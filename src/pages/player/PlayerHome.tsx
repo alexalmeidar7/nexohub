@@ -827,19 +827,19 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
       style={{
         width: "160px",
         aspectRatio: "2/3",
-        background: "rgba(255,255,255,0.04)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        background: "rgba(255,255,255,0.05)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
         border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.5)";
-        e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)";
+        e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px hsla(var(--player-accent) / 0.4), inset 0 1px 0 rgba(255,255,255,0.1)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+        e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)";
       }}
     >
       {image ? (
