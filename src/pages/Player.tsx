@@ -2422,8 +2422,8 @@ export default function PlayerPage() {
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
         <div
           className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3 transition-all duration-500 ease-in-out backdrop-blur-2xl"
-          style={{
-            background: "linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.45) 100%)",
+           style={{
+            background: `linear-gradient(180deg, var(--player-watch-topbar-bg, rgba(0,0,0,0.7)) 0%, color-mix(in srgb, var(--player-watch-topbar-bg, rgba(0,0,0,0.7)) 65%, transparent) 100%)`,
             borderBottom: "1px solid rgba(255,255,255,0.06)",
             opacity: topBarVisible ? 1 : 0,
             pointerEvents: topBarVisible ? "auto" : "none",
@@ -2440,27 +2440,27 @@ export default function PlayerPage() {
               style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
               title="Voltar ao Hub"
             >
-              <Home size={15} className="text-white/80" />
+              <Home size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} />
             </button>
             <div className="flex flex-col items-center gap-0.5">
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(-1)} className="text-white/40 hover:text-white/90 transition-colors p-0.5"><ChevronUp size={16} /></button>
+                <button onClick={() => navigateChannel(-1)} className="hover:opacity-100 transition-colors p-0.5" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.4))" }}><ChevronUp size={16} /></button>
               )}
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(1)} className="text-white/40 hover:text-white/90 transition-colors p-0.5"><ChevronDown size={16} /></button>
+                <button onClick={() => navigateChannel(1)} className="hover:opacity-100 transition-colors p-0.5" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.4))" }}><ChevronDown size={16} /></button>
               )}
             </div>
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-white/90 text-xl sm:text-2xl font-black tabular-nums">{canal?.numero_canal || "--"}</span>
-              <span className="text-white/80 text-base sm:text-lg font-bold truncate max-w-[180px]">{canal?.name || "Sem canal"}</span>
+              <span className="text-xl sm:text-2xl font-black tabular-nums" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))" }}>{canal?.numero_canal || "--"}</span>
+              <span className="text-base sm:text-lg font-bold truncate max-w-[180px]" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }}>{canal?.name || "Sem canal"}</span>
             </div>
           </div>
 
           {/* Program info: "no ar" */}
           <div className="hidden sm:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06]" style={{ flex: "0 1 350px" }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>no ar</span>
-            <span className="text-white/90 text-lg sm:text-xl font-bold leading-tight truncate">{currentProg?.nome || "—"}</span>
-            <div className="flex items-center gap-2 text-white/50 text-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>no ar</span>
+            <span className="text-lg sm:text-xl font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))" }}>{currentProg?.nome || "—"}</span>
+            <div className="flex items-center gap-2 text-xs" style={{ color: "color-mix(in srgb, var(--player-watch-topbar-text, #ffffff) 50%, transparent)" }}>
               <span className="truncate">{currentPresenter?.nome || ""}</span>
               {currentProg && (
                 <span className="shrink-0">{currentProg.horario_inicio.slice(0, 5)}/{currentProg.horario_fim.slice(0, 5)}</span>
@@ -2468,15 +2468,15 @@ export default function PlayerPage() {
             </div>
             {/* Program progress line */}
             <div className="w-full h-0.5 mt-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.08)" }}>
-              <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+              <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }} />
             </div>
           </div>
 
           {/* Next program: "a seguir" */}
           <div className="hidden lg:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06]" style={{ flex: "0 1 220px" }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>a seguir</span>
-            <span className="text-white/90 text-lg font-bold leading-tight truncate">{nextProg?.nome || "—"}</span>
-            <span className="text-white/35 text-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>a seguir</span>
+            <span className="text-lg font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))" }}>{nextProg?.nome || "—"}</span>
+            <span className="text-xs" style={{ color: "color-mix(in srgb, var(--player-watch-topbar-text, #ffffff) 35%, transparent)" }}>
               {nextProg ? `${nextProg.horario_inicio.slice(0, 5)}` : "..."}
             </span>
           </div>
@@ -2491,7 +2491,7 @@ export default function PlayerPage() {
                 style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
                 title="Estilo do espectro"
               >
-                <Settings2 size={15} className="text-white/80" />
+                <Settings2 size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} />
               </button>
             )}
 
@@ -2554,7 +2554,7 @@ export default function PlayerPage() {
               style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
               title={fullscreen ? "Sair tela cheia" : "Tela cheia"}
             >
-              {fullscreen ? <Minimize size={15} className="text-white/80" /> : <Maximize size={15} className="text-white/80" />}
+              {fullscreen ? <Minimize size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} /> : <Maximize size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} />}
             </button>
           </div>
         </div>
@@ -2615,7 +2615,7 @@ export default function PlayerPage() {
         <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "110px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
           <div
             className="absolute left-0 right-0 bottom-0 mx-auto px-5 sm:px-10 pb-5 pt-3 transition-all duration-400 ease-in-out backdrop-blur-2xl"
-            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none", background: "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 100%)" }}
+            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none", background: `linear-gradient(0deg, var(--player-watch-music-bg, rgba(0,0,0,0.5)) 0%, color-mix(in srgb, var(--player-watch-music-bg, rgba(0,0,0,0.5)) 40%, transparent) 100%)` }}
           >
             {/* Single row: Play | Title+Artist | Slider | Like+Volume */}
             <div className="flex items-center gap-4">
@@ -2624,7 +2624,7 @@ export default function PlayerPage() {
                 <button
                   onClick={handlePlayCanal}
                   className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
-                  style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
+                  style={{ backgroundColor: "var(--player-watch-music-accent, hsl(var(--player-accent)))", color: "#000" }}
                   title={playing ? "Pausar" : "Reproduzir"}
                 >
                   {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
@@ -2635,10 +2635,10 @@ export default function PlayerPage() {
               <div className="flex-1 min-w-0">
                 {/* Title + Artist */}
                 <div className="flex flex-col mb-1.5">
-                  <span className="text-sm sm:text-base font-black italic leading-tight truncate" style={{ color: "#ffffff" }}>
+                   <span className="text-sm sm:text-base font-black italic leading-tight truncate" style={{ color: "var(--player-watch-music-text, #ffffff)" }}>
                     {musicData?.titulo && musicData.titulo !== "Sem título" ? musicData.titulo : ""}
                   </span>
-                  <span className="text-xs sm:text-sm font-bold leading-tight truncate" style={{ color: "rgba(255,255,255,0.85)" }}>
+                  <span className="text-xs sm:text-sm font-bold leading-tight truncate" style={{ color: "color-mix(in srgb, var(--player-watch-music-text, #ffffff) 85%, transparent)" }}>
                     {musicData?.artista && musicData.artista !== "Desconhecido" ? musicData.artista : ""}
                   </span>
                 </div>
@@ -2669,7 +2669,7 @@ export default function PlayerPage() {
                     <div className="relative">
                       <div className="w-full group cursor-pointer">
                         <div className="w-full h-[2px] rounded-full overflow-hidden group-hover:h-[4px] transition-all" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
-                          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "#ffffff" }} />
+                          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "var(--player-watch-scrubber, #ffffff)" }} />
                         </div>
                       </div>
                     </div>
@@ -2699,8 +2699,8 @@ export default function PlayerPage() {
                   }
                   return (
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>{fmtTime(musicElapsed)}</span>
-                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>{fmtTime(musicTotal)}</span>
+                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "color-mix(in srgb, var(--player-watch-music-text, #ffffff) 60%, transparent)" }}>{fmtTime(musicElapsed)}</span>
+                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "color-mix(in srgb, var(--player-watch-music-text, #ffffff) 60%, transparent)" }}>{fmtTime(musicTotal)}</span>
                     </div>
                   );
                 })()}
@@ -2779,7 +2779,7 @@ export default function PlayerPage() {
           style={{ width: "80%", paddingLeft: "8px", paddingRight: "8px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
         >
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/10 px-2 sm:px-5 py-2 sm:py-3 backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/10 px-2 sm:px-5 py-2 sm:py-3 backdrop-blur-xl" style={{ backgroundColor: "var(--player-watch-bottombar-bg, rgba(0, 0, 0, 0.5))", boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
 
            {/* Channel logo + Catalog controls */}
            <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
@@ -2809,8 +2809,8 @@ export default function PlayerPage() {
 
           {/* Program Info */}
           <div className="hidden sm:block px-5 min-w-0" style={{ flex: "0 1 450px" }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>No Ar:</span>
-            <MarqueeText className="text-white text-lg font-bold leading-tight" text={channelLabel} />
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>No Ar:</span>
+            <MarqueeText className="text-lg font-bold leading-tight" text={channelLabel} />
             {programLabel && (
               <MarqueeText className="text-white/60 text-sm leading-tight" text={programLabel} />
             )}
@@ -2840,7 +2840,7 @@ export default function PlayerPage() {
               >
                 <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-3 transition-all relative">
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }} />
                 </div>
                 {midrollBreakPoints.map((bp, i) => (
                   <div
@@ -2859,7 +2859,7 @@ export default function PlayerPage() {
               </div>
             ) : null}
             {selectedVideoId ? (
-              <span className="text-[10px] mt-1 inline-block" style={{ color: "hsl(var(--player-accent))" }}>
+              <span className="text-[10px] mt-1 inline-block" style={{ color: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }}>
                 {fmtTime(ytCurrentTime)} - {fmtTime(ytDuration)}
               </span>
             ) : null}
@@ -2869,7 +2869,7 @@ export default function PlayerPage() {
           <div className="sm:hidden w-full">
             {selectedVideoId ? (
               <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }} />
               </div>
             ) : null}
           </div>
@@ -2935,7 +2935,7 @@ export default function PlayerPage() {
           style={{ width: "80%", paddingLeft: "8px", paddingRight: "8px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
         >
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/10 px-2 sm:px-5 py-2 sm:py-3 backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/10 px-2 sm:px-5 py-2 sm:py-3 backdrop-blur-xl" style={{ backgroundColor: "var(--player-watch-bottombar-bg, rgba(0, 0, 0, 0.5))", boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
            <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
             {canal?.background_url && canal.background_url.trim() !== "" ? (
               <img src={canal.background_url} alt="" className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg object-contain" />
@@ -2945,14 +2945,14 @@ export default function PlayerPage() {
               <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg bg-white/10 flex items-center justify-center text-white text-sm sm:text-lg font-bold">{canal?.numero_canal || "?"}</div>
             )}
             <div className="flex-1 min-w-0 sm:hidden">
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>No Ar:</span>
-              <MarqueeText className="text-white text-sm font-bold leading-tight" text={channelLabel} />
+               <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>No Ar:</span>
+               <MarqueeText className="text-sm font-bold leading-tight" text={channelLabel} />
             </div>
           </div>
 
           <div className="hidden sm:block px-5 min-w-0" style={{ flex: "0 1 450px" }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>No Ar:</span>
-            <MarqueeText className="text-white text-lg font-bold leading-tight" text={channelLabel} />
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>No Ar:</span>
+            <MarqueeText className="text-lg font-bold leading-tight" text={channelLabel} />
             {programLabel && <MarqueeText className="text-white/60 text-sm leading-tight" text={programLabel} />}
             {selectedVideoId ? (
               <div className="w-full mt-2 group cursor-pointer relative"
@@ -2962,19 +2962,19 @@ export default function PlayerPage() {
               >
                 <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-3 transition-all relative">
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }} />
                 </div>
               </div>
             ) : null}
             {selectedVideoId ? (
-              <span className="text-[10px] mt-1 inline-block" style={{ color: "hsl(var(--player-accent))" }}>{fmtTime(ytCurrentTime)} - {fmtTime(ytDuration)}</span>
+              <span className="text-[10px] mt-1 inline-block" style={{ color: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }}>{fmtTime(ytCurrentTime)} - {fmtTime(ytDuration)}</span>
             ) : null}
           </div>
 
           <div className="sm:hidden w-full">
             {selectedVideoId ? (
               <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }} />
               </div>
             ) : null}
           </div>
