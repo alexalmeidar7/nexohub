@@ -47,6 +47,18 @@ export default function PlayerSidebar({
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
+  // Close profile popup on outside click
+  useEffect(() => {
+    if (!profileOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [profileOpen]);
+
   const isShown = autoHide ? (visible || hovered) : true;
 
   return (
