@@ -110,6 +110,8 @@ export interface PlayerColors {
   watchScrubber: string;
   watchMusicBg: string;
   watchMusicText: string;
+  watchMusicTitleColor: string;
+  watchMusicArtistColor: string;
   watchMusicAccent: string;
   // Catalog / On Demand
   catalogBg: string;
