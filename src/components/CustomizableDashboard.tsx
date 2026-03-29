@@ -1636,8 +1636,8 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
               </div>
             )}
             <div className="flex items-center gap-2">
-              <button onClick={togglePlay} className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent-color))", boxShadow: "0 2px 12px color-mix(in srgb, var(--layout-accent-color) 40%, transparent)" }}>
-                {isPlaying ? <Pause size={12} className="text-white" /> : <Play size={12} className="text-white ml-0.5" />}
+              <button onClick={togglePlay} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))", backdropFilter: "blur(20px) saturate(1.6)", WebkitBackdropFilter: "blur(20px) saturate(1.6)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.1)" }}>
+                {isPlaying ? <Pause size={13} className="text-white" /> : <Play size={13} className="text-white ml-0.5" />}
               </button>
               <button onClick={toggleMute} className="text-white/40 hover:text-white transition-colors flex-shrink-0">
                 {isMuted || volume === 0 ? <VolumeX size={13} /> : <Volume2 size={13} />}
