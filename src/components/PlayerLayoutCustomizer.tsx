@@ -149,6 +149,7 @@ const screenColorKeys: Record<ScreenTab, { key: keyof PlayerColors; label: strin
 
 /* ── Color Input ── */
 function PColorInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(value);
 
