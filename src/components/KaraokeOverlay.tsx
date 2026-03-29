@@ -124,6 +124,7 @@ export default function KaraokeOverlay({
   const [error, setError] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [exitAnim, setExitAnim] = useState(false);
+  const [songEnded, setSongEnded] = useState(false);
   const [speedOffset, setSpeedOffset] = useState(() => {
     const saved = localStorage.getItem(SPEED_OFFSET_KEY);
     const parsed = saved ? parseFloat(saved) : NaN;
@@ -167,6 +168,7 @@ export default function KaraokeOverlay({
     setCurrentLineIdx(-1);
     setError(false);
     setExitAnim(false);
+    setSongEnded(false);
     setLoading(true);
     setShowConfetti(false);
     setSyncMode(false);
@@ -254,6 +256,15 @@ export default function KaraokeOverlay({
 
       setCurrentLineIdx(idx);
 
+      // Detect song ended: elapsed is past the last lyric line + a buffer
+      const lastLineTime = lines[lines.length - 1]?.time ?? 0;
+      const endBuffer = 8; // seconds after last lyric to consider song ended
+      if (elapsed > lastLineTime + endBuffer && idx === lines.length - 1) {
+        setSongEnded(true);
+      } else {
+        setSongEnded(false);
+      }
+
       if (idx >= 0) {
         const lineStart = lines[idx].time;
         const lineEnd = idx + 1 < lines.length ? lines[idx + 1].time : lineStart + 4;
@@ -278,6 +289,9 @@ export default function KaraokeOverlay({
   }, [syncMode, currentLineIdx]);
 
   if (!visible) return null;
+
+  // Song ended — hide lyrics until next song triggers a re-fetch
+  if (songEnded && !loading) return null;
 
   const line1Idx = currentLineIdx >= 0 ? currentLineIdx : 0;
   const line2Idx = line1Idx + 1;
