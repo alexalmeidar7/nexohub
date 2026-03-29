@@ -2468,7 +2468,7 @@ export default function PlayerPage() {
             </div>
             {/* Program progress line */}
             <div className="w-full h-0.5 mt-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.08)" }}>
-              <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+              <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }} />
             </div>
           </div>
 
