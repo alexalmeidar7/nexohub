@@ -177,6 +177,8 @@ const screenColorKeys: Record<ScreenTab, { key: keyof PlayerColors; label: strin
     { key: "homeCardBg", label: "Card" },
     { key: "homeCardText", label: "Texto Card" },
     { key: "homeCardBorder", label: "Borda Card" },
+    { key: "homeBadgeBg", label: "Badge" },
+    { key: "homeBadgeText", label: "Texto Badge" },
     { key: "homeBannerOverlay", label: "Overlay Banner" },
   ],
   live: [
