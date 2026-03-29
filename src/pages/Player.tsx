@@ -2364,28 +2364,127 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Audio channel: dual card layout */}
+      {/* Audio Spectrum — visible behind content for audio channels */}
       {isAudio && playing && (
         <Suspense fallback={null}>
-          <AudioDualCard
-            presenterName={currentPresenter?.nome}
-            presenterInstagram={currentPresenter?.instagram}
-            presenterPhoto={currentPresenter?.foto}
-            musicTitle={musicData?.titulo}
-            musicArtist={musicData?.artista}
-            musicCover={musicData?.capa}
-            channelLogo={canal?.logo_url}
-            channelThumb={canal?.cover_url}
-            liked={liked}
-            onToggleLike={toggleLike}
-            audioElement={audioRef.current}
-            whatsappPhone={whatsappPhone}
-            onOpenChat={() => setChatOpen(true)}
-            userId={user?.id || publicUserId}
-            spectrumStyle={spectrumStyle}
-            onSpectrumStyleChange={handleSpectrumStyleChange}
-          />
+          <div className="absolute inset-0 z-[1] flex items-end justify-center pointer-events-none" style={{ opacity: 0.3 }}>
+            <AudioSpectrum audioElement={audioRef.current} style={spectrumStyle} onStyleChange={handleSpectrumStyleChange} userId={user?.id || publicUserId} />
+          </div>
         </Suspense>
+      )}
+
+      {/* Top Header Bar — always visible for live channels */}
+      {!isCatalog && !isPrerollVisible && !midrollActive && playing && (
+        <div className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
+          {/* Channel nav + name */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 pr-4 sm:pr-6 border-r border-white/10">
+            <div className="flex flex-col items-center gap-0.5">
+              {liveChannels.length > 1 && (
+                <button onClick={() => navigateChannel(-1)} className="text-white/50 hover:text-white transition-colors p-0.5"><ChevronUp size={16} /></button>
+              )}
+              {liveChannels.length > 1 && (
+                <button onClick={() => navigateChannel(1)} className="text-white/50 hover:text-white transition-colors p-0.5"><ChevronDown size={16} /></button>
+              )}
+            </div>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-white text-xl sm:text-2xl font-black tabular-nums">{canal?.numero_canal || "--"}</span>
+              <span className="text-white text-base sm:text-lg font-bold truncate max-w-[180px]">{canal?.name || "Sem canal"}</span>
+            </div>
+          </div>
+
+          {/* Program info: "no ar" */}
+          <div className="hidden sm:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/10" style={{ flex: "0 1 350px" }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>no ar</span>
+            <span className="text-white text-lg sm:text-xl font-bold leading-tight truncate">{currentProg?.nome || "—"}</span>
+            <div className="flex items-center gap-2 text-white/60 text-xs">
+              <span className="truncate">{currentPresenter?.nome || ""}</span>
+              {currentProg && (
+                <span className="shrink-0">{currentProg.horario_inicio.slice(0, 5)}/{currentProg.horario_fim.slice(0, 5)}</span>
+              )}
+            </div>
+            {/* Program progress line */}
+            <div className="w-full h-0.5 mt-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
+              <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+            </div>
+          </div>
+
+          {/* Next program: "a seguir" */}
+          <div className="hidden lg:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/10" style={{ flex: "0 1 220px" }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>a seguir</span>
+            <span className="text-white text-lg font-bold leading-tight truncate">{nextProg?.nome || "—"}</span>
+            <span className="text-white/40 text-xs">
+              {nextProg ? `${nextProg.horario_inicio.slice(0, 5)}` : "..."}
+            </span>
+          </div>
+
+          {/* Glass icon buttons */}
+          <div className="flex items-center gap-2 ml-auto shrink-0">
+            {/* Spectrum config (audio only) */}
+            {isAudio && (
+              <button
+                onClick={() => handleSpectrumStyleChange(spectrumStyle === "bars" ? "wave" : spectrumStyle === "wave" ? "circular" : "bars")}
+                className="w-9 h-9 rounded-full flex items-center justify-center transition-all border border-white/10 hover:border-white/30 hover:bg-white/10 backdrop-blur-xl"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+                title="Estilo do espectro"
+              >
+                <Settings2 size={15} className="text-white/70" />
+              </button>
+            )}
+
+            {/* Karaoke */}
+            {(isAudio || isVideo) && musicData?.titulo && musicData.titulo !== "Sem título" && (
+              <button
+                onClick={() => setKaraokeEnabled(!karaokeEnabled)}
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border backdrop-blur-xl ${karaokeEnabled ? "border-player-accent bg-player-accent/20" : "border-white/10 hover:border-white/30 hover:bg-white/10"}`}
+                style={karaokeEnabled ? {} : { backgroundColor: "rgba(255,255,255,0.08)" }}
+                title={karaokeEnabled ? "Desativar Karaoke" : "Ativar Karaoke"}
+              >
+                <MicVocal size={15} className={karaokeEnabled ? "text-player-accent" : "text-white/70"} />
+              </button>
+            )}
+
+            {/* Cast */}
+            <button
+              onClick={() => { if (navigator.mediaDevices && "getDisplayMedia" in navigator.mediaDevices) navigator.mediaDevices.getDisplayMedia({ video: true }).catch(() => {}); }}
+              className="hidden sm:flex w-9 h-9 rounded-full items-center justify-center transition-all border border-white/10 hover:border-white/30 hover:bg-white/10 backdrop-blur-xl"
+              style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+              title="Transmitir"
+            >
+              <Cast size={15} className="text-white/70" />
+            </button>
+
+            {/* Shop */}
+            <button
+              onClick={() => setShopOpen(!shopOpen)}
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border backdrop-blur-xl relative ${shopOpen ? "border-player-accent bg-player-accent/20" : "border-white/10 hover:border-white/30 hover:bg-white/10"}`}
+              style={shopOpen ? {} : { backgroundColor: "rgba(255,255,255,0.08)" }}
+              title="Shopping ao Vivo"
+            >
+              <ShoppingCart size={15} className={shopOpen ? "text-player-accent" : "text-white/70"} />
+              {showShopIcon && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse bg-player-accent" />}
+            </button>
+
+            {/* Chat */}
+            <button
+              onClick={() => setChatOpen(!chatOpen)}
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border backdrop-blur-xl ${chatOpen ? "border-player-accent bg-player-accent/20" : "border-white/10 hover:border-white/30 hover:bg-white/10"}`}
+              style={chatOpen ? {} : { backgroundColor: "rgba(255,255,255,0.08)" }}
+              title="Chat ao Vivo"
+            >
+              <MessageSquare size={15} className={chatOpen ? "text-player-accent" : "text-white/70"} />
+            </button>
+
+            {/* Fullscreen */}
+            <button
+              onClick={toggleFullscreen}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all border border-white/10 hover:border-white/30 hover:bg-white/10 backdrop-blur-xl"
+              style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+              title={fullscreen ? "Sair tela cheia" : "Tela cheia"}
+            >
+              {fullscreen ? <Minimize size={15} className="text-white/70" /> : <Maximize size={15} className="text-white/70" />}
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Karaoke overlay */}
