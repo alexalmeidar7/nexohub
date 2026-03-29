@@ -2444,10 +2444,10 @@ export default function PlayerPage() {
             </button>
             <div className="flex flex-col items-center gap-0.5">
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(-1)} className="text-white/40 hover:text-white/90 transition-colors p-0.5"><ChevronUp size={16} /></button>
+                <button onClick={() => navigateChannel(-1)} className="hover:opacity-100 transition-colors p-0.5" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.4))" }}><ChevronUp size={16} /></button>
               )}
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(1)} className="text-white/40 hover:text-white/90 transition-colors p-0.5"><ChevronDown size={16} /></button>
+                <button onClick={() => navigateChannel(1)} className="hover:opacity-100 transition-colors p-0.5" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.4))" }}><ChevronDown size={16} /></button>
               )}
             </div>
             <div className="flex items-center gap-2 min-w-0">
