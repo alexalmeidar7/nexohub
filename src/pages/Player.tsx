@@ -2555,55 +2555,32 @@ export default function PlayerPage() {
 
       {/* Bottom minimal controls — for live channels (non-catalog) */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
-        <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "120px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
+        <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "140px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
           <div
-            className="absolute left-0 right-0 bottom-4 sm:bottom-8 mx-auto px-4 sm:px-8 transition-all duration-400 ease-in-out"
+            className="absolute left-0 right-0 bottom-4 sm:bottom-6 mx-auto px-4 sm:px-8 transition-all duration-400 ease-in-out"
             style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none" }}
           >
-            <div className="flex items-center gap-4 sm:gap-6">
-              {/* Play/Pause circle */}
-              <button
-                onClick={handlePlayCanal}
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 shadow-lg"
-                style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
-                title={playing ? "Pausar" : "Reproduzir"}
-              >
-                {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
-              </button>
-
-              {/* Music progress bar + time */}
-              <div className="flex-1 min-w-0 flex flex-col gap-1">
-                {(() => {
-                  // Compute music elapsed time from horario
-                  let musicElapsed = 0;
-                  let musicTotal = musicData?.duracao || 0;
-                  if (musicData?.horario && musicTotal > 0) {
-                    const now = new Date();
-                    const parts = musicData.horario.split(":").map(Number);
-                    const startDate = new Date(now);
-                    startDate.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
-                    musicElapsed = Math.max(0, (now.getTime() - startDate.getTime()) / 1000);
-                    if (musicElapsed > musicTotal) musicElapsed = musicTotal;
-                  }
-                  const musicPct = musicTotal > 0 ? Math.min(100, (musicElapsed / musicTotal) * 100) : 0;
-
-                  return (
-                    <>
-                      <div className="w-full group cursor-pointer relative">
-                        <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden group-hover:h-2.5 transition-all">
-                          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between text-white/50 text-[11px] tabular-nums">
-                        <span>{fmtTime(musicElapsed)}</span>
-                        <span className="hidden sm:block text-white/40 text-xs truncate max-w-[300px]">
-                          {musicData?.titulo && musicData.titulo !== "Sem título" ? `♫ ${musicData.titulo} — ${musicData.artista}` : ""}
-                        </span>
-                        <span>{fmtTime(musicTotal)}</span>
-                      </div>
-                    </>
-                  );
-                })()}
+            {/* Row 1: Play/Pause + Music info (left) | Like + Volume (right) */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Play/Pause circle */}
+                <button
+                  onClick={handlePlayCanal}
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 shadow-lg"
+                  style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
+                  title={playing ? "Pausar" : "Reproduzir"}
+                >
+                  {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
+                </button>
+                {/* Music title + artist */}
+                <div className="flex flex-col min-w-0">
+                  <span className="text-white text-sm sm:text-base font-bold leading-tight truncate max-w-[300px] sm:max-w-[450px]">
+                    {musicData?.titulo && musicData.titulo !== "Sem título" ? musicData.titulo : ""}
+                  </span>
+                  <span className="text-white/60 text-xs sm:text-sm leading-tight truncate max-w-[250px] sm:max-w-[400px]">
+                    {musicData?.artista && musicData.artista !== "Desconhecido" ? musicData.artista : ""}
+                  </span>
+                </div>
               </div>
 
               {/* Like + Volume on right */}
@@ -2666,6 +2643,33 @@ export default function PlayerPage() {
                 </div>
               </div>
             </div>
+
+            {/* Row 2: Full-width music slider + times */}
+            {(() => {
+              let musicElapsed = 0;
+              let musicTotal = musicData?.duracao || 0;
+              if (musicData?.horario && musicTotal > 0) {
+                const now = new Date();
+                const parts = musicData.horario.split(":").map(Number);
+                const startDate = new Date(now);
+                startDate.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+                musicElapsed = Math.max(0, (now.getTime() - startDate.getTime()) / 1000);
+                if (musicElapsed > musicTotal) musicElapsed = musicTotal;
+              }
+              const musicPct = musicTotal > 0 ? Math.min(100, (musicElapsed / musicTotal) * 100) : 0;
+
+              return (
+                <div className="flex items-center gap-3">
+                  <span className="text-white/50 text-[11px] tabular-nums shrink-0">{fmtTime(musicElapsed)}</span>
+                  <div className="flex-1 group cursor-pointer relative">
+                    <div className="w-full h-[3px] bg-white/20 rounded-full overflow-hidden group-hover:h-[5px] transition-all">
+                      <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+                    </div>
+                  </div>
+                  <span className="text-white/50 text-[11px] tabular-nums shrink-0">{fmtTime(musicTotal)}</span>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
