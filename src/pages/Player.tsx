@@ -2458,9 +2458,9 @@ export default function PlayerPage() {
 
           {/* Program info: "no ar" */}
           <div className="hidden sm:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06]" style={{ flex: "0 1 350px" }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>no ar</span>
-            <span className="text-white/90 text-lg sm:text-xl font-bold leading-tight truncate">{currentProg?.nome || "—"}</span>
-            <div className="flex items-center gap-2 text-white/50 text-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>no ar</span>
+            <span className="text-lg sm:text-xl font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))" }}>{currentProg?.nome || "—"}</span>
+            <div className="flex items-center gap-2 text-xs" style={{ color: "color-mix(in srgb, var(--player-watch-topbar-text, #ffffff) 50%, transparent)" }}>
               <span className="truncate">{currentPresenter?.nome || ""}</span>
               {currentProg && (
                 <span className="shrink-0">{currentProg.horario_inicio.slice(0, 5)}/{currentProg.horario_fim.slice(0, 5)}</span>
