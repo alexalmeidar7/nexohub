@@ -15,10 +15,13 @@ interface PlayerSidebarProps {
   activeKey: string;
   avatarUrl?: string | null;
   userName?: string;
+  userEmail?: string;
+  userCity?: string;
   showLogout?: boolean;
   showSignup?: boolean;
   onLogout?: () => void;
   onSignup?: () => void;
+  onEditProfile?: () => void;
   loading?: boolean;
   autoHide?: boolean;
   visible?: boolean;
