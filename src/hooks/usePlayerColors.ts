@@ -130,6 +130,10 @@ export function usePlayerColors() {
     root.style.setProperty("--player-live-control-bg", colors.liveControlBg);
     root.style.setProperty("--player-live-control-text", colors.liveControlText);
 
+    // Audio channel settings
+    root.style.setProperty("--player-live-audio-bg-mode", colors.liveAudioBgMode || "cover");
+    root.style.setProperty("--player-spectrum-color", colors.spectrumColor || "#dc2626");
+
     // Watch controls
     root.style.setProperty("--player-watch-topbar-bg", colors.watchTopBarBg || "#000000cc");
     root.style.setProperty("--player-watch-topbar-text", colors.watchTopBarText || "#ffffff");

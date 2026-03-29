@@ -377,6 +377,7 @@ function HomeMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
 }
 
 function LiveMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
+  const bgMode = c.liveAudioBgMode || "cover";
   return (
     <div className="absolute inset-0 flex flex-col" style={buildBgStyle(c.liveBg, bg)}>
       {/* Video area */}
@@ -384,10 +385,26 @@ function LiveMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
         <div className="absolute top-2 left-2">
           <span className="text-[7px] font-bold px-1.5 py-0.5 rounded animate-pulse" style={{ backgroundColor: c.liveBadgeBg, color: c.liveBadgeText }}>● AO VIVO</span>
         </div>
+        {/* Background mode indicator */}
+        <div className="absolute top-2 right-2">
+          <span className="text-[6px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}>
+            {bgMode === "thumb" ? "THUMB" : bgMode === "cover" ? "CAPA" : "DEGRADÊ"}
+          </span>
+        </div>
+        {/* Music cover mockup */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: c.liveAccent + "33", border: `2px solid ${c.liveAccent}` }}>
-            <Play size={12} fill={c.liveAccent} style={{ color: c.liveAccent }} />
+          <div className="w-16 h-16 rounded-xl overflow-hidden" style={{ backgroundColor: c.liveCardBg, border: `1px solid rgba(255,255,255,0.1)`, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
+            <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${c.liveAccent}33, ${c.liveBg})` }} />
           </div>
+        </div>
+        {/* Spectrum bars */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-end gap-[2px]" style={{ height: "30%", width: "60%" }}>
+          {Array.from({ length: 16 }).map((_, i) => {
+            const h = 20 + Math.sin(i * 0.8) * 40 + Math.random() * 30;
+            return (
+              <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, backgroundColor: c.spectrumColor || c.liveAccent, opacity: 0.7 }} />
+            );
+          })}
         </div>
       </div>
       {/* Control bar */}
