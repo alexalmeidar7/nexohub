@@ -1181,6 +1181,7 @@ export default function PlayerPage() {
     return () => {
       cancelled = true;
       clearInterval(interval);
+      clearInterval(storagePoll);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("storage", onStorage);
       window.removeEventListener(MUSIC_SYNC_EVENT, onMusicSync as EventListener);
