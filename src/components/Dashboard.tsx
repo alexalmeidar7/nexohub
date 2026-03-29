@@ -600,8 +600,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </Tooltip>
           <button
             onClick={onLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all"
-            style={{ background: `linear-gradient(135deg, ${layoutColors.buttonBg}cc, ${layoutColors.buttonBg})`, color: layoutColors.buttonText, boxShadow: `0 2px 10px ${layoutColors.buttonBg}4d` }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all hover:scale-105"
+            style={{ background: `linear-gradient(135deg, ${layoutColors.buttonBg}cc, ${layoutColors.buttonBg})`, color: layoutColors.buttonText, boxShadow: `0 4px 16px ${layoutColors.buttonBg}4d, inset 0 1px 0 rgba(255,255,255,0.15)`, border: `1px solid ${layoutColors.buttonBg}66` }}
             onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
             onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
           >
