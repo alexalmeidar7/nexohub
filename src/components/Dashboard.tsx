@@ -413,7 +413,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ background: `${layoutColors.navBg}73`, backdropFilter: "blur(32px) saturate(1.5)", WebkitBackdropFilter: "blur(32px) saturate(1.5)", borderRight: `1px solid ${layoutColors.borderColor}1a` }}>
+          <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ background: `${layoutColors.navBg}a6`, backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", borderRight: `1px solid ${layoutColors.borderColor}15`, boxShadow: "inset -1px 0 0 rgba(255,255,255,0.04)" }}>
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <img src={seloNexohub} alt="NexoHUB" className="h-4" />
               <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: layoutColors.buttonBg }}>
@@ -487,12 +487,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div
           className="flex items-center px-2 lg:px-2 xl:px-5 py-2 xl:py-2.5 flex-shrink min-w-0"
           style={{
-            background: `${layoutColors.navBg}d9`,
-            backdropFilter: "blur(20px) saturate(1.6)",
-            WebkitBackdropFilter: "blur(20px) saturate(1.6)",
+            background: `${layoutColors.navBg}b3`,
+            backdropFilter: "blur(32px) saturate(1.8)",
+            WebkitBackdropFilter: "blur(32px) saturate(1.8)",
             borderRadius: "16px",
-            border: `1px solid ${layoutColors.borderColor}33`,
-            boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)",
+            border: `1px solid ${layoutColors.borderColor}22`,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15)",
           }}
         >
           <img src={logoMenu} alt="NexoHUB" className="h-4 mr-2 xl:mr-5 flex-shrink-0 opacity-90" />
@@ -550,13 +550,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {item.children && isOpen && (
                   <div className="absolute top-full left-0 pt-2 z-[70]" onMouseEnter={clearMenuLeaveTimer} onMouseLeave={scheduleCloseMenu}>
                     <div
-                      className="rounded-xl py-1.5 min-w-[180px]"
+                      className="rounded-2xl py-1.5 min-w-[180px]"
                       style={{
-                        background: `${layoutColors.navBg}cc`,
-                        backdropFilter: "blur(24px) saturate(1.4)",
-                        WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-                        border: `1px solid ${layoutColors.borderColor}22`,
-                        boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+                        background: `${layoutColors.navBg}b3`,
+                        backdropFilter: "blur(32px) saturate(1.8)",
+                        WebkitBackdropFilter: "blur(32px) saturate(1.8)",
+                        border: `1px solid ${layoutColors.borderColor}1a`,
+                        boxShadow: "0 16px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
                       }}
                     >
                       {item.children.map(child => (
@@ -588,10 +588,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <TooltipTrigger asChild>
               <button
                 onClick={() => setCurrentPage("configuracoes")}
-                className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                style={{ backgroundColor: `${layoutColors.navText}1a` }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}33`; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:scale-105"
+                style={{ backgroundColor: `${layoutColors.navText}14`, backdropFilter: "blur(16px)", border: `1px solid ${layoutColors.navText}1a`, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}2e`; e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}14`; e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.06)"; }}
               >
                 <Settings size={14} style={{ color: `${layoutColors.navText}b3` }} />
               </button>
@@ -600,8 +600,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </Tooltip>
           <button
             onClick={onLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all"
-            style={{ background: `linear-gradient(135deg, ${layoutColors.buttonBg}cc, ${layoutColors.buttonBg})`, color: layoutColors.buttonText, boxShadow: `0 2px 10px ${layoutColors.buttonBg}4d` }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all hover:scale-105"
+            style={{ background: `linear-gradient(135deg, ${layoutColors.buttonBg}cc, ${layoutColors.buttonBg})`, color: layoutColors.buttonText, boxShadow: `0 4px 16px ${layoutColors.buttonBg}4d, inset 0 1px 0 rgba(255,255,255,0.15)`, border: `1px solid ${layoutColors.buttonBg}66` }}
             onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
             onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
           >
@@ -624,11 +624,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
           {/* Content area */}
           {currentPage !== "dashboard" && (
-            <div className="flex items-center gap-3 mb-2 ml-1 px-4 py-2 rounded-xl" style={{ backgroundColor: layoutColors.headerBg, color: layoutColors.headerText }}>
+            <div className="flex items-center gap-3 mb-2 ml-1 px-4 py-2 rounded-2xl backdrop-blur-2xl" style={{ background: `${layoutColors.headerBg}b3`, color: layoutColors.headerText, border: `1px solid ${layoutColors.borderColor}1a`, boxShadow: "0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
               <button
                 onClick={() => setCurrentPage("dashboard")}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all"
-                style={{ backgroundColor: layoutColors.headerText, color: layoutColors.headerBg }}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105"
+                style={{ backgroundColor: layoutColors.headerText, color: layoutColors.headerBg, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15)" }}
                 onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
                 onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
               >
@@ -797,16 +797,17 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
          <div
           key={widget.id}
           className={`dashboard-widget-card rounded-2xl p-3 lg:p-4 flex-shrink-0 overflow-hidden relative ${
-            draggedId === widget.id ? "opacity-50 scale-95" : ""
+             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2" : ""}`}
            style={{
              background: widget.bg === "glass-dark"
-               ? "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 60%, transparent)"
-               : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 20%, transparent)",
-             backdropFilter: "blur(24px) saturate(1.4)",
-             WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-             boxShadow: "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
-             border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
+               ? "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 55%, transparent)"
+               : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 18%, transparent)",
+             backdropFilter: "blur(32px) saturate(1.6)",
+             WebkitBackdropFilter: "blur(32px) saturate(1.6)",
+             boxShadow: "0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.1)",
+             border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)",
+             borderRadius: "20px",
            }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}

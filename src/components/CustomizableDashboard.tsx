@@ -370,28 +370,28 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => handleLinkClick(item)}
                 >
                   <div
-                    className={`w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center pt-[14px] sm:pt-[18px] transition-all hover:scale-[1.06] hover:shadow-lg`}
+                    className={`w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center pt-[14px] sm:pt-[18px] transition-all hover:scale-[1.06]`}
                     style={{
                       background: isDragOver
                         ? `linear-gradient(145deg, var(--layout-button-bg, #333), var(--layout-accent-color, #444))`
                         : `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))`,
-                      backdropFilter: "blur(12px)",
-                      WebkitBackdropFilter: "blur(12px)",
-                      border: isDragOver ? `2px solid var(--layout-button-bg, #333)` : `1px solid color-mix(in srgb, var(--layout-button-text, #fff) 25%, transparent)`,
-                      boxShadow: `0 4px 15px color-mix(in srgb, var(--layout-button-bg, #333) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.15)`,
+                      backdropFilter: "blur(24px) saturate(1.6)",
+                      WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                      border: isDragOver ? `2px solid var(--layout-button-bg, #333)` : `1px solid color-mix(in srgb, var(--layout-button-text, #fff) 20%, transparent)`,
+                      boxShadow: `0 6px 20px color-mix(in srgb, var(--layout-button-bg, #333) 40%, transparent), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.1)`,
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.boxShadow = `0 8px 25px color-mix(in srgb, var(--layout-button-bg, #333) 50%, transparent), inset 0 1px 0 rgba(255,255,255,0.2)`;
+                      e.currentTarget.style.boxShadow = `0 10px 30px color-mix(in srgb, var(--layout-button-bg, #333) 55%, transparent), inset 0 1px 0 rgba(255,255,255,0.25)`;
                       e.currentTarget.style.background = `linear-gradient(135deg, var(--layout-button-bg, #333), color-mix(in srgb, var(--layout-button-bg, #333) 80%, white))`;
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.background = isDragOver
                         ? `linear-gradient(145deg, var(--layout-button-bg, #333), var(--layout-accent-color, #444))`
                         : `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))`;
-                      e.currentTarget.style.boxShadow = `0 4px 15px color-mix(in srgb, var(--layout-button-bg, #333) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.15)`;
+                      e.currentTarget.style.boxShadow = `0 6px 20px color-mix(in srgb, var(--layout-button-bg, #333) 40%, transparent), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.1)`;
                     }}
                   >
-                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.15)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)" }}>
                       <Icon size={16} className="sm:hidden" style={{ color: "var(--layout-button-text, #fff)" }} /><Icon size={18} className="hidden sm:block" style={{ color: "var(--layout-button-text, #fff)" }} />
                     </div>
                     <span className="text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5" style={{ color: "var(--layout-button-text, #fff)" }}>{item.linkLabel}</span>
@@ -510,9 +510,12 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   key={item.id}
                   className={`relative group rounded-2xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
-                    background: "var(--layout-widget-bg)",
-                    border: isDragOver ? "2px solid var(--layout-button-bg)" : "1px solid color-mix(in srgb, var(--layout-border-color) 30%, transparent)",
-                    boxShadow: "0 4px 20px color-mix(in srgb, var(--layout-border-color) 25%, transparent)",
+                    background: "color-mix(in srgb, var(--layout-widget-bg) 70%, transparent)",
+                    backdropFilter: "blur(32px) saturate(1.6)",
+                    WebkitBackdropFilter: "blur(32px) saturate(1.6)",
+                    border: isDragOver ? "2px solid var(--layout-button-bg)" : "1px solid color-mix(in srgb, var(--layout-border-color) 20%, transparent)",
+                    boxShadow: "0 8px 32px color-mix(in srgb, var(--layout-border-color) 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.08)",
+                    borderRadius: "20px",
                     minHeight: item.widgetType === "agenda" ? "200px" : "150px",
                     maxHeight: item.widgetType === "agenda" ? "240px" : "none",
                     overflow: item.widgetType === "player" ? "visible" : "hidden",
