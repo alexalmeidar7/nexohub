@@ -2809,8 +2809,8 @@ export default function PlayerPage() {
 
           {/* Program Info */}
           <div className="hidden sm:block px-5 min-w-0" style={{ flex: "0 1 450px" }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>No Ar:</span>
-            <MarqueeText className="text-white text-lg font-bold leading-tight" text={channelLabel} />
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>No Ar:</span>
+            <MarqueeText className="text-lg font-bold leading-tight" style={{ color: "var(--player-watch-bottombar-text, #ffffff)" }} text={channelLabel} />
             {programLabel && (
               <MarqueeText className="text-white/60 text-sm leading-tight" text={programLabel} />
             )}
