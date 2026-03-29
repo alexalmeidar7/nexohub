@@ -2097,9 +2097,10 @@ export default function PlayerPage() {
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
 
-      {/* Dynamic background: program thumb with accent tint > gradient */}
+      {/* Dynamic background: program thumb with accent tint > gradient, positioned below top bar */}
       {(() => {
         const bgThumb = currentProg?.thumb || currentProg?.capa;
+        const topOffset = (!isCatalog && !isYoutube && playing) ? "56px" : "0px";
         if (bgThumb) {
           return (
             <>
@@ -2107,13 +2108,13 @@ export default function PlayerPage() {
                 key={bgThumb}
                 src={bgThumb}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
-                style={{ opacity: 0.95, zIndex: 0 }}
+                className="absolute left-0 right-0 bottom-0 w-full object-cover pointer-events-none transition-opacity duration-1000"
+                style={{ opacity: 0.95, zIndex: 0, top: topOffset }}
               />
               {/* Accent color tint overlay */}
               <div
-                className="absolute inset-0 pointer-events-none"
-                style={{ background: "hsla(var(--player-accent) / 0.25)", zIndex: 0, mixBlendMode: "multiply" }}
+                className="absolute left-0 right-0 bottom-0 pointer-events-none"
+                style={{ background: "hsla(var(--player-accent) / 0.25)", zIndex: 0, mixBlendMode: "multiply", top: topOffset }}
               />
             </>
           );
