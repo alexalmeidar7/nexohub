@@ -1,0 +1,500 @@
+import { useState, useEffect, useRef } from "react";
+import { Palette, Save, RotateCcw, Loader2, Monitor, Play, Home, Tv, Film, LogIn } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+
+/* ── Player Color Schema ── */
+export interface PlayerColors {
+  // Loading Screen
+  loadingBg: string;
+  loadingSpinner: string;
+  loadingText: string;
+  // Login/Access Screen
+  loginBg: string;
+  loginCardBg: string;
+  loginButtonBg: string;
+  loginButtonText: string;
+  loginText: string;
+  loginSubtext: string;
+  // Home Screen
+  homeBg: string;
+  homeText: string;
+  homeAccent: string;
+  homeSectionTitle: string;
+  homeCardBg: string;
+  homeCardText: string;
+  homeCardBorder: string;
+  homeBannerOverlay: string;
+  // Live Channels
+  liveBg: string;
+  liveCardBg: string;
+  liveCardText: string;
+  liveCardBorder: string;
+  liveAccent: string;
+  liveBadgeBg: string;
+  liveBadgeText: string;
+  liveControlBg: string;
+  liveControlText: string;
+  liveControlIcon: string;
+  // Catalog / On Demand
+  catalogBg: string;
+  catalogText: string;
+  catalogCardBg: string;
+  catalogCardText: string;
+  catalogAccent: string;
+  catalogBadgeBg: string;
+  catalogBadgeText: string;
+  catalogPlayBg: string;
+  catalogPlayText: string;
+}
+
+export const defaultPlayerColors: PlayerColors = {
+  loadingBg: "#000000",
+  loadingSpinner: "#dc2626",
+  loadingText: "#ffffff",
+  loginBg: "#0a0a0a",
+  loginCardBg: "#1a1a1a",
+  loginButtonBg: "#dc2626",
+  loginButtonText: "#ffffff",
+  loginText: "#ffffff",
+  loginSubtext: "#999999",
+  homeBg: "#0a0a0a",
+  homeText: "#ffffff",
+  homeAccent: "#dc2626",
+  homeSectionTitle: "#ffffff",
+  homeCardBg: "#1a1a1a",
+  homeCardText: "#ffffff",
+  homeCardBorder: "#333333",
+  homeBannerOverlay: "#000000",
+  liveBg: "#000000",
+  liveCardBg: "#1a1a1a",
+  liveCardText: "#ffffff",
+  liveCardBorder: "#333333",
+  liveAccent: "#dc2626",
+  liveBadgeBg: "#dc2626",
+  liveBadgeText: "#ffffff",
+  liveControlBg: "#0a0a0a",
+  liveControlText: "#ffffff",
+  liveControlIcon: "#999999",
+  catalogBg: "#0a0a0a",
+  catalogText: "#ffffff",
+  catalogCardBg: "#1a1a1a",
+  catalogCardText: "#ffffff",
+  catalogAccent: "#dc2626",
+  catalogBadgeBg: "#dc2626",
+  catalogBadgeText: "#ffffff",
+  catalogPlayBg: "#dc2626",
+  catalogPlayText: "#ffffff",
+};
+
+type ScreenTab = "loading" | "login" | "home" | "live" | "catalog";
+
+const screenTabs: { key: ScreenTab; label: string; icon: React.ReactNode }[] = [
+  { key: "loading", label: "Loading", icon: <Loader2 size={14} /> },
+  { key: "login", label: "Login", icon: <LogIn size={14} /> },
+  { key: "home", label: "Home", icon: <Home size={14} /> },
+  { key: "live", label: "Ao Vivo", icon: <Tv size={14} /> },
+  { key: "catalog", label: "Catálogo", icon: <Film size={14} /> },
+];
+
+const screenColorKeys: Record<ScreenTab, { key: keyof PlayerColors; label: string }[]> = {
+  loading: [
+    { key: "loadingBg", label: "Fundo" },
+    { key: "loadingSpinner", label: "Spinner" },
+    { key: "loadingText", label: "Texto" },
+  ],
+  login: [
+    { key: "loginBg", label: "Fundo" },
+    { key: "loginCardBg", label: "Card" },
+    { key: "loginButtonBg", label: "Botão" },
+    { key: "loginButtonText", label: "Texto do Botão" },
+    { key: "loginText", label: "Texto" },
+    { key: "loginSubtext", label: "Subtexto" },
+  ],
+  home: [
+    { key: "homeBg", label: "Fundo" },
+    { key: "homeText", label: "Texto" },
+    { key: "homeAccent", label: "Destaque" },
+    { key: "homeSectionTitle", label: "Título Seção" },
+    { key: "homeCardBg", label: "Card" },
+    { key: "homeCardText", label: "Texto Card" },
+    { key: "homeCardBorder", label: "Borda Card" },
+    { key: "homeBannerOverlay", label: "Overlay Banner" },
+  ],
+  live: [
+    { key: "liveBg", label: "Fundo" },
+    { key: "liveCardBg", label: "Card" },
+    { key: "liveCardText", label: "Texto Card" },
+    { key: "liveCardBorder", label: "Borda Card" },
+    { key: "liveAccent", label: "Destaque" },
+    { key: "liveBadgeBg", label: "Badge" },
+    { key: "liveBadgeText", label: "Texto Badge" },
+    { key: "liveControlBg", label: "Controles" },
+    { key: "liveControlText", label: "Texto Controles" },
+    { key: "liveControlIcon", label: "Ícones" },
+  ],
+  catalog: [
+    { key: "catalogBg", label: "Fundo" },
+    { key: "catalogText", label: "Texto" },
+    { key: "catalogCardBg", label: "Card" },
+    { key: "catalogCardText", label: "Texto Card" },
+    { key: "catalogAccent", label: "Destaque" },
+    { key: "catalogBadgeBg", label: "Badge" },
+    { key: "catalogBadgeText", label: "Texto Badge" },
+    { key: "catalogPlayBg", label: "Botão Play" },
+    { key: "catalogPlayText", label: "Texto Play" },
+  ],
+};
+
+/* ── Color Input ── */
+function PColorInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-8 h-8 rounded-lg cursor-pointer border-none p-0 shrink-0"
+        style={{ WebkitAppearance: "none", background: "none" }}
+      />
+      <div className="flex-1 min-w-0">
+        <span className="text-[10px] font-semibold block truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{label}</span>
+        <span className="text-[9px] font-mono block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{value}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Mockup Components ── */
+function MockupFrame({ children, label }: { children: React.ReactNode; label: string }) {
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
+      <div className="px-3 py-1.5 flex items-center justify-between" style={{ background: "#1a1a1a" }}>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#ff5f57" }} />
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#febc2e" }} />
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#28c840" }} />
+        </div>
+        <span className="text-[8px] font-bold text-white/40 uppercase tracking-wider">{label}</span>
+        <div className="w-12" />
+      </div>
+      <div className="aspect-video relative overflow-hidden">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function LoadingMockup({ c }: { c: PlayerColors }) {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={{ backgroundColor: c.loadingBg }}>
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: c.loadingSpinner + "22" }}>
+        <div className="w-8 h-8 rounded-full border-3 animate-spin" style={{ borderColor: c.loadingSpinner + "33", borderTopColor: c.loadingSpinner }} />
+      </div>
+      <span className="text-[10px] font-medium" style={{ color: c.loadingText, opacity: 0.7 }}>Carregando player...</span>
+    </div>
+  );
+}
+
+function LoginMockup({ c }: { c: PlayerColors }) {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: c.loginBg }}>
+      <div className="w-[60%] max-w-[200px] rounded-2xl p-4 space-y-3" style={{ backgroundColor: c.loginCardBg, border: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="w-10 h-10 mx-auto rounded-xl" style={{ background: `linear-gradient(135deg, ${c.loginButtonBg}, ${c.loginButtonBg}88)` }} />
+        <p className="text-center text-[10px] font-bold" style={{ color: c.loginText }}>Bem-vindo</p>
+        <p className="text-center text-[8px]" style={{ color: c.loginSubtext }}>Faça login para continuar</p>
+        <div className="h-5 rounded-lg" style={{ backgroundColor: c.loginBg, border: "1px solid rgba(255,255,255,0.1)" }} />
+        <div className="h-5 rounded-lg" style={{ backgroundColor: c.loginBg, border: "1px solid rgba(255,255,255,0.1)" }} />
+        <button className="w-full py-1.5 text-[9px] font-bold rounded-lg" style={{ backgroundColor: c.loginButtonBg, color: c.loginButtonText }}>
+          Entrar
+        </button>
+        <p className="text-center text-[8px]" style={{ color: c.loginSubtext }}>ou entre como visitante</p>
+      </div>
+    </div>
+  );
+}
+
+function HomeMockup({ c }: { c: PlayerColors }) {
+  return (
+    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: c.homeBg }}>
+      {/* Sidebar indicator */}
+      <div className="absolute left-0 top-0 bottom-0 w-[30px] flex flex-col items-center justify-center gap-2 z-10" style={{ backgroundColor: c.homeBg + "ee" }}>
+        {[Home, Tv, Film].map((Icon, i) => (
+          <div key={i} className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: i === 0 ? c.homeAccent + "33" : "transparent" }}>
+            <Icon size={8} style={{ color: i === 0 ? c.homeAccent : c.homeCardText + "66" }} />
+          </div>
+        ))}
+      </div>
+      {/* Hero */}
+      <div className="ml-[30px] h-[45%] relative" style={{ background: `linear-gradient(to right, ${c.homeBannerOverlay}dd, transparent)` }}>
+        <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${c.homeAccent}22, ${c.homeBg})` }} />
+        <div className="absolute bottom-2 left-3 z-10">
+          <span className="text-[7px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: c.homeAccent, color: "#fff" }}>AO VIVO</span>
+          <p className="text-[9px] font-bold mt-1" style={{ color: c.homeText }}>Programa da Manhã</p>
+          <p className="text-[7px]" style={{ color: c.homeText, opacity: 0.5 }}>06:00 - 09:00</p>
+        </div>
+      </div>
+      {/* Section */}
+      <div className="ml-[30px] flex-1 px-3 py-2">
+        <p className="text-[8px] font-bold mb-1.5" style={{ color: c.homeSectionTitle }}>Em Alta</p>
+        <div className="flex gap-1.5">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="flex-1 rounded-lg overflow-hidden" style={{ backgroundColor: c.homeCardBg, border: `1px solid ${c.homeCardBorder}` }}>
+              <div className="h-6" style={{ background: `linear-gradient(135deg, ${c.homeAccent}15, ${c.homeCardBg})` }} />
+              <div className="p-1">
+                <div className="h-1.5 w-8 rounded-sm" style={{ backgroundColor: c.homeCardText + "33" }} />
+                <div className="h-1 w-5 mt-0.5 rounded-sm" style={{ backgroundColor: c.homeCardText + "1a" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LiveMockup({ c }: { c: PlayerColors }) {
+  return (
+    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: c.liveBg }}>
+      {/* Video area */}
+      <div className="flex-1 relative" style={{ background: `linear-gradient(180deg, ${c.liveBg}, ${c.liveAccent}11)` }}>
+        <div className="absolute top-2 left-2">
+          <span className="text-[7px] font-bold px-1.5 py-0.5 rounded animate-pulse" style={{ backgroundColor: c.liveBadgeBg, color: c.liveBadgeText }}>● AO VIVO</span>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: c.liveAccent + "33", border: `2px solid ${c.liveAccent}` }}>
+            <Play size={12} fill={c.liveAccent} style={{ color: c.liveAccent }} />
+          </div>
+        </div>
+      </div>
+      {/* Control bar */}
+      <div className="h-[28%] flex items-center gap-2 px-3" style={{ backgroundColor: c.liveControlBg, borderTop: `1px solid ${c.liveCardBorder}` }}>
+        <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: c.liveCardBg, border: `1px solid ${c.liveCardBorder}` }} />
+        <div className="flex-1 min-w-0">
+          <p className="text-[8px] font-bold truncate" style={{ color: c.liveControlText }}>Manhã Show</p>
+          <p className="text-[7px]" style={{ color: c.liveControlIcon }}>06:00 - 09:00</p>
+          <div className="h-1 mt-1 rounded-full overflow-hidden" style={{ backgroundColor: c.liveCardBorder }}>
+            <div className="h-full w-[40%] rounded-full" style={{ backgroundColor: c.liveAccent }} />
+          </div>
+        </div>
+        <div className="flex gap-1">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: c.liveCardBg }}>
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.liveControlIcon }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CatalogMockup({ c }: { c: PlayerColors }) {
+  return (
+    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: c.catalogBg }}>
+      {/* Hero */}
+      <div className="h-[40%] relative" style={{ background: `linear-gradient(135deg, ${c.catalogAccent}22, ${c.catalogBg})` }}>
+        <div className="absolute bottom-2 left-3">
+          <span className="text-[7px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: c.catalogBadgeBg, color: c.catalogBadgeText }}>ON DEMAND</span>
+          <p className="text-[9px] font-bold mt-1" style={{ color: c.catalogText }}>Programa Especial</p>
+          <p className="text-[7px]" style={{ color: c.catalogText, opacity: 0.5 }}>4 episódios disponíveis</p>
+          <button className="mt-1 px-3 py-1 text-[7px] font-bold rounded-full" style={{ backgroundColor: c.catalogPlayBg, color: c.catalogPlayText }}>
+            ▶ Assistir
+          </button>
+        </div>
+      </div>
+      {/* Playlist */}
+      <div className="flex-1 px-3 py-2">
+        <p className="text-[8px] font-bold mb-1.5" style={{ color: c.catalogText }}>Últimos Programas</p>
+        <div className="flex gap-1.5 overflow-hidden">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="flex-shrink-0 w-[30%] rounded-lg overflow-hidden" style={{ backgroundColor: c.catalogCardBg, border: `1px solid ${c.catalogAccent}22` }}>
+              <div className="h-7 relative" style={{ background: `linear-gradient(135deg, ${c.catalogAccent}10, ${c.catalogCardBg})` }}>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-3 h-3 rounded-full flex items-center justify-center" style={{ backgroundColor: c.catalogPlayBg + "66" }}>
+                    <Play size={5} style={{ color: c.catalogPlayText }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-1">
+                <div className="h-1.5 w-8 rounded-sm" style={{ backgroundColor: c.catalogCardText + "33" }} />
+                <div className="h-1 w-5 mt-0.5 rounded-sm" style={{ backgroundColor: c.catalogCardText + "1a" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main Component ── */
+export default function PlayerLayoutCustomizer() {
+  const { user } = useAuth();
+  const [colors, setColors] = useState<PlayerColors>(defaultPlayerColors);
+  const [saving, setSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [activeTab, setActiveTab] = useState<ScreenTab>("loading");
+  const originalRef = useRef<PlayerColors>(defaultPlayerColors);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from("user_settings")
+        .select("dashboard_items")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!active) return;
+      if (data?.dashboard_items && typeof data.dashboard_items === "object" && (data.dashboard_items as any).player_colors) {
+        const loaded = { ...defaultPlayerColors, ...(data.dashboard_items as any).player_colors };
+        setColors(loaded);
+        originalRef.current = loaded;
+      }
+    })();
+    return () => { active = false; };
+  }, [user]);
+
+  const updateColor = (key: keyof PlayerColors, value: string) => {
+    setColors(prev => ({ ...prev, [key]: value }));
+    setHasChanges(true);
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const { data: existing } = await supabase
+        .from("user_settings")
+        .select("dashboard_items")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const current = (existing?.dashboard_items && typeof existing.dashboard_items === "object") ? { ...(existing.dashboard_items as any) } : {};
+      const payload = { ...current, player_colors: colors };
+
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert([{ user_id: user.id, dashboard_items: payload as any, updated_at: new Date().toISOString() }], { onConflict: "user_id" });
+
+      if (error) throw error;
+      toast.success("Cores do Player salvas com sucesso!");
+      originalRef.current = colors;
+      setHasChanges(false);
+      window.dispatchEvent(new Event("player-colors-updated"));
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao salvar cores do Player.");
+    }
+    setSaving(false);
+  };
+
+  const resetColors = async () => {
+    setColors(defaultPlayerColors);
+    if (!user) return;
+    setSaving(true);
+    try {
+      const { data: existing } = await supabase
+        .from("user_settings")
+        .select("dashboard_items")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const current = (existing?.dashboard_items && typeof existing.dashboard_items === "object") ? { ...(existing.dashboard_items as any) } : {};
+      const payload = { ...current, player_colors: defaultPlayerColors };
+      await supabase.from("user_settings").upsert([{ user_id: user.id, dashboard_items: payload as any, updated_at: new Date().toISOString() }], { onConflict: "user_id" });
+      toast.success("Cores do Player restauradas ao padrão.");
+      originalRef.current = defaultPlayerColors;
+      setHasChanges(false);
+      window.dispatchEvent(new Event("player-colors-updated"));
+    } catch { toast.error("Erro ao restaurar cores."); }
+    setSaving(false);
+  };
+
+  const mockupMap: Record<ScreenTab, React.ReactNode> = {
+    loading: <LoadingMockup c={colors} />,
+    login: <LoginMockup c={colors} />,
+    home: <HomeMockup c={colors} />,
+    live: <LiveMockup c={colors} />,
+    catalog: <CatalogMockup c={colors} />,
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Screen tabs */}
+      <div className="flex flex-wrap gap-1.5">
+        {screenTabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-[11px] font-bold rounded-xl transition-all"
+            style={{
+              backgroundColor: activeTab === tab.key ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)",
+              color: activeTab === tab.key ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)",
+              boxShadow: activeTab === tab.key ? "0 4px 12px color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 25%, transparent)" : "none",
+            }}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Mockup + Color pickers layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Mockup preview */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Monitor size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
+            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+              Pré-visualização
+            </span>
+          </div>
+          <MockupFrame label={screenTabs.find(t => t.key === activeTab)?.label || ""}>
+            {mockupMap[activeTab]}
+          </MockupFrame>
+        </div>
+
+        {/* Color pickers */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Palette size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
+            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+              Cores — {screenTabs.find(t => t.key === activeTab)?.label}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {screenColorKeys[activeTab].map(({ key, label }) => (
+              <PColorInput key={key} label={label} value={colors[key]} onChange={(v) => updateColor(key, v)} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-between pt-2">
+        <button
+          onClick={resetColors}
+          className="px-5 py-2.5 text-xs font-bold flex items-center gap-2 rounded-xl transition-all"
+          style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
+        >
+          <RotateCcw size={13} /> Restaurar Padrão
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saving || !hasChanges}
+          className="px-8 py-2.5 text-sm font-bold flex items-center gap-2 rounded-xl transition-all disabled:opacity-40"
+          style={{
+            background: hasChanges ? "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)",
+            color: "#ffffff",
+            boxShadow: hasChanges ? "0 4px 16px color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 30%, transparent)" : "none",
+          }}
+        >
+          {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+          {saving ? "Salvando..." : "Salvar Alterações"}
+        </button>
+      </div>
+    </div>
+  );
+}
