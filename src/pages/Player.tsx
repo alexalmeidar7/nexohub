@@ -2646,6 +2646,7 @@ export default function PlayerPage() {
 
             {/* Row 2: Full-width music slider + times */}
             {(() => {
+              void musicTick; // force re-render on tick
               let musicElapsed = 0;
               let musicTotal = musicData?.duracao || 0;
               if (musicData?.horario && musicTotal > 0) {
