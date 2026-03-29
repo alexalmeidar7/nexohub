@@ -2097,21 +2097,9 @@ export default function PlayerPage() {
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
 
-      {/* Dynamic background: music cover (blurred) > program thumb (no blur) > gradient */}
+      {/* Dynamic background: program thumb (no blur) > gradient */}
       {(() => {
-        const bgCover = musicData?.capa;
         const bgThumb = currentProg?.thumb || currentProg?.capa;
-        if (bgCover) {
-          return (
-            <img
-              key={bgCover}
-              src={bgCover}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
-              style={{ opacity: 0.8, filter: "blur(40px)", zIndex: 0 }}
-            />
-          );
-        }
         if (bgThumb) {
           return (
             <img
