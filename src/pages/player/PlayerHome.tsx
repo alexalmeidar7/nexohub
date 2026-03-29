@@ -824,19 +824,19 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
       style={{
         width: "160px",
         aspectRatio: "2/3",
-        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "hsl(var(--player-accent))";
-        e.currentTarget.style.borderWidth = "2px";
-        e.currentTarget.style.boxShadow = "0 0 12px 2px hsla(var(--player-accent) / 0.5)";
+        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.5)";
+        e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-        e.currentTarget.style.borderWidth = "1px";
-        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
       }}
     >
       {image ? (
