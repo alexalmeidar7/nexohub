@@ -124,7 +124,12 @@ export default function KaraokeOverlay({
   const [error, setError] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [exitAnim, setExitAnim] = useState(false);
-  const [speedOffset, setSpeedOffset] = useState(-25);
+  const [speedOffset, setSpeedOffset] = useState(() => {
+    const saved = localStorage.getItem(SPEED_OFFSET_KEY);
+    const parsed = saved ? parseFloat(saved) : NaN;
+    if (Number.isFinite(parsed)) return Math.max(-30, Math.min(30, parsed));
+    return -25;
+  });
   const [syncMode, setSyncMode] = useState(false);
   const [fontSize, setFontSize] = useState(() => {
     const saved = localStorage.getItem(FONT_SIZE_KEY);
@@ -134,6 +139,7 @@ export default function KaraokeOverlay({
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const animRef = useRef<number>(0);
   const lastFetchRef = useRef("");
+  const lastElapsedRef = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Persist speed offset & font size
@@ -164,6 +170,7 @@ export default function KaraokeOverlay({
     setLoading(true);
     setShowConfetti(false);
     setSyncMode(false);
+    lastElapsedRef.current = null;
 
     supabase.functions.invoke("fetch-lyrics", {
       body: { artist, title, duration: duration ? Math.round(duration) : undefined },
@@ -193,26 +200,69 @@ export default function KaraokeOverlay({
     if (!visible || lines.length === 0) return;
 
     const tick = () => {
+      const expectedMaxTime = duration && duration > 0
+        ? duration
+        : (lines[lines.length - 1]?.time ?? 0) + 8;
+
+      const isPlausible = (value: number | null) => (
+        value !== null
+        && Number.isFinite(value)
+        && value >= -20
+        && value <= expectedMaxTime + 20
+      );
+
       const startStr = localStorage.getItem(MUSIC_START_KEY);
-      if (startStr) {
-        const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 + 3 + speedOffset;
+      const storageElapsed = startStr
+        ? ((Date.now() - parseInt(startStr, 10)) / 1000 + 3 + speedOffset)
+        : null;
 
-        let idx = -1;
-        for (let i = lines.length - 1; i >= 0; i--) {
-          if (elapsed >= lines[i].time) {
-            idx = i;
-            break;
-          }
-        }
-        setCurrentLineIdx(idx);
+      const mediaElapsed = audioElement && Number.isFinite(audioElement.currentTime)
+        ? audioElement.currentTime + speedOffset
+        : null;
 
-        if (idx >= 0) {
-          const lineStart = lines[idx].time;
-          const lineEnd = idx + 1 < lines.length ? lines[idx + 1].time : lineStart + 4;
-          const p = Math.min(1, Math.max(0, (elapsed - lineStart) / (lineEnd - lineStart)));
-          setProgress(p);
+      const storageOk = isPlausible(storageElapsed);
+      const mediaOk = isPlausible(mediaElapsed);
+
+      let elapsed: number | null = null;
+
+      if (storageOk) elapsed = storageElapsed;
+      else if (mediaOk) elapsed = mediaElapsed;
+
+      // Keep continuity if both are valid but one suddenly jumps.
+      if (storageOk && mediaOk && lastElapsedRef.current !== null) {
+        const distanceToStorage = Math.abs(storageElapsed - lastElapsedRef.current);
+        const distanceToMedia = Math.abs(mediaElapsed - lastElapsedRef.current);
+        if (distanceToMedia + 0.35 < distanceToStorage) {
+          elapsed = mediaElapsed;
         }
       }
+
+      if (elapsed === null) {
+        animRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      lastElapsedRef.current = elapsed;
+
+      let idx = -1;
+      for (let i = lines.length - 1; i >= 0; i--) {
+        if (elapsed >= lines[i].time) {
+          idx = i;
+          break;
+        }
+      }
+
+      setCurrentLineIdx(idx);
+
+      if (idx >= 0) {
+        const lineStart = lines[idx].time;
+        const lineEnd = idx + 1 < lines.length ? lines[idx + 1].time : lineStart + 4;
+        const p = Math.min(1, Math.max(0, (elapsed - lineStart) / (lineEnd - lineStart)));
+        setProgress(p);
+      } else {
+        setProgress(0);
+      }
+
       animRef.current = requestAnimationFrame(tick);
     };
     animRef.current = requestAnimationFrame(tick);
