@@ -64,15 +64,6 @@ export default function PlayerHub() {
     setSplashDone(true);
   }, []);
 
-  useEffect(() => {
-    if (!splashDone || loading) return;
-    if (user) {
-      setStep("welcome");
-    } else {
-      setStep("access");
-    }
-  }, [splashDone, loading, user]);
-
   const transitionTo = useCallback((target: Step) => {
     setFadeOut(true);
     setPendingStep(target);
@@ -82,6 +73,12 @@ export default function PlayerHub() {
       setPendingStep(null);
     }, 500);
   }, []);
+
+  useEffect(() => {
+    if (!splashDone || loading) return;
+    const target: Step = user ? "welcome" : "access";
+    transitionTo(target);
+  }, [splashDone, loading, user, transitionTo]);
 
   const onLoginSuccess = useCallback(() => {
     transitionTo("welcome");
@@ -98,7 +95,11 @@ export default function PlayerHub() {
   const wrapperClass = `transition-opacity duration-500 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`;
 
   if (step === "splash") {
-    return <SplashScreen logoUrl={logoUrl} channelName={channelName} onFinish={onSplashFinish} />;
+    return (
+      <div className={wrapperClass}>
+        <SplashScreen logoUrl={logoUrl} channelName={channelName} onFinish={onSplashFinish} />
+      </div>
+    );
   }
 
   if (step === "access") {
