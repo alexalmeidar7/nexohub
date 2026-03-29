@@ -2422,8 +2422,8 @@ export default function PlayerPage() {
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
         <div
           className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3 transition-all duration-500 ease-in-out backdrop-blur-2xl"
-          style={{
-            background: "linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.45) 100%)",
+           style={{
+            background: `linear-gradient(180deg, var(--player-watch-topbar-bg, rgba(0,0,0,0.7)) 0%, color-mix(in srgb, var(--player-watch-topbar-bg, rgba(0,0,0,0.7)) 65%, transparent) 100%)`,
             borderBottom: "1px solid rgba(255,255,255,0.06)",
             opacity: topBarVisible ? 1 : 0,
             pointerEvents: topBarVisible ? "auto" : "none",
