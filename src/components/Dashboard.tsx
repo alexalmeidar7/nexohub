@@ -797,16 +797,17 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
          <div
           key={widget.id}
           className={`dashboard-widget-card rounded-2xl p-3 lg:p-4 flex-shrink-0 overflow-hidden relative ${
-            draggedId === widget.id ? "opacity-50 scale-95" : ""
+             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2" : ""}`}
            style={{
              background: widget.bg === "glass-dark"
-               ? "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 60%, transparent)"
-               : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 20%, transparent)",
-             backdropFilter: "blur(24px) saturate(1.4)",
-             WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-             boxShadow: "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
-             border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
+               ? "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 55%, transparent)"
+               : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 18%, transparent)",
+             backdropFilter: "blur(32px) saturate(1.6)",
+             WebkitBackdropFilter: "blur(32px) saturate(1.6)",
+             boxShadow: "0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.1)",
+             border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)",
+             borderRadius: "20px",
            }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
