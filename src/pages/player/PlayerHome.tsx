@@ -361,10 +361,34 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
   const hlsRef = useRef<any>(null);
   const isVideo = channel.type === "video" || channel.type === "video_live";
   const [videoReady, setVideoReady] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  // Animated text keys
+  const progKey = currentProgram?.nome || "--";
+  const musicKey = nowPlaying?.musica || "--";
+  const artistKey = nowPlaying?.artista || "--";
+
+  // Program progress
+  useEffect(() => {
+    if (!currentProgram) { setProgress(0); return; }
+    const calc = () => {
+      const now = new Date();
+      const [sh, sm] = currentProgram.horario_inicio.split(":").map(Number);
+      const [eh, em] = currentProgram.horario_fim.split(":").map(Number);
+      const startMin = sh * 60 + sm;
+      const endMin = eh * 60 + em;
+      const curMin = now.getHours() * 60 + now.getMinutes();
+      const total = endMin - startMin;
+      if (total <= 0) { setProgress(0); return; }
+      setProgress(Math.min(100, Math.max(0, ((curMin - startMin) / total) * 100)));
+    };
+    calc();
+    const iv = setInterval(calc, 30000);
+    return () => clearInterval(iv);
+  }, [currentProgram]);
 
   useEffect(() => {
     if (!hovered || !isVideo || !channel.url) {
-      // Cleanup when not hovered
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
       setVideoReady(false);
@@ -478,17 +502,47 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 
       {/* Gradient + info overlay */}
       <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
-      <div className="absolute bottom-0 left-0 right-0 p-3.5 z-[4] text-left pointer-events-none">
-        <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{channel.name}</p>
-        {currentProgram && (
-          <p className="text-[10px] text-white/50 mt-1 font-medium truncate">{currentProgram.nome}</p>
-        )}
-        {nowPlaying?.musica && (
-          <div className="flex items-center gap-1 mt-1.5">
-            <Music className="h-3 w-3 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-            <p className="text-[10px] text-white/50 truncate">{nowPlaying.musica}</p>
-          </div>
-        )}
+      <div className="absolute bottom-0 left-0 right-0 z-[4] text-left pointer-events-none flex flex-col">
+        <div className="px-3.5 pb-1">
+          <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{channel.name}</p>
+          {currentProgram && (
+            <p
+              key={`prog-${progKey}`}
+              className="text-[10px] text-white/50 mt-1 font-medium truncate"
+              style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}
+            >
+              {currentProgram.nome}
+            </p>
+          )}
+          {nowPlaying?.musica && (
+            <div className="flex items-center gap-1 mt-1.5" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
+              <Music className="h-3 w-3 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
+              <div className="min-w-0 flex flex-col">
+                <p
+                  key={`artist-${artistKey}`}
+                  className="text-[10px] text-white/50 truncate lowercase"
+                  style={{ animation: "playerFadeSlideIn 0.35s ease-out" }}
+                >
+                  {nowPlaying.artista}
+                </p>
+                <p
+                  key={`music-${musicKey}`}
+                  className="text-[10px] text-white/40 truncate lowercase"
+                  style={{ animation: "playerFadeSlideIn 0.35s ease-out 0.05s both" }}
+                >
+                  {nowPlaying.musica}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+        {/* Program progress slider */}
+        <div className="w-full h-[3px] mt-1" style={{ background: "rgba(255,255,255,0.1)" }}>
+          <div
+            className="h-full transition-all duration-1000"
+            style={{ width: `${progress}%`, backgroundColor: "hsl(var(--player-accent))", borderRadius: "0 2px 2px 0" }}
+          />
+        </div>
       </div>
     </button>
   );
