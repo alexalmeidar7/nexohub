@@ -29,6 +29,8 @@ interface AudioDualCardProps {
   whatsappPhone?: string | null;
   onOpenChat?: () => void;
   userId?: string | null;
+  spectrumStyle?: SpectrumStyle;
+  onSpectrumStyleChange?: (style: SpectrumStyle) => void;
 }
 
 interface MusicaTocada {
