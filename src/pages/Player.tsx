@@ -2669,7 +2669,7 @@ export default function PlayerPage() {
                     <div className="relative">
                       <div className="w-full group cursor-pointer">
                         <div className="w-full h-[2px] rounded-full overflow-hidden group-hover:h-[4px] transition-all" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
-                          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "#ffffff" }} />
+                          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "var(--player-watch-scrubber, #ffffff)" }} />
                         </div>
                       </div>
                     </div>
