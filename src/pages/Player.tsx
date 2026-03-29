@@ -398,7 +398,19 @@ export default function PlayerPage() {
       });
   }, [user]);
 
-  // YouTube video progress tracking
+  // Load spectrum style preference from user_settings
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      const items = (data?.dashboard_items as any) || {};
+      if (items.spectrum_style) {
+        setSpectrumStyle(items.spectrum_style);
+        localStorage.setItem("nexo_spectrum_style", items.spectrum_style);
+      }
+    });
+  }, [user]);
+
+
   const [ytCurrentTime, setYtCurrentTime] = useState(0);
   const [ytDuration, setYtDuration] = useState(0);
   const gradeScrollRef = useRef<HTMLDivElement>(null);
