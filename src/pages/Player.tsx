@@ -92,6 +92,7 @@ interface Programa {
   variavel: boolean;
   data_variavel: string | null;
   capa: string | null;
+  thumb: string | null;
   descricao: string | null;
   apresentador_id: string | null;
 }
@@ -746,7 +747,7 @@ export default function PlayerPage() {
 
         // STAGE 2 — Secondary: programas + apresentadores + empresa
         const [programasRes, apresentadoresRes, empresaRes] = await Promise.all([
-          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
+          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
           supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
           supabase.from("empresa_config").select("telefone_participacao, logo").eq("user_id", userId).maybeSingle(),
         ]);
@@ -2068,6 +2069,43 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
+
+      {/* Dynamic background: music cover (blurred) > program thumb (no blur) > gradient */}
+      {(() => {
+        const bgCover = musicData?.capa;
+        const bgThumb = currentProg?.thumb || currentProg?.capa;
+        if (bgCover) {
+          return (
+            <img
+              key={bgCover}
+              src={bgCover}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
+              style={{ opacity: 0.8, filter: "blur(40px)", zIndex: 0 }}
+            />
+          );
+        }
+        if (bgThumb) {
+          return (
+            <img
+              key={bgThumb}
+              src={bgThumb}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
+              style={{ opacity: 0.95, zIndex: 0 }}
+            />
+          );
+        }
+        return (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "radial-gradient(ellipse at 50% 100%, hsla(var(--player-accent) / 0.15), transparent 70%), linear-gradient(to bottom, #0a0a0a, #000)",
+              zIndex: 0,
+            }}
+          />
+        );
+      })()}
 
       {/* Content wrapper with fade transition */}
       <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
