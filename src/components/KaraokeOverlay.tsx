@@ -168,6 +168,7 @@ export default function KaraokeOverlay({
     setCurrentLineIdx(-1);
     setError(false);
     setExitAnim(false);
+    setSongEnded(false);
     setLoading(true);
     setShowConfetti(false);
     setSyncMode(false);
