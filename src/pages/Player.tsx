@@ -2451,8 +2451,8 @@ export default function PlayerPage() {
               )}
             </div>
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-white/90 text-xl sm:text-2xl font-black tabular-nums">{canal?.numero_canal || "--"}</span>
-              <span className="text-white/80 text-base sm:text-lg font-bold truncate max-w-[180px]">{canal?.name || "Sem canal"}</span>
+              <span className="text-xl sm:text-2xl font-black tabular-nums" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))" }}>{canal?.numero_canal || "--"}</span>
+              <span className="text-base sm:text-lg font-bold truncate max-w-[180px]" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }}>{canal?.name || "Sem canal"}</span>
             </div>
           </div>
 
