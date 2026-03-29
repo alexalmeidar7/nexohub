@@ -2485,7 +2485,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Next program: "a seguir" */}
-          <div className="hidden lg:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06] overflow-hidden" style={{ flex: "0 1 220px" }}>
+          <div className="hidden lg:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06] overflow-hidden" style={{ flex: "0 0 200px", maxWidth: "220px" }}>
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>a seguir</span>
             <span key={`aseguir-${nextProg?.nome}-${channelAnimKey}`} className="text-lg font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))", animation: "playerFadeSlideIn 0.4s ease-out 0.15s both" }}>{nextProg?.nome || "—"}</span>
             <span className="text-xs" style={{ color: "color-mix(in srgb, var(--player-watch-topbar-text, #ffffff) 35%, transparent)" }}>
