@@ -117,9 +117,10 @@ export default function PlayerSidebar({
                 className="group/btn relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 focus-visible:outline-none"
                 style={{
                   background: isActive
-                    ? "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))"
+                    ? "rgba(255,255,255,0.1)"
                     : "transparent",
-                  boxShadow: isActive ? "0 2px 12px hsla(var(--player-accent) / 0.35)" : "none",
+                  boxShadow: isActive ? "inset 0 0 0 1px rgba(255,255,255,0.15)" : "none",
+                  border: isActive ? "1px solid rgba(255,255,255,0.12)" : "1px solid transparent",
                 }}
                 title={item.label}
                 aria-label={item.label}
