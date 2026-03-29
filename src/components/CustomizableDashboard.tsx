@@ -607,19 +607,20 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           <div
             className="relative rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
             style={{
-              background: "rgba(0, 0, 0, 0.95)",
-              backdropFilter: "blur(24px)",
-              border: "1px solid rgba(255,255,255,0.15)",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-            }}
+               background: "rgba(15, 15, 15, 0.75)",
+               backdropFilter: "blur(40px) saturate(1.8)",
+               WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+               border: "1px solid rgba(255,255,255,0.12)",
+               boxShadow: "0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15)",
+             }}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-base" style={{ color: "var(--layout-nav-text, #fff)" }}>
                 {addStep === "choose" ? "O que deseja adicionar?" : addStep === "link" ? "Escolha um atalho" : "Escolha um widget"}
               </h3>
-              <button onClick={() => { setShowAddDialog(false); setAddStep("choose"); }} className="hover:opacity-70" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>
-                <X size={18} />
+              <button onClick={() => { setShowAddDialog(false); setAddStep("choose"); }} className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.18)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}>
+                <X size={14} style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }} />
               </button>
             </div>
 
@@ -627,12 +628,12 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setAddStep("link")}
-                  className="flex flex-col items-center gap-3 p-5 rounded-xl transition-all"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-button-bg, #333) 40%, transparent)`; }}
+                  className="flex flex-col items-center gap-3 p-5 rounded-2xl transition-all hover:scale-[1.03]"
+                  style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
                     <Link2 size={20} style={{ color: "var(--layout-button-text, #fff)" }} />
                   </div>
                   <div className="text-center">
@@ -642,12 +643,12 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 </button>
                 <button
                   onClick={() => setAddStep("widget")}
-                  className="flex flex-col items-center gap-3 p-5 rounded-xl transition-all"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-button-bg, #333) 40%, transparent)`; }}
+                  className="flex flex-col items-center gap-3 p-5 rounded-2xl transition-all hover:scale-[1.03]"
+                  style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
                     <BarChart3 size={20} style={{ color: "var(--layout-button-text, #fff)" }} />
                   </div>
                   <div className="text-center">
@@ -670,15 +671,18 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     <button
                       key={opt.label}
                       onClick={() => addLink(opt)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all text-left"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all text-left hover:scale-[1.01]"
                       style={{
                         background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
+                        backdropFilter: "blur(12px)",
+                        WebkitBackdropFilter: "blur(12px)",
                         border: "1px solid rgba(255,255,255,0.08)",
+                        boxShadow: exists ? "none" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
                       }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; } }}
-                      onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; } }}
+                      onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
                     >
                       <Icon size={16} />
                       <span className="font-semibold">{opt.label}</span>
@@ -699,17 +703,20 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       key={opt.type}
                       onClick={() => !exists && addWidget(opt)}
                       disabled={exists}
-                      className="w-full flex items-start gap-3 px-4 py-4 rounded-xl text-sm transition-all text-left"
+                      className="w-full flex items-start gap-3 px-4 py-4 rounded-xl text-sm transition-all text-left hover:scale-[1.01]"
                       style={{
                         background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
+                        backdropFilter: "blur(12px)",
+                        WebkitBackdropFilter: "blur(12px)",
                         border: "1px solid rgba(255,255,255,0.08)",
+                        boxShadow: exists ? "none" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
                       }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; } }}
-                      onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; } }}
+                      onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
                         {opt.type === "agenda" && <CalendarDays size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
                         {opt.type === "musica" && <Music size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
                         {opt.type === "stats" && <BarChart3 size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
@@ -730,7 +737,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             {addStep !== "choose" && (
               <button
                 onClick={() => setAddStep("choose")}
-                className="mt-3 text-xs text-white/40 hover:text-white/70 transition-colors"
+                className="mt-3 px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all hover:scale-105"
+                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "rgba(255,255,255,0.8)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
               >
                 ← Voltar
               </button>
