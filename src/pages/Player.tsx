@@ -2646,7 +2646,7 @@ export default function PlayerPage() {
               {/* Center: Title/Artist + Slider */}
               <div className="flex-1 min-w-0">
                 {/* Title + Artist */}
-                <div className="flex flex-col mb-1.5">
+                <div key={`music-info-${musicAnimKey}`} className="flex flex-col mb-1.5" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
                    <span className="text-sm sm:text-base font-black italic leading-tight truncate" style={{ color: "var(--player-watch-music-text, #ffffff)" }}>
                     {musicData?.titulo && musicData.titulo !== "Sem título" ? musicData.titulo : ""}
                   </span>
