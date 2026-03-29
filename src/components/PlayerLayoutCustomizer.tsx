@@ -149,6 +149,18 @@ const screenColorKeys: Record<ScreenTab, { key: keyof PlayerColors; label: strin
 
 /* ── Color Input ── */
 function PColorInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(value);
+
+  React.useEffect(() => { setDraft(value); }, [value]);
+
+  const commit = () => {
+    setEditing(false);
+    const v = draft.trim().replace(/^#?/, "#").toLowerCase();
+    if (/^#[0-9a-f]{6}$/.test(v)) onChange(v);
+    else setDraft(value);
+  };
+
   return (
     <div className="flex items-center gap-2">
       <input
@@ -160,7 +172,24 @@ function PColorInput({ label, value, onChange }: { label: string; value: string;
       />
       <div className="flex-1 min-w-0">
         <span className="text-[10px] font-semibold block truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{label}</span>
-        <span className="text-[9px] font-mono block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{value}</span>
+        {editing ? (
+          <input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setDraft(value); setEditing(false); } }}
+            className="text-[9px] font-mono block w-full bg-transparent border-b outline-none"
+            style={{ color: "var(--layout-page-text, #1a1a1a)", borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
+          />
+        ) : (
+          <span
+            className="text-[9px] font-mono block cursor-pointer hover:underline"
+            style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}
+            onClick={() => setEditing(true)}
+            title="Clique para editar o código da cor"
+          >{value}</span>
+        )}
       </div>
     </div>
   );
