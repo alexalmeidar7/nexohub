@@ -61,7 +61,7 @@ export default function AudioSpectrum({ audioElement, barColor }: AudioSpectrumP
         const x = i * (w / bufferLength);
 
         // Main bar — resolve CSS var if needed
-        let resolvedColor = barColor || "rgba(211, 7, 7, 0.85)";
+        let resolvedColor = barColor || "var(--layout-accent-color)";
         if (resolvedColor.startsWith("var(")) {
           const match = resolvedColor.match(/var\(([^,)]+)/);
           if (match) {
@@ -69,12 +69,15 @@ export default function AudioSpectrum({ audioElement, barColor }: AudioSpectrumP
             if (computed) resolvedColor = computed;
           }
         }
-        ctx.fillStyle = `${resolvedColor}`;
+        if (!resolvedColor || resolvedColor === "") resolvedColor = "rgba(255,255,255,0.6)";
+        ctx.fillStyle = resolvedColor;
         ctx.fillRect(x, h - barHeight, barWidth, barHeight);
 
-        // Peak marker (yellow)
-        ctx.fillStyle = "rgba(255, 120, 120, 0.85)";
+        // Peak marker — same accent color, slightly brighter
+        ctx.fillStyle = resolvedColor;
+        ctx.globalAlpha = 0.95;
         ctx.fillRect(x, h - peaksRef.current[i] - 4, barWidth, 3);
+        ctx.globalAlpha = 1;
       }
     };
 
