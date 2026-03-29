@@ -215,9 +215,8 @@ function HeroBanner({
             <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse" />
             {activeSlide?.label || "ao vivo"}
           </span>
-          {channelName && (
-            <span className="flex items-center gap-2 text-white/60 text-xs">
-              {channelName}
+          {(channelIsHd || channelIsStereo) && (
+            <span className="flex items-center gap-2">
               {channelIsHd && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/60 border border-white/20" style={{ fontFamily: "monospace" }}>
                   1080P <span className="text-[7px] font-extrabold tracking-widest ml-0.5 px-1 rounded" style={{ background: "hsla(var(--player-accent) / 0.3)", color: "hsl(var(--player-accent))" }}>FULL HD</span>
@@ -270,9 +269,8 @@ function HeroBanner({
                   const rating = RATING_COLORS[cls] || RATING_COLORS["Livre"];
                   return (
                     <span
-                      className="inline-flex items-center justify-center text-[9px] font-black rounded"
+                      className="inline-flex items-center justify-center text-[9px] font-bold tracking-wide rounded border border-white/15"
                       style={{
-                        backgroundColor: rating.bg,
                         color: rating.text,
                         minWidth: "20px",
                         height: "20px",
@@ -292,17 +290,6 @@ function HeroBanner({
           </h1>
         ) : null}
 
-        {/* Now playing music */}
-        {nowPlaying?.musica && (
-          <div className="flex items-center gap-2.5 mb-4">
-            {nowPlaying.capa ? (
-              <img src={nowPlaying.capa} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 shadow-lg" />
-            ) : (
-              <Music className="h-3.5 w-3.5 text-player-accent flex-shrink-0" />
-            )}
-            <span className="text-xs text-white/70 truncate">{nowPlaying.musica} — {nowPlaying.artista}</span>
-          </div>
-        )}
 
         {/* Action buttons — Sky Glass inspired frosted glass */}
         <div className="flex items-center gap-3">
