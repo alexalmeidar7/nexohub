@@ -110,6 +110,8 @@ export interface PlayerColors {
   watchScrubber: string;
   watchMusicBg: string;
   watchMusicText: string;
+  watchMusicTitleColor: string;
+  watchMusicArtistColor: string;
   watchMusicAccent: string;
   // Catalog / On Demand
   catalogBg: string;
@@ -169,6 +171,8 @@ export const defaultPlayerColors: PlayerColors = {
   watchScrubber: "#dc2626",
   watchMusicBg: "#000000ee",
   watchMusicText: "#ffffff",
+  watchMusicTitleColor: "#ffffff",
+  watchMusicArtistColor: "#ffffffd9",
   watchMusicAccent: "#dc2626",
   catalogBg: "#0a0a0a",
   catalogText: "#ffffff",
@@ -923,6 +927,8 @@ export default function PlayerLayoutCustomizer() {
                     {([
                       { key: "watchMusicBg" as const, label: "Fundo" },
                       { key: "watchMusicText" as const, label: "Texto" },
+                      { key: "watchMusicTitleColor" as const, label: "Texto Música" },
+                      { key: "watchMusicArtistColor" as const, label: "Texto Artista" },
                       { key: "watchMusicAccent" as const, label: "Destaque" },
                     ]).map(({ key, label }) => (
                       <PColorInput key={key} label={label} value={String(colors[key])} onChange={(v) => updateColor(key, v)} />

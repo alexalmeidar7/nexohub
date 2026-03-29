@@ -2681,10 +2681,10 @@ export default function PlayerPage() {
               <div className="flex-1 min-w-0">
                 {/* Title + Artist */}
                 <div key={`music-info-${musicAnimKey}`} className="flex flex-col mb-1.5" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
-                   <span className="text-sm sm:text-base font-black italic leading-tight truncate" style={{ color: "var(--player-watch-music-text, #ffffff)" }}>
+                   <span className="text-sm sm:text-base font-black italic leading-tight truncate" style={{ color: "var(--player-watch-music-title-color, var(--player-watch-music-text, #ffffff))" }}>
                     {musicData?.titulo && musicData.titulo !== "Sem título" ? musicData.titulo : ""}
                   </span>
-                  <span className="text-xs sm:text-sm font-bold leading-tight truncate" style={{ color: "color-mix(in srgb, var(--player-watch-music-text, #ffffff) 85%, transparent)" }}>
+                  <span className="text-xs sm:text-sm font-bold leading-tight truncate" style={{ color: "var(--player-watch-music-artist-color, color-mix(in srgb, var(--player-watch-music-text, #ffffff) 85%, transparent))" }}>
                     {musicData?.artista && musicData.artista !== "Desconhecido" ? musicData.artista : ""}
                   </span>
                 </div>
