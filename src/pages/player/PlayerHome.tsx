@@ -303,16 +303,16 @@ function HeroBanner({
           </div>
         )}
 
-        {/* Action buttons */}
+        {/* Action buttons — Sky Glass inspired frosted glass */}
         <div className="flex items-center gap-3">
           <button
             onClick={onPlay}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105 backdrop-blur-2xl"
             style={{
-              background: "rgba(255,255,255,0.12)",
-              backdropFilter: "blur(20px)",
+              background: "rgba(255,255,255,0.15)",
+              border: "1px solid rgba(255,255,255,0.2)",
               color: "#fff",
-              border: "1px solid rgba(255,255,255,0.15)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.3)",
             }}
           >
             <Play className="h-4 w-4 fill-current" />
@@ -320,12 +320,12 @@ function HeroBanner({
           </button>
           <button
             onClick={onGrade}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105"
+            className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105 backdrop-blur-2xl"
             style={{
-              background: "rgba(255,255,255,0.06)",
-              backdropFilter: "blur(20px)",
-              color: "rgba(255,255,255,0.7)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "rgba(255,255,255,0.75)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
             }}
           >
             <LayoutGrid className="h-4 w-4" />
@@ -427,11 +427,13 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "rgba(255,255,255,0.04)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        background: "rgba(255,255,255,0.05)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
         transform: "none",
-        boxShadow: hovered ? "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)" : "0 2px 8px rgba(0,0,0,0.2)",
+        boxShadow: hovered
+          ? "0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px hsla(var(--player-accent) / 0.4), inset 0 1px 0 rgba(255,255,255,0.1)"
+          : "0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
         border: hovered ? "1px solid hsla(var(--player-accent) / 0.5)" : "1px solid rgba(255,255,255,0.08)",
       }}
     >
@@ -471,16 +473,16 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       {/* Live badge */}
       <span
         className="absolute top-2.5 left-2.5 z-10 text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-lg flex items-center gap-1.5"
-        style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", color: "#fff", border: "1px solid rgba(255,255,255,0.1)" }}
+        style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(16px)", color: "#fff", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
       >
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
         ao vivo
       </span>
 
-      {/* Play overlay on hover — hidden for video cards */}
+      {/* Play overlay on hover — frosted glass */}
       {!isVideo && (
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-          <div className="w-11 h-11 rounded-full backdrop-blur-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
+          <div className="w-11 h-11 rounded-xl backdrop-blur-2xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 16px rgba(0,0,0,0.3)" }}>
             <Play className="h-4 w-4 text-white fill-white" />
           </div>
         </div>
@@ -732,13 +734,13 @@ function TrendingCard({ item, idx, channels, onClick }: {
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "rgba(255,255,255,0.04)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        background: "rgba(255,255,255,0.05)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
         zIndex: hovered ? 20 : 1,
         boxShadow: hovered
-          ? "0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)"
-          : "0 2px 8px rgba(0,0,0,0.2)",
+          ? "0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px hsla(var(--player-accent) / 0.4), inset 0 1px 0 rgba(255,255,255,0.1)"
+          : "0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
         border: hovered ? "1px solid hsla(var(--player-accent) / 0.5)" : "1px solid rgba(255,255,255,0.08)",
         transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.4s ease, border 0.3s ease",
       }}
@@ -794,7 +796,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
       {/* Ranking badge */}
       <div
         className="absolute top-2.5 left-2.5 z-10 w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-black"
-        style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}
+        style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
       >
         {idx + 1}
       </div>
@@ -825,19 +827,19 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
       style={{
         width: "160px",
         aspectRatio: "2/3",
-        background: "rgba(255,255,255,0.04)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        background: "rgba(255,255,255,0.05)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
         border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.5)";
-        e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)";
+        e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px hsla(var(--player-accent) / 0.4), inset 0 1px 0 rgba(255,255,255,0.1)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+        e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)";
       }}
     >
       {image ? (
@@ -855,9 +857,9 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
         </div>
       )}
 
-      {/* Play overlay */}
+      {/* Play overlay — frosted glass */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-        <div className="w-11 h-11 rounded-full backdrop-blur-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
+        <div className="w-11 h-11 rounded-xl backdrop-blur-2xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 16px rgba(0,0,0,0.3)" }}>
           <Play className="h-4 w-4 text-white fill-white" />
         </div>
       </div>

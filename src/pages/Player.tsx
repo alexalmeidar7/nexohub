@@ -2418,59 +2418,65 @@ export default function PlayerPage() {
         />
       )}
 
-      {/* Top Header Bar — auto-hides after 2s for live channels */}
+      {/* Top Header Bar — auto-hides after 2s for live channels — Sky Glass inspired glass */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
         <div
-          className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3 transition-all duration-500 ease-in-out"
-          style={{ backgroundColor: "rgba(0,0,0,0.85)", opacity: topBarVisible ? 1 : 0, pointerEvents: topBarVisible ? "auto" : "none", transform: topBarVisible ? "translateY(0)" : "translateY(-100%)" }}
+          className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3 transition-all duration-500 ease-in-out backdrop-blur-2xl"
+          style={{
+            background: "linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.45) 100%)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            opacity: topBarVisible ? 1 : 0,
+            pointerEvents: topBarVisible ? "auto" : "none",
+            transform: topBarVisible ? "translateY(0)" : "translateY(-100%)",
+          }}
           onMouseEnter={() => { setTopBarVisible(true); if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current); }}
           onMouseLeave={resetTopBarTimer}
         >
           {/* Home + Channel nav + name */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0 pr-4 sm:pr-6 border-r border-white/10">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 pr-4 sm:pr-6 border-r border-white/[0.06]">
             <button
               onClick={handleHomeClick}
-              className="w-9 h-9 rounded-full flex items-center justify-center transition-all border border-white/10 hover:border-white/30 hover:bg-white/10 backdrop-blur-xl"
-              style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl hover:scale-105"
+              style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
               title="Voltar ao Hub"
             >
-              <Home size={15} className="text-white/70" />
+              <Home size={15} className="text-white/80" />
             </button>
             <div className="flex flex-col items-center gap-0.5">
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(-1)} className="text-white/50 hover:text-white transition-colors p-0.5"><ChevronUp size={16} /></button>
+                <button onClick={() => navigateChannel(-1)} className="text-white/40 hover:text-white/90 transition-colors p-0.5"><ChevronUp size={16} /></button>
               )}
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(1)} className="text-white/50 hover:text-white transition-colors p-0.5"><ChevronDown size={16} /></button>
+                <button onClick={() => navigateChannel(1)} className="text-white/40 hover:text-white/90 transition-colors p-0.5"><ChevronDown size={16} /></button>
               )}
             </div>
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-white text-xl sm:text-2xl font-black tabular-nums">{canal?.numero_canal || "--"}</span>
-              <span className="text-white text-base sm:text-lg font-bold truncate max-w-[180px]">{canal?.name || "Sem canal"}</span>
+              <span className="text-white/90 text-xl sm:text-2xl font-black tabular-nums">{canal?.numero_canal || "--"}</span>
+              <span className="text-white/80 text-base sm:text-lg font-bold truncate max-w-[180px]">{canal?.name || "Sem canal"}</span>
             </div>
           </div>
 
           {/* Program info: "no ar" */}
-          <div className="hidden sm:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/10" style={{ flex: "0 1 350px" }}>
+          <div className="hidden sm:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06]" style={{ flex: "0 1 350px" }}>
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>no ar</span>
-            <span className="text-white text-lg sm:text-xl font-bold leading-tight truncate">{currentProg?.nome || "—"}</span>
-            <div className="flex items-center gap-2 text-white/60 text-xs">
+            <span className="text-white/90 text-lg sm:text-xl font-bold leading-tight truncate">{currentProg?.nome || "—"}</span>
+            <div className="flex items-center gap-2 text-white/50 text-xs">
               <span className="truncate">{currentPresenter?.nome || ""}</span>
               {currentProg && (
                 <span className="shrink-0">{currentProg.horario_inicio.slice(0, 5)}/{currentProg.horario_fim.slice(0, 5)}</span>
               )}
             </div>
             {/* Program progress line */}
-            <div className="w-full h-0.5 mt-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
+            <div className="w-full h-0.5 mt-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.08)" }}>
               <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "hsl(var(--player-accent))" }} />
             </div>
           </div>
 
           {/* Next program: "a seguir" */}
-          <div className="hidden lg:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/10" style={{ flex: "0 1 220px" }}>
+          <div className="hidden lg:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06]" style={{ flex: "0 1 220px" }}>
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>a seguir</span>
-            <span className="text-white text-lg font-bold leading-tight truncate">{nextProg?.nome || "—"}</span>
-            <span className="text-white/40 text-xs">
+            <span className="text-white/90 text-lg font-bold leading-tight truncate">{nextProg?.nome || "—"}</span>
+            <span className="text-white/35 text-xs">
               {nextProg ? `${nextProg.horario_inicio.slice(0, 5)}` : "..."}
             </span>
           </div>
@@ -2481,11 +2487,11 @@ export default function PlayerPage() {
             {isAudio && (
               <button
                 onClick={() => handleSpectrumStyleChange(spectrumStyle === "bars" ? "wave" : spectrumStyle === "wave" ? "circular" : "bars")}
-                className="w-9 h-9 rounded-full flex items-center justify-center transition-all border border-white/10 hover:border-white/30 hover:bg-white/10 backdrop-blur-xl"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl hover:scale-105"
+                style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
                 title="Estilo do espectro"
               >
-                <Settings2 size={15} className="text-white/70" />
+                <Settings2 size={15} className="text-white/80" />
               </button>
             )}
 
@@ -2493,53 +2499,62 @@ export default function PlayerPage() {
             {(isAudio || isVideo) && musicData?.titulo && musicData.titulo !== "Sem título" && (
               <button
                 onClick={() => setKaraokeEnabled(!karaokeEnabled)}
-                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border backdrop-blur-xl ${karaokeEnabled ? "border-player-accent bg-player-accent/20" : "border-white/10 hover:border-white/30 hover:bg-white/10"}`}
-                style={karaokeEnabled ? {} : { backgroundColor: "rgba(255,255,255,0.08)" }}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl hover:scale-105 ${karaokeEnabled ? "" : ""}`}
+                style={karaokeEnabled
+                  ? { background: "hsla(var(--player-accent) / 0.25)", border: "1px solid hsla(var(--player-accent) / 0.5)", boxShadow: "0 0 12px hsla(var(--player-accent) / 0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }
+                  : { background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }
+                }
                 title={karaokeEnabled ? "Desativar Karaoke" : "Ativar Karaoke"}
               >
-                <MicVocal size={15} className={karaokeEnabled ? "text-player-accent" : "text-white/70"} />
+                <MicVocal size={15} className={karaokeEnabled ? "text-player-accent" : "text-white/80"} />
               </button>
             )}
 
             {/* Cast */}
             <button
               onClick={() => { if (navigator.mediaDevices && "getDisplayMedia" in navigator.mediaDevices) navigator.mediaDevices.getDisplayMedia({ video: true }).catch(() => {}); }}
-              className="hidden sm:flex w-9 h-9 rounded-full items-center justify-center transition-all border border-white/10 hover:border-white/30 hover:bg-white/10 backdrop-blur-xl"
-              style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+              className="hidden sm:flex w-9 h-9 rounded-xl items-center justify-center transition-all backdrop-blur-xl hover:scale-105"
+              style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
               title="Transmitir"
             >
-              <Cast size={15} className="text-white/70" />
+              <Cast size={15} className="text-white/80" />
             </button>
 
             {/* Shop */}
             <button
               onClick={() => setShopOpen(!shopOpen)}
-              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border backdrop-blur-xl relative ${shopOpen ? "border-player-accent bg-player-accent/20" : "border-white/10 hover:border-white/30 hover:bg-white/10"}`}
-              style={shopOpen ? {} : { backgroundColor: "rgba(255,255,255,0.08)" }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl relative hover:scale-105"
+              style={shopOpen
+                ? { background: "hsla(var(--player-accent) / 0.25)", border: "1px solid hsla(var(--player-accent) / 0.5)", boxShadow: "0 0 12px hsla(var(--player-accent) / 0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }
+                : { background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }
+              }
               title="Shopping ao Vivo"
             >
-              <ShoppingCart size={15} className={shopOpen ? "text-player-accent" : "text-white/70"} />
+              <ShoppingCart size={15} className={shopOpen ? "text-player-accent" : "text-white/80"} />
               {showShopIcon && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse bg-player-accent" />}
             </button>
 
             {/* Chat */}
             <button
               onClick={() => setChatOpen(!chatOpen)}
-              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border backdrop-blur-xl ${chatOpen ? "border-player-accent bg-player-accent/20" : "border-white/10 hover:border-white/30 hover:bg-white/10"}`}
-              style={chatOpen ? {} : { backgroundColor: "rgba(255,255,255,0.08)" }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl hover:scale-105"
+              style={chatOpen
+                ? { background: "hsla(var(--player-accent) / 0.25)", border: "1px solid hsla(var(--player-accent) / 0.5)", boxShadow: "0 0 12px hsla(var(--player-accent) / 0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }
+                : { background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }
+              }
               title="Chat ao Vivo"
             >
-              <MessageSquare size={15} className={chatOpen ? "text-player-accent" : "text-white/70"} />
+              <MessageSquare size={15} className={chatOpen ? "text-player-accent" : "text-white/80"} />
             </button>
 
             {/* Fullscreen */}
             <button
               onClick={toggleFullscreen}
-              className="w-9 h-9 rounded-full flex items-center justify-center transition-all border border-white/10 hover:border-white/30 hover:bg-white/10 backdrop-blur-xl"
-              style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl hover:scale-105"
+              style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
               title={fullscreen ? "Sair tela cheia" : "Tela cheia"}
             >
-              {fullscreen ? <Minimize size={15} className="text-white/70" /> : <Maximize size={15} className="text-white/70" />}
+              {fullscreen ? <Minimize size={15} className="text-white/80" /> : <Maximize size={15} className="text-white/80" />}
             </button>
           </div>
         </div>
@@ -2595,12 +2610,12 @@ export default function PlayerPage() {
         </div>
       </div>
 
-      {/* Bottom minimal controls — for live channels (non-catalog) */}
+      {/* Bottom minimal controls — Sky Glass inspired glass panel */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
         <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "110px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
           <div
-            className="absolute left-0 right-0 bottom-0 mx-auto px-5 sm:px-10 pb-5 pt-3 transition-all duration-400 ease-in-out"
-            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none" }}
+            className="absolute left-0 right-0 bottom-0 mx-auto px-5 sm:px-10 pb-5 pt-3 transition-all duration-400 ease-in-out backdrop-blur-2xl"
+            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none", background: "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 100%)" }}
           >
             {/* Single row: Play | Title+Artist | Slider | Like+Volume */}
             <div className="flex items-center gap-4">
@@ -2698,8 +2713,8 @@ export default function PlayerPage() {
                   <div className="relative">
                     <button
                       onClick={toggleLike}
-                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105"
-                      style={{ backgroundColor: "rgba(30,30,30,0.85)" }}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105 backdrop-blur-xl"
+                      style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
                       title={liked ? "Descurtir" : "Curtir"}
                     >
                       <Heart
@@ -2726,8 +2741,8 @@ export default function PlayerPage() {
                 <div className="relative" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
                   <button
                     onClick={toggleMuteWithOsd}
-                    className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105"
-                    style={{ backgroundColor: "rgba(30,30,30,0.85)" }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105 backdrop-blur-xl"
+                    style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
                     title={muted ? "Ativar som" : "Desativar som"}
                   >
                     {muted ? <VolumeX size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : volume < 50 ? <Volume1 size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : <Volume2 size={16} style={{ color: "rgba(255,255,255,0.8)" }} />}
