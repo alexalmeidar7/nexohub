@@ -23,7 +23,6 @@ const AVATARS = [
   "/avatars/usr-6.png",
   "/avatars/usr-7.png",
   "/avatars/usr-8.png",
-  "/avatars/usr-9.png",
 ];
 
 interface Profile {
