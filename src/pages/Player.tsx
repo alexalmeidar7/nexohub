@@ -2624,7 +2624,7 @@ export default function PlayerPage() {
                 <button
                   onClick={handlePlayCanal}
                   className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
-                  style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
+                  style={{ backgroundColor: "var(--player-watch-music-accent, hsl(var(--player-accent)))", color: "#000" }}
                   title={playing ? "Pausar" : "Reproduzir"}
                 >
                   {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
