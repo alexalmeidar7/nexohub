@@ -293,9 +293,9 @@ function LoginMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   );
 }
 
-function HomeMockup({ c }: { c: PlayerColors }) {
+function HomeMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   return (
-    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: c.homeBg }}>
+    <div className="absolute inset-0 flex flex-col" style={buildBgStyle(c.homeBg, bg)}>
       {/* Sidebar indicator */}
       <div className="absolute left-0 top-0 bottom-0 w-[30px] flex flex-col items-center justify-center gap-2 z-10" style={{ backgroundColor: c.homeBg + "ee" }}>
         {[Home, Tv, Film].map((Icon, i) => (
