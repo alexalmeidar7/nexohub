@@ -54,7 +54,10 @@ export default function PlayerSidebar({
         onMouseLeave={() => autoHide && setHovered(false)}
         className="w-[52px] flex flex-col items-center py-6 pl-2 gap-2 z-40 fixed left-0 top-0 bottom-0 transition-all duration-300 ease-in-out"
         style={{
-          background: "transparent",
+          background: "rgba(0,0,0,0.3)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          borderRight: "1px solid rgba(255,255,255,0.06)",
           transform: isShown ? "translateX(0)" : "translateX(-100%)",
           opacity: isShown ? 1 : 0,
           pointerEvents: isShown ? "auto" : "none",
