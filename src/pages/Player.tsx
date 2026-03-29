@@ -2411,13 +2411,29 @@ export default function PlayerPage() {
       {/* Floating album cover — centered on screen for audio channels only */}
       {isAudio && playing && musicData?.capa && musicData.titulo !== "Sem título" && (
         <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
-          <img
-            key={`cover-${musicAnimKey}`}
-            src={musicData.capa}
-            alt=""
-            className="w-48 h-48 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-2xl object-cover"
-            style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 80px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.15)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px", animation: "playerCoverIn 0.5s ease-out" }}
-          />
+          <div
+            key={`cover-wrap-${musicAnimKey}`}
+            className="relative rounded-3xl overflow-hidden backdrop-blur-sm"
+            style={{
+              animation: "playerCoverIn 0.5s ease-out",
+              boxShadow: "0 30px 80px rgba(0,0,0,0.6), 0 0 120px rgba(0,0,0,0.25), 0 0 40px hsl(var(--player-accent) / 0.15)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              outline: "1px solid rgba(255,255,255,0.06)",
+              outlineOffset: "4px",
+              background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)",
+              padding: "6px",
+            }}
+          >
+            <img
+              src={musicData.capa}
+              alt=""
+              className="w-56 h-56 sm:w-72 sm:h-72 lg:w-[340px] lg:h-[340px] rounded-[20px] object-cover"
+            />
+            {/* Glass reflection overlay */}
+            <div className="absolute inset-0 rounded-3xl pointer-events-none" style={{
+              background: "linear-gradient(160deg, rgba(255,255,255,0.15) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.03) 100%)",
+            }} />
+          </div>
         </div>
       )}
 
