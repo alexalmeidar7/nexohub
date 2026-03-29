@@ -32,15 +32,20 @@ export default function PlayerSidebar({
   activeKey,
   avatarUrl,
   userName = "Visitante",
+  userEmail,
+  userCity,
   showLogout,
   showSignup,
   onLogout,
   onSignup,
+  onEditProfile,
   loading,
   autoHide = false,
   visible = true,
 }: PlayerSidebarProps) {
   const [hovered, setHovered] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const isShown = autoHide ? (visible || hovered) : true;
 
