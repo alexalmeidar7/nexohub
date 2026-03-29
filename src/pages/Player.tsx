@@ -2974,7 +2974,7 @@ export default function PlayerPage() {
           <div className="sm:hidden w-full">
             {selectedVideoId ? (
               <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }} />
               </div>
             ) : null}
           </div>
