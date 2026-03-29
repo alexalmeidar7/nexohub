@@ -269,9 +269,8 @@ function HeroBanner({
                   const rating = RATING_COLORS[cls] || RATING_COLORS["Livre"];
                   return (
                     <span
-                      className="inline-flex items-center justify-center text-[9px] font-black rounded"
+                      className="inline-flex items-center justify-center text-[9px] font-bold tracking-wide rounded border border-white/15"
                       style={{
-                        backgroundColor: rating.bg,
                         color: rating.text,
                         minWidth: "20px",
                         height: "20px",
