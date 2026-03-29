@@ -997,10 +997,17 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
       <div className="mt-auto pt-3">
         <button
           onClick={() => onNavigate("agenda")}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all"
-          style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 16%, transparent)", color: "var(--layout-accent-color)" }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color) 28%, transparent)"; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color) 16%, transparent)"; }}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all hover:scale-105"
+          style={{
+            background: "rgba(255,255,255,0.08)",
+            backdropFilter: "blur(16px) saturate(1.4)",
+            WebkitBackdropFilter: "blur(16px) saturate(1.4)",
+            color: "var(--layout-accent-color)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06)",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
         >
           <Plus size={10} /> Adicionar evento
         </button>
