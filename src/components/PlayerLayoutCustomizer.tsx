@@ -927,6 +927,8 @@ export default function PlayerLayoutCustomizer() {
                     {([
                       { key: "watchMusicBg" as const, label: "Fundo" },
                       { key: "watchMusicText" as const, label: "Texto" },
+                      { key: "watchMusicTitleColor" as const, label: "Texto Música" },
+                      { key: "watchMusicArtistColor" as const, label: "Texto Artista" },
                       { key: "watchMusicAccent" as const, label: "Destaque" },
                     ]).map(({ key, label }) => (
                       <PColorInput key={key} label={label} value={String(colors[key])} onChange={(v) => updateColor(key, v)} />

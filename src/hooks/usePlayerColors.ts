@@ -151,6 +151,8 @@ export function usePlayerColors() {
     root.style.setProperty("--player-watch-scrubber", colors.watchScrubber || "#dc2626");
     root.style.setProperty("--player-watch-music-bg", colors.watchMusicBg || "#000000ee");
     root.style.setProperty("--player-watch-music-text", colors.watchMusicText || "#ffffff");
+    root.style.setProperty("--player-watch-music-title-color", colors.watchMusicTitleColor || colors.watchMusicText || "#ffffff");
+    root.style.setProperty("--player-watch-music-artist-color", colors.watchMusicArtistColor || "color-mix(in srgb, " + (colors.watchMusicText || "#ffffff") + " 85%, transparent)");
     root.style.setProperty("--player-watch-music-accent", colors.watchMusicAccent || "#dc2626");
 
     // Glow gradient from accent + bg
