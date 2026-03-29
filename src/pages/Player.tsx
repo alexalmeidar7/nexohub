@@ -2070,6 +2070,43 @@ export default function PlayerPage() {
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
 
+      {/* Dynamic background: music cover (blurred) > program thumb (no blur) > gradient */}
+      {(() => {
+        const bgCover = musicData?.capa;
+        const bgThumb = currentProg?.thumb || currentProg?.capa;
+        if (bgCover) {
+          return (
+            <img
+              key={bgCover}
+              src={bgCover}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
+              style={{ opacity: 0.8, filter: "blur(40px)", zIndex: 0 }}
+            />
+          );
+        }
+        if (bgThumb) {
+          return (
+            <img
+              key={bgThumb}
+              src={bgThumb}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
+              style={{ opacity: 0.95, zIndex: 0 }}
+            />
+          );
+        }
+        return (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "radial-gradient(ellipse at 50% 100%, hsla(var(--player-accent) / 0.15), transparent 70%), linear-gradient(to bottom, #0a0a0a, #000)",
+              zIndex: 0,
+            }}
+          />
+        );
+      })()}
+
       {/* Content wrapper with fade transition */}
       <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
 
