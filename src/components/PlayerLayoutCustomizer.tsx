@@ -368,9 +368,9 @@ function LiveMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   );
 }
 
-function CatalogMockup({ c }: { c: PlayerColors }) {
+function CatalogMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   return (
-    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: c.catalogBg }}>
+    <div className="absolute inset-0 flex flex-col" style={buildBgStyle(c.catalogBg, bg)}>
       {/* Hero */}
       <div className="h-[40%] relative" style={{ background: `linear-gradient(135deg, ${c.catalogAccent}22, ${c.catalogBg})` }}>
         <div className="absolute bottom-2 left-3">
