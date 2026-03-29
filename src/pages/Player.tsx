@@ -2921,6 +2921,10 @@ export default function PlayerPage() {
 
       {/* Floating heart animation keyframes */}
       <style>{`
+        @keyframes slideDownIn {
+          0% { opacity: 0; transform: translateY(-100%); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
         @keyframes floatHeart {
           0% { opacity: 1; transform: translateY(0) scale(1); }
           100% { opacity: 0; transform: translateY(-60px) scale(0.5); }
