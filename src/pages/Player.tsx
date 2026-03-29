@@ -2491,7 +2491,7 @@ export default function PlayerPage() {
                 style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
                 title="Estilo do espectro"
               >
-                <Settings2 size={15} className="text-white/80" />
+                <Settings2 size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} />
               </button>
             )}
 
