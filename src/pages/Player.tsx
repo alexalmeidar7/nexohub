@@ -495,6 +495,23 @@ export default function PlayerPage() {
   const warmupAbortRef = useRef<AbortController | null>(null);
   const isPrerollVisible = Boolean((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing));
 
+  // Top bar auto-hide logic
+  const [topBarVisible, setTopBarVisible] = useState(true);
+  const topBarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetTopBarTimer = useCallback(() => {
+    setTopBarVisible(true);
+    if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current);
+    topBarTimerRef.current = setTimeout(() => setTopBarVisible(false), 2000);
+  }, []);
+
+  useEffect(() => {
+    if (playing && !isCatalog && !isYoutube) {
+      resetTopBarTimer();
+    }
+    return () => { if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current); };
+  }, [playing, isCatalog, isYoutube, resetTopBarTimer]);
+
   // Mid-roll state for YouTube
   const [midrollActive, setMidrollActive] = useState(false);
   const [midrollResumeTime, setMidrollResumeTime] = useState(0);
