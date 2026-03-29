@@ -2555,10 +2555,10 @@ export default function PlayerPage() {
 
       {/* Bottom minimal controls — for live channels (non-catalog) */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
-        <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "140px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
+        <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "120px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
           <div
-            className="absolute left-0 right-0 bottom-4 sm:bottom-6 mx-auto px-4 sm:px-8 transition-all duration-400 ease-in-out"
-            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none" }}
+            className="absolute left-0 right-0 bottom-0 mx-auto px-4 sm:px-8 pb-3 pt-6 transition-all duration-400 ease-in-out"
+            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }}
           >
             {/* Row 1: Play/Pause + Music info (left) | Like + Volume (right) */}
             <div className="flex items-center justify-between mb-2">
