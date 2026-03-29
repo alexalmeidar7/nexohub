@@ -1171,6 +1171,8 @@ export default function PlayerPage() {
 
     fetchAndSync(); // immediate first fetch
     const interval = setInterval(fetchAndSync, 1500);
+    // Also poll localStorage frequently to catch updates from useGlobalMusicSync in same tab
+    const storagePoll = setInterval(syncFromStorage, 800);
 
     // Resume sync immediately when page becomes visible again (e.g. after alt-tab in fullscreen)
     const onVisibility = () => { if (!document.hidden && !cancelled) fetchAndSync(); };
@@ -1179,6 +1181,7 @@ export default function PlayerPage() {
     return () => {
       cancelled = true;
       clearInterval(interval);
+      clearInterval(storagePoll);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("storage", onStorage);
       window.removeEventListener(MUSIC_SYNC_EVENT, onMusicSync as EventListener);
