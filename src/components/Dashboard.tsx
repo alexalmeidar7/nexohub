@@ -550,13 +550,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {item.children && isOpen && (
                   <div className="absolute top-full left-0 pt-2 z-[70]" onMouseEnter={clearMenuLeaveTimer} onMouseLeave={scheduleCloseMenu}>
                     <div
-                      className="rounded-xl py-1.5 min-w-[180px]"
+                      className="rounded-2xl py-1.5 min-w-[180px]"
                       style={{
-                        background: `${layoutColors.navBg}cc`,
-                        backdropFilter: "blur(24px) saturate(1.4)",
-                        WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-                        border: `1px solid ${layoutColors.borderColor}22`,
-                        boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+                        background: `${layoutColors.navBg}b3`,
+                        backdropFilter: "blur(32px) saturate(1.8)",
+                        WebkitBackdropFilter: "blur(32px) saturate(1.8)",
+                        border: `1px solid ${layoutColors.borderColor}1a`,
+                        boxShadow: "0 16px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
                       }}
                     >
                       {item.children.map(child => (
