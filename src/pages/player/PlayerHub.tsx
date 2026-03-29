@@ -95,7 +95,11 @@ export default function PlayerHub() {
   const wrapperClass = `transition-opacity duration-500 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`;
 
   if (step === "splash") {
-    return <SplashScreen logoUrl={logoUrl} channelName={channelName} onFinish={onSplashFinish} />;
+    return (
+      <div className={wrapperClass}>
+        <SplashScreen logoUrl={logoUrl} channelName={channelName} onFinish={onSplashFinish} />
+      </div>
+    );
   }
 
   if (step === "access") {
