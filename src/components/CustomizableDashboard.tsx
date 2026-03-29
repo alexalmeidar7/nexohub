@@ -369,33 +369,37 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onDragEnd={handleDragEnd}
                   onClick={() => handleLinkClick(item)}
                 >
-                  <div
-                    className={`w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center pt-[14px] sm:pt-[18px] transition-all hover:scale-[1.06]`}
-                    style={{
-                      background: isDragOver
-                        ? `linear-gradient(145deg, var(--layout-button-bg, #333), var(--layout-accent-color, #444))`
-                        : `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))`,
-                      backdropFilter: "blur(24px) saturate(1.6)",
-                      WebkitBackdropFilter: "blur(24px) saturate(1.6)",
-                      border: isDragOver ? `2px solid var(--layout-button-bg, #333)` : `1px solid color-mix(in srgb, var(--layout-button-text, #fff) 20%, transparent)`,
-                      boxShadow: `0 6px 20px color-mix(in srgb, var(--layout-button-bg, #333) 40%, transparent), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.1)`,
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.boxShadow = `0 10px 30px color-mix(in srgb, var(--layout-button-bg, #333) 55%, transparent), inset 0 1px 0 rgba(255,255,255,0.25)`;
-                      e.currentTarget.style.background = `linear-gradient(135deg, var(--layout-button-bg, #333), color-mix(in srgb, var(--layout-button-bg, #333) 80%, white))`;
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background = isDragOver
-                        ? `linear-gradient(145deg, var(--layout-button-bg, #333), var(--layout-accent-color, #444))`
-                        : `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))`;
-                      e.currentTarget.style.boxShadow = `0 6px 20px color-mix(in srgb, var(--layout-button-bg, #333) 40%, transparent), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.1)`;
-                    }}
-                  >
-                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.15)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)" }}>
-                      <Icon size={16} className="sm:hidden" style={{ color: "var(--layout-button-text, #fff)" }} /><Icon size={18} className="hidden sm:block" style={{ color: "var(--layout-button-text, #fff)" }} />
-                    </div>
-                    <span className="text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5" style={{ color: "var(--layout-button-text, #fff)" }}>{item.linkLabel}</span>
-                    {item.linkExternal && <ExternalLink size={7} className="absolute bottom-1.5 right-1.5" style={{ color: "var(--layout-button-text, #fff)", opacity: 0.4 }} />}
+                    <div
+                      className={`w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center pt-[14px] sm:pt-[18px] transition-all duration-200 hover:scale-[1.06] overflow-hidden`}
+                      style={{
+                        background: isDragOver
+                          ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #333) 70%, white 30%), var(--layout-accent-color, #444))`
+                          : `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #333) 85%, white 15%) 0%, var(--layout-button-bg, #333) 50%, color-mix(in srgb, var(--layout-button-bg, #333) 90%, black 10%) 100%)`,
+                        backdropFilter: "blur(30px) saturate(1.8)",
+                        WebkitBackdropFilter: "blur(30px) saturate(1.8)",
+                        border: isDragOver ? `2px solid var(--layout-button-bg, #333)` : `1px solid color-mix(in srgb, var(--layout-button-text, #fff) 15%, transparent)`,
+                        boxShadow: `0 8px 24px color-mix(in srgb, var(--layout-button-bg, #333) 35%, transparent), 0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.08)`,
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.boxShadow = `0 12px 36px color-mix(in srgb, var(--layout-button-bg, #333) 50%, transparent), 0 4px 10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.35)`;
+                        e.currentTarget.style.background = `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #333) 75%, white 25%) 0%, color-mix(in srgb, var(--layout-button-bg, #333) 90%, white 10%) 50%, var(--layout-button-bg, #333) 100%)`;
+                        e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-button-text, #fff) 30%, transparent)`;
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = isDragOver
+                          ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #333) 70%, white 30%), var(--layout-accent-color, #444))`
+                          : `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #333) 85%, white 15%) 0%, var(--layout-button-bg, #333) 50%, color-mix(in srgb, var(--layout-button-bg, #333) 90%, black 10%) 100%)`;
+                        e.currentTarget.style.boxShadow = `0 8px 24px color-mix(in srgb, var(--layout-button-bg, #333) 35%, transparent), 0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.08)`;
+                        e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-button-text, #fff) 15%, transparent)`;
+                      }}
+                    >
+                      {/* Top glass shine */}
+                      <div className="absolute top-0 left-0 right-0 h-[45%] pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 60%, transparent 100%)", borderRadius: "16px 16px 0 0" }} />
+                      <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0 relative z-10" style={{ background: "rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 8px rgba(0,0,0,0.1)" }}>
+                        <Icon size={16} className="sm:hidden" style={{ color: "var(--layout-button-text, #fff)" }} /><Icon size={18} className="hidden sm:block" style={{ color: "var(--layout-button-text, #fff)" }} />
+                      </div>
+                      <span className="text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5 relative z-10" style={{ color: "var(--layout-button-text, #fff)", textShadow: "0 1px 3px rgba(0,0,0,0.2)" }}>{item.linkLabel}</span>
+                      {item.linkExternal && <ExternalLink size={7} className="absolute bottom-1.5 right-1.5 z-10" style={{ color: "var(--layout-button-text, #fff)", opacity: 0.4 }} />}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
