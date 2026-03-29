@@ -17,6 +17,7 @@ export interface ScreenBgConfig {
   gradientColor2: string;
   gradientPosition: GradientPosition;
   gradientAngle: number; // for linear
+  gradientMidpoint: number; // 0-100, where color transition happens
 }
 
 export const defaultScreenBg: ScreenBgConfig = {
