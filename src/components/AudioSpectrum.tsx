@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Settings2 } from "lucide-react";
 
-export type SpectrumStyle = "bars" | "wave" | "circular";
+export type SpectrumStyle = "bars" | "wave" | "circular" | "off";
 
 interface AudioSpectrumProps {
   audioElement: HTMLAudioElement | null;
@@ -23,23 +23,40 @@ function resolveColor(barColor?: string): string {
   return c && c !== "" ? c : "rgba(255,255,255,0.6)";
 }
 
+// ── Web Audio API helper — shared context to avoid multiple connections ──
+const audioCtxMap = new WeakMap<HTMLAudioElement, { ctx: AudioContext; analyser: AnalyserNode; source: MediaElementAudioSourceNode }>();
+
+function getOrCreateAnalyser(audio: HTMLAudioElement): AnalyserNode | null {
+  try {
+    if (audioCtxMap.has(audio)) {
+      const entry = audioCtxMap.get(audio)!;
+      if (entry.ctx.state === "suspended") entry.ctx.resume().catch(() => {});
+      return entry.analyser;
+    }
+    const ctx = new AudioContext();
+    const source = ctx.createMediaElementSource(audio);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 128;
+    analyser.smoothingTimeConstant = 0.82;
+    source.connect(analyser);
+    analyser.connect(ctx.destination);
+    audioCtxMap.set(audio, { ctx, analyser, source });
+    return analyser;
+  } catch {
+    return null;
+  }
+}
+
 /* ── Draw: Bars ── */
 function drawBars(
-  ctx: CanvasRenderingContext2D, w: number, h: number, t: number, active: boolean,
-  bufferLength: number, barOffsets: number[], barSpeeds: number[], peaks: number[], color: string
+  ctx: CanvasRenderingContext2D, w: number, h: number,
+  freqData: Uint8Array | null, bufferLength: number, peaks: number[], color: string
 ) {
   const barWidth = (w / bufferLength) * 0.8;
   for (let i = 0; i < bufferLength; i++) {
-    const off = barOffsets[i];
-    const spd = barSpeeds[i];
-    const w1 = Math.sin(t * spd + i * 0.22 + off) * 0.5 + 0.5;
-    const w2 = Math.sin(t * 1.4 * spd + i * 0.45) * 0.4 + 0.5;
-    const w3 = Math.cos(t * 0.8 + i * 0.12 + off * 2) * 0.3 + 0.5;
-    const spike = Math.pow(Math.sin(t * 0.5 + i * 0.08), 8) * 0.4;
-    const combined = w1 * 0.35 + w2 * 0.3 + w3 * 0.2 + spike * 0.15;
+    const value = freqData ? freqData[i] / 255 : 0;
     const bassBoost = i < bufferLength * 0.3 ? 1.3 : i < bufferLength * 0.6 ? 1.0 : 0.7;
-    const intensity = active ? 1.1 : 0.08;
-    const barHeight = Math.min(1, combined * bassBoost * intensity) * h * 0.95;
+    const barHeight = Math.min(1, value * bassBoost) * h * 0.95;
 
     if (barHeight > peaks[i]) peaks[i] = barHeight;
     else { peaks[i] -= 2.5; if (peaks[i] < 0) peaks[i] = 0; }
@@ -55,28 +72,23 @@ function drawBars(
 
 /* ── Draw: Wave ── */
 function drawWave(
-  ctx: CanvasRenderingContext2D, w: number, h: number, t: number, active: boolean,
-  bufferLength: number, barOffsets: number[], barSpeeds: number[], color: string
+  ctx: CanvasRenderingContext2D, w: number, h: number,
+  freqData: Uint8Array | null, bufferLength: number, color: string
 ) {
-  const intensity = active ? 1 : 0.1;
   ctx.strokeStyle = color;
   ctx.lineWidth = 2.5;
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
 
-  // Draw 3 layered waves for depth
   for (let layer = 0; layer < 3; layer++) {
     ctx.globalAlpha = layer === 0 ? 0.9 : layer === 1 ? 0.4 : 0.15;
     ctx.beginPath();
-    const phaseShift = layer * 1.2;
+    const phaseShift = layer * 0.3;
     const ampScale = layer === 0 ? 1 : layer === 1 ? 0.7 : 0.5;
     for (let i = 0; i <= bufferLength; i++) {
       const x = (i / bufferLength) * w;
-      const off = barOffsets[i % bufferLength];
-      const spd = barSpeeds[i % bufferLength];
-      const y1 = Math.sin(t * spd * 0.8 + i * 0.18 + off + phaseShift) * 0.5 + 0.5;
-      const y2 = Math.sin(t * 1.2 + i * 0.35 + phaseShift) * 0.3 + 0.5;
-      const combined = (y1 * 0.6 + y2 * 0.4) * intensity * ampScale;
+      const value = freqData ? (freqData[i % freqData.length] / 255) : 0;
+      const combined = value * ampScale + phaseShift * 0.02;
       const y = h * 0.5 - combined * h * 0.4 + h * 0.1;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
@@ -89,12 +101,8 @@ function drawWave(
   ctx.beginPath();
   for (let i = 0; i <= bufferLength; i++) {
     const x = (i / bufferLength) * w;
-    const off = barOffsets[i % bufferLength];
-    const spd = barSpeeds[i % bufferLength];
-    const y1 = Math.sin(t * spd * 0.8 + i * 0.18 + off) * 0.5 + 0.5;
-    const y2 = Math.sin(t * 1.2 + i * 0.35) * 0.3 + 0.5;
-    const combined = (y1 * 0.6 + y2 * 0.4) * intensity;
-    const y = h * 0.5 - combined * h * 0.4 + h * 0.1;
+    const value = freqData ? (freqData[i % freqData.length] / 255) : 0;
+    const y = h * 0.5 - value * h * 0.4 + h * 0.1;
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   }
@@ -108,16 +116,14 @@ function drawWave(
 
 /* ── Draw: Circular ── */
 function drawCircular(
-  ctx: CanvasRenderingContext2D, w: number, h: number, t: number, active: boolean,
-  bufferLength: number, barOffsets: number[], barSpeeds: number[], color: string
+  ctx: CanvasRenderingContext2D, w: number, h: number,
+  freqData: Uint8Array | null, bufferLength: number, color: string
 ) {
   const cx = w / 2;
   const cy = h * 0.55;
   const radius = Math.min(w, h) * 0.22;
-  const intensity = active ? 1 : 0.1;
   const count = 48;
 
-  // Outer glow
   ctx.globalAlpha = 0.06;
   ctx.beginPath();
   ctx.arc(cx, cy, radius * 1.8, 0, Math.PI * 2);
@@ -127,13 +133,9 @@ function drawCircular(
 
   for (let i = 0; i < count; i++) {
     const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-    const idx = i % bufferLength;
-    const off = barOffsets[idx];
-    const spd = barSpeeds[idx];
-    const v1 = Math.sin(t * spd + i * 0.3 + off) * 0.5 + 0.5;
-    const v2 = Math.cos(t * 0.9 + i * 0.2) * 0.3 + 0.5;
-    const combined = (v1 * 0.6 + v2 * 0.4) * intensity;
-    const len = combined * radius * 1.2 + radius * 0.1;
+    const idx = Math.floor((i / count) * bufferLength) % bufferLength;
+    const value = freqData ? (freqData[idx] / 255) : 0;
+    const len = value * radius * 1.2 + radius * 0.1;
 
     const x1 = cx + Math.cos(angle) * radius;
     const y1 = cy + Math.sin(angle) * radius;
@@ -141,7 +143,7 @@ function drawCircular(
     const y2 = cy + Math.sin(angle) * (radius + len);
 
     ctx.strokeStyle = color;
-    ctx.globalAlpha = 0.6 + combined * 0.4;
+    ctx.globalAlpha = 0.6 + value * 0.4;
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
     ctx.beginPath();
@@ -150,7 +152,6 @@ function drawCircular(
     ctx.stroke();
   }
 
-  // Inner circle
   ctx.globalAlpha = 0.15;
   ctx.beginPath();
   ctx.arc(cx, cy, radius * 0.85, 0, Math.PI * 2);
@@ -164,6 +165,7 @@ const STYLE_LABELS: Record<SpectrumStyle, string> = {
   bars: "Barras",
   wave: "Onda",
   circular: "Circular",
+  off: "Desligado",
 };
 
 export default function AudioSpectrum({ audioElement, barColor, style = "bars", showConfig = false, onStyleChange }: AudioSpectrumProps) {
@@ -171,12 +173,28 @@ export default function AudioSpectrum({ audioElement, barColor, style = "bars", 
   const rafRef = useRef<number>(0);
   const peaksRef = useRef<number[]>([]);
   const styleRef = useRef(style);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const freqDataRef = useRef<Uint8Array | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Keep ref in sync
   useEffect(() => { styleRef.current = style; }, [style]);
 
+  // Connect to real audio when available
   useEffect(() => {
+    if (!audioElement || style === "off") return;
+    const analyser = getOrCreateAnalyser(audioElement);
+    analyserRef.current = analyser;
+    if (analyser) {
+      freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+    }
+  }, [audioElement, style]);
+
+  useEffect(() => {
+    if (style === "off") {
+      cancelAnimationFrame(rafRef.current);
+      return;
+    }
+
     const canvas = canvasRef.current;
     if (!audioElement || !canvas) return;
 
@@ -184,8 +202,6 @@ export default function AudioSpectrum({ audioElement, barColor, style = "bars", 
     if (!ctx) return;
 
     const bufferLength = 64;
-    const barOffsets = Array.from({ length: bufferLength }, () => Math.random() * Math.PI * 2);
-    const barSpeeds = Array.from({ length: bufferLength }, () => 0.7 + Math.random() * 1.8);
 
     if (peaksRef.current.length !== bufferLength) {
       peaksRef.current = new Array(bufferLength).fill(0);
@@ -195,27 +211,36 @@ export default function AudioSpectrum({ audioElement, barColor, style = "bars", 
       rafRef.current = requestAnimationFrame(draw);
       const w = canvas.width;
       const h = canvas.height;
-      const t = performance.now() / 280;
-      const active = !audioElement.paused;
       const color = resolveColor(barColor);
+
+      // Get real frequency data
+      const analyser = analyserRef.current;
+      let freqData = freqDataRef.current as Uint8Array<ArrayBuffer> | null;
+      if (analyser && freqData) {
+        analyser.getByteFrequencyData(freqData);
+      } else {
+        freqData = null;
+      }
 
       ctx.clearRect(0, 0, w, h);
 
       switch (styleRef.current) {
         case "wave":
-          drawWave(ctx, w, h, t, active, bufferLength, barOffsets, barSpeeds, color);
+          drawWave(ctx, w, h, freqData, bufferLength, color);
           break;
         case "circular":
-          drawCircular(ctx, w, h, t, active, bufferLength, barOffsets, barSpeeds, color);
+          drawCircular(ctx, w, h, freqData, bufferLength, color);
+          break;
+        case "off":
           break;
         default:
-          drawBars(ctx, w, h, t, active, bufferLength, barOffsets, barSpeeds, peaksRef.current, color);
+          drawBars(ctx, w, h, freqData, bufferLength, peaksRef.current, color);
       }
     };
 
     draw();
     return () => cancelAnimationFrame(rafRef.current);
-  }, [audioElement, barColor]);
+  }, [audioElement, barColor, style]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -236,6 +261,8 @@ export default function AudioSpectrum({ audioElement, barColor, style = "bars", 
     onStyleChange?.(s);
     setMenuOpen(false);
   }, [onStyleChange]);
+
+  if (style === "off") return null;
 
   return (
     <div
@@ -269,7 +296,7 @@ export default function AudioSpectrum({ audioElement, barColor, style = "bars", 
                 minWidth: 130,
               }}
             >
-              {(["bars", "wave", "circular"] as SpectrumStyle[]).map(s => (
+              {(["bars", "wave", "circular", "off"] as SpectrumStyle[]).map(s => (
                 <button
                   key={s}
                   onClick={() => handleSelect(s)}
