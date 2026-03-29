@@ -2376,8 +2376,16 @@ export default function PlayerPage() {
       {/* Top Header Bar — always visible for live channels */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
         <div className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
-          {/* Channel nav + name */}
+          {/* Home + Channel nav + name */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 pr-4 sm:pr-6 border-r border-white/10">
+            <button
+              onClick={handleHomeClick}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all border border-white/10 hover:border-white/30 hover:bg-white/10 backdrop-blur-xl"
+              style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+              title="Voltar ao Hub"
+            >
+              <Home size={15} className="text-white/70" />
+            </button>
             <div className="flex flex-col items-center gap-0.5">
               {liveChannels.length > 1 && (
                 <button onClick={() => navigateChannel(-1)} className="text-white/50 hover:text-white transition-colors p-0.5"><ChevronUp size={16} /></button>
