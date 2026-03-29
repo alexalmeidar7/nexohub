@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect } from "react";
-import { LogOut } from "lucide-react";
+import { useRef, useState, useEffect, useCallback } from "react";
+import { LogOut, User, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { LucideIcon } from "lucide-react";
 
