@@ -2567,32 +2567,98 @@ export default function PlayerPage() {
 
       {/* Bottom minimal controls — for live channels (non-catalog) */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
-        <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "120px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
+        <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "100px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
           <div
-            className="absolute left-0 right-0 bottom-0 mx-auto px-4 sm:px-8 pb-3 pt-6 transition-all duration-400 ease-in-out"
-            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }}
+            className="absolute left-0 right-0 bottom-0 mx-auto px-4 sm:px-8 pb-4 pt-3 transition-all duration-400 ease-in-out"
+            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none" }}
           >
-            {/* Row 1: Play/Pause + Music info (left) | Like + Volume (right) */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3 min-w-0">
+            {/* Single row: Play | Title+Artist | Slider | Like+Volume */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 shrink-0">
                 {/* Play/Pause circle */}
                 <button
                   onClick={handlePlayCanal}
-                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 shadow-lg"
-                  style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
+                  style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000", border: "2px solid rgba(0,0,0,0.2)" }}
                   title={playing ? "Pausar" : "Reproduzir"}
                 >
-                  {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
+                  {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
                 </button>
-                {/* Music title + artist */}
-                <div className="flex flex-col min-w-0">
-                  <span className="text-white text-sm sm:text-base font-bold leading-tight truncate max-w-[300px] sm:max-w-[450px]">
+              </div>
+
+              {/* Center: Title/Artist + Slider */}
+              <div className="flex-1 min-w-0">
+                {/* Title + Artist */}
+                <div className="flex flex-col mb-1">
+                  <span className="text-white text-sm sm:text-base font-extrabold italic leading-tight truncate">
                     {musicData?.titulo && musicData.titulo !== "Sem título" ? musicData.titulo : ""}
                   </span>
-                  <span className="text-white/60 text-xs sm:text-sm leading-tight truncate max-w-[250px] sm:max-w-[400px]">
+                  <span className="text-white/70 text-xs sm:text-sm font-semibold leading-tight truncate">
                     {musicData?.artista && musicData.artista !== "Desconhecido" ? musicData.artista : ""}
                   </span>
                 </div>
+                {/* Slider + times */}
+                {(() => {
+                  void musicTick;
+                  let musicElapsed = 0;
+                  let musicTotal = musicData?.duracao || 0;
+                  if (musicTotal > 0) {
+                    if (musicData?.horario) {
+                      const now = new Date();
+                      const parts = musicData.horario.split(":").map(Number);
+                      const startDate = new Date(now);
+                      startDate.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+                      musicElapsed = Math.max(0, (now.getTime() - startDate.getTime()) / 1000);
+                      if (musicElapsed > musicTotal) musicElapsed = musicTotal;
+                    }
+                    if (musicElapsed <= 0) {
+                      const startStr = localStorage.getItem("masterview_music_start");
+                      if (startStr) {
+                        musicElapsed = Math.max(0, (Date.now() - parseInt(startStr, 10)) / 1000);
+                        if (musicElapsed > musicTotal) musicElapsed = musicTotal;
+                      }
+                    }
+                  }
+                  const musicPct = musicTotal > 0 ? Math.min(100, (musicElapsed / musicTotal) * 100) : 0;
+                  return (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 group cursor-pointer relative">
+                        <div className="w-full h-[3px] bg-white/30 rounded-full overflow-hidden group-hover:h-[5px] transition-all">
+                          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "#fff" }} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {/* Times below slider */}
+                {(() => {
+                  void musicTick;
+                  let musicElapsed = 0;
+                  let musicTotal = musicData?.duracao || 0;
+                  if (musicTotal > 0) {
+                    if (musicData?.horario) {
+                      const now = new Date();
+                      const parts = musicData.horario.split(":").map(Number);
+                      const startDate = new Date(now);
+                      startDate.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+                      musicElapsed = Math.max(0, (now.getTime() - startDate.getTime()) / 1000);
+                      if (musicElapsed > musicTotal) musicElapsed = musicTotal;
+                    }
+                    if (musicElapsed <= 0) {
+                      const startStr = localStorage.getItem("masterview_music_start");
+                      if (startStr) {
+                        musicElapsed = Math.max(0, (Date.now() - parseInt(startStr, 10)) / 1000);
+                        if (musicElapsed > musicTotal) musicElapsed = musicTotal;
+                      }
+                    }
+                  }
+                  return (
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="text-white/50 text-[10px] tabular-nums">{fmtTime(musicElapsed)}</span>
+                      <span className="text-white/50 text-[10px] tabular-nums">{fmtTime(musicTotal)}</span>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Like + Volume on right */}
@@ -2602,16 +2668,15 @@ export default function PlayerPage() {
                   <div className="relative">
                     <button
                       onClick={toggleLike}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border backdrop-blur-xl ${liked ? "border-player-accent bg-player-accent/20" : "border-white/10 hover:border-white/30 hover:bg-white/10"}`}
-                      style={liked ? {} : { backgroundColor: "rgba(255,255,255,0.08)" }}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${liked ? "bg-white/20" : "bg-black/40 hover:bg-black/60"}`}
                       title={liked ? "Descurtir" : "Curtir"}
                     >
                       <Heart
-                        size={16}
+                        size={15}
                         className="transition-colors"
                         style={{
-                          color: liked ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.6)",
-                          fill: liked ? "hsl(var(--player-accent))" : "none",
+                          color: liked ? "#fff" : "rgba(255,255,255,0.8)",
+                          fill: liked ? "#fff" : "none",
                         }}
                       />
                     </button>
@@ -2630,11 +2695,10 @@ export default function PlayerPage() {
                 <div className="relative" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
                   <button
                     onClick={toggleMuteWithOsd}
-                    className="w-10 h-10 rounded-full flex items-center justify-center transition-all border border-white/10 hover:border-white/30 hover:bg-white/10 backdrop-blur-xl"
-                    style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-black/40 hover:bg-black/60"
                     title={muted ? "Ativar som" : "Desativar som"}
                   >
-                    {muted ? <VolumeX size={16} className="text-white/60" /> : volume < 50 ? <Volume1 size={16} className="text-white/60" /> : <Volume2 size={16} className="text-white/60" />}
+                    {muted ? <VolumeX size={15} className="text-white/80" /> : volume < 50 ? <Volume1 size={15} className="text-white/80" /> : <Volume2 size={15} className="text-white/80" />}
                   </button>
                   {volumeHover && (
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 border border-white/10 shadow-2xl backdrop-blur-xl" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
@@ -2655,45 +2719,6 @@ export default function PlayerPage() {
                 </div>
               </div>
             </div>
-
-            {/* Row 2: Full-width music slider + times */}
-            {(() => {
-              void musicTick; // force re-render on tick
-              let musicElapsed = 0;
-              let musicTotal = musicData?.duracao || 0;
-              if (musicTotal > 0) {
-                // Try horario field first
-                if (musicData?.horario) {
-                  const now = new Date();
-                  const parts = musicData.horario.split(":").map(Number);
-                  const startDate = new Date(now);
-                  startDate.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
-                  musicElapsed = Math.max(0, (now.getTime() - startDate.getTime()) / 1000);
-                  if (musicElapsed > musicTotal) musicElapsed = musicTotal;
-                }
-                // Fallback to localStorage start time
-                if (musicElapsed <= 0) {
-                  const startStr = localStorage.getItem("masterview_music_start");
-                  if (startStr) {
-                    musicElapsed = Math.max(0, (Date.now() - parseInt(startStr, 10)) / 1000);
-                    if (musicElapsed > musicTotal) musicElapsed = musicTotal;
-                  }
-                }
-              }
-              const musicPct = musicTotal > 0 ? Math.min(100, (musicElapsed / musicTotal) * 100) : 0;
-
-              return (
-                <div className="flex items-center gap-3">
-                  <span className="text-white/50 text-[11px] tabular-nums shrink-0">{fmtTime(musicElapsed)}</span>
-                  <div className="flex-1 group cursor-pointer relative">
-                    <div className="w-full h-[3px] bg-white/20 rounded-full overflow-hidden group-hover:h-[5px] transition-all">
-                      <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
-                    </div>
-                  </div>
-                  <span className="text-white/50 text-[11px] tabular-nums shrink-0">{fmtTime(musicTotal)}</span>
-                </div>
-              );
-            })()}
           </div>
         </div>
       )}
