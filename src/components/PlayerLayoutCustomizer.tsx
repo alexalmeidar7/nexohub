@@ -472,6 +472,21 @@ function BgConfigEditor({ config, onChange, solidColor }: { config: ScreenBgConf
             <PColorInput label="Cor 2" value={config.gradientColor2} onChange={(v) => onChange({ ...config, gradientColor2: v })} />
           </div>
 
+          {/* Midpoint slider */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Aproximação: {config.gradientMidpoint ?? 50}%
+            </span>
+            <Slider
+              value={[config.gradientMidpoint ?? 50]}
+              onValueChange={([v]) => onChange({ ...config, gradientMidpoint: v })}
+              min={10}
+              max={100}
+              step={1}
+              className="w-full"
+            />
+          </div>
+
           {/* Position / Angle */}
           {config.gradientType === "linear" ? (
             <div className="space-y-1.5">
