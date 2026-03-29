@@ -627,11 +627,11 @@ export default function PlayerLayoutCustomizer() {
   };
 
   const mockupMap: Record<ScreenTab, React.ReactNode> = {
-    loading: <LoadingMockup c={colors} />,
-    login: <LoginMockup c={colors} />,
-    home: <HomeMockup c={colors} />,
-    live: <LiveMockup c={colors} />,
-    catalog: <CatalogMockup c={colors} />,
+    loading: <LoadingMockup c={colors} bg={bgConfigs.loading} />,
+    login: <LoginMockup c={colors} bg={bgConfigs.login} />,
+    home: <HomeMockup c={colors} bg={bgConfigs.home} />,
+    live: <LiveMockup c={colors} bg={bgConfigs.live} />,
+    catalog: <CatalogMockup c={colors} bg={bgConfigs.catalog} />,
   };
 
   return (
