@@ -792,8 +792,8 @@ function TrendingCard({ item, idx, channels, onClick }: {
 
       {/* Ranking badge */}
       <div
-        className="absolute top-2.5 left-2.5 z-10 w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-black"
-        style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)" }}
+        className="absolute top-2.5 left-2.5 z-10 w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-black"
+        style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}
       >
         {idx + 1}
       </div>
