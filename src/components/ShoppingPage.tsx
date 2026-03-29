@@ -30,6 +30,7 @@ export default function ShoppingPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [shopActive, setShopActive] = useState(true);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -44,7 +45,19 @@ export default function ShoppingPage() {
   useEffect(() => {
     if (!user) return;
     loadData();
+    // Load shopping_active setting
+    supabase.from("user_settings").select("shopping_active").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      if (data && typeof (data as any).shopping_active === "boolean") setShopActive((data as any).shopping_active);
+    });
   }, [user]);
+
+  const toggleShopActive = async () => {
+    if (!user) return;
+    const newVal = !shopActive;
+    setShopActive(newVal);
+    await supabase.from("user_settings").upsert({ user_id: user.id, shopping_active: newVal } as any, { onConflict: "user_id" });
+    toast({ title: newVal ? "Vitrine ativada no Player" : "Vitrine desativada no Player" });
+  };
 
   const loadData = async () => {
     if (!user) return;
