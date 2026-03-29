@@ -467,7 +467,7 @@ export default function KaraokeOverlay({
       <Confetti active={showConfetti} />
       <div
         className="absolute left-0 right-0 z-[60] flex flex-col items-center animate-fade-in"
-        style={{ bottom: controlsVisible ? "180px" : "100px", transition: "bottom 0.4s ease" }}
+        style={{ bottom: controlsVisible ? "120px" : "40px", transition: "bottom 0.4s ease" }}
         onMouseEnter={handleLyricsMouseEnter}
         onMouseLeave={handleLyricsMouseLeave}
         onWheel={(e) => {
