@@ -3052,6 +3052,22 @@ export default function PlayerPage() {
         .marquee-scroll[data-overflow="false"] {
           animation: none;
         }
+        @keyframes playerSlideUp {
+          0% { opacity: 0; transform: translateY(100%); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes playerSlideDown {
+          0% { opacity: 0; transform: translateY(-100%); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes playerFadeSlideIn {
+          0% { opacity: 0; transform: translateY(8px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes playerCoverIn {
+          0% { opacity: 0; transform: scale(0.85); }
+          100% { opacity: 1; transform: scale(1); }
+        }
       `}</style>
       </div>
 
