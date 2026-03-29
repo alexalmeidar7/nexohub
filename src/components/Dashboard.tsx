@@ -588,10 +588,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <TooltipTrigger asChild>
               <button
                 onClick={() => setCurrentPage("configuracoes")}
-                className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                style={{ backgroundColor: `${layoutColors.navText}1a` }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}33`; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:scale-105"
+                style={{ backgroundColor: `${layoutColors.navText}14`, backdropFilter: "blur(16px)", border: `1px solid ${layoutColors.navText}1a`, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}2e`; e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}14`; e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.06)"; }}
               >
                 <Settings size={14} style={{ color: `${layoutColors.navText}b3` }} />
               </button>
