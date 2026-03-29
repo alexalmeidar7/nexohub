@@ -29,8 +29,8 @@ export default function SplashScreen({ logoUrl, channelName, onFinish }: SplashS
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-player transition-opacity duration-600 ${fadeOut ? "opacity-0" : "opacity-100"}`}
-      style={{ background: "var(--player-glow)" }}
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-600 ${fadeOut ? "opacity-0" : "opacity-100"}`}
+      style={{ background: `var(--player-loading-background, var(--player-glow))` }}
     >
       <div
         className={`mb-16 transition-all duration-700 ease-out ${
@@ -47,8 +47,8 @@ export default function SplashScreen({ logoUrl, channelName, onFinish }: SplashS
       </div>
 
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-player-accent" />
-        <p className="text-player-muted-foreground text-sm font-normal tracking-wide">
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: `var(--player-loading-spinner, hsl(var(--player-accent)))` }} />
+        <p className="text-sm font-normal tracking-wide" style={{ color: `var(--player-loading-text, hsl(var(--player-muted-foreground)))` }}>
           carregando {channelName || "Positiva Play"}
         </p>
       </div>
