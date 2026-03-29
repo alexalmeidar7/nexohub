@@ -1881,11 +1881,18 @@ export default function PlayerPage() {
   // Cleanup on unmount
   useEffect(() => { return () => { if (hlsRef.current) hlsRef.current.destroy(); }; }, []);
 
-  // Periodic clock tick to re-compute currentProg every 30s (reduced from 10s)
+  // Periodic clock tick to re-compute currentProg every 30s
+  const [musicTick, setMusicTick] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => setClock(c => c + 1), 30000);
     return () => clearInterval(interval);
   }, []);
+  // Fast tick for music progress bar (every 1s)
+  useEffect(() => {
+    if (!playing || isYoutube) return;
+    const interval = setInterval(() => setMusicTick(t => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [playing, isYoutube]);
 
   // Filter programs by the current channel's estudio (if set)
   const filteredProgramas = useMemo(() => {
