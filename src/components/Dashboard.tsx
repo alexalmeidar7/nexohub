@@ -628,9 +628,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <button
                 onClick={() => setCurrentPage("dashboard")}
                 className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105"
-                style={{ backgroundColor: layoutColors.headerText, color: layoutColors.headerBg, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15)" }}
-                onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
-                onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+                style={{
+                  background: "rgba(255,255,255,0.12)",
+                  backdropFilter: "blur(20px) saturate(1.6)",
+                  WebkitBackdropFilter: "blur(20px) saturate(1.6)",
+                  color: layoutColors.headerText,
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.1)",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; }}
               >
                 <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
               </button>
