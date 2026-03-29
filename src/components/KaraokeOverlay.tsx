@@ -256,6 +256,15 @@ export default function KaraokeOverlay({
 
       setCurrentLineIdx(idx);
 
+      // Detect song ended: elapsed is past the last lyric line + a buffer
+      const lastLineTime = lines[lines.length - 1]?.time ?? 0;
+      const endBuffer = 8; // seconds after last lyric to consider song ended
+      if (elapsed > lastLineTime + endBuffer && idx === lines.length - 1) {
+        setSongEnded(true);
+      } else {
+        setSongEnded(false);
+      }
+
       if (idx >= 0) {
         const lineStart = lines[idx].time;
         const lineEnd = idx + 1 < lines.length ? lines[idx + 1].time : lineStart + 4;
