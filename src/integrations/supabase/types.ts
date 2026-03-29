@@ -1166,6 +1166,7 @@ export type Database = {
           id: string
           music_source_mode: string
           music_xml_url: string | null
+          shopping_active: boolean
           updated_at: string
           user_id: string
           vmix_pass: string | null
@@ -1182,6 +1183,7 @@ export type Database = {
           id?: string
           music_source_mode?: string
           music_xml_url?: string | null
+          shopping_active?: boolean
           updated_at?: string
           user_id: string
           vmix_pass?: string | null
@@ -1198,6 +1200,7 @@ export type Database = {
           id?: string
           music_source_mode?: string
           music_xml_url?: string | null
+          shopping_active?: boolean
           updated_at?: string
           user_id?: string
           vmix_pass?: string | null

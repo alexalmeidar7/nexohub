@@ -30,6 +30,7 @@ export default function ShoppingPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [shopActive, setShopActive] = useState(true);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -44,7 +45,19 @@ export default function ShoppingPage() {
   useEffect(() => {
     if (!user) return;
     loadData();
+    // Load shopping_active setting
+    supabase.from("user_settings").select("shopping_active").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      if (data && typeof (data as any).shopping_active === "boolean") setShopActive((data as any).shopping_active);
+    });
   }, [user]);
+
+  const toggleShopActive = async () => {
+    if (!user) return;
+    const newVal = !shopActive;
+    setShopActive(newVal);
+    await supabase.from("user_settings").upsert({ user_id: user.id, shopping_active: newVal } as any, { onConflict: "user_id" });
+    toast({ title: newVal ? "Vitrine ativada no Player" : "Vitrine desativada no Player" });
+  };
 
   const loadData = async () => {
     if (!user) return;
@@ -147,6 +160,18 @@ export default function ShoppingPage() {
             <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Shopping</h3>
             <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie produtos exibidos na vitrine do player</p>
           </div>
+          <button
+            onClick={toggleShopActive}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+            style={{
+              backgroundColor: shopActive ? "color-mix(in srgb, var(--layout-accent, #e1f532) 20%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+              color: shopActive ? "var(--layout-accent, #e1f532)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
+              border: `1px solid ${shopActive ? "color-mix(in srgb, var(--layout-accent, #e1f532) 40%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}`,
+            }}
+          >
+            <span className={`w-2 h-2 rounded-full ${shopActive ? "bg-green-500" : "bg-red-500"}`} />
+            {shopActive ? "Ativo" : "Inativo"}
+          </button>
         </div>
 
         {/* Form */}

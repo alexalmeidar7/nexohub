@@ -400,15 +400,19 @@ export default function PlayerPage() {
 
   // Load spectrum style preference from user_settings
   useEffect(() => {
-    if (!user) return;
-    supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+    const effectiveId = user?.id || publicUserId;
+    if (!effectiveId) return;
+    supabase.from("user_settings").select("dashboard_items, shopping_active").eq("user_id", effectiveId).maybeSingle().then(({ data }) => {
       const items = (data?.dashboard_items as any) || {};
       if (items.spectrum_style) {
         setSpectrumStyle(items.spectrum_style);
         localStorage.setItem("nexo_spectrum_style", items.spectrum_style);
       }
+      if (data && typeof (data as any).shopping_active === "boolean") {
+        setShopActive((data as any).shopping_active);
+      }
     });
-  }, [user]);
+  }, [user, publicUserId]);
 
 
   const [ytCurrentTime, setYtCurrentTime] = useState(0);
@@ -482,6 +486,7 @@ export default function PlayerPage() {
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
   const [shopOpen, setShopOpen] = useState(false);
   const [shopPopupDismissed, setShopPopupDismissed] = useState(true);
+  const [shopActive, setShopActive] = useState(true);
   const [shopProductIndex, setShopProductIndex] = useState(0);
   const shopPopupTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [prerollUrl, setPrerollUrl] = useState<string | null>(null);
@@ -2104,7 +2109,7 @@ export default function PlayerPage() {
     return shopProducts.filter(p => !p.program_id || p.program_id === currentProg.id);
   }, [shopProducts, currentProg]);
 
-  const showShopIcon = currentShopProducts.length > 0;
+  const showShopIcon = shopActive && currentShopProducts.length > 0;
   // playerHomePath is now defined earlier in the component
   const userDisplayName = profileName || user?.email?.split("@")[0] || "Visitante";
 
@@ -2118,9 +2123,9 @@ export default function PlayerPage() {
       { icon: Home, label: "Home", key: "home", action: handleHomeClick },
       { icon: Radio, label: "Streaming", key: "streaming", action: () => {} },
       { icon: Film, label: "Conteúdo", key: "content", action: () => {} },
-      ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => setShopOpen((o: boolean) => !o) }] : []),
+      ...(user && shopActive ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => setShopOpen((o: boolean) => !o) }] : []),
     ];
-  }, [handleHomeClick, user, is991Channel]);
+  }, [handleHomeClick, user, is991Channel, shopActive]);
 
   if (loading) {
     return (
@@ -2567,6 +2572,7 @@ export default function PlayerPage() {
             </button>
 
             {/* Shop */}
+            {shopActive && (
             <button
               onClick={() => setShopOpen(!shopOpen)}
               className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl relative hover:scale-105"
@@ -2579,6 +2585,7 @@ export default function PlayerPage() {
               <ShoppingCart size={15} className={shopOpen ? "text-player-accent" : "text-white/80"} />
               {showShopIcon && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse bg-player-accent" />}
             </button>
+            )}
 
             {/* Chat */}
             <button

@@ -1,0 +1,1 @@
+ALTER TABLE public.user_settings ADD COLUMN shopping_active boolean NOT NULL DEFAULT true;
