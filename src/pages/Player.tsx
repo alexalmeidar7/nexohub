@@ -2097,18 +2097,25 @@ export default function PlayerPage() {
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
 
-      {/* Dynamic background: program thumb (no blur) > gradient */}
+      {/* Dynamic background: program thumb with accent tint > gradient */}
       {(() => {
         const bgThumb = currentProg?.thumb || currentProg?.capa;
         if (bgThumb) {
           return (
-            <img
-              key={bgThumb}
-              src={bgThumb}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
-              style={{ opacity: 0.95, zIndex: 0 }}
-            />
+            <>
+              <img
+                key={bgThumb}
+                src={bgThumb}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
+                style={{ opacity: 0.95, zIndex: 0 }}
+              />
+              {/* Accent color tint overlay */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: "hsla(var(--player-accent) / 0.25)", zIndex: 0, mixBlendMode: "multiply" }}
+              />
+            </>
           );
         }
         return (
