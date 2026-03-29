@@ -2699,8 +2699,8 @@ export default function PlayerPage() {
                   }
                   return (
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>{fmtTime(musicElapsed)}</span>
-                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>{fmtTime(musicTotal)}</span>
+                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "color-mix(in srgb, var(--player-watch-music-text, #ffffff) 60%, transparent)" }}>{fmtTime(musicElapsed)}</span>
+                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "color-mix(in srgb, var(--player-watch-music-text, #ffffff) 60%, transparent)" }}>{fmtTime(musicTotal)}</span>
                     </div>
                   );
                 })()}
