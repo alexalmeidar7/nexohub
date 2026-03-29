@@ -95,6 +95,12 @@ export interface PlayerColors {
   // Audio Channel Settings
   liveAudioBgMode: string; // "thumb" | "cover" | "gradient"
   spectrumColor: string;
+  liveAudioGradientColor1: string;
+  liveAudioGradientColor2: string;
+  liveAudioGradientType: string; // "linear" | "radial"
+  liveAudioGradientPosition: string;
+  liveAudioGradientAngle: number;
+  liveAudioGradientMidpoint: number;
   // Watch / Player Controls
   watchTopBarBg: string;
   watchTopBarText: string;
@@ -149,6 +155,12 @@ export const defaultPlayerColors: PlayerColors = {
   liveControlIcon: "#999999",
   liveAudioBgMode: "cover",
   spectrumColor: "#dc2626",
+  liveAudioGradientColor1: "#dc2626",
+  liveAudioGradientColor2: "#000000",
+  liveAudioGradientType: "radial",
+  liveAudioGradientPosition: "bottom",
+  liveAudioGradientAngle: 135,
+  liveAudioGradientMidpoint: 62,
   watchTopBarBg: "#000000cc",
   watchTopBarText: "#ffffff",
   watchTopBarAccent: "#dc2626",
@@ -205,28 +217,7 @@ const screenColorKeys: Record<ScreenTab, { key: keyof PlayerColors; label: strin
     { key: "homeBadgeText", label: "Texto Badge" },
     { key: "homeBannerOverlay", label: "Overlay Banner" },
   ],
-  live: [
-    { key: "liveBg", label: "Fundo" },
-    { key: "liveCardBg", label: "Card" },
-    { key: "liveCardText", label: "Texto Card" },
-    { key: "liveCardBorder", label: "Borda Card" },
-    { key: "liveAccent", label: "Destaque" },
-    { key: "liveBadgeBg", label: "Badge" },
-    { key: "liveBadgeText", label: "Texto Badge" },
-    { key: "liveControlBg", label: "Controles" },
-    { key: "liveControlText", label: "Texto Controles" },
-    { key: "liveControlIcon", label: "Ícones" },
-    { key: "spectrumColor", label: "Cor do Espectro" },
-    { key: "watchTopBarBg", label: "Barra Topo" },
-    { key: "watchTopBarText", label: "Texto Barra Topo" },
-    { key: "watchTopBarAccent", label: "Destaque Barra Topo" },
-    { key: "watchBottomBarBg", label: "Barra Inferior" },
-    { key: "watchBottomBarText", label: "Texto Barra Inferior" },
-    { key: "watchScrubber", label: "Scrubber" },
-    { key: "watchMusicBg", label: "Fundo Música" },
-    { key: "watchMusicText", label: "Texto Música" },
-    { key: "watchMusicAccent", label: "Destaque Música" },
-  ],
+  live: [],
   catalog: [
     { key: "catalogBg", label: "Fundo" },
     { key: "catalogText", label: "Texto" },
@@ -751,7 +742,7 @@ export default function PlayerLayoutCustomizer() {
           {/* Background type */}
           <BgConfigEditor
             config={bgConfigs[activeTab]}
-            solidColor={colors[screenBgColorKey[activeTab]]}
+            solidColor={String(colors[screenBgColorKey[activeTab]])}
             onChange={(cfg) => updateBgConfig(activeTab, cfg)}
           />
 
@@ -780,8 +771,90 @@ export default function PlayerLayoutCustomizer() {
                   </button>
                 ))}
               </div>
+
+              {/* Gradient config when Degradê is selected */}
+              {colors.liveAudioBgMode === "gradient" && (
+                <div className="space-y-3 mt-2">
+                  {/* Gradient type */}
+                  <div className="flex gap-1.5">
+                    {(["linear", "radial"] as const).map(gt => (
+                      <button key={gt} onClick={() => updateColor("liveAudioGradientType", gt)}
+                        className="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all"
+                        style={{
+                          backgroundColor: colors.liveAudioGradientType === gt ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                          color: colors.liveAudioGradientType === gt ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                        }}>
+                        {gt === "linear" ? "Linear" : "Circular (Radial)"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Cor 1 / Cor 2 */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <PColorInput label="Cor 1" value={String(colors.liveAudioGradientColor1)} onChange={(v) => updateColor("liveAudioGradientColor1", v)} />
+                    <PColorInput label="Cor 2" value={String(colors.liveAudioGradientColor2)} onChange={(v) => updateColor("liveAudioGradientColor2", v)} />
+                  </div>
+
+                  {/* Midpoint */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                      Aproximação: {colors.liveAudioGradientMidpoint ?? 62}%
+                    </span>
+                    <Slider
+                      value={[Number(colors.liveAudioGradientMidpoint) || 62]}
+                      onValueChange={([v]) => { setColors(prev => ({ ...prev, liveAudioGradientMidpoint: v })); setHasChanges(true); }}
+                      min={10} max={100} step={1} className="w-full"
+                    />
+                  </div>
+
+                  {/* Position / Angle */}
+                  {colors.liveAudioGradientType === "linear" ? (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Ângulo: {colors.liveAudioGradientAngle}°</span>
+                      <div className="flex flex-wrap gap-1">
+                        {[0, 45, 90, 135, 180, 225, 270, 315].map(a => (
+                          <button key={a} onClick={() => { setColors(prev => ({ ...prev, liveAudioGradientAngle: a })); setHasChanges(true); }}
+                            className="w-8 h-8 rounded-lg text-[9px] font-bold transition-all"
+                            style={{
+                              backgroundColor: Number(colors.liveAudioGradientAngle) === a ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                              color: Number(colors.liveAudioGradientAngle) === a ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                            }}>
+                            {a}°
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Posição do centro</span>
+                      <div className="grid grid-cols-3 gap-1 w-fit">
+                        {(["top-left", "top", "top-right", "left", "center", "right", "bottom-left", "bottom", "bottom-right"] as GradientPosition[]).map(p => (
+                          <button key={p} onClick={() => updateColor("liveAudioGradientPosition", p)}
+                            className="w-8 h-8 rounded-lg text-[8px] font-bold transition-all flex items-center justify-center"
+                            style={{
+                              backgroundColor: colors.liveAudioGradientPosition === p ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                              color: colors.liveAudioGradientPosition === p ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                            }}>
+                            {positionLabels[p].split(" ")[0]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Preview strip */}
+                  <div className="h-6 rounded-lg" style={(() => {
+                    const mid = Number(colors.liveAudioGradientMidpoint) || 62;
+                    const c1 = String(colors.liveAudioGradientColor1);
+                    const c2 = String(colors.liveAudioGradientColor2);
+                    if (colors.liveAudioGradientType === "linear") return { background: `linear-gradient(${colors.liveAudioGradientAngle}deg, ${c1} 0%, ${c2} ${mid}%)` };
+                    return { background: `radial-gradient(ellipse ${positionToCSS[colors.liveAudioGradientPosition as GradientPosition] || "at bottom center"}, ${c1} 0%, ${c2} ${mid}%)` };
+                  })()} />
+                </div>
+              )}
             </div>
           )}
+
           {/* Color pickers */}
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -790,11 +863,80 @@ export default function PlayerLayoutCustomizer() {
                 Cores — {screenTabs.find(t => t.key === activeTab)?.label}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              {screenColorKeys[activeTab].map(({ key, label }) => (
-                <PColorInput key={key} label={label} value={colors[key]} onChange={(v) => updateColor(key, v)} />
-              ))}
-            </div>
+
+            {activeTab === "live" ? (
+              <div className="space-y-4">
+                {/* Group: Cores — Ao Vivo */}
+                <div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider mb-2 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Geral</span>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {([
+                      { key: "liveBg" as const, label: "Fundo" },
+                      { key: "liveCardBg" as const, label: "Card" },
+                      { key: "liveCardText" as const, label: "Texto Card" },
+                      { key: "liveCardBorder" as const, label: "Borda Card" },
+                      { key: "liveAccent" as const, label: "Destaque" },
+                      { key: "liveBadgeBg" as const, label: "Badge" },
+                      { key: "liveBadgeText" as const, label: "Texto Badge" },
+                      { key: "liveControlBg" as const, label: "Controles" },
+                      { key: "liveControlText" as const, label: "Texto Controles" },
+                      { key: "liveControlIcon" as const, label: "Ícones" },
+                      { key: "spectrumColor" as const, label: "Cor do Espectro" },
+                    ]).map(({ key, label }) => (
+                      <PColorInput key={key} label={label} value={String(colors[key])} onChange={(v) => updateColor(key, v)} />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Group: Barra Topo */}
+                <div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider mb-2 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Barra Superior</span>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {([
+                      { key: "watchTopBarBg" as const, label: "Fundo" },
+                      { key: "watchTopBarText" as const, label: "Texto" },
+                      { key: "watchTopBarAccent" as const, label: "Destaque" },
+                    ]).map(({ key, label }) => (
+                      <PColorInput key={key} label={label} value={String(colors[key])} onChange={(v) => updateColor(key, v)} />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Group: Barra Inferior */}
+                <div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider mb-2 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Barra Inferior</span>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {([
+                      { key: "watchBottomBarBg" as const, label: "Fundo" },
+                      { key: "watchBottomBarText" as const, label: "Texto" },
+                      { key: "watchScrubber" as const, label: "Scrubber" },
+                    ]).map(({ key, label }) => (
+                      <PColorInput key={key} label={label} value={String(colors[key])} onChange={(v) => updateColor(key, v)} />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Group: Card Música */}
+                <div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider mb-2 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Card Música</span>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {([
+                      { key: "watchMusicBg" as const, label: "Fundo" },
+                      { key: "watchMusicText" as const, label: "Texto" },
+                      { key: "watchMusicAccent" as const, label: "Destaque" },
+                    ]).map(({ key, label }) => (
+                      <PColorInput key={key} label={label} value={String(colors[key])} onChange={(v) => updateColor(key, v)} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2.5">
+                {screenColorKeys[activeTab].map(({ key, label }) => (
+                  <PColorInput key={key} label={label} value={String(colors[key])} onChange={(v) => updateColor(key, v)} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -2158,6 +2158,19 @@ export default function PlayerPage() {
             </>
           );
         }
+        if (useGradientBg) {
+          const c1 = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-color1").trim() || "#dc2626";
+          const c2 = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-color2").trim() || "#000000";
+          const gType = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-type").trim() || "radial";
+          const gPos = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-position").trim() || "bottom";
+          const gAngle = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-angle").trim() || "135";
+          const gMid = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-midpoint").trim() || "62";
+          const posMap: Record<string, string> = { "top-left": "at top left", "top": "at top center", "top-right": "at top right", "left": "at center left", "center": "at center", "right": "at center right", "bottom-left": "at bottom left", "bottom": "at bottom center", "bottom-right": "at bottom right" };
+          const bg = gType === "linear"
+            ? `linear-gradient(${gAngle}deg, ${c1} 0%, ${c2} ${gMid}%)`
+            : `radial-gradient(ellipse ${posMap[gPos] || "at bottom center"}, ${c1} 0%, ${c2} ${gMid}%)`;
+          return <div className="absolute inset-0 pointer-events-none" style={{ background: bg, zIndex: 0 }} />;
+        }
         return (
           <div
             className="absolute inset-0 pointer-events-none"
