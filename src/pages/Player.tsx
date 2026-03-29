@@ -2109,7 +2109,7 @@ export default function PlayerPage() {
     return shopProducts.filter(p => !p.program_id || p.program_id === currentProg.id);
   }, [shopProducts, currentProg]);
 
-  const showShopIcon = currentShopProducts.length > 0;
+  const showShopIcon = shopActive && currentShopProducts.length > 0;
   // playerHomePath is now defined earlier in the component
   const userDisplayName = profileName || user?.email?.split("@")[0] || "Visitante";
 
