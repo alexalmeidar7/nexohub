@@ -539,6 +539,9 @@ export default function KaraokeOverlay({
 }
 
 function KaraokeLine({ text, progress, active, accentHsl, fontSize = 1.6 }: { text: string; progress: number; active: boolean; accentHsl: string; fontSize?: number }) {
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+  const mobileFactor = isMobile ? 0.65 : 1;
+  const effectiveSize = fontSize * mobileFactor;
   const words = text.split(/\s+/);
   const highlightedCount = active ? Math.ceil(words.length * progress) : 0;
   const ballIdx = active ? highlightedCount : -1;
