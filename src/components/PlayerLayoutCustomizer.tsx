@@ -275,9 +275,9 @@ function LoadingMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   );
 }
 
-function LoginMockup({ c }: { c: PlayerColors }) {
+function LoginMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: c.loginBg }}>
+    <div className="absolute inset-0 flex items-center justify-center" style={buildBgStyle(c.loginBg, bg)}>
       <div className="w-[60%] max-w-[200px] rounded-2xl p-4 space-y-3" style={{ backgroundColor: c.loginCardBg, border: "1px solid rgba(255,255,255,0.08)" }}>
         <div className="w-10 h-10 mx-auto rounded-xl" style={{ background: `linear-gradient(135deg, ${c.loginButtonBg}, ${c.loginButtonBg}88)` }} />
         <p className="text-center text-[10px] font-bold" style={{ color: c.loginText }}>Bem-vindo</p>
