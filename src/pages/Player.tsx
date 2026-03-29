@@ -2462,9 +2462,9 @@ export default function PlayerPage() {
                 <button onClick={() => navigateChannel(1)} className="hover:opacity-100 transition-colors p-0.5" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.4))" }}><ChevronDown size={16} /></button>
               )}
             </div>
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-xl sm:text-2xl font-black tabular-nums" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))" }}>{canal?.numero_canal || "--"}</span>
-              <span className="text-base sm:text-lg font-bold truncate max-w-[180px]" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }}>{canal?.name || "Sem canal"}</span>
+            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+              <span key={`chnum-${channelAnimKey}`} className="text-xl sm:text-2xl font-black tabular-nums" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))", animation: `playerSlide${channelNavDir > 0 ? "Up" : "Down"} 0.35s ease-out` }}>{canal?.numero_canal || "--"}</span>
+              <span key={`chname-${channelAnimKey}`} className="text-base sm:text-lg font-bold truncate max-w-[180px]" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))", animation: `playerSlide${channelNavDir > 0 ? "Up" : "Down"} 0.35s ease-out 0.05s both` }}>{canal?.name || "Sem canal"}</span>
             </div>
           </div>
 
