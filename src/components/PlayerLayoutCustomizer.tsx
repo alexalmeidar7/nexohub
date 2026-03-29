@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Slider } from "@/components/ui/slider";
 import { Palette, Save, RotateCcw, Loader2, Monitor, Play, Home, Tv, Film, LogIn, Image, Paintbrush } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +18,7 @@ export interface ScreenBgConfig {
   gradientColor2: string;
   gradientPosition: GradientPosition;
   gradientAngle: number; // for linear
+  gradientMidpoint: number; // 0-100, where color transition happens
 }
 
 export const defaultScreenBg: ScreenBgConfig = {
@@ -27,6 +29,7 @@ export const defaultScreenBg: ScreenBgConfig = {
   gradientColor2: "#1a1a1a",
   gradientPosition: "center",
   gradientAngle: 135,
+  gradientMidpoint: 50,
 };
 
 export type ScreenBgConfigs = Record<ScreenTab, ScreenBgConfig>;
@@ -47,8 +50,9 @@ export function buildBgStyle(solidColor: string, bgCfg?: ScreenBgConfig): React.
   if (!bgCfg || bgCfg.bgType === "solid") return { backgroundColor: solidColor };
   if (bgCfg.bgType === "image" && bgCfg.bgImage) return { backgroundImage: `url(${bgCfg.bgImage})`, backgroundSize: "cover", backgroundPosition: "center" };
   if (bgCfg.bgType === "gradient") {
-    if (bgCfg.gradientType === "linear") return { background: `linear-gradient(${bgCfg.gradientAngle}deg, ${bgCfg.gradientColor1}, ${bgCfg.gradientColor2})` };
-    return { background: `radial-gradient(ellipse ${positionToCSS[bgCfg.gradientPosition]}, ${bgCfg.gradientColor1}, ${bgCfg.gradientColor2})` };
+    const mid = bgCfg.gradientMidpoint ?? 50;
+    if (bgCfg.gradientType === "linear") return { background: `linear-gradient(${bgCfg.gradientAngle}deg, ${bgCfg.gradientColor1} 0%, ${bgCfg.gradientColor2} ${mid}%)` };
+    return { background: `radial-gradient(ellipse ${positionToCSS[bgCfg.gradientPosition]}, ${bgCfg.gradientColor1} 0%, ${bgCfg.gradientColor2} ${mid}%)` };
   }
   return { backgroundColor: solidColor };
 }
@@ -467,6 +471,21 @@ function BgConfigEditor({ config, onChange, solidColor }: { config: ScreenBgConf
           <div className="grid grid-cols-2 gap-2">
             <PColorInput label="Cor 1" value={config.gradientColor1} onChange={(v) => onChange({ ...config, gradientColor1: v })} />
             <PColorInput label="Cor 2" value={config.gradientColor2} onChange={(v) => onChange({ ...config, gradientColor2: v })} />
+          </div>
+
+          {/* Midpoint slider */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Aproximação: {config.gradientMidpoint ?? 50}%
+            </span>
+            <Slider
+              value={[config.gradientMidpoint ?? 50]}
+              onValueChange={([v]) => onChange({ ...config, gradientMidpoint: v })}
+              min={10}
+              max={100}
+              step={1}
+              className="w-full"
+            />
           </div>
 
           {/* Position / Angle */}
