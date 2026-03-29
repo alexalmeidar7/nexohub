@@ -737,7 +737,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             {addStep !== "choose" && (
               <button
                 onClick={() => setAddStep("choose")}
-                className="mt-3 text-xs text-white/40 hover:text-white/70 transition-colors"
+                className="mt-3 px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all hover:scale-105"
+                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "rgba(255,255,255,0.8)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
               >
                 ← Voltar
               </button>
