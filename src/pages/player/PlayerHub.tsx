@@ -64,12 +64,6 @@ export default function PlayerHub() {
     setSplashDone(true);
   }, []);
 
-  useEffect(() => {
-    if (!splashDone || loading) return;
-    const target: Step = user ? "welcome" : "access";
-    transitionTo(target);
-  }, [splashDone, loading, user, transitionTo]);
-
   const transitionTo = useCallback((target: Step) => {
     setFadeOut(true);
     setPendingStep(target);
@@ -79,6 +73,12 @@ export default function PlayerHub() {
       setPendingStep(null);
     }, 500);
   }, []);
+
+  useEffect(() => {
+    if (!splashDone || loading) return;
+    const target: Step = user ? "welcome" : "access";
+    transitionTo(target);
+  }, [splashDone, loading, user, transitionTo]);
 
   const onLoginSuccess = useCallback(() => {
     transitionTo("welcome");
