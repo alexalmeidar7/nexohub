@@ -87,14 +87,14 @@ export default function PlayerSidebar({
         <div ref={profileRef} className="relative flex flex-col items-center mb-2">
           <button
             onClick={() => setProfileOpen(v => !v)}
-            className="w-9 h-9 rounded-full bg-player-surface/30 flex items-center justify-center overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-110 focus-visible:outline-none"
+            className="w-9 h-9 rounded-full bg-player-accent flex items-center justify-center overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-110 focus-visible:outline-none"
           >
             {loading ? (
               <Skeleton className="w-full h-full rounded-full bg-white/10" />
             ) : avatarUrl ? (
-              <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+              <img src={avatarUrl} alt={userName} className="w-full h-full object-contain" />
             ) : (
-              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-contain" />
             )}
           </button>
 
@@ -115,11 +115,11 @@ export default function PlayerSidebar({
               >
                 {/* Header */}
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full overflow-hidden shrink-0" style={{ border: "2px solid rgba(255,255,255,0.15)" }}>
+                  <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 bg-player-accent" style={{ border: "2px solid rgba(255,255,255,0.15)" }}>
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+                      <img src={avatarUrl} alt={userName} className="w-full h-full object-contain" />
                     ) : (
-                      <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+                      <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-contain" />
                     )}
                   </div>
                   <div className="flex flex-col min-w-0">
