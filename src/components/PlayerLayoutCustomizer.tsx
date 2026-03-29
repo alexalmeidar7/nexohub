@@ -755,6 +755,33 @@ export default function PlayerLayoutCustomizer() {
             onChange={(cfg) => updateBgConfig(activeTab, cfg)}
           />
 
+          {/* Audio channel background mode — only on live tab */}
+          {activeTab === "live" && (
+            <div className="space-y-3 p-3 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                Fundo do Canal de Áudio
+              </span>
+              <div className="flex gap-1.5">
+                {([
+                  { value: "thumb", label: "Thumb Programa", icon: <Image size={12} /> },
+                  { value: "cover", label: "Capa da Música", icon: <Music size={12} /> },
+                  { value: "gradient", label: "Degradê", icon: <Palette size={12} /> },
+                ] as { value: string; label: string; icon: React.ReactNode }[]).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => updateColor("liveAudioBgMode", opt.value)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all"
+                    style={{
+                      backgroundColor: colors.liveAudioBgMode === opt.value ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                      color: colors.liveAudioBgMode === opt.value ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                    }}
+                  >
+                    {opt.icon} {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Color pickers */}
           <div>
             <div className="flex items-center gap-2 mb-3">
