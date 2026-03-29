@@ -618,8 +618,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <h3 className="font-bold text-base" style={{ color: "var(--layout-nav-text, #fff)" }}>
                 {addStep === "choose" ? "O que deseja adicionar?" : addStep === "link" ? "Escolha um atalho" : "Escolha um widget"}
               </h3>
-              <button onClick={() => { setShowAddDialog(false); setAddStep("choose"); }} className="hover:opacity-70" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>
-                <X size={18} />
+              <button onClick={() => { setShowAddDialog(false); setAddStep("choose"); }} className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.18)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}>
+                <X size={14} style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }} />
               </button>
             </div>
 
