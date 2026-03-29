@@ -264,9 +264,9 @@ function MockupFrame({ children, label }: { children: React.ReactNode; label: st
   );
 }
 
-function LoadingMockup({ c }: { c: PlayerColors }) {
+function LoadingMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={{ backgroundColor: c.loadingBg }}>
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={buildBgStyle(c.loadingBg, bg)}>
       <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: c.loadingSpinner + "22" }}>
         <div className="w-8 h-8 rounded-full border-3 animate-spin" style={{ borderColor: c.loadingSpinner + "33", borderTopColor: c.loadingSpinner }} />
       </div>
