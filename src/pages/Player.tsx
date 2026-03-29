@@ -2107,7 +2107,7 @@ export default function PlayerPage() {
       {/* Dynamic background: program thumb with accent tint > gradient, positioned below top bar */}
       {(() => {
         const bgThumb = currentProg?.thumb || currentProg?.capa;
-        const topOffset = (!isCatalog && !isYoutube && playing) ? "56px" : "0px";
+        const topOffset = (!isCatalog && !isYoutube && playing) ? "72px" : "0px";
         if (bgThumb) {
           return (
             <>
