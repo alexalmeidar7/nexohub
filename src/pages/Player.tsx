@@ -2945,8 +2945,8 @@ export default function PlayerPage() {
               <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg bg-white/10 flex items-center justify-center text-white text-sm sm:text-lg font-bold">{canal?.numero_canal || "?"}</div>
             )}
             <div className="flex-1 min-w-0 sm:hidden">
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>No Ar:</span>
-              <MarqueeText className="text-white text-sm font-bold leading-tight" text={channelLabel} />
+               <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>No Ar:</span>
+               <MarqueeText className="text-sm font-bold leading-tight" text={channelLabel} />
             </div>
           </div>
 
