@@ -2123,7 +2123,7 @@ export default function PlayerPage() {
       { icon: Home, label: "Home", key: "home", action: handleHomeClick },
       { icon: Radio, label: "Streaming", key: "streaming", action: () => {} },
       { icon: Film, label: "Conteúdo", key: "content", action: () => {} },
-      ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => setShopOpen((o: boolean) => !o) }] : []),
+      ...(user && shopActive ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => setShopOpen((o: boolean) => !o) }] : []),
     ];
   }, [handleHomeClick, user, is991Channel]);
 
