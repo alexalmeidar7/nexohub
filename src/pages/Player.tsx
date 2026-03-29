@@ -369,7 +369,22 @@ export default function PlayerPage() {
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
 
-  // Fetch profile
+  // Spectrum style preference
+  const [spectrumStyle, setSpectrumStyle] = useState<import("@/components/AudioSpectrum").SpectrumStyle>(() => {
+    try { return (localStorage.getItem("nexo_spectrum_style") as any) || "bars"; } catch { return "bars"; }
+  });
+  const handleSpectrumStyleChange = useCallback((s: import("@/components/AudioSpectrum").SpectrumStyle) => {
+    setSpectrumStyle(s);
+    localStorage.setItem("nexo_spectrum_style", s);
+    // Persist to user_settings if logged in
+    if (user) {
+      supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+        const items = (data?.dashboard_items as any) || {};
+        supabase.from("user_settings").upsert({ user_id: user.id, dashboard_items: { ...items, spectrum_style: s } }, { onConflict: "user_id" }).then(() => {});
+      });
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
     supabase
@@ -383,7 +398,19 @@ export default function PlayerPage() {
       });
   }, [user]);
 
-  // YouTube video progress tracking
+  // Load spectrum style preference from user_settings
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      const items = (data?.dashboard_items as any) || {};
+      if (items.spectrum_style) {
+        setSpectrumStyle(items.spectrum_style);
+        localStorage.setItem("nexo_spectrum_style", items.spectrum_style);
+      }
+    });
+  }, [user]);
+
+
   const [ytCurrentTime, setYtCurrentTime] = useState(0);
   const [ytDuration, setYtDuration] = useState(0);
   const gradeScrollRef = useRef<HTMLDivElement>(null);
@@ -2360,6 +2387,8 @@ export default function PlayerPage() {
             whatsappPhone={whatsappPhone}
             onOpenChat={() => setChatOpen(true)}
             userId={user?.id || publicUserId}
+            spectrumStyle={spectrumStyle}
+            onSpectrumStyleChange={handleSpectrumStyleChange}
           />
         </Suspense>
       )}

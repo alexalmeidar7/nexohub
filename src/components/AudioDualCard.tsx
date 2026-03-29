@@ -2,6 +2,7 @@ import { Heart, Mic, Plus, Instagram, MessageCircle, X, Music } from "lucide-rea
 import { lazy, Suspense, useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { SpectrumStyle } from "@/components/AudioSpectrum";
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 
 // WhatsApp icon as inline SVG (lucide doesn't have it)
@@ -28,6 +29,8 @@ interface AudioDualCardProps {
   whatsappPhone?: string | null;
   onOpenChat?: () => void;
   userId?: string | null;
+  spectrumStyle?: SpectrumStyle;
+  onSpectrumStyleChange?: (style: SpectrumStyle) => void;
 }
 
 interface MusicaTocada {
@@ -53,6 +56,8 @@ export default function AudioDualCard({
   whatsappPhone,
   onOpenChat,
   userId,
+  spectrumStyle = "bars",
+  onSpectrumStyleChange,
 }: AudioDualCardProps) {
   const isMobile = useIsMobile();
   const isSemTitulo = !musicTitle || musicTitle === "Sem título";
@@ -371,7 +376,7 @@ export default function AudioDualCard({
               <Suspense fallback={null}>
                 <div className="absolute inset-0 z-[2]">
                   <div className="relative w-full h-full">
-                    <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" />
+                    <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" style={spectrumStyle} showConfig onStyleChange={onSpectrumStyleChange} />
                   </div>
                 </div>
               </Suspense>
@@ -383,7 +388,7 @@ export default function AudioDualCard({
                   <Suspense fallback={null}>
                     <div className="absolute inset-0 z-[2]">
                       <div className="relative w-full h-full">
-                        <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" />
+                        <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" style={spectrumStyle} showConfig onStyleChange={onSpectrumStyleChange} />
                       </div>
                     </div>
                   </Suspense>
@@ -401,7 +406,7 @@ export default function AudioDualCard({
                   <Suspense fallback={null}>
                     <div className="absolute inset-0 z-[2]">
                       <div className="relative w-full h-full">
-                        <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" />
+                        <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" style={spectrumStyle} showConfig onStyleChange={onSpectrumStyleChange} />
                       </div>
                     </div>
                   </Suspense>
@@ -411,7 +416,7 @@ export default function AudioDualCard({
                   <Suspense fallback={null}>
                     <div className="absolute inset-x-0 bottom-0 z-[2]" style={{ height: "60%" }}>
                       <div className="relative w-full h-full">
-                        <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" />
+                        <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" style={spectrumStyle} showConfig onStyleChange={onSpectrumStyleChange} />
                       </div>
                     </div>
                   </Suspense>
