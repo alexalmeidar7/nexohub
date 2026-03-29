@@ -544,25 +544,25 @@ function KaraokeLine({ text, progress, active, accentHsl, fontSize = 1.6 }: { te
   const ballIdx = active ? highlightedCount : -1;
 
   return (
-    <p className="text-center leading-relaxed transition-all duration-300 relative" style={{ fontSize: active ? `${fontSize}rem` : `${fontSize * 0.75}rem` }}>
+    <p className="text-center leading-snug transition-all duration-300 relative" style={{ fontSize: active ? `${fontSize}rem` : `${fontSize * 0.7}rem`, letterSpacing: "-0.01em" }}>
       {words.map((word, i) => {
         const isHighlighted = i < highlightedCount;
         const isBallWord = i === ballIdx && active;
         return (
           <span
             key={i}
-            className="inline-block mx-1 transition-all duration-200 relative"
+            className="inline-block mx-[3px] transition-all duration-200 relative"
             style={{
               color: active
                 ? isHighlighted
                   ? "#ffffff"
-                  : "rgba(255,255,255,0.35)"
-                : "rgba(255,255,255,0.25)",
+                  : "rgba(255,255,255,0.4)"
+                : "rgba(255,255,255,0.3)",
               textShadow: isHighlighted
-                ? `0 0 20px hsl(${accentHsl} / 0.8), 0 0 40px hsl(${accentHsl} / 0.4)`
-                : "none",
-              transform: isHighlighted ? "scale(1.05)" : "scale(1)",
-              fontWeight: active ? 700 : 500,
+                ? `0 1px 3px rgba(0,0,0,0.8), 0 0 20px hsl(${accentHsl} / 0.7), 0 0 40px hsl(${accentHsl} / 0.3)`
+                : active ? "0 1px 4px rgba(0,0,0,0.7)" : "0 1px 3px rgba(0,0,0,0.5)",
+              transform: isHighlighted ? "scale(1.04)" : "scale(1)",
+              fontWeight: active ? 800 : 500,
             }}
           >
             {/* Bouncing ball */}
