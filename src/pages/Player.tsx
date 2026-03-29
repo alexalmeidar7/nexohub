@@ -2137,8 +2137,10 @@ export default function PlayerPage() {
 
       {/* Dynamic background: program thumb fills entire screen */}
       {(() => {
+        const audioBgMode = getComputedStyle(document.documentElement).getPropertyValue("--player-live-audio-bg-mode").trim() || "cover";
+        const useGradientBg = isAudio && audioBgMode === "gradient";
         const bgThumb = currentProg?.thumb || currentProg?.capa;
-        if (bgThumb) {
+        if (!useGradientBg && bgThumb) {
           return (
             <>
               <img
