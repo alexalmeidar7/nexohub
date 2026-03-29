@@ -2383,7 +2383,7 @@ export default function PlayerPage() {
 
       {/* Top Header Bar — always visible for live channels */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
-        <div className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
+        <div className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3 animate-fade-in" style={{ backgroundColor: "rgba(0,0,0,0.85)", animation: "slideDownIn 0.5s ease-out" }}>
           {/* Home + Channel nav + name */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 pr-4 sm:pr-6 border-r border-white/10">
             <button
@@ -2921,6 +2921,10 @@ export default function PlayerPage() {
 
       {/* Floating heart animation keyframes */}
       <style>{`
+        @keyframes slideDownIn {
+          0% { opacity: 0; transform: translateY(-100%); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
         @keyframes floatHeart {
           0% { opacity: 1; transform: translateY(0) scale(1); }
           100% { opacity: 0; transform: translateY(-60px) scale(0.5); }
