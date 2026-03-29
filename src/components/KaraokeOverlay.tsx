@@ -477,7 +477,7 @@ export default function KaraokeOverlay({
         }}
       >
         {/* Lyrics — no background */}
-        <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-1.5 px-6 py-3 pointer-events-auto cursor-default rounded-2xl"
+        <div className="w-[94vw] sm:w-[90vw] max-w-[700px] flex flex-col items-center gap-1 sm:gap-1.5 px-3 sm:px-6 py-2 sm:py-3 pointer-events-auto cursor-default rounded-2xl"
           style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 70%, transparent 100%)" }}>
           {loading && (
             <span className="text-white/50 text-xs animate-pulse">Buscando letra...</span>
