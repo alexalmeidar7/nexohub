@@ -160,6 +160,18 @@ export default function ShoppingPage() {
             <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Shopping</h3>
             <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie produtos exibidos na vitrine do player</p>
           </div>
+          <button
+            onClick={toggleShopActive}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+            style={{
+              backgroundColor: shopActive ? "color-mix(in srgb, var(--layout-accent, #e1f532) 20%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+              color: shopActive ? "var(--layout-accent, #e1f532)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
+              border: `1px solid ${shopActive ? "color-mix(in srgb, var(--layout-accent, #e1f532) 40%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}`,
+            }}
+          >
+            <span className={`w-2 h-2 rounded-full ${shopActive ? "bg-green-500" : "bg-red-500"}`} />
+            {shopActive ? "Ativo" : "Inativo"}
+          </button>
         </div>
 
         {/* Form */}

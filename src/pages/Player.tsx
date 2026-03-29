@@ -482,6 +482,7 @@ export default function PlayerPage() {
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
   const [shopOpen, setShopOpen] = useState(false);
   const [shopPopupDismissed, setShopPopupDismissed] = useState(true);
+  const [shopActive, setShopActive] = useState(true);
   const [shopProductIndex, setShopProductIndex] = useState(0);
   const shopPopupTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [prerollUrl, setPrerollUrl] = useState<string | null>(null);
