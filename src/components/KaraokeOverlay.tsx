@@ -124,6 +124,7 @@ export default function KaraokeOverlay({
   const [error, setError] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [exitAnim, setExitAnim] = useState(false);
+  const [songEnded, setSongEnded] = useState(false);
   const [speedOffset, setSpeedOffset] = useState(() => {
     const saved = localStorage.getItem(SPEED_OFFSET_KEY);
     const parsed = saved ? parseFloat(saved) : NaN;
