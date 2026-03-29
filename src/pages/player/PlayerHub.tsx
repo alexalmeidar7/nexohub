@@ -66,12 +66,9 @@ export default function PlayerHub() {
 
   useEffect(() => {
     if (!splashDone || loading) return;
-    if (user) {
-      setStep("welcome");
-    } else {
-      setStep("access");
-    }
-  }, [splashDone, loading, user]);
+    const target: Step = user ? "welcome" : "access";
+    transitionTo(target);
+  }, [splashDone, loading, user, transitionTo]);
 
   const transitionTo = useCallback((target: Step) => {
     setFadeOut(true);
