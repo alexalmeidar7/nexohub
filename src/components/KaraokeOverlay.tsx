@@ -547,7 +547,7 @@ function KaraokeLine({ text, progress, active, accentHsl, fontSize = 1.6 }: { te
   const ballIdx = active ? highlightedCount : -1;
 
   return (
-    <p className="text-center leading-snug transition-all duration-300 relative" style={{ fontSize: active ? `${fontSize}rem` : `${fontSize * 0.7}rem`, letterSpacing: "-0.01em" }}>
+    <p className="text-center leading-snug transition-all duration-300 relative" style={{ fontSize: active ? `${effectiveSize}rem` : `${effectiveSize * 0.7}rem`, letterSpacing: "-0.01em" }}>
       {words.map((word, i) => {
         const isHighlighted = i < highlightedCount;
         const isBallWord = i === ballIdx && active;
