@@ -2554,7 +2554,7 @@ export default function PlayerPage() {
               style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
               title={fullscreen ? "Sair tela cheia" : "Tela cheia"}
             >
-              {fullscreen ? <Minimize size={15} className="text-white/80" /> : <Maximize size={15} className="text-white/80" />}
+              {fullscreen ? <Minimize size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} /> : <Maximize size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} />}
             </button>
           </div>
         </div>
