@@ -423,6 +423,10 @@ export default function PlayerPage() {
   const ccRecognitionRef = useRef<any>(null);
   const ccIsListeningRef = useRef(false);
   const ccClearTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const [channelNavDir, setChannelNavDir] = useState<1 | -1>(1);
+  const [channelAnimKey, setChannelAnimKey] = useState(0);
+  const [musicAnimKey, setMusicAnimKey] = useState(0);
+  const prevMusicRef = useRef<string>("");
 
   const canal = canais[currentIndex] || null;
   const liveChannels = useMemo(
