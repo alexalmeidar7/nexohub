@@ -2412,11 +2412,11 @@ export default function PlayerPage() {
       {isAudio && playing && musicData?.capa && musicData.titulo !== "Sem título" && (
         <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
           <img
-            key={musicData.capa}
+            key={`cover-${musicAnimKey}`}
             src={musicData.capa}
             alt=""
-            className="w-48 h-48 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-2xl object-cover animate-fade-in"
-            style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 80px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.15)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px" }}
+            className="w-48 h-48 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-2xl object-cover"
+            style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 80px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.15)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px", animation: "playerCoverIn 0.5s ease-out" }}
           />
         </div>
       )}
