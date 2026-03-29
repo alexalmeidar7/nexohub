@@ -216,6 +216,7 @@ const screenColorKeys: Record<ScreenTab, { key: keyof PlayerColors; label: strin
     { key: "liveControlBg", label: "Controles" },
     { key: "liveControlText", label: "Texto Controles" },
     { key: "liveControlIcon", label: "Ícones" },
+    { key: "spectrumColor", label: "Cor do Espectro" },
     { key: "watchTopBarBg", label: "Barra Topo" },
     { key: "watchTopBarText", label: "Texto Barra Topo" },
     { key: "watchTopBarAccent", label: "Destaque Barra Topo" },
