@@ -2380,6 +2380,19 @@ export default function PlayerPage() {
         </Suspense>
       )}
 
+      {/* Floating album cover — centered on screen for audio/video channels */}
+      {(isAudio || isVideo) && playing && musicData?.capa && musicData.titulo !== "Sem título" && (
+        <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
+          <img
+            key={musicData.capa}
+            src={musicData.capa}
+            alt=""
+            className="w-48 h-48 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-2xl object-cover shadow-2xl animate-fade-in"
+            style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 80px rgba(0,0,0,0.3)" }}
+          />
+        </div>
+      )}
+
       {/* Top Header Bar — always visible for live channels */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
         <div className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3 animate-fade-in" style={{ backgroundColor: "rgba(0,0,0,0.85)", animation: "slideDownIn 0.5s ease-out" }}>
@@ -2571,10 +2584,6 @@ export default function PlayerPage() {
                 >
                   {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
                 </button>
-                {/* Music cover */}
-                {musicData?.capa && (
-                  <img src={musicData.capa} alt="" className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-cover shrink-0 shadow-lg" />
-                )}
                 {/* Music title + artist */}
                 <div className="flex flex-col min-w-0">
                   <span className="text-white text-sm sm:text-base font-bold leading-tight truncate max-w-[300px] sm:max-w-[450px]">
@@ -2652,13 +2661,24 @@ export default function PlayerPage() {
               void musicTick; // force re-render on tick
               let musicElapsed = 0;
               let musicTotal = musicData?.duracao || 0;
-              if (musicData?.horario && musicTotal > 0) {
-                const now = new Date();
-                const parts = musicData.horario.split(":").map(Number);
-                const startDate = new Date(now);
-                startDate.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
-                musicElapsed = Math.max(0, (now.getTime() - startDate.getTime()) / 1000);
-                if (musicElapsed > musicTotal) musicElapsed = musicTotal;
+              if (musicTotal > 0) {
+                // Try horario field first
+                if (musicData?.horario) {
+                  const now = new Date();
+                  const parts = musicData.horario.split(":").map(Number);
+                  const startDate = new Date(now);
+                  startDate.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+                  musicElapsed = Math.max(0, (now.getTime() - startDate.getTime()) / 1000);
+                  if (musicElapsed > musicTotal) musicElapsed = musicTotal;
+                }
+                // Fallback to localStorage start time
+                if (musicElapsed <= 0) {
+                  const startStr = localStorage.getItem("masterview_music_start");
+                  if (startStr) {
+                    musicElapsed = Math.max(0, (Date.now() - parseInt(startStr, 10)) / 1000);
+                    if (musicElapsed > musicTotal) musicElapsed = musicTotal;
+                  }
+                }
               }
               const musicPct = musicTotal > 0 ? Math.min(100, (musicElapsed / musicTotal) * 100) : 0;
 
