@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useParams, useSearchParams } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
+import { usePlayerColors } from "@/hooks/usePlayerColors";
 import SplashScreen from "./SplashScreen";
 import AccessScreen from "./AccessScreen";
 import WelcomeScreen from "./WelcomeScreen";
@@ -14,6 +15,7 @@ type Step = "splash" | "access" | "welcome" | "home";
 export default function PlayerHub() {
   usePageTitle("Player");
   useLayoutColors();
+  const { colors: playerColors, bgConfigs: playerBgConfigs } = usePlayerColors();
   const { user, loading } = useAuth();
   const { userSlug } = useParams();
   const [searchParams] = useSearchParams();
