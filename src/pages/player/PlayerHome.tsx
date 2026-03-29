@@ -1099,9 +1099,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   // Fetch profile
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("nome, avatar_url").eq("user_id", user.id).single().then(({ data }) => {
+    supabase.from("profiles").select("nome, avatar_url, email, cidade, estado").eq("user_id", user.id).single().then(({ data }) => {
       if (data?.nome) setProfileName(data.nome);
       setProfileAvatar(data?.avatar_url && data.avatar_url.trim() !== '' ? data.avatar_url : '/avatars/usr-default.png');
+      if (data?.email) setProfileEmail(data.email);
+      setProfileCity([data?.cidade, data?.estado].filter(Boolean).join(", "));
     });
   }, [user]);
 
