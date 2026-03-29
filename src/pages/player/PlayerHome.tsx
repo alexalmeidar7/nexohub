@@ -1481,8 +1481,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         {shopProducts.map((product: any) => (
                           <div
                             key={product.id}
-                            className="group rounded-xl overflow-hidden transition-all duration-300 hover:border-white/80"
-                            style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)", border: "1px solid rgba(255,255,255,0.08)" }}
+                            className="group rounded-xl overflow-hidden transition-all duration-300"
+                            style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
                           >
                             <div className="aspect-square overflow-hidden relative">
                               {product.image_url ? (
