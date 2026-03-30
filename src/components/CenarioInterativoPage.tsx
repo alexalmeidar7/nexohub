@@ -872,6 +872,16 @@ export default function CenarioInterativoPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 w-7 p-0 text-xs font-bold"
+                            style={{ borderColor: "var(--layout-border-color, #333)", color: textColor }}
+                            disabled={config.traffic.zoom <= 3}
+                            onClick={() => updateTraffic({ zoom: Math.max(3, config.traffic.zoom - 1) })}
+                          >
+                            −
+                          </Button>
                           <input
                             type="range"
                             min={3}
@@ -881,6 +891,16 @@ export default function CenarioInterativoPage() {
                             className="flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
                             style={{ accentColor: "var(--layout-accent-color, #e1f532)" }}
                           />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 w-7 p-0 text-xs font-bold"
+                            style={{ borderColor: "var(--layout-border-color, #333)", color: textColor }}
+                            disabled={config.traffic.zoom >= 18}
+                            onClick={() => updateTraffic({ zoom: Math.min(18, config.traffic.zoom + 1) })}
+                          >
+                            +
+                          </Button>
                           <span className="text-[10px] font-mono opacity-50" style={{ color: textColor }}>{config.traffic.zoom}x</span>
                         </div>
                       </div>
