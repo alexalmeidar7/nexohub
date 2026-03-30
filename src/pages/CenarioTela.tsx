@@ -4,6 +4,7 @@ import { WeatherIcon } from "@/components/WeatherIcons";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import TrafficMap from "@/components/TrafficMap";
 
 /* ─── types (mirrored from CenarioInterativoPage) ─── */
 interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3Days: boolean; showSatellite: boolean; city: string; bgImage: string; }
@@ -337,13 +338,13 @@ export default function CenarioTela() {
             />
           )}
 
-          {/* Traffic fullscreen */}
+          {/* Traffic (Leaflet) fullscreen */}
           {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
-            <div className="absolute inset-0 overflow-hidden" style={{ zIndex: 1 }}>
-              <iframe
-                src={`https://embed.waze.com/iframe?zoom=${config.traffic.zoom || 13}&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
-                className="absolute border-0" style={{ top: 0, left: 0, width: '100%', height: 'calc(100% + 80px)' }}
-                title="Trânsito"
+            <div className="absolute inset-0" style={{ zIndex: 1 }}>
+              <TrafficMap
+                lat={config.traffic.lat ?? trafficCoords.lat}
+                lon={config.traffic.lon ?? trafficCoords.lon}
+                zoom={config.traffic.zoom}
               />
             </div>
           )}
