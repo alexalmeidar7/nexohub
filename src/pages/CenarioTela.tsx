@@ -819,21 +819,23 @@ export default function CenarioTela() {
 
             </div>{/* end animated page wrapper */}
 
-          {/* Drawing canvas overlay */}
-          {drawingActive && (
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0"
-              style={{ zIndex: 40, cursor: "crosshair", touchAction: "none" }}
-              onMouseDown={handleDrawStart}
-              onMouseMove={handleDrawMove}
-              onMouseUp={handleDrawEnd}
-              onMouseLeave={handleDrawEnd}
-              onTouchStart={handleDrawStart}
-              onTouchMove={handleDrawMove}
-              onTouchEnd={handleDrawEnd}
-            />
-          )}
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0"
+            style={{
+              zIndex: 40,
+              cursor: drawingActive ? "crosshair" : "default",
+              touchAction: drawingActive ? "none" : "auto",
+              pointerEvents: drawingActive ? "auto" : "none",
+            }}
+            onMouseDown={handleDrawStart}
+            onMouseMove={handleDrawMove}
+            onMouseUp={handleDrawEnd}
+            onMouseLeave={handleDrawEnd}
+            onTouchStart={handleDrawStart}
+            onTouchMove={handleDrawMove}
+            onTouchEnd={handleDrawEnd}
+          />
 
           {/* Clear drawing button */}
           {hasDrawing && (
