@@ -161,8 +161,8 @@ export default function CenarioTela() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const pos = getCanvasPos(e, canvas);
-    ctx.strokeStyle = "#e1f532";
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = drawColor;
+    ctx.lineWidth = drawWidth;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.lineTo(pos.x, pos.y);
