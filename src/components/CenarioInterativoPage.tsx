@@ -354,6 +354,21 @@ export default function CenarioInterativoPage() {
           config: configRef.current,
         });
       }
+      if (ev.data?.type === "draw") {
+        const canvas = previewCanvasRef.current;
+        if (canvas) {
+          drawOnCanvas(canvas, ev.data.action, ev.data.px, ev.data.py, ev.data.color, ev.data.width);
+          if (ev.data.action === "move") setPreviewHasDrawing(true);
+        }
+      }
+      if (ev.data?.type === "draw-clear") {
+        const canvas = previewCanvasRef.current;
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+          setPreviewHasDrawing(false);
+        }
+      }
     };
     return () => { cenarioBcRef.current = null; bc.close(); };
   }, []);
