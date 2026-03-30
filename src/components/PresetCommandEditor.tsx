@@ -402,7 +402,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
           <button
             onClick={addCommand}
             className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.03]"
-            style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-icon-color, #888888)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)" }}
+            style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
           >
             <Plus size={12} />
             Adicionar Ação

@@ -212,12 +212,12 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     style={{
                       background: isOnAir
                         ? "var(--layout-header-bg, #1a1a1a)"
-                        : "color-mix(in srgb, var(--layout-accent-color, #444444) 8%, var(--layout-page-bg, #ffffff))",
+                        : "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #ffffff))",
                       verticalAlign: "top",
                       padding: "8px 10px",
                       borderLeft: isOnAir
-                        ? "3px solid var(--layout-accent-color, #444444)"
-                        : "3px solid color-mix(in srgb, var(--layout-accent-color, #444444) 25%, transparent)",
+                        ? "3px solid var(--layout-accent-color, #2563eb)"
+                        : "3px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
                       boxShadow: isOnAir ? "0 4px 16px rgba(0,0,0,0.15)" : undefined,
                     }}>
                     <div className="text-[12px] font-extrabold leading-snug" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", color: isOnAir ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)" }}>{prog.nome}</div>
@@ -665,7 +665,7 @@ export default function ProgramaForm() {
         {/* Form Header */}
         <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
-            <PlaySquare size={20} style={{ color: "var(--layout-accent-color, #444444)" }} />
+            <PlaySquare size={20} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
           </div>
           <div>
             <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
@@ -684,7 +684,7 @@ export default function ProgramaForm() {
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
                 className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
                 style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
               />
             </div>
@@ -704,7 +704,7 @@ export default function ProgramaForm() {
                 <Dialog open={tipoDialogOpen} onOpenChange={setTipoDialogOpen}>
                   <DialogTrigger asChild>
                     <button className="px-3 py-1 text-xs font-bold transition-all shrink-0 rounded-xl"
-                      style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                      style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
                     >+ Novo</button>
                   </DialogTrigger>
                   <DialogContent className="max-w-sm">
@@ -713,11 +713,11 @@ export default function ProgramaForm() {
                       <input value={newTipo} onChange={(e) => setNewTipo(e.target.value)} placeholder="Nome do tipo"
                         className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
                         style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
-                        onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                        onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                         onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                       />
                       <button onClick={addTipo} className="w-full py-2 font-bold transition-all rounded-xl"
-                        style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                        style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
                       >Adicionar</button>
                     </div>
                   </DialogContent>
@@ -789,7 +789,7 @@ export default function ProgramaForm() {
                     const ap = apresentadores.find(a => a.id === id);
                     if (!ap) return null;
                     return (
-                      <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                      <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
                         {ap.nome}
                         <button onClick={() => toggleApresentador(id)} className="hover:opacity-60">
                           <X size={10} />
@@ -808,7 +808,7 @@ export default function ProgramaForm() {
             <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
               className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
               style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-              onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+              onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
               onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; }}
             />
           </div>
@@ -881,7 +881,7 @@ export default function ProgramaForm() {
               <Dialog open={estudioDialogOpen} onOpenChange={setEstudioDialogOpen}>
                 <DialogTrigger asChild>
                   <button className="px-3 py-1 text-xs font-bold transition-all shrink-0 rounded-xl"
-                    style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                    style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
                   >+ Novo</button>
                 </DialogTrigger>
                 <DialogContent className="max-w-sm">
@@ -890,11 +890,11 @@ export default function ProgramaForm() {
                     <input value={newEstudio} onChange={(e) => setNewEstudio(e.target.value)} placeholder="Nome do estúdio"
                       className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
                       style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
-                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                       onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                     />
                     <button onClick={addEstudio} className="w-full py-2 font-bold transition-all rounded-xl"
-                      style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                      style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
                     >Adicionar</button>
                   </div>
                 </DialogContent>
@@ -930,7 +930,7 @@ export default function ProgramaForm() {
               <input type="time" step="1" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
                 className="w-full px-4 py-2 outline-none transition-all text-sm"
                 style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; }}
               />
             </div>
@@ -939,7 +939,7 @@ export default function ProgramaForm() {
               <input type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
                 className="w-full px-4 py-2 outline-none transition-all text-sm"
                 style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; }}
               />
             </div>
@@ -1016,9 +1016,9 @@ export default function ProgramaForm() {
             )}
             <button onClick={handleAdd} disabled={saving}
               className="px-6 py-2 text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50 rounded-xl"
-              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px color-mix(in srgb, var(--layout-accent-color, #444444) 50%, transparent)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)"; e.currentTarget.style.transform = "translateY(0)"; }}
+              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)" }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, transparent)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)"; e.currentTarget.style.transform = "translateY(0)"; }}
             >
               {saving && <Loader2 size={13} className="animate-spin" />}
               {saving ? "Salvando..." : editingId ? "Atualizar" : "Adicionar Programa"}
@@ -1087,7 +1087,7 @@ export default function ProgramaForm() {
             .grade-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
             .grade-scroll::-webkit-scrollbar-track { background: transparent; }
             .grade-scroll::-webkit-scrollbar-thumb { background: var(--layout-header-bg, #1a1a1a); border-radius: 3px; }
-            .grade-scroll::-webkit-scrollbar-thumb:hover { background: var(--layout-accent-color, #444444); }
+            .grade-scroll::-webkit-scrollbar-thumb:hover { background: var(--layout-accent-color, #2563eb); }
             .grade-scroll::-webkit-scrollbar-button { display: none; }
           `}</style>
           <div
@@ -1103,7 +1103,7 @@ export default function ProgramaForm() {
                     <th key={dia} className="px-2 py-2.5 text-center text-[10px] font-bold uppercase tracking-widest"
                       style={{
                         color: "var(--layout-header-text, #ffffff)",
-                        backgroundColor: dia === diaAtual ? "color-mix(in srgb, var(--layout-accent-color, #444444) 50%, var(--layout-header-bg, #1a1a1a))" : undefined,
+                        backgroundColor: dia === diaAtual ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, var(--layout-header-bg, #1a1a1a))" : undefined,
                       }}>
                       <div>{dia.slice(0, 3).toUpperCase()}</div>
                       <div className="text-[10px] font-semibold mt-0.5 opacity-70">{weekDates[dia]}</div>
@@ -1250,7 +1250,7 @@ export default function ProgramaForm() {
                         <button onClick={() => startEdit(p)} title="Editar"
                           className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
                           style={{ backgroundColor: "transparent" }}
-                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)"; }}
+                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)"; }}
                           onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
                         >
                           <Pencil size={14} style={{ color: "var(--layout-icon-color, #888888)" }} />
@@ -1286,7 +1286,7 @@ export default function ProgramaForm() {
           <div className="flex flex-col items-center justify-center animate-fade-in overflow-hidden"
             style={{ width: "450px", height: "165px", background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", borderRadius: "20px", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
             <div className="flex items-center gap-3 flex-1 justify-center" style={{ fontSize: "14px", color: "var(--layout-header-text, #ffffff)", fontWeight: 600 }}>
-              <CheckCircle size={22} style={{ color: "var(--layout-accent-color, #444444)" }} /> Salvo com sucesso!
+              <CheckCircle size={22} style={{ color: "var(--layout-accent-color, #2563eb)" }} /> Salvo com sucesso!
             </div>
             <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.1)" }}>
               <div style={{ height: "100%", background: "linear-gradient(90deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", animation: "shrinkBar 2s linear forwards" }} />

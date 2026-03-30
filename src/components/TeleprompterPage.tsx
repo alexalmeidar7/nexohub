@@ -121,9 +121,9 @@ export default function TeleprompterPage() {
           onClick={handleAdd}
           disabled={loading}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all"
-          style={{ backgroundColor: "var(--layout-accent-color, #444444)", color: "var(--layout-header-text, #ffffff)" }}
+          style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "var(--layout-header-text, #ffffff)" }}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--layout-accent-color, #444444)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--layout-accent-color, #2563eb)"; }}
         >
           <Plus size={14} /> {loading ? "Salvando..." : "Cadastrar TP"}
         </button>

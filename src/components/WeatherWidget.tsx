@@ -122,7 +122,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
         <button
           onClick={() => onNavigate?.("previsao")}
           className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold rounded-lg px-2 py-1 hover:opacity-80 transition-opacity"
-          style={{ color: "var(--layout-icon-color, #888888)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)" }}
+          style={{ color: "var(--layout-icon-color, #888888)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}
         >
           <Settings size={10} /> Configurar
         </button>
@@ -185,7 +185,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
       <button
         onClick={() => onNavigate?.("previsao")}
         className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold rounded-lg px-2 py-1 self-start hover:opacity-80 transition-opacity"
-        style={{ color: "var(--layout-icon-color, #888888)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)" }}
+        style={{ color: "var(--layout-icon-color, #888888)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}
       >
         <Settings size={10} /> Configuração
       </button>

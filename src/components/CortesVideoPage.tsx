@@ -174,7 +174,7 @@ export default function CortesVideoPage() {
                 placeholder="https://www.youtube.com/watch?v=..."
                 className="w-full pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
                 style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
               />
             </div>
@@ -221,7 +221,7 @@ export default function CortesVideoPage() {
                   placeholder="HH:MM:SS" maxLength={8}
                   className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none transition-colors"
                   style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
                 {videoId && startSeconds > 0 && (
@@ -230,9 +230,9 @@ export default function CortesVideoPage() {
               </div>
 
               <div className="flex flex-col items-center justify-center gap-1">
-                <Scissors size={20} style={{ color: duration > 0 ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
+                <Scissors size={20} style={{ color: duration > 0 ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
                 <div className="flex items-center gap-1.5 px-4 py-2 rounded-full"
-                  style={{ backgroundColor: duration > 0 ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: duration > 0 ? "#fff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                  style={{ backgroundColor: duration > 0 ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: duration > 0 ? "#fff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                   <Clock size={14} />
                   <span className="text-sm font-bold font-mono">{formatDuration(duration > 0 ? duration : 0)}</span>
                 </div>
@@ -246,7 +246,7 @@ export default function CortesVideoPage() {
                   placeholder="HH:MM:SS" maxLength={8}
                   className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none transition-colors"
                   style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
                 {videoId && endSeconds > 0 && (
@@ -261,8 +261,8 @@ export default function CortesVideoPage() {
         <div className="flex justify-center mb-5">
           <button onClick={handleCut} disabled={!canCut || cutting}
             className="flex items-center gap-2 px-8 py-2.5 rounded-full text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "#fff", border: "none" }}
-            onMouseEnter={e => { if (canCut && !cutting) e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)"; }}
+            style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "#fff", border: "none" }}
+            onMouseEnter={e => { if (canCut && !cutting) e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)"; }}
             onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
           >
             {cutting ? <><Loader2 size={16} className="animate-spin" /> Processando...</> : <><Scissors size={16} /> Gerar Corte</>}
@@ -300,7 +300,7 @@ export default function CortesVideoPage() {
                 </button>
                 <button onClick={() => copyToClipboard(result.share_url)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "var(--layout-accent-color, #444444)", color: "#fff" }}>
+                  style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}>
                   <Copy size={12} /> Copiar Link com Tempo
                 </button>
                 <button onClick={() => copyToClipboard(result.clip_embed_url)}

@@ -186,7 +186,7 @@ export default function PreRollPage() {
     if (!p.active) return { label: "Inativo", color: { backgroundColor: "rgba(220,38,38,0.1)", color: "#dc2626" } };
     const today = format(new Date(), "yyyy-MM-dd");
     if (p.data_final && today > p.data_final) return { label: "Expirado", color: { backgroundColor: "rgba(234,179,8,0.1)", color: "#eab308" } };
-    if (p.data_inicial && today < p.data_inicial) return { label: "Agendado", color: { backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-accent-color, #444444)" } };
+    if (p.data_inicial && today < p.data_inicial) return { label: "Agendado", color: { backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" } };
     return { label: "Ativo", color: { backgroundColor: "rgba(34,197,94,0.1)", color: "#22c55e" } };
   };
 
@@ -200,8 +200,8 @@ export default function PreRollPage() {
   };
 
   const focusHandler = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)";
-    e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #444444) 12%, transparent)";
+    e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)";
+    e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)";
   };
   const blurHandler = (e: React.FocusEvent<HTMLInputElement>) => {
     e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)";
@@ -210,7 +210,7 @@ export default function PreRollPage() {
 
   const sectionHeader = (icon: React.ReactNode, title: string) => (
     <div className="flex items-center gap-2.5 mb-4 mt-2">
-      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)" }}>
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" }}>
         {icon}
       </div>
       <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{title}</span>
@@ -250,7 +250,7 @@ export default function PreRollPage() {
 
           <div className="p-5 space-y-6">
             {/* ──── SEÇÃO 1: IDENTIFICAÇÃO ──── */}
-            {sectionHeader(<Tag size={14} style={{ color: "var(--layout-accent-color, #444444)" }} />, "Identificação")}
+            {sectionHeader(<Tag size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Identificação")}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
               <div>
                 <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Pré-Roll</label>
@@ -262,7 +262,7 @@ export default function PreRollPage() {
               <div>
                 <label className="flex items-center gap-2.5 cursor-pointer py-2">
                   <input type="checkbox" checked={activeField} onChange={(e) => setActiveField(e.target.checked)}
-                    className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
+                    className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} />
                   <span className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Ativo</span>
                   <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>— Desmarque para salvar como inativo</span>
                 </label>
@@ -270,18 +270,18 @@ export default function PreRollPage() {
             </div>
 
             {/* ──── SEÇÃO 2: MÍDIA ──── */}
-            {sectionHeader(<Video size={14} style={{ color: "var(--layout-accent-color, #444444)" }} />, "Mídia")}
+            {sectionHeader(<Video size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Mídia")}
 
             {/* Media type */}
             <div>
               <label className="text-xs font-semibold block mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tipo de Mídia</label>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={mediaType === "video"} onChange={() => setMediaType("video")} style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
+                  <input type="radio" checked={mediaType === "video"} onChange={() => setMediaType("video")} style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} />
                   <span className="text-xs" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Upload de vídeo (até 5MB)</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={mediaType === "youtube"} onChange={() => setMediaType("youtube")} style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
+                  <input type="radio" checked={mediaType === "youtube"} onChange={() => setMediaType("youtube")} style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} />
                   <span className="text-xs" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Link do YouTube</span>
                 </label>
               </div>
@@ -324,8 +324,8 @@ export default function PreRollPage() {
                     <button key={ratio} type="button" onClick={() => setAspectRatio(ratio)}
                       className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all"
                       style={{
-                        border: aspectRatio === ratio ? "2px solid var(--layout-accent-color, #444444)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
-                        backgroundColor: aspectRatio === ratio ? "color-mix(in srgb, var(--layout-accent-color, #444444) 8%, transparent)" : "transparent",
+                        border: aspectRatio === ratio ? "2px solid var(--layout-accent-color, #2563eb)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                        backgroundColor: aspectRatio === ratio ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)" : "transparent",
                       }}
                     >
                       <div
@@ -333,11 +333,11 @@ export default function PreRollPage() {
                         style={{
                           width: ratio === "16:9" ? 48 : ratio === "9:16" ? 24 : 48,
                           height: ratio === "16:9" ? 27 : ratio === "9:16" ? 42 : 32,
-                          backgroundColor: aspectRatio === ratio ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)",
+                          backgroundColor: aspectRatio === ratio ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)",
                           transition: "background-color 0.2s",
                         }}
                       />
-                      <span className="text-[10px] font-bold" style={{ color: aspectRatio === ratio ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                      <span className="text-[10px] font-bold" style={{ color: aspectRatio === ratio ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                         {ratio === "full" ? "Full" : ratio}
                       </span>
                     </button>
@@ -357,8 +357,8 @@ export default function PreRollPage() {
                     <button key={pos.value} type="button" onClick={() => setVideoPosition(pos.value)}
                       className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all flex-1"
                       style={{
-                        border: videoPosition === pos.value ? "2px solid var(--layout-accent-color, #444444)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
-                        backgroundColor: videoPosition === pos.value ? "color-mix(in srgb, var(--layout-accent-color, #444444) 8%, transparent)" : "transparent",
+                        border: videoPosition === pos.value ? "2px solid var(--layout-accent-color, #2563eb)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                        backgroundColor: videoPosition === pos.value ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)" : "transparent",
                       }}
                     >
                       <div className="w-12 h-8 rounded overflow-hidden flex" style={{
@@ -370,12 +370,12 @@ export default function PreRollPage() {
                         <div className="rounded-sm" style={{
                           width: aspectRatio === "16:9" ? 20 : 10,
                           height: aspectRatio === "16:9" ? 12 : 22,
-                          backgroundColor: videoPosition === pos.value ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)",
+                          backgroundColor: videoPosition === pos.value ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)",
                           transition: "background-color 0.2s",
                           flexShrink: 0,
                         }} />
                       </div>
-                      <span className="text-[10px] font-bold" style={{ color: videoPosition === pos.value ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                      <span className="text-[10px] font-bold" style={{ color: videoPosition === pos.value ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                         {pos.label}
                       </span>
                     </button>
@@ -400,7 +400,7 @@ export default function PreRollPage() {
               <div className="flex items-center gap-3">
                 <button type="button" onClick={() => bgInputRef.current?.click()}
                   className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 hover:shadow-md"
-                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
+                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
                 >
                   <Image size={14} style={{ color: "var(--layout-icon-color, #888888)" }} /> Escolher imagem
                 </button>
@@ -417,7 +417,7 @@ export default function PreRollPage() {
             </div>
 
             {/* ──── SEÇÃO 3: AGENDAMENTO ──── */}
-            {sectionHeader(<CalendarLucide size={14} style={{ color: "var(--layout-accent-color, #444444)" }} />, "Agendamento")}
+            {sectionHeader(<CalendarLucide size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Agendamento")}
 
             {/* Days */}
             <div>
@@ -487,13 +487,13 @@ export default function PreRollPage() {
             </div>
 
             {/* ──── SEÇÃO 4: CONFIGURAÇÕES ──── */}
-            {sectionHeader(<Settings2 size={14} style={{ color: "var(--layout-accent-color, #444444)" }} />, "Configurações")}
+            {sectionHeader(<Settings2 size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Configurações")}
 
             {/* Mid-Roll checkbox */}
-            <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)" }}>
+            <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={isMidroll} onChange={(e) => setIsMidroll(e.target.checked)}
-                  className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
+                  className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} />
                 <div>
                   <span className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Mid-Roll (Intervalo)</span>
                   <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
@@ -524,7 +524,7 @@ export default function PreRollPage() {
             </div>
 
             {/* ──── SEÇÃO 5: PRÉ-VISUALIZAÇÃO ──── */}
-            {sectionHeader(<Sparkles size={14} style={{ color: "var(--layout-accent-color, #444444)" }} />, "Pré-visualização")}
+            {sectionHeader(<Sparkles size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Pré-visualização")}
 
             <button type="button" onClick={() => setShowPreview(!showPreview)}
               className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
@@ -641,7 +641,7 @@ export default function PreRollPage() {
                         <span className="ml-2 text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                           {p.media_type === "youtube" ? "YouTube" : "Vídeo"} • {p.aspect_ratio || "16:9"}
                           {(p as any).is_midroll && (
-                            <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>Mid-Roll</span>
+                            <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>Mid-Roll</span>
                           )}
                         </span>
                       </div>

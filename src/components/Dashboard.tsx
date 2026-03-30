@@ -1035,7 +1035,7 @@ function ComercialWidgets() {
   if (loading) return (
     <div className="animate-pulse">
       <div className="flex items-center gap-1.5 mb-2">
-        <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: "var(--layout-button-bg, #333333)", opacity: 0.2 }} />
+        <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: "var(--layout-button-bg, #0f1058333)", opacity: 0.2 }} />
         <div className="w-28 h-3 rounded bg-white/10" />
       </div>
       <div className="w-12 h-8 rounded bg-white/10 mb-1" />
@@ -1134,7 +1134,7 @@ function DashboardAgenda() {
           ))}
         </div>
         <div className="mt-1 space-y-1">
-          <div className="h-6 rounded-lg" style={{ backgroundColor: "var(--layout-button-bg, #333333)", opacity: 0.15 }} />
+          <div className="h-6 rounded-lg" style={{ backgroundColor: "var(--layout-button-bg, #0f1058333)", opacity: 0.15 }} />
         </div>
       </div>
     );
@@ -1151,15 +1151,15 @@ function DashboardAgenda() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header: icon + AGENDA + month nav */}
       <div className="flex items-center gap-1.5 mb-1">
-        <CalendarDays size={14} style={{ color: "var(--layout-button-bg, #333333)" }} />
+        <CalendarDays size={14} style={{ color: "var(--layout-button-bg, #0f1058333)" }} />
         <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "var(--layout-widget-text, #ffffff)" }}>Agenda</span>
         <div className="flex items-center gap-1 ml-auto">
           <button onClick={prevMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
-            <ChevronDown size={10} className="rotate-90" style={{ color: "var(--layout-button-bg, #333333)" }} />
+            <ChevronDown size={10} className="rotate-90" style={{ color: "var(--layout-button-bg, #0f1058333)" }} />
           </button>
-          <span className="text-[9px] font-semibold capitalize" style={{ color: "var(--layout-button-bg, #333333)", minWidth: "55px", textAlign: "center" }}>{monthLabel}</span>
+          <span className="text-[9px] font-semibold capitalize" style={{ color: "var(--layout-button-bg, #0f1058333)", minWidth: "55px", textAlign: "center" }}>{monthLabel}</span>
           <button onClick={nextMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
-            <ChevronDown size={10} className="-rotate-90" style={{ color: "var(--layout-button-bg, #333333)" }} />
+            <ChevronDown size={10} className="-rotate-90" style={{ color: "var(--layout-button-bg, #0f1058333)" }} />
           </button>
         </div>
       </div>
@@ -1173,7 +1173,7 @@ function DashboardAgenda() {
       {dayEvents.length > 0 && (
         <div className="mt-1 space-y-1 overflow-y-auto flex-1 scrollbar-hide">
           {dayEvents.map((evt: any) => (
-            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "var(--layout-button-bg, #333333)", color: "var(--layout-button-text, #fff)" }}>
+            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "var(--layout-button-bg, #0f1058333)", color: "var(--layout-button-text, #fff)" }}>
               <p className="font-semibold">{evt.programa?.nome || "Evento"}</p>
               {evt.programa && <p className="opacity-70">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
             </div>
@@ -1217,7 +1217,7 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
       }}
       modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
-        hasEvent: { backgroundColor: "var(--layout-button-bg, #333333)", fontWeight: "bold", color: "var(--layout-button-text, #fff)", borderRadius: "50%" },
+        hasEvent: { backgroundColor: "var(--layout-button-bg, #0f1058333)", fontWeight: "bold", color: "var(--layout-button-text, #fff)", borderRadius: "50%" },
       }}
       styles={{
         day: { color: "var(--layout-widget-text, #ffffff)", fontSize: "14px" },

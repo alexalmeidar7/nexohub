@@ -84,24 +84,24 @@ export function PdfPopup({ status, blobUrl, filename, onClose, anchorId }: {
 
         {status === "generating" && (
           <>
-            <Loader2 size={32} className="animate-spin" style={{ color: "var(--layout-accent-color, #444444)" }} />
+            <Loader2 size={32} className="animate-spin" style={{ color: "var(--layout-accent-color, #2563eb)" }} />
             <p className="text-white text-sm font-semibold">Gerando PDF...</p>
             <div className="w-full h-1 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-              <div className="h-full rounded-full animate-pulse" style={{ backgroundColor: "var(--layout-accent-color, #444444)", width: "60%" }} />
+              <div className="h-full rounded-full animate-pulse" style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", width: "60%" }} />
             </div>
           </>
         )}
 
         {status === "ready" && blobUrl && (
           <>
-            <FileText size={32} style={{ color: "var(--layout-accent-color, #444444)" }} />
+            <FileText size={32} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
             <p className="text-white text-sm font-semibold">PDF gerado com sucesso!</p>
             <a
               href={blobUrl}
               download={filename}
               onClick={() => setTimeout(onClose, 500)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-white hover:opacity-90 transition"
-              style={{ backgroundColor: "var(--layout-accent-color, #444444)" }}
+              style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}
             >
               <Download size={14} />
               Download do PDF
