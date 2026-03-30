@@ -67,6 +67,7 @@ const App = () => (
             <Route path="/user/:userSlug/nexohub/player/catalog" element={<PlayerCatalog />} />
             <Route path="/user/nexohub/player/app" element={<PlayerApp />} />
             <Route path="/user/:userSlug/nexohub/player/app" element={<PlayerApp />} />
+            <Route path="/user/:userSlug/telainterativatelao" element={<TelaInterativa />} />
 
             {/* Legacy redirects */}
             <Route path="/masterview/home" element={<Navigate to="/user/nexohub/home" replace />} />
