@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import TrafficMap from "@/components/TrafficMap";
+import SatelliteMap from "@/components/SatelliteMap";
 
 /* ─── types ─── */
 interface WeatherConfig {
@@ -1036,12 +1037,9 @@ export default function CenarioInterativoPage() {
               <div className="absolute inset-0 flex" style={{ fontSize: 10 }}>
                 {/* Satellite fullscreen behind sidebar */}
                 {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
-                  <iframe
-                    src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=4&overlay=satellite&product=satellite&level=surface&lat=-14.2&lon=-51.9&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true&autoplay=true&border=full`}
-                    className="absolute inset-0 h-full border-0"
-                    style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}
-                    title="Satélite preview"
-                  />
+                  <div className="absolute inset-0" style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}>
+                    <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={6} />
+                  </div>
                 )}
                 {/* Traffic (Leaflet) fullscreen behind sidebar */}
                 {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
