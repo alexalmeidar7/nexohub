@@ -494,12 +494,7 @@ export default function CenarioTela() {
             {/* ═══ TRAFFIC ═══ */}
             {activeTab === "traffic" && (
               <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ padding: "3vh" }}>
-                {config.traffic.enabled && trafficCoords ? (
-                  <div className="text-center text-white drop-shadow-lg">
-                    <div className="font-bold" style={{ fontSize: "3vh" }}>{config.traffic.city || config.city || "—"}</div>
-                    <div className="opacity-70 mt-1" style={{ fontSize: "1.5vh" }}>Trânsito em tempo real</div>
-                  </div>
-                ) : (
+                {config.traffic.enabled && trafficCoords ? null : (
                   <div className="opacity-50" style={{ color: "#333", fontSize: "1.8vh" }}>Trânsito desativado</div>
                 )}
               </div>
