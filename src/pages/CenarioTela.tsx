@@ -246,7 +246,7 @@ export default function CenarioTela() {
   const weatherCity = config.weather.city || config.city;
   const weatherFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!config.weather.enabled || !weatherCity) return;
+    if (!weatherCity) return;
     if (weatherFetchRef.current) clearTimeout(weatherFetchRef.current);
     weatherFetchRef.current = setTimeout(async () => {
       try {
