@@ -7,7 +7,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 
 /* ─── types (mirrored from CenarioInterativoPage) ─── */
 interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3Days: boolean; showSatellite: boolean; city: string; bgImage: string; }
-interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage: string; }
+interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage: string; lat: number | null; lon: number | null; zoom: number; }
 interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
 interface HomeConfig { bgImage: string; }
