@@ -375,7 +375,47 @@ export default function CenarioInterativoPage() {
   useEffect(() => { currencySubTabRef.current = currencySubTab; }, [currencySubTab]);
 
   const [externalConnected, setExternalConnected] = useState(false);
+  const [showConnectedMsg, setShowConnectedMsg] = useState(false);
   const lastPongRef = useRef(0);
+  const presenceShownRef = useRef(false);
+
+  /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
+  useEffect(() => {
+    if (!user?.id) return;
+    const ch = supabase.channel(`cenario-presence-${user.id}`, { config: { presence: { key: "painel-controle" } } });
+    ch.on("presence", { event: "join" }, ({ key }) => {
+      if (key === "tela-externa") {
+        setExternalConnected(true);
+        if (!presenceShownRef.current) {
+          presenceShownRef.current = true;
+          setShowConnectedMsg(true);
+          setTimeout(() => setShowConnectedMsg(false), 4000);
+        }
+      }
+    });
+    ch.on("presence", { event: "leave" }, ({ key }) => {
+      if (key === "tela-externa") {
+        setExternalConnected(false);
+        presenceShownRef.current = false;
+      }
+    });
+    ch.on("presence", { event: "sync" }, () => {
+      const state = ch.presenceState();
+      const hasExternal = !!state["tela-externa"]?.length;
+      setExternalConnected(hasExternal);
+      if (hasExternal && !presenceShownRef.current) {
+        presenceShownRef.current = true;
+        setShowConnectedMsg(true);
+        setTimeout(() => setShowConnectedMsg(false), 4000);
+      }
+    });
+    ch.subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await ch.track({ screen: "painel-controle", ts: Date.now() });
+      }
+    });
+    return () => { supabase.removeChannel(ch); presenceShownRef.current = false; };
+  }, [user?.id]);
 
   const cenarioBcRef = useRef<BroadcastChannel | null>(null);
   useEffect(() => {
