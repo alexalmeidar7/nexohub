@@ -254,6 +254,75 @@ export default function CenarioInterativoPage() {
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
 
+  /* ─── Preview Drawing ─── */
+  const [previewDrawActive, setPreviewDrawActive] = useState(false);
+  const [previewHasDrawing, setPreviewHasDrawing] = useState(false);
+  const [previewDrawColor, setPreviewDrawColor] = useState("#e1f532");
+  const [previewDrawWidth, setPreviewDrawWidth] = useState(3);
+  const [showPreviewDrawOptions, setShowPreviewDrawOptions] = useState(false);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const previewIsDrawingRef = useRef(false);
+  const PREV_DRAW_COLORS = ["#e1f532", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
+  const PREV_DRAW_WIDTHS = [2, 4, 8, 14];
+
+  const getPreviewCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }, []);
+
+  const handlePreviewDrawStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = previewCanvasRef.current;
+    if (!canvas || !previewDrawActive) return;
+    e.preventDefault();
+    previewIsDrawingRef.current = true;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pos = getPreviewCanvasPos(e, canvas);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }, [previewDrawActive, getPreviewCanvasPos]);
+
+  const handlePreviewDrawMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = previewCanvasRef.current;
+    if (!canvas || !previewIsDrawingRef.current) return;
+    e.preventDefault();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pos = getPreviewCanvasPos(e, canvas);
+    ctx.strokeStyle = previewDrawColor;
+    ctx.lineWidth = previewDrawWidth;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    setPreviewHasDrawing(true);
+  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth]);
+
+  const handlePreviewDrawEnd = useCallback(() => { previewIsDrawingRef.current = false; }, []);
+
+  const clearPreviewDrawing = useCallback(() => {
+    const canvas = previewCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setPreviewHasDrawing(false);
+  }, []);
+
+  useEffect(() => {
+    if (!previewDrawActive) return;
+    const canvas = previewCanvasRef.current;
+    if (!canvas) return;
+    const parent = canvas.parentElement;
+    if (!parent) return;
+    const resize = () => { canvas.width = parent.clientWidth; canvas.height = parent.clientHeight; };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, [previewDrawActive]);
+
   const configRef = useRef(config);
   const activeTabRef = useRef(activeTab);
   const weatherSubTabRef = useRef(weatherSubTab);
