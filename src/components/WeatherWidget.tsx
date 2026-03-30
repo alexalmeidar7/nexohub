@@ -104,6 +104,8 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
           tomorrowMin: Math.round(wxData.daily.temperature_2m_min[1]),
           tomorrowMax: Math.round(wxData.daily.temperature_2m_max[1]),
           weatherCode: wxData.current.weather_code,
+          feelsLike: Math.round(wxData.current.apparent_temperature),
+          windSpeed: Math.round(wxData.current.wind_speed_10m),
         });
       } catch { /* silent */ }
     };
