@@ -338,9 +338,9 @@ export default function CenarioTela() {
             </div>
           )}
 
-          {/* Traffic (Leaflet) fullscreen */}
+          {/* Traffic (Leaflet) fullscreen — aligned after sidebar */}
           {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
-            <div className="absolute inset-0" style={{ zIndex: 1 }}>
+            <div className="absolute inset-y-0 right-0" style={{ left: "8%", zIndex: 1 }}>
               <TrafficMap
                 lat={config.traffic.lat ?? trafficCoords.lat}
                 lon={config.traffic.lon ?? trafficCoords.lon}
