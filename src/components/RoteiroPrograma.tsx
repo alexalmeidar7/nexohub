@@ -125,8 +125,8 @@ export default function RoteiroPrograma() {
                   {r.numero_roteiro && <span className="text-xs font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}> #{r.numero_roteiro}</span>}
                 </p>
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{
-                  backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
-                  color: isFeito ? "#16a34a" : isAgd ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
+                  backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
+                  color: isFeito ? "#16a34a" : isAgd ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
                 }}>{isFeito ? "feito" : isAgd ? "agendado" : r.status}</span>
               </div>
               <p className="text-xs font-medium mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
@@ -143,7 +143,7 @@ export default function RoteiroPrograma() {
               {r.subtitulo?.startsWith("express_xml::") && (
                 <button onClick={() => { const xmlUrl = r.subtitulo.replace("express_xml::", ""); navigator.clipboard.writeText(xmlUrl).then(() => toast.success("URL do XML copiada!")).catch(() => toast.error("Erro ao copiar")); }}
                   className="h-7 px-2 flex items-center justify-center gap-1 rounded-lg hover:opacity-70 transition text-[9px] font-bold"
-                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-accent-color, #444444)" }} title="Copiar URL do XML">
+                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }} title="Copiar URL do XML">
                   <Code2 size={12} /> XML
                 </button>
               )}

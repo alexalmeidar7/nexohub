@@ -248,7 +248,7 @@ export default function PromocoesPage() {
                   <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Descrição da campanha..." rows={3} required
                     className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[80px]"
                     style={{ ...inputStyle, borderRadius: "12px" }}
-                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   />
                 </div>
@@ -260,7 +260,7 @@ export default function PromocoesPage() {
                   <input value={oferecimento} onChange={(e) => setOferecimento(e.target.value)} placeholder="Quem assina a promoção"
                     className="w-full px-4 py-1.5 text-sm outline-none"
                     style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   />
                 </div>
@@ -271,7 +271,7 @@ export default function PromocoesPage() {
                     <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} required
                       className="w-full px-4 py-1.5 text-sm outline-none"
                       style={inputStyle}
-                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                       onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                     />
                   </div>
@@ -280,7 +280,7 @@ export default function PromocoesPage() {
                     <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} required
                       className="w-full px-4 py-1.5 text-sm outline-none"
                       style={inputStyle}
-                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                       onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                     />
                   </div>

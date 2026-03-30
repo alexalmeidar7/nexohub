@@ -366,7 +366,7 @@ export default function AgendaPage() {
             {evt.programa && ` • ${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`}
           </p>
           {evt.recorrencia !== "unico" && (
-            <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+            <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
               🔁 {recorrenciaLabels[evt.recorrencia]}
             </span>
           )}
@@ -496,8 +496,8 @@ export default function AgendaPage() {
             )}
             <button type="button" onClick={openNewDialog}
               className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold transition-all rounded-full"
-              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)"; }}
+              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)"; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
             >
               <Plus size={14} /> Novo Evento
@@ -510,20 +510,20 @@ export default function AgendaPage() {
             <style>{`
               .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active {
                 outline: none !important;
-                box-shadow: 0 0 0 2px color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent) !important;
-                border-color: var(--layout-accent-color, #444444) !important;
+                box-shadow: 0 0 0 2px color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent) !important;
+                border-color: var(--layout-accent-color, #2563eb) !important;
               }
               .agenda-form-calendar .rdp { color: var(--layout-page-text, #1a1a1a) !important; }
               .agenda-form-calendar .rdp-caption_label { color: var(--layout-page-text, #1a1a1a) !important; font-weight: 700; }
               .agenda-form-calendar .rdp-head_cell { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent) !important; }
               .agenda-form-calendar .rdp-day { color: var(--layout-page-text, #1a1a1a) !important; }
-              .agenda-form-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: var(--layout-accent-color, #444444) !important; }
-              .agenda-form-calendar .rdp-day_selected { background-color: var(--layout-accent-color, #444444) !important; color: #fff !important; }
+              .agenda-form-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; }
+              .agenda-form-calendar .rdp-day_selected { background-color: var(--layout-accent-color, #2563eb) !important; color: #fff !important; }
               .agenda-form-calendar .rdp-day_selected:hover { background-color: #1a7ae0 !important; color: #fff !important; }
               .agenda-form-calendar .rdp-day_today { background-color: var(--layout-page-text, #1a1a1a) !important; color: #fff !important; font-weight: 700; }
               .agenda-form-calendar .rdp-day_outside { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent) !important; }
               .agenda-form-calendar .rdp-nav_button { color: var(--layout-page-text, #1a1a1a) !important; }
-              .agenda-form-calendar .rdp-nav_button:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent) !important; }
+              .agenda-form-calendar .rdp-nav_button:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent) !important; }
               .agenda-form-calendar button[name="previous-month"],
               .agenda-form-calendar button[name="next-month"] { color: var(--layout-page-text, #1a1a1a) !important; }
             `}</style>
@@ -546,15 +546,15 @@ export default function AgendaPage() {
               <style>{`
                 .agenda-dialog-scroll::-webkit-scrollbar { width: 6px; }
                 .agenda-dialog-scroll::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
-                .agenda-dialog-scroll::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%)); border-radius: 10px; }
-                .agenda-dialog-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--layout-accent-color, #444444) 80%, black 20%), var(--layout-accent-color, #444444)); }
+                .agenda-dialog-scroll::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%)); border-radius: 10px; }
+                .agenda-dialog-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--layout-accent-color, #2563eb) 80%, black 20%), var(--layout-accent-color, #2563eb)); }
               `}</style>
 
               {/* Programa */}
               <div>
                 <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Programa</Label>
                 <Select value={formProgramaId} onValueChange={setFormProgramaId}>
-                  <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                  <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
                     <SelectValue placeholder="Selecione o programa" />
                   </SelectTrigger>
                   <SelectContent>
@@ -576,7 +576,7 @@ export default function AgendaPage() {
               {/* Calendário */}
               <div>
                 <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Data do Evento</Label>
-                <div className="agenda-form-calendar rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)", backgroundColor: "#f8faff" }}>
+                <div className="agenda-form-calendar rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", backgroundColor: "#f8faff" }}>
                   <Calendar
                     mode="single"
                     selected={formData}
@@ -598,7 +598,7 @@ export default function AgendaPage() {
                 <div>
                   <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
                   <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
-                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -612,7 +612,7 @@ export default function AgendaPage() {
                 <div>
                   <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Local</Label>
                   <Select value={formLocal} onValueChange={setFormLocal}>
-                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
                       <SelectValue placeholder="Local" />
                     </SelectTrigger>
                     <SelectContent>
@@ -660,7 +660,7 @@ export default function AgendaPage() {
                   placeholder="Breve descrição do evento..."
                   rows={3}
                   className="agenda-form-input w-full resize-none text-xs px-3 py-2.5"
-                  style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)" }}
+                  style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
                 />
               </div>
 
@@ -669,7 +669,7 @@ export default function AgendaPage() {
                 onClick={handleSave}
                 disabled={!formProgramaId || !formData}
                 className="w-full h-11 font-bold text-xs tracking-wide"
-                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", borderRadius: "14px", border: "none", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" }}
+                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", borderRadius: "14px", border: "none", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)" }}
               >
                 {editingId ? "✓ Atualizar Evento" : "✓ Salvar Evento"}
               </Button>
@@ -686,13 +686,13 @@ export default function AgendaPage() {
             </div>
             <div className="p-3">
               <style>{`
-                .agenda-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: var(--layout-accent-color, #444444) !important; }
-                .agenda-calendar .rdp-day_selected { background-color: var(--layout-accent-color, #444444) !important; color: #fff !important; }
-                .agenda-calendar .rdp-day_selected:hover { background-color: var(--layout-accent-color, #444444) !important; }
+                .agenda-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; }
+                .agenda-calendar .rdp-day_selected { background-color: var(--layout-accent-color, #2563eb) !important; color: #fff !important; }
+                .agenda-calendar .rdp-day_selected:hover { background-color: var(--layout-accent-color, #2563eb) !important; }
                 .agenda-calendar .rdp-day_today { background-color: var(--layout-page-text, #1a1a1a) !important; color: #ffffff !important; font-weight: 700 !important; }
                 .agenda-calendar .rdp-day_today:hover { background-color: var(--layout-page-text, #1a1a1a) !important; color: #ffffff !important; }
                 .agenda-calendar [class*="day_today"] { background-color: var(--layout-page-text, #1a1a1a) !important; color: #ffffff !important; font-weight: 700 !important; }
-                .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: var(--layout-accent-color, #444444) !important; font-weight: bold; }
+                .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; font-weight: bold; }
               `}</style>
               <Calendar
                 mode="single"
@@ -753,7 +753,7 @@ export default function AgendaPage() {
                       >
                         <CalendarIcon size={10} />
                         {format(date, "EEEE, dd/MM", { locale: ptBR })}
-                        <span className="ml-auto text-[9px] font-normal px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                        <span className="ml-auto text-[9px] font-normal px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
                           {dayEvents.length}
                         </span>
                       </button>
@@ -773,7 +773,7 @@ export default function AgendaPage() {
                               {evt.local ? ` • ${evt.local}` : ""}
                             </p>
                             {evt.recorrencia !== "unico" && (
-                              <span className="inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded mt-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                              <span className="inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded mt-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
                                 🔁 {recorrenciaLabels[evt.recorrencia]}
                               </span>
                             )}

@@ -60,7 +60,7 @@ export default function TopLikedSongs() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-1.5 mb-2">
-        <Heart size={14} fill="var(--layout-accent-color, #444444)" style={{ color: "var(--layout-icon-color, #888888)" }} className="animate-pulse" />
+        <Heart size={14} fill="var(--layout-accent-color, #2563eb)" style={{ color: "var(--layout-icon-color, #888888)" }} className="animate-pulse" />
         <span className="font-bold text-xs uppercase tracking-wide text-white">Músicas Curtidas</span>
       </div>
 
@@ -88,7 +88,7 @@ export default function TopLikedSongs() {
             >
               <span
                 className="w-4 h-4 flex items-center justify-center rounded-full text-[9px] font-bold text-white shrink-0"
-                style={{ backgroundColor: i < 3 ? "var(--layout-accent-color, #444444)" : "rgba(255,255,255,0.2)" }}
+                style={{ backgroundColor: i < 3 ? "var(--layout-accent-color, #2563eb)" : "rgba(255,255,255,0.2)" }}
               >
                 {i + 1}
               </span>
@@ -104,7 +104,7 @@ export default function TopLikedSongs() {
                 <p className="text-[9px] truncate text-white/50">{song.artista}</p>
               </div>
               <div className="flex items-center gap-0.5 shrink-0">
-                <Heart size={8} fill="var(--layout-accent-color, #444444)" style={{ color: "var(--layout-icon-color, #888888)" }} />
+                <Heart size={8} fill="var(--layout-accent-color, #2563eb)" style={{ color: "var(--layout-icon-color, #888888)" }} />
                 <span className="text-[9px] font-bold text-white">{song.count}</span>
               </div>
             </div>

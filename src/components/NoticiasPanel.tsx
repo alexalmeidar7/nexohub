@@ -665,7 +665,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
               <button
                 onClick={() => setWizardOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all hover:shadow-md"
-                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
               >
                 <Newspaper size={11} /> Montar Roteiro
               </button>
@@ -688,7 +688,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             placeholder="URL do RSS feed (ex: https://site.com/feed)"
             className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
-            onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+            onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
             autoFocus
           />
@@ -711,7 +711,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             placeholder="URL da notícia (ex: https://site.com/noticia)"
             className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
-            onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+            onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
             autoFocus
           />

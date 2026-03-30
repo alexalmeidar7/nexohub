@@ -949,7 +949,7 @@ export default function MusicaNoAr() {
               <div className="relative w-36 h-36 lg:w-44 lg:h-44 shrink-0 overflow-hidden rounded-xl group" style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}>
                 {loadingCover && !isBreak && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10 backdrop-blur-sm rounded-xl">
-                    <Loader2 className="animate-spin" size={28} style={{ color: "var(--layout-accent-color, #444444)" }} />
+                    <Loader2 className="animate-spin" size={28} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
                   </div>
                 )}
                 {isBreak ? (
@@ -1069,7 +1069,7 @@ export default function MusicaNoAr() {
                     <span className="text-xs font-bold">LENDO AQUI</span>
                   </div>
                 ) : hasValidOnlineUrl ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 12%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
                     <Loader2 size={12} className="animate-spin" />
                     <span className="text-xs font-bold">AGUARDANDO LEITURA</span>
                   </div>
@@ -1190,7 +1190,7 @@ export default function MusicaNoAr() {
                     <span className="text-xs font-bold">LENDO AQUI</span>
                   </div>
                 ) : localFileName ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 12%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
                     <Loader2 size={12} className="animate-spin" />
                     <span className="text-xs font-bold">AGUARDANDO LEITURA</span>
                   </div>

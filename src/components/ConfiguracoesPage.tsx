@@ -83,7 +83,7 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
       readOnly={readOnly}
       className={`w-full px-4 py-1.5 outline-none transition-colors text-sm ${readOnly ? "cursor-not-allowed opacity-60" : ""} ${className}`}
       style={inputStyle}
-      onFocus={e => { if (!readOnly) e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+      onFocus={e => { if (!readOnly) e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
       onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
     />
   );
@@ -436,7 +436,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           {/* ── Header + Mode ── */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))" }}>
                 {editingCanal ? <Pencil size={18} className="text-white" /> : <Plus size={18} className="text-white" />}
               </div>
               <div>
@@ -560,7 +560,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                               setNewCatalogMode(false);
                             }}
                               className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0 whitespace-nowrap flex items-center gap-1"
-                              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
+                              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
                             >
                               <Save size={12} /> Salvar Catálogo
                             </button>
@@ -593,7 +593,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                           </select>
                           <button onClick={() => { setNewCatalogMode(true); setCanalForm(p => ({ ...p, catalog_name: "" })); }}
                             className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0 whitespace-nowrap flex items-center gap-1"
-                            style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
+                            style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
                           >
                             <Plus size={12} /> Novo Catálogo
                           </button>
@@ -721,7 +721,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                         placeholder="Descreva o conteúdo do vídeo..."
                         className="w-full px-4 py-2 outline-none transition-colors text-sm resize-none"
                         style={inputStyle}
-                        onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                        onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                         onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                       />
                     </div>
@@ -815,14 +815,14 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
               <div className="flex flex-wrap items-center gap-6">
                 <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   <input type="checkbox" checked={canalForm.is_hd} onChange={(e) => setCanalForm(p => ({ ...p, is_hd: e.target.checked }))}
-                    className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
+                    className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} />
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-black tracking-wider opacity-80 group-hover:opacity-100 transition-opacity" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
                     <span className="text-[9px]">1080p</span> FULL HD
                   </span>
                 </label>
                 <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   <input type="checkbox" checked={canalForm.is_stereo} onChange={(e) => setCanalForm(p => ({ ...p, is_stereo: e.target.checked }))}
-                    className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
+                    className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} />
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-black tracking-wider opacity-80 group-hover:opacity-100 transition-opacity" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg>
                     STEREO
@@ -841,7 +841,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
               )}
               <button onClick={handleAddCanal} disabled={savingCanal}
                 className="px-6 py-2.5 font-bold transition-all flex items-center gap-2 disabled:opacity-70 rounded-full text-sm shadow-md"
-                style={{ ...btnPrimary, background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", border: "none", color: "var(--layout-header-text, #ffffff)" }}
+                style={{ ...btnPrimary, background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", border: "none", color: "var(--layout-header-text, #ffffff)" }}
                 onMouseEnter={e => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-1px)"; }}
                 onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}
               >
@@ -865,7 +865,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             <div className="flex items-center gap-2 mb-4">
               <Tv size={16} style={{ color: "var(--layout-icon-color, #888888)" }} />
               <h4 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Canais Cadastrados</h4>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>{canais.length}</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>{canais.length}</span>
             </div>
             <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
               <table className="w-full text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
@@ -883,7 +883,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   {canais.map((c, i) => (
                     <tr key={c.id} className="transition-colors hover:bg-blue-50/50" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f9fe", borderTop: "1px solid rgba(13,4,70,0.05)" }}>
                       <td className="px-4 py-3" style={{ minWidth: "80px", whiteSpace: "nowrap" }}>
-                        <span className="inline-flex items-center justify-center min-w-[32px] h-7 px-2 rounded-lg text-xs font-bold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                        <span className="inline-flex items-center justify-center min-w-[32px] h-7 px-2 rounded-lg text-xs font-bold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
                           {c.numero_canal || "—"}
                         </span>
                       </td>
@@ -892,7 +892,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                         {c.catalog_name ? <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-full" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)" }}>({c.catalog_name})</span> : null}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-[11px] font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: c.type === "catalog" ? "rgba(139,92,246,0.1)" : "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: c.type === "catalog" ? "#8b5cf6" : "var(--layout-accent-color, #444444)" }}>
+                        <span className="text-[11px] font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: c.type === "catalog" ? "rgba(139,92,246,0.1)" : "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: c.type === "catalog" ? "#8b5cf6" : "var(--layout-accent-color, #2563eb)" }}>
                           {typeLabels[c.type] || c.type}
                         </span>
                       </td>
@@ -904,9 +904,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => handleEditCanal(c)} title="Editar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:shadow-sm" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)" }}
-                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)"; }}
-                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)"; }}
+                          <button onClick={() => handleEditCanal(c)} title="Editar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:shadow-sm" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" }}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)"; }}
                           >
                             <Pencil size={13} style={{ color: "var(--layout-icon-color, #888888)" }} />
                           </button>

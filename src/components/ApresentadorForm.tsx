@@ -250,7 +250,7 @@ export default function ApresentadorForm() {
       <div className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
         {/* Form Header */}
         <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}>
             <UserPlus size={20} style={{ color: "var(--layout-icon-color, #888888)" }} />
           </div>
           <div>
@@ -268,7 +268,7 @@ export default function ApresentadorForm() {
             <div>
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Categoria</label>
               <Select value={categoria} onValueChange={setCategoria} open={catOpen} onOpenChange={setCatOpen}>
-                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: catOpen ? "1px solid var(--layout-accent-color, #444444)" : "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)", transition: "border-color 0.3s" }}>
+                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: catOpen ? "1px solid var(--layout-accent-color, #2563eb)" : "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)", transition: "border-color 0.3s" }}>
                   <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -285,7 +285,7 @@ export default function ApresentadorForm() {
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome completo"
                 className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
                 style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
               />
             </div>
@@ -297,7 +297,7 @@ export default function ApresentadorForm() {
               <input value={cargoConvidado} onChange={(e) => setCargoConvidado(e.target.value)} placeholder="Ex: Médico, Advogado..."
                 className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
                 style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
               />
             </div>
@@ -314,7 +314,7 @@ export default function ApresentadorForm() {
                 <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@usuario_instagram"
                   className="flex-1 px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
                   style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
                 />
               </div>
@@ -328,7 +328,7 @@ export default function ApresentadorForm() {
                 <input value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))} placeholder="+55 (DDD) 00000-0000"
                   className="flex-1 px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
                   style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
                 />
               </div>
@@ -389,9 +389,9 @@ export default function ApresentadorForm() {
               )}
               <button onClick={handleSave} disabled={saving}
                 className="px-6 py-2 text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50 rounded-xl"
-                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px color-mix(in srgb, var(--layout-accent-color, #444444) 50%, transparent)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)"; e.currentTarget.style.transform = "translateY(0)"; }}
+                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)" }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, transparent)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)"; e.currentTarget.style.transform = "translateY(0)"; }}
               >
                 {saving && <Loader2 size={13} className="animate-spin" />}
                 {saving ? "Salvando..." : editingId ? "Atualizar" : "Salvar"}
@@ -404,7 +404,7 @@ export default function ApresentadorForm() {
       {/* Import Excel + Stats Bar */}
       <div className="flex items-center gap-4 flex-wrap">
         <label className="cursor-pointer flex items-center gap-2 px-4 py-1.5 rounded-xl text-[11px] font-semibold transition-all hover:opacity-80"
-          style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "#fff", boxShadow: "0 2px 8px rgba(38,143,250,0.25)" }}>
+          style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "#fff", boxShadow: "0 2px 8px rgba(38,143,250,0.25)" }}>
           <FileSpreadsheet size={14} />
           Importar Excel
           <input ref={excelInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelFile} className="hidden" />
@@ -464,8 +464,8 @@ export default function ApresentadorForm() {
                     <td className="px-4 py-2.5">
                       <span className="inline-block px-2 py-0.5 rounded-lg text-[10px] font-semibold"
                         style={{
-                          backgroundColor: a.cargo === "Apresentador" ? "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)" : a.cargo === "Jornalista" ? "rgba(45,191,244,0.1)" : "rgba(251,216,55,0.15)",
-                          color: a.cargo === "Apresentador" ? "var(--layout-accent-color, #444444)" : a.cargo === "Jornalista" ? "#0e9bc0" : "#b8860b",
+                          backgroundColor: a.cargo === "Apresentador" ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : a.cargo === "Jornalista" ? "rgba(45,191,244,0.1)" : "rgba(251,216,55,0.15)",
+                          color: a.cargo === "Apresentador" ? "var(--layout-accent-color, #2563eb)" : a.cargo === "Jornalista" ? "#0e9bc0" : "#b8860b",
                         }}
                       >
                         {a.cargo || "—"}
@@ -523,9 +523,9 @@ export default function ApresentadorForm() {
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="animate-fade-in p-6 text-center space-y-4"
             style={{ width: "420px", background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", borderRadius: "20px", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-            <FileSpreadsheet size={36} style={{ color: "var(--layout-accent-color, #444444)", margin: "0 auto" }} />
+            <FileSpreadsheet size={36} style={{ color: "var(--layout-accent-color, #2563eb)", margin: "0 auto" }} />
             <p className="text-white text-sm font-semibold">
-              Deseja importar <span style={{ color: "var(--layout-accent-color, #444444)" }}>{importRows.length}</span> participante{importRows.length > 1 ? "s" : ""} para o banco de dados?
+              Deseja importar <span style={{ color: "var(--layout-accent-color, #2563eb)" }}>{importRows.length}</span> participante{importRows.length > 1 ? "s" : ""} para o banco de dados?
             </p>
             <div className="flex gap-3 justify-center pt-2">
               <button onClick={() => setImportRows(null)} disabled={importing}
@@ -535,7 +535,7 @@ export default function ApresentadorForm() {
               </button>
               <button onClick={confirmImport} disabled={importing}
                 className="px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
-                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "#fff", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)" }}>
+                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "#fff", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)" }}>
                 {importing && <Loader2 size={13} className="animate-spin" />}
                 {importing ? "Importando..." : "OK"}
               </button>
@@ -549,7 +549,7 @@ export default function ApresentadorForm() {
           <div className="flex flex-col items-center justify-center animate-fade-in overflow-hidden"
             style={{ width: "450px", height: "165px", background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", borderRadius: "20px", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
             <div className="flex items-center gap-3 flex-1 justify-center" style={{ fontSize: "14px", color: "var(--layout-header-text, #ffffff)", fontWeight: 600 }}>
-              <CheckCircle size={22} style={{ color: "var(--layout-accent-color, #444444)" }} /> Salvo com sucesso!
+              <CheckCircle size={22} style={{ color: "var(--layout-accent-color, #2563eb)" }} /> Salvo com sucesso!
             </div>
             <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.1)" }}>
               <div style={{ height: "100%", background: "linear-gradient(90deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", animation: "shrinkBar 2s linear forwards" }} />

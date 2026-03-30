@@ -373,23 +373,23 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       className={`w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center pt-[14px] sm:pt-[18px] transition-all duration-200 hover:scale-[1.06] overflow-hidden`}
                       style={{
                         background: isDragOver
-                          ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #333) 70%, white 30%), var(--layout-accent-color, #444))`
-                          : `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #333) 85%, white 15%) 0%, var(--layout-button-bg, #333) 50%, color-mix(in srgb, var(--layout-button-bg, #333) 90%, black 10%) 100%)`,
+                          ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #0f1058) 70%, white 30%), var(--layout-accent-color, #444))`
+                          : `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #0f1058) 85%, white 15%) 0%, var(--layout-button-bg, #0f1058) 50%, color-mix(in srgb, var(--layout-button-bg, #0f1058) 90%, black 10%) 100%)`,
                         backdropFilter: "blur(30px) saturate(1.8)",
                         WebkitBackdropFilter: "blur(30px) saturate(1.8)",
-                        border: isDragOver ? `2px solid var(--layout-button-bg, #333)` : `1px solid color-mix(in srgb, var(--layout-button-text, #fff) 15%, transparent)`,
-                        boxShadow: `0 8px 24px color-mix(in srgb, var(--layout-button-bg, #333) 35%, transparent), 0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.08)`,
+                        border: isDragOver ? `2px solid var(--layout-button-bg, #0f1058)` : `1px solid color-mix(in srgb, var(--layout-button-text, #fff) 15%, transparent)`,
+                        boxShadow: `0 8px 24px color-mix(in srgb, var(--layout-button-bg, #0f1058) 35%, transparent), 0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.08)`,
                       }}
                       onMouseEnter={e => {
-                        e.currentTarget.style.boxShadow = `0 12px 36px color-mix(in srgb, var(--layout-button-bg, #333) 50%, transparent), 0 4px 10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.35)`;
-                        e.currentTarget.style.background = `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #333) 75%, white 25%) 0%, color-mix(in srgb, var(--layout-button-bg, #333) 90%, white 10%) 50%, var(--layout-button-bg, #333) 100%)`;
+                        e.currentTarget.style.boxShadow = `0 12px 36px color-mix(in srgb, var(--layout-button-bg, #0f1058) 50%, transparent), 0 4px 10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.35)`;
+                        e.currentTarget.style.background = `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #0f1058) 75%, white 25%) 0%, color-mix(in srgb, var(--layout-button-bg, #0f1058) 90%, white 10%) 50%, var(--layout-button-bg, #0f1058) 100%)`;
                         e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-button-text, #fff) 30%, transparent)`;
                       }}
                       onMouseLeave={e => {
                         e.currentTarget.style.background = isDragOver
-                          ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #333) 70%, white 30%), var(--layout-accent-color, #444))`
-                          : `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #333) 85%, white 15%) 0%, var(--layout-button-bg, #333) 50%, color-mix(in srgb, var(--layout-button-bg, #333) 90%, black 10%) 100%)`;
-                        e.currentTarget.style.boxShadow = `0 8px 24px color-mix(in srgb, var(--layout-button-bg, #333) 35%, transparent), 0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.08)`;
+                          ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #0f1058) 70%, white 30%), var(--layout-accent-color, #444))`
+                          : `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #0f1058) 85%, white 15%) 0%, var(--layout-button-bg, #0f1058) 50%, color-mix(in srgb, var(--layout-button-bg, #0f1058) 90%, black 10%) 100%)`;
+                        e.currentTarget.style.boxShadow = `0 8px 24px color-mix(in srgb, var(--layout-button-bg, #0f1058) 35%, transparent), 0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.08)`;
                         e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-button-text, #fff) 15%, transparent)`;
                       }}
                     >
@@ -597,7 +597,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           <button
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="px-6 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.03]"
-            style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))`, color: "var(--layout-button-text, #fff)", boxShadow: `0 4px 16px color-mix(in srgb, var(--layout-button-bg, #333) 25%, transparent)` }}
+            style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #0f1058))`, color: "var(--layout-button-text, #fff)", boxShadow: `0 4px 16px color-mix(in srgb, var(--layout-button-bg, #0f1058) 25%, transparent)` }}
           >
             <Plus size={12} className="inline mr-1.5" /> Começar a personalizar
           </button>
@@ -1129,17 +1129,17 @@ function MusicProgramWidget() {
 
       {/* Current Program */}
       {currentProgram && (
-        <div key={`prog-${programKey}`} className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl animate-fade-in" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 6%, transparent)` }}>
+        <div key={`prog-${programKey}`} className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl animate-fade-in" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #0f1058) 6%, transparent)` }}>
           {apresentador?.foto ? (
-            <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" style={{ border: `2px solid color-mix(in srgb, var(--layout-button-bg, #333) 30%, transparent)` }} />
+            <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" style={{ border: `2px solid color-mix(in srgb, var(--layout-button-bg, #0f1058) 30%, transparent)` }} />
           ) : (
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)` }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #0f1058) 15%, transparent)` }}>
               <Mic2 size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
             </div>
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <Radio size={10} className="animate-pulse flex-shrink-0" style={{ color: "var(--layout-button-bg, #333)" }} />
+              <Radio size={10} className="animate-pulse flex-shrink-0" style={{ color: "var(--layout-button-bg, #0f1058)" }} />
               <p className="text-xs font-bold truncate" style={{ color: "var(--layout-widget-text, #fff)" }}>{currentProgram.nome}</p>
             </div>
             {apresentador?.nome && (
@@ -1149,7 +1149,7 @@ function MusicProgramWidget() {
               <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: `color-mix(in srgb, var(--layout-widget-text, #fff) 8%, transparent)` }}>
                 <div
                   className="h-full rounded-full transition-all duration-1000"
-                  style={{ width: `${progressPercent}%`, background: `linear-gradient(90deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}
+                  style={{ width: `${progressPercent}%`, background: `linear-gradient(90deg, var(--layout-accent-color, #444), var(--layout-button-bg, #0f1058))` }}
                 />
               </div>
               <span className="text-[8px] font-semibold flex-shrink-0" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>
@@ -1202,11 +1202,11 @@ function StatsWidget() {
         <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text, #fff)" }}>Dados Estatísticos</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 6%, transparent)` }}>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #0f1058) 6%, transparent)` }}>
           <p className="text-2xl font-bold" style={{ color: "var(--layout-widget-text, #fff)" }}>{prerollCount}</p>
           <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>Pre-rolls Ativos</p>
         </div>
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 6%, transparent)` }}>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #0f1058) 6%, transparent)` }}>
           <p className="text-2xl font-bold" style={{ color: "var(--layout-widget-text, #fff)" }}>{channelCount}</p>
           <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>Canais Ativos</p>
         </div>
@@ -1316,20 +1316,20 @@ function DashboardWeatherWidget() {
       {weather ? (
         <div key={`wx-${weatherKey}`} className="flex gap-3 animate-fade-in">
           {/* Hoje */}
-          <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 5%, transparent)` }}>
+          <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #0f1058) 5%, transparent)` }}>
             <div className="flex-shrink-0">
               {WeatherIconComp && <WeatherIconComp code={weather.current.weatherCode} size={40} />}
             </div>
             <div className="min-w-0">
               <p className="text-[9px] font-bold uppercase" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>Hoje</p>
-              <p className="text-2xl font-bold leading-none" style={{ color: "var(--layout-button-bg, #333)" }}>{weather.current.temp}°</p>
+              <p className="text-2xl font-bold leading-none" style={{ color: "var(--layout-button-bg, #0f1058)" }}>{weather.current.temp}°</p>
               <p className="text-[9px] mt-0.5" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>↑{weather.current.tempMax}° ↓{weather.current.tempMin}°</p>
             </div>
           </div>
 
           {/* Amanhã */}
           {weather.tomorrow && (
-            <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 5%, transparent)` }}>
+            <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #0f1058) 5%, transparent)` }}>
               <div className="flex-shrink-0">
                 {WeatherIconComp && <WeatherIconComp code={weather.tomorrow.weatherCode} size={32} forceDay />}
               </div>
