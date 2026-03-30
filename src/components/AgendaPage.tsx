@@ -495,10 +495,7 @@ export default function AgendaPage() {
               </Select>
             )}
             <button type="button" onClick={openNewDialog}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold transition-all rounded-full"
-              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)"; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+              className="btn-skyglass-accent px-3 py-1.5 text-[10px]"
             >
               <Plus size={14} /> Novo Evento
             </button>
