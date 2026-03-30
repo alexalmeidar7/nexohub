@@ -493,6 +493,11 @@ export default function CenarioInterativoPage() {
   const trafficGeoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!config.traffic.enabled || !trafficCity) { setTrafficCoords(null); return; }
+    // If config already has lat/lon from a previous geocode or manual input, use those
+    if (config.traffic.lat != null && config.traffic.lon != null) {
+      setTrafficCoords({ lat: config.traffic.lat, lon: config.traffic.lon });
+      return;
+    }
     if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current);
     trafficGeoRef.current = setTimeout(async () => {
       try {
@@ -501,12 +506,15 @@ export default function CenarioInterativoPage() {
         });
         const results = geoData?.results;
         if (results?.length) {
-          setTrafficCoords({ lat: results[0].latitude, lon: results[0].longitude });
+          const lat = results[0].latitude;
+          const lon = results[0].longitude;
+          setTrafficCoords({ lat, lon });
+          updateTraffic({ lat, lon });
         }
       } catch { /* silent */ }
     }, 1000);
     return () => { if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current); };
-  }, [config.traffic.enabled, trafficCity]);
+  }, [config.traffic.enabled, trafficCity, config.traffic.lat, config.traffic.lon]);
 
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSaveRef = useRef<string>("");
