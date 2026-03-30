@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Plus, Trash2, Power } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 interface TP {
   id: string;
