@@ -703,8 +703,7 @@ export default function ProgramaForm() {
                 </Select>
                 <Dialog open={tipoDialogOpen} onOpenChange={setTipoDialogOpen}>
                   <DialogTrigger asChild>
-                    <button className="px-3 py-1 text-xs font-bold transition-all shrink-0 rounded-xl"
-                      style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                    <button className="btn-skyglass-accent px-3 py-1 text-xs shrink-0"
                     >+ Novo</button>
                   </DialogTrigger>
                   <DialogContent className="max-w-sm">
