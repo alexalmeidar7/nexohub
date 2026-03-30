@@ -284,6 +284,40 @@ export default function CenarioInterativoPage() {
     }
   }, []);
 
+  /* ─── Supabase Realtime draw channel (cross-device) ─── */
+  const rtDrawChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  useEffect(() => {
+    if (!user?.id) return;
+    const ch = supabase.channel(`draw-sync-${user.id}`);
+    ch.on("broadcast", { event: "draw" }, ({ payload }: any) => {
+      const canvas = previewCanvasRef.current;
+      if (canvas && payload) {
+        drawOnCanvas(canvas, payload.action, payload.px, payload.py, payload.color, payload.width);
+        if (payload.action === "move") setPreviewHasDrawing(true);
+      }
+    }).on("broadcast", { event: "draw-clear" }, () => {
+      const canvas = previewCanvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setPreviewHasDrawing(false);
+      }
+    }).subscribe();
+    rtDrawChannelRef.current = ch;
+    return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
+  }, [user?.id, drawOnCanvas]);
+
+  const sendDraw = useCallback((action: string, px: number, py: number, color: string, width: number) => {
+    const msg = { type: "draw" as const, action, px, py, color, width };
+    cenarioBcRef.current?.postMessage(msg);
+    rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw", payload: { action, px, py, color, width } });
+  }, []);
+
+  const sendDrawClear = useCallback(() => {
+    cenarioBcRef.current?.postMessage({ type: "draw-clear" });
+    rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw-clear", payload: {} });
+  }, []);
+
   const handlePreviewDrawStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = previewCanvasRef.current;
     if (!canvas || !previewDrawActive) return;
@@ -291,8 +325,8 @@ export default function CenarioInterativoPage() {
     previewIsDrawingRef.current = true;
     const pos = getPreviewCanvasPos(e, canvas);
     drawOnCanvas(canvas, "start", pos.px, pos.py, previewDrawColor, previewDrawWidth);
-    cenarioBcRef.current?.postMessage({ type: "draw", action: "start", px: pos.px, py: pos.py, color: previewDrawColor, width: previewDrawWidth });
-  }, [previewDrawActive, getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas]);
+    sendDraw("start", pos.px, pos.py, previewDrawColor, previewDrawWidth);
+  }, [previewDrawActive, getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas, sendDraw]);
 
   const handlePreviewDrawMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = previewCanvasRef.current;
@@ -301,13 +335,13 @@ export default function CenarioInterativoPage() {
     const pos = getPreviewCanvasPos(e, canvas);
     drawOnCanvas(canvas, "move", pos.px, pos.py, previewDrawColor, previewDrawWidth);
     setPreviewHasDrawing(true);
-    cenarioBcRef.current?.postMessage({ type: "draw", action: "move", px: pos.px, py: pos.py, color: previewDrawColor, width: previewDrawWidth });
-  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas]);
+    sendDraw("move", pos.px, pos.py, previewDrawColor, previewDrawWidth);
+  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas, sendDraw]);
 
   const handlePreviewDrawEnd = useCallback(() => {
     previewIsDrawingRef.current = false;
-    cenarioBcRef.current?.postMessage({ type: "draw", action: "end" });
-  }, []);
+    sendDraw("end", 0, 0, "", 0);
+  }, [sendDraw]);
 
   const clearPreviewDrawing = useCallback(() => {
     const canvas = previewCanvasRef.current;
@@ -315,8 +349,8 @@ export default function CenarioInterativoPage() {
     const ctx = canvas.getContext("2d");
     if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     setPreviewHasDrawing(false);
-    cenarioBcRef.current?.postMessage({ type: "draw-clear" });
-  }, []);
+    sendDrawClear();
+  }, [sendDrawClear]);
 
   useEffect(() => {
     if (!previewDrawActive) return;
