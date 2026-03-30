@@ -277,7 +277,14 @@ export default function CenarioTela() {
   /* Geocode traffic */
   const trafficCity = config.traffic.city || config.city;
   useEffect(() => {
-    if (!config.traffic.enabled || !trafficCity) { setTrafficCoords(null); return; }
+    if (!config.traffic.enabled) { setTrafficCoords(null); return; }
+    // Use config lat/lon if available (synced from config page)
+    if (config.traffic.lat != null && config.traffic.lon != null) {
+      setTrafficCoords({ lat: config.traffic.lat, lon: config.traffic.lon });
+      return;
+    }
+    // Fallback: geocode from city name
+    if (!trafficCity) { setTrafficCoords(null); return; }
     const t = setTimeout(async () => {
       try {
         const { data: geoData } = await supabase.functions.invoke("fetch-weather", { body: { action: "geocode", query: trafficCity, count: 1 } });
@@ -285,7 +292,7 @@ export default function CenarioTela() {
       } catch { /* silent */ }
     }, 500);
     return () => clearTimeout(t);
-  }, [config.traffic.enabled, trafficCity]);
+  }, [config.traffic.enabled, trafficCity, config.traffic.lat, config.traffic.lon]);
 
   /* Listen for sync messages from config page via BroadcastChannel */
   useEffect(() => {
