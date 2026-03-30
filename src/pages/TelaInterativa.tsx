@@ -20,11 +20,20 @@ export default function TelaInterativa() {
 
     (async () => {
       try {
-        const { data, error: fnError } = await supabase.functions.invoke("public-player-data", {
-          body: { slug: userSlug },
-        });
+        const res = await fetch(
+          `https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/public-player-data`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6amZ6eHh2eGJzcGJka29kb2l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyOTUxNDEsImV4cCI6MjA4Njg3MTE0MX0.isUmXafM1scN8AogofAEw5ffcVZSZX4ff-WVusaB1OU",
+            },
+            body: JSON.stringify({ slug: userSlug }),
+          }
+        );
+        const data = await res.json();
 
-        if (fnError || data?.error) {
+        if (!res.ok || data?.error) {
           setError("Usuário não encontrado");
           setLoading(false);
           return;
