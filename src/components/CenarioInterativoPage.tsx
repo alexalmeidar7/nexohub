@@ -269,7 +269,19 @@ export default function CenarioInterativoPage() {
     const rect = canvas.getBoundingClientRect();
     const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top };
+    return { x: clientX - rect.left, y: clientY - rect.top, px: (clientX - rect.left) / rect.width, py: (clientY - rect.top) / rect.height };
+  }, []);
+
+  const drawOnCanvas = useCallback((canvas: HTMLCanvasElement, action: string, px: number, py: number, color: string, width: number) => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const x = px * canvas.width;
+    const y = py * canvas.height;
+    if (action === "start") { ctx.beginPath(); ctx.moveTo(x, y); }
+    else if (action === "move") {
+      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.lineTo(x, y); ctx.stroke();
+    }
   }, []);
 
   const handlePreviewDrawStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -277,30 +289,25 @@ export default function CenarioInterativoPage() {
     if (!canvas || !previewDrawActive) return;
     e.preventDefault();
     previewIsDrawingRef.current = true;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
     const pos = getPreviewCanvasPos(e, canvas);
-    ctx.beginPath();
-    ctx.moveTo(pos.x, pos.y);
-  }, [previewDrawActive, getPreviewCanvasPos]);
+    drawOnCanvas(canvas, "start", pos.px, pos.py, previewDrawColor, previewDrawWidth);
+    cenarioBcRef.current?.postMessage({ type: "draw", action: "start", px: pos.px, py: pos.py, color: previewDrawColor, width: previewDrawWidth });
+  }, [previewDrawActive, getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas]);
 
   const handlePreviewDrawMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = previewCanvasRef.current;
     if (!canvas || !previewIsDrawingRef.current) return;
     e.preventDefault();
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
     const pos = getPreviewCanvasPos(e, canvas);
-    ctx.strokeStyle = previewDrawColor;
-    ctx.lineWidth = previewDrawWidth;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.lineTo(pos.x, pos.y);
-    ctx.stroke();
+    drawOnCanvas(canvas, "move", pos.px, pos.py, previewDrawColor, previewDrawWidth);
     setPreviewHasDrawing(true);
-  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth]);
+    cenarioBcRef.current?.postMessage({ type: "draw", action: "move", px: pos.px, py: pos.py, color: previewDrawColor, width: previewDrawWidth });
+  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas]);
 
-  const handlePreviewDrawEnd = useCallback(() => { previewIsDrawingRef.current = false; }, []);
+  const handlePreviewDrawEnd = useCallback(() => {
+    previewIsDrawingRef.current = false;
+    cenarioBcRef.current?.postMessage({ type: "draw", action: "end" });
+  }, []);
 
   const clearPreviewDrawing = useCallback(() => {
     const canvas = previewCanvasRef.current;
@@ -308,6 +315,7 @@ export default function CenarioInterativoPage() {
     const ctx = canvas.getContext("2d");
     if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     setPreviewHasDrawing(false);
+    cenarioBcRef.current?.postMessage({ type: "draw-clear" });
   }, []);
 
   useEffect(() => {
@@ -345,6 +353,21 @@ export default function CenarioInterativoPage() {
           currencySubTab: currencySubTabRef.current,
           config: configRef.current,
         });
+      }
+      if (ev.data?.type === "draw") {
+        const canvas = previewCanvasRef.current;
+        if (canvas) {
+          drawOnCanvas(canvas, ev.data.action, ev.data.px, ev.data.py, ev.data.color, ev.data.width);
+          if (ev.data.action === "move") setPreviewHasDrawing(true);
+        }
+      }
+      if (ev.data?.type === "draw-clear") {
+        const canvas = previewCanvasRef.current;
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+          setPreviewHasDrawing(false);
+        }
       }
     };
     return () => { cenarioBcRef.current = null; bc.close(); };
