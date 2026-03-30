@@ -443,6 +443,9 @@ export default function CenarioInterativoPage() {
           if (ev.data.action === "move") setPreviewHasDrawing(true);
         }
       }
+      if (ev.data?.type === "zoom-change" && typeof ev.data.zoom === "number") {
+        setSatelliteZoom(ev.data.zoom);
+      }
       if (ev.data?.type === "draw-clear") {
         const canvas = previewCanvasRef.current;
         if (canvas) {
