@@ -1360,6 +1360,7 @@ export default function CenarioInterativoPage() {
                       </div>
                     </div>
                   )}
+                  </div>{/* end animated page wrapper */}
                 </div>
               </div>
 
