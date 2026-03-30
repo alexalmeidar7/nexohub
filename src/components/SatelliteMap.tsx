@@ -45,6 +45,21 @@ export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: S
       { maxZoom: 19 }
     ).addTo(map);
 
+    // RainViewer weather radar overlay (free, no API key)
+    const ts = Math.floor(Date.now() / 1000);
+    fetch("https://api.rainviewer.com/public/weather-maps.json")
+      .then(r => r.json())
+      .then(apiData => {
+        if (apiData?.radar?.past?.length) {
+          const latest = apiData.radar.past[apiData.radar.past.length - 1];
+          L.tileLayer(
+            `https://tilecache.rainviewer.com${latest.path}/256/{z}/{x}/{y}/2/1_1.png`,
+            { maxZoom: 19, opacity: 0.6 }
+          ).addTo(map);
+        }
+      })
+      .catch(() => {});
+
     mapRef.current = map;
     setTimeout(() => { try { map.invalidateSize(); } catch {} }, 200);
 
