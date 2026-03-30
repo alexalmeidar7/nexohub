@@ -386,6 +386,9 @@ export default function CenarioTela() {
     const bc = new BroadcastChannel("cenario-interativo");
     cenarioBcDrawRef.current = bc;
     bc.onmessage = (ev) => {
+      if (ev.data?.type === "ping") {
+        bc.postMessage({ type: "pong" });
+      }
       if (ev.data?.type === "tab-change") {
         setActiveTab(ev.data.tab);
         if (ev.data.subTab) setWeatherSubTab(ev.data.subTab);
