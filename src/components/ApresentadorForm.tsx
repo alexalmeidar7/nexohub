@@ -388,10 +388,17 @@ export default function ApresentadorForm() {
                 </button>
               )}
               <button onClick={handleSave} disabled={saving}
-                className="px-6 py-2 text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50 rounded-xl"
-                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)" }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, transparent)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)"; e.currentTarget.style.transform = "translateY(0)"; }}
+                className="px-6 py-2.5 text-xs font-bold transition-all duration-300 flex items-center gap-2 disabled:opacity-50 rounded-full hover:scale-[1.03] active:scale-[0.97]"
+                style={{
+                  background: "rgba(255,255,255,0.12)",
+                  backdropFilter: "blur(16px)",
+                  WebkitBackdropFilter: "blur(16px)",
+                  color: "var(--layout-accent-color, #2563eb)",
+                  border: "1.5px solid rgba(255,255,255,0.18)",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.15)",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.15)"; }}
               >
                 {saving && <Loader2 size={13} className="animate-spin" />}
                 {saving ? "Salvando..." : editingId ? "Atualizar" : "Salvar"}
@@ -403,8 +410,18 @@ export default function ApresentadorForm() {
 
       {/* Import Excel + Stats Bar */}
       <div className="flex items-center gap-4 flex-wrap">
-        <label className="cursor-pointer flex items-center gap-2 px-4 py-1.5 rounded-xl text-[11px] font-semibold transition-all hover:opacity-80"
-          style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "#fff", boxShadow: "0 2px 8px rgba(38,143,250,0.25)" }}>
+        <label className="cursor-pointer flex items-center gap-2 px-5 py-2 rounded-full text-[11px] font-semibold transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
+          style={{
+            background: "rgba(255,255,255,0.12)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            color: "var(--layout-accent-color, #2563eb)",
+            border: "1.5px solid rgba(255,255,255,0.18)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.15)",
+          }}
+          onMouseEnter={(e: any) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.2)"; }}
+          onMouseLeave={(e: any) => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.15)"; }}
+        >
           <FileSpreadsheet size={14} />
           Importar Excel
           <input ref={excelInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelFile} className="hidden" />
