@@ -176,6 +176,10 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
           </div>
           <p className="font-semibold text-[11px] text-white truncate mt-0.5">{weather.city}</p>
           <p className="text-[9px] text-white/50 truncate">{getLabel(weather.weatherCode)}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[9px] text-white/40">ST {weather.feelsLike}°</span>
+            <span className="text-[9px] text-white/40">💨 {weather.windSpeed} km/h</span>
+          </div>
         </div>
 
         {/* AMANHÃ */}

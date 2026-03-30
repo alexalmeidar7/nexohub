@@ -115,6 +115,8 @@ serve(async (req) => {
     <minima>${Math.round(d.daily.temperature_2m_min[0])}Cº</minima>
     <maxima>${Math.round(d.daily.temperature_2m_max[0])}Cº</maxima>
     <humidade>${d.current.relative_humidity_2m}%</humidade>
+    <sensacao_termica>${Math.round(d.current.apparent_temperature)}Cº</sensacao_termica>
+    <vento>${Math.round(d.current.wind_speed_10m)} km/h</vento>
     <precipitacao>${d.daily.precipitation_probability_max[0] ?? 0}%</precipitacao>${amanhaXml}
 </tempo>`;
 
