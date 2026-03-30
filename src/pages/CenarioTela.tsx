@@ -143,6 +143,7 @@ export default function CenarioTela() {
   const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
+  const [satelliteZoom, setSatelliteZoom] = useState(6);
 
 
   /* ─── Drawing (Pen) ─── */
@@ -493,7 +494,7 @@ export default function CenarioTela() {
           {/* Satellite fullscreen — aligned after sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
             <div className="absolute inset-y-0 right-0" style={{ left: "8%", zIndex: 5 }}>
-              <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={6} />
+              <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={setSatelliteZoom} />
             </div>
           )}
 

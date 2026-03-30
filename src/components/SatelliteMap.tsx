@@ -13,6 +13,8 @@ interface SatelliteMapProps {
   lat: number;
   lon: number;
   zoom?: number;
+  onZoomChange?: (zoom: number) => void;
+  showControls?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -48,7 +50,7 @@ function loadGoogleMaps(): Promise<void> {
   });
 }
 
-export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: SatelliteMapProps) {
+export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showControls = false, className, style }: SatelliteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
 
@@ -110,6 +112,14 @@ export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: S
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleZoom = (delta: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const newZoom = Math.max(2, Math.min(20, (map.getZoom() || zoom) + delta));
+    map.setZoom(newZoom);
+    onZoomChange?.(newZoom);
+  };
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -120,10 +130,24 @@ export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: S
   }, [lat, lon, zoom]);
 
   return (
-    <div
-      ref={containerRef}
-      className={className}
-      style={{ width: "100%", height: "100%", ...style }}
-    />
+    <div className="relative" style={{ width: "100%", height: "100%", ...style }}>
+      <div
+        ref={containerRef}
+        className={className}
+        style={{ width: "100%", height: "100%" }}
+      />
+      {showControls && (
+        <div className="absolute bottom-4 right-4 flex flex-col gap-1 z-50">
+          <button
+            onClick={() => handleZoom(1)}
+            className="w-9 h-9 rounded-lg bg-black/60 backdrop-blur text-white flex items-center justify-center text-lg font-bold hover:bg-black/80 transition"
+          >+</button>
+          <button
+            onClick={() => handleZoom(-1)}
+            className="w-9 h-9 rounded-lg bg-black/60 backdrop-blur text-white flex items-center justify-center text-lg font-bold hover:bg-black/80 transition"
+          >−</button>
+        </div>
+      )}
+    </div>
   );
 }
