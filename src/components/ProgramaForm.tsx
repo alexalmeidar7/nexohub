@@ -659,6 +659,8 @@ export default function ProgramaForm() {
     return sorted;
   }, [programas, sortBy]);
 
+  if (loadingData) return <ModulePageSkeleton variant="form" />;
+
   return (
     <div className="animate-fade-in space-y-6">
       {/* Form Card */}
