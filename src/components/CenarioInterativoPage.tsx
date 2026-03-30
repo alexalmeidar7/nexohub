@@ -1441,6 +1441,44 @@ export default function CenarioInterativoPage() {
                 </div>
               </div>
 
+              {/* Drawing options panel for preview */}
+              {previewDrawActive && showPreviewDrawOptions && (
+                <div className="absolute flex flex-col items-center gap-1 rounded-xl" style={{ left: 60, top: "50%", transform: "translateY(-50%)", zIndex: 45, padding: "6px 4px", background: "rgba(20,20,20,0.85)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  {PREV_DRAW_COLORS.map(c => (
+                    <button key={c} onClick={() => setPreviewDrawColor(c)} className="rounded-full cursor-pointer" style={{ width: 18, height: 18, background: c, border: previewDrawColor === c ? "2px solid #fff" : "2px solid transparent", boxShadow: previewDrawColor === c ? `0 0 6px ${c}` : "none", transition: "all 0.15s ease" }} />
+                  ))}
+                  <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.15)", margin: "2px 0" }} />
+                  {PREV_DRAW_WIDTHS.map(w => (
+                    <button key={w} onClick={() => setPreviewDrawWidth(w)} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: 18, height: 18, background: previewDrawWidth === w ? "rgba(255,255,255,0.2)" : "transparent", border: previewDrawWidth === w ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent", transition: "all 0.15s ease" }}>
+                      <div style={{ width: Math.max(3, w * 1.2), height: Math.max(3, w * 1.2), borderRadius: "50%", background: previewDrawColor }} />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Drawing canvas overlay for preview */}
+              {previewDrawActive && (
+                <canvas
+                  ref={previewCanvasRef}
+                  className="absolute inset-0 rounded-2xl"
+                  style={{ zIndex: 40, cursor: "crosshair", touchAction: "none" }}
+                  onMouseDown={handlePreviewDrawStart}
+                  onMouseMove={handlePreviewDrawMove}
+                  onMouseUp={handlePreviewDrawEnd}
+                  onMouseLeave={handlePreviewDrawEnd}
+                  onTouchStart={handlePreviewDrawStart}
+                  onTouchMove={handlePreviewDrawMove}
+                  onTouchEnd={handlePreviewDrawEnd}
+                />
+              )}
+
+              {/* Clear drawing button for preview */}
+              {previewHasDrawing && (
+                <button onClick={clearPreviewDrawing} className="absolute flex items-center justify-center rounded-full" style={{ top: 8, right: 8, zIndex: 45, width: 24, height: 24, background: "rgba(239,68,68,0.8)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" }}>
+                  <Eraser size={12} color="white" />
+                </button>
+              )}
+
               {!config.weather.enabled && !config.traffic.enabled && !config.currency.enabled && !config.chat.enabled && !config.home.bgImage && (
                 <div className="absolute inset-0 flex items-center justify-center text-center" style={{ background: "rgba(26,26,26,0.85)" }}>
                   <div className="text-white opacity-50">
