@@ -254,6 +254,36 @@ export default function CenarioInterativoPage() {
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
 
+  /* ─── Preview Drawing ─── */
+  const [previewDrawActive, setPreviewDrawActive] = useState(false);
+  const [previewHasDrawing, setPreviewHasDrawing] = useState(false);
+  const [previewDrawColor, setPreviewDrawColor] = useState("#e1f532");
+  const [previewDrawWidth, setPreviewDrawWidth] = useState(3);
+  const [showPreviewDrawOptions, setShowPreviewDrawOptions] = useState(false);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const previewIsDrawingRef = useRef(false);
+  const PREV_DRAW_COLORS = ["#e1f532", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
+  const PREV_DRAW_WIDTHS = [2, 4, 8, 14];
+
+  const getPreviewCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top, px: (clientX - rect.left) / rect.width, py: (clientY - rect.top) / rect.height };
+  }, []);
+
+  const drawOnCanvas = useCallback((canvas: HTMLCanvasElement, action: string, px: number, py: number, color: string, width: number) => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const x = px * canvas.width;
+    const y = py * canvas.height;
+    if (action === "start") { ctx.beginPath(); ctx.moveTo(x, y); }
+    else if (action === "move") {
+      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.lineTo(x, y); ctx.stroke();
+    }
+  }, []);
+
   /* ─── Supabase Realtime draw channel (cross-device) ─── */
   const rtDrawChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   useEffect(() => {
@@ -287,32 +317,6 @@ export default function CenarioInterativoPage() {
     cenarioBcRef.current?.postMessage({ type: "draw-clear" });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw-clear", payload: {} });
   }, []);
-
-  /* ─── Preview Drawing ─── */
-  const [previewDrawActive, setPreviewDrawActive] = useState(false);
-  const [previewHasDrawing, setPreviewHasDrawing] = useState(false);
-  const [previewDrawColor, setPreviewDrawColor] = useState("#e1f532");
-  const [previewDrawWidth, setPreviewDrawWidth] = useState(3);
-  const [showPreviewDrawOptions, setShowPreviewDrawOptions] = useState(false);
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
-  const previewIsDrawingRef = useRef(false);
-  const PREV_DRAW_COLORS = ["#e1f532", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
-  const PREV_DRAW_WIDTHS = [2, 4, 8, 14];
-
-  const getPreviewCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
-    const rect = canvas.getBoundingClientRect();
-    const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top, px: (clientX - rect.left) / rect.width, py: (clientY - rect.top) / rect.height };
-  }, []);
-
-  const drawOnCanvas = useCallback((canvas: HTMLCanvasElement, action: string, px: number, py: number, color: string, width: number) => {
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const x = px * canvas.width;
-    const y = py * canvas.height;
-    if (action === "start") { ctx.beginPath(); ctx.moveTo(x, y); }
-    else if (action === "move") {
       ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = "round"; ctx.lineJoin = "round";
       ctx.lineTo(x, y); ctx.stroke();
     }
