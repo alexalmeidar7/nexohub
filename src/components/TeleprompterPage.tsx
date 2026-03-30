@@ -87,6 +87,8 @@ export default function TeleprompterPage() {
 
   const inputStyle = "w-full rounded-lg px-3 py-2 text-sm border focus:outline-none focus:ring-2";
 
+  if (initialLoading) return <ModulePageSkeleton variant="form" />;
+
   return (
     <div className="space-y-6">
       {/* Form */}
