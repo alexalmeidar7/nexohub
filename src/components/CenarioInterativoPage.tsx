@@ -462,12 +462,12 @@ export default function CenarioInterativoPage() {
       }
     };
 
-    // Ping external screen every 3s
+    // Ping external screen every 3s (only for same-browser BroadcastChannel)
     const pingInterval = setInterval(() => {
       bc.postMessage({ type: "ping" });
-      // If no pong in 5s, mark offline
+      // If no pong in 5s AND no presence connection, mark offline
       setTimeout(() => {
-        if (Date.now() - lastPongRef.current > 5000) setExternalConnected(false);
+        if (Date.now() - lastPongRef.current > 5000 && !presenceConnectedRef.current) setExternalConnected(false);
       }, 2000);
     }, 3000);
     // Initial ping
