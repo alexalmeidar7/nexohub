@@ -28,6 +28,7 @@ const TpExterno = lazy(() => import("./pages/TpExterno"));
 const PlayerCatalog = lazy(() => import("./pages/player/PlayerCatalog"));
 const VmixControl = lazy(() => import("./pages/VmixControl"));
 const CenarioTela = lazy(() => import("./pages/CenarioTela"));
+const TelaInterativa = lazy(() => import("./pages/TelaInterativa"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/user/:userSlug/nexohub/player/catalog" element={<PlayerCatalog />} />
             <Route path="/user/nexohub/player/app" element={<PlayerApp />} />
             <Route path="/user/:userSlug/nexohub/player/app" element={<PlayerApp />} />
+            <Route path="/user/:userSlug/telainterativatelao" element={<TelaInterativa />} />
 
             {/* Legacy redirects */}
             <Route path="/masterview/home" element={<Navigate to="/user/nexohub/home" replace />} />

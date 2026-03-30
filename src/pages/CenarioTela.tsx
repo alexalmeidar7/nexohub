@@ -107,6 +107,27 @@ export default function CenarioTela() {
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [showConnectedMsg, setShowConnectedMsg] = useState(false);
+  const presenceShownRef = useRef(false);
+
+  /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
+  useEffect(() => {
+    if (!effectiveUserId) return;
+    const ch = supabase.channel(`cenario-presence-${effectiveUserId}`, { config: { presence: { key: "tela-externa" } } });
+    ch.on("presence", { event: "join" }, ({ key }) => {
+      if (key === "painel-controle" && !presenceShownRef.current) {
+        presenceShownRef.current = true;
+        setShowConnectedMsg(true);
+        setTimeout(() => setShowConnectedMsg(false), 4000);
+      }
+    });
+    ch.subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await ch.track({ screen: "tela-externa", ts: Date.now() });
+      }
+    });
+    return () => { supabase.removeChannel(ch); };
+  }, [effectiveUserId]);
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === "undefined") return "home";
     return new URLSearchParams(window.location.search).get("tab") || "home";
@@ -828,6 +849,25 @@ export default function CenarioTela() {
               </span>
             )}
           </div>
+
+          {/* "Telas Conectadas" notification */}
+          {showConnectedMsg && (
+            <div
+              className="absolute left-1/2 flex items-center gap-2 px-4 py-2 rounded-full"
+              style={{
+                top: "3vh",
+                transform: "translateX(-50%)",
+                zIndex: 60,
+                background: "rgba(74,222,128,0.2)",
+                backdropFilter: "blur(16px)",
+                border: "1px solid rgba(74,222,128,0.4)",
+                animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both",
+              }}
+            >
+              <div className="rounded-full" style={{ width: "1vh", height: "1vh", background: "#4ade80", boxShadow: "0 0 8px #4ade80" }} />
+              <span className="text-white font-semibold" style={{ fontSize: "1.4vh" }}>Telas conectadas</span>
+            </div>
+          )}
 
           </div>
         </div>

@@ -375,7 +375,47 @@ export default function CenarioInterativoPage() {
   useEffect(() => { currencySubTabRef.current = currencySubTab; }, [currencySubTab]);
 
   const [externalConnected, setExternalConnected] = useState(false);
+  const [showConnectedMsg, setShowConnectedMsg] = useState(false);
   const lastPongRef = useRef(0);
+  const presenceShownRef = useRef(false);
+
+  /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
+  useEffect(() => {
+    if (!user?.id) return;
+    const ch = supabase.channel(`cenario-presence-${user.id}`, { config: { presence: { key: "painel-controle" } } });
+    ch.on("presence", { event: "join" }, ({ key }) => {
+      if (key === "tela-externa") {
+        setExternalConnected(true);
+        if (!presenceShownRef.current) {
+          presenceShownRef.current = true;
+          setShowConnectedMsg(true);
+          setTimeout(() => setShowConnectedMsg(false), 4000);
+        }
+      }
+    });
+    ch.on("presence", { event: "leave" }, ({ key }) => {
+      if (key === "tela-externa") {
+        setExternalConnected(false);
+        presenceShownRef.current = false;
+      }
+    });
+    ch.on("presence", { event: "sync" }, () => {
+      const state = ch.presenceState();
+      const hasExternal = !!state["tela-externa"]?.length;
+      setExternalConnected(hasExternal);
+      if (hasExternal && !presenceShownRef.current) {
+        presenceShownRef.current = true;
+        setShowConnectedMsg(true);
+        setTimeout(() => setShowConnectedMsg(false), 4000);
+      }
+    });
+    ch.subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await ch.track({ screen: "painel-controle", ts: Date.now() });
+      }
+    });
+    return () => { supabase.removeChannel(ch); presenceShownRef.current = false; };
+  }, [user?.id]);
 
   const cenarioBcRef = useRef<BroadcastChannel | null>(null);
   useEffect(() => {
@@ -1199,6 +1239,20 @@ export default function CenarioInterativoPage() {
                 <ExternalLink size={12} /> Abrir Tela
               </button>
             </div>
+
+            {/* "Telas Conectadas" notification */}
+            {showConnectedMsg && (
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full mb-2 mx-auto w-fit animate-fade-in"
+                style={{
+                  background: "rgba(74,222,128,0.15)",
+                  border: "1px solid rgba(74,222,128,0.3)",
+                }}
+              >
+                <div className="rounded-full" style={{ width: 6, height: 6, background: "#4ade80", boxShadow: "0 0 6px #4ade80" }} />
+                <span className="text-[11px] font-semibold" style={{ color: "#4ade80" }}>Telas conectadas</span>
+              </div>
+            )}
 
             <div
               className="relative rounded-2xl overflow-hidden mx-auto"
