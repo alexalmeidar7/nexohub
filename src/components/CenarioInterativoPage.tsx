@@ -1149,7 +1149,7 @@ export default function CenarioInterativoPage() {
                   )}
 
                   {/* Weather overlay */}
-                  {activeTab === "weather" && (
+                  {activeTab === "weather" && weatherSubTab !== "satellite" && (
                     <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                       {!config.weather.bgImage && (
                         <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d47a1 0%, #1565c0 25%, #1e88e5 50%, #42a5f5 75%, #90caf9 100%)" }} />
