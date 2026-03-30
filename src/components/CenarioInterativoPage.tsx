@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -340,6 +340,9 @@ export default function CenarioInterativoPage() {
   useEffect(() => { weatherSubTabRef.current = weatherSubTab; }, [weatherSubTab]);
   useEffect(() => { currencySubTabRef.current = currencySubTab; }, [currencySubTab]);
 
+  const [externalConnected, setExternalConnected] = useState(false);
+  const lastPongRef = useRef(0);
+
   const cenarioBcRef = useRef<BroadcastChannel | null>(null);
   useEffect(() => {
     const bc = new BroadcastChannel("cenario-interativo");
@@ -353,6 +356,10 @@ export default function CenarioInterativoPage() {
           currencySubTab: currencySubTabRef.current,
           config: configRef.current,
         });
+      }
+      if (ev.data?.type === "pong") {
+        lastPongRef.current = Date.now();
+        setExternalConnected(true);
       }
       if (ev.data?.type === "draw") {
         const canvas = previewCanvasRef.current;
@@ -370,7 +377,32 @@ export default function CenarioInterativoPage() {
         }
       }
     };
-    return () => { cenarioBcRef.current = null; bc.close(); };
+
+    // Ping external screen every 3s
+    const pingInterval = setInterval(() => {
+      bc.postMessage({ type: "ping" });
+      // If no pong in 5s, mark offline
+      setTimeout(() => {
+        if (Date.now() - lastPongRef.current > 5000) setExternalConnected(false);
+      }, 2000);
+    }, 3000);
+    // Initial ping
+    bc.postMessage({ type: "ping" });
+
+    return () => { cenarioBcRef.current = null; clearInterval(pingInterval); bc.close(); };
+  }, [drawOnCanvas]);
+
+  const forceReconnect = useCallback(() => {
+    cenarioBcRef.current?.postMessage({ type: "ping" });
+    cenarioBcRef.current?.postMessage({ type: "request-state" });
+    // Also re-send current state to wake up external screen
+    cenarioBcRef.current?.postMessage({
+      type: "full-state",
+      tab: activeTabRef.current,
+      subTab: weatherSubTabRef.current,
+      currencySubTab: currencySubTabRef.current,
+      config: configRef.current,
+    });
   }, []);
 
   const handleTabChange = (tab: string) => {
@@ -1107,6 +1139,24 @@ export default function CenarioInterativoPage() {
             <div className="flex items-center gap-2 mb-4">
               <Eye size={16} style={{ color: mutedText }} />
               <span className="text-sm font-semibold">Preview (9:16)</span>
+              <div className="flex items-center gap-1.5 ml-2">
+                {externalConnected ? (
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)" }}>
+                    <Wifi size={10} style={{ color: "#4ade80" }} />
+                    <span className="text-[10px] font-semibold" style={{ color: "#4ade80" }}>Online</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}>
+                      <WifiOff size={10} style={{ color: "#ef4444" }} />
+                      <span className="text-[10px] font-semibold" style={{ color: "#ef4444" }}>Offline</span>
+                    </div>
+                    <button onClick={forceReconnect} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold cursor-pointer transition-opacity hover:opacity-80" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: mutedText }}>
+                      <RefreshCw size={10} /> Forçar conexão
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
                 className="ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
