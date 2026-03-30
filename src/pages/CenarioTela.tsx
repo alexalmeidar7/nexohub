@@ -384,6 +384,7 @@ export default function CenarioTela() {
   /* Listen for sync messages from config page via BroadcastChannel */
   useEffect(() => {
     const bc = new BroadcastChannel("cenario-interativo");
+    cenarioBcDrawRef.current = bc;
     bc.onmessage = (ev) => {
       if (ev.data?.type === "tab-change") {
         setActiveTab(ev.data.tab);
@@ -403,11 +404,27 @@ export default function CenarioTela() {
           setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
         }
       }
+
+      if (ev.data?.type === "draw") {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          drawOnCanvas(canvas, ev.data.action, ev.data.px, ev.data.py, ev.data.color, ev.data.width);
+          if (ev.data.action === "move") setHasDrawing(true);
+        }
+      }
+      if (ev.data?.type === "draw-clear") {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+          setHasDrawing(false);
+        }
+      }
     };
     // Request current state from the config page
     bc.postMessage({ type: "request-state" });
-    return () => bc.close();
-  }, []);
+    return () => { cenarioBcDrawRef.current = null; bc.close(); };
+  }, [drawOnCanvas]);
 
   const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
 
