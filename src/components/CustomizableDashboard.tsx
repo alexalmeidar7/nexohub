@@ -596,8 +596,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           <p className="text-xs mb-5 max-w-xs" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicione atalhos e widgets para personalizar seu painel</p>
           <button
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-            className="px-6 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.03]"
-            style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #0f1058))`, color: "var(--layout-button-text, #fff)", boxShadow: `0 4px 16px color-mix(in srgb, var(--layout-button-bg, #0f1058) 25%, transparent)` }}
+            className="btn-skyglass px-6 py-2.5 text-xs"
           >
             <Plus size={12} className="inline mr-1.5" /> Começar a personalizar
           </button>

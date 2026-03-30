@@ -959,12 +959,7 @@ export default function PlayerLayoutCustomizer() {
         <button
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className="px-8 py-2.5 text-sm font-bold flex items-center gap-2 rounded-xl transition-all disabled:opacity-40"
-          style={{
-            background: hasChanges ? "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)",
-            color: "#ffffff",
-            boxShadow: hasChanges ? "0 4px 16px color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 30%, transparent)" : "none",
-          }}
+          className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-40"
         >
           {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
           {saving ? "Salvando..." : "Salvar Alterações"}

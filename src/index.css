@@ -623,61 +623,72 @@ table:not([data-no-row-hover]) tbody tr:hover {
   100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
 }
 
-/* ─── Themed Button Utilities ─── */
-.btn-themed-primary {
+/* ─── SkyGlass Button Utilities ─── */
+.btn-skyglass {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
+  padding: 0.5rem 1.5rem;
   font-size: 0.75rem;
   font-weight: 700;
   border-radius: 9999px;
-  border: none;
-  background: linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%));
-  color: var(--layout-header-text, #ffffff);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--layout-accent-color, #2563eb) 35%, transparent);
-  transition: all 0.2s ease;
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--layout-accent-color, #2563eb);
+  border: 1.5px solid rgba(255,255,255,0.16);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.12);
+  transition: all 0.25s cubic-bezier(.4,0,.2,1);
   cursor: pointer;
 }
-.btn-themed-primary:hover {
-  box-shadow: 0 6px 20px color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, transparent);
+.btn-skyglass:hover {
+  background: rgba(255,255,255,0.20);
+  border-color: rgba(255,255,255,0.28);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.18);
   transform: translateY(-1px);
-  filter: brightness(1.08);
 }
-.btn-themed-primary:active {
+.btn-skyglass:active {
   transform: translateY(0) scale(0.97);
 }
-.btn-themed-primary:disabled {
-  opacity: 0.5;
+.btn-skyglass:disabled {
+  opacity: 0.45;
   pointer-events: none;
 }
 
-.btn-themed-secondary {
+.btn-skyglass-accent {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
+  padding: 0.5rem 1.5rem;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 9999px;
-  background: color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent);
+  background: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, rgba(255,255,255,0.08));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: var(--layout-accent-color, #2563eb);
   border: 1.5px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent);
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.10);
+  transition: all 0.25s cubic-bezier(.4,0,.2,1);
   cursor: pointer;
 }
-.btn-themed-secondary:hover {
-  background: color-mix(in srgb, var(--layout-accent-color, #2563eb) 18%, transparent);
+.btn-skyglass-accent:hover {
+  background: color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, rgba(255,255,255,0.12));
   border-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent);
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent), inset 0 1px 0 rgba(255,255,255,0.15);
   transform: translateY(-1px);
 }
-.btn-themed-secondary:active {
+.btn-skyglass-accent:active {
   transform: translateY(0) scale(0.97);
 }
+.btn-skyglass-accent:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
 
-.btn-themed-outline {
+.btn-skyglass-outline {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -686,36 +697,44 @@ table:not([data-no-row-hover]) tbody tr:hover {
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 9999px;
-  background: var(--layout-page-bg, #ffffff);
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: var(--layout-page-text, #1a1a1a);
-  border: 1.5px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent);
-  transition: all 0.2s ease;
+  border: 1.5px solid rgba(255,255,255,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  transition: all 0.25s cubic-bezier(.4,0,.2,1);
   cursor: pointer;
 }
-.btn-themed-outline:hover {
-  background: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent);
-  border-color: color-mix(in srgb, var(--layout-border-color, #333333) 60%, transparent);
+.btn-skyglass-outline:hover {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.24);
 }
-.btn-themed-outline:active {
+.btn-skyglass-outline:active {
   transform: scale(0.97);
 }
 
-.btn-themed-ghost {
+.btn-skyglass-danger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
+  padding: 0.375rem 1rem;
   font-size: 0.6875rem;
   font-weight: 600;
-  border-radius: 0.625rem;
-  background: transparent;
-  color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent);
-  border: none;
-  transition: all 0.2s ease;
+  border-radius: 9999px;
+  background: rgba(220,38,38,0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #dc2626;
+  border: 1.5px solid rgba(220,38,38,0.18);
+  transition: all 0.25s cubic-bezier(.4,0,.2,1);
   cursor: pointer;
 }
-.btn-themed-ghost:hover {
-  background: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent);
-  color: var(--layout-page-text, #1a1a1a);
+.btn-skyglass-danger:hover {
+  background: rgba(220,38,38,0.15);
+  border-color: rgba(220,38,38,0.30);
+}
+.btn-skyglass-danger:active {
+  transform: scale(0.97);
 }

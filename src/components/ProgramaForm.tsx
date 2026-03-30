@@ -703,8 +703,7 @@ export default function ProgramaForm() {
                 </Select>
                 <Dialog open={tipoDialogOpen} onOpenChange={setTipoDialogOpen}>
                   <DialogTrigger asChild>
-                    <button className="px-3 py-1 text-xs font-bold transition-all shrink-0 rounded-xl"
-                      style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                    <button className="btn-skyglass-accent px-3 py-1 text-xs shrink-0"
                     >+ Novo</button>
                   </DialogTrigger>
                   <DialogContent className="max-w-sm">
@@ -716,8 +715,7 @@ export default function ProgramaForm() {
                         onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                         onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                       />
-                      <button onClick={addTipo} className="w-full py-2 font-bold transition-all rounded-xl"
-                        style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                      <button onClick={addTipo} className="btn-skyglass-accent w-full py-2"
                       >Adicionar</button>
                     </div>
                   </DialogContent>
@@ -880,8 +878,7 @@ export default function ProgramaForm() {
               </Select>
               <Dialog open={estudioDialogOpen} onOpenChange={setEstudioDialogOpen}>
                 <DialogTrigger asChild>
-                  <button className="px-3 py-1 text-xs font-bold transition-all shrink-0 rounded-xl"
-                    style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                  <button className="btn-skyglass-accent px-3 py-1 text-xs shrink-0"
                   >+ Novo</button>
                 </DialogTrigger>
                 <DialogContent className="max-w-sm">
@@ -893,8 +890,7 @@ export default function ProgramaForm() {
                       onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                       onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                     />
-                    <button onClick={addEstudio} className="w-full py-2 font-bold transition-all rounded-xl"
-                      style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                    <button onClick={addEstudio} className="btn-skyglass-accent w-full py-2"
                     >Adicionar</button>
                   </div>
                 </DialogContent>
@@ -1015,10 +1011,7 @@ export default function ProgramaForm() {
               </button>
             )}
             <button onClick={handleAdd} disabled={saving}
-              className="px-6 py-2 text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50 rounded-xl"
-              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)" }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, transparent)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)"; e.currentTarget.style.transform = "translateY(0)"; }}
+              className="btn-skyglass-accent px-6 py-2.5 text-xs disabled:opacity-50"
             >
               {saving && <Loader2 size={13} className="animate-spin" />}
               {saving ? "Salvando..." : editingId ? "Atualizar" : "Adicionar Programa"}

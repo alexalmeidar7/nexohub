@@ -903,8 +903,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         <button
           onClick={handleSave}
           disabled={saving || !programaId}
-          className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 mt-3 flex items-center justify-center gap-2 disabled:opacity-40"
-          style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 16px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 30%, transparent)" }}
+          className="btn-skyglass-accent w-full py-3 text-sm mt-3 disabled:opacity-40"
+          style={{ borderRadius: "12px" }}
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
           {saving ? "Salvando..." : "Finalizar Programa Express"}

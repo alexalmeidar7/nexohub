@@ -260,10 +260,7 @@ export default function CortesVideoPage() {
         {/* Cut button */}
         <div className="flex justify-center mb-5">
           <button onClick={handleCut} disabled={!canCut || cutting}
-            className="flex items-center gap-2 px-8 py-2.5 rounded-full text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "#fff", border: "none" }}
-            onMouseEnter={e => { if (canCut && !cutting) e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)"; }}
-            onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+            className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {cutting ? <><Loader2 size={16} className="animate-spin" /> Processando...</> : <><Scissors size={16} /> Gerar Corte</>}
           </button>

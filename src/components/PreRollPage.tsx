@@ -599,10 +599,7 @@ export default function PreRollPage() {
 
             {/* Submit */}
             <button type="submit" disabled={saving}
-              className="w-full sm:w-auto px-8 py-2.5 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 rounded-xl hover:shadow-lg"
-              style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 20px color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 40%, transparent)"; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+              className="btn-skyglass-accent w-full sm:w-auto px-8 py-2.5 text-sm disabled:opacity-50"
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
               {editId ? "Salvar Alterações" : "Cadastrar Pré-Roll"}

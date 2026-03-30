@@ -551,8 +551,7 @@ export default function ApresentadorForm() {
                 Cancelar
               </button>
               <button onClick={confirmImport} disabled={importing}
-                className="px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
-                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "#fff", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)" }}>
+                className="btn-skyglass-accent px-5 py-2 text-xs">
                 {importing && <Loader2 size={13} className="animate-spin" />}
                 {importing ? "Importando..." : "OK"}
               </button>

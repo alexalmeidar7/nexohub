@@ -345,10 +345,7 @@ export default function LogosPatrocinadoresPage() {
                 </div>
 
                 <button type="submit" disabled={saving}
-                  className="w-full px-6 py-2 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 rounded-full"
-                  style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+                  className="btn-skyglass-accent w-full py-2.5 text-sm disabled:opacity-50"
                 >
                   {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingFullId ? "Atualizar Logo" : `Salvar ${pendingFiles.length} logo(s)`}
                 </button>
