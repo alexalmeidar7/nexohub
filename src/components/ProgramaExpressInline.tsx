@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2 } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Participante {
   nome: string;
@@ -535,17 +536,25 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Estúdio {editedFields.has("estudio") && <EditedCheck />}</label>
-              <select value={estudio} onChange={e => { setEstudio(e.target.value); setProgramaId(""); if (editingId) markEdited("estudio"); }} className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all" style={inputStyle}>
-                <option value="">Selecione</option>
-                {estudios.map(e => <option key={e} value={e}>{e}</option>)}
-              </select>
+              <Select value={estudio} onValueChange={v => { setEstudio(v); setProgramaId(""); if (editingId) markEdited("estudio"); }}>
+                <SelectTrigger className="w-full text-xs h-10">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {estudios.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programa {editedFields.has("programa") && <EditedCheck />}</label>
-              <select value={programaId} onChange={e => { setProgramaId(e.target.value); if (editingId) markEdited("programa"); }} className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all" style={inputStyle}>
-                <option value="">Selecione</option>
-                {filteredProgramas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-              </select>
+              <Select value={programaId} onValueChange={v => { setProgramaId(v); if (editingId) markEdited("programa"); }}>
+                <SelectTrigger className="w-full text-xs h-10">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredProgramas.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
