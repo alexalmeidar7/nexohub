@@ -1,4 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useCallback } from "react";
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyAFjw2CYxl40aDop1SsYTNC8sCrdsoR-5o";
 
