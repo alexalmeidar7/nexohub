@@ -32,6 +32,9 @@ interface TrafficConfig {
   city: string;
   points: TrafficPoint[];
   bgImage: string;
+  lat: number | null;
+  lon: number | null;
+  zoom: number;
 }
 
 interface CurrencyConfig {
