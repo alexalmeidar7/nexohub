@@ -83,7 +83,8 @@ serve(async (req) => {
 
         // Fetch weather
         const wxRes = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=2`
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=2`
+        );
         );
         const d = await wxRes.json();
 
@@ -114,6 +115,8 @@ serve(async (req) => {
     <minima>${Math.round(d.daily.temperature_2m_min[0])}Cº</minima>
     <maxima>${Math.round(d.daily.temperature_2m_max[0])}Cº</maxima>
     <humidade>${d.current.relative_humidity_2m}%</humidade>
+    <sensacao_termica>${Math.round(d.current.apparent_temperature)}Cº</sensacao_termica>
+    <vento>${Math.round(d.current.wind_speed_10m)} km/h</vento>
     <precipitacao>${d.daily.precipitation_probability_max[0] ?? 0}%</precipitacao>${amanhaXml}
 </tempo>`;
 

@@ -11,6 +11,8 @@ interface WidgetWeather {
   tomorrowMin: number;
   tomorrowMax: number;
   weatherCode: number;
+  feelsLike: number;
+  windSpeed: number;
 }
 
 const weatherIcons: Record<number, string> = {
@@ -102,6 +104,8 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
           tomorrowMin: Math.round(wxData.daily.temperature_2m_min[1]),
           tomorrowMax: Math.round(wxData.daily.temperature_2m_max[1]),
           weatherCode: wxData.current.weather_code,
+          feelsLike: Math.round(wxData.current.apparent_temperature),
+          windSpeed: Math.round(wxData.current.wind_speed_10m),
         });
       } catch { /* silent */ }
     };
@@ -172,6 +176,10 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
           </div>
           <p className="font-semibold text-[11px] text-white truncate mt-0.5">{weather.city}</p>
           <p className="text-[9px] text-white/50 truncate">{getLabel(weather.weatherCode)}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[9px] text-white/40">ST {weather.feelsLike}°</span>
+            <span className="text-[9px] text-white/40">💨 {weather.windSpeed} km/h</span>
+          </div>
         </div>
 
         {/* AMANHÃ */}
