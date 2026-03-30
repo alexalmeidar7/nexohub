@@ -820,6 +820,70 @@ export default function CenarioInterativoPage() {
                       O mapa de trânsito é exibido no Preview ao lado →
                     </div>
 
+                    {/* Lat / Lon / Zoom controls */}
+                    {trafficCoords && (
+                      <div className="space-y-2 mt-2">
+                        <Label className="text-xs font-medium" style={{ color: mutedText }}>Coordenadas e Zoom</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <Label className="text-[10px] opacity-60">Latitude</Label>
+                            <Input
+                              type="number"
+                              step="0.001"
+                              value={config.traffic.lat ?? trafficCoords.lat}
+                              onChange={e => {
+                                const v = parseFloat(e.target.value);
+                                if (!isNaN(v)) updateTraffic({ lat: v });
+                              }}
+                              className="text-xs h-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] opacity-60">Longitude</Label>
+                            <Input
+                              type="number"
+                              step="0.001"
+                              value={config.traffic.lon ?? trafficCoords.lon}
+                              onChange={e => {
+                                const v = parseFloat(e.target.value);
+                                if (!isNaN(v)) updateTraffic({ lon: v });
+                              }}
+                              className="text-xs h-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] opacity-60">Zoom</Label>
+                            <Input
+                              type="number"
+                              min={3}
+                              max={18}
+                              value={config.traffic.zoom}
+                              onChange={e => {
+                                const v = parseInt(e.target.value);
+                                if (!isNaN(v) && v >= 3 && v <= 18) updateTraffic({ zoom: v });
+                              }}
+                              className="text-xs h-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min={3}
+                            max={18}
+                            value={config.traffic.zoom}
+                            onChange={e => updateTraffic({ zoom: parseInt(e.target.value) })}
+                            className="flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
+                            style={{ accentColor: "var(--layout-accent-color, #e1f532)" }}
+                          />
+                          <span className="text-[10px] font-mono opacity-50" style={{ color: textColor }}>{config.traffic.zoom}x</span>
+                        </div>
+                      </div>
+                    )}
+
                     {config.traffic.points.length > 0 && (
                       <div className="space-y-2 mt-2">
                         <Label className="text-xs font-medium" style={{ color: mutedText }}>Pontos marcados</Label>
