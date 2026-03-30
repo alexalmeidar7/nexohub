@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Plus, Trash2, Power } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 interface TP {
   id: string;
@@ -19,6 +20,7 @@ export default function TeleprompterPage() {
   const [estudio, setEstudio] = useState("");
   const [nome, setNome] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -46,6 +48,7 @@ export default function TeleprompterPage() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (data) setTps(data);
+    setInitialLoading(false);
   }
 
   async function handleAdd() {
@@ -83,6 +86,8 @@ export default function TeleprompterPage() {
   }
 
   const inputStyle = "w-full rounded-lg px-3 py-2 text-sm border focus:outline-none focus:ring-2";
+
+  if (initialLoading) return <ModulePageSkeleton variant="form" />;
 
   return (
     <div className="space-y-6">

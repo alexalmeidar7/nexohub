@@ -142,7 +142,7 @@ export default function ShoppingPage() {
     loadData();
   };
 
-  if (loading) return <ModulePageSkeleton />;
+  if (loading) return <ModulePageSkeleton variant="form" />;
 
   const inputStyle: React.CSSProperties = {
     backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",

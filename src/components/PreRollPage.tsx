@@ -190,7 +190,7 @@ export default function PreRollPage() {
     return { label: "Ativo", color: { backgroundColor: "rgba(34,197,94,0.1)", color: "#22c55e" } };
   };
 
-  if (loading) return <ModulePageSkeleton />;
+  if (loading) return <ModulePageSkeleton variant="form" />;
 
   const inputStyle: React.CSSProperties = {
     backgroundColor: "var(--layout-page-bg, #ffffff)",

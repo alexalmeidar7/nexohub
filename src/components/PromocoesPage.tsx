@@ -165,7 +165,7 @@ export default function PromocoesPage() {
   };
 
   if (loading) {
-    return <ModulePageSkeleton />;
+    return <ModulePageSkeleton variant="form" />;
   }
 
   return (
