@@ -252,7 +252,6 @@ export default function CenarioTela() {
   }, [sendDrawClear]);
 
   useEffect(() => {
-    if (!drawingActive) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const parent = canvas.parentElement;
@@ -262,7 +261,7 @@ export default function CenarioTela() {
     const ro = new ResizeObserver(resize);
     ro.observe(parent);
     return () => ro.disconnect();
-  }, [drawingActive]);
+  }, []);
 
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
   const [liveStocks, setLiveStocks] = useState<LiveStock[]>([]);
