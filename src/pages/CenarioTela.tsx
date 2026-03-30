@@ -24,13 +24,18 @@ const defaultConfig: CenarioConfig = {
 };
 
 const CURRENCY_OPTIONS = [
-  { value: "USD", label: "Dólar Comercial (USD)" }, { value: "EUR", label: "Euro (EUR)" },
-  { value: "GBP", label: "Libra Esterlina (GBP)" }, { value: "ARS", label: "Peso Argentino (ARS)" },
-  { value: "JPY", label: "Iene Japonês (JPY)" }, { value: "BTC", label: "Bitcoin (BTC)" }, { value: "ETH", label: "Ethereum (ETH)" },
+  { value: "USD", label: "Dólar Comercial (USD)", flag: "US" }, { value: "EUR", label: "Euro (EUR)", flag: "EU" },
+  { value: "GBP", label: "Libra Esterlina (GBP)", flag: "GB" }, { value: "ARS", label: "Peso Argentino (ARS)", flag: "AR" },
+  { value: "JPY", label: "Iene Japonês (JPY)", flag: "JP" }, { value: "BTC", label: "Bitcoin (BTC)", flag: "BT" }, { value: "ETH", label: "Ethereum (ETH)", flag: "ET" },
 ];
 
 const CURRENCY_API_MAP: Record<string, string> = {
   USD: "USD-BRL", EUR: "EUR-BRL", GBP: "GBP-BRL", ARS: "ARS-BRL", JPY: "JPY-BRL", BTC: "BTC-BRL", ETH: "ETH-BRL",
+};
+
+const COUNTRY_FLAG_MAP: Record<string, string> = {
+  US: "🇺🇸", EU: "🇪🇺", GB: "🇬🇧", AR: "🇦🇷", JP: "🇯🇵", BT: "₿", ET: "Ξ",
+  BR: "🇧🇷", DE: "🇩🇪",
 };
 interface LiveCurrency { code: string; name: string; value: string; change: string; direction: "up" | "down" | "neutral"; }
 async function fetchLiveCurrencies(codes: string[]): Promise<LiveCurrency[]> {
@@ -513,7 +518,7 @@ export default function CenarioTela() {
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.3)" }} />}
                 <div className="relative z-10 flex flex-col h-full" style={{ padding: "3vh" }}>
-                  {config.currency.enabled ? (<>
+                    {config.currency.enabled ? (<>
                     <div className="flex justify-end mb-1 cenario-anim-icon"><DollarSign size={48} className="drop-shadow-lg" style={{ color: "#e1f532" }} /></div>
                     <div style={{ marginBottom: "1.6vh" }}>
                       <div className="font-extrabold leading-tight drop-shadow-lg cenario-anim-title" style={{ fontSize: "4.2vh" }}>cotação</div>
@@ -523,44 +528,54 @@ export default function CenarioTela() {
                     </div>
 
                     {currencySubTab === "moedas" ? (
-                      <div className="flex-1 space-y-2 overflow-auto" style={{ padding: "2.2vh" }}>
+                      <div className="flex-1 flex flex-col overflow-auto" style={{ gap: "0.6vh" }}>
                         {config.currency.currencies.map((c, idx) => {
                           const opt = CURRENCY_OPTIONS.find(o => o.value === c);
                           const live = liveCurrencies.find(l => l.code === c);
+                          const flagIcon = opt?.flag ? COUNTRY_FLAG_MAP[opt.flag] : "";
                           return (
-                            <div key={c} className={`flex items-center justify-between cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ fontSize: "1.95vh", padding: "1.25vh 1.4vh" }}>
-                              <span className="font-semibold" style={{ maxWidth: "52%", lineHeight: 1.15 }}>{opt?.label?.split("(")[0]?.trim() || c}</span>
-                              {live ? (
-                                <div className="flex items-center" style={{ gap: "0.8vh" }}>
-                                  <span className="font-extrabold" style={{ fontSize: "2.05vh" }}>{live.value}</span>
-                                  <span className="font-bold" style={{ fontSize: "1.75vh", color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{live.change}</span>
-                                  {live.direction === "up" && <ChevronUp style={{ width: "2.5vh", height: "2.5vh" }} strokeWidth={3} className="cenario-arrow-up" />}
-                                  {live.direction === "down" && <ChevronDown style={{ width: "2.5vh", height: "2.5vh" }} strokeWidth={3} className="cenario-arrow-down" />}
-                                  {live.direction !== "up" && live.direction !== "down" && <Minus style={{ width: "2vh", height: "2vh", color: "rgba(255,255,255,0.5)" }} />}
+                            <div key={c} className={`flex items-center cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ padding: "1.2vh 1.5vh", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                              <div className="flex items-center" style={{ gap: "1.2vh", flex: 1, minWidth: 0 }}>
+                                <span style={{ fontSize: "3vh", opacity: 0.2, filter: "grayscale(1) brightness(10)", lineHeight: 1 }}>{flagIcon}</span>
+                                <div className="flex flex-col" style={{ minWidth: 0 }}>
+                                  <span className="font-bold truncate" style={{ fontSize: "2vh", lineHeight: 1.2 }}>{c}</span>
+                                  <span className="truncate" style={{ fontSize: "1.3vh", opacity: 0.5, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
                                 </div>
-                              ) : (
-                                <span className="opacity-70">---</span>
-                              )}
+                              </div>
+                              {live ? (
+                                <div className="flex items-center" style={{ gap: "1vh", flexShrink: 0 }}>
+                                  <span className="font-black tabular-nums" style={{ fontSize: "2.2vh" }}>{live.value}</span>
+                                  <div className="flex items-center" style={{ gap: "0.3vh" }}>
+                                    <span className="font-bold tabular-nums" style={{ fontSize: "1.6vh", color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
+                                    {live.direction === "up" && <ChevronUp style={{ width: "2vh", height: "2vh" }} strokeWidth={3} className="cenario-arrow-up" />}
+                                    {live.direction === "down" && <ChevronDown style={{ width: "2vh", height: "2vh" }} strokeWidth={3} className="cenario-arrow-down" />}
+                                  </div>
+                                </div>
+                              ) : <span className="opacity-30">---</span>}
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <div className="flex-1 space-y-2 overflow-auto" style={{ padding: "2.2vh" }}>
-                        {liveStocks.map((s, idx) => (
-                          <div key={s.symbol} className={`flex items-center justify-between cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ fontSize: "1.95vh", padding: "1.25vh 1.4vh" }}>
-                            <span className="font-semibold" style={{ maxWidth: "52%", lineHeight: 1.15 }}>
-                              <span style={{ marginRight: "0.5vh" }}>{s.flag}</span>{s.name}
-                            </span>
-                            <div className="flex items-center" style={{ gap: "0.8vh" }}>
-                              <span className="font-extrabold" style={{ fontSize: "2.05vh" }}>{s.value}</span>
-                              <span className="font-bold" style={{ fontSize: "1.75vh", color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{s.change}</span>
-                              {s.direction === "up" && <ChevronUp style={{ width: "2.5vh", height: "2.5vh" }} strokeWidth={3} className="cenario-arrow-up" />}
-                              {s.direction === "down" && <ChevronDown style={{ width: "2.5vh", height: "2.5vh" }} strokeWidth={3} className="cenario-arrow-down" />}
-                              {s.direction !== "up" && s.direction !== "down" && <Minus style={{ width: "2vh", height: "2vh", color: "rgba(255,255,255,0.5)" }} />}
+                      <div className="flex-1 flex flex-col overflow-auto" style={{ gap: "0.6vh" }}>
+                        {liveStocks.map((s, idx) => {
+                          const flagChar = COUNTRY_FLAG_MAP[s.flag?.replace(/[^A-Z]/g, "").slice(0,2)] || s.flag;
+                          return (
+                            <div key={s.symbol} className={`flex items-center cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ padding: "1.2vh 1.5vh", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                              <div className="flex items-center" style={{ gap: "1.2vh", flex: 1, minWidth: 0 }}>
+                                <span style={{ fontSize: "3vh", opacity: 0.2, filter: "grayscale(1) brightness(10)", lineHeight: 1 }}>{flagChar}</span>
+                                <span className="font-bold truncate" style={{ fontSize: "2vh" }}>{s.name}</span>
+                              </div>
+                              <div className="flex items-center" style={{ gap: "1vh", flexShrink: 0 }}>
+                                <span className="font-black tabular-nums" style={{ fontSize: "2.2vh" }}>{s.value}</span>
+                                <div className="flex items-center" style={{ gap: "0.3vh" }}>
+                                  <span className="font-bold tabular-nums" style={{ fontSize: "1.6vh", color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{s.change}</span>
+                                  {s.direction === "up" && <ChevronUp style={{ width: "2vh", height: "2vh" }} strokeWidth={3} className="cenario-arrow-up" />}
+                                  {s.direction === "down" && <ChevronDown style={{ width: "2vh", height: "2vh" }} strokeWidth={3} className="cenario-arrow-down" />}</div>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                         {!liveStocks.length && (
                           <div className="opacity-60 text-center" style={{ fontSize: "1.8vh" }}>Dados indisponíveis</div>
                         )}
