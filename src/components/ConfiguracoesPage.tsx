@@ -838,10 +838,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 </button>
               )}
               <button onClick={handleAddCanal} disabled={savingCanal}
-                className="px-6 py-2.5 font-bold transition-all flex items-center gap-2 disabled:opacity-70 rounded-full text-sm shadow-md"
-                style={{ ...btnPrimary, background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", border: "none", color: "var(--layout-header-text, #ffffff)" }}
-                onMouseEnter={e => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}
+                className="btn-skyglass-accent px-6 py-2.5 text-sm disabled:opacity-70"
               >
                 {savingCanal ? <Loader2 size={14} className="animate-spin" /> : <><Plus size={14} /> {editingCanal ? "Salvar Alterações" : "Adicionar Canal"}</>}
               </button>
