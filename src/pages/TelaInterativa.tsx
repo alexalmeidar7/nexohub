@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+
 import { usePageTitle } from "@/hooks/usePageTitle";
 import CenarioTela from "./CenarioTela";
 
@@ -20,11 +20,22 @@ export default function TelaInterativa() {
 
     (async () => {
       try {
-        const { data, error: fnError } = await supabase.functions.invoke("public-player-data", {
-          body: { slug: userSlug },
-        });
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const res = await fetch(
+          `${supabaseUrl}/functions/v1/public-player-data`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: anonKey,
+            },
+            body: JSON.stringify({ slug: userSlug }),
+          }
+        );
+        const data = await res.json();
 
-        if (fnError || data?.error) {
+        if (!res.ok || data?.error) {
           setError("Usuário não encontrado");
           setLoading(false);
           return;
