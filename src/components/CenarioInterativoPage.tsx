@@ -524,7 +524,7 @@ export default function CenarioInterativoPage() {
         console.error("Erro ao salvar cenário:", error);
       }
       setSaving(false);
-    }, 400);
+    }, 150);
     return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
   }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab]);
 

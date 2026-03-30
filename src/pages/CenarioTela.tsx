@@ -98,6 +98,8 @@ export default function CenarioTela() {
   const effectiveUserId = user?.id || uidFromUrl || null;
 
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === "undefined") return "home";
     return new URLSearchParams(window.location.search).get("tab") || "home";
