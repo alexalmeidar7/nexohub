@@ -591,8 +591,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                             ))}
                           </select>
                           <button onClick={() => { setNewCatalogMode(true); setCanalForm(p => ({ ...p, catalog_name: "" })); }}
-                            className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0 whitespace-nowrap flex items-center gap-1"
-                            style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
+                            className="btn-skyglass-accent px-3 py-1.5 text-xs shrink-0 whitespace-nowrap"
                           >
                             <Plus size={12} /> Novo Catálogo
                           </button>
