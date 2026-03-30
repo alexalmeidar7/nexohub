@@ -325,8 +325,8 @@ export default function CenarioInterativoPage() {
     previewIsDrawingRef.current = true;
     const pos = getPreviewCanvasPos(e, canvas);
     drawOnCanvas(canvas, "start", pos.px, pos.py, previewDrawColor, previewDrawWidth);
-    cenarioBcRef.current?.postMessage({ type: "draw", action: "start", px: pos.px, py: pos.py, color: previewDrawColor, width: previewDrawWidth });
-  }, [previewDrawActive, getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas]);
+    sendDraw("start", pos.px, pos.py, previewDrawColor, previewDrawWidth);
+  }, [previewDrawActive, getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas, sendDraw]);
 
   const handlePreviewDrawMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = previewCanvasRef.current;
@@ -335,13 +335,13 @@ export default function CenarioInterativoPage() {
     const pos = getPreviewCanvasPos(e, canvas);
     drawOnCanvas(canvas, "move", pos.px, pos.py, previewDrawColor, previewDrawWidth);
     setPreviewHasDrawing(true);
-    cenarioBcRef.current?.postMessage({ type: "draw", action: "move", px: pos.px, py: pos.py, color: previewDrawColor, width: previewDrawWidth });
-  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas]);
+    sendDraw("move", pos.px, pos.py, previewDrawColor, previewDrawWidth);
+  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas, sendDraw]);
 
   const handlePreviewDrawEnd = useCallback(() => {
     previewIsDrawingRef.current = false;
-    cenarioBcRef.current?.postMessage({ type: "draw", action: "end" });
-  }, []);
+    sendDraw("end", 0, 0, "", 0);
+  }, [sendDraw]);
 
   const clearPreviewDrawing = useCallback(() => {
     const canvas = previewCanvasRef.current;
@@ -349,8 +349,8 @@ export default function CenarioInterativoPage() {
     const ctx = canvas.getContext("2d");
     if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     setPreviewHasDrawing(false);
-    cenarioBcRef.current?.postMessage({ type: "draw-clear" });
-  }, []);
+    sendDrawClear();
+  }, [sendDrawClear]);
 
   useEffect(() => {
     if (!previewDrawActive) return;
