@@ -560,7 +560,8 @@ export default function CenarioInterativoPage() {
 
   const handleTrafficSearch = () => {
     if (!trafficSearchCity.trim()) return;
-    updateTraffic({ city: trafficSearchCity.trim() });
+    // Reset lat/lon so geocoding will run for the new city
+    updateTraffic({ city: trafficSearchCity.trim(), lat: null, lon: null });
   };
 
   const trafficMapCity = config.traffic.city || config.city || "São Paulo";
