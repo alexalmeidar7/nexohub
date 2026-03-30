@@ -44,20 +44,15 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
       return;
     }
 
+    // Base map tiles
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
     }).addTo(map);
 
-    // Traffic flow overlay (free OpenStreetMap-based traffic tiles)
-    L.tileLayer("https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      opacity: 0,
-    });
-    // Use Waymarked Trails as a visual overlay hint — real traffic needs a provider key
-    // Add Google-style traffic tile overlay
+    // Google traffic overlay
     L.tileLayer(
-      "https://mt1.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}",
-      { maxZoom: 19, opacity: 0.7 }
+      "https://mt0.google.com/vt/lyrs=h,traffic&x={x}&y={y}&z={z}",
+      { maxZoom: 19, opacity: 0.6 }
     ).addTo(map);
 
     mapRef.current = map;
