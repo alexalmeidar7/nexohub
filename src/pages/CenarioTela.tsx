@@ -24,13 +24,18 @@ const defaultConfig: CenarioConfig = {
 };
 
 const CURRENCY_OPTIONS = [
-  { value: "USD", label: "Dólar Comercial (USD)" }, { value: "EUR", label: "Euro (EUR)" },
-  { value: "GBP", label: "Libra Esterlina (GBP)" }, { value: "ARS", label: "Peso Argentino (ARS)" },
-  { value: "JPY", label: "Iene Japonês (JPY)" }, { value: "BTC", label: "Bitcoin (BTC)" }, { value: "ETH", label: "Ethereum (ETH)" },
+  { value: "USD", label: "Dólar Comercial (USD)", flag: "US" }, { value: "EUR", label: "Euro (EUR)", flag: "EU" },
+  { value: "GBP", label: "Libra Esterlina (GBP)", flag: "GB" }, { value: "ARS", label: "Peso Argentino (ARS)", flag: "AR" },
+  { value: "JPY", label: "Iene Japonês (JPY)", flag: "JP" }, { value: "BTC", label: "Bitcoin (BTC)", flag: "BT" }, { value: "ETH", label: "Ethereum (ETH)", flag: "ET" },
 ];
 
 const CURRENCY_API_MAP: Record<string, string> = {
   USD: "USD-BRL", EUR: "EUR-BRL", GBP: "GBP-BRL", ARS: "ARS-BRL", JPY: "JPY-BRL", BTC: "BTC-BRL", ETH: "ETH-BRL",
+};
+
+const COUNTRY_FLAG_MAP: Record<string, string> = {
+  US: "🇺🇸", EU: "🇪🇺", GB: "🇬🇧", AR: "🇦🇷", JP: "🇯🇵", BT: "₿", ET: "Ξ",
+  BR: "🇧🇷", DE: "🇩🇪",
 };
 interface LiveCurrency { code: string; name: string; value: string; change: string; direction: "up" | "down" | "neutral"; }
 async function fetchLiveCurrencies(codes: string[]): Promise<LiveCurrency[]> {
