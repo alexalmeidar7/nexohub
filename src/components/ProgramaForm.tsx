@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { getApresentadores, type Apresentador } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { uploadProgramImage } from "@/lib/uploadProgramImage";
 import { useAuth } from "@/hooks/useAuth";
 import {
