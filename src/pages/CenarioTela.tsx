@@ -136,6 +136,7 @@ export default function CenarioTela() {
   const DRAW_WIDTHS = [2, 4, 8, 14];
 
   const cenarioBcDrawRef = useRef<BroadcastChannel | null>(null);
+  const rtDrawChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const getCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
@@ -156,6 +157,38 @@ export default function CenarioTela() {
     }
   }, []);
 
+  /* Supabase Realtime draw channel (cross-device) */
+  useEffect(() => {
+    if (!effectiveUserId) return;
+    const ch = supabase.channel(`draw-sync-${effectiveUserId}`);
+    ch.on("broadcast", { event: "draw" }, ({ payload }: any) => {
+      const canvas = canvasRef.current;
+      if (canvas && payload) {
+        drawOnCanvas(canvas, payload.action, payload.px, payload.py, payload.color, payload.width);
+        if (payload.action === "move") setHasDrawing(true);
+      }
+    }).on("broadcast", { event: "draw-clear" }, () => {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setHasDrawing(false);
+      }
+    }).subscribe();
+    rtDrawChannelRef.current = ch;
+    return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
+  }, [effectiveUserId, drawOnCanvas]);
+
+  const sendDraw = useCallback((action: string, px: number, py: number, color: string, width: number) => {
+    cenarioBcDrawRef.current?.postMessage({ type: "draw", action, px, py, color, width });
+    rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw", payload: { action, px, py, color, width } });
+  }, []);
+
+  const sendDrawClear = useCallback(() => {
+    cenarioBcDrawRef.current?.postMessage({ type: "draw-clear" });
+    rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw-clear", payload: {} });
+  }, []);
+
   const handleDrawStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas || !drawingActive) return;
@@ -163,8 +196,8 @@ export default function CenarioTela() {
     isDrawingRef.current = true;
     const pos = getCanvasPos(e, canvas);
     drawOnCanvas(canvas, "start", pos.px, pos.py, drawColor, drawWidth);
-    cenarioBcDrawRef.current?.postMessage({ type: "draw", action: "start", px: pos.px, py: pos.py, color: drawColor, width: drawWidth });
-  }, [drawingActive, getCanvasPos, drawColor, drawWidth, drawOnCanvas]);
+    sendDraw("start", pos.px, pos.py, drawColor, drawWidth);
+  }, [drawingActive, getCanvasPos, drawColor, drawWidth, drawOnCanvas, sendDraw]);
 
   const handleDrawMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
@@ -173,13 +206,13 @@ export default function CenarioTela() {
     const pos = getCanvasPos(e, canvas);
     drawOnCanvas(canvas, "move", pos.px, pos.py, drawColor, drawWidth);
     setHasDrawing(true);
-    cenarioBcDrawRef.current?.postMessage({ type: "draw", action: "move", px: pos.px, py: pos.py, color: drawColor, width: drawWidth });
-  }, [getCanvasPos, drawColor, drawWidth, drawOnCanvas]);
+    sendDraw("move", pos.px, pos.py, drawColor, drawWidth);
+  }, [getCanvasPos, drawColor, drawWidth, drawOnCanvas, sendDraw]);
 
   const handleDrawEnd = useCallback(() => {
     isDrawingRef.current = false;
-    cenarioBcDrawRef.current?.postMessage({ type: "draw", action: "end" });
-  }, []);
+    sendDraw("end", 0, 0, "", 0);
+  }, [sendDraw]);
 
   const clearDrawing = useCallback(() => {
     const canvas = canvasRef.current;
@@ -187,8 +220,8 @@ export default function CenarioTela() {
     const ctx = canvas.getContext("2d");
     if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     setHasDrawing(false);
-    cenarioBcDrawRef.current?.postMessage({ type: "draw-clear" });
-  }, []);
+    sendDrawClear();
+  }, [sendDrawClear]);
 
   useEffect(() => {
     if (!drawingActive) return;
