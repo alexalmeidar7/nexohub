@@ -679,17 +679,25 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         <div className="grid grid-cols-2 gap-3 mt-2">
           <div>
             <label className="text-[11px] font-semibold mb-1 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Estúdio</label>
-            <select value={estudio} onChange={e => { setEstudio(e.target.value); setProgramaId(""); }} className="w-full px-3 py-2 rounded-xl text-xs outline-none" style={inputStyle}>
-              <option value="">Selecione</option>
-              {estudios.map(e => <option key={e} value={e}>{e}</option>)}
-            </select>
+            <Select value={estudio} onValueChange={v => { setEstudio(v); setProgramaId(""); }}>
+              <SelectTrigger className="w-full text-xs h-10">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {estudios.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="text-[11px] font-semibold mb-1 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programa</label>
-            <select value={programaId} onChange={e => setProgramaId(e.target.value)} className="w-full px-3 py-2 rounded-xl text-xs outline-none" style={inputStyle}>
-              <option value="">Selecione</option>
-              {filteredProgramas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-            </select>
+            <Select value={programaId} onValueChange={v => setProgramaId(v)}>
+              <SelectTrigger className="w-full text-xs h-10">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredProgramas.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
