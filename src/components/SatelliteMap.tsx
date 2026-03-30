@@ -84,10 +84,25 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
       }
     } catch {}
 
-    // RainViewer radar overlay
+    // RainViewer radar + satellite cloud overlay
     try {
       const rvRes = await fetch("https://api.rainviewer.com/public/weather-maps.json");
       const rvData = await rvRes.json();
+
+      // Satellite/infrared cloud layer
+      if (rvData?.satellite?.infrared?.length) {
+        const latestSat = rvData.satellite.infrared[rvData.satellite.infrared.length - 1];
+        const cloudOverlay = new gm.ImageMapType({
+          getTileUrl: (coord: any, z: number) =>
+            `https://tilecache.rainviewer.com${latestSat.path}/256/${z}/${coord.x}/${coord.y}/0/0_0.png`,
+          tileSize: new gm.Size(256, 256),
+          opacity: 0.45,
+          name: "Clouds",
+        });
+        map.overlayMapTypes.push(cloudOverlay);
+      }
+
+      // Radar precipitation layer
       if (rvData?.radar?.past?.length) {
         const latest = rvData.radar.past[rvData.radar.past.length - 1];
         const radarOverlay = new gm.ImageMapType({

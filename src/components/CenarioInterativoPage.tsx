@@ -380,6 +380,7 @@ export default function CenarioInterativoPage() {
   const [externalConnected, setExternalConnected] = useState(false);
   const [showConnectedMsg, setShowConnectedMsg] = useState(false);
   const lastPongRef = useRef(0);
+  const presenceConnectedRef = useRef(false);
   const presenceShownRef = useRef(false);
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
@@ -388,6 +389,7 @@ export default function CenarioInterativoPage() {
     const ch = supabase.channel(`cenario-presence-${user.id}`, { config: { presence: { key: "painel-controle" } } });
     ch.on("presence", { event: "join" }, ({ key }) => {
       if (key === "tela-externa") {
+        presenceConnectedRef.current = true;
         setExternalConnected(true);
         if (!presenceShownRef.current) {
           presenceShownRef.current = true;
@@ -398,6 +400,7 @@ export default function CenarioInterativoPage() {
     });
     ch.on("presence", { event: "leave" }, ({ key }) => {
       if (key === "tela-externa") {
+        presenceConnectedRef.current = false;
         setExternalConnected(false);
         presenceShownRef.current = false;
       }
@@ -405,6 +408,7 @@ export default function CenarioInterativoPage() {
     ch.on("presence", { event: "sync" }, () => {
       const state = ch.presenceState();
       const hasExternal = !!state["tela-externa"]?.length;
+      presenceConnectedRef.current = hasExternal;
       setExternalConnected(hasExternal);
       if (hasExternal && !presenceShownRef.current) {
         presenceShownRef.current = true;
@@ -417,7 +421,7 @@ export default function CenarioInterativoPage() {
         await ch.track({ screen: "painel-controle", ts: Date.now() });
       }
     });
-    return () => { supabase.removeChannel(ch); presenceShownRef.current = false; };
+    return () => { supabase.removeChannel(ch); presenceShownRef.current = false; presenceConnectedRef.current = false; };
   }, [user?.id]);
 
   const cenarioBcRef = useRef<BroadcastChannel | null>(null);
@@ -458,12 +462,12 @@ export default function CenarioInterativoPage() {
       }
     };
 
-    // Ping external screen every 3s
+    // Ping external screen every 3s (only for same-browser BroadcastChannel)
     const pingInterval = setInterval(() => {
       bc.postMessage({ type: "ping" });
-      // If no pong in 5s, mark offline
+      // If no pong in 5s AND no presence connection, mark offline
       setTimeout(() => {
-        if (Date.now() - lastPongRef.current > 5000) setExternalConnected(false);
+        if (Date.now() - lastPongRef.current > 5000 && !presenceConnectedRef.current) setExternalConnected(false);
       }, 2000);
     }, 3000);
     // Initial ping
@@ -488,14 +492,17 @@ export default function CenarioInterativoPage() {
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab, subTab: weatherSubTab, currencySubTab });
+    rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab, subTab: weatherSubTab, currencySubTab } });
   };
   const handleWeatherSubTabChange = (sub: string) => {
     setWeatherSubTab(sub);
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "weather", subTab: sub, currencySubTab });
+    rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "weather", subTab: sub, currencySubTab } });
   };
   const handleCurrencySubTabChange = (sub: "moedas" | "bolsas") => {
     setCurrencySubTab(sub);
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "currency", subTab: weatherSubTab, currencySubTab: sub });
+    rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "currency", subTab: weatherSubTab, currencySubTab: sub } });
   };
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
   const [saving, setSaving] = useState(false);

@@ -198,6 +198,10 @@ export default function CenarioTela() {
       }
     }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
       if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
+    }).on("broadcast", { event: "tab-change" }, ({ payload }: any) => {
+      if (payload?.tab) setActiveTab(payload.tab);
+      if (payload?.subTab) setWeatherSubTab(payload.subTab);
+      if (payload?.currencySubTab) setCurrencySubTab(payload.currencySubTab);
     }).subscribe();
     rtDrawChannelRef.current = ch;
     return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
