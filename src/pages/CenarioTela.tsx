@@ -98,6 +98,8 @@ export default function CenarioTela() {
   const effectiveUserId = user?.id || uidFromUrl || null;
 
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === "undefined") return "home";
     return new URLSearchParams(window.location.search).get("tab") || "home";
@@ -168,15 +170,15 @@ export default function CenarioTela() {
   useEffect(() => {
     if (!effectiveUserId) return;
 
-    const applyConfig = (raw: any) => {
+    const applyConfig = (raw: any, fromRealtime = false) => {
       if (!raw || typeof raw !== "object") return;
       const { _activeTab, _weatherSubTab, _currencySubTab, ...rest } = raw;
       const merged = { ...defaultConfig, ...rest };
       setConfig(merged);
-      // Always apply tab state from remote
       if (_activeTab) setActiveTab(_activeTab);
       if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
       if (_currencySubTab) setCurrencySubTab(_currencySubTab);
+      if (fromRealtime) setLastSyncTime(new Date());
       try {
         localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
       } catch { /* silent */ }
@@ -204,12 +206,14 @@ export default function CenarioTela() {
         },
         (payload: any) => {
           const newConfig = payload.new?.cenario_config;
-          if (newConfig) applyConfig(newConfig);
+          if (newConfig) applyConfig(newConfig, true);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        setRealtimeConnected(status === "SUBSCRIBED");
+      });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { setRealtimeConnected(false); supabase.removeChannel(channel); };
   }, [effectiveUserId]);
 
   /* Keep cache synced */
@@ -602,6 +606,20 @@ export default function CenarioTela() {
             )}
 
             </div>{/* end animated page wrapper */}
+
+          {/* Realtime connection indicator */}
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", zIndex: 50, fontSize: "1vh" }}>
+            <div className="rounded-full" style={{ width: "0.8vh", height: "0.8vh", background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 6px #4ade80" : "0 0 6px #ef4444", animation: realtimeConnected ? "cenario-active-blink 2s ease-in-out infinite" : "none" }} />
+            <span className="text-white/60 font-medium" style={{ fontSize: "0.9vh" }}>
+              {realtimeConnected ? "SYNC" : "OFF"}
+            </span>
+            {lastSyncTime && realtimeConnected && (
+              <span className="text-white/30" style={{ fontSize: "0.8vh" }}>
+                {lastSyncTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              </span>
+            )}
+          </div>
+
           </div>
         </div>
       </div>
