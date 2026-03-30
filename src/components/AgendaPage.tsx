@@ -665,8 +665,8 @@ export default function AgendaPage() {
               <Button
                 onClick={handleSave}
                 disabled={!formProgramaId || !formData}
-                className="w-full h-11 font-bold text-xs tracking-wide"
-                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", borderRadius: "14px", border: "none", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)" }}
+                className="btn-skyglass-accent w-full h-11 text-xs tracking-wide"
+                style={{ borderRadius: "14px" }}
               >
                 {editingId ? "✓ Atualizar Evento" : "✓ Salvar Evento"}
               </Button>
