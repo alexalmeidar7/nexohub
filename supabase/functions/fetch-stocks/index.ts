@@ -6,13 +6,13 @@ const corsHeaders = {
 };
 
 const STOCK_EXCHANGES = [
-  { symbol: "^BVSP", name: "Ibovespa", flag: "🇧🇷", gfPath: "IBOV:INDEXBVL" },
-  { symbol: "^GSPC", name: "S&P 500", flag: "🇺🇸", gfPath: ".INX:INDEXSP" },
-  { symbol: "^DJI", name: "Dow Jones", flag: "🇺🇸", gfPath: ".DJI:INDEXDJX" },
-  { symbol: "^IXIC", name: "Nasdaq", flag: "🇺🇸", gfPath: ".IXIC:INDEXNASDAQ" },
-  { symbol: "^FTSE", name: "FTSE 100", flag: "🇬🇧", gfPath: "UKX:INDEXFTSE" },
-  { symbol: "^N225", name: "Nikkei 225", flag: "🇯🇵", gfPath: "NI225:INDEXNIKKEI" },
-  { symbol: "^GDAXI", name: "DAX", flag: "🇩🇪", gfPath: "DAX:INDEXDB" },
+  { symbol: "^BVSP", name: "Ibovespa", flag: "🇧🇷" },
+  { symbol: "^GSPC", name: "S&P 500", flag: "🇺🇸" },
+  { symbol: "^DJI", name: "Dow Jones", flag: "🇺🇸" },
+  { symbol: "^IXIC", name: "Nasdaq", flag: "🇺🇸" },
+  { symbol: "^FTSE", name: "FTSE 100", flag: "🇬🇧" },
+  { symbol: "^N225", name: "Nikkei 225", flag: "🇯🇵" },
+  { symbol: "^GDAXI", name: "DAX", flag: "🇩🇪" },
 ];
 
 serve(async (req) => {
@@ -35,38 +35,28 @@ serve(async (req) => {
 async function fetchAll(): Promise<any[]> {
   const results = await Promise.allSettled(
     STOCK_EXCHANGES.map(async (ex) => {
-      const url = `https://www.google.com/finance/quote/${ex.gfPath}`;
+      const encoded = encodeURIComponent(ex.symbol);
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encoded}?interval=1d&range=1d`;
       const res = await fetch(url, {
         headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
       });
-      const html = await res.text();
+      const data = await res.json();
 
-      // 1) data-last-price
-      let price = 0;
-      const dlp = html.match(/data-last-price="([^"]+)"/);
-      if (dlp) {
-        price = parseFloat(dlp[1]);
-      }
+      const result = data?.chart?.result?.[0];
+      if (!result) return null;
 
-      // 2) Fallback: biggest number with comma-thousands and decimals in the page
-      if (price === 0) {
-        const allNums = [...html.matchAll(/>(\d{1,3}(?:,\d{3})+\.\d{2})</g)]
-          .map(m => parseFloat(m[1].replace(/,/g, "")))
-          .sort((a, b) => b - a);
-        if (allNums.length > 0) price = allNums[0];
-      }
-
-      // Percentage: first >X.XX%< pattern in the page
-      let pct = 0;
-      const pctMatch = html.match(/>([-+]?\d+\.\d+)%</);
-      if (pctMatch) {
-        pct = parseFloat(pctMatch[1]);
-      }
+      const meta = result.meta;
+      const price = meta?.regularMarketPrice ?? 0;
+      const prevClose = meta?.chartPreviousClose ?? meta?.previousClose ?? price;
 
       if (price === 0) return null;
 
+      const pct = prevClose > 0 ? ((price - prevClose) / prevClose) * 100 : 0;
+
       return {
-        symbol: ex.symbol, name: ex.name, flag: ex.flag,
+        symbol: ex.symbol,
+        name: ex.name,
+        flag: ex.flag,
         value: price >= 1000
           ? price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })
           : price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
