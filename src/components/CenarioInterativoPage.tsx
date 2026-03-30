@@ -1533,8 +1533,8 @@ export default function CenarioInterativoPage() {
               {previewDrawActive && (
                 <canvas
                   ref={previewCanvasRef}
-                  className="absolute inset-0 rounded-2xl"
-                  style={{ zIndex: 40, cursor: "crosshair", touchAction: "none" }}
+                  className="absolute rounded-2xl"
+                  style={{ top: 0, bottom: 0, right: 0, left: 52, zIndex: 40, cursor: "crosshair", touchAction: "none" }}
                   onMouseDown={handlePreviewDrawStart}
                   onMouseMove={handlePreviewDrawMove}
                   onMouseUp={handlePreviewDrawEnd}
