@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -253,6 +253,75 @@ export default function CenarioInterativoPage() {
   const [activeTab, setActiveTab] = useState("home");
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
+
+  /* ─── Preview Drawing ─── */
+  const [previewDrawActive, setPreviewDrawActive] = useState(false);
+  const [previewHasDrawing, setPreviewHasDrawing] = useState(false);
+  const [previewDrawColor, setPreviewDrawColor] = useState("#e1f532");
+  const [previewDrawWidth, setPreviewDrawWidth] = useState(3);
+  const [showPreviewDrawOptions, setShowPreviewDrawOptions] = useState(false);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const previewIsDrawingRef = useRef(false);
+  const PREV_DRAW_COLORS = ["#e1f532", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
+  const PREV_DRAW_WIDTHS = [2, 4, 8, 14];
+
+  const getPreviewCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }, []);
+
+  const handlePreviewDrawStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = previewCanvasRef.current;
+    if (!canvas || !previewDrawActive) return;
+    e.preventDefault();
+    previewIsDrawingRef.current = true;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pos = getPreviewCanvasPos(e, canvas);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }, [previewDrawActive, getPreviewCanvasPos]);
+
+  const handlePreviewDrawMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = previewCanvasRef.current;
+    if (!canvas || !previewIsDrawingRef.current) return;
+    e.preventDefault();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pos = getPreviewCanvasPos(e, canvas);
+    ctx.strokeStyle = previewDrawColor;
+    ctx.lineWidth = previewDrawWidth;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    setPreviewHasDrawing(true);
+  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth]);
+
+  const handlePreviewDrawEnd = useCallback(() => { previewIsDrawingRef.current = false; }, []);
+
+  const clearPreviewDrawing = useCallback(() => {
+    const canvas = previewCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setPreviewHasDrawing(false);
+  }, []);
+
+  useEffect(() => {
+    if (!previewDrawActive) return;
+    const canvas = previewCanvasRef.current;
+    if (!canvas) return;
+    const parent = canvas.parentElement;
+    if (!parent) return;
+    const resize = () => { canvas.width = parent.clientWidth; canvas.height = parent.clientHeight; };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, [previewDrawActive]);
 
   const configRef = useRef(config);
   const activeTabRef = useRef(activeTab);
@@ -1096,6 +1165,14 @@ export default function CenarioInterativoPage() {
                   <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.chat.enabled && handleTabChange("chat")} style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <MessageCircle size={16} className="text-white" />
                   </div>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-1 cursor-pointer" onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) setShowPreviewDrawOptions(false); return n; }); }} style={{ background: previewDrawActive ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawActive ? "2px solid #e1f532" : "2px solid transparent", transition: "all 0.2s ease" }}>
+                    <Pen size={16} className="text-white" />
+                  </div>
+                  {previewDrawActive && (
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer" onClick={() => setShowPreviewDrawOptions(p => !p)} style={{ background: showPreviewDrawOptions ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: previewDrawColor }} />
+                    </div>
+                  )}
                 </div>
 
                 {/* ── Content area with bg image ── */}
@@ -1363,6 +1440,44 @@ export default function CenarioInterativoPage() {
                   </div>{/* end animated page wrapper */}
                 </div>
               </div>
+
+              {/* Drawing options panel for preview */}
+              {previewDrawActive && showPreviewDrawOptions && (
+                <div className="absolute flex flex-col items-center gap-1 rounded-xl" style={{ left: 60, top: "50%", transform: "translateY(-50%)", zIndex: 45, padding: "6px 4px", background: "rgba(20,20,20,0.85)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  {PREV_DRAW_COLORS.map(c => (
+                    <button key={c} onClick={() => setPreviewDrawColor(c)} className="rounded-full cursor-pointer" style={{ width: 18, height: 18, background: c, border: previewDrawColor === c ? "2px solid #fff" : "2px solid transparent", boxShadow: previewDrawColor === c ? `0 0 6px ${c}` : "none", transition: "all 0.15s ease" }} />
+                  ))}
+                  <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.15)", margin: "2px 0" }} />
+                  {PREV_DRAW_WIDTHS.map(w => (
+                    <button key={w} onClick={() => setPreviewDrawWidth(w)} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: 18, height: 18, background: previewDrawWidth === w ? "rgba(255,255,255,0.2)" : "transparent", border: previewDrawWidth === w ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent", transition: "all 0.15s ease" }}>
+                      <div style={{ width: Math.max(3, w * 1.2), height: Math.max(3, w * 1.2), borderRadius: "50%", background: previewDrawColor }} />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Drawing canvas overlay for preview */}
+              {previewDrawActive && (
+                <canvas
+                  ref={previewCanvasRef}
+                  className="absolute inset-0 rounded-2xl"
+                  style={{ zIndex: 40, cursor: "crosshair", touchAction: "none" }}
+                  onMouseDown={handlePreviewDrawStart}
+                  onMouseMove={handlePreviewDrawMove}
+                  onMouseUp={handlePreviewDrawEnd}
+                  onMouseLeave={handlePreviewDrawEnd}
+                  onTouchStart={handlePreviewDrawStart}
+                  onTouchMove={handlePreviewDrawMove}
+                  onTouchEnd={handlePreviewDrawEnd}
+                />
+              )}
+
+              {/* Clear drawing button for preview */}
+              {previewHasDrawing && (
+                <button onClick={clearPreviewDrawing} className="absolute flex items-center justify-center rounded-full" style={{ top: 8, right: 8, zIndex: 45, width: 24, height: 24, background: "rgba(239,68,68,0.8)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" }}>
+                  <Eraser size={12} color="white" />
+                </button>
+              )}
 
               {!config.weather.enabled && !config.traffic.enabled && !config.currency.enabled && !config.chat.enabled && !config.home.bgImage && (
                 <div className="absolute inset-0 flex items-center justify-center text-center" style={{ background: "rgba(26,26,26,0.85)" }}>
