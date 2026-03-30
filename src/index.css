@@ -744,10 +744,10 @@ table:not([data-no-row-hover]) tbody tr:hover {
 .mv-content-area input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):not(.sr-only),
 .mv-content-area select,
 .mv-content-area textarea {
-  background: rgba(255,255,255,0.06) !important;
+  background: color-mix(in srgb, var(--layout-page-bg, #ffffff) 95%, var(--layout-page-text, #1a1a1a) 5%) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1.5px solid rgba(255,255,255,0.12) !important;
+  border: 1.5px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent) !important;
   border-radius: 12px !important;
   color: var(--layout-page-text, #1a1a1a) !important;
   font-size: 0.8125rem;
