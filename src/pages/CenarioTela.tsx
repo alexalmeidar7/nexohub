@@ -206,12 +206,14 @@ export default function CenarioTela() {
         },
         (payload: any) => {
           const newConfig = payload.new?.cenario_config;
-          if (newConfig) applyConfig(newConfig);
+          if (newConfig) applyConfig(newConfig, true);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        setRealtimeConnected(status === "SUBSCRIBED");
+      });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { setRealtimeConnected(false); supabase.removeChannel(channel); };
   }, [effectiveUserId]);
 
   /* Keep cache synced */
