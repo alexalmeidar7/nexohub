@@ -575,10 +575,6 @@ export default function CenarioTela() {
                               </div>
                             </div>
                           );
-                        })}
-                            </div>
-                          </div>
-                        ))}
                         {!liveStocks.length && (
                           <div className="opacity-60 text-center" style={{ fontSize: "1.8vh" }}>Dados indisponíveis</div>
                         )}
