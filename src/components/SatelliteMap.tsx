@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
+import { Cloud, Radio } from "lucide-react";
 
 declare global {
   interface Window {
@@ -50,9 +51,16 @@ function loadGoogleMaps(): Promise<void> {
   });
 }
 
+function formatTime(ts: number) {
+  const d = new Date(ts * 1000);
+  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
 export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showControls = false, className, style }: SatelliteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const [radarTime, setRadarTime] = useState<string | null>(null);
+  const [cloudTime, setCloudTime] = useState<string | null>(null);
 
   const initMap = useCallback(async () => {
     const el = containerRef.current;
@@ -92,6 +100,7 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
       // Satellite/infrared cloud layer
       if (rvData?.satellite?.infrared?.length) {
         const latestSat = rvData.satellite.infrared[rvData.satellite.infrared.length - 1];
+        setCloudTime(formatTime(latestSat.time));
         const cloudOverlay = new gm.ImageMapType({
           getTileUrl: (coord: any, z: number) =>
             `https://tilecache.rainviewer.com${latestSat.path}/256/${z}/${coord.x}/${coord.y}/0/0_0.png`,
@@ -105,6 +114,7 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
       // Radar precipitation layer
       if (rvData?.radar?.past?.length) {
         const latest = rvData.radar.past[rvData.radar.past.length - 1];
+        setRadarTime(formatTime(latest.time));
         const radarOverlay = new gm.ImageMapType({
           getTileUrl: (coord: any, z: number) =>
             `https://tilecache.rainviewer.com${latest.path}/256/${z}/${coord.x}/${coord.y}/2/1_1.png`,
@@ -151,6 +161,28 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
         className={className}
         style={{ width: "100%", height: "100%" }}
       />
+      {/* Timestamp indicator */}
+      {(radarTime || cloudTime) && (
+        <div
+          className="absolute top-3 left-3 z-50 flex flex-col gap-1"
+          style={{ pointerEvents: "none" }}
+        >
+          {cloudTime && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}>
+              <Cloud size={12} style={{ color: "#93c5fd" }} />
+              <span className="text-[10px] font-medium" style={{ color: "#93c5fd" }}>Nuvens</span>
+              <span className="text-[10px] font-mono font-bold text-white">{cloudTime}</span>
+            </div>
+          )}
+          {radarTime && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}>
+              <Radio size={12} style={{ color: "#4ade80" }} />
+              <span className="text-[10px] font-medium" style={{ color: "#4ade80" }}>Radar</span>
+              <span className="text-[10px] font-mono font-bold text-white">{radarTime}</span>
+            </div>
+          )}
+        </div>
+      )}
       {showControls && (
         <div className="absolute bottom-4 right-4 flex flex-col gap-1 z-50">
           <button
