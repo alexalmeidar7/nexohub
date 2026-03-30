@@ -1269,7 +1269,7 @@ export default function CenarioInterativoPage() {
                 {/* Satellite fullscreen behind sidebar */}
                 {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
                   <div className="absolute inset-0" style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}>
-                    <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={setSatelliteZoom} />
+                    <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={(z) => { setSatelliteZoom(z); cenarioBcRef.current?.postMessage({ type: "zoom-change", zoom: z }); rtDrawChannelRef.current?.send({ type: "broadcast", event: "zoom-change", payload: { zoom: z } }); }} />
                   </div>
                 )}
                 {/* Traffic (Leaflet) fullscreen behind sidebar */}
