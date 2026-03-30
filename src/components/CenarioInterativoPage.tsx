@@ -1139,6 +1139,24 @@ export default function CenarioInterativoPage() {
             <div className="flex items-center gap-2 mb-4">
               <Eye size={16} style={{ color: mutedText }} />
               <span className="text-sm font-semibold">Preview (9:16)</span>
+              <div className="flex items-center gap-1.5 ml-2">
+                {externalConnected ? (
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)" }}>
+                    <Wifi size={10} style={{ color: "#4ade80" }} />
+                    <span className="text-[10px] font-semibold" style={{ color: "#4ade80" }}>Online</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}>
+                      <WifiOff size={10} style={{ color: "#ef4444" }} />
+                      <span className="text-[10px] font-semibold" style={{ color: "#ef4444" }}>Offline</span>
+                    </div>
+                    <button onClick={forceReconnect} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold cursor-pointer transition-opacity hover:opacity-80" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: mutedText }}>
+                      <RefreshCw size={10} /> Forçar conexão
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
                 className="ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
