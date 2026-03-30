@@ -317,10 +317,6 @@ export default function CenarioInterativoPage() {
     cenarioBcRef.current?.postMessage({ type: "draw-clear" });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw-clear", payload: {} });
   }, []);
-      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = "round"; ctx.lineJoin = "round";
-      ctx.lineTo(x, y); ctx.stroke();
-    }
-  }, []);
 
   const handlePreviewDrawStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = previewCanvasRef.current;
