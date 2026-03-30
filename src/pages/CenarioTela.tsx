@@ -163,34 +163,53 @@ export default function CenarioTela() {
     }
   }, []);
 
-  /* Load config from DB + poll every 10s */
+  /* Load config from DB + subscribe to realtime changes */
   const initialTabLoaded = useRef(false);
   useEffect(() => {
     if (!effectiveUserId) return;
+
+    const applyConfig = (raw: any) => {
+      if (!raw || typeof raw !== "object") return;
+      const { _activeTab, _weatherSubTab, _currencySubTab, ...rest } = raw;
+      const merged = { ...defaultConfig, ...rest };
+      setConfig(merged);
+      // Always apply tab state from remote
+      if (_activeTab) setActiveTab(_activeTab);
+      if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
+      if (_currencySubTab) setCurrencySubTab(_currencySubTab);
+      try {
+        localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
+      } catch { /* silent */ }
+    };
+
+    // Initial load
     const load = async () => {
       const { data } = await supabase.from("user_settings").select("cenario_config" as any).eq("user_id", effectiveUserId).maybeSingle();
-      if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
-        const raw = (data as any).cenario_config as any;
-        const { _activeTab, _weatherSubTab, _currencySubTab, ...rest } = raw;
-        const merged = { ...defaultConfig, ...rest };
-        setConfig(merged);
-        // Only restore saved tab on the very first load, not on subsequent polls
-        if (!initialTabLoaded.current) {
-          initialTabLoaded.current = true;
-          if (_activeTab) setActiveTab(_activeTab);
-          if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
-          if (_currencySubTab) setCurrencySubTab(_currencySubTab);
-        }
-        try {
-          localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
-        } catch {
-          // silent
-        }
+      if ((data as any)?.cenario_config) {
+        applyConfig((data as any).cenario_config);
       }
     };
     load();
-    const interval = setInterval(load, 10000);
-    return () => clearInterval(interval);
+
+    // Realtime subscription for cross-computer sync
+    const channel = supabase
+      .channel(`cenario-sync-${effectiveUserId}`)
+      .on(
+        "postgres_changes" as any,
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "user_settings",
+          filter: `user_id=eq.${effectiveUserId}`,
+        },
+        (payload: any) => {
+          const newConfig = payload.new?.cenario_config;
+          if (newConfig) applyConfig(newConfig);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [effectiveUserId]);
 
   /* Keep cache synced */
