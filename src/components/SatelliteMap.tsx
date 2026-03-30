@@ -13,6 +13,8 @@ interface SatelliteMapProps {
   lat: number;
   lon: number;
   zoom?: number;
+  onZoomChange?: (zoom: number) => void;
+  showControls?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
