@@ -69,8 +69,11 @@ export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: S
 
     // Add weather/cloud layer
     try {
-      const cloudLayer = new (google.maps as any).visualization?.WeatherLayer?.();
-      if (cloudLayer) cloudLayer.setMap(map);
+      const vis = (google.maps as any).visualization;
+      if (vis && vis.WeatherLayer) {
+        const cloudLayer = new vis.WeatherLayer();
+        cloudLayer.setMap(map);
+      }
     } catch {
       // WeatherLayer may not be available, add cloud overlay via tile
     }
