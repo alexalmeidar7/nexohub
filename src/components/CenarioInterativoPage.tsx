@@ -1144,46 +1144,44 @@ export default function CenarioInterativoPage() {
                   {/* Weather overlay */}
                   {activeTab === "weather" && (
                     <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                      {/* Sky-blue gradient background when no custom bg */}
                       {!config.weather.bgImage && (
-                        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #4fc3f7 0%, #29b6f6 40%, #81d4fa 70%, #e1f5fe 100%)" }} />
+                        <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d47a1 0%, #1565c0 25%, #1e88e5 50%, #42a5f5 75%, #90caf9 100%)" }} />
                       )}
-                      {/* Bottom accent glow */}
-                      <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.35), transparent)" }} />
+                      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
+                      <div className="absolute bottom-0 left-0 right-0 h-1/3" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.3), transparent)" }} />
 
                       <div className="relative z-10 flex flex-col h-full p-3">
                         {liveWeather ? (
                           <>
                             {weatherSubTab === "today" && (
                               <>
-                                <div className="flex justify-end mb-0 cenario-anim-icon">
-                                  <WeatherIcon code={liveWeather.current.code} size={36} />
+                                <div className="flex items-start justify-between mb-1.5 cenario-anim-icon">
+                                  <div>
+                                    <div className="text-lg font-black leading-none drop-shadow-lg cenario-anim-title" style={{ letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
+                                    <div className="text-xs font-bold uppercase tracking-widest cenario-anim-subtitle" style={{ color: "#e1f532", marginTop: 2 }}>hoje</div>
+                                  </div>
+                                  <div className="w-10 h-10">
+                                    <WeatherIcon code={liveWeather.current.code} size={40} />
+                                  </div>
                                 </div>
-                                <div className="mb-2">
-                                  <div className="text-xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">{weatherCity || config.city || "Cidade"}</div>
-                                  <div className="text-sm font-bold cenario-anim-subtitle" style={{ color: "#e1f532" }}>hoje</div>
-                                </div>
-                                <div className="flex-1 rounded-xl p-3 flex flex-col items-start gap-2 cenario-anim-card" style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.25)" }}>
-                                  <div className="w-20 h-20 flex items-center justify-center drop-shadow-xl cenario-anim-row-1">
-                                    <WeatherIcon code={liveWeather.current.code} size={64} forceDay />
+                                <div className="flex-1 rounded-xl p-2.5 flex flex-col cenario-anim-card" style={{ gap: 8, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}>
+                                  <div className="flex items-center gap-2 cenario-anim-row-1">
+                                    <div className="drop-shadow-xl" style={{ width: 56, height: 56, filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.2))" }}>
+                                      <WeatherIcon code={liveWeather.current.code} size={56} forceDay />
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <div className="font-black drop-shadow-lg" style={{ fontSize: 28, lineHeight: 1 }}>{liveWeather.current.temp}°</div>
+                                      <div className="text-[9px] font-medium opacity-90">{getWLabel(liveWeather.current.code)}</div>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-1.5 cenario-anim-row-2" style={{ color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-                                    <Thermometer size={13} color="#fff" />
-                                    <span className="text-sm font-extrabold">
-                                      {liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°
-                                    </span>
-                                  </div>
-                                  <div className="text-[10px] font-semibold drop-shadow-sm cenario-anim-row-3" style={{ color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-                                    {getWLabel(liveWeather.current.code)}
-                                  </div>
-                                  <div className="flex items-center gap-3 text-[9px] cenario-anim-row-4" style={{ color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-                                    <span className="flex items-center gap-0.5"><Droplets size={10} color="#fff" /> {liveWeather.current.humidity}%</span>
-                                    <span className="flex items-center gap-0.5">🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
-                                  </div>
-                                  <div className="w-full pt-2 cenario-anim-row-5" style={{ borderTop: "1px solid rgba(255,255,255,0.3)" }}>
-                                    <div className="text-[9px] text-white font-semibold uppercase tracking-wider">tempo atual</div>
-                                    <div className="text-2xl font-black text-white drop-shadow-lg">
-                                      {liveWeather.current.temp}°C
+                                  <div className="flex items-center justify-between rounded-lg cenario-anim-row-2" style={{ padding: "6px 8px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                                    <div className="flex items-center gap-1">
+                                      <Thermometer size={11} style={{ opacity: 0.8 }} />
+                                      <span className="text-[10px] font-bold">{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[9px]">
+                                      <span className="flex items-center gap-0.5"><Droplets size={9} style={{ opacity: 0.8 }} /> {liveWeather.current.humidity}%</span>
+                                      <span className="flex items-center gap-0.5">🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
                                     </div>
                                   </div>
                                 </div>
@@ -1192,19 +1190,19 @@ export default function CenarioInterativoPage() {
 
                             {weatherSubTab === "forecast" && (
                               <>
-                                <div className="flex justify-end mb-1 cenario-anim-icon">
-                                  <CalendarDays size={32} className="drop-shadow-lg" style={{ color: "#fff" }} />
+                                <div className="flex items-start justify-between mb-2 cenario-anim-icon">
+                                  <div>
+                                    <div className="text-lg font-black leading-none drop-shadow-lg cenario-anim-title" style={{ letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
+                                    <div className="text-xs font-bold uppercase tracking-widest cenario-anim-subtitle" style={{ color: "#e1f532", marginTop: 2 }}>próximos dias</div>
+                                  </div>
+                                  <CalendarDays size={24} style={{ opacity: 0.8 }} />
                                 </div>
-                                <div className="mb-3">
-                                  <div className="text-xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">{weatherCity || config.city || "Cidade"}</div>
-                                  <div className="text-sm font-bold cenario-anim-subtitle" style={{ color: "#c8e600" }}>próximos dias</div>
-                                </div>
-                                <div className="flex-1 rounded-xl p-3 space-y-2 cenario-anim-card" style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)" }}>
+                                <div className="flex-1 rounded-xl p-2 flex flex-col gap-1.5 cenario-anim-card" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}>
                                   {liveWeather.daily.slice(1, 4).map((d, i) => (
-                                    <div key={i} className={`flex items-center justify-between text-[9px] rounded-lg px-2 py-1.5 cenario-anim-row-${i + 1}`} style={{ background: "rgba(255,255,255,0.15)", color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-                                      <span className="font-bold" style={{ color: "#fff" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
-                                      <span className="text-base">{getWIcon(d.code)}</span>
-                                      <span style={{ color: "#fff" }}>↓{d.min}° ↑{d.max}°</span>
+                                    <div key={i} className={`flex items-center justify-between rounded-lg cenario-anim-row-${i + 1}`} style={{ fontSize: 9, padding: "6px 8px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                                      <span className="font-bold" style={{ width: "30%" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                                      <div style={{ width: 24, height: 24 }}><WeatherIcon code={d.code} size={24} forceDay /></div>
+                                      <span className="font-semibold" style={{ width: "30%", textAlign: "right" }}>↓{d.min}° ↑{d.max}°</span>
                                     </div>
                                   ))}
                                 </div>
