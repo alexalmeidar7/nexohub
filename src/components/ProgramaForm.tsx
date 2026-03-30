@@ -1011,10 +1011,7 @@ export default function ProgramaForm() {
               </button>
             )}
             <button onClick={handleAdd} disabled={saving}
-              className="px-6 py-2 text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50 rounded-xl"
-              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)" }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, transparent)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)"; e.currentTarget.style.transform = "translateY(0)"; }}
+              className="btn-skyglass-accent px-6 py-2.5 text-xs disabled:opacity-50"
             >
               {saving && <Loader2 size={13} className="animate-spin" />}
               {saving ? "Salvando..." : editingId ? "Atualizar" : "Adicionar Programa"}
