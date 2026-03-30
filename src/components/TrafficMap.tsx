@@ -44,15 +44,14 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
       return;
     }
 
-    // Base map tiles
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-    }).addTo(map);
-
-    // Google traffic overlay
+    // Google Maps base + traffic layer combined
     L.tileLayer(
-      "https://mt0.google.com/vt/lyrs=h,traffic&x={x}&y={y}&z={z}",
-      { maxZoom: 19, opacity: 0.6 }
+      "https://mt{s}.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}&hl=pt-BR",
+      {
+        maxZoom: 20,
+        subdomains: ["0", "1", "2", "3"],
+        attribution: "© Google",
+      }
     ).addTo(map);
 
     mapRef.current = map;
