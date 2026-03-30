@@ -505,7 +505,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Widgets</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" style={{ gridAutoRows: "260px" }}>
             {items.filter(i => i.type === "widget").map(item => {
               const isDragging = draggedId === item.id;
               const isDragOver = dragOverId === item.id && draggedId !== item.id;
@@ -520,8 +520,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     border: isDragOver ? "2px solid var(--layout-button-bg)" : "1px solid color-mix(in srgb, var(--layout-border-color) 20%, transparent)",
                     boxShadow: "0 8px 32px color-mix(in srgb, var(--layout-border-color) 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.08)",
                     borderRadius: "20px",
-                    minHeight: item.widgetType === "agenda" ? "200px" : "150px",
-                    maxHeight: item.widgetType === "agenda" ? "240px" : "none",
+                    height: "100%",
                     overflow: item.widgetType === "player" ? "visible" : "hidden",
                     transition: "margin-top 0.4s ease, max-height 0.4s ease, min-height 0.4s ease",
                     marginTop: (item.widgetType === "player" && playerVideoActive === item.id) ? "-220px" : "0px",
