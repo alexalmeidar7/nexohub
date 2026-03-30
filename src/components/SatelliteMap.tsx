@@ -15,32 +15,41 @@ export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: S
   const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const el = containerRef.current;
+    if (!el) return;
 
-    const map = L.map(containerRef.current, {
-      center: [lat, lon],
-      zoom,
-      zoomControl: false,
-      dragging: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      touchZoom: false,
-      boxZoom: false,
-      keyboard: false,
-      attributionControl: false,
-    });
+    if ((el as any)._leaflet_id) {
+      try { (el as any)._leaflet_id = undefined; } catch {}
+    }
 
-    // ESRI World Imagery — free satellite tiles
+    let map: L.Map;
+    try {
+      map = L.map(el, {
+        center: [lat, lon],
+        zoom,
+        zoomControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        touchZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        attributionControl: false,
+      });
+    } catch {
+      return;
+    }
+
     L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       { maxZoom: 19 }
     ).addTo(map);
 
     mapRef.current = map;
-    setTimeout(() => map.invalidateSize(), 200);
+    setTimeout(() => { try { map.invalidateSize(); } catch {} }, 200);
 
     return () => {
-      map.remove();
+      try { map.remove(); } catch {}
       mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -49,7 +58,7 @@ export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: S
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    map.setView([lat, lon], zoom, { animate: true, duration: 0.5 });
+    try { map.setView([lat, lon], zoom, { animate: true, duration: 0.5 }); } catch {}
   }, [lat, lon, zoom]);
 
   return <div ref={containerRef} className={className} style={{ width: "100%", height: "100%", ...style }} />;

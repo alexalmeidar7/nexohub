@@ -17,24 +17,33 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
   const mapRef = useRef<L.Map | null>(null);
   const skipNextView = useRef(false);
 
-  // Initialise map once
   useEffect(() => {
-    if (!containerRef.current) return;
+    const el = containerRef.current;
+    if (!el) return;
 
-    const map = L.map(containerRef.current, {
-      center: [lat, lon],
-      zoom,
-      zoomControl: interactive,
-      dragging: interactive,
-      scrollWheelZoom: interactive,
-      doubleClickZoom: interactive,
-      touchZoom: interactive,
-      boxZoom: interactive,
-      keyboard: interactive,
-      attributionControl: false,
-    });
+    // Prevent double-init
+    if ((el as any)._leaflet_id) {
+      try { (el as any)._leaflet_id = undefined; } catch {}
+    }
 
-    // OpenStreetMap tile layer with traffic-style colours
+    let map: L.Map;
+    try {
+      map = L.map(el, {
+        center: [lat, lon],
+        zoom,
+        zoomControl: interactive,
+        dragging: interactive,
+        scrollWheelZoom: interactive,
+        doubleClickZoom: interactive,
+        touchZoom: interactive,
+        boxZoom: interactive,
+        keyboard: interactive,
+        attributionControl: false,
+      });
+    } catch {
+      return;
+    }
+
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
     }).addTo(map);
@@ -49,17 +58,15 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
       });
     }
 
-    // Fix tile sizing after initial render
-    setTimeout(() => map.invalidateSize(), 200);
+    setTimeout(() => { try { map.invalidateSize(); } catch {} }, 200);
 
     return () => {
-      map.remove();
+      try { map.remove(); } catch {}
       mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interactive]);
 
-  // Sync external prop changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -69,15 +76,17 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
       return;
     }
 
-    const currentCenter = map.getCenter();
-    const currentZoom = map.getZoom();
-    if (
-      Math.abs(currentCenter.lat - lat) > 0.0001 ||
-      Math.abs(currentCenter.lng - lon) > 0.0001 ||
-      currentZoom !== zoom
-    ) {
-      map.setView([lat, lon], zoom, { animate: true, duration: 0.5 });
-    }
+    try {
+      const currentCenter = map.getCenter();
+      const currentZoom = map.getZoom();
+      if (
+        Math.abs(currentCenter.lat - lat) > 0.0001 ||
+        Math.abs(currentCenter.lng - lon) > 0.0001 ||
+        currentZoom !== zoom
+      ) {
+        map.setView([lat, lon], zoom, { animate: true, duration: 0.5 });
+      }
+    } catch {}
   }, [lat, lon, zoom]);
 
   return <div ref={containerRef} className={className} style={{ width: "100%", height: "100%", ...style }} />;
