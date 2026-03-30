@@ -23,22 +23,31 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Find user by email prefix using GoTrue admin API with large page size
+    // Find user by email prefix using GoTrue admin API with pagination
     const slugLower = slug.toLowerCase();
-    const gotrue = `${supabaseUrl}/auth/v1/admin/users?per_page=1000`;
-    const res = await fetch(gotrue, {
-      headers: {
-        Authorization: `Bearer ${serviceRoleKey}`,
-        apikey: serviceRoleKey,
-      },
-    });
-    if (!res.ok) throw new Error("Failed to fetch users");
-    const payload = await res.json();
-    const allUsers: any[] = payload.users || [];
+    let matchedUser: any = null;
+    let page = 1;
+    const perPage = 1000;
 
-    const matchedUser = allUsers.find((u: any) =>
-      u.email && u.email.split("@")[0].toLowerCase() === slugLower
-    );
+    while (!matchedUser) {
+      const gotrue = `${supabaseUrl}/auth/v1/admin/users?page=${page}&per_page=${perPage}`;
+      const res = await fetch(gotrue, {
+        headers: {
+          Authorization: `Bearer ${serviceRoleKey}`,
+          apikey: serviceRoleKey,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to fetch users");
+      const payload = await res.json();
+      const users: any[] = payload.users || [];
+
+      matchedUser = users.find((u: any) =>
+        u.email && u.email.split("@")[0].toLowerCase() === slugLower
+      );
+
+      if (matchedUser || users.length < perPage) break;
+      page++;
+    }
 
     if (!matchedUser) {
       return new Response(JSON.stringify({ error: "User not found" }), {
