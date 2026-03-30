@@ -1583,8 +1583,8 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
 
       {/* Video area - grows above controls */}
       {showVideo && isVideo && (
-        <div className="relative -mx-4 -mt-4 mb-3 rounded-t-2xl overflow-hidden" style={{ animation: "widget-video-grow 0.4s ease-out forwards" }}>
-          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "220px", background: "#000" }} />
+        <div className="relative -mx-4 -mt-4 mb-2 rounded-t-2xl overflow-hidden flex-shrink-0">
+          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "130px", background: "#000" }} />
           {videoLoading && (
             <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.6)" }}>
               <Loader2 size={24} className="text-white/60 animate-spin" />
