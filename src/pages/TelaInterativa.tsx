@@ -20,13 +20,15 @@ export default function TelaInterativa() {
 
     (async () => {
       try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const res = await fetch(
-          `https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/public-player-data`,
+          `${supabaseUrl}/functions/v1/public-player-data`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6amZ6eHh2eGJzcGJka29kb2l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyOTUxNDEsImV4cCI6MjA4Njg3MTE0MX0.isUmXafM1scN8AogofAEw5ffcVZSZX4ff-WVusaB1OU",
+              apikey: anonKey,
             },
             body: JSON.stringify({ slug: userSlug }),
           }
