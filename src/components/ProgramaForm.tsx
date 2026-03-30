@@ -715,8 +715,7 @@ export default function ProgramaForm() {
                         onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                         onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                       />
-                      <button onClick={addTipo} className="w-full py-2 font-bold transition-all rounded-xl"
-                        style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                      <button onClick={addTipo} className="btn-skyglass-accent w-full py-2"
                       >Adicionar</button>
                     </div>
                   </DialogContent>
