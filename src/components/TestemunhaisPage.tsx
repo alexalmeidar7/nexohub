@@ -160,7 +160,7 @@ export default function TestemunhaisPage() {
   };
 
   if (loading) {
-    return <ModulePageSkeleton />;
+    return <ModulePageSkeleton variant="form" />;
   }
 
   return (
