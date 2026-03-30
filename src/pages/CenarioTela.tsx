@@ -127,8 +127,13 @@ export default function CenarioTela() {
   /* ─── Drawing (Pen) ─── */
   const [drawingActive, setDrawingActive] = useState(false);
   const [hasDrawing, setHasDrawing] = useState(false);
+  const [drawColor, setDrawColor] = useState("#e1f532");
+  const [drawWidth, setDrawWidth] = useState(3);
+  const [showDrawOptions, setShowDrawOptions] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawingRef = useRef(false);
+  const DRAW_COLORS = ["#e1f532", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
+  const DRAW_WIDTHS = [2, 4, 8, 14];
 
   const getCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
@@ -156,8 +161,8 @@ export default function CenarioTela() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const pos = getCanvasPos(e, canvas);
-    ctx.strokeStyle = "#e1f532";
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = drawColor;
+    ctx.lineWidth = drawWidth;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.lineTo(pos.x, pos.y);
@@ -467,10 +472,30 @@ export default function CenarioTela() {
             <button onClick={() => setActiveTab("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
               <MessageCircle style={{ width: "1.7vh", height: "1.7vh" }} className="text-white" />
             </button>
-            <button onClick={() => { setDrawingActive(p => !p); if (drawingActive) { /* keep drawing visible */ } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", marginTop: "0.5vh", background: drawingActive ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: drawingActive ? "2px solid #e1f532" : "2px solid transparent", transition: "all 0.2s ease" }}>
+            <button onClick={() => { setDrawingActive(p => { const next = !p; if (!next) setShowDrawOptions(false); return next; }); }} onContextMenu={(e) => { e.preventDefault(); if (drawingActive) setShowDrawOptions(p => !p); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", marginTop: "0.5vh", background: drawingActive ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: drawingActive ? "2px solid #e1f532" : "2px solid transparent", transition: "all 0.2s ease" }}>
               <Pen style={{ width: "1.7vh", height: "1.7vh" }} className="text-white" />
             </button>
+            {drawingActive && (
+              <button onClick={() => setShowDrawOptions(p => !p)} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "2.8vh", height: "2.8vh", background: showDrawOptions ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: showDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                <div style={{ width: "1.2vh", height: "1.2vh", borderRadius: "50%", background: drawColor }} />
+              </button>
+            )}
           </div>
+
+          {/* Drawing options panel */}
+          {drawingActive && showDrawOptions && (
+            <div className="absolute flex flex-col items-center gap-[0.8vh] rounded-2xl" style={{ left: "9.5%", top: "50%", transform: "translateY(-50%)", zIndex: 45, padding: "1.2vh 0.8vh", background: "rgba(20,20,20,0.85)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+              {DRAW_COLORS.map(c => (
+                <button key={c} onClick={() => setDrawColor(c)} className="rounded-full cursor-pointer" style={{ width: "2.8vh", height: "2.8vh", background: c, border: drawColor === c ? "2px solid #fff" : "2px solid transparent", boxShadow: drawColor === c ? `0 0 8px ${c}` : "none", transition: "all 0.15s ease" }} />
+              ))}
+              <div style={{ width: "100%", height: "1px", background: "rgba(255,255,255,0.15)", margin: "0.2vh 0" }} />
+              {DRAW_WIDTHS.map(w => (
+                <button key={w} onClick={() => setDrawWidth(w)} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "2.8vh", height: "2.8vh", background: drawWidth === w ? "rgba(255,255,255,0.2)" : "transparent", border: drawWidth === w ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent", transition: "all 0.15s ease" }}>
+                  <div style={{ width: `${Math.max(0.4, w * 0.18)}vh`, height: `${Math.max(0.4, w * 0.18)}vh`, borderRadius: "50%", background: drawColor }} />
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Content */}
           <div className="flex-1 relative" style={{ background: isMapTab ? "transparent" : "#e8e8e8", zIndex: 1 }}>
