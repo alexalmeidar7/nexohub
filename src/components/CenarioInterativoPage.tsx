@@ -254,6 +254,40 @@ export default function CenarioInterativoPage() {
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
 
+  /* ─── Supabase Realtime draw channel (cross-device) ─── */
+  const rtDrawChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  useEffect(() => {
+    if (!user?.id) return;
+    const ch = supabase.channel(`draw-sync-${user.id}`);
+    ch.on("broadcast", { event: "draw" }, ({ payload }: any) => {
+      const canvas = previewCanvasRef.current;
+      if (canvas && payload) {
+        drawOnCanvas(canvas, payload.action, payload.px, payload.py, payload.color, payload.width);
+        if (payload.action === "move") setPreviewHasDrawing(true);
+      }
+    }).on("broadcast", { event: "draw-clear" }, () => {
+      const canvas = previewCanvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setPreviewHasDrawing(false);
+      }
+    }).subscribe();
+    rtDrawChannelRef.current = ch;
+    return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
+  }, [user?.id, drawOnCanvas]);
+
+  const sendDraw = useCallback((action: string, px: number, py: number, color: string, width: number) => {
+    const msg = { type: "draw" as const, action, px, py, color, width };
+    cenarioBcRef.current?.postMessage(msg);
+    rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw", payload: { action, px, py, color, width } });
+  }, []);
+
+  const sendDrawClear = useCallback(() => {
+    cenarioBcRef.current?.postMessage({ type: "draw-clear" });
+    rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw-clear", payload: {} });
+  }, []);
+
   /* ─── Preview Drawing ─── */
   const [previewDrawActive, setPreviewDrawActive] = useState(false);
   const [previewHasDrawing, setPreviewHasDrawing] = useState(false);
