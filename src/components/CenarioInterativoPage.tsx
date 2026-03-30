@@ -340,6 +340,9 @@ export default function CenarioInterativoPage() {
   useEffect(() => { weatherSubTabRef.current = weatherSubTab; }, [weatherSubTab]);
   useEffect(() => { currencySubTabRef.current = currencySubTab; }, [currencySubTab]);
 
+  const [externalConnected, setExternalConnected] = useState(false);
+  const lastPongRef = useRef(0);
+
   const cenarioBcRef = useRef<BroadcastChannel | null>(null);
   useEffect(() => {
     const bc = new BroadcastChannel("cenario-interativo");
@@ -353,6 +356,10 @@ export default function CenarioInterativoPage() {
           currencySubTab: currencySubTabRef.current,
           config: configRef.current,
         });
+      }
+      if (ev.data?.type === "pong") {
+        lastPongRef.current = Date.now();
+        setExternalConnected(true);
       }
       if (ev.data?.type === "draw") {
         const canvas = previewCanvasRef.current;
@@ -370,7 +377,32 @@ export default function CenarioInterativoPage() {
         }
       }
     };
-    return () => { cenarioBcRef.current = null; bc.close(); };
+
+    // Ping external screen every 3s
+    const pingInterval = setInterval(() => {
+      bc.postMessage({ type: "ping" });
+      // If no pong in 5s, mark offline
+      setTimeout(() => {
+        if (Date.now() - lastPongRef.current > 5000) setExternalConnected(false);
+      }, 2000);
+    }, 3000);
+    // Initial ping
+    bc.postMessage({ type: "ping" });
+
+    return () => { cenarioBcRef.current = null; clearInterval(pingInterval); bc.close(); };
+  }, [drawOnCanvas]);
+
+  const forceReconnect = useCallback(() => {
+    cenarioBcRef.current?.postMessage({ type: "ping" });
+    cenarioBcRef.current?.postMessage({ type: "request-state" });
+    // Also re-send current state to wake up external screen
+    cenarioBcRef.current?.postMessage({
+      type: "full-state",
+      tab: activeTabRef.current,
+      subTab: weatherSubTabRef.current,
+      currencySubTab: currencySubTabRef.current,
+      config: configRef.current,
+    });
   }, []);
 
   const handleTabChange = (tab: string) => {
