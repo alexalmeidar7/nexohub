@@ -303,6 +303,8 @@ export default function CenarioInterativoPage() {
         if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
         setPreviewHasDrawing(false);
       }
+    }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
+      if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
     }).subscribe();
     rtDrawChannelRef.current = ch;
     return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
