@@ -506,6 +506,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         <div className="mb-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Widgets</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" style={{ gridAutoRows: "260px" }}>
+
             {items.filter(i => i.type === "widget").map(item => {
               const isDragging = draggedId === item.id;
               const isDragOver = dragOverId === item.id && draggedId !== item.id;
@@ -520,11 +521,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     border: isDragOver ? "2px solid var(--layout-button-bg)" : "1px solid color-mix(in srgb, var(--layout-border-color) 20%, transparent)",
                     boxShadow: "0 8px 32px color-mix(in srgb, var(--layout-border-color) 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.08)",
                     borderRadius: "20px",
-                    height: "100%",
-                    overflow: item.widgetType === "player" ? "visible" : "hidden",
-                    transition: "margin-top 0.4s ease, max-height 0.4s ease, min-height 0.4s ease",
-                    marginTop: (item.widgetType === "player" && playerVideoActive === item.id) ? "-220px" : "0px",
-                    zIndex: (item.widgetType === "player" && playerVideoActive === item.id) ? 20 : undefined,
+                    height: "260px",
+                    maxHeight: "260px",
+                    overflow: "hidden",
                   }}
                   onDragOver={(e) => handleDragOver(e, item.id)}
                   onDrop={() => handleDrop(item.id)}
@@ -1584,8 +1583,8 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
 
       {/* Video area - grows above controls */}
       {showVideo && isVideo && (
-        <div className="relative -mx-4 -mt-4 mb-3 rounded-t-2xl overflow-hidden" style={{ animation: "widget-video-grow 0.4s ease-out forwards" }}>
-          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "220px", background: "#000" }} />
+        <div className="relative -mx-4 -mt-4 mb-2 rounded-t-2xl overflow-hidden flex-shrink-0">
+          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "130px", background: "#000" }} />
           {videoLoading && (
             <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.6)" }}>
               <Loader2 size={24} className="text-white/60 animate-spin" />
