@@ -664,8 +664,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             {!defaultJornalConfig && (
               <button
                 onClick={() => setWizardOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all hover:shadow-md"
-                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
+                className="btn-skyglass-accent px-3 py-1.5 text-[10px]"
               >
                 <Newspaper size={11} /> Montar Roteiro
               </button>
