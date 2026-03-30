@@ -1117,6 +1117,13 @@ export default function CenarioInterativoPage() {
                     <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
                   )}
 
+                  {/* Animated page wrapper */}
+                  <div
+                    key={activeTab + (activeTab === "weather" ? `-${weatherSubTab}` : "") + (activeTab === "currency" ? `-${currencySubTab}` : "")}
+                    className="absolute inset-0"
+                    style={{ animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both" }}
+                  >
+
                   {/* Home overlay: clock + date + logos */}
                   {activeTab === "home" && (
                     <div className="absolute inset-0 flex flex-col justify-center p-3" style={{ color: config.home.bgImage ? "#fff" : "#333" }}>
@@ -1353,6 +1360,7 @@ export default function CenarioInterativoPage() {
                       </div>
                     </div>
                   )}
+                  </div>{/* end animated page wrapper */}
                 </div>
               </div>
 
