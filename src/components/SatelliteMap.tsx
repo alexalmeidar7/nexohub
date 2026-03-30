@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useRef, useCallback } from "react";
+
+const GOOGLE_MAPS_API_KEY = "AIzaSyAFjw2CYxl40aDop1SsYTNC8sCrdsoR-5o";
 
 interface SatelliteMapProps {
   lat: number;
@@ -10,62 +10,99 @@ interface SatelliteMapProps {
   style?: React.CSSProperties;
 }
 
+let scriptLoaded = false;
+let scriptLoading = false;
+const loadCallbacks: (() => void)[] = [];
+
+function loadGoogleMaps(): Promise<void> {
+  if (scriptLoaded && window.google?.maps) return Promise.resolve();
+  return new Promise((resolve) => {
+    if (scriptLoading) {
+      loadCallbacks.push(resolve);
+      return;
+    }
+    scriptLoading = true;
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=visualization`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      scriptLoaded = true;
+      scriptLoading = false;
+      resolve();
+      loadCallbacks.forEach((cb) => cb());
+      loadCallbacks.length = 0;
+    };
+    script.onerror = () => {
+      scriptLoading = false;
+      resolve(); // resolve anyway to avoid hanging
+    };
+    document.head.appendChild(script);
+  });
+}
+
 export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: SatelliteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
 
-  useEffect(() => {
+  const initMap = useCallback(async () => {
     const el = containerRef.current;
     if (!el) return;
 
-    if ((el as any)._leaflet_id) {
-      try { (el as any)._leaflet_id = undefined; } catch {}
+    await loadGoogleMaps();
+    if (!window.google?.maps) return;
+
+    // Destroy previous map
+    if (mapRef.current) {
+      mapRef.current = null;
+      el.innerHTML = "";
     }
 
-    let map: L.Map;
+    const map = new google.maps.Map(el, {
+      center: { lat, lng: lon },
+      zoom,
+      mapTypeId: "hybrid", // satellite with labels
+      disableDefaultUI: true,
+      gestureHandling: "none",
+      keyboardShortcuts: false,
+    });
+
+    // Add weather/cloud layer
     try {
-      map = L.map(el, {
-        center: [lat, lon],
-        zoom,
-        zoomControl: false,
-        dragging: false,
-        scrollWheelZoom: false,
-        doubleClickZoom: false,
-        touchZoom: false,
-        boxZoom: false,
-        keyboard: false,
-        attributionControl: false,
-      });
+      const cloudLayer = new (google.maps as any).visualization?.WeatherLayer?.();
+      if (cloudLayer) cloudLayer.setMap(map);
     } catch {
-      return;
+      // WeatherLayer may not be available, add cloud overlay via tile
     }
 
-    L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 19 }
-    ).addTo(map);
-
-    // RainViewer weather radar overlay (free, no API key)
-    const ts = Math.floor(Date.now() / 1000);
-    fetch("https://api.rainviewer.com/public/weather-maps.json")
-      .then(r => r.json())
-      .then(apiData => {
-        if (apiData?.radar?.past?.length) {
-          const latest = apiData.radar.past[apiData.radar.past.length - 1];
-          L.tileLayer(
-            `https://tilecache.rainviewer.com${latest.path}/256/{z}/{x}/{y}/2/1_1.png`,
-            { maxZoom: 19, opacity: 0.6 }
-          ).addTo(map);
-        }
-      })
-      .catch(() => {});
+    // Add RainViewer radar overlay as a fallback weather layer
+    try {
+      const rvRes = await fetch("https://api.rainviewer.com/public/weather-maps.json");
+      const rvData = await rvRes.json();
+      if (rvData?.radar?.past?.length) {
+        const latest = rvData.radar.past[rvData.radar.past.length - 1];
+        const radarOverlay = new google.maps.ImageMapType({
+          getTileUrl: (coord, z) =>
+            `https://tilecache.rainviewer.com${latest.path}/256/${z}/${coord.x}/${coord.y}/2/1_1.png`,
+          tileSize: new google.maps.Size(256, 256),
+          opacity: 0.55,
+          name: "Radar",
+        });
+        map.overlayMapTypes.push(radarOverlay);
+      }
+    } catch {
+      /* silent */
+    }
 
     mapRef.current = map;
-    setTimeout(() => { try { map.invalidateSize(); } catch {} }, 200);
+  }, [lat, lon, zoom]);
 
+  useEffect(() => {
+    initMap();
     return () => {
-      try { map.remove(); } catch {}
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -73,8 +110,17 @@ export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: S
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    try { map.setView([lat, lon], zoom, { animate: true, duration: 0.5 }); } catch {}
+    try {
+      map.panTo({ lat, lng: lon });
+      map.setZoom(zoom);
+    } catch {}
   }, [lat, lon, zoom]);
 
-  return <div ref={containerRef} className={className} style={{ width: "100%", height: "100%", ...style }} />;
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      style={{ width: "100%", height: "100%", ...style }}
+    />
+  );
 }
