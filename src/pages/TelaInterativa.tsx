@@ -30,16 +30,9 @@ export default function TelaInterativa() {
           return;
         }
 
-        // The function returns userId in the response
-        // We need to extract it — let's use the empresa_config or channels to find it
-        // Actually public-player-data doesn't return userId directly, let's create a simpler approach
-        // We'll call the function and extract userId from the returned data
-        if (data?.channels?.length > 0) {
-          setUserId(data.channels[0].user_id);
-        } else if (data?.empresa?.user_id) {
-          setUserId(data.empresa.user_id);
+        if (data?.userId) {
+          setUserId(data.userId);
         } else {
-          // Fallback: use a dedicated edge function call
           setError("Usuário não encontrado");
         }
       } catch {
