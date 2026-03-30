@@ -16,7 +16,7 @@ interface CenarioConfig { city: string; home: HomeConfig; weather: WeatherConfig
 const defaultConfig: CenarioConfig = {
   city: "", home: { bgImage: "" },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
-  traffic: { enabled: false, city: "", points: [], bgImage: "" },
+  traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
   chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
 };
