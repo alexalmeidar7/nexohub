@@ -331,9 +331,9 @@ export default function CenarioTela() {
       <div className="relative h-full" style={{ aspectRatio: "9/16", maxHeight: "100vh" }}>
         <div className="absolute inset-0 flex" style={{ fontSize: "1.8vh" }}>
 
-          {/* Satellite fullscreen — behind sidebar */}
+          {/* Satellite fullscreen — aligned after sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
-            <div className="absolute inset-0" style={{ zIndex: 1 }}>
+            <div className="absolute inset-y-0 right-0" style={{ left: "8%", zIndex: 1 }}>
               <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={6} />
             </div>
           )}
