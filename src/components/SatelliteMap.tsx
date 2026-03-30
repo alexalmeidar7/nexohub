@@ -80,7 +80,7 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
       zoom,
       mapTypeId: "hybrid",
       disableDefaultUI: true,
-      gestureHandling: "none",
+      gestureHandling: "greedy",
       keyboardShortcuts: false,
     });
 
