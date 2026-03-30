@@ -130,10 +130,24 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
   }, [lat, lon, zoom]);
 
   return (
-    <div
-      ref={containerRef}
-      className={className}
-      style={{ width: "100%", height: "100%", ...style }}
-    />
+    <div className="relative" style={{ width: "100%", height: "100%", ...style }}>
+      <div
+        ref={containerRef}
+        className={className}
+        style={{ width: "100%", height: "100%" }}
+      />
+      {showControls && (
+        <div className="absolute bottom-4 right-4 flex flex-col gap-1 z-50">
+          <button
+            onClick={() => handleZoom(1)}
+            className="w-9 h-9 rounded-lg bg-black/60 backdrop-blur text-white flex items-center justify-center text-lg font-bold hover:bg-black/80 transition"
+          >+</button>
+          <button
+            onClick={() => handleZoom(-1)}
+            className="w-9 h-9 rounded-lg bg-black/60 backdrop-blur text-white flex items-center justify-center text-lg font-bold hover:bg-black/80 transition"
+          >−</button>
+        </div>
+      )}
+    </div>
   );
 }
