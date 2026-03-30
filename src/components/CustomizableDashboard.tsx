@@ -521,11 +521,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     border: isDragOver ? "2px solid var(--layout-button-bg)" : "1px solid color-mix(in srgb, var(--layout-border-color) 20%, transparent)",
                     boxShadow: "0 8px 32px color-mix(in srgb, var(--layout-border-color) 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.08)",
                     borderRadius: "20px",
-                    height: "100%",
-                    overflow: item.widgetType === "player" ? "visible" : "hidden",
-                    transition: "margin-top 0.4s ease, max-height 0.4s ease, min-height 0.4s ease",
-                    marginTop: (item.widgetType === "player" && playerVideoActive === item.id) ? "-220px" : "0px",
-                    zIndex: (item.widgetType === "player" && playerVideoActive === item.id) ? 20 : undefined,
+                    height: "260px",
+                    maxHeight: "260px",
+                    overflow: "hidden",
                   }}
                   onDragOver={(e) => handleDragOver(e, item.id)}
                   onDrop={() => handleDrop(item.id)}
