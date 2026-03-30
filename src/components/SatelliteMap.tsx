@@ -112,6 +112,14 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleZoom = (delta: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const newZoom = Math.max(2, Math.min(20, (map.getZoom() || zoom) + delta));
+    map.setZoom(newZoom);
+    onZoomChange?.(newZoom);
+  };
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
