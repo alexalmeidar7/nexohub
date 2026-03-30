@@ -1211,12 +1211,7 @@ export default function CenarioInterativoPage() {
                               </>
                             )}
 
-                            {weatherSubTab === "satellite" && (
-                              <div className="flex-1 flex flex-col items-center justify-center text-center text-white drop-shadow-lg">
-                                <div className="text-sm font-bold">{weatherCity || config.city || "—"}</div>
-                                <div className="text-[8px] opacity-70 mt-1">Satélite em tempo real</div>
-                              </div>
-                            )}
+                            {weatherSubTab === "satellite" && null}
                           </>
                         ) : (
                           <div className="flex-1 flex items-center justify-center text-[10px] opacity-50">
