@@ -380,6 +380,7 @@ export default function CenarioInterativoPage() {
   const [externalConnected, setExternalConnected] = useState(false);
   const [showConnectedMsg, setShowConnectedMsg] = useState(false);
   const lastPongRef = useRef(0);
+  const presenceConnectedRef = useRef(false);
   const presenceShownRef = useRef(false);
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
