@@ -389,6 +389,7 @@ export default function CenarioInterativoPage() {
     const ch = supabase.channel(`cenario-presence-${user.id}`, { config: { presence: { key: "painel-controle" } } });
     ch.on("presence", { event: "join" }, ({ key }) => {
       if (key === "tela-externa") {
+        presenceConnectedRef.current = true;
         setExternalConnected(true);
         if (!presenceShownRef.current) {
           presenceShownRef.current = true;
@@ -399,6 +400,7 @@ export default function CenarioInterativoPage() {
     });
     ch.on("presence", { event: "leave" }, ({ key }) => {
       if (key === "tela-externa") {
+        presenceConnectedRef.current = false;
         setExternalConnected(false);
         presenceShownRef.current = false;
       }
@@ -406,6 +408,7 @@ export default function CenarioInterativoPage() {
     ch.on("presence", { event: "sync" }, () => {
       const state = ch.presenceState();
       const hasExternal = !!state["tela-externa"]?.length;
+      presenceConnectedRef.current = hasExternal;
       setExternalConnected(hasExternal);
       if (hasExternal && !presenceShownRef.current) {
         presenceShownRef.current = true;
@@ -418,7 +421,7 @@ export default function CenarioInterativoPage() {
         await ch.track({ screen: "painel-controle", ts: Date.now() });
       }
     });
-    return () => { supabase.removeChannel(ch); presenceShownRef.current = false; };
+    return () => { supabase.removeChannel(ch); presenceShownRef.current = false; presenceConnectedRef.current = false; };
   }, [user?.id]);
 
   const cenarioBcRef = useRef<BroadcastChannel | null>(null);
