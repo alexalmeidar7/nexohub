@@ -434,44 +434,57 @@ export default function CenarioTela() {
             {/* ═══ WEATHER ═══ */}
             {activeTab === "weather" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #4fc3f7 0%, #29b6f6 40%, #81d4fa 70%, #e1f5fe 100%)" }} />}
-                <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.35), transparent)" }} />
+                {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d47a1 0%, #1565c0 25%, #1e88e5 50%, #42a5f5 75%, #90caf9 100%)" }} />}
+                <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
+                <div className="absolute bottom-0 left-0 right-0 h-1/3" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.3), transparent)" }} />
                 <div className="relative z-10 flex flex-col h-full" style={{ padding: "3vh" }}>
                   {liveWeather ? (<>
                     {weatherSubTab === "today" && (<>
-                      <div className="flex justify-end mb-0"><WeatherIcon code={liveWeather.current.code} size={56} /></div>
-                      <div style={{ marginBottom: "2vh" }}>
-                        <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: "4vh" }}>{weatherCity || config.city || "Cidade"}</div>
-                        <div className="font-bold" style={{ fontSize: "2.5vh", color: "#e1f532" }}>hoje</div>
+                      <div className="flex items-start justify-between" style={{ marginBottom: "1.5vh" }}>
+                        <div>
+                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: "4.5vh", letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
+                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: "1.8vh", color: "#e1f532", marginTop: "0.5vh" }}>hoje</div>
+                        </div>
+                        <div style={{ width: "8vh", height: "8vh" }}>
+                          <WeatherIcon code={liveWeather.current.code} size={64} />
+                        </div>
                       </div>
-                      <div className="flex-1 rounded-xl flex flex-col items-start" style={{ padding: "2.5vh", gap: "1.5vh", background: "rgba(255,255,255,0.18)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.25)" }}>
-                        <div className="flex items-center justify-center drop-shadow-xl" style={{ width: "12vh", height: "12vh" }}>
-                          <WeatherIcon code={liveWeather.current.code} size={96} forceDay />
+                      <div className="flex-1 rounded-2xl flex flex-col" style={{ padding: "2.5vh", gap: "2vh", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+                        <div className="flex items-center gap-3" style={{ gap: "2vh" }}>
+                          <div className="drop-shadow-xl" style={{ width: "14vh", height: "14vh", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.2))" }}>
+                            <WeatherIcon code={liveWeather.current.code} size={112} forceDay />
+                          </div>
+                          <div className="flex flex-col">
+                            <div className="font-black drop-shadow-lg" style={{ fontSize: "6vh", lineHeight: 1 }}>{liveWeather.current.temp}°</div>
+                            <div className="font-medium opacity-90" style={{ fontSize: "1.6vh" }}>{getWLabel(liveWeather.current.code)}</div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-white"><Thermometer style={{ width: "2vh", height: "2vh" }} /><span className="font-extrabold" style={{ fontSize: "2.5vh" }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span></div>
-                        <div className="font-semibold text-white drop-shadow-sm" style={{ fontSize: "1.8vh" }}>{getWLabel(liveWeather.current.code)}</div>
-                        <div className="flex items-center gap-3 text-white" style={{ fontSize: "1.6vh" }}>
-                          <span className="flex items-center gap-0.5"><Droplets style={{ width: "1.6vh", height: "1.6vh" }} /> {liveWeather.current.humidity}%</span>
-                          <span className="flex items-center gap-0.5">🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
-                        </div>
-                        <div className="w-full" style={{ paddingTop: "1.5vh", borderTop: "1px solid rgba(255,255,255,0.3)" }}>
-                          <div className="text-white font-semibold uppercase tracking-wider" style={{ fontSize: "1.4vh" }}>tempo atual</div>
-                          <div className="font-black text-white drop-shadow-lg" style={{ fontSize: "5vh" }}>{liveWeather.current.temp}°C</div>
+                        <div className="flex items-center justify-between rounded-xl" style={{ padding: "1.5vh 2vh", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                          <div className="flex items-center" style={{ gap: "0.8vh" }}>
+                            <Thermometer style={{ width: "2vh", height: "2vh", opacity: 0.8 }} />
+                            <span className="font-bold" style={{ fontSize: "2vh" }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
+                          </div>
+                          <div className="flex items-center" style={{ gap: "1.5vh", fontSize: "1.5vh" }}>
+                            <span className="flex items-center" style={{ gap: "0.4vh" }}><Droplets style={{ width: "1.5vh", height: "1.5vh", opacity: 0.8 }} /> {liveWeather.current.humidity}%</span>
+                            <span className="flex items-center" style={{ gap: "0.4vh" }}>🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
+                          </div>
                         </div>
                       </div>
                     </>)}
                     {weatherSubTab === "forecast" && (<>
-                      <div className="flex justify-end mb-1"><CalendarDays size={48} className="drop-shadow-lg" style={{ color: "#fff" }} /></div>
-                      <div style={{ marginBottom: "2vh" }}>
-                        <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: "4vh" }}>{weatherCity || config.city || "Cidade"}</div>
-                        <div className="font-bold" style={{ fontSize: "2.5vh", color: "#e1f532" }}>próximos dias</div>
+                      <div className="flex items-start justify-between" style={{ marginBottom: "2vh" }}>
+                        <div>
+                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: "4.5vh", letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
+                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: "1.8vh", color: "#e1f532", marginTop: "0.5vh" }}>próximos dias</div>
+                        </div>
+                        <CalendarDays style={{ width: "5vh", height: "5vh", opacity: 0.8 }} />
                       </div>
-                      <div className="flex-1 rounded-xl space-y-2" style={{ padding: "2.5vh", background: "rgba(255,255,255,0.2)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)" }}>
+                      <div className="flex-1 rounded-2xl flex flex-col" style={{ padding: "2vh", gap: "1.5vh", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
                         {liveWeather.daily.slice(1, 4).map((d, i) => (
-                          <div key={i} className="flex items-center justify-between rounded-lg" style={{ fontSize: "1.8vh", padding: "1.2vh 1.5vh", background: "rgba(255,255,255,0.15)" }}>
-                            <span className="font-bold">{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
-                            <span style={{ fontSize: "3vh" }}>{getWIcon(d.code)}</span>
-                            <span>↓{d.min}° ↑{d.max}°</span>
+                          <div key={i} className="flex items-center justify-between rounded-xl" style={{ fontSize: "1.8vh", padding: "1.5vh 2vh", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                            <span className="font-bold" style={{ width: "30%" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                            <div style={{ width: "4vh", height: "4vh" }}><WeatherIcon code={d.code} size={32} forceDay /></div>
+                            <span className="font-semibold" style={{ width: "30%", textAlign: "right" }}>↓{d.min}° ↑{d.max}°</span>
                           </div>
                         ))}
                       </div>
