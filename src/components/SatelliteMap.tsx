@@ -80,7 +80,7 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
       zoom,
       mapTypeId: "hybrid",
       disableDefaultUI: true,
-      gestureHandling: "none",
+      gestureHandling: "greedy",
       keyboardShortcuts: false,
     });
 
@@ -103,9 +103,9 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
         setCloudTime(formatTime(latestSat.time));
         const cloudOverlay = new gm.ImageMapType({
           getTileUrl: (coord: any, z: number) =>
-            `https://tilecache.rainviewer.com${latestSat.path}/256/${z}/${coord.x}/${coord.y}/0/0_0.png`,
+            `https://tilecache.rainviewer.com${latestSat.path}/256/${z}/${coord.x}/${coord.y}/1/1_1.png`,
           tileSize: new gm.Size(256, 256),
-          opacity: 0.45,
+          opacity: 0.6,
           name: "Clouds",
         });
         map.overlayMapTypes.push(cloudOverlay);
@@ -117,9 +117,9 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
         setRadarTime(formatTime(latest.time));
         const radarOverlay = new gm.ImageMapType({
           getTileUrl: (coord: any, z: number) =>
-            `https://tilecache.rainviewer.com${latest.path}/256/${z}/${coord.x}/${coord.y}/2/1_1.png`,
+            `https://tilecache.rainviewer.com${latest.path}/256/${z}/${coord.x}/${coord.y}/6/1_1.png`,
           tileSize: new gm.Size(256, 256),
-          opacity: 0.55,
+          opacity: 0.65,
           name: "Radar",
         });
         map.overlayMapTypes.push(radarOverlay);

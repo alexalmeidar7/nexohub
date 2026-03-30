@@ -356,7 +356,6 @@ export default function CenarioInterativoPage() {
   }, [sendDrawClear]);
 
   useEffect(() => {
-    if (!previewDrawActive) return;
     const canvas = previewCanvasRef.current;
     if (!canvas) return;
     const parent = canvas.parentElement;
@@ -366,7 +365,7 @@ export default function CenarioInterativoPage() {
     const ro = new ResizeObserver(resize);
     ro.observe(parent);
     return () => ro.disconnect();
-  }, [previewDrawActive]);
+  }, []);
 
   const configRef = useRef(config);
   const activeTabRef = useRef(activeTab);
