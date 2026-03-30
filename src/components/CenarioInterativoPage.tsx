@@ -506,12 +506,16 @@ export default function CenarioInterativoPage() {
   }, [config.traffic.enabled, trafficCity]);
 
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevSaveRef = useRef<string>("");
   useEffect(() => {
     if (!user?.id || !loaded) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    const configWithTabs = { ...config, _activeTab: activeTab, _weatherSubTab: weatherSubTab, _currencySubTab: currencySubTab };
+    const serialized = JSON.stringify(configWithTabs);
+    if (serialized === prevSaveRef.current) return;
     saveTimeout.current = setTimeout(async () => {
+      prevSaveRef.current = serialized;
       setSaving(true);
-      const configWithTabs = { ...config, _activeTab: activeTab, _weatherSubTab: weatherSubTab, _currencySubTab: currencySubTab };
       const payload = { user_id: user.id, cenario_config: configWithTabs } as any;
       const { error } = await supabase
         .from("user_settings")
@@ -520,7 +524,7 @@ export default function CenarioInterativoPage() {
         console.error("Erro ao salvar cenário:", error);
       }
       setSaving(false);
-    }, 1500);
+    }, 400);
     return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
   }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab]);
 
