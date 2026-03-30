@@ -268,7 +268,7 @@ export default function CenarioTela() {
       } catch { /* silent */ }
     }, 500);
     return () => { if (weatherFetchRef.current) clearTimeout(weatherFetchRef.current); };
-  }, [config.weather.enabled, weatherCity]);
+  }, [config.weather.enabled, weatherCity, config.weather.showSatellite]);
 
   /* Geocode traffic */
   const trafficCity = config.traffic.city || config.city;
