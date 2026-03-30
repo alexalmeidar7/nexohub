@@ -135,11 +135,25 @@ export default function CenarioTela() {
   const DRAW_COLORS = ["#e1f532", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
   const DRAW_WIDTHS = [2, 4, 8, 14];
 
+  const cenarioBcDrawRef = useRef<BroadcastChannel | null>(null);
+
   const getCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top };
+    return { x: clientX - rect.left, y: clientY - rect.top, px: (clientX - rect.left) / rect.width, py: (clientY - rect.top) / rect.height };
+  }, []);
+
+  const drawOnCanvas = useCallback((canvas: HTMLCanvasElement, action: string, px: number, py: number, color: string, width: number) => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const x = px * canvas.width;
+    const y = py * canvas.height;
+    if (action === "start") { ctx.beginPath(); ctx.moveTo(x, y); }
+    else if (action === "move") {
+      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.lineTo(x, y); ctx.stroke();
+    }
   }, []);
 
   const handleDrawStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -147,31 +161,24 @@ export default function CenarioTela() {
     if (!canvas || !drawingActive) return;
     e.preventDefault();
     isDrawingRef.current = true;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
     const pos = getCanvasPos(e, canvas);
-    ctx.beginPath();
-    ctx.moveTo(pos.x, pos.y);
-  }, [drawingActive, getCanvasPos]);
+    drawOnCanvas(canvas, "start", pos.px, pos.py, drawColor, drawWidth);
+    cenarioBcDrawRef.current?.postMessage({ type: "draw", action: "start", px: pos.px, py: pos.py, color: drawColor, width: drawWidth });
+  }, [drawingActive, getCanvasPos, drawColor, drawWidth, drawOnCanvas]);
 
   const handleDrawMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas || !isDrawingRef.current) return;
     e.preventDefault();
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
     const pos = getCanvasPos(e, canvas);
-    ctx.strokeStyle = drawColor;
-    ctx.lineWidth = drawWidth;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.lineTo(pos.x, pos.y);
-    ctx.stroke();
+    drawOnCanvas(canvas, "move", pos.px, pos.py, drawColor, drawWidth);
     setHasDrawing(true);
-  }, [getCanvasPos]);
+    cenarioBcDrawRef.current?.postMessage({ type: "draw", action: "move", px: pos.px, py: pos.py, color: drawColor, width: drawWidth });
+  }, [getCanvasPos, drawColor, drawWidth, drawOnCanvas]);
 
   const handleDrawEnd = useCallback(() => {
     isDrawingRef.current = false;
+    cenarioBcDrawRef.current?.postMessage({ type: "draw", action: "end" });
   }, []);
 
   const clearDrawing = useCallback(() => {
@@ -180,6 +187,7 @@ export default function CenarioTela() {
     const ctx = canvas.getContext("2d");
     if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     setHasDrawing(false);
+    cenarioBcDrawRef.current?.postMessage({ type: "draw-clear" });
   }, []);
 
   useEffect(() => {
