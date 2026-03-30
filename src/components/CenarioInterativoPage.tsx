@@ -32,6 +32,9 @@ interface TrafficConfig {
   city: string;
   points: TrafficPoint[];
   bgImage: string;
+  lat: number | null;
+  lon: number | null;
+  zoom: number;
 }
 
 interface CurrencyConfig {
@@ -63,7 +66,7 @@ const defaultConfig: CenarioConfig = {
   city: "",
   home: { bgImage: "" },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
-  traffic: { enabled: false, city: "", points: [], bgImage: "" },
+  traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
   chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
 };
@@ -490,6 +493,11 @@ export default function CenarioInterativoPage() {
   const trafficGeoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!config.traffic.enabled || !trafficCity) { setTrafficCoords(null); return; }
+    // If config already has lat/lon from a previous geocode or manual input, use those
+    if (config.traffic.lat != null && config.traffic.lon != null) {
+      setTrafficCoords({ lat: config.traffic.lat, lon: config.traffic.lon });
+      return;
+    }
     if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current);
     trafficGeoRef.current = setTimeout(async () => {
       try {
@@ -498,12 +506,15 @@ export default function CenarioInterativoPage() {
         });
         const results = geoData?.results;
         if (results?.length) {
-          setTrafficCoords({ lat: results[0].latitude, lon: results[0].longitude });
+          const lat = results[0].latitude;
+          const lon = results[0].longitude;
+          setTrafficCoords({ lat, lon });
+          updateTraffic({ lat, lon });
         }
       } catch { /* silent */ }
     }, 1000);
     return () => { if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current); };
-  }, [config.traffic.enabled, trafficCity]);
+  }, [config.traffic.enabled, trafficCity, config.traffic.lat, config.traffic.lon]);
 
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSaveRef = useRef<string>("");
@@ -549,7 +560,8 @@ export default function CenarioInterativoPage() {
 
   const handleTrafficSearch = () => {
     if (!trafficSearchCity.trim()) return;
-    updateTraffic({ city: trafficSearchCity.trim() });
+    // Reset lat/lon so geocoding will run for the new city
+    updateTraffic({ city: trafficSearchCity.trim(), lat: null, lon: null });
   };
 
   const trafficMapCity = config.traffic.city || config.city || "São Paulo";
@@ -809,6 +821,70 @@ export default function CenarioInterativoPage() {
                       O mapa de trânsito é exibido no Preview ao lado →
                     </div>
 
+                    {/* Lat / Lon / Zoom controls */}
+                    {trafficCoords && (
+                      <div className="space-y-2 mt-2">
+                        <Label className="text-xs font-medium" style={{ color: mutedText }}>Coordenadas e Zoom</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <Label className="text-[10px] opacity-60">Latitude</Label>
+                            <Input
+                              type="number"
+                              step="0.001"
+                              value={config.traffic.lat ?? trafficCoords.lat}
+                              onChange={e => {
+                                const v = parseFloat(e.target.value);
+                                if (!isNaN(v)) updateTraffic({ lat: v });
+                              }}
+                              className="text-xs h-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] opacity-60">Longitude</Label>
+                            <Input
+                              type="number"
+                              step="0.001"
+                              value={config.traffic.lon ?? trafficCoords.lon}
+                              onChange={e => {
+                                const v = parseFloat(e.target.value);
+                                if (!isNaN(v)) updateTraffic({ lon: v });
+                              }}
+                              className="text-xs h-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] opacity-60">Zoom</Label>
+                            <Input
+                              type="number"
+                              min={3}
+                              max={18}
+                              value={config.traffic.zoom}
+                              onChange={e => {
+                                const v = parseInt(e.target.value);
+                                if (!isNaN(v) && v >= 3 && v <= 18) updateTraffic({ zoom: v });
+                              }}
+                              className="text-xs h-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min={3}
+                            max={18}
+                            value={config.traffic.zoom}
+                            onChange={e => updateTraffic({ zoom: parseInt(e.target.value) })}
+                            className="flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
+                            style={{ accentColor: "var(--layout-accent-color, #e1f532)" }}
+                          />
+                          <span className="text-[10px] font-mono opacity-50" style={{ color: textColor }}>{config.traffic.zoom}x</span>
+                        </div>
+                      </div>
+                    )}
+
                     {config.traffic.points.length > 0 && (
                       <div className="space-y-2 mt-2">
                         <Label className="text-xs font-medium" style={{ color: mutedText }}>Pontos marcados</Label>
@@ -950,7 +1026,7 @@ export default function CenarioInterativoPage() {
                 {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
                   <div className="absolute inset-0 overflow-hidden" style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}>
                     <iframe
-                      src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
+                      src={`https://embed.waze.com/iframe?zoom=${config.traffic.zoom || 13}&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
                       className="absolute border-0"
                       style={{ top: 0, left: 0, width: '100%', height: 'calc(100% + 80px)' }}
                       title="Trânsito preview"

@@ -7,7 +7,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 
 /* ─── types (mirrored from CenarioInterativoPage) ─── */
 interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3Days: boolean; showSatellite: boolean; city: string; bgImage: string; }
-interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage: string; }
+interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage: string; lat: number | null; lon: number | null; zoom: number; }
 interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
 interface HomeConfig { bgImage: string; }
@@ -16,7 +16,7 @@ interface CenarioConfig { city: string; home: HomeConfig; weather: WeatherConfig
 const defaultConfig: CenarioConfig = {
   city: "", home: { bgImage: "" },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
-  traffic: { enabled: false, city: "", points: [], bgImage: "" },
+  traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
   chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
 };
@@ -277,7 +277,14 @@ export default function CenarioTela() {
   /* Geocode traffic */
   const trafficCity = config.traffic.city || config.city;
   useEffect(() => {
-    if (!config.traffic.enabled || !trafficCity) { setTrafficCoords(null); return; }
+    if (!config.traffic.enabled) { setTrafficCoords(null); return; }
+    // Use config lat/lon if available (synced from config page)
+    if (config.traffic.lat != null && config.traffic.lon != null) {
+      setTrafficCoords({ lat: config.traffic.lat, lon: config.traffic.lon });
+      return;
+    }
+    // Fallback: geocode from city name
+    if (!trafficCity) { setTrafficCoords(null); return; }
     const t = setTimeout(async () => {
       try {
         const { data: geoData } = await supabase.functions.invoke("fetch-weather", { body: { action: "geocode", query: trafficCity, count: 1 } });
@@ -285,7 +292,7 @@ export default function CenarioTela() {
       } catch { /* silent */ }
     }, 500);
     return () => clearTimeout(t);
-  }, [config.traffic.enabled, trafficCity]);
+  }, [config.traffic.enabled, trafficCity, config.traffic.lat, config.traffic.lon]);
 
   /* Listen for sync messages from config page via BroadcastChannel */
   useEffect(() => {
@@ -334,7 +341,7 @@ export default function CenarioTela() {
           {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
             <div className="absolute inset-0 overflow-hidden" style={{ zIndex: 1 }}>
               <iframe
-                src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
+                src={`https://embed.waze.com/iframe?zoom=${config.traffic.zoom || 13}&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
                 className="absolute border-0" style={{ top: 0, left: 0, width: '100%', height: 'calc(100% + 80px)' }}
                 title="Trânsito"
               />
