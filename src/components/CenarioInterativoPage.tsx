@@ -1022,14 +1022,15 @@ export default function CenarioInterativoPage() {
                     title="Satélite preview"
                   />
                 )}
-                {/* Traffic (Waze) fullscreen behind sidebar */}
+                {/* Traffic (Leaflet) fullscreen behind sidebar */}
                 {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
-                  <div className="absolute inset-0 overflow-hidden" style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}>
-                    <iframe
-                      src={`https://embed.waze.com/iframe?zoom=${config.traffic.zoom || 13}&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
-                      className="absolute border-0"
-                      style={{ top: 0, left: 0, width: '100%', height: 'calc(100% + 80px)' }}
-                      title="Trânsito preview"
+                  <div className="absolute inset-0" style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}>
+                    <TrafficMap
+                      lat={config.traffic.lat ?? trafficCoords.lat}
+                      lon={config.traffic.lon ?? trafficCoords.lon}
+                      zoom={config.traffic.zoom}
+                      interactive
+                      onMove={(lat, lon, zoom) => updateTraffic({ lat, lon, zoom })}
                     />
                   </div>
                 )}
