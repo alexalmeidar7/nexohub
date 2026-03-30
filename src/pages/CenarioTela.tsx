@@ -850,6 +850,25 @@ export default function CenarioTela() {
             )}
           </div>
 
+          {/* "Telas Conectadas" notification */}
+          {showConnectedMsg && (
+            <div
+              className="absolute left-1/2 flex items-center gap-2 px-4 py-2 rounded-full"
+              style={{
+                top: "3vh",
+                transform: "translateX(-50%)",
+                zIndex: 60,
+                background: "rgba(74,222,128,0.2)",
+                backdropFilter: "blur(16px)",
+                border: "1px solid rgba(74,222,128,0.4)",
+                animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both",
+              }}
+            >
+              <div className="rounded-full" style={{ width: "1vh", height: "1vh", background: "#4ade80", boxShadow: "0 0 8px #4ade80" }} />
+              <span className="text-white font-semibold" style={{ fontSize: "1.4vh" }}>Telas conectadas</span>
+            </div>
+          )}
+
           </div>
         </div>
       </div>
