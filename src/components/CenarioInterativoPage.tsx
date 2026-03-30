@@ -303,6 +303,8 @@ export default function CenarioInterativoPage() {
         if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
         setPreviewHasDrawing(false);
       }
+    }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
+      if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
     }).subscribe();
     rtDrawChannelRef.current = ch;
     return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
@@ -442,6 +444,9 @@ export default function CenarioInterativoPage() {
           drawOnCanvas(canvas, ev.data.action, ev.data.px, ev.data.py, ev.data.color, ev.data.width);
           if (ev.data.action === "move") setPreviewHasDrawing(true);
         }
+      }
+      if (ev.data?.type === "zoom-change" && typeof ev.data.zoom === "number") {
+        setSatelliteZoom(ev.data.zoom);
       }
       if (ev.data?.type === "draw-clear") {
         const canvas = previewCanvasRef.current;
@@ -1269,7 +1274,7 @@ export default function CenarioInterativoPage() {
                 {/* Satellite fullscreen behind sidebar */}
                 {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
                   <div className="absolute inset-0" style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}>
-                    <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={setSatelliteZoom} />
+                    <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={(z) => { setSatelliteZoom(z); cenarioBcRef.current?.postMessage({ type: "zoom-change", zoom: z }); rtDrawChannelRef.current?.send({ type: "broadcast", event: "zoom-change", payload: { zoom: z } }); }} />
                   </div>
                 )}
                 {/* Traffic (Leaflet) fullscreen behind sidebar */}

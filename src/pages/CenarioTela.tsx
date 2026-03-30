@@ -196,6 +196,8 @@ export default function CenarioTela() {
         if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
         setHasDrawing(false);
       }
+    }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
+      if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
     }).subscribe();
     rtDrawChannelRef.current = ch;
     return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
@@ -470,6 +472,9 @@ export default function CenarioTela() {
           if (ev.data.action === "move") setHasDrawing(true);
         }
       }
+      if (ev.data?.type === "zoom-change" && typeof ev.data.zoom === "number") {
+        setSatelliteZoom(ev.data.zoom);
+      }
       if (ev.data?.type === "draw-clear") {
         const canvas = canvasRef.current;
         if (canvas) {
@@ -494,7 +499,7 @@ export default function CenarioTela() {
           {/* Satellite fullscreen — aligned after sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
             <div className="absolute inset-y-0 right-0" style={{ left: "8%", zIndex: 5 }}>
-              <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={setSatelliteZoom} />
+              <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={(z) => { setSatelliteZoom(z); cenarioBcDrawRef.current?.postMessage({ type: "zoom-change", zoom: z }); rtDrawChannelRef.current?.send({ type: "broadcast", event: "zoom-change", payload: { zoom: z } }); }} />
             </div>
           )}
 
