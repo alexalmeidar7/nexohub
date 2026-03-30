@@ -1205,7 +1205,10 @@ export default function PlayerPage() {
       if (isAudioType && audioRef.current) {
         audioRef.current.volume = volumeRef.current / 100;
         if (forceAutoplay) {
+          // Keep muted on autoplay to avoid browser pausing playback after 1s
           audioRef.current.muted = true;
+          mutedRef.current = true;
+          setMuted(true);
         } else {
           audioRef.current.muted = mutedRef.current;
         }
@@ -1243,11 +1246,6 @@ export default function PlayerPage() {
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
             audio.play().then(() => {
               setBuffering(false);
-              // Unmute after successful autoplay
-              if (forceAutoplay && !mutedRef.current) {
-                audio.muted = false;
-                setMuted(false);
-              }
             }).catch((e) => console.warn("Audio play blocked:", e));
           });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
@@ -1262,15 +1260,11 @@ export default function PlayerPage() {
         } else if (audio.canPlayType("application/vnd.apple.mpegurl")) {
           audio.src = freshUrl;
           audio.load();
-          audio.play().then(() => {
-            if (forceAutoplay && !mutedRef.current) { audio.muted = false; setMuted(false); }
-          }).catch((e) => console.warn("Audio play blocked:", e));
+          audio.play().catch((e) => console.warn("Audio play blocked:", e));
         } else {
           audio.src = freshUrl;
           audio.load();
-          audio.play().then(() => {
-            if (forceAutoplay && !mutedRef.current) { audio.muted = false; setMuted(false); }
-          }).catch((e) => console.warn("Audio play blocked:", e));
+          audio.play().catch((e) => console.warn("Audio play blocked:", e));
         }
       } else {
         if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
