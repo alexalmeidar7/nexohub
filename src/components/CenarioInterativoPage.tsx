@@ -1629,21 +1629,19 @@ export default function CenarioInterativoPage() {
                 </div>
               )}
 
-              {/* Drawing canvas overlay for preview */}
-              {previewDrawActive && (
-                <canvas
-                  ref={previewCanvasRef}
-                  className="absolute rounded-2xl"
-                  style={{ top: 0, bottom: 0, right: 0, left: 52, zIndex: 40, cursor: "crosshair", touchAction: "none" }}
-                  onMouseDown={handlePreviewDrawStart}
-                  onMouseMove={handlePreviewDrawMove}
-                  onMouseUp={handlePreviewDrawEnd}
-                  onMouseLeave={handlePreviewDrawEnd}
-                  onTouchStart={handlePreviewDrawStart}
-                  onTouchMove={handlePreviewDrawMove}
-                  onTouchEnd={handlePreviewDrawEnd}
-                />
-              )}
+              {/* Drawing canvas overlay for preview — always mounted for remote sync */}
+              <canvas
+                ref={previewCanvasRef}
+                className="absolute rounded-2xl"
+                style={{ top: 0, bottom: 0, right: 0, left: 52, zIndex: 40, cursor: previewDrawActive ? "crosshair" : "default", touchAction: previewDrawActive ? "none" : "auto", pointerEvents: previewDrawActive ? "auto" : "none" }}
+                onMouseDown={handlePreviewDrawStart}
+                onMouseMove={handlePreviewDrawMove}
+                onMouseUp={handlePreviewDrawEnd}
+                onMouseLeave={handlePreviewDrawEnd}
+                onTouchStart={handlePreviewDrawStart}
+                onTouchMove={handlePreviewDrawMove}
+                onTouchEnd={handlePreviewDrawEnd}
+              />
 
               {/* Clear drawing button for preview */}
               {previewHasDrawing && (
