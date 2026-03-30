@@ -143,6 +143,7 @@ export default function CenarioTela() {
   const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
+  const [satelliteZoom, setSatelliteZoom] = useState(6);
 
 
   /* ─── Drawing (Pen) ─── */
