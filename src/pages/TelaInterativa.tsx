@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+
 import { usePageTitle } from "@/hooks/usePageTitle";
 import CenarioTela from "./CenarioTela";
 
