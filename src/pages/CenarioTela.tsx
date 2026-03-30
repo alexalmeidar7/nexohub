@@ -467,6 +467,9 @@ export default function CenarioTela() {
             <button onClick={() => setActiveTab("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
               <MessageCircle style={{ width: "1.7vh", height: "1.7vh" }} className="text-white" />
             </button>
+            <button onClick={() => { setDrawingActive(p => !p); if (drawingActive) { /* keep drawing visible */ } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", marginTop: "0.5vh", background: drawingActive ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: drawingActive ? "2px solid #e1f532" : "2px solid transparent", transition: "all 0.2s ease" }}>
+              <Pen style={{ width: "1.7vh", height: "1.7vh" }} className="text-white" />
+            </button>
           </div>
 
           {/* Content */}
