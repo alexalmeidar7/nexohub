@@ -42,7 +42,7 @@ function loadGoogleMaps(): Promise<void> {
     };
     script.onerror = () => {
       scriptLoading = false;
-      resolve(); // resolve anyway to avoid hanging
+      resolve();
     };
     document.head.appendChild(script);
   });
@@ -50,59 +50,54 @@ function loadGoogleMaps(): Promise<void> {
 
 export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: SatelliteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
+  const mapRef = useRef<any>(null);
 
   const initMap = useCallback(async () => {
     const el = containerRef.current;
     if (!el) return;
 
     await loadGoogleMaps();
-    if (!window.google?.maps) return;
+    const gm = window.google?.maps;
+    if (!gm) return;
 
-    // Destroy previous map
     if (mapRef.current) {
       mapRef.current = null;
       el.innerHTML = "";
     }
 
-    const map = new google.maps.Map(el, {
+    const map = new gm.Map(el, {
       center: { lat, lng: lon },
       zoom,
-      mapTypeId: "hybrid", // satellite with labels
+      mapTypeId: "hybrid",
       disableDefaultUI: true,
       gestureHandling: "none",
       keyboardShortcuts: false,
     });
 
-    // Add weather/cloud layer
+    // Weather layer attempt
     try {
-      const vis = (google.maps as any).visualization;
-      if (vis && vis.WeatherLayer) {
-        const cloudLayer = new vis.WeatherLayer();
-        cloudLayer.setMap(map);
+      const vis = gm.visualization;
+      if (vis?.WeatherLayer) {
+        new vis.WeatherLayer().setMap(map);
       }
-    } catch {
-      // WeatherLayer may not be available, add cloud overlay via tile
-    }
+    } catch {}
 
-    // Add RainViewer radar overlay as a fallback weather layer
+    // RainViewer radar overlay
     try {
       const rvRes = await fetch("https://api.rainviewer.com/public/weather-maps.json");
       const rvData = await rvRes.json();
       if (rvData?.radar?.past?.length) {
         const latest = rvData.radar.past[rvData.radar.past.length - 1];
-        const radarOverlay = new google.maps.ImageMapType({
-          getTileUrl: (coord, z) =>
+        const radarOverlay = new gm.ImageMapType({
+          getTileUrl: (coord: any, z: number) =>
             `https://tilecache.rainviewer.com${latest.path}/256/${z}/${coord.x}/${coord.y}/2/1_1.png`,
-          tileSize: new google.maps.Size(256, 256),
+          tileSize: new gm.Size(256, 256),
           opacity: 0.55,
           name: "Radar",
         });
         map.overlayMapTypes.push(radarOverlay);
       }
-    } catch {
-      /* silent */
-    }
+    } catch {}
 
     mapRef.current = map;
   }, [lat, lon, zoom]);
@@ -110,9 +105,7 @@ export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: S
   useEffect(() => {
     initMap();
     return () => {
-      if (mapRef.current) {
-        mapRef.current = null;
-      }
+      mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
