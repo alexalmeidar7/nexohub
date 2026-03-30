@@ -127,8 +127,13 @@ export default function CenarioTela() {
   /* ─── Drawing (Pen) ─── */
   const [drawingActive, setDrawingActive] = useState(false);
   const [hasDrawing, setHasDrawing] = useState(false);
+  const [drawColor, setDrawColor] = useState("#e1f532");
+  const [drawWidth, setDrawWidth] = useState(3);
+  const [showDrawOptions, setShowDrawOptions] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawingRef = useRef(false);
+  const DRAW_COLORS = ["#e1f532", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
+  const DRAW_WIDTHS = [2, 4, 8, 14];
 
   const getCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
