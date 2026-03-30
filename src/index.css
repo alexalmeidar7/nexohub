@@ -738,3 +738,75 @@ table:not([data-no-row-hover]) tbody tr:hover {
 .btn-skyglass-danger:active {
   transform: scale(0.97);
 }
+
+/* ─── SkyGlass Form Utilities ─── */
+.input-skyglass,
+.mv-content-area input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):not(.sr-only),
+.mv-content-area select,
+.mv-content-area textarea {
+  background: rgba(255,255,255,0.06) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255,255,255,0.12) !important;
+  border-radius: 12px !important;
+  color: var(--layout-page-text, #1a1a1a) !important;
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.875rem;
+  transition: all 0.25s cubic-bezier(.4,0,.2,1);
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.input-skyglass:focus,
+.mv-content-area input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):not(.sr-only):focus,
+.mv-content-area select:focus,
+.mv-content-area textarea:focus {
+  border-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+  background: rgba(255,255,255,0.10) !important;
+}
+.input-skyglass::placeholder,
+.mv-content-area input::placeholder,
+.mv-content-area textarea::placeholder {
+  color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 35%, transparent) !important;
+}
+.mv-content-area select option {
+  background: var(--layout-page-bg, #ffffff);
+  color: var(--layout-page-text, #1a1a1a);
+}
+
+/* SkyGlass Labels */
+.label-skyglass,
+.mv-content-area label:not(.cursor-pointer) {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent);
+  margin-bottom: 0.375rem;
+  display: block;
+}
+
+/* SkyGlass Form Groups */
+.form-group-skyglass {
+  position: relative;
+}
+.form-group-skyglass .label-skyglass {
+  position: absolute;
+  top: -0.5rem;
+  left: 0.75rem;
+  background: var(--layout-page-bg, #ffffff);
+  padding: 0 0.375rem;
+  z-index: 1;
+  font-size: 0.625rem;
+}
+
+/* SkyGlass Card/Section Wrapper */
+.card-skyglass {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.08);
+  padding: 1.25rem;
+}
