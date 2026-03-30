@@ -703,6 +703,33 @@ export default function CenarioTela() {
 
             </div>{/* end animated page wrapper */}
 
+          {/* Drawing canvas overlay */}
+          {drawingActive && (
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0"
+              style={{ zIndex: 40, cursor: "crosshair", touchAction: "none" }}
+              onMouseDown={handleDrawStart}
+              onMouseMove={handleDrawMove}
+              onMouseUp={handleDrawEnd}
+              onMouseLeave={handleDrawEnd}
+              onTouchStart={handleDrawStart}
+              onTouchMove={handleDrawMove}
+              onTouchEnd={handleDrawEnd}
+            />
+          )}
+
+          {/* Clear drawing button */}
+          {hasDrawing && (
+            <button
+              onClick={clearDrawing}
+              className="absolute flex items-center justify-center rounded-full"
+              style={{ top: "1.5vh", right: "1.5vh", zIndex: 45, width: "4vh", height: "4vh", background: "rgba(239,68,68,0.8)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", transition: "all 0.2s ease" }}
+            >
+              <Eraser style={{ width: "2vh", height: "2vh", color: "white" }} />
+            </button>
+          )}
+
           {/* Realtime connection indicator */}
           <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", zIndex: 50, fontSize: "1vh" }}>
             <div className="rounded-full" style={{ width: "0.8vh", height: "0.8vh", background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 6px #4ade80" : "0 0 6px #ef4444", animation: realtimeConnected ? "cenario-active-blink 2s ease-in-out infinite" : "none" }} />
