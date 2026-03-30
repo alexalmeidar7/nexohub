@@ -123,6 +123,73 @@ export default function CenarioTela() {
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
 
+
+  /* ─── Drawing (Pen) ─── */
+  const [drawingActive, setDrawingActive] = useState(false);
+  const [hasDrawing, setHasDrawing] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isDrawingRef = useRef(false);
+
+  const getCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }, []);
+
+  const handleDrawStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !drawingActive) return;
+    e.preventDefault();
+    isDrawingRef.current = true;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pos = getCanvasPos(e, canvas);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }, [drawingActive, getCanvasPos]);
+
+  const handleDrawMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !isDrawingRef.current) return;
+    e.preventDefault();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pos = getCanvasPos(e, canvas);
+    ctx.strokeStyle = "#e1f532";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    setHasDrawing(true);
+  }, [getCanvasPos]);
+
+  const handleDrawEnd = useCallback(() => {
+    isDrawingRef.current = false;
+  }, []);
+
+  const clearDrawing = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawing(false);
+  }, []);
+
+  useEffect(() => {
+    if (!drawingActive) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const parent = canvas.parentElement;
+    if (!parent) return;
+    const resize = () => { canvas.width = parent.clientWidth; canvas.height = parent.clientHeight; };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, [drawingActive]);
+
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
   const [liveStocks, setLiveStocks] = useState<LiveStock[]>([]);
 
