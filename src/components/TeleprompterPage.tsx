@@ -20,6 +20,7 @@ export default function TeleprompterPage() {
   const [estudio, setEstudio] = useState("");
   const [nome, setNome] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
