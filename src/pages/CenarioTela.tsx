@@ -606,6 +606,20 @@ export default function CenarioTela() {
             )}
 
             </div>{/* end animated page wrapper */}
+
+          {/* Realtime connection indicator */}
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", zIndex: 50, fontSize: "1vh" }}>
+            <div className="rounded-full" style={{ width: "0.8vh", height: "0.8vh", background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 6px #4ade80" : "0 0 6px #ef4444", animation: realtimeConnected ? "cenario-active-blink 2s ease-in-out infinite" : "none" }} />
+            <span className="text-white/60 font-medium" style={{ fontSize: "0.9vh" }}>
+              {realtimeConnected ? "SYNC" : "OFF"}
+            </span>
+            {lastSyncTime && realtimeConnected && (
+              <span className="text-white/30" style={{ fontSize: "0.8vh" }}>
+                {lastSyncTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              </span>
+            )}
+          </div>
+
           </div>
         </div>
       </div>
