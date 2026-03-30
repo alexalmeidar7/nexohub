@@ -1240,6 +1240,20 @@ export default function CenarioInterativoPage() {
               </button>
             </div>
 
+            {/* "Telas Conectadas" notification */}
+            {showConnectedMsg && (
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full mb-2 mx-auto w-fit animate-fade-in"
+                style={{
+                  background: "rgba(74,222,128,0.15)",
+                  border: "1px solid rgba(74,222,128,0.3)",
+                }}
+              >
+                <div className="rounded-full" style={{ width: 6, height: 6, background: "#4ade80", boxShadow: "0 0 6px #4ade80" }} />
+                <span className="text-[11px] font-semibold" style={{ color: "#4ade80" }}>Telas conectadas</span>
+              </div>
+            )}
+
             <div
               className="relative rounded-2xl overflow-hidden mx-auto"
               style={{
