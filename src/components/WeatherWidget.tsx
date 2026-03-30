@@ -11,6 +11,8 @@ interface WidgetWeather {
   tomorrowMin: number;
   tomorrowMax: number;
   weatherCode: number;
+  feelsLike: number;
+  windSpeed: number;
 }
 
 const weatherIcons: Record<number, string> = {
