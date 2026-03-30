@@ -50,7 +50,7 @@ function loadGoogleMaps(): Promise<void> {
   });
 }
 
-export default function SatelliteMap({ lat, lon, zoom = 6, className, style }: SatelliteMapProps) {
+export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showControls = false, className, style }: SatelliteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
 
