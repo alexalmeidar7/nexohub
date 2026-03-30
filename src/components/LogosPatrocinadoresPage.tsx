@@ -274,7 +274,7 @@ export default function LogosPatrocinadoresPage() {
   }, [logos, programas]);
 
   if (loading) {
-    return <ModulePageSkeleton />;
+    return <ModulePageSkeleton variant="form" />;
   }
 
   return (
