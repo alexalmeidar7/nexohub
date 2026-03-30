@@ -48,6 +48,7 @@ export default function TeleprompterPage() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (data) setTps(data);
+    setInitialLoading(false);
   }
 
   async function handleAdd() {
