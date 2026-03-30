@@ -170,15 +170,15 @@ export default function CenarioTela() {
   useEffect(() => {
     if (!effectiveUserId) return;
 
-    const applyConfig = (raw: any) => {
+    const applyConfig = (raw: any, fromRealtime = false) => {
       if (!raw || typeof raw !== "object") return;
       const { _activeTab, _weatherSubTab, _currencySubTab, ...rest } = raw;
       const merged = { ...defaultConfig, ...rest };
       setConfig(merged);
-      // Always apply tab state from remote
       if (_activeTab) setActiveTab(_activeTab);
       if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
       if (_currencySubTab) setCurrencySubTab(_currencySubTab);
+      if (fromRealtime) setLastSyncTime(new Date());
       try {
         localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
       } catch { /* silent */ }
