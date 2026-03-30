@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CalendarDays, TrendingUp, TrendingDown, Minus, Loader2, ChevronUp, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CalendarDays, TrendingUp, TrendingDown, Minus, Loader2, ChevronUp, ChevronDown, Pen, Eraser } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -122,6 +122,73 @@ export default function CenarioTela() {
   const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
+
+
+  /* ─── Drawing (Pen) ─── */
+  const [drawingActive, setDrawingActive] = useState(false);
+  const [hasDrawing, setHasDrawing] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isDrawingRef = useRef(false);
+
+  const getCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }, []);
+
+  const handleDrawStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !drawingActive) return;
+    e.preventDefault();
+    isDrawingRef.current = true;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pos = getCanvasPos(e, canvas);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }, [drawingActive, getCanvasPos]);
+
+  const handleDrawMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !isDrawingRef.current) return;
+    e.preventDefault();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pos = getCanvasPos(e, canvas);
+    ctx.strokeStyle = "#e1f532";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    setHasDrawing(true);
+  }, [getCanvasPos]);
+
+  const handleDrawEnd = useCallback(() => {
+    isDrawingRef.current = false;
+  }, []);
+
+  const clearDrawing = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawing(false);
+  }, []);
+
+  useEffect(() => {
+    if (!drawingActive) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const parent = canvas.parentElement;
+    if (!parent) return;
+    const resize = () => { canvas.width = parent.clientWidth; canvas.height = parent.clientHeight; };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, [drawingActive]);
 
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
   const [liveStocks, setLiveStocks] = useState<LiveStock[]>([]);
@@ -400,6 +467,9 @@ export default function CenarioTela() {
             <button onClick={() => setActiveTab("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
               <MessageCircle style={{ width: "1.7vh", height: "1.7vh" }} className="text-white" />
             </button>
+            <button onClick={() => { setDrawingActive(p => !p); if (drawingActive) { /* keep drawing visible */ } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", marginTop: "0.5vh", background: drawingActive ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: drawingActive ? "2px solid #e1f532" : "2px solid transparent", transition: "all 0.2s ease" }}>
+              <Pen style={{ width: "1.7vh", height: "1.7vh" }} className="text-white" />
+            </button>
           </div>
 
           {/* Content */}
@@ -632,6 +702,33 @@ export default function CenarioTela() {
             )}
 
             </div>{/* end animated page wrapper */}
+
+          {/* Drawing canvas overlay */}
+          {drawingActive && (
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0"
+              style={{ zIndex: 40, cursor: "crosshair", touchAction: "none" }}
+              onMouseDown={handleDrawStart}
+              onMouseMove={handleDrawMove}
+              onMouseUp={handleDrawEnd}
+              onMouseLeave={handleDrawEnd}
+              onTouchStart={handleDrawStart}
+              onTouchMove={handleDrawMove}
+              onTouchEnd={handleDrawEnd}
+            />
+          )}
+
+          {/* Clear drawing button */}
+          {hasDrawing && (
+            <button
+              onClick={clearDrawing}
+              className="absolute flex items-center justify-center rounded-full"
+              style={{ top: "1.5vh", right: "1.5vh", zIndex: 45, width: "4vh", height: "4vh", background: "rgba(239,68,68,0.8)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", transition: "all 0.2s ease" }}
+            >
+              <Eraser style={{ width: "2vh", height: "2vh", color: "white" }} />
+            </button>
+          )}
 
           {/* Realtime connection indicator */}
           <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", zIndex: 50, fontSize: "1vh" }}>
