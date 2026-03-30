@@ -559,8 +559,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                               toast.success("Catálogo salvo na lista!");
                               setNewCatalogMode(false);
                             }}
-                              className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0 whitespace-nowrap flex items-center gap-1"
-                              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
+                              className="btn-skyglass-accent px-3 py-1.5 text-xs shrink-0 whitespace-nowrap"
                             >
                               <Save size={12} /> Salvar Catálogo
                             </button>
