@@ -337,7 +337,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     </div>
   );
 
-  if (loading) return <ModulePageSkeleton />;
+  if (loading) return <ModulePageSkeleton variant="form" />;
 
   const typeLabels: Record<string, string> = { audio_live: "Áudio ao vivo", video_live: "Vídeo ao vivo", video: "Vídeo ao vivo", youtube: "Vídeo do YouTube", catalog: "Catálogo" };
 
