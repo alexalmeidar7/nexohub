@@ -28,6 +28,7 @@ const TpExterno = lazy(() => import("./pages/TpExterno"));
 const PlayerCatalog = lazy(() => import("./pages/player/PlayerCatalog"));
 const VmixControl = lazy(() => import("./pages/VmixControl"));
 const CenarioTela = lazy(() => import("./pages/CenarioTela"));
+const TelaInterativa = lazy(() => import("./pages/TelaInterativa"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
