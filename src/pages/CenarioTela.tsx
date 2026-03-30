@@ -332,10 +332,9 @@ export default function CenarioTela() {
 
           {/* Satellite fullscreen — behind sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
-            <iframe
-              src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=4&overlay=satellite&product=satellite&level=surface&lat=-14.2&lon=-51.9&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true&autoplay=true&border=full`}
-              className="absolute inset-0 w-full h-full border-0" title="Satélite" style={{ zIndex: 1 }}
-            />
+            <div className="absolute inset-0" style={{ zIndex: 1 }}>
+              <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={6} />
+            </div>
           )}
 
           {/* Traffic (Leaflet) fullscreen */}
