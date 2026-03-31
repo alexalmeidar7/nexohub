@@ -623,6 +623,13 @@ table:not([data-no-row-hover]) tbody tr:hover {
   100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
 }
 
+/* ─── vMix Chromium 103 compatibility: webkit backdrop-filter utilities ─── */
+.vmix-blur-4 { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.vmix-blur-8 { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.vmix-blur-12 { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.vmix-blur-16 { -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.vmix-blur-20 { -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+
 /* ─── SkyGlass Button Utilities ─── */
 .btn-skyglass {
   display: inline-flex;
