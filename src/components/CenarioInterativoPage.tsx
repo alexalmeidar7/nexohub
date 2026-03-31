@@ -636,6 +636,13 @@ export default function CenarioInterativoPage() {
           setPreviewHasDrawing(false);
         }
       }
+      if (ev.data?.type === "draw-shape") {
+        const canvas = previewCanvasRef.current;
+        if (canvas && ev.data) {
+          drawShapeOnCanvas(canvas, ev.data.shape, ev.data.startPx, ev.data.startPy, ev.data.endPx, ev.data.endPy, ev.data.color, ev.data.width);
+          setPreviewHasDrawing(true);
+        }
+      }
     };
 
     // Ping external screen every 3s (only for same-browser BroadcastChannel)
