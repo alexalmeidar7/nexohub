@@ -473,7 +473,15 @@ export default function CenarioTela() {
           setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, tipo_programa: onAir.tipo_programa });
           const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", effectiveUserId).eq("ativo", true).eq("excluido", false);
           setSponsorLogos(logos || []);
-        } else { setCurrentProgram(null); setSponsorLogos([]); }
+          // Find next program
+          const upcoming = progs?.filter(p => (p.dias_semana || []).includes(today) && p.horario_inicio > nowTime).sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
+          if (upcoming?.length) {
+            const np = upcoming[0];
+            setNextProgram({ nome: np.nome, selo: np.selo, horario_inicio: np.horario_inicio, horario_fim: np.horario_fim });
+          } else {
+            setNextProgram(null);
+          }
+        } else { setCurrentProgram(null); setSponsorLogos([]); setNextProgram(null); }
       } else {
         // Unauthenticated: use edge function for program data
         const result = await fetchViaEdgeFunction(effectiveUserId);
