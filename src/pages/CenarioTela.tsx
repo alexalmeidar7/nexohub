@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CalendarDays, TrendingUp, TrendingDown, Minus, Loader2, ChevronUp, ChevronDown, Pen, Eraser, Clock, Music } from "lucide-react";
+import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CalendarDays, TrendingUp, TrendingDown, Minus, Loader2, ChevronUp, ChevronDown, Pen, Eraser, Clock, Music, Mic } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -145,7 +145,7 @@ export default function CenarioTela() {
     return new URLSearchParams(window.location.search).get("weatherSubTab") || "today";
   });
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string } | null>(null);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
   const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
@@ -419,10 +419,16 @@ export default function CenarioTela() {
       const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
       const today = dayNames[now.getDay()];
       const nowTime = now.toTimeString().slice(0, 5);
-      const { data: progs } = await supabase.from("programas").select("id, nome, selo, horario_inicio, horario_fim, dias_semana").eq("user_id", effectiveUserId).eq("ativo", true);
+      const { data: progs } = await supabase.from("programas").select("id, nome, selo, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids").eq("user_id", effectiveUserId).eq("ativo", true);
       const onAir = progs?.find(p => (p.dias_semana || []).includes(today) && p.horario_inicio <= nowTime && p.horario_fim > nowTime);
       if (onAir) {
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim });
+        let apresentadorNome = "";
+        const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
+        if (apIds.length) {
+          const { data: aps } = await supabase.from("apresentadores").select("nome").in("id", apIds);
+          apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
+        }
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome });
         const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", effectiveUserId).eq("ativo", true).eq("excluido", false);
         setSponsorLogos(logos || []);
       } else { setCurrentProgram(null); setSponsorLogos([]); }
@@ -700,19 +706,19 @@ export default function CenarioTela() {
                   </div>
 
                   {/* Center: Program logo + info */}
-                  <div className="flex-1 flex flex-col items-center justify-center" style={{ gap: "1.5vh", marginBottom: "3vh" }}>
+                  <div className="flex-1 flex flex-col items-center justify-center" style={{ gap: "1vh" }}>
                     {currentProgram?.selo && (
                       <img
                         src={currentProgram.selo}
                         alt={currentProgram.nome}
                         className="object-contain drop-shadow-lg"
-                        style={{ maxWidth: "35vh", maxHeight: "22vh", animation: "cenario-fade-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}
+                        style={{ maxWidth: "45vh", maxHeight: "28vh", animation: "cenario-fade-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}
                       />
                     )}
                     {currentProgram && (
                       <div className="text-center" style={{ animation: "cenario-slide-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>
                         {!currentProgram.selo && (
-                          <div className="font-bold drop-shadow-md" style={{ fontSize: "3vh", marginBottom: "0.5vh", color: "#fff" }}>{currentProgram.nome}</div>
+                          <div className="font-bold drop-shadow-md" style={{ fontSize: "3.5vh", marginBottom: "0.5vh", color: "#fff" }}>{currentProgram.nome}</div>
                         )}
                         <div className="opacity-70 font-medium" style={{ fontSize: "1.6vh", color: "#fff" }}>
                           {currentProgram.horario_inicio.slice(0,5)} — {currentProgram.horario_fim.slice(0,5)}
@@ -721,47 +727,54 @@ export default function CenarioTela() {
                         <div className="mx-auto" style={{ width: "25vh", height: "0.5vh", marginTop: "1vh", borderRadius: "1vh", background: "rgba(255,255,255,0.2)", overflow: "hidden" }}>
                           <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: "1vh", background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 8px rgba(225,245,50,0.5)" }} />
                         </div>
+                        {/* Presenter name */}
+                        {currentProgram.apresentador && (
+                          <div className="flex items-center justify-center gap-[0.5vh] opacity-80" style={{ marginTop: "1vh", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
+                            <Mic style={{ width: "1.4vh", height: "1.4vh", color: "#e1f532" }} />
+                            <span style={{ fontSize: "1.4vh", color: "#fff", fontWeight: 500 }}>{currentProgram.apresentador}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                     {!currentProgram && (
                       <div className="opacity-40 text-center" style={{ fontSize: "1.8vh", color: "#fff" }}>Nenhum programa no ar</div>
                     )}
-                  </div>
 
-                  {/* Music cover — bigger and higher */}
-                  {musicData && (
-                    <div
-                      key={musicKey}
-                      className="flex items-center gap-[2vh] self-center"
-                      style={{
-                        padding: "1.5vh 2vh",
-                        borderRadius: "1.5vh",
-                        background: "rgba(0,0,0,0.45)",
-                        WebkitBackdropFilter: "blur(12px)",
-                        backdropFilter: "blur(12px)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        maxWidth: "85%",
-                        marginBottom: "1.5vh",
-                        animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
-                      }}
-                    >
-                      {musicData.capa ? (
-                        <img src={musicData.capa} alt="" className="rounded-xl object-cover" style={{ width: "9vh", height: "9vh", flexShrink: 0 }} />
-                      ) : (
-                        <div className="rounded-xl flex items-center justify-center" style={{ width: "9vh", height: "9vh", flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
-                          <Music style={{ width: "3.5vh", height: "3.5vh", opacity: 0.5, color: "#fff" }} />
+                    {/* Music cover — positioned inside center area */}
+                    {musicData && (
+                      <div
+                        key={musicKey}
+                        className="flex items-center gap-[2vh] self-center"
+                        style={{
+                          padding: "1.5vh 2vh",
+                          borderRadius: "1.5vh",
+                          background: "rgba(0,0,0,0.45)",
+                          WebkitBackdropFilter: "blur(12px)",
+                          backdropFilter: "blur(12px)",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                          maxWidth: "85%",
+                          marginTop: "2vh",
+                          animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
+                        }}
+                      >
+                        {musicData.capa ? (
+                          <img src={musicData.capa} alt="" className="rounded-xl object-cover" style={{ width: "9vh", height: "9vh", flexShrink: 0 }} />
+                        ) : (
+                          <div className="rounded-xl flex items-center justify-center" style={{ width: "9vh", height: "9vh", flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
+                            <Music style={{ width: "3.5vh", height: "3.5vh", opacity: 0.5, color: "#fff" }} />
+                          </div>
+                        )}
+                        <div style={{ minWidth: 0 }}>
+                          <div className="font-bold truncate" style={{ fontSize: "2vh", color: "#fff" }}>{musicData.titulo}</div>
+                          <div className="truncate opacity-70" style={{ fontSize: "1.5vh", color: "#fff" }}>{musicData.artista}</div>
                         </div>
-                      )}
-                      <div style={{ minWidth: 0 }}>
-                        <div className="font-bold truncate" style={{ fontSize: "2vh", color: "#fff" }}>{musicData.titulo}</div>
-                        <div className="truncate opacity-70" style={{ fontSize: "1.5vh", color: "#fff" }}>{musicData.artista}</div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {/* Sponsor logos */}
                   {sponsorLogos.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: "1.5vh", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
+                    <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: "1vh", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
                       {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: "4vh", height: "4vh", background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
                     </div>
                   )}

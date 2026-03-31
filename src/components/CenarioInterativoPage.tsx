@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -691,7 +691,7 @@ export default function CenarioInterativoPage() {
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string } | null>(null);
   const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const prevMusicRef = useRef("");
@@ -769,7 +769,7 @@ export default function CenarioInterativoPage() {
     (async () => {
       const { data: progs } = await supabase
         .from("programas")
-        .select("id, nome, horario_inicio, horario_fim, dias_semana, selo")
+        .select("id, nome, horario_inicio, horario_fim, dias_semana, selo, apresentador_id, apresentadores_ids")
         .eq("user_id", user.id)
         .eq("ativo", true);
 
@@ -779,7 +779,13 @@ export default function CenarioInterativoPage() {
       });
 
       if (onAir) {
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim });
+        let apresentadorNome = "";
+        const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
+        if (apIds.length) {
+          const { data: aps } = await supabase.from("apresentadores").select("nome").in("id", apIds);
+          apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
+        }
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
           .select("id, nome, logo_url")
@@ -1670,9 +1676,9 @@ export default function CenarioInterativoPage() {
                         </div>
 
                         {/* Center: Program logo + progress */}
-                        <div className="flex-1 flex flex-col items-center justify-center gap-1" style={{ marginBottom: "2vh" }}>
+                        <div className="flex-1 flex flex-col items-center justify-center gap-1">
                           {currentProgram?.selo && (
-                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: "60%", maxHeight: "40%" }} />
+                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: "70%", maxHeight: "45%" }} />
                           )}
                           {currentProgram && (
                             <div className="text-center">
@@ -1681,27 +1687,33 @@ export default function CenarioInterativoPage() {
                               <div className="mx-auto mt-1" style={{ width: "60%", height: 3, borderRadius: 3, background: "rgba(255,255,255,0.2)", overflow: "hidden" }}>
                                 <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: 3, background: "#e1f532", transition: "width 1s linear" }} />
                               </div>
+                              {currentProgram.apresentador && (
+                                <div className="flex items-center justify-center gap-1 mt-1 opacity-80">
+                                  <Mic size={8} style={{ color: "#e1f532" }} />
+                                  <span className="text-[8px] font-medium" style={{ color: "#fff" }}>{currentProgram.apresentador}</span>
+                                </div>
+                              )}
                             </div>
                           )}
                           {!currentProgram && <div className="text-[9px] opacity-40" style={{ color: "#fff" }}>Nenhum programa no ar</div>}
-                        </div>
 
-                        {/* Music — bigger cover, positioned higher */}
-                        {musicData && (
-                          <div key={musicKey} className="flex items-center gap-2 self-center" style={{ padding: "6px 8px", borderRadius: 8, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.12)", maxWidth: "92%", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", marginBottom: "1vh" }}>
-                            {musicData.capa ? (
-                              <img src={musicData.capa} alt="" className="rounded-md object-cover" style={{ width: 40, height: 40, flexShrink: 0 }} />
-                            ) : (
-                              <div className="rounded-md flex items-center justify-center" style={{ width: 40, height: 40, flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
-                                <Music size={16} style={{ opacity: 0.5, color: "#fff" }} />
+                          {/* Music — inside center area */}
+                          {musicData && (
+                            <div key={musicKey} className="flex items-center gap-2 self-center" style={{ padding: "6px 8px", borderRadius: 8, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.12)", maxWidth: "92%", marginTop: 4, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                              {musicData.capa ? (
+                                <img src={musicData.capa} alt="" className="rounded-md object-cover" style={{ width: 40, height: 40, flexShrink: 0 }} />
+                              ) : (
+                                <div className="rounded-md flex items-center justify-center" style={{ width: 40, height: 40, flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
+                                  <Music size={16} style={{ opacity: 0.5, color: "#fff" }} />
+                                </div>
+                              )}
+                              <div style={{ minWidth: 0 }}>
+                                <div className="font-bold truncate text-[9px]" style={{ color: "#fff" }}>{musicData.titulo}</div>
+                                <div className="truncate text-[7px] opacity-70" style={{ color: "#fff" }}>{musicData.artista}</div>
                               </div>
-                            )}
-                            <div style={{ minWidth: 0 }}>
-                              <div className="font-bold truncate text-[9px]" style={{ color: "#fff" }}>{musicData.titulo}</div>
-                              <div className="truncate text-[7px] opacity-70" style={{ color: "#fff" }}>{musicData.artista}</div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
 
                         {/* Sponsor logos */}
                         {sponsorLogos.length > 0 && (
