@@ -929,101 +929,103 @@ export default function CenarioTela() {
                 </div>
               );
 
-              // ── LANDSCAPE: Reference layout with vertical text elements ──
+              // ── LANDSCAPE: Reference layout matching provided mockup ──
               if (isLandscape) {
                 return (
                   <div className="absolute inset-0 flex" style={{ color: "#fff" }}>
-                    {/* LEFT: Presenter name + time (vertical) */}
-                    <div className="flex flex-col items-center justify-center flex-shrink-0" style={{ width: `8${vu}`, padding: `2${vu} 0` }}>
+
+                    {/* LEFT COLUMN: Presenter name (vertical) + schedule */}
+                    <div className="flex flex-col items-center justify-center flex-shrink-0" style={{ width: `10${vu}`, padding: `2${vu} 0` }}>
                       {currentProgram?.apresentador && (
                         <div style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)" }}>
-                          <span className="font-black" style={{ fontSize: `3${vu}`, letterSpacing: "0.02em", lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.apresentador}</span>
+                          <span className="font-black" style={{ fontSize: `3.5${vu}`, letterSpacing: "0.02em", lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.apresentador}</span>
                         </div>
                       )}
                       {currentProgram && (
-                        <div className="opacity-60" style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)", marginTop: `1${vu}`, fontSize: `1.4${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                        <div className="opacity-60" style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)", marginTop: `1.5${vu}`, fontSize: `1.6${vu}`, fontVariantNumeric: "tabular-nums" }}>
                           {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                         </div>
                       )}
                     </div>
 
-                    {/* CENTER: Logo + Music info + Cover */}
-                    <div className="flex-1 flex items-center justify-center relative" style={{ gap: `0${vu}` }}>
+                    {/* CENTER: Program logo + Music info + Album cover */}
+                    <div className="flex-1 flex items-center justify-center relative">
+
+                      {/* Progress bar pill at top center */}
+                      <div className="absolute" style={{ top: `2${vu}`, left: "50%", transform: "translateX(-50%)", width: `40${vu}` }}>
+                        <div style={{ width: "100%", height: `1${vu}`, borderRadius: `1${vu}`, background: "rgba(0,0,0,0.6)", overflow: "hidden" }}>
+                          <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 8px rgba(225,245,50,0.5)" }} />
+                        </div>
+                      </div>
+
                       {/* Program logo */}
                       {currentProgram && (
                         <div
                           key={`program-${currentProgram.id}`}
                           className="flex flex-col items-center justify-center flex-shrink-0"
-                          style={{ animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
+                          style={{ marginRight: `3${vu}`, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
                         >
                           {currentProgram.selo ? (
-                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `18${vu}`, maxHeight: `22${vu}` }} />
+                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `20${vu}`, maxHeight: `24${vu}` }} />
                           ) : (
-                            <div className="font-black text-center" style={{ fontSize: `3${vu}`, maxWidth: `16${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
+                            <div className="font-black text-center" style={{ fontSize: `3.5${vu}`, maxWidth: `18${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
                           )}
                         </div>
                       )}
 
-                      {/* Music info (vertical) + Cover */}
+                      {/* Vertical separator + Music text (vertical) */}
+                      {musicData && (
+                        <div className="flex flex-col items-center flex-shrink-0" style={{ marginRight: `2${vu}` }}>
+                          <div style={{ width: 0, height: 0, borderLeft: `1${vu} solid transparent`, borderRight: `1${vu} solid transparent`, borderTop: `1.5${vu} solid #e1f532`, marginBottom: `1.2${vu}` }} />
+                          <div style={{ width: "2px", height: `5${vu}`, background: "rgba(255,255,255,0.3)", marginBottom: `1.2${vu}` }} />
+                          <div style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)" }}>
+                            <div className="font-black uppercase" style={{ fontSize: `2.5${vu}`, letterSpacing: "0.05em", lineHeight: 1.2 }}>{musicData.titulo}</div>
+                            <div className="font-semibold uppercase opacity-70" style={{ fontSize: `1.6${vu}`, letterSpacing: "0.08em", marginTop: `1${vu}` }}>{musicData.artista}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Album cover — LARGE */}
                       {musicData && (
                         <div
                           key={musicKey}
-                          className="flex items-center"
-                          style={{ marginLeft: `2${vu}`, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}
+                          style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}
                         >
-                          {/* Vertical separator + music text */}
-                          <div className="flex flex-col items-center" style={{ marginRight: `1.5${vu}` }}>
-                            <div style={{ width: 0, height: 0, borderLeft: `0.8${vu} solid transparent`, borderRight: `0.8${vu} solid transparent`, borderTop: `1.2${vu} solid #e1f532`, marginBottom: `1${vu}` }} />
-                            <div style={{ width: "2px", height: `4${vu}`, background: "rgba(255,255,255,0.3)", marginBottom: `1${vu}` }} />
-                            <div style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)" }}>
-                              <div className="font-black uppercase" style={{ fontSize: `2${vu}`, letterSpacing: "0.05em", lineHeight: 1.2 }}>{musicData.titulo}</div>
-                              <div className="font-semibold uppercase opacity-70" style={{ fontSize: `1.4${vu}`, letterSpacing: "0.08em", marginTop: `0.8${vu}` }}>{musicData.artista}</div>
-                            </div>
-                          </div>
-
-                          {/* Album cover */}
                           {musicData.capa ? (
-                            <img src={musicData.capa} alt="" className="object-cover" style={{ width: `30${vu}`, height: `30${vu}`, borderRadius: `1.5${vu}`, boxShadow: "0 8px 40px rgba(0,0,0,0.5)", border: "2px solid rgba(225,245,50,0.3)" }} />
+                            <img src={musicData.capa} alt="" className="object-cover" style={{ width: `34${vu}`, height: `34${vu}`, borderRadius: `2${vu}`, boxShadow: "0 8px 40px rgba(0,0,0,0.5)", border: "3px solid rgba(225,245,50,0.25)" }} />
                           ) : (
-                            <div className="flex items-center justify-center" style={{ width: `30${vu}`, height: `30${vu}`, borderRadius: `1.5${vu}`, background: "rgba(255,255,255,0.08)", border: "2px solid rgba(255,255,255,0.1)" }}>
-                              <Music style={{ width: `8${vu}`, height: `8${vu}`, opacity: 0.3 }} />
+                            <div className="flex items-center justify-center" style={{ width: `34${vu}`, height: `34${vu}`, borderRadius: `2${vu}`, background: "rgba(255,255,255,0.08)", border: "3px solid rgba(255,255,255,0.1)" }}>
+                              <Music style={{ width: `10${vu}`, height: `10${vu}`, opacity: 0.3 }} />
                             </div>
                           )}
                         </div>
                       )}
 
-                      {/* Progress bar pill at top center */}
-                      <div className="absolute" style={{ top: `1.5${vu}`, left: "50%", transform: "translateX(-50%)", width: `30${vu}` }}>
-                        <div style={{ width: "100%", height: `0.8${vu}`, borderRadius: `1${vu}`, background: "rgba(0,0,0,0.5)", overflow: "hidden" }}>
-                          <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 8px rgba(225,245,50,0.5)" }} />
-                        </div>
-                      </div>
-
-                      {/* Next program (bottom-right) */}
+                      {/* Next program (bottom-right corner) */}
                       {nextProgram && (
-                        <div className="absolute flex items-end" style={{ bottom: `1.5${vu}`, right: `1.5${vu}` }}>
+                        <div className="absolute flex items-end" style={{ bottom: `2${vu}`, right: `2${vu}` }}>
                           <div style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
-                            <span className="opacity-50 font-medium" style={{ fontSize: `1${vu}` }}>a seguir</span>
-                            <span className="font-bold" style={{ fontSize: `1.4${vu}`, marginTop: `0.3${vu}` }}>{nextProgram.nome}</span>
+                            <span className="opacity-50 font-medium" style={{ fontSize: `1.2${vu}` }}>a seguir</span>
+                            <span className="font-bold" style={{ fontSize: `1.6${vu}`, marginTop: `0.4${vu}` }}>{nextProgram.nome}</span>
                           </div>
                         </div>
                       )}
 
                       {/* Sponsor logos (bottom-left) */}
                       {sponsorLogos.length > 0 && (
-                        <div className="absolute flex items-center" style={{ bottom: `1.5${vu}`, left: `1${vu}`, gap: `0.8${vu}` }}>
-                          {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: `3.5${vu}`, height: `3.5${vu}`, background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
+                        <div className="absolute flex items-center" style={{ bottom: `2${vu}`, left: `1${vu}`, gap: `1${vu}` }}>
+                          {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: `4${vu}`, height: `4${vu}`, background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
                         </div>
                       )}
                     </div>
 
-                    {/* RIGHT: Clock + date (vertical) */}
-                    <div className="flex flex-col items-center justify-start flex-shrink-0" style={{ width: `6${vu}`, paddingTop: `2${vu}` }}>
+                    {/* RIGHT COLUMN: Clock + date (vertical) */}
+                    <div className="flex flex-col items-center justify-start flex-shrink-0" style={{ width: `8${vu}`, paddingTop: `3${vu}` }}>
                       <div style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
-                        <span className="font-black" style={{ fontSize: `4${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
+                        <span className="font-black" style={{ fontSize: `5${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
                           {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                         </span>
-                        <span className="opacity-60 font-medium" style={{ fontSize: `1.4${vu}`, marginTop: `1${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                        <span className="font-bold" style={{ fontSize: `1.8${vu}`, marginTop: `1.2${vu}`, fontVariantNumeric: "tabular-nums", color: "#e1f532" }}>
                           {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                         </span>
                       </div>
