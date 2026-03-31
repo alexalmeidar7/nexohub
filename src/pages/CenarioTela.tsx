@@ -536,8 +536,35 @@ export default function CenarioTela() {
     return () => clearTimeout(t);
   }, [config.traffic.enabled, trafficCity, config.traffic.lat, config.traffic.lon]);
 
+  /* ─── Fetch iTunes cover when capa is missing ─── */
+  const fetchItunesCover = useCallback(async (titulo: string, artista: string): Promise<string> => {
+    try {
+      const q = `${artista} ${titulo}`.trim();
+      if (!q) return "";
+      const resp = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&limit=1`);
+      const data = await resp.json();
+      if (data?.results?.[0]?.artworkUrl100) {
+        return data.results[0].artworkUrl100.replace("100x100", "600x600");
+      }
+    } catch { /* silent */ }
+    return "";
+  }, []);
+
   /* ─── Music polling from localStorage + DB fallback ─── */
   useEffect(() => {
+    const setMusicWithCoverFallback = async (titulo: string, artista: string, capa: string) => {
+      const key = `${titulo}|${artista}`;
+      if (key === prevMusicRef.current) return;
+      prevMusicRef.current = key;
+      // If no cover, try iTunes client-side
+      let finalCapa = capa;
+      if (!finalCapa) {
+        finalCapa = await fetchItunesCover(titulo, artista);
+      }
+      setMusicData({ titulo, artista, capa: finalCapa });
+      setMusicKey(k => k + 1);
+    };
+
     const pollLocal = () => {
       try {
         const raw = localStorage.getItem("masterview_music_data");
@@ -545,9 +572,7 @@ export default function CenarioTela() {
         const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string };
         const key = `${d.titulo || ""}|${d.artista || ""}`;
         if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
-          prevMusicRef.current = key;
-          setMusicData({ titulo: d.titulo || "", artista: d.artista || "", capa: d.capa || "" });
-          setMusicKey(k => k + 1);
+          setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "");
         }
         return !!(d.titulo && d.titulo !== "Sem título");
       } catch { return false; }
@@ -559,11 +584,8 @@ export default function CenarioTela() {
         const result = await fetchViaEdgeFunction(effectiveUserId);
         if (result?.musicData) {
           const d = result.musicData;
-          const key = `${d.titulo}|${d.artista}`;
-          if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
-            prevMusicRef.current = key;
-            setMusicData({ titulo: d.titulo, artista: d.artista, capa: d.capa || "" });
-            setMusicKey(k => k + 1);
+          if (d.titulo && d.titulo !== "Sem título") {
+            await setMusicWithCoverFallback(d.titulo, d.artista, d.capa || "");
           }
         }
       } catch { /* silent */ }
@@ -575,11 +597,8 @@ export default function CenarioTela() {
         const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", effectiveUserId).order("created_at", { ascending: false }).limit(1);
         if (data?.[0]) {
           const d = data[0];
-          const key = `${d.musica}|${d.artista}`;
-          if (key !== prevMusicRef.current && d.musica && d.musica !== "Sem título") {
-            prevMusicRef.current = key;
-            setMusicData({ titulo: d.musica, artista: d.artista, capa: "" });
-            setMusicKey(k => k + 1);
+          if (d.musica && d.musica !== "Sem título") {
+            await setMusicWithCoverFallback(d.musica, d.artista, "");
           }
         }
       } catch { /* silent */ }
@@ -588,7 +607,6 @@ export default function CenarioTela() {
     const poll = async () => {
       const hasLocal = pollLocal();
       if (!hasLocal) {
-        // For unauthenticated (vMix browser), use edge function which also fetches XML
         if (!isAuthenticated) {
           await pollEdgeFunction();
         } else {
@@ -599,7 +617,7 @@ export default function CenarioTela() {
     poll();
     const interval = setInterval(poll, 3000);
     return () => clearInterval(interval);
-  }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction]);
+  }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction, fetchItunesCover]);
 
   /* Listen for sync messages from config page via BroadcastChannel */
   useEffect(() => {
