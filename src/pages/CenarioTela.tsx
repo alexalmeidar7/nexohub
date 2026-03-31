@@ -452,6 +452,26 @@ export default function CenarioTela() {
     return () => clearTimeout(t);
   }, [config.traffic.enabled, trafficCity, config.traffic.lat, config.traffic.lon]);
 
+  /* ─── Music polling from localStorage ─── */
+  useEffect(() => {
+    const poll = () => {
+      try {
+        const raw = localStorage.getItem("masterview_music_data");
+        if (!raw) return;
+        const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string };
+        const key = `${d.titulo || ""}|${d.artista || ""}`;
+        if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
+          prevMusicRef.current = key;
+          setMusicData({ titulo: d.titulo || "", artista: d.artista || "", capa: d.capa || "" });
+          setMusicKey(k => k + 1);
+        }
+      } catch { /* silent */ }
+    };
+    poll();
+    const interval = setInterval(poll, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   /* Listen for sync messages from config page via BroadcastChannel */
   useEffect(() => {
     const bc = new BroadcastChannel("cenario-interativo");
