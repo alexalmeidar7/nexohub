@@ -773,9 +773,13 @@ export default function CenarioTela() {
                   </div>
 
                   {/* Center: Program logo + music */}
-                  <div className="flex-1 flex flex-col items-center justify-center" style={{ gap: "0vh" }}>
+                  <div className="flex-1 flex flex-col items-center justify-center" style={{ gap: "0vh", overflow: "hidden" }}>
                     {currentProgram && (
-                      <div className="relative flex flex-col items-center" style={{ animation: "cenario-fade-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
+                      <div
+                        key={`program-${currentProgram.id}`}
+                        className="relative flex flex-col items-center"
+                        style={{ animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
+                      >
                         <span className="font-bold uppercase tracking-widest" style={{ fontSize: "1.2vh", color: "#e1f532", letterSpacing: "0.3em", marginBottom: "0.5vh", textShadow: "0 0 8px rgba(225,245,50,0.4)" }}>NO AR</span>
                         {currentProgram.selo && (
                           <img
@@ -788,7 +792,11 @@ export default function CenarioTela() {
                       </div>
                     )}
                     {currentProgram && (
-                      <div className="text-center" style={{ animation: "cenario-slide-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>
+                      <div
+                        key={`info-${currentProgram.id}`}
+                        className="text-center"
+                        style={{ animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s both" }}
+                      >
                         {!currentProgram.selo && (
                           <div className="font-bold drop-shadow-md" style={{ fontSize: "3.5vh", marginBottom: "0.5vh", color: "#fff" }}>{currentProgram.nome}</div>
                         )}
@@ -801,7 +809,7 @@ export default function CenarioTela() {
                         </div>
                         {/* Presenter name */}
                         {currentProgram.apresentador && (
-                          <div className="flex items-center justify-center gap-[0.5vh] opacity-80" style={{ marginTop: "1vh", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
+                          <div className="flex items-center justify-center gap-[0.5vh] opacity-80" style={{ marginTop: "1vh", animation: "cenario-program-slide-in 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
                             <Mic style={{ width: "1.4vh", height: "1.4vh", color: "#e1f532" }} />
                             <span style={{ fontSize: "1.4vh", color: "#fff", fontWeight: 500 }}>{currentProgram.apresentador}</span>
                           </div>
