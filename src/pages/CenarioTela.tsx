@@ -1041,8 +1041,8 @@ export default function CenarioTela() {
                                 <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%, rgba(0,0,0,0.15) 100%)", pointerEvents: "none" }} />
                               </div>
                             ) : (
-                              <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)" }}>
-                                <Music style={{ width: `8${vu}`, height: `8${vu}`, opacity: 0.3, color: "#fff" }} />
+                              <div className="flex items-center justify-center" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)", position: "relative" }}>
+                                <Music style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: `8${vu}`, height: `8${vu}`, opacity: 0.3, color: "#fff" }} />
                               </div>
                             )}
                             <div className="flex items-center self-start" style={{ gap: `1${vu}`, maxWidth: "100%" }}>
