@@ -416,7 +416,7 @@ export default function CenarioTela() {
     if (!effectiveUserId) return;
     const load = async () => {
       const now = new Date();
-      const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
       const today = dayNames[now.getDay()];
       const nowTime = now.toTimeString().slice(0, 5);
       const { data: progs } = await supabase.from("programas").select("id, nome, selo, horario_inicio, horario_fim, dias_semana").eq("user_id", effectiveUserId).eq("ativo", true);

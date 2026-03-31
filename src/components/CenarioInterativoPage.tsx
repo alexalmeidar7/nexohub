@@ -762,7 +762,7 @@ export default function CenarioInterativoPage() {
   useEffect(() => {
     if (!user?.id) return;
     const now = new Date();
-    const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const today = dayNames[now.getDay()];
     const nowTime = now.toTimeString().slice(0, 5);
 
