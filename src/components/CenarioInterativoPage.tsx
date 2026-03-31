@@ -53,6 +53,11 @@ interface ChatConfig {
 
 interface HomeConfig {
   bgImage: string;
+  bgGradient?: boolean;
+  bgGradientColorA?: string;
+  bgGradientColorB?: string;
+  bgGradientType?: "linear" | "radial";
+  bgGradientAngle?: number;
 }
 
 interface CenarioConfig {
