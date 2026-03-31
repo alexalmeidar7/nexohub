@@ -875,114 +875,105 @@ export default function CenarioTela() {
                 </div>
               );
 
-              // ── LANDSCAPE MUSICAL: Cover hero center, program info on the side ──
-              if (showMusicHero) {
-                return (
-                  <div className="absolute inset-0 flex items-center justify-center" style={{ padding: `2${vu} 3${vu}`, color: "#fff" }}>
-                    {/* Music hero - center */}
-                    <div
-                      key={musicKey}
-                      className="flex flex-col items-center"
-                      style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", flex: "0 0 auto" }}
-                    >
-                      {musicData.capa ? (
-                        <img src={musicData.capa} alt="" className="rounded-2xl object-cover" style={{ width: `28${vu}`, height: `28${vu}`, boxShadow: "0 8px 40px rgba(0,0,0,0.5)", border: "2px solid rgba(255,255,255,0.1)" }} />
-                      ) : (
-                        <div className="rounded-2xl flex items-center justify-center" style={{ width: `28${vu}`, height: `28${vu}`, background: "rgba(255,255,255,0.08)", border: "2px solid rgba(255,255,255,0.1)" }}>
-                          <Music style={{ width: `8${vu}`, height: `8${vu}`, opacity: 0.3, color: "#fff" }} />
-                        </div>
-                      )}
-                      <div className="text-center" style={{ marginTop: `1.5${vu}`, maxWidth: `32${vu}` }}>
-                        <div className="font-bold" style={{ fontSize: `2.4${vu}`, color: "#fff", lineHeight: 1.2 }}>{musicData.titulo}</div>
-                        <div className="opacity-60 font-medium" style={{ fontSize: `1.6${vu}`, color: "#fff", marginTop: `0.3${vu}` }}>{musicData.artista}</div>
-                      </div>
-                    </div>
-
-                    {/* Program info - right side */}
-                    <div className="flex flex-col items-center justify-center" style={{ marginLeft: `4${vu}`, gap: `1${vu}` }}>
-                      {currentProgram && (
-                        <div
-                          key={`program-${currentProgram.id}`}
-                          className="flex flex-col items-center"
-                          style={{ animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
-                        >
-                          <span className="font-bold uppercase tracking-widest" style={{ fontSize: `0.9${vu}`, color: "#e1f532", letterSpacing: "0.3em", marginBottom: `0.5${vu}`, textShadow: "0 0 8px rgba(225,245,50,0.4)" }}>NO AR</span>
-                          {currentProgram.selo && (
-                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `18${vu}`, maxHeight: `14${vu}` }} />
-                          )}
-                        </div>
-                      )}
-                      {programInfoBlock}
-                      {sponsorLogos.length > 0 && (
-                        <div className="flex flex-wrap justify-center" style={{ gap: `0.6${vu}`, marginTop: `0.5${vu}` }}>
-                          {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: `3${vu}`, height: `3${vu}`, background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              }
-
-              // ── LANDSCAPE JOURNALISTIC / DEFAULT: Program logo hero center ──
+              // ── LANDSCAPE: Reference layout with vertical text elements ──
               if (isLandscape) {
                 return (
-                  <div className="absolute inset-0 flex items-center justify-center" style={{ padding: `2${vu} 3${vu}`, color: "#fff" }}>
-                    {/* Program hero - center */}
-                    <div className="flex flex-col items-center" style={{ flex: "0 0 auto" }}>
-                      {currentProgram && (
-                        <div
-                          key={`program-${currentProgram.id}`}
-                          className="flex flex-col items-center"
-                          style={{ animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
-                        >
-                          <span className="font-bold uppercase tracking-widest" style={{ fontSize: `1.2${vu}`, color: "#e1f532", letterSpacing: "0.3em", marginBottom: `0.8${vu}`, textShadow: "0 0 8px rgba(225,245,50,0.4)" }}>NO AR</span>
-                          {currentProgram.selo && (
-                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `40${vu}`, maxHeight: `28${vu}` }} />
-                          )}
+                  <div className="absolute inset-0 flex" style={{ color: "#fff" }}>
+                    {/* LEFT: Presenter name + time (vertical) */}
+                    <div className="flex flex-col items-center justify-center flex-shrink-0" style={{ width: `8${vu}`, padding: `2${vu} 0` }}>
+                      {currentProgram?.apresentador && (
+                        <div style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)" }}>
+                          <span className="font-black" style={{ fontSize: `3${vu}`, letterSpacing: "0.02em", lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.apresentador}</span>
                         </div>
                       )}
-                      {programInfoBlock}
-                      {!currentProgram && (
-                        <div className="opacity-40 text-center" style={{ fontSize: `1.8${vu}`, color: "#fff" }}>Nenhum programa no ar</div>
+                      {currentProgram && (
+                        <div className="opacity-60" style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)", marginTop: `1${vu}`, fontSize: `1.4${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                          {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
+                        </div>
                       )}
                     </div>
 
-                    {/* Music + sponsors - right side */}
-                    {(musicData || sponsorLogos.length > 0) && (
-                      <div className="flex flex-col items-center justify-center" style={{ marginLeft: `4${vu}`, gap: `1.5${vu}` }}>
-                        {musicData && (
-                          <div
-                            key={musicKey}
-                            className="flex flex-col items-center"
-                            style={{
-                              padding: `1.2${vu} 1.5${vu} 1.5${vu}`,
-                              borderRadius: `1.2${vu}`,
-                              background: "rgba(0,0,0,0.4)",
-                              WebkitBackdropFilter: "blur(12px)", backdropFilter: "blur(12px)",
-                              border: "1px solid rgba(255,255,255,0.1)",
-                              animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
-                            }}
-                          >
-                            {musicData.capa ? (
-                              <img src={musicData.capa} alt="" className="rounded-xl object-cover" style={{ width: `14${vu}`, height: `14${vu}`, border: "1px solid rgba(255,255,255,0.1)" }} />
-                            ) : (
-                              <div className="rounded-xl flex items-center justify-center" style={{ width: `14${vu}`, height: `14${vu}`, background: "rgba(255,255,255,0.08)" }}>
-                                <Music style={{ width: `4${vu}`, height: `4${vu}`, opacity: 0.4, color: "#fff" }} />
-                              </div>
-                            )}
-                            <div className="text-center" style={{ marginTop: `0.8${vu}`, maxWidth: `16${vu}` }}>
-                              <div className="font-bold truncate" style={{ fontSize: `1.4${vu}`, color: "#fff" }}>{musicData.titulo}</div>
-                              <div className="truncate opacity-60" style={{ fontSize: `1${vu}`, color: "#fff" }}>{musicData.artista}</div>
+                    {/* CENTER: Logo + Music info + Cover */}
+                    <div className="flex-1 flex items-center justify-center relative" style={{ gap: `0${vu}` }}>
+                      {/* Program logo */}
+                      {currentProgram && (
+                        <div
+                          key={`program-${currentProgram.id}`}
+                          className="flex flex-col items-center justify-center flex-shrink-0"
+                          style={{ animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
+                        >
+                          {currentProgram.selo ? (
+                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `18${vu}`, maxHeight: `22${vu}` }} />
+                          ) : (
+                            <div className="font-black text-center" style={{ fontSize: `3${vu}`, maxWidth: `16${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Music info (vertical) + Cover */}
+                      {musicData && (
+                        <div
+                          key={musicKey}
+                          className="flex items-center"
+                          style={{ marginLeft: `2${vu}`, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}
+                        >
+                          {/* Vertical separator + music text */}
+                          <div className="flex flex-col items-center" style={{ marginRight: `1.5${vu}` }}>
+                            <div style={{ width: 0, height: 0, borderLeft: `0.8${vu} solid transparent`, borderRight: `0.8${vu} solid transparent`, borderTop: `1.2${vu} solid #e1f532`, marginBottom: `1${vu}` }} />
+                            <div style={{ width: "2px", height: `4${vu}`, background: "rgba(255,255,255,0.3)", marginBottom: `1${vu}` }} />
+                            <div style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)" }}>
+                              <div className="font-black uppercase" style={{ fontSize: `2${vu}`, letterSpacing: "0.05em", lineHeight: 1.2 }}>{musicData.titulo}</div>
+                              <div className="font-semibold uppercase opacity-70" style={{ fontSize: `1.4${vu}`, letterSpacing: "0.08em", marginTop: `0.8${vu}` }}>{musicData.artista}</div>
                             </div>
                           </div>
-                        )}
-                        {sponsorLogos.length > 0 && (
-                          <div className="flex flex-wrap justify-center" style={{ gap: `0.6${vu}` }}>
-                            {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: `3.5${vu}`, height: `3.5${vu}`, background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
-                          </div>
-                        )}
+
+                          {/* Album cover */}
+                          {musicData.capa ? (
+                            <img src={musicData.capa} alt="" className="object-cover" style={{ width: `30${vu}`, height: `30${vu}`, borderRadius: `1.5${vu}`, boxShadow: "0 8px 40px rgba(0,0,0,0.5)", border: "2px solid rgba(225,245,50,0.3)" }} />
+                          ) : (
+                            <div className="flex items-center justify-center" style={{ width: `30${vu}`, height: `30${vu}`, borderRadius: `1.5${vu}`, background: "rgba(255,255,255,0.08)", border: "2px solid rgba(255,255,255,0.1)" }}>
+                              <Music style={{ width: `8${vu}`, height: `8${vu}`, opacity: 0.3 }} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Progress bar pill at top center */}
+                      <div className="absolute" style={{ top: `1.5${vu}`, left: "50%", transform: "translateX(-50%)", width: `30${vu}` }}>
+                        <div style={{ width: "100%", height: `0.8${vu}`, borderRadius: `1${vu}`, background: "rgba(0,0,0,0.5)", overflow: "hidden" }}>
+                          <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 8px rgba(225,245,50,0.5)" }} />
+                        </div>
                       </div>
-                    )}
+
+                      {/* Next program (bottom-right) */}
+                      {nextProgram && (
+                        <div className="absolute flex items-end" style={{ bottom: `1.5${vu}`, right: `1.5${vu}` }}>
+                          <div style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
+                            <span className="opacity-50 font-medium" style={{ fontSize: `1${vu}` }}>a seguir</span>
+                            <span className="font-bold" style={{ fontSize: `1.4${vu}`, marginTop: `0.3${vu}` }}>{nextProgram.nome}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Sponsor logos (bottom-left) */}
+                      {sponsorLogos.length > 0 && (
+                        <div className="absolute flex items-center" style={{ bottom: `1.5${vu}`, left: `1${vu}`, gap: `0.8${vu}` }}>
+                          {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: `3.5${vu}`, height: `3.5${vu}`, background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* RIGHT: Clock + date (vertical) */}
+                    <div className="flex flex-col items-center justify-start flex-shrink-0" style={{ width: `6${vu}`, paddingTop: `2${vu}` }}>
+                      <div style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
+                        <span className="font-black" style={{ fontSize: `4${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
+                          {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                        </span>
+                        <span className="opacity-60 font-medium" style={{ fontSize: `1.4${vu}`, marginTop: `1${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                          {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 );
               }
