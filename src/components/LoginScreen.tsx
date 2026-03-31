@@ -252,10 +252,10 @@ export default function LoginScreen() {
                   onKeyDown={(e) => e.key === "Enter" && handleForgot()}
                   className="w-full rounded-full px-5 py-2.5 outline-none transition-colors"
                   style={{ fontSize: "12px", color: "#0f1058", border: "2px solid rgba(255,255,255,0.3)", backgroundColor: "#fff" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#be0101")}
-                  onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#0d379a"; }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#be0101")}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+                  onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)")}
                 />
                 {forgotError && <p className="text-red-400 text-center" style={{ fontSize: "12px" }}>{forgotError}</p>}
                 <div className="flex justify-between items-center">
