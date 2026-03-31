@@ -633,7 +633,9 @@ export default function CenarioTela() {
     return "";
   }, []);
 
-  /* ─── Music polling from localStorage + DB (single source of truth) ─── */
+  /* ─── Music sync: Realtime + localStorage listener + fallback polling ─── */
+  const setMusicWithCoverFallbackRef = useRef<(titulo: string, artista: string, capa: string, duracao?: number, startTime?: number | null) => Promise<void>>();
+  
   useEffect(() => {
     const setMusicWithCoverFallback = async (titulo: string, artista: string, capa: string, duracao?: number, startTime?: number | null) => {
       const key = `${titulo}|${artista}`;
@@ -644,83 +646,141 @@ export default function CenarioTela() {
         finalCapa = await fetchItunesCover(titulo, artista);
       }
       setMusicData({ titulo, artista, capa: finalCapa, duracao });
-      // Use synced start time from DB when available for cross-device accuracy
       musicStartRef.current = startTime || Date.now();
       setMusicElapsed(startTime ? Math.floor((Date.now() - startTime) / 1000) : 0);
       setMusicKey(k => k + 1);
     };
+    setMusicWithCoverFallbackRef.current = setMusicWithCoverFallback;
 
-    const pollLocal = () => {
+    // ─── 1. localStorage listener (same-tab, updated by useGlobalMusicSync) ───
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== "masterview_music_data" || !e.newValue) return;
       try {
-        const raw = localStorage.getItem("masterview_music_data");
-        if (!raw) return false;
-        const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
-        const key = `${d.titulo || ""}|${d.artista || ""}`;
-        if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
-          // Read synced start time from localStorage (set by useGlobalMusicSync)
+        const d = JSON.parse(e.newValue) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
+        if (d.titulo && d.titulo !== "Sem título") {
           const startRaw = localStorage.getItem("masterview_music_start");
           const startTime = startRaw ? parseInt(startRaw, 10) : null;
           setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
         }
-        return !!(d.titulo && d.titulo !== "Sem título");
-      } catch { return false; }
-    };
-
-    const pollEdgeFunction = async () => {
-      if (!effectiveUserId) return;
-      try {
-        const result = await fetchViaEdgeFunction(effectiveUserId);
-        if (result?.musicData) {
-          const d = result.musicData;
-          if (d.titulo && d.titulo !== "Sem título") {
-            await setMusicWithCoverFallback(d.titulo, d.artista, d.capa || "", undefined, result.musicStartTime);
-          }
-        }
       } catch { /* silent */ }
     };
+    window.addEventListener("storage", onStorage);
 
-    const pollDbDashboard = async () => {
-      if (!effectiveUserId) return;
-      try {
-        // Read from dashboard_items (single source of truth set by useGlobalMusicSync)
-        const { data: settings } = await supabase
-          .from("user_settings")
-          .select("dashboard_items")
-          .eq("user_id", effectiveUserId)
-          .maybeSingle();
-        const items = (settings?.dashboard_items as Record<string, any>) || {};
-        if (items.music_current_title && items.music_current_title !== "Sem título") {
-          await setMusicWithCoverFallback(
-            items.music_current_title,
-            items.music_current_artist || "",
-            "",
-            undefined,
-            items.music_start_time || null
-          );
-          return;
-        }
-        // Fallback: last played from history
-        const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", effectiveUserId).order("created_at", { ascending: false }).limit(1);
-        if (data?.[0]?.musica && data[0].musica !== "Sem título") {
-          await setMusicWithCoverFallback(data[0].musica, data[0].artista, "");
-        }
-      } catch { /* silent */ }
-    };
-
-    const poll = async () => {
-      const hasLocal = pollLocal();
-      if (!hasLocal) {
-        if (!isAuthenticated) {
-          await pollEdgeFunction();
-        } else {
-          await pollDbDashboard();
+    // Also read initial value from localStorage
+    try {
+      const raw = localStorage.getItem("masterview_music_data");
+      if (raw) {
+        const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
+        if (d.titulo && d.titulo !== "Sem título") {
+          const startRaw = localStorage.getItem("masterview_music_start");
+          const startTime = startRaw ? parseInt(startRaw, 10) : null;
+          setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
         }
       }
+    } catch { /* silent */ }
+
+    // ─── 2. Supabase Realtime subscription on user_settings (cross-device, instant) ───
+    let realtimeCh: ReturnType<typeof supabase.channel> | null = null;
+    let destroyed = false;
+
+    if (effectiveUserId) {
+      const connectRealtime = () => {
+        if (destroyed) return;
+        realtimeCh = supabase
+          .channel(`music-rt-${effectiveUserId}-${Date.now()}`)
+          .on(
+            "postgres_changes" as any,
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "user_settings",
+              filter: `user_id=eq.${effectiveUserId}`,
+            },
+            (payload: any) => {
+              const items = payload.new?.dashboard_items as Record<string, any> | null;
+              if (items?.music_current_title && items.music_current_title !== "Sem título") {
+                setMusicWithCoverFallback(
+                  items.music_current_title,
+                  items.music_current_artist || "",
+                  "",
+                  undefined,
+                  items.music_start_time || null
+                );
+              }
+            }
+          )
+          .subscribe((status) => {
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+              setTimeout(() => {
+                if (!destroyed && realtimeCh) { try { supabase.removeChannel(realtimeCh); } catch {} }
+                connectRealtime();
+              }, 5000);
+            }
+          });
+      };
+      connectRealtime();
+
+      // ─── 3. Initial fetch from DB ───
+      (async () => {
+        try {
+          if (isAuthenticated) {
+            const { data: settings } = await supabase
+              .from("user_settings")
+              .select("dashboard_items")
+              .eq("user_id", effectiveUserId)
+              .maybeSingle();
+            const items = (settings?.dashboard_items as Record<string, any>) || {};
+            if (items.music_current_title && items.music_current_title !== "Sem título") {
+              await setMusicWithCoverFallback(items.music_current_title, items.music_current_artist || "", "", undefined, items.music_start_time || null);
+            }
+          } else {
+            const result = await fetchViaEdgeFunction(effectiveUserId);
+            if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
+              await setMusicWithCoverFallback(result.musicData.titulo, result.musicData.artista, result.musicData.capa || "", undefined, result.musicStartTime);
+            }
+          }
+        } catch { /* silent */ }
+      })();
+    }
+
+    // ─── 4. Fallback polling for vMix (no Realtime support) — slower interval ───
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null;
+    if (!isAuthenticated && effectiveUserId) {
+      fallbackInterval = setInterval(async () => {
+        try {
+          const result = await fetchViaEdgeFunction(effectiveUserId);
+          if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
+            await setMusicWithCoverFallback(result.musicData.titulo, result.musicData.artista, result.musicData.capa || "", undefined, result.musicStartTime);
+          }
+        } catch { /* silent */ }
+      }, 3000);
+    }
+
+    // ─── 5. Same-tab polling for localStorage changes (useGlobalMusicSync writes here) ───
+    let localPollInterval: ReturnType<typeof setInterval> | null = null;
+    if (isAuthenticated) {
+      localPollInterval = setInterval(() => {
+        try {
+          const raw = localStorage.getItem("masterview_music_data");
+          if (!raw) return;
+          const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
+          const key = `${d.titulo || ""}|${d.artista || ""}`;
+          if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
+            const startRaw = localStorage.getItem("masterview_music_start");
+            const startTime = startRaw ? parseInt(startRaw, 10) : null;
+            setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
+          }
+        } catch { /* silent */ }
+      }, 1500);
+    }
+
+    return () => {
+      destroyed = true;
+      window.removeEventListener("storage", onStorage);
+      if (realtimeCh) supabase.removeChannel(realtimeCh);
+      if (fallbackInterval) clearInterval(fallbackInterval);
+      if (localPollInterval) clearInterval(localPollInterval);
     };
-    poll();
-    // Poll every 1.5s for tighter sync
-    const interval = setInterval(poll, 1500);
-    return () => clearInterval(interval);
   }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction, fetchItunesCover]);
 
   /* Listen for sync messages from config page via BroadcastChannel */
