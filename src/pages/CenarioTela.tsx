@@ -636,22 +636,102 @@ export default function CenarioTela() {
             >
 
             {/* ═══ HOME ═══ */}
-            {activeTab === "home" && (
-              <div className="absolute inset-0 flex flex-col justify-center" style={{ padding: "3vh", color: (config.home.bgImage || config.home.bgGradient) ? "#fff" : "#333" }}>
-                <div className="font-bold leading-none drop-shadow-md" style={{ fontSize: "6vh", fontVariantNumeric: "tabular-nums", animation: "cenario-clock-enter 0.8s cubic-bezier(0.16,1,0.3,1) both" }}>
-                  {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                </div>
-                <div className="mt-1 drop-shadow-sm opacity-80" style={{ fontSize: "1.8vh", animation: "cenario-clock-enter 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s both" }}>
-                  {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                </div>
-                {currentProgram && <div className="mt-2 font-semibold drop-shadow-sm opacity-90" style={{ fontSize: "1.6vh", animation: "cenario-clock-enter 0.8s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>{currentProgram.nome}</div>}
-                {sponsorLogos.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3" style={{ animation: "cenario-clock-enter 0.8s cubic-bezier(0.16,1,0.3,1) 0.45s both" }}>
-                    {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: "5vh", height: "5vh", background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
+            {activeTab === "home" && (() => {
+              const textColor = (config.home.bgImage || config.home.bgGradient) ? "#fff" : "#333";
+              // Program progress bar
+              let progressPct = 0;
+              if (currentProgram) {
+                const [sh, sm] = currentProgram.horario_inicio.split(":").map(Number);
+                const [eh, em] = currentProgram.horario_fim.split(":").map(Number);
+                const startMin = sh * 60 + sm;
+                const endMin = eh * 60 + em;
+                const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
+                const total = endMin - startMin;
+                if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
+              }
+              return (
+                <div className="absolute inset-0 flex flex-col" style={{ padding: "2.5vh 3vh", color: textColor }}>
+                  {/* Top-left: small clock + date */}
+                  <div style={{ animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                    <div className="flex items-center gap-[0.8vh]">
+                      <Clock style={{ width: "2vh", height: "2vh", opacity: 0.7 }} />
+                      <span className="font-bold" style={{ fontSize: "2.8vh", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>
+                        {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                      </span>
+                    </div>
+                    <div className="opacity-70" style={{ fontSize: "1.4vh", marginTop: "0.3vh", marginLeft: "2.8vh" }}>
+                      {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
+
+                  {/* Center: Program logo + info */}
+                  <div className="flex-1 flex flex-col items-center justify-center" style={{ gap: "1.5vh" }}>
+                    {currentProgram?.selo && (
+                      <img
+                        src={currentProgram.selo}
+                        alt={currentProgram.nome}
+                        className="object-contain drop-shadow-lg"
+                        style={{ maxWidth: "35vh", maxHeight: "22vh", animation: "cenario-fade-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}
+                      />
+                    )}
+                    {currentProgram && (
+                      <div className="text-center" style={{ animation: "cenario-slide-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>
+                        {!currentProgram.selo && (
+                          <div className="font-bold drop-shadow-md" style={{ fontSize: "3vh", marginBottom: "0.5vh" }}>{currentProgram.nome}</div>
+                        )}
+                        <div className="opacity-70 font-medium" style={{ fontSize: "1.6vh" }}>
+                          {currentProgram.horario_inicio} — {currentProgram.horario_fim}
+                        </div>
+                        {/* Progress bar */}
+                        <div className="mx-auto" style={{ width: "25vh", height: "0.5vh", marginTop: "1vh", borderRadius: "1vh", background: "rgba(255,255,255,0.2)", overflow: "hidden" }}>
+                          <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: "1vh", background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 8px rgba(225,245,50,0.5)" }} />
+                        </div>
+                      </div>
+                    )}
+                    {!currentProgram && (
+                      <div className="opacity-40 text-center" style={{ fontSize: "1.8vh" }}>Nenhum programa no ar</div>
+                    )}
+                  </div>
+
+                  {/* Bottom: Music cover */}
+                  {musicData && (
+                    <div
+                      key={musicKey}
+                      className="flex items-center gap-[1.5vh] self-center"
+                      style={{
+                        padding: "1vh 1.5vh",
+                        borderRadius: "1.2vh",
+                        background: "rgba(0,0,0,0.4)",
+                        WebkitBackdropFilter: "blur(12px)",
+                        backdropFilter: "blur(12px)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        maxWidth: "80%",
+                        animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
+                      }}
+                    >
+                      {musicData.capa ? (
+                        <img src={musicData.capa} alt="" className="rounded-lg object-cover" style={{ width: "6vh", height: "6vh", flexShrink: 0 }} />
+                      ) : (
+                        <div className="rounded-lg flex items-center justify-center" style={{ width: "6vh", height: "6vh", flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
+                          <Music style={{ width: "2.5vh", height: "2.5vh", opacity: 0.5 }} />
+                        </div>
+                      )}
+                      <div style={{ minWidth: 0 }}>
+                        <div className="font-bold truncate" style={{ fontSize: "1.6vh", color: "#fff" }}>{musicData.titulo}</div>
+                        <div className="truncate opacity-70" style={{ fontSize: "1.3vh", color: "#fff" }}>{musicData.artista}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sponsor logos */}
+                  {sponsorLogos.length > 0 && (
+                    <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: "1.5vh", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
+                      {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: "4vh", height: "4vh", background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* ═══ WEATHER ═══ */}
             {activeTab === "weather" && (
