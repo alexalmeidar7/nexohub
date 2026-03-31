@@ -1208,29 +1208,65 @@ export default function CenarioTela() {
                 {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d47a1 0%, #1565c0 25%, #1e88e5 50%, #42a5f5 75%, #90caf9 100%)" }} />}
                 <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-0 left-0 right-0 h-1/3" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.3), transparent)" }} />
-                <div className={`relative z-10 flex flex-col h-full`} style={{ padding: `3${vu}` }}>
+                <div className={`relative z-10 flex flex-col h-full`} style={{ padding: `${isLandscape ? 2 : 3}${vu}` }}>
                   {liveWeather ? (<>
                     {weatherSubTab === "today" && (<>
+                      {isLandscape ? (
+                        /* ── LANDSCAPE: horizontal layout ── */
+                        <div className="flex-1 flex items-stretch" style={{ gap: `2${vu}` }}>
+                          {/* Left: City + big temp */}
+                          <div className="flex flex-col justify-center" style={{ flex: "0 0 40%" }}>
+                            <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `3${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
+                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.4${vu}`, color: "#e1f532", marginTop: `0.5${vu}` }}>hoje</div>
+                            <div className="flex items-center" style={{ gap: `1.5${vu}`, marginTop: `1.5${vu}` }}>
+                              <div style={{ width: `10${vu}`, height: `10${vu}`, filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.2))" }}>
+                                <WeatherIcon code={liveWeather.current.code} size={112} forceDay />
+                              </div>
+                              <div>
+                                <div className="font-black drop-shadow-lg" style={{ fontSize: `6${vu}`, lineHeight: 1 }}>{liveWeather.current.temp}°</div>
+                                <div className="font-medium opacity-90" style={{ fontSize: `1.4${vu}` }}>{getWLabel(liveWeather.current.code)}</div>
+                              </div>
+                            </div>
+                          </div>
+                          {/* Right: details card */}
+                          <div className="flex-1 rounded-2xl flex flex-col justify-center" style={{ padding: `2${vu}`, background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+                            <div className="flex items-center" style={{ gap: `1${vu}`, marginBottom: `1.5${vu}` }}>
+                              <Thermometer style={{ width: `2.5${vu}`, height: `2.5${vu}`, opacity: 0.8 }} />
+                              <span className="font-bold" style={{ fontSize: `2.2${vu}` }}>Mín {liveWeather.daily[0]?.min ?? "--"}° / Máx {liveWeather.daily[0]?.max ?? "--"}°</span>
+                            </div>
+                            <div className="flex items-center" style={{ gap: `1${vu}`, marginBottom: `1${vu}` }}>
+                              <Droplets style={{ width: `2.5${vu}`, height: `2.5${vu}`, opacity: 0.8 }} />
+                              <span className="font-semibold" style={{ fontSize: `2${vu}` }}>Umidade {liveWeather.current.humidity}%</span>
+                            </div>
+                            <div className="flex items-center" style={{ gap: `1${vu}` }}>
+                              <span style={{ fontSize: `2.5${vu}` }}>🌧</span>
+                              <span className="font-semibold" style={{ fontSize: `2${vu}` }}>Precipitação {liveWeather.daily[0]?.precip ?? 0}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* ── PORTRAIT: original vertical layout ── */
+                        <>
                       <div className="flex items-start justify-between" style={{ marginBottom: `1.5${vu}` }}>
                         <div>
-                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `${isLandscape ? 3 : 4.5}${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
+                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `4.5${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
                           <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: "#e1f532", marginTop: `0.5${vu}` }}>hoje</div>
                         </div>
                         <div style={{ width: `6${vu}`, height: `6${vu}` }}>
                           <WeatherIcon code={liveWeather.current.code} size={64} />
                         </div>
                       </div>
-                      <div className={`flex-1 rounded-2xl flex ${isLandscape ? "flex-row items-center" : "flex-col"}`} style={{ padding: `2.5${vu}`, gap: `2${vu}`, background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+                      <div className="flex-1 rounded-2xl flex flex-col" style={{ padding: `2.5${vu}`, gap: `2${vu}`, background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
                         <div className="flex items-center" style={{ gap: `2${vu}` }}>
-                          <div className="drop-shadow-xl" style={{ width: `${isLandscape ? 10 : 14}${vu}`, height: `${isLandscape ? 10 : 14}${vu}`, filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.2))" }}>
+                          <div className="drop-shadow-xl" style={{ width: `14${vu}`, height: `14${vu}`, filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.2))" }}>
                             <WeatherIcon code={liveWeather.current.code} size={112} forceDay />
                           </div>
                           <div className="flex flex-col">
-                            <div className="font-black drop-shadow-lg" style={{ fontSize: `${isLandscape ? 5 : 6}${vu}`, lineHeight: 1 }}>{liveWeather.current.temp}°</div>
+                            <div className="font-black drop-shadow-lg" style={{ fontSize: `6${vu}`, lineHeight: 1 }}>{liveWeather.current.temp}°</div>
                             <div className="font-medium opacity-90" style={{ fontSize: `1.6${vu}` }}>{getWLabel(liveWeather.current.code)}</div>
                           </div>
                         </div>
-                        <div className={`flex items-center ${isLandscape ? "flex-1" : ""} justify-between rounded-xl`} style={{ padding: `1.5${vu} 2${vu}`, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                        <div className="flex items-center justify-between rounded-xl" style={{ padding: `1.5${vu} 2${vu}`, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}>
                           <div className="flex items-center" style={{ gap: `0.8${vu}` }}>
                             <Thermometer style={{ width: `2${vu}`, height: `2${vu}`, opacity: 0.8 }} />
                             <span className="font-bold" style={{ fontSize: `2${vu}` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
@@ -1241,6 +1277,8 @@ export default function CenarioTela() {
                           </div>
                         </div>
                       </div>
+                        </>
+                      )}
                     </>)}
                     {weatherSubTab === "forecast" && (<>
                       <div className="flex items-start justify-between" style={{ marginBottom: `${isLandscape ? 1 : 2}${vu}` }}>
