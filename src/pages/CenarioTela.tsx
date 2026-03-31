@@ -606,6 +606,9 @@ export default function CenarioTela() {
       if (ev.data?.type === "zoom-change" && typeof ev.data.zoom === "number") {
         setSatelliteZoom(ev.data.zoom);
       }
+      if (ev.data?.type === "rotate" && typeof ev.data.angle === "number") {
+        setScreenRotation(ev.data.angle);
+      }
       if (ev.data?.type === "draw-clear") {
         const canvas = canvasRef.current;
         if (canvas) {
