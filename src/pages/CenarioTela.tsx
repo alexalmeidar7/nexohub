@@ -740,7 +740,7 @@ export default function CenarioTela() {
           )}
 
           {/* Clock + date — floating top-left above sidebar */}
-          {activeTab === "home" && (
+          {activeTab === "home" && !isLandscape && (
             <div className="absolute flex items-center" style={{ top: `1.5${vu}`, left: `1.5${vu}`, gap: `1${vu}`, zIndex: 15, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
               <Clock style={{ width: `2${vu}`, height: `2${vu}`, opacity: 0.7, color: "#fff" }} />
               <div>
