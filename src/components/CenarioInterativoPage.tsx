@@ -786,7 +786,7 @@ export default function CenarioInterativoPage() {
           const { data: aps } = await supabase.from("apresentadores").select("nome").in("id", apIds);
           apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
         }
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome });
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, tipo_programa: onAir.tipo_programa });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
           .select("id, nome, logo_url")
