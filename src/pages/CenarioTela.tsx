@@ -447,26 +447,48 @@ export default function CenarioTela() {
     load();
 
     // Realtime subscription for cross-computer sync
-    const channel = supabase
-      .channel(`cenario-sync-${effectiveUserId}`)
-      .on(
-        "postgres_changes" as any,
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "user_settings",
-          filter: `user_id=eq.${effectiveUserId}`,
-        },
-        (payload: any) => {
-          const newConfig = payload.new?.cenario_config;
-          if (newConfig) applyConfig(newConfig, true);
-        }
-      )
-      .subscribe((status) => {
-        setRealtimeConnected(status === "SUBSCRIBED");
-      });
+    let destroyed = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    const connectSync = () => {
+      if (destroyed) return;
+      channel = supabase
+        .channel(`cenario-sync-${effectiveUserId}-${Date.now()}`)
+        .on(
+          "postgres_changes" as any,
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "user_settings",
+            filter: `user_id=eq.${effectiveUserId}`,
+          },
+          (payload: any) => {
+            const newConfig = payload.new?.cenario_config;
+            if (newConfig) applyConfig(newConfig, true);
+          }
+        )
+        .subscribe((status) => {
+          setRealtimeConnected(status === "SUBSCRIBED");
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            setRealtimeConnected(false);
+            setTimeout(() => {
+              if (!destroyed && channel) { try { supabase.removeChannel(channel); } catch {} }
+              connectSync();
+            }, 5000);
+          }
+        });
+    };
+    connectSync();
 
-    return () => { setRealtimeConnected(false); supabase.removeChannel(channel); };
+    // Fallback: poll edge function every 30s for unauthenticated users
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+    if (!isAuthenticated) {
+      pollInterval = setInterval(async () => {
+        const result = await fetchViaEdgeFunction(effectiveUserId);
+        if (result?.cenario_config) applyConfig(result.cenario_config);
+      }, 30000);
+    }
+
+    return () => { destroyed = true; setRealtimeConnected(false); if (channel) supabase.removeChannel(channel); if (pollInterval) clearInterval(pollInterval); };
   }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction]);
 
   /* Keep cache synced */
