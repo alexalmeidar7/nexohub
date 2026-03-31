@@ -232,37 +232,50 @@ export default function CenarioTela() {
   /* Supabase Realtime draw channel (cross-device) */
   useEffect(() => {
     if (!effectiveUserId) return;
-    const ch = supabase.channel(`draw-sync-${effectiveUserId}`);
-    ch.on("broadcast", { event: "draw" }, ({ payload }: any) => {
-      const canvas = canvasRef.current;
-      if (canvas && payload) {
-        drawOnCanvas(canvas, payload.action, payload.px, payload.py, payload.color, payload.width);
-        if (payload.action === "move") setHasDrawing(true);
-      }
-    }).on("broadcast", { event: "draw-clear" }, () => {
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const ctx = canvas.getContext("2d");
-        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-        setHasDrawing(false);
-      }
-    }).on("broadcast", { event: "draw-shape" }, ({ payload }: any) => {
-      const canvas = canvasRef.current;
-      if (canvas && payload) {
-        drawShapeOnCanvas(canvas, payload.shape, payload.startPx, payload.startPy, payload.endPx, payload.endPy, payload.color, payload.width);
-        setHasDrawing(true);
-      }
-    }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
-      if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
-    }).on("broadcast", { event: "tab-change" }, ({ payload }: any) => {
-      if (payload?.tab) setActiveTab(payload.tab);
-      if (payload?.subTab) setWeatherSubTab(payload.subTab);
-      if (payload?.currencySubTab) setCurrencySubTab(payload.currencySubTab);
-    }).on("broadcast", { event: "rotate" }, ({ payload }: any) => {
-      if (payload && typeof payload.angle === "number") setScreenRotation(payload.angle);
-    }).subscribe();
-    rtDrawChannelRef.current = ch;
-    return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
+    let destroyed = false;
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    const connect = () => {
+      if (destroyed) return;
+      ch = supabase.channel(`draw-sync-${effectiveUserId}-${Date.now()}`);
+      ch.on("broadcast", { event: "draw" }, ({ payload }: any) => {
+        const canvas = canvasRef.current;
+        if (canvas && payload) {
+          drawOnCanvas(canvas, payload.action, payload.px, payload.py, payload.color, payload.width);
+          if (payload.action === "move") setHasDrawing(true);
+        }
+      }).on("broadcast", { event: "draw-clear" }, () => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+          setHasDrawing(false);
+        }
+      }).on("broadcast", { event: "draw-shape" }, ({ payload }: any) => {
+        const canvas = canvasRef.current;
+        if (canvas && payload) {
+          drawShapeOnCanvas(canvas, payload.shape, payload.startPx, payload.startPy, payload.endPx, payload.endPy, payload.color, payload.width);
+          setHasDrawing(true);
+        }
+      }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
+        if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
+      }).on("broadcast", { event: "tab-change" }, ({ payload }: any) => {
+        if (payload?.tab) setActiveTab(payload.tab);
+        if (payload?.subTab) setWeatherSubTab(payload.subTab);
+        if (payload?.currencySubTab) setCurrencySubTab(payload.currencySubTab);
+      }).on("broadcast", { event: "rotate" }, ({ payload }: any) => {
+        if (payload && typeof payload.angle === "number") setScreenRotation(payload.angle);
+      }).subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setTimeout(() => {
+            if (!destroyed && ch) { try { supabase.removeChannel(ch); } catch {} }
+            connect();
+          }, 5000);
+        }
+      });
+      rtDrawChannelRef.current = ch;
+    };
+    connect();
+    return () => { destroyed = true; if (ch) supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
   }, [effectiveUserId, drawOnCanvas]);
 
   const sendDraw = useCallback((action: string, px: number, py: number, color: string, width: number) => {
