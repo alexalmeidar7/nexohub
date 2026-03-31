@@ -210,6 +210,7 @@ export default function CenarioTela() {
       case "arrow-left": { const cy=sy+h/2; ctx.moveTo(sx,cy);ctx.lineTo(sx+w*0.4,sy);ctx.moveTo(sx,cy);ctx.lineTo(sx+w*0.4,sy+h);ctx.moveTo(sx,cy);ctx.lineTo(sx+w,cy);break;}
     }
     ctx.stroke();
+  }, []);
 
   /* Supabase Realtime draw channel (cross-device) */
   useEffect(() => {
