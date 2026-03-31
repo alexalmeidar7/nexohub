@@ -648,10 +648,10 @@ export default function CenarioTela() {
       try {
         const raw = localStorage.getItem("masterview_music_data");
         if (!raw) return false;
-        const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string };
+        const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
         const key = `${d.titulo || ""}|${d.artista || ""}`;
         if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
-          setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "");
+          setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao);
         }
         return !!(d.titulo && d.titulo !== "Sem título");
       } catch { return false; }
