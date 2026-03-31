@@ -272,20 +272,20 @@ export default function LoginScreen() {
                     onClick={handleForgot}
                     disabled={forgotLoading}
                     className="group flex items-center gap-3 px-6 py-2 rounded-full font-medium disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent"
-                    style={{ fontSize: "12px", backgroundColor: "#be0101" }}
+                    style={{ fontSize: "12px", backgroundColor: "#268ffa" }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent";
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
+                      e.currentTarget.style.borderColor = "#268ffa";
                       e.currentTarget.style.color = "#ffffff";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#be0101";
+                      e.currentTarget.style.backgroundColor = "#268ffa";
                       e.currentTarget.style.borderColor = "transparent";
                       e.currentTarget.style.color = "#ffffff";
                     }}
                   >
                     {forgotLoading ? (
-                      <Loader2 size={20} className="animate-spin" style={{ color: "#be0101" }} />
+                      <Loader2 size={20} className="animate-spin" style={{ color: "#ffffff" }} />
                     ) : (
                       <>
                         enviar
