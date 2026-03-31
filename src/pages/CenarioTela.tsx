@@ -419,7 +419,7 @@ export default function CenarioTela() {
       if (!resp.ok) return null;
       const json = await resp.json();
       if (!json.ok) return null;
-      return json as { cenario_config: any; currentProgram: any; nextProgram?: any; sponsorLogos: any[]; musicData?: { titulo: string; artista: string; capa: string } | null };
+      return json as { cenario_config: any; currentProgram: any; nextProgram?: any; sponsorLogos: any[]; musicData?: { titulo: string; artista: string; capa: string } | null; musicStartTime?: number | null };
     } catch {
       return null;
     }
