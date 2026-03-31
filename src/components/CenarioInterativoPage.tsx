@@ -1412,9 +1412,9 @@ export default function CenarioInterativoPage() {
                 </div>
 
                 {/* ── Content area with bg image ── */}
-                <div className="flex-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "transparent" : "#e8e8e8", zIndex: 1 }}>
+                <div className="flex-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "transparent" : (activeTab === "home" && config.home.bgGradient ? buildHomeGradient(config.home) : "#e8e8e8"), zIndex: 1 }}>
                   {/* Show bg image based on active tab */}
-                  {activeTab === "home" && config.home.bgImage && (
+                  {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && (
                     <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
                   )}
                   {activeTab === "weather" && config.weather.bgImage && (
