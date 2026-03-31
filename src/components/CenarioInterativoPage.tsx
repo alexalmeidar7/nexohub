@@ -1713,16 +1713,6 @@ export default function CenarioInterativoPage() {
                               {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                             </div>
                           </div>
-                          {nextProgram && (
-                            <div className="text-right">
-                              <div className="opacity-60 font-medium" style={{ fontSize: 6 }}>a seguir</div>
-                              {nextProgram.selo ? (
-                                <img src={nextProgram.selo} alt={nextProgram.nome} className="object-contain drop-shadow-sm" style={{ maxHeight: 18, marginTop: 1, marginLeft: "auto" }} />
-                              ) : (
-                                <div className="font-bold" style={{ fontSize: 8, marginTop: 1 }}>{nextProgram.nome}</div>
-                              )}
-                            </div>
-                          )}
                         </div>
 
                         {/* CENTER: Music card */}
