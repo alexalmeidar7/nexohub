@@ -1040,61 +1040,61 @@ export default function CenarioTela() {
                 {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d47a1 0%, #1565c0 25%, #1e88e5 50%, #42a5f5 75%, #90caf9 100%)" }} />}
                 <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-0 left-0 right-0 h-1/3" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.3), transparent)" }} />
-                <div className="relative z-10 flex flex-col h-full" style={{ padding: "3vh" }}>
+                <div className={`relative z-10 flex flex-col h-full`} style={{ padding: `3${vu}` }}>
                   {liveWeather ? (<>
                     {weatherSubTab === "today" && (<>
-                      <div className="flex items-start justify-between" style={{ marginBottom: "1.5vh" }}>
+                      <div className="flex items-start justify-between" style={{ marginBottom: `1.5${vu}` }}>
                         <div>
-                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: "4.5vh", letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
-                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: "1.8vh", color: "#e1f532", marginTop: "0.5vh" }}>hoje</div>
+                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `${isLandscape ? 3 : 4.5}${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
+                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: "#e1f532", marginTop: `0.5${vu}` }}>hoje</div>
                         </div>
-                        <div style={{ width: "8vh", height: "8vh" }}>
+                        <div style={{ width: `6${vu}`, height: `6${vu}` }}>
                           <WeatherIcon code={liveWeather.current.code} size={64} />
                         </div>
                       </div>
-                      <div className="flex-1 rounded-2xl flex flex-col" style={{ padding: "2.5vh", gap: "2vh", background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
-                        <div className="flex items-center gap-3" style={{ gap: "2vh" }}>
-                          <div className="drop-shadow-xl" style={{ width: "14vh", height: "14vh", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.2))" }}>
+                      <div className={`flex-1 rounded-2xl flex ${isLandscape ? "flex-row items-center" : "flex-col"}`} style={{ padding: `2.5${vu}`, gap: `2${vu}`, background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+                        <div className="flex items-center" style={{ gap: `2${vu}` }}>
+                          <div className="drop-shadow-xl" style={{ width: `${isLandscape ? 10 : 14}${vu}`, height: `${isLandscape ? 10 : 14}${vu}`, filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.2))" }}>
                             <WeatherIcon code={liveWeather.current.code} size={112} forceDay />
                           </div>
                           <div className="flex flex-col">
-                            <div className="font-black drop-shadow-lg" style={{ fontSize: "6vh", lineHeight: 1 }}>{liveWeather.current.temp}°</div>
-                            <div className="font-medium opacity-90" style={{ fontSize: "1.6vh" }}>{getWLabel(liveWeather.current.code)}</div>
+                            <div className="font-black drop-shadow-lg" style={{ fontSize: `${isLandscape ? 5 : 6}${vu}`, lineHeight: 1 }}>{liveWeather.current.temp}°</div>
+                            <div className="font-medium opacity-90" style={{ fontSize: `1.6${vu}` }}>{getWLabel(liveWeather.current.code)}</div>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between rounded-xl" style={{ padding: "1.5vh 2vh", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                          <div className="flex items-center" style={{ gap: "0.8vh" }}>
-                            <Thermometer style={{ width: "2vh", height: "2vh", opacity: 0.8 }} />
-                            <span className="font-bold" style={{ fontSize: "2vh" }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
+                        <div className={`flex items-center ${isLandscape ? "flex-1" : ""} justify-between rounded-xl`} style={{ padding: `1.5${vu} 2${vu}`, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                          <div className="flex items-center" style={{ gap: `0.8${vu}` }}>
+                            <Thermometer style={{ width: `2${vu}`, height: `2${vu}`, opacity: 0.8 }} />
+                            <span className="font-bold" style={{ fontSize: `2${vu}` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
                           </div>
-                          <div className="flex items-center" style={{ gap: "1.5vh", fontSize: "1.5vh" }}>
-                            <span className="flex items-center" style={{ gap: "0.4vh" }}><Droplets style={{ width: "1.5vh", height: "1.5vh", opacity: 0.8 }} /> {liveWeather.current.humidity}%</span>
-                            <span className="flex items-center" style={{ gap: "0.4vh" }}>🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
+                          <div className="flex items-center" style={{ gap: `1.5${vu}`, fontSize: `1.5${vu}` }}>
+                            <span className="flex items-center" style={{ gap: `0.4${vu}` }}><Droplets style={{ width: `1.5${vu}`, height: `1.5${vu}`, opacity: 0.8 }} /> {liveWeather.current.humidity}%</span>
+                            <span className="flex items-center" style={{ gap: `0.4${vu}` }}>🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
                           </div>
                         </div>
                       </div>
                     </>)}
                     {weatherSubTab === "forecast" && (<>
-                      <div className="flex items-start justify-between" style={{ marginBottom: "2vh" }}>
+                      <div className="flex items-start justify-between" style={{ marginBottom: `2${vu}` }}>
                         <div>
-                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: "4.5vh", letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
-                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: "1.8vh", color: "#e1f532", marginTop: "0.5vh" }}>próximos dias</div>
+                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `${isLandscape ? 3 : 4.5}${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
+                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: "#e1f532", marginTop: `0.5${vu}` }}>próximos dias</div>
                         </div>
-                        <CalendarDays style={{ width: "5vh", height: "5vh", opacity: 0.8 }} />
+                        <CalendarDays style={{ width: `5${vu}`, height: `5${vu}`, opacity: 0.8 }} />
                       </div>
-                      <div className="flex-1 rounded-2xl flex flex-col" style={{ padding: "2vh", gap: "1.5vh", background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
-                        {liveWeather.daily.slice(1, 4).map((d, i) => (
-                          <div key={i} className="flex items-center justify-between rounded-xl" style={{ fontSize: "1.8vh", padding: "1.5vh 2vh", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                            <span className="font-bold" style={{ width: "30%" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
-                            <div style={{ width: "4vh", height: "4vh" }}><WeatherIcon code={d.code} size={32} forceDay /></div>
-                            <span className="font-semibold" style={{ width: "30%", textAlign: "right" }}>↓{d.min}° ↑{d.max}°</span>
+                      <div className={`flex-1 rounded-2xl flex ${isLandscape ? "flex-row" : "flex-col"}`} style={{ padding: `2${vu}`, gap: `1.5${vu}`, background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+                        {liveWeather.daily.slice(1, isLandscape ? 6 : 4).map((d, i) => (
+                          <div key={i} className={`flex items-center justify-between rounded-xl ${isLandscape ? "flex-1 flex-col text-center" : ""}`} style={{ fontSize: `1.8${vu}`, padding: `1.5${vu} 2${vu}`, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                            <span className="font-bold" style={{ width: isLandscape ? "auto" : "30%" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                            <div style={{ width: `4${vu}`, height: `4${vu}` }}><WeatherIcon code={d.code} size={32} forceDay /></div>
+                            <span className="font-semibold" style={{ width: isLandscape ? "auto" : "30%", textAlign: isLandscape ? "center" : "right" }}>↓{d.min}° ↑{d.max}°</span>
                           </div>
                         ))}
                       </div>
                     </>)}
                     {weatherSubTab === "satellite" && null}
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: "1.8vh" }}>
+                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `1.8${vu}` }}>
                       <CloudSun size={24} className="mr-1" /> {weatherCity ? "Carregando..." : "Configure uma cidade"}
                     </div>
                   )}
@@ -1104,9 +1104,9 @@ export default function CenarioTela() {
 
             {/* ═══ TRAFFIC ═══ */}
             {activeTab === "traffic" && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ padding: "3vh" }}>
+              <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ padding: `3${vu}` }}>
                 {config.traffic.enabled && trafficCoords ? null : (
-                  <div className="opacity-50" style={{ color: "#333", fontSize: "1.8vh" }}>Trânsito desativado</div>
+                  <div className="opacity-50" style={{ color: "#333", fontSize: `1.8${vu}` }}>Trânsito desativado</div>
                 )}
               </div>
             )}
@@ -1115,38 +1115,38 @@ export default function CenarioTela() {
             {activeTab === "currency" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.3)" }} />}
-                <div className="relative z-10 flex flex-col h-full" style={{ padding: "3vh" }}>
+                <div className="relative z-10 flex flex-col h-full" style={{ padding: `3${vu}` }}>
                     {config.currency.enabled ? (<>
-                    <div className="flex justify-end mb-1 cenario-anim-icon"><DollarSign size={48} className="drop-shadow-lg" style={{ color: "#e1f532" }} /></div>
-                    <div style={{ marginBottom: "1.6vh" }}>
-                      <div className="font-extrabold leading-tight drop-shadow-lg cenario-anim-title" style={{ fontSize: "4.2vh" }}>cotação</div>
-                      <div className="font-bold cenario-anim-subtitle" style={{ fontSize: "2.6vh", color: "#e1f532" }}>
+                    <div className="flex justify-end mb-1 cenario-anim-icon"><DollarSign size={isLandscape ? 32 : 48} className="drop-shadow-lg" style={{ color: "#e1f532" }} /></div>
+                    <div style={{ marginBottom: `1.6${vu}` }}>
+                      <div className="font-extrabold leading-tight drop-shadow-lg cenario-anim-title" style={{ fontSize: `${isLandscape ? 3 : 4.2}${vu}` }}>cotação</div>
+                      <div className="font-bold cenario-anim-subtitle" style={{ fontSize: `${isLandscape ? 2 : 2.6}${vu}`, color: "#e1f532" }}>
                         {currencySubTab === "moedas" ? "moedas" : "bolsas"}
                       </div>
                     </div>
 
                     {currencySubTab === "moedas" ? (
-                      <div className="flex-1 flex flex-col overflow-auto" style={{ gap: "0.6vh" }}>
+                      <div className={`flex-1 flex ${isLandscape ? "flex-row flex-wrap" : "flex-col"} overflow-auto`} style={{ gap: `0.6${vu}` }}>
                         {config.currency.currencies.map((c, idx) => {
                           const opt = CURRENCY_OPTIONS.find(o => o.value === c);
                           const live = liveCurrencies.find(l => l.code === c);
                           const flagIcon = opt?.flag ? COUNTRY_FLAG_MAP[opt.flag] : "";
                           return (
-                            <div key={c} className={`flex items-center cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ padding: "1.2vh 1.5vh", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                              <div className="flex items-center" style={{ gap: "1.2vh", flex: 1, minWidth: 0 }}>
-                                <span style={{ fontSize: "3vh", opacity: 0.2, filter: "grayscale(1) brightness(10)", lineHeight: 1 }}>{flagIcon}</span>
+                            <div key={c} className={`flex items-center cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ padding: `1.2${vu} 1.5${vu}`, borderBottom: "1px solid rgba(255,255,255,0.06)", flex: isLandscape ? "1 1 45%" : "none" }}>
+                              <div className="flex items-center" style={{ gap: `1.2${vu}`, flex: 1, minWidth: 0 }}>
+                                <span style={{ fontSize: `3${vu}`, opacity: 0.2, filter: "grayscale(1) brightness(10)", lineHeight: 1 }}>{flagIcon}</span>
                                 <div className="flex flex-col" style={{ minWidth: 0 }}>
-                                  <span className="font-bold truncate" style={{ fontSize: "2vh", lineHeight: 1.2 }}>{c}</span>
-                                  <span className="truncate" style={{ fontSize: "1.3vh", opacity: 0.5, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
+                                  <span className="font-bold truncate" style={{ fontSize: `2${vu}`, lineHeight: 1.2 }}>{c}</span>
+                                  <span className="truncate" style={{ fontSize: `1.3${vu}`, opacity: 0.5, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
                                 </div>
                               </div>
                               {live ? (
-                                <div className="flex items-center" style={{ gap: "1vh", flexShrink: 0 }}>
-                                  <span className="font-black tabular-nums" style={{ fontSize: "2.2vh" }}>{live.value}</span>
-                                  <div className="flex items-center" style={{ gap: "0.3vh" }}>
-                                    <span className="font-bold tabular-nums" style={{ fontSize: "1.6vh", color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
-                                    {live.direction === "up" && <ChevronUp style={{ width: "2vh", height: "2vh" }} strokeWidth={3} className="cenario-arrow-up" />}
-                                    {live.direction === "down" && <ChevronDown style={{ width: "2vh", height: "2vh" }} strokeWidth={3} className="cenario-arrow-down" />}
+                                <div className="flex items-center" style={{ gap: `1${vu}`, flexShrink: 0 }}>
+                                  <span className="font-black tabular-nums" style={{ fontSize: `2.2${vu}` }}>{live.value}</span>
+                                  <div className="flex items-center" style={{ gap: `0.3${vu}` }}>
+                                    <span className="font-bold tabular-nums" style={{ fontSize: `1.6${vu}`, color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
+                                    {live.direction === "up" && <ChevronUp style={{ width: `2${vu}`, height: `2${vu}` }} strokeWidth={3} className="cenario-arrow-up" />}
+                                    {live.direction === "down" && <ChevronDown style={{ width: `2${vu}`, height: `2${vu}` }} strokeWidth={3} className="cenario-arrow-down" />}
                                   </div>
                                 </div>
                               ) : <span className="opacity-30">---</span>}
@@ -1155,32 +1155,32 @@ export default function CenarioTela() {
                         })}
                       </div>
                     ) : (
-                      <div className="flex-1 flex flex-col overflow-auto" style={{ gap: "0.6vh" }}>
+                      <div className={`flex-1 flex ${isLandscape ? "flex-row flex-wrap" : "flex-col"} overflow-auto`} style={{ gap: `0.6${vu}` }}>
                         {liveStocks.map((s, idx) => {
                           const flagChar = COUNTRY_FLAG_MAP[s.flag?.replace(/[^A-Z]/g, "").slice(0,2)] || s.flag;
                           return (
-                            <div key={s.symbol} className={`flex items-center cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ padding: "1.2vh 1.5vh", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                              <div className="flex items-center" style={{ gap: "1.2vh", flex: 1, minWidth: 0 }}>
-                                <span style={{ fontSize: "3vh", opacity: 0.2, filter: "grayscale(1) brightness(10)", lineHeight: 1 }}>{flagChar}</span>
-                                <span className="font-bold truncate" style={{ fontSize: "2vh" }}>{s.name}</span>
+                            <div key={s.symbol} className={`flex items-center cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ padding: `1.2${vu} 1.5${vu}`, borderBottom: "1px solid rgba(255,255,255,0.06)", flex: isLandscape ? "1 1 45%" : "none" }}>
+                              <div className="flex items-center" style={{ gap: `1.2${vu}`, flex: 1, minWidth: 0 }}>
+                                <span style={{ fontSize: `3${vu}`, opacity: 0.2, filter: "grayscale(1) brightness(10)", lineHeight: 1 }}>{flagChar}</span>
+                                <span className="font-bold truncate" style={{ fontSize: `2${vu}` }}>{s.name}</span>
                               </div>
-                              <div className="flex items-center" style={{ gap: "1vh", flexShrink: 0 }}>
-                                <span className="font-black tabular-nums" style={{ fontSize: "2.2vh" }}>{s.value}</span>
-                                <div className="flex items-center" style={{ gap: "0.3vh" }}>
-                                  <span className="font-bold tabular-nums" style={{ fontSize: "1.6vh", color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{s.change}</span>
-                                  {s.direction === "up" && <ChevronUp style={{ width: "2vh", height: "2vh" }} strokeWidth={3} className="cenario-arrow-up" />}
-                                  {s.direction === "down" && <ChevronDown style={{ width: "2vh", height: "2vh" }} strokeWidth={3} className="cenario-arrow-down" />}</div>
+                              <div className="flex items-center" style={{ gap: `1${vu}`, flexShrink: 0 }}>
+                                <span className="font-black tabular-nums" style={{ fontSize: `2.2${vu}` }}>{s.value}</span>
+                                <div className="flex items-center" style={{ gap: `0.3${vu}` }}>
+                                  <span className="font-bold tabular-nums" style={{ fontSize: `1.6${vu}`, color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{s.change}</span>
+                                  {s.direction === "up" && <ChevronUp style={{ width: `2${vu}`, height: `2${vu}` }} strokeWidth={3} className="cenario-arrow-up" />}
+                                  {s.direction === "down" && <ChevronDown style={{ width: `2${vu}`, height: `2${vu}` }} strokeWidth={3} className="cenario-arrow-down" />}</div>
                               </div>
                             </div>
                           );
                         })}
                         {!liveStocks.length && (
-                          <div className="opacity-60 text-center" style={{ fontSize: "1.8vh" }}>Dados indisponíveis</div>
+                          <div className="opacity-60 text-center" style={{ fontSize: `1.8${vu}` }}>Dados indisponíveis</div>
                         )}
                       </div>
                     )}
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: "1.9vh" }}>Cotação desativada</div>
+                    <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: `1.9${vu}` }}>Cotação desativada</div>
                   )}
                 </div>
               </div>
@@ -1191,12 +1191,12 @@ export default function CenarioTela() {
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {!config.chat.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)" }} />}
                 <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.25), transparent)" }} />
-                <div className="relative z-10 flex flex-col h-full" style={{ padding: "3vh" }}>
+                <div className="relative z-10 flex flex-col h-full" style={{ padding: `3${vu}` }}>
                   {config.chat.enabled ? (<>
-                    <div className="flex justify-end mb-1"><MessageCircle size={48} className="drop-shadow-lg" style={{ color: "#e1f532" }} /></div>
-                    <div style={{ marginBottom: "2vh" }}>
-                      <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: "4vh" }}>mensagens</div>
-                      <div className="font-bold" style={{ fontSize: "2.5vh", color: "#e1f532" }}>chat</div>
+                    <div className="flex justify-end mb-1"><MessageCircle size={isLandscape ? 32 : 48} className="drop-shadow-lg" style={{ color: "#e1f532" }} /></div>
+                    <div style={{ marginBottom: `2${vu}` }}>
+                      <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: `${isLandscape ? 3 : 4}${vu}` }}>mensagens</div>
+                      <div className="font-bold" style={{ fontSize: `${isLandscape ? 1.8 : 2.5}${vu}`, color: "#e1f532" }}>chat</div>
                     </div>
                     <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(12px)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                       {(() => {
@@ -1216,14 +1216,14 @@ export default function CenarioTela() {
                           );
                         }
                         return (
-                          <div className="flex-1 flex items-center justify-center opacity-50 h-full" style={{ fontSize: "1.8vh" }}>
+                          <div className="flex-1 flex items-center justify-center opacity-50 h-full" style={{ fontSize: `1.8${vu}` }}>
                             Insira a URL da live para carregar o chat
                           </div>
                         );
                       })()}
                     </div>
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: "1.8vh" }}>Chat desativado</div>
+                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `1.8${vu}` }}>Chat desativado</div>
                   )}
                 </div>
               </div>
