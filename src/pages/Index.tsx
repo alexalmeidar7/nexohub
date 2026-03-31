@@ -12,15 +12,15 @@ export default function Index() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary" size={32} />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#0f1058" }}>
+        <Loader2 className="animate-spin" size={32} style={{ color: "#268ffa" }} />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>}>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#0f1058" }}><Loader2 className="animate-spin" size={32} style={{ color: "#268ffa" }} /></div>}>
         <LoginScreen />
       </Suspense>
     );
