@@ -820,23 +820,25 @@ export default function CenarioTela() {
                 if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
               }
               return (
-                <div className="absolute inset-0 flex flex-col" style={{ padding: "1.5vh 3vh 2.5vh 3vh", color: "#fff" }}>
+                <div className={`absolute inset-0 flex ${isLandscape ? "flex-row" : "flex-col"}`} style={{ padding: `1.5${vu} 3${vu} 2.5${vu} 3${vu}`, color: "#fff" }}>
 
                   {/* Center: Program logo + music */}
-                  <div className="flex-1 flex flex-col items-center justify-center" style={{ gap: "0vh", overflow: "hidden" }}>
+                  <div className={`flex-1 flex ${isLandscape ? "flex-row items-center justify-center" : "flex-col items-center justify-center"}`} style={{ gap: isLandscape ? `4${vu}` : "0", overflow: "hidden" }}>
+                    {/* Program section */}
+                    <div className={`flex flex-col items-center ${isLandscape ? "flex-1" : ""}`}>
                     {currentProgram && (
                       <div
                         key={`program-${currentProgram.id}`}
                         className="relative flex flex-col items-center"
                         style={{ animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
                       >
-                        <span className="font-bold uppercase tracking-widest" style={{ fontSize: "1.2vh", color: "#e1f532", letterSpacing: "0.3em", marginBottom: "0.5vh", textShadow: "0 0 8px rgba(225,245,50,0.4)" }}>NO AR</span>
+                        <span className="font-bold uppercase tracking-widest" style={{ fontSize: `1.2${vu}`, color: "#e1f532", letterSpacing: "0.3em", marginBottom: `0.5${vu}`, textShadow: "0 0 8px rgba(225,245,50,0.4)" }}>NO AR</span>
                         {currentProgram.selo && (
                           <img
                             src={currentProgram.selo}
                             alt={currentProgram.nome}
                             className="object-contain drop-shadow-lg"
-                            style={{ maxWidth: "55vh", maxHeight: "32vh" }}
+                            style={{ maxWidth: isLandscape ? `30${vu}` : `55${vu}`, maxHeight: isLandscape ? `22${vu}` : `32${vu}` }}
                           />
                         )}
                       </div>
@@ -848,54 +850,55 @@ export default function CenarioTela() {
                         style={{ animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s both" }}
                       >
                         {!currentProgram.selo && (
-                          <div className="font-bold drop-shadow-md" style={{ fontSize: "3.5vh", marginBottom: "0.5vh", color: "#fff" }}>{currentProgram.nome}</div>
+                          <div className="font-bold drop-shadow-md" style={{ fontSize: `3.5${vu}`, marginBottom: `0.5${vu}`, color: "#fff" }}>{currentProgram.nome}</div>
                         )}
-                        <div className="opacity-70 font-medium" style={{ fontSize: "1.6vh", color: "#fff" }}>
+                        <div className="opacity-70 font-medium" style={{ fontSize: `1.6${vu}`, color: "#fff" }}>
                           {currentProgram.horario_inicio.slice(0,5)} — {currentProgram.horario_fim.slice(0,5)}
                         </div>
                         {/* Progress bar */}
-                        <div className="mx-auto" style={{ width: "25vh", height: "0.5vh", marginTop: "1vh", borderRadius: "1vh", background: "rgba(255,255,255,0.2)", overflow: "hidden" }}>
-                          <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: "1vh", background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 8px rgba(225,245,50,0.5)" }} />
+                        <div className="mx-auto" style={{ width: `25${vu}`, height: `0.5${vu}`, marginTop: `1${vu}`, borderRadius: `1${vu}`, background: "rgba(255,255,255,0.2)", overflow: "hidden" }}>
+                          <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 8px rgba(225,245,50,0.5)" }} />
                         </div>
                         {/* Presenter name */}
                         {currentProgram.apresentador && (
-                          <div className="flex items-center justify-center gap-[0.5vh] opacity-80" style={{ marginTop: "1vh", animation: "cenario-program-slide-in 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
-                            <Mic style={{ width: "1.4vh", height: "1.4vh", color: "#e1f532" }} />
-                            <span style={{ fontSize: "1.4vh", color: "#fff", fontWeight: 500 }}>{currentProgram.apresentador}</span>
+                          <div className="flex items-center justify-center gap-[0.5vh] opacity-80" style={{ marginTop: `1${vu}`, animation: "cenario-program-slide-in 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
+                            <Mic style={{ width: `1.4${vu}`, height: `1.4${vu}`, color: "#e1f532" }} />
+                            <span style={{ fontSize: `1.4${vu}`, color: "#fff", fontWeight: 500 }}>{currentProgram.apresentador}</span>
                           </div>
                         )}
                       </div>
                     )}
                     {!currentProgram && (
-                      <div className="opacity-40 text-center" style={{ fontSize: "1.8vh", color: "#fff" }}>Nenhum programa no ar</div>
+                      <div className="opacity-40 text-center" style={{ fontSize: `1.8${vu}`, color: "#fff" }}>Nenhum programa no ar</div>
                     )}
+                    </div>
 
-                    {/* Music cover — vertical layout with text above cover */}
+                    {/* Music cover */}
                     {musicData && (
                       <div
                         key={musicKey}
-                        className="flex flex-col items-center self-center"
+                        className={`flex flex-col items-center ${isLandscape ? "flex-shrink-0" : "self-center"}`}
                         style={{
-                          padding: "1.5vh 2vh 2vh",
-                          borderRadius: "1.5vh",
+                          padding: `1.5${vu} 2${vu} 2${vu}`,
+                          borderRadius: `1.5${vu}`,
                           background: "rgba(0,0,0,0.45)",
                           WebkitBackdropFilter: "blur(12px)",
                           backdropFilter: "blur(12px)",
                           border: "1px solid rgba(255,255,255,0.12)",
-                          maxWidth: "85%",
-                          marginTop: "1.5vh",
+                          maxWidth: isLandscape ? `35${vu}` : "85%",
+                          marginTop: isLandscape ? "0" : `1.5${vu}`,
                           animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
                         }}
                       >
-                        <div className="text-center" style={{ marginBottom: "1vh", maxWidth: "100%" }}>
-                          <div className="font-bold truncate" style={{ fontSize: "1.8vh", color: "#fff" }}>{musicData.titulo}</div>
-                          <div className="truncate opacity-70" style={{ fontSize: "1.3vh", color: "#fff" }}>{musicData.artista}</div>
+                        <div className="text-center" style={{ marginBottom: `1${vu}`, maxWidth: "100%" }}>
+                          <div className="font-bold truncate" style={{ fontSize: `1.8${vu}`, color: "#fff" }}>{musicData.titulo}</div>
+                          <div className="truncate opacity-70" style={{ fontSize: `1.3${vu}`, color: "#fff" }}>{musicData.artista}</div>
                         </div>
                         {musicData.capa ? (
-                          <img src={musicData.capa} alt="" className="rounded-xl object-cover" style={{ width: "14vh", height: "14vh", flexShrink: 0 }} />
+                          <img src={musicData.capa} alt="" className="rounded-xl object-cover" style={{ width: isLandscape ? `18${vu}` : `14${vu}`, height: isLandscape ? `18${vu}` : `14${vu}`, flexShrink: 0 }} />
                         ) : (
-                          <div className="rounded-xl flex items-center justify-center" style={{ width: "14vh", height: "14vh", flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
-                            <Music style={{ width: "5vh", height: "5vh", opacity: 0.5, color: "#fff" }} />
+                          <div className="rounded-xl flex items-center justify-center" style={{ width: isLandscape ? `18${vu}` : `14${vu}`, height: isLandscape ? `18${vu}` : `14${vu}`, flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
+                            <Music style={{ width: `5${vu}`, height: `5${vu}`, opacity: 0.5, color: "#fff" }} />
                           </div>
                         )}
                       </div>
@@ -904,8 +907,8 @@ export default function CenarioTela() {
 
                   {/* Sponsor logos */}
                   {sponsorLogos.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: "1vh", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
-                      {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: "4vh", height: "4vh", background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
+                    <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: isLandscape ? "0" : `1${vu}`, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
+                      {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: `4${vu}`, height: `4${vu}`, background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
                     </div>
                   )}
                 </div>
