@@ -979,7 +979,7 @@ export default function CenarioTela() {
                           </div>
                         )}
                         <div className="flex items-center self-start" style={{ gap: `1${vu}`, maxWidth: "100%" }}>
-                          <Play style={{ width: `2.2${vu}`, height: `2.2${vu}`, color: "#e1f532", flexShrink: 0, fill: "#e1f532" }} />
+                          <Play style={{ width: `2.2${vu}`, height: `2.2${vu}`, color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 6px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
                           <div style={{ overflow: "hidden", minWidth: 0 }}>
                             <div className="font-black uppercase truncate" style={{ fontSize: `2${vu}`, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
                             <div className="font-bold uppercase truncate" style={{ fontSize: `1.5${vu}`, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
