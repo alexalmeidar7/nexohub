@@ -709,13 +709,18 @@ export default function CenarioTela() {
 
                   {/* Center: Program logo + info */}
                   <div className="flex-1 flex flex-col items-center justify-center" style={{ gap: "1vh" }}>
-                    {currentProgram?.selo && (
-                      <img
-                        src={currentProgram.selo}
-                        alt={currentProgram.nome}
-                        className="object-contain drop-shadow-lg"
-                        style={{ maxWidth: "45vh", maxHeight: "28vh", animation: "cenario-fade-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}
-                      />
+                    {currentProgram && (
+                      <div className="relative flex flex-col items-center" style={{ animation: "cenario-fade-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
+                        <span className="font-bold uppercase tracking-widest" style={{ fontSize: "1.2vh", color: "#e1f532", letterSpacing: "0.3em", marginBottom: "0.5vh", textShadow: "0 0 8px rgba(225,245,50,0.4)" }}>NO AR</span>
+                        {currentProgram.selo && (
+                          <img
+                            src={currentProgram.selo}
+                            alt={currentProgram.nome}
+                            className="object-contain drop-shadow-lg"
+                            style={{ maxWidth: "60vh", maxHeight: "38vh" }}
+                          />
+                        )}
+                      </div>
                     )}
                     {currentProgram && (
                       <div className="text-center" style={{ animation: "cenario-slide-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>
