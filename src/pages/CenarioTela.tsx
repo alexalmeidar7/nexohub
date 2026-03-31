@@ -1064,7 +1064,10 @@ export default function CenarioTela() {
                         }}
                       >
                         {musicData.capa ? (
-                          <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}` }} />
+                          <div className="relative" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
+                            <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", height: "100%" }} />
+                            <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%, rgba(0,0,0,0.15) 100%)", pointerEvents: "none" }} />
+                          </div>
                         ) : (
                           <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)" }}>
                             <Music style={{ width: `8${vu}`, height: `8${vu}`, opacity: 0.3, color: "#fff" }} />
@@ -1108,6 +1111,11 @@ export default function CenarioTela() {
                       </div>
                     </div>
                   )}
+
+                  {/* Full-width program progress bar */}
+                  <div className="flex-shrink-0" style={{ width: "100%", height: 10, background: "#000", marginTop: `0.5${vu}` }}>
+                    <div style={{ width: `${progressPct}%`, height: "100%", background: "#fff", transition: "width 1s linear" }} />
+                  </div>
 
                   {sponsorLogos.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: `1${vu}`, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
