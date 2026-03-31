@@ -121,20 +121,33 @@ export default function CenarioTela() {
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
     if (!effectiveUserId) return;
-    const ch = supabase.channel(`cenario-presence-${effectiveUserId}`, { config: { presence: { key: "tela-externa" } } });
-    ch.on("presence", { event: "join" }, ({ key }) => {
-      if (key === "painel-controle" && !presenceShownRef.current) {
-        presenceShownRef.current = true;
-        setShowConnectedMsg(true);
-        setTimeout(() => setShowConnectedMsg(false), 4000);
-      }
-    });
-    ch.subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        await ch.track({ screen: "tela-externa", ts: Date.now() });
-      }
-    });
-    return () => { supabase.removeChannel(ch); };
+    let destroyed = false;
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    const connect = () => {
+      if (destroyed) return;
+      ch = supabase.channel(`cenario-presence-${effectiveUserId}-${Date.now()}`, { config: { presence: { key: "tela-externa" } } });
+      ch.on("presence", { event: "join" }, ({ key }) => {
+        if (key === "painel-controle" && !presenceShownRef.current) {
+          presenceShownRef.current = true;
+          setShowConnectedMsg(true);
+          setTimeout(() => setShowConnectedMsg(false), 4000);
+        }
+      });
+      ch.subscribe(async (status) => {
+        if (status === "SUBSCRIBED" && ch) {
+          await ch.track({ screen: "tela-externa", ts: Date.now() });
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          // Reconnect after delay
+          setTimeout(() => {
+            if (!destroyed && ch) { try { supabase.removeChannel(ch); } catch {} }
+            connect();
+          }, 5000);
+        }
+      });
+    };
+    connect();
+    return () => { destroyed = true; if (ch) supabase.removeChannel(ch); };
   }, [effectiveUserId]);
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === "undefined") return "home";
@@ -219,37 +232,50 @@ export default function CenarioTela() {
   /* Supabase Realtime draw channel (cross-device) */
   useEffect(() => {
     if (!effectiveUserId) return;
-    const ch = supabase.channel(`draw-sync-${effectiveUserId}`);
-    ch.on("broadcast", { event: "draw" }, ({ payload }: any) => {
-      const canvas = canvasRef.current;
-      if (canvas && payload) {
-        drawOnCanvas(canvas, payload.action, payload.px, payload.py, payload.color, payload.width);
-        if (payload.action === "move") setHasDrawing(true);
-      }
-    }).on("broadcast", { event: "draw-clear" }, () => {
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const ctx = canvas.getContext("2d");
-        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-        setHasDrawing(false);
-      }
-    }).on("broadcast", { event: "draw-shape" }, ({ payload }: any) => {
-      const canvas = canvasRef.current;
-      if (canvas && payload) {
-        drawShapeOnCanvas(canvas, payload.shape, payload.startPx, payload.startPy, payload.endPx, payload.endPy, payload.color, payload.width);
-        setHasDrawing(true);
-      }
-    }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
-      if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
-    }).on("broadcast", { event: "tab-change" }, ({ payload }: any) => {
-      if (payload?.tab) setActiveTab(payload.tab);
-      if (payload?.subTab) setWeatherSubTab(payload.subTab);
-      if (payload?.currencySubTab) setCurrencySubTab(payload.currencySubTab);
-    }).on("broadcast", { event: "rotate" }, ({ payload }: any) => {
-      if (payload && typeof payload.angle === "number") setScreenRotation(payload.angle);
-    }).subscribe();
-    rtDrawChannelRef.current = ch;
-    return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
+    let destroyed = false;
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    const connect = () => {
+      if (destroyed) return;
+      ch = supabase.channel(`draw-sync-${effectiveUserId}-${Date.now()}`);
+      ch.on("broadcast", { event: "draw" }, ({ payload }: any) => {
+        const canvas = canvasRef.current;
+        if (canvas && payload) {
+          drawOnCanvas(canvas, payload.action, payload.px, payload.py, payload.color, payload.width);
+          if (payload.action === "move") setHasDrawing(true);
+        }
+      }).on("broadcast", { event: "draw-clear" }, () => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+          setHasDrawing(false);
+        }
+      }).on("broadcast", { event: "draw-shape" }, ({ payload }: any) => {
+        const canvas = canvasRef.current;
+        if (canvas && payload) {
+          drawShapeOnCanvas(canvas, payload.shape, payload.startPx, payload.startPy, payload.endPx, payload.endPy, payload.color, payload.width);
+          setHasDrawing(true);
+        }
+      }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
+        if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
+      }).on("broadcast", { event: "tab-change" }, ({ payload }: any) => {
+        if (payload?.tab) setActiveTab(payload.tab);
+        if (payload?.subTab) setWeatherSubTab(payload.subTab);
+        if (payload?.currencySubTab) setCurrencySubTab(payload.currencySubTab);
+      }).on("broadcast", { event: "rotate" }, ({ payload }: any) => {
+        if (payload && typeof payload.angle === "number") setScreenRotation(payload.angle);
+      }).subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setTimeout(() => {
+            if (!destroyed && ch) { try { supabase.removeChannel(ch); } catch {} }
+            connect();
+          }, 5000);
+        }
+      });
+      rtDrawChannelRef.current = ch;
+    };
+    connect();
+    return () => { destroyed = true; if (ch) supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
   }, [effectiveUserId, drawOnCanvas]);
 
   const sendDraw = useCallback((action: string, px: number, py: number, color: string, width: number) => {
@@ -421,26 +447,48 @@ export default function CenarioTela() {
     load();
 
     // Realtime subscription for cross-computer sync
-    const channel = supabase
-      .channel(`cenario-sync-${effectiveUserId}`)
-      .on(
-        "postgres_changes" as any,
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "user_settings",
-          filter: `user_id=eq.${effectiveUserId}`,
-        },
-        (payload: any) => {
-          const newConfig = payload.new?.cenario_config;
-          if (newConfig) applyConfig(newConfig, true);
-        }
-      )
-      .subscribe((status) => {
-        setRealtimeConnected(status === "SUBSCRIBED");
-      });
+    let destroyed = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    const connectSync = () => {
+      if (destroyed) return;
+      channel = supabase
+        .channel(`cenario-sync-${effectiveUserId}-${Date.now()}`)
+        .on(
+          "postgres_changes" as any,
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "user_settings",
+            filter: `user_id=eq.${effectiveUserId}`,
+          },
+          (payload: any) => {
+            const newConfig = payload.new?.cenario_config;
+            if (newConfig) applyConfig(newConfig, true);
+          }
+        )
+        .subscribe((status) => {
+          setRealtimeConnected(status === "SUBSCRIBED");
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            setRealtimeConnected(false);
+            setTimeout(() => {
+              if (!destroyed && channel) { try { supabase.removeChannel(channel); } catch {} }
+              connectSync();
+            }, 5000);
+          }
+        });
+    };
+    connectSync();
 
-    return () => { setRealtimeConnected(false); supabase.removeChannel(channel); };
+    // Fallback: poll edge function every 30s for unauthenticated users
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+    if (!isAuthenticated) {
+      pollInterval = setInterval(async () => {
+        const result = await fetchViaEdgeFunction(effectiveUserId);
+        if (result?.cenario_config) applyConfig(result.cenario_config);
+      }, 30000);
+    }
+
+    return () => { destroyed = true; setRealtimeConnected(false); if (channel) supabase.removeChannel(channel); if (pollInterval) clearInterval(pollInterval); };
   }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction]);
 
   /* Keep cache synced */
@@ -634,7 +682,12 @@ export default function CenarioTela() {
 
   /* Listen for sync messages from config page via BroadcastChannel */
   useEffect(() => {
-    const bc = new BroadcastChannel("cenario-interativo");
+    // BroadcastChannel may not be available in vMix's embedded browser
+    if (typeof BroadcastChannel === "undefined") return;
+    let bc: BroadcastChannel;
+    try {
+      bc = new BroadcastChannel("cenario-interativo");
+    } catch { return; }
     cenarioBcDrawRef.current = bc;
     bc.onmessage = (ev) => {
       if (ev.data?.type === "ping") {
@@ -645,11 +698,9 @@ export default function CenarioTela() {
         if (ev.data.subTab) setWeatherSubTab(ev.data.subTab);
         if (ev.data.currencySubTab) setCurrencySubTab(ev.data.currencySubTab);
       }
-
       if (ev.data?.type === "config-update" && ev.data.config && typeof ev.data.config === "object") {
         setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
       }
-
       if (ev.data?.type === "full-state") {
         if (ev.data.tab) setActiveTab(ev.data.tab);
         if (ev.data.subTab) setWeatherSubTab(ev.data.subTab);
@@ -658,7 +709,6 @@ export default function CenarioTela() {
           setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
         }
       }
-
       if (ev.data?.type === "draw") {
         const canvas = canvasRef.current;
         if (canvas) {
@@ -688,9 +738,8 @@ export default function CenarioTela() {
         }
       }
     };
-    // Request current state from the config page
     bc.postMessage({ type: "request-state" });
-    return () => { cenarioBcDrawRef.current = null; bc.close(); };
+    return () => { cenarioBcDrawRef.current = null; try { bc.close(); } catch {} };
   }, [drawOnCanvas]);
 
   const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
