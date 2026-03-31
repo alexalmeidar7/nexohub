@@ -1026,7 +1026,7 @@ export default function CenarioTela() {
 
               // ── PORTRAIT (original vertical layout) ──
               return (
-                <div className="absolute inset-0 flex flex-col" style={{ padding: `2${vu} 2${vu} 1.5${vu} 2${vu}`, color: "#fff" }}>
+                <div className="absolute inset-0 flex flex-col" style={{ padding: `2${vu} 1.5${vu} 1.5${vu} 1.5${vu}`, color: "#fff" }}>
 
                   {/* TOP ROW: Clock + Date (left) / Next program (right) */}
                   <div className="flex justify-between items-start flex-shrink-0" style={{ zIndex: 2, padding: `0 0.5${vu}`, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
