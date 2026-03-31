@@ -374,9 +374,14 @@ export default function CenarioTela() {
     try {
       const raw = localStorage.getItem("cenario_interativo_config_cache_v1");
       if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<CenarioConfig>;
+      const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === "object") {
-        setConfig(prev => ({ ...prev, ...parsed }));
+        const { _activeTab, _weatherSubTab, _currencySubTab, _screenRotation, ...rest } = parsed;
+        setConfig(prev => ({ ...prev, ...rest }));
+        if (_activeTab) setActiveTab(_activeTab);
+        if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
+        if (_currencySubTab) setCurrencySubTab(_currencySubTab);
+        if (typeof _screenRotation === "number") setScreenRotation(_screenRotation);
       }
     } catch {
       // silent
@@ -486,20 +491,19 @@ export default function CenarioTela() {
       pollInterval = setInterval(async () => {
         const result = await fetchViaEdgeFunction(effectiveUserId);
         if (result?.cenario_config) applyConfig(result.cenario_config);
+        if (result?.currentProgram) {
+          setCurrentProgram(result.currentProgram);
+          setSponsorLogos(result.sponsorLogos || []);
+          setNextProgram(result.nextProgram || null);
+        }
+        if (result?.musicData) setMusicData(result.musicData);
       }, 2000);
     }
 
     return () => { destroyed = true; setRealtimeConnected(false); if (channel) supabase.removeChannel(channel); if (pollInterval) clearInterval(pollInterval); };
   }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction]);
 
-  /* Keep cache synced */
-  useEffect(() => {
-    try {
-      localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(config));
-    } catch {
-      // silent
-    }
-  }, [config]);
+  /* Keep cache synced — handled entirely by applyConfig, remove standalone sync to avoid overwriting _screenRotation etc */
 
   /* Fetch current program + sponsor logos */
   useEffect(() => {
