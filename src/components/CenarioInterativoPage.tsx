@@ -71,6 +71,14 @@ interface CenarioConfig {
   chat: ChatConfig;
 }
 
+function buildHomeGradient(h: HomeConfig): string {
+  const a = h.bgGradientColorA || "#1a1a2e";
+  const b = h.bgGradientColorB || "#16213e";
+  const type = h.bgGradientType || "linear";
+  const angle = h.bgGradientAngle ?? 135;
+  return type === "radial" ? `radial-gradient(circle, ${a}, ${b})` : `linear-gradient(${angle}deg, ${a}, ${b})`;
+}
+
 const defaultConfig: CenarioConfig = {
   city: "",
   home: { bgImage: "" },
