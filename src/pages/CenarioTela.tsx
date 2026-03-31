@@ -513,7 +513,7 @@ export default function CenarioTela() {
           setSponsorLogos(result.sponsorLogos || []);
           setNextProgram(result.nextProgram || null);
         }
-        if (result?.musicData) setMusicData(result.musicData);
+        // Music is handled by the dedicated music polling effect — don't set here to avoid conflicts
       }, 2000);
     }
 
