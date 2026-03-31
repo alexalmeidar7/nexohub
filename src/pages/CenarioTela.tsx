@@ -1041,11 +1041,7 @@ export default function CenarioTela() {
                     {nextProgram && (
                       <div className="text-right" style={{ animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>
                         <div className="opacity-60 font-medium" style={{ fontSize: `1.2${vu}` }}>a seguir</div>
-                        {nextProgram.selo ? (
-                          <img src={nextProgram.selo} alt={nextProgram.nome} className="object-contain drop-shadow-md" style={{ maxHeight: `4${vu}`, marginTop: `0.3${vu}`, marginLeft: "auto" }} />
-                        ) : (
-                          <div className="font-bold" style={{ fontSize: `1.6${vu}`, marginTop: `0.2${vu}` }}>{nextProgram.nome}</div>
-                        )}
+                        <div className="font-bold" style={{ fontSize: `1.6${vu}`, marginTop: `0.2${vu}` }}>{nextProgram.nome}</div>
                       </div>
                     )}
                   </div>
