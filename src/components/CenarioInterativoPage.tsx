@@ -836,8 +836,18 @@ export default function CenarioInterativoPage() {
         .maybeSingle();
 
       if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
-        const merged = { ...defaultConfig, ...((data as any).cenario_config as Partial<CenarioConfig>) };
+        const savedConfig = (data as any).cenario_config as Partial<CenarioConfig> & {
+          _activeTab?: string;
+          _weatherSubTab?: string;
+          _currencySubTab?: "moedas" | "bolsas";
+          _screenRotation?: number;
+        };
+        const merged = { ...defaultConfig, ...savedConfig };
         setConfig(merged);
+        if (savedConfig._activeTab) setActiveTab(savedConfig._activeTab);
+        if (savedConfig._weatherSubTab) setWeatherSubTab(savedConfig._weatherSubTab);
+        if (savedConfig._currencySubTab) setCurrencySubTab(savedConfig._currencySubTab);
+        if (typeof savedConfig._screenRotation === "number") setExternalRotation(savedConfig._screenRotation);
         try {
           localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
         } catch {
@@ -947,7 +957,13 @@ export default function CenarioInterativoPage() {
   useEffect(() => {
     if (!user?.id || !loaded) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    const configWithTabs = { ...config, _activeTab: activeTab, _weatherSubTab: weatherSubTab, _currencySubTab: currencySubTab };
+    const configWithTabs = {
+      ...config,
+      _activeTab: activeTab,
+      _weatherSubTab: weatherSubTab,
+      _currencySubTab: currencySubTab,
+      _screenRotation: externalRotation,
+    };
     const serialized = JSON.stringify(configWithTabs);
     if (serialized === prevSaveRef.current) return;
     saveTimeout.current = setTimeout(async () => {
@@ -963,7 +979,7 @@ export default function CenarioInterativoPage() {
       setSaving(false);
     }, 150);
     return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
-  }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab]);
+  }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab, externalRotation]);
 
   const updateHome = (partial: Partial<HomeConfig>) =>
     setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
