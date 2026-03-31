@@ -20,15 +20,39 @@ const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, timeoutMe
   }
 };
 
+const getErrorMessage = (value: unknown) => {
+  if (typeof value === "string") return value;
+  if (value instanceof Error) return value.message;
+  if (value && typeof value === "object" && "message" in value) {
+    return String((value as { message?: unknown }).message ?? "");
+  }
+  return "";
+};
+
 const isConnectionLikeError = (value: unknown) => {
-  const message = String((value as { message?: string } | undefined)?.message ?? value ?? "").toLowerCase();
+  const message = getErrorMessage(value).toLowerCase();
   return (
     message.includes("timeout") ||
+    message.includes("tempo de conexão excedido") ||
+    message.includes("connection") ||
+    message.includes("networkerror") ||
     message.includes("failed to fetch") ||
+    message.includes("fetch failed") ||
     message.includes("network") ||
     message.includes("load failed") ||
     message.includes("não foi possível conectar")
   );
+};
+
+const getFriendlyAuthMessage = (message: string) => {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("invalid login credentials")) {
+    return "E-mail ou senha inválidos.";
+  }
+  if (normalized.includes("email not confirmed")) {
+    return "Seu e-mail ainda não foi confirmado.";
+  }
+  return message;
 };
 
 export default function LoginScreen() {
@@ -92,24 +116,17 @@ export default function LoginScreen() {
       const { error } = await withTimeout(request(), AUTH_TIMEOUT_FAST_MS, "Tempo de conexão excedido.");
 
       if (error) {
-        if (error.message.toLowerCase().includes("invalid login credentials")) {
-          setError("E-mail ou senha inválidos.");
-        } else {
-          setError(error.message);
-        }
+        setError(getFriendlyAuthMessage(error.message));
       }
     } catch (firstError) {
       if (!isConnectionLikeError(firstError)) {
-        setError("Não foi possível autenticar. Tente novamente.");
+        const rawMessage = getErrorMessage(firstError);
+        setError(rawMessage ? getFriendlyAuthMessage(rawMessage) : "Não foi possível autenticar. Tente novamente.");
       } else {
         try {
           const { error } = await withTimeout(request(), AUTH_TIMEOUT_RETRY_MS, "Tempo de conexão excedido.");
           if (error) {
-            if (error.message.toLowerCase().includes("invalid login credentials")) {
-              setError("E-mail ou senha inválidos.");
-            } else {
-              setError(error.message);
-            }
+            setError(getFriendlyAuthMessage(error.message));
           }
         } catch {
           setError("Servidor ainda iniciando. Aguarde alguns segundos e tente novamente.");
