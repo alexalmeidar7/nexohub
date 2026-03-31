@@ -672,7 +672,7 @@ export default function CenarioTela() {
 
             {/* ═══ HOME ═══ */}
             {activeTab === "home" && (() => {
-              const textColor = (config.home.bgImage || config.home.bgGradient) ? "#fff" : "#333";
+              // Program progress bar
               // Program progress bar
               let progressPct = 0;
               if (currentProgram) {
