@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { mergeUserDashboardItems } from "@/lib/userSettings";
 
 const AgendaPage = lazy(() => import("./AgendaPage"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
@@ -106,7 +107,6 @@ interface Props {
 export default function CustomizableDashboard({ onNavigate }: Props) {
   const { user } = useAuth();
   const [items, setItems] = useState<DashboardItem[]>([]);
-  const dashboardSettingsRef = useRef<DashboardSettingsPayload>({ items: [] });
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [addStep, setAddStep] = useState<"choose" | "link" | "widget">("choose");
   const [editMode, setEditMode] = useState(false);
@@ -196,7 +196,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       }
 
       const normalized = normalizeDashboardSettings(data?.dashboard_items);
-      dashboardSettingsRef.current = normalized;
 
       if (Array.isArray(normalized.items) && normalized.items.length > 0) {
         setItems(normalized.items);
@@ -212,22 +211,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         if (!Array.isArray(parsed) || parsed.length === 0) return;
 
         setItems(parsed as DashboardItem[]);
-        const payload: DashboardSettingsPayload = {
-          ...dashboardSettingsRef.current,
-          items: parsed as DashboardItem[],
-        };
-        dashboardSettingsRef.current = payload;
-
-        await supabase
-          .from("user_settings")
-          .upsert(
-            {
-              user_id: user.id,
-              dashboard_items: payload as any,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "user_id" }
-          );
+        await mergeUserDashboardItems(user.id, {
+          items: parsed as unknown[],
+        });
       } catch {
         // ignore invalid local data
       }
@@ -241,25 +227,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
     if (!user) return;
 
-    const payload: DashboardSettingsPayload = {
-      ...dashboardSettingsRef.current,
-      items: newItems,
-    };
-    dashboardSettingsRef.current = payload;
-
-    // Save to DB
-    const { error } = await supabase
-      .from("user_settings")
-      .upsert(
-        {
-          user_id: user.id,
-          dashboard_items: payload as any,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" }
-      );
-
-    if (error) {
+    try {
+      await mergeUserDashboardItems(user.id, {
+        items: newItems as unknown[],
+      });
+    } catch (error) {
       console.error("Erro ao salvar dashboard_items:", error);
     }
   }, [user]);
