@@ -157,6 +157,9 @@ export default function CenarioTela() {
   const prevMusicRef = useRef("");
 
 
+  /* ─── Screen Rotation ─── */
+  const [screenRotation, setScreenRotation] = useState(0);
+
   /* ─── Drawing (Pen) ─── */
   const [drawingActive, setDrawingActive] = useState(false);
   const [hasDrawing, setHasDrawing] = useState(false);
