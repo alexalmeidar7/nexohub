@@ -779,7 +779,7 @@ export default function CenarioTela() {
         style={{
           ...(isLandscape
             ? { width: "100vh", height: "100vw", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
-            : { height: "100vh", aspectRatio: "9/16", maxHeight: "100vh", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
+            : { width: "calc(100vh * 9 / 16)", height: "100vh", maxHeight: "100vh", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
           ),
         }}
       >
