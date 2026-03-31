@@ -1484,10 +1484,12 @@ export default function CenarioInterativoPage() {
 
           {/* ── RIGHT: 9:16 Preview ── */}
           <div className="lg:w-[320px] flex-shrink-0">
-            <div className="flex items-center gap-2 mb-4">
-              <Eye size={16} style={{ color: mutedText }} />
-              <span className="text-sm font-semibold">Preview (9:16)</span>
-              <div className="flex items-center gap-1.5 ml-2">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <Eye size={16} style={{ color: mutedText }} />
+                <span className="text-sm font-semibold whitespace-nowrap">Preview (9:16)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
                 {externalConnected ? (
                   <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)" }}>
                     <Wifi size={10} style={{ color: "#4ade80" }} />
@@ -1500,32 +1502,34 @@ export default function CenarioInterativoPage() {
                       <span className="text-[10px] font-semibold" style={{ color: "#ef4444" }}>Offline</span>
                     </div>
                     <button onClick={forceReconnect} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold cursor-pointer transition-opacity hover:opacity-80" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: mutedText }}>
-                      <RefreshCw size={10} /> Forçar conexão
+                      <RefreshCw size={10} /> Forçar
                     </button>
                   </div>
                 )}
               </div>
-              <button
-                onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
-                className="ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
-                style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
-              >
-              <ExternalLink size={12} /> Abrir Tela
-              </button>
-              <button
-                onClick={() => {
-                  setExternalRotation(prev => {
-                    const val = (prev + 45) % 360;
-                    cenarioBcRef.current?.postMessage({ type: "rotate", angle: val });
-                    rtDrawChannelRef.current?.send({ type: "broadcast", event: "rotate", payload: { angle: val } });
-                    return val;
-                  });
-                }}
-                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
-                style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
-              >
-                <RotateCw size={12} /> Rotacionar 45°
-              </button>
+              <div className="flex items-center gap-1.5 ml-auto">
+                <button
+                  onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
+                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
+                >
+                  <ExternalLink size={11} /> Abrir Tela
+                </button>
+                <button
+                  onClick={() => {
+                    setExternalRotation(prev => {
+                      const val = (prev + 45) % 360;
+                      cenarioBcRef.current?.postMessage({ type: "rotate", angle: val });
+                      rtDrawChannelRef.current?.send({ type: "broadcast", event: "rotate", payload: { angle: val } });
+                      return val;
+                    });
+                  }}
+                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
+                >
+                  <RotateCw size={11} /> Rotacionar 45°
+                </button>
+              </div>
             </div>
 
             {/* "Telas Conectadas" notification */}
