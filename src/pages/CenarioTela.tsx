@@ -411,15 +411,16 @@ export default function CenarioTela() {
 
     const applyConfig = (raw: any, fromRealtime = false) => {
       if (!raw || typeof raw !== "object" || Object.keys(raw).length === 0) return;
-      const { _activeTab, _weatherSubTab, _currencySubTab, ...rest } = raw;
+      const { _activeTab, _weatherSubTab, _currencySubTab, _screenRotation, ...rest } = raw;
       const merged = { ...defaultConfig, ...rest };
       setConfig(merged);
       if (_activeTab) setActiveTab(_activeTab);
       if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
       if (_currencySubTab) setCurrencySubTab(_currencySubTab);
+      if (typeof _screenRotation === "number") setScreenRotation(_screenRotation);
       if (fromRealtime) setLastSyncTime(new Date());
       try {
-        localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
+        localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify({ ...merged, _activeTab, _weatherSubTab, _currencySubTab, _screenRotation }));
       } catch { /* silent */ }
     };
 
@@ -479,13 +480,13 @@ export default function CenarioTela() {
     };
     connectSync();
 
-    // Fallback: poll edge function every 30s for unauthenticated users
+    // Fallback forte para navegador do vMix: polling curto da config pública
     let pollInterval: ReturnType<typeof setInterval> | null = null;
     if (!isAuthenticated) {
       pollInterval = setInterval(async () => {
         const result = await fetchViaEdgeFunction(effectiveUserId);
         if (result?.cenario_config) applyConfig(result.cenario_config);
-      }, 30000);
+      }, 2000);
     }
 
     return () => { destroyed = true; setRealtimeConnected(false); if (channel) supabase.removeChannel(channel); if (pollInterval) clearInterval(pollInterval); };
