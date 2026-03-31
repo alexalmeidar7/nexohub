@@ -614,7 +614,7 @@ export default function CenarioTela() {
 
             {/* ═══ HOME ═══ */}
             {activeTab === "home" && (
-              <div className="absolute inset-0 flex flex-col justify-center" style={{ padding: "3vh", color: config.home.bgImage ? "#fff" : "#333" }}>
+              <div className="absolute inset-0 flex flex-col justify-center" style={{ padding: "3vh", color: (config.home.bgImage || config.home.bgGradient) ? "#fff" : "#333" }}>
                 <div className="font-bold leading-none drop-shadow-md" style={{ fontSize: "6vh", fontVariantNumeric: "tabular-nums", animation: "cenario-clock-enter 0.8s cubic-bezier(0.16,1,0.3,1) both" }}>
                   {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                 </div>
