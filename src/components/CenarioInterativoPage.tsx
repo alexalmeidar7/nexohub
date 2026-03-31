@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -1703,58 +1703,60 @@ export default function CenarioInterativoPage() {
                     }
                     return (
                       <div className="absolute inset-0 flex flex-col p-2" style={{ color: "#fff" }}>
-                        {/* Top-left: small clock + date */}
-                        <div>
-                          <div className="flex items-center gap-1">
-                            <Clock size={10} style={{ opacity: 0.7 }} />
-                            <span className="font-bold text-sm" style={{ fontVariantNumeric: "tabular-nums", color: "#fff" }}>
+                        {/* TOP: Clock + Date (left) / Next program (right) */}
+                        <div className="flex justify-between items-start flex-shrink-0">
+                          <div>
+                            <div className="font-black" style={{ fontSize: 18, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
                               {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                            </span>
-                          </div>
-                          <div className="text-[8px] opacity-70 ml-3" style={{ color: "#fff" }}>
-                            {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                            </div>
+                            <div className="font-bold" style={{ fontSize: 7, color: "#e1f532", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
+                              {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                            </div>
                           </div>
                         </div>
 
-                        {/* Center: Program logo + progress */}
-                        <div className="flex-1 flex flex-col items-center justify-center gap-1">
-                          {currentProgram?.selo && (
-                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: "70%", maxHeight: "45%" }} />
-                          )}
-                          {currentProgram && (
-                            <div className="text-center">
-                              {!currentProgram.selo && <div className="font-bold text-sm drop-shadow-sm" style={{ color: "#fff" }}>{currentProgram.nome}</div>}
-                              <div className="text-[8px] opacity-70" style={{ color: "#fff" }}>{currentProgram.horario_inicio.slice(0,5)} — {currentProgram.horario_fim.slice(0,5)}</div>
-                              <div className="mx-auto mt-1" style={{ width: "60%", height: 3, borderRadius: 3, background: "rgba(255,255,255,0.2)", overflow: "hidden" }}>
-                                <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: 3, background: "#e1f532", transition: "width 1s linear" }} />
-                              </div>
-                              {currentProgram.apresentador && (
-                                <div className="flex items-center justify-center gap-1 mt-1 opacity-80">
-                                  <Mic size={8} style={{ color: "#e1f532" }} />
-                                  <span className="text-[8px] font-medium" style={{ color: "#fff" }}>{currentProgram.apresentador}</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          {!currentProgram && <div className="text-[9px] opacity-40" style={{ color: "#fff" }}>Nenhum programa no ar</div>}
-
-                          {/* Music — inside center area */}
+                        {/* CENTER: Music card */}
+                        <div className="flex-1 flex flex-col items-center justify-center" style={{ overflow: "hidden" }}>
                           {musicData && (
-                            <div key={musicKey} className="flex items-center gap-2 self-center" style={{ padding: "6px 8px", borderRadius: 8, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.12)", maxWidth: "92%", marginTop: 4, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                            <div key={musicKey} className="flex flex-col items-center" style={{ width: "85%", padding: "6px 8px 8px", borderRadius: 10, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(16px)", border: "1.5px solid rgba(225,245,50,0.15)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                               {musicData.capa ? (
-                                <img src={musicData.capa} alt="" className="rounded-md object-cover" style={{ width: 40, height: 40, flexShrink: 0 }} />
+                                <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5 }} />
                               ) : (
-                                <div className="rounded-md flex items-center justify-center" style={{ width: 40, height: 40, flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
-                                  <Music size={16} style={{ opacity: 0.5, color: "#fff" }} />
+                                <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5, background: "rgba(255,255,255,0.08)" }}>
+                                  <Music size={28} style={{ opacity: 0.3, color: "#fff" }} />
                                 </div>
                               )}
-                              <div style={{ minWidth: 0 }}>
-                                <div className="font-bold truncate text-[9px]" style={{ color: "#fff" }}>{musicData.titulo}</div>
-                                <div className="truncate text-[7px] opacity-70" style={{ color: "#fff" }}>{musicData.artista}</div>
+                              <div className="flex items-center self-start gap-1" style={{ maxWidth: "100%" }}>
+                                <Play size={10} style={{ color: "#e1f532", flexShrink: 0, fill: "#e1f532" }} />
+                                <div style={{ overflow: "hidden", minWidth: 0 }}>
+                                  <div className="font-black uppercase truncate" style={{ fontSize: 9, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
+                                  <div className="font-bold uppercase truncate" style={{ fontSize: 7, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
+                                </div>
+                              </div>
+                              <div style={{ width: "100%", height: 2, marginTop: 5, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
+                                <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: 2, background: "#e1f532", transition: "width 1s linear" }} />
                               </div>
                             </div>
                           )}
+                          {!musicData && !currentProgram && <div className="text-[9px] opacity-40" style={{ color: "#fff" }}>Nenhum programa no ar</div>}
                         </div>
+
+                        {/* BOTTOM: Program logo + presenter + schedule */}
+                        {currentProgram && (
+                          <div className="flex flex-col items-center flex-shrink-0" style={{ marginTop: 4 }}>
+                            {currentProgram.selo ? (
+                              <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: "50%", maxHeight: 50 }} />
+                            ) : (
+                              <div className="font-black text-center" style={{ fontSize: 13, lineHeight: 1.1 }}>{currentProgram.nome}</div>
+                            )}
+                            {currentProgram.apresentador && (
+                              <div className="font-bold" style={{ fontSize: 10, marginTop: 3, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>{currentProgram.apresentador}</div>
+                            )}
+                            <div className="opacity-50 font-medium" style={{ fontSize: 6, marginTop: 1, fontVariantNumeric: "tabular-nums" }}>
+                              {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Sponsor logos */}
                         {sponsorLogos.length > 0 && (
