@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => ({
     include: ["@tanstack/react-query", "react", "react-dom", "react-router-dom"],
   },
   build: {
+    target: "chrome103",
     rollupOptions: {
       output: {
         manualChunks: {
