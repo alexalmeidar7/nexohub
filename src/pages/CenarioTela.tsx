@@ -371,6 +371,15 @@ export default function CenarioTela() {
     return () => clearInterval(t);
   }, []);
 
+  /* Music elapsed time ticker */
+  useEffect(() => {
+    if (!musicData) return;
+    const t = setInterval(() => {
+      setMusicElapsed(Math.floor((Date.now() - musicStartRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [musicData, musicKey]);
+
   /* Load cached config first (works even without auth token in new tab) */
   useEffect(() => {
     try {
