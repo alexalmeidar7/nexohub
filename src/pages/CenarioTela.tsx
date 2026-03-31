@@ -717,7 +717,7 @@ export default function CenarioTela() {
                 if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
               }
               return (
-                <div className="absolute inset-0 flex flex-col" style={{ padding: "12vh 3vh 2.5vh 3vh", color: "#fff" }}>
+                <div className="absolute inset-0 flex flex-col" style={{ padding: "1.5vh 3vh 2.5vh 3vh", color: "#fff" }}>
                   {/* Top-left: small clock + date */}
                   <div style={{ animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                     <div className="flex items-center gap-[0.8vh]">
