@@ -534,8 +534,8 @@ export default function CenarioTela() {
               <button onClick={() => { if (activeTab === "weather") { setActiveTab("home"); } else { setActiveTab("weather"); setWeatherSubTab("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", background: "rgba(255,255,255,0.12)", border: activeTab === "weather" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "weather" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                 <CloudSun style={{ width: "1.7vh", height: "1.7vh" }} className="text-white" />
               </button>
-              <div style={{ display: "grid", gridTemplateRows: activeTab === "weather" ? "1fr" : "0fr", transition: "grid-template-rows 0.35s cubic-bezier(0.4,0,0.2,1)" }}>
-                <div style={{ overflow: "hidden" }}>
+              <div style={{ overflow: "hidden", maxHeight: activeTab === "weather" ? "20vh" : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "weather" ? 1 : 0 }}>
+                <div>
                   <div className="flex flex-col items-center gap-[0.4vh]" style={{ paddingTop: "0.4vh" }}>
                     {config.weather.enabled && config.weather.showCurrent && (
                       <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("today"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: "2.8vh", height: "2.8vh", fontSize: "1.2vh", background: activeTab === "weather" && weatherSubTab === "today" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: activeTab === "weather" && weatherSubTab === "today" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>1</button>
