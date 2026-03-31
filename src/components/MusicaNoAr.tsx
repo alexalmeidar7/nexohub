@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { findCurrentProgram } from "./OnAirWidget";
 import { getApresentadores } from "./ApresentadorForm";
 import { normalizeMusicText } from "@/lib/textEncoding";
+import { mergeUserDashboardItems } from "@/lib/userSettings";
 
 interface MusicData {
   titulo: string;
@@ -437,21 +438,11 @@ export default function MusicaNoAr() {
       if (user) {
         (async () => {
           try {
-            const { data: settings } = await supabase.from("user_settings")
-              .select("dashboard_items")
-              .eq("user_id", user.id)
-              .maybeSingle();
-            const items = (settings?.dashboard_items as Record<string, any>) || {};
-            await supabase.from("user_settings").upsert({
-              user_id: user.id,
-              dashboard_items: {
-                ...items,
-                music_start_time: now,
-                music_current_title: data.titulo,
-                music_current_artist: data.artista,
-              },
-              updated_at: new Date().toISOString(),
-            }, { onConflict: "user_id" });
+            await mergeUserDashboardItems(user.id, {
+              music_start_time: now,
+              music_current_title: data.titulo,
+              music_current_artist: data.artista,
+            });
           } catch {}
         })();
       }
@@ -619,13 +610,9 @@ export default function MusicaNoAr() {
 
     // Persist local filename to DB so it survives across computers/sessions
     if (user) {
-      const { data: currentSettings } = await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle();
-      const di = (currentSettings?.dashboard_items as any) || {};
-      await supabase.from("user_settings").upsert({
-        user_id: user.id,
-        dashboard_items: { ...di, local_xml_filename: file.name },
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+      await mergeUserDashboardItems(user.id, {
+        local_xml_filename: file.name,
+      });
     }
 
     const text = await readFileWithEncoding(file);
