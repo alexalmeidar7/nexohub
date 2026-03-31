@@ -157,6 +157,9 @@ export default function CenarioTela() {
   const prevMusicRef = useRef("");
 
 
+  /* ─── Screen Rotation ─── */
+  const [screenRotation, setScreenRotation] = useState(0);
+
   /* ─── Drawing (Pen) ─── */
   const [drawingActive, setDrawingActive] = useState(false);
   const [hasDrawing, setHasDrawing] = useState(false);
@@ -241,6 +244,8 @@ export default function CenarioTela() {
       if (payload?.tab) setActiveTab(payload.tab);
       if (payload?.subTab) setWeatherSubTab(payload.subTab);
       if (payload?.currencySubTab) setCurrencySubTab(payload.currencySubTab);
+    }).on("broadcast", { event: "rotate" }, ({ payload }: any) => {
+      if (payload && typeof payload.angle === "number") setScreenRotation(payload.angle);
     }).subscribe();
     rtDrawChannelRef.current = ch;
     return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
@@ -606,6 +611,9 @@ export default function CenarioTela() {
       if (ev.data?.type === "zoom-change" && typeof ev.data.zoom === "number") {
         setSatelliteZoom(ev.data.zoom);
       }
+      if (ev.data?.type === "rotate" && typeof ev.data.angle === "number") {
+        setScreenRotation(ev.data.angle);
+      }
       if (ev.data?.type === "draw-clear") {
         const canvas = canvasRef.current;
         if (canvas) {
@@ -631,7 +639,7 @@ export default function CenarioTela() {
 
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center">
-      <div className="relative h-full" style={{ aspectRatio: "9/16", maxHeight: "100vh" }}>
+      <div className="relative h-full" style={{ aspectRatio: "9/16", maxHeight: "100vh", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }}>
         <div className="absolute inset-0 flex" style={{ fontSize: "1.8vh" }}>
 
           {/* Fullscreen background layers behind sidebar */}

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -554,6 +554,7 @@ export default function CenarioInterativoPage() {
   useEffect(() => { currencySubTabRef.current = currencySubTab; }, [currencySubTab]);
 
   const [externalConnected, setExternalConnected] = useState(false);
+  const [externalRotation, setExternalRotation] = useState(0);
   const [showConnectedMsg, setShowConnectedMsg] = useState(false);
   const lastPongRef = useRef(0);
   const presenceConnectedRef = useRef(false);
@@ -1509,7 +1510,21 @@ export default function CenarioInterativoPage() {
                 className="ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
                 style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
               >
-                <ExternalLink size={12} /> Abrir Tela
+              <ExternalLink size={12} /> Abrir Tela
+              </button>
+              <button
+                onClick={() => {
+                  setExternalRotation(prev => {
+                    const val = (prev + 45) % 360;
+                    cenarioBcRef.current?.postMessage({ type: "rotate", angle: val });
+                    rtDrawChannelRef.current?.send({ type: "broadcast", event: "rotate", payload: { angle: val } });
+                    return val;
+                  });
+                }}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
+                style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
+              >
+                <RotateCw size={12} /> Rotacionar 45°
               </button>
             </div>
 
