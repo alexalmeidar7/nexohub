@@ -711,6 +711,23 @@ export default function CenarioInterativoPage() {
     return () => clearInterval(timer);
   }, []);
 
+  /* ─── Music data sync from localStorage ─── */
+  useEffect(() => {
+    const poll = setInterval(() => {
+      try {
+        const raw = localStorage.getItem("masterview_music_data");
+        if (!raw) return;
+        const d = JSON.parse(raw);
+        const key = `${d.titulo}|${d.artista}`;
+        if (key !== prevMusicRef.current) {
+          prevMusicRef.current = key;
+          setMusicData({ titulo: d.titulo || "", artista: d.artista || "", capa: d.capa || "" });
+          setMusicKey(k => k + 1);
+        }
+      } catch {}
+    }, 2000);
+    return () => clearInterval(poll);
+
   /* ─── Fetch live currencies ─── */
   useEffect(() => {
     if (!config.currency.enabled || !config.currency.currencies.length) return;
