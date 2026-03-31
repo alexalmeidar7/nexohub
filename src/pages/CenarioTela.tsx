@@ -583,7 +583,7 @@ export default function CenarioTela() {
 
           {/* Drawing options panel */}
           {drawingActive && showDrawOptions && (
-            <div className="absolute flex flex-col items-center gap-[0.8vh] rounded-2xl" style={{ left: "9.5%", top: "50%", transform: "translateY(-50%)", zIndex: 45, padding: "1.2vh 0.8vh", background: "rgba(20,20,20,0.85)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+            <div className="absolute flex flex-col items-center gap-[0.8vh] rounded-2xl" style={{ left: "9.5%", top: "50%", transform: "translateY(-50%)", zIndex: 45, padding: "1.2vh 0.8vh", background: "rgba(20,20,20,0.85)", WebkitBackdropFilter: "blur(12px)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
               {DRAW_COLORS.map(c => (
                 <button key={c} onClick={() => setDrawColor(c)} className="rounded-full cursor-pointer" style={{ width: "2.8vh", height: "2.8vh", background: c, border: drawColor === c ? "2px solid #fff" : "2px solid transparent", boxShadow: drawColor === c ? `0 0 8px ${c}` : "none", transition: "all 0.15s ease" }} />
               ))}
@@ -648,7 +648,7 @@ export default function CenarioTela() {
                           <WeatherIcon code={liveWeather.current.code} size={64} />
                         </div>
                       </div>
-                      <div className="flex-1 rounded-2xl flex flex-col" style={{ padding: "2.5vh", gap: "2vh", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+                      <div className="flex-1 rounded-2xl flex flex-col" style={{ padding: "2.5vh", gap: "2vh", background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
                         <div className="flex items-center gap-3" style={{ gap: "2vh" }}>
                           <div className="drop-shadow-xl" style={{ width: "14vh", height: "14vh", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.2))" }}>
                             <WeatherIcon code={liveWeather.current.code} size={112} forceDay />
@@ -678,7 +678,7 @@ export default function CenarioTela() {
                         </div>
                         <CalendarDays style={{ width: "5vh", height: "5vh", opacity: 0.8 }} />
                       </div>
-                      <div className="flex-1 rounded-2xl flex flex-col" style={{ padding: "2vh", gap: "1.5vh", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+                      <div className="flex-1 rounded-2xl flex flex-col" style={{ padding: "2vh", gap: "1.5vh", background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
                         {liveWeather.daily.slice(1, 4).map((d, i) => (
                           <div key={i} className="flex items-center justify-between rounded-xl" style={{ fontSize: "1.8vh", padding: "1.5vh 2vh", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.08)" }}>
                             <span className="font-bold" style={{ width: "30%" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
@@ -794,7 +794,7 @@ export default function CenarioTela() {
                       <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: "4vh" }}>mensagens</div>
                       <div className="font-bold" style={{ fontSize: "2.5vh", color: "#e1f532" }}>chat</div>
                     </div>
-                    <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                    <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(12px)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                       {(() => {
                         const ytUrl = config.chat.youtubeVideoUrl || "";
                         let videoId = "";
@@ -850,14 +850,14 @@ export default function CenarioTela() {
             <button
               onClick={clearDrawing}
               className="absolute flex items-center justify-center rounded-full"
-              style={{ top: "1.5vh", right: "1.5vh", zIndex: 45, width: "4vh", height: "4vh", background: "rgba(239,68,68,0.8)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", transition: "all 0.2s ease" }}
+              style={{ top: "1.5vh", right: "1.5vh", zIndex: 45, width: "4vh", height: "4vh", background: "rgba(239,68,68,0.8)", WebkitBackdropFilter: "blur(8px)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", transition: "all 0.2s ease" }}
             >
               <Eraser style={{ width: "2vh", height: "2vh", color: "white" }} />
             </button>
           )}
 
           {/* Realtime connection indicator */}
-          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", zIndex: 50, fontSize: "1vh" }}>
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.6)", WebkitBackdropFilter: "blur(8px)", backdropFilter: "blur(8px)", zIndex: 50, fontSize: "1vh" }}>
             <div className="rounded-full" style={{ width: "0.8vh", height: "0.8vh", background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 6px #4ade80" : "0 0 6px #ef4444", animation: realtimeConnected ? "cenario-active-blink 2s ease-in-out infinite" : "none" }} />
             <span className="text-white/60 font-medium" style={{ fontSize: "0.9vh" }}>
               {realtimeConnected ? "SYNC" : "OFF"}
@@ -878,7 +878,7 @@ export default function CenarioTela() {
                 transform: "translateX(-50%)",
                 zIndex: 60,
                 background: "rgba(74,222,128,0.2)",
-                backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)", backdropFilter: "blur(16px)",
                 border: "1px solid rgba(74,222,128,0.4)",
                 animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both",
               }}
