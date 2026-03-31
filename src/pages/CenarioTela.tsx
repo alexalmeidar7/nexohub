@@ -847,8 +847,8 @@ export default function CenarioTela() {
                 if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
               }
 
-              const isMusical = currentProgram?.tipo_programa?.toLowerCase()?.includes("music") || currentProgram?.tipo_programa?.toLowerCase()?.includes("músic") || currentProgram?.tipo_programa?.toLowerCase()?.includes("musical");
-              const showMusicHero = isLandscape && isMusical && musicData;
+              const isMusical = false; // unused in new layout but kept for reference
+              const showMusicHero = false;
 
               // ── Program info block (reused in both layouts) ──
               const programInfoBlock = currentProgram && (
