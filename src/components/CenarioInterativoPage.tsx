@@ -1557,13 +1557,28 @@ export default function CenarioInterativoPage() {
                   <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.chat.enabled && handleTabChange("chat")} style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <MessageCircle size={16} className="text-white" />
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-1 cursor-pointer" onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) setShowPreviewDrawOptions(false); return n; }); }} style={{ background: previewDrawActive ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawActive ? "2px solid #e1f532" : "2px solid transparent", transition: "all 0.2s ease" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-1 cursor-pointer" onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} style={{ background: previewDrawActive ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawActive ? "2px solid #e1f532" : "2px solid transparent", transition: "all 0.2s ease" }}>
                     <Pen size={16} className="text-white" />
                   </div>
                   {previewDrawActive && (
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer" onClick={() => setShowPreviewDrawOptions(p => !p)} style={{ background: showPreviewDrawOptions ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: previewDrawColor }} />
-                    </div>
+                    <>
+                      {/* Color picker */}
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} style={{ background: showPreviewDrawOptions ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: previewDrawColor }} />
+                      </div>
+                      {/* Eraser */}
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} style={{ background: previewDrawMode === "eraser" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "eraser" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                        <Eraser size={13} className="text-white" />
+                      </div>
+                      {/* Undo */}
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={undoLastDraw} style={{ background: "rgba(255,255,255,0.12)", transition: "all 0.2s ease" }}>
+                        <Undo2 size={13} className="text-white" />
+                      </div>
+                      {/* Shapes */}
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} style={{ background: previewDrawMode === "shape" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "shape" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                        <Shapes size={13} className="text-white" />
+                      </div>
+                    </>
                   )}
                 </div>
 
