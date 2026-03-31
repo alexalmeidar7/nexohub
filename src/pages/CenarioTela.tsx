@@ -630,6 +630,8 @@ export default function CenarioTela() {
         finalCapa = await fetchItunesCover(titulo, artista);
       }
       setMusicData({ titulo, artista, capa: finalCapa });
+      musicStartRef.current = Date.now();
+      setMusicElapsed(0);
       setMusicKey(k => k + 1);
     };
 
