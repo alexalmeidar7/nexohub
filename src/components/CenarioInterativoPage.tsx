@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -53,6 +55,11 @@ interface ChatConfig {
 
 interface HomeConfig {
   bgImage: string;
+  bgGradient?: boolean;
+  bgGradientColorA?: string;
+  bgGradientColorB?: string;
+  bgGradientType?: "linear" | "radial";
+  bgGradientAngle?: number;
 }
 
 interface CenarioConfig {
@@ -62,6 +69,14 @@ interface CenarioConfig {
   traffic: TrafficConfig;
   currency: CurrencyConfig;
   chat: ChatConfig;
+}
+
+function buildHomeGradient(h: HomeConfig): string {
+  const a = h.bgGradientColorA || "#1a1a2e";
+  const b = h.bgGradientColorB || "#16213e";
+  const type = h.bgGradientType || "linear";
+  const angle = h.bgGradientAngle ?? 135;
+  return type === "radial" ? `radial-gradient(circle, ${a}, ${b})` : `linear-gradient(${angle}deg, ${a}, ${b})`;
 }
 
 const defaultConfig: CenarioConfig = {
@@ -871,6 +886,54 @@ export default function CenarioInterativoPage() {
                 </div>
 
                 <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
+
+                {/* Gradient background options */}
+                <div className="rounded-lg p-3 space-y-3" style={{ background: subTabBg }}>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <Palette size={12} /> Fundo em degradê
+                    </Label>
+                    <Switch checked={!!config.home.bgGradient} onCheckedChange={v => updateHome({ bgGradient: v })} />
+                  </div>
+                  {config.home.bgGradient && (
+                    <div className="space-y-3 pt-1">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Cor A</Label>
+                          <div className="flex items-center gap-2">
+                            <input type="color" value={config.home.bgGradientColorA || "#1a1a2e"} onChange={e => updateHome({ bgGradientColorA: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 p-0" />
+                            <Input value={config.home.bgGradientColorA || "#1a1a2e"} onChange={e => updateHome({ bgGradientColorA: e.target.value })} className="h-7 text-xs flex-1" />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Cor B</Label>
+                          <div className="flex items-center gap-2">
+                            <input type="color" value={config.home.bgGradientColorB || "#16213e"} onChange={e => updateHome({ bgGradientColorB: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 p-0" />
+                            <Input value={config.home.bgGradientColorB || "#16213e"} onChange={e => updateHome({ bgGradientColorB: e.target.value })} className="h-7 text-xs flex-1" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Tipo</Label>
+                          <Select value={config.home.bgGradientType || "linear"} onValueChange={(v: "linear" | "radial") => updateHome({ bgGradientType: v })}>
+                            <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="linear">Linear</SelectItem>
+                              <SelectItem value="radial">Circular (Radial)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Ângulo ({config.home.bgGradientAngle ?? 135}°)</Label>
+                          <Slider value={[config.home.bgGradientAngle ?? 135]} onValueChange={([v]) => updateHome({ bgGradientAngle: v })} min={0} max={360} step={1} disabled={(config.home.bgGradientType || "linear") === "radial"} />
+                        </div>
+                      </div>
+                      {/* Mini preview */}
+                      <div className="w-full h-10 rounded-md border" style={{ background: buildHomeGradient(config.home) }} />
+                    </div>
+                  )}
+                </div>
               </TabsContent>
 
               {/* ═══ Weather ═══ */}
@@ -1349,9 +1412,9 @@ export default function CenarioInterativoPage() {
                 </div>
 
                 {/* ── Content area with bg image ── */}
-                <div className="flex-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "transparent" : "#e8e8e8", zIndex: 1 }}>
+                <div className="flex-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "transparent" : (activeTab === "home" && config.home.bgGradient ? buildHomeGradient(config.home) : "#e8e8e8"), zIndex: 1 }}>
                   {/* Show bg image based on active tab */}
-                  {activeTab === "home" && config.home.bgImage && (
+                  {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && (
                     <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
                   )}
                   {activeTab === "weather" && config.weather.bgImage && (
@@ -1376,7 +1439,7 @@ export default function CenarioInterativoPage() {
 
                   {/* Home overlay: clock + date + logos */}
                   {activeTab === "home" && (
-                    <div className="absolute inset-0 flex flex-col justify-center p-3" style={{ color: config.home.bgImage ? "#fff" : "#333" }}>
+                    <div className="absolute inset-0 flex flex-col justify-center p-3" style={{ color: (config.home.bgImage || config.home.bgGradient) ? "#fff" : "#333" }}>
                       <div className="text-3xl font-bold leading-none drop-shadow-md" style={{ fontVariantNumeric: "tabular-nums" }}>
                         {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                       </div>

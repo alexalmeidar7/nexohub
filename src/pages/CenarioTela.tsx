@@ -12,8 +12,16 @@ interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3D
 interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage: string; lat: number | null; lon: number | null; zoom: number; }
 interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
-interface HomeConfig { bgImage: string; }
+interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; }
 interface CenarioConfig { city: string; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
+
+function buildHomeGradient(h: HomeConfig): string {
+  const a = h.bgGradientColorA || "#1a1a2e";
+  const b = h.bgGradientColorB || "#16213e";
+  const type = h.bgGradientType || "linear";
+  const angle = h.bgGradientAngle ?? 135;
+  return type === "radial" ? `radial-gradient(circle, ${a}, ${b})` : `linear-gradient(${angle}deg, ${a}, ${b})`;
+}
 
 const defaultConfig: CenarioConfig = {
   city: "", home: { bgImage: "" },
@@ -589,9 +597,9 @@ export default function CenarioTela() {
           )}
 
           {/* Content */}
-          <div className="flex-1 relative" style={{ background: isMapTab ? "transparent" : "#e8e8e8", zIndex: 1 }}>
+          <div className="flex-1 relative" style={{ background: isMapTab ? "transparent" : (activeTab === "home" && config.home.bgGradient ? buildHomeGradient(config.home) : "#e8e8e8"), zIndex: 1 }}>
             {/* Bg images */}
-            {activeTab === "home" && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+            {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
             {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
             {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
             {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
@@ -606,7 +614,7 @@ export default function CenarioTela() {
 
             {/* ═══ HOME ═══ */}
             {activeTab === "home" && (
-              <div className="absolute inset-0 flex flex-col justify-center" style={{ padding: "3vh", color: config.home.bgImage ? "#fff" : "#333" }}>
+              <div className="absolute inset-0 flex flex-col justify-center" style={{ padding: "3vh", color: (config.home.bgImage || config.home.bgGradient) ? "#fff" : "#333" }}>
                 <div className="font-bold leading-none drop-shadow-md" style={{ fontSize: "6vh", fontVariantNumeric: "tabular-nums", animation: "cenario-clock-enter 0.8s cubic-bezier(0.16,1,0.3,1) both" }}>
                   {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                 </div>
