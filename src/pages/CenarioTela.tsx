@@ -1026,10 +1026,10 @@ export default function CenarioTela() {
 
               // ── PORTRAIT (original vertical layout) ──
               return (
-                <div className="absolute inset-0 flex flex-col" style={{ padding: `2${vu} 2${vu} 1.5${vu} 2${vu}`, color: "#fff" }}>
+                <div className="absolute inset-0 flex flex-col" style={{ padding: `2${vu} 1.5${vu} 1.5${vu} 1.5${vu}`, color: "#fff" }}>
 
                   {/* TOP ROW: Clock + Date (left) / Next program (right) */}
-                  <div className="flex justify-between items-start flex-shrink-0" style={{ zIndex: 2, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                  <div className="flex justify-between items-start flex-shrink-0" style={{ zIndex: 2, padding: `0 0.5${vu}`, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                     <div>
                       <div className="font-black" style={{ fontSize: `4${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
                         {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
@@ -1117,8 +1117,16 @@ export default function CenarioTela() {
                     <div style={{ width: `${progressPct}%`, height: "100%", background: "#fff", transition: "width 1s linear" }} />
                   </div>
 
+                  {/* SYNC status below progress bar */}
+                  <div className="flex items-center justify-center flex-shrink-0" style={{ gap: `0.4${vu}`, marginTop: `0.4${vu}`, opacity: 0.5 }}>
+                    <div className="rounded-full" style={{ width: `0.6${vu}`, height: `0.6${vu}`, background: realtimeConnected ? "#4ade80" : "#ef4444" }} />
+                    <span className="text-white font-medium" style={{ fontSize: `0.9${vu}` }}>
+                      {realtimeConnected ? "SYNC" : "OFF"}
+                    </span>
+                  </div>
+
                   {sponsorLogos.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: `1${vu}`, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
+                    <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: `0.5${vu}`, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
                       {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: `4${vu}`, height: `4${vu}`, background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
                     </div>
                   )}
