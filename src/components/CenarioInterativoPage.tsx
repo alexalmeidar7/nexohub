@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -691,7 +691,10 @@ export default function CenarioInterativoPage() {
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
+  const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+  const [musicKey, setMusicKey] = useState(0);
+  const prevMusicRef = useRef("");
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
@@ -708,6 +711,23 @@ export default function CenarioInterativoPage() {
     return () => clearInterval(timer);
   }, []);
 
+  /* ─── Music data sync from localStorage ─── */
+  useEffect(() => {
+    const poll = setInterval(() => {
+      try {
+        const raw = localStorage.getItem("masterview_music_data");
+        if (!raw) return;
+        const d = JSON.parse(raw);
+        const key = `${d.titulo}|${d.artista}`;
+        if (key !== prevMusicRef.current) {
+          prevMusicRef.current = key;
+          setMusicData({ titulo: d.titulo || "", artista: d.artista || "", capa: d.capa || "" });
+          setMusicKey(k => k + 1);
+        }
+      } catch {}
+    }, 2000);
+    return () => clearInterval(poll);
+  }, []);
   /* ─── Fetch live currencies ─── */
   useEffect(() => {
     if (!config.currency.enabled || !config.currency.currencies.length) return;
@@ -749,7 +769,7 @@ export default function CenarioInterativoPage() {
     (async () => {
       const { data: progs } = await supabase
         .from("programas")
-        .select("id, nome, horario_inicio, horario_fim, dias_semana")
+        .select("id, nome, horario_inicio, horario_fim, dias_semana, selo")
         .eq("user_id", user.id)
         .eq("ativo", true);
 
@@ -759,7 +779,7 @@ export default function CenarioInterativoPage() {
       });
 
       if (onAir) {
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id });
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
           .select("id, nome, logo_url")
@@ -1621,29 +1641,77 @@ export default function CenarioInterativoPage() {
                     style={{ animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both" }}
                   >
 
-                  {/* Home overlay: clock + date + logos */}
-                  {activeTab === "home" && (
-                    <div className="absolute inset-0 flex flex-col justify-center p-3" style={{ color: (config.home.bgImage || config.home.bgGradient) ? "#fff" : "#333" }}>
-                      <div className="text-3xl font-bold leading-none drop-shadow-md" style={{ fontVariantNumeric: "tabular-nums" }}>
-                        {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                      </div>
-                      <div className="text-[10px] mt-1 drop-shadow-sm opacity-80">
-                        {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                      </div>
-                      {currentProgram && (
-                        <div className="text-[9px] mt-2 font-semibold drop-shadow-sm opacity-90">
-                          {currentProgram.nome}
+                  {/* Home overlay */}
+                  {activeTab === "home" && (() => {
+                    const textColor = (config.home.bgImage || config.home.bgGradient) ? "#fff" : "#333";
+                    let progressPct = 0;
+                    if (currentProgram) {
+                      const [sh, sm] = currentProgram.horario_inicio.split(":").map(Number);
+                      const [eh, em] = currentProgram.horario_fim.split(":").map(Number);
+                      const startMin = sh * 60 + sm;
+                      const endMin = eh * 60 + em;
+                      const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
+                      const total = endMin - startMin;
+                      if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
+                    }
+                    return (
+                      <div className="absolute inset-0 flex flex-col p-2" style={{ color: textColor }}>
+                        {/* Top-left: small clock + date */}
+                        <div>
+                          <div className="flex items-center gap-1">
+                            <Clock size={10} style={{ opacity: 0.7 }} />
+                            <span className="font-bold text-sm" style={{ fontVariantNumeric: "tabular-nums" }}>
+                              {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                            </span>
+                          </div>
+                          <div className="text-[8px] opacity-70 ml-3">
+                            {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                          </div>
                         </div>
-                      )}
-                      {sponsorLogos.length > 0 && (
-                        <div className="flex flex-wrap justify-center gap-2 mt-3">
-                          {sponsorLogos.map(l => (
-                            l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="w-8 h-8 object-contain rounded drop-shadow-md" style={{ background: "rgba(255,255,255,0.15)", padding: 2 }} />
-                          ))}
+
+                        {/* Center: Program logo + progress */}
+                        <div className="flex-1 flex flex-col items-center justify-center gap-1">
+                          {currentProgram?.selo && (
+                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: "60%", maxHeight: "40%" }} />
+                          )}
+                          {currentProgram && (
+                            <div className="text-center">
+                              {!currentProgram.selo && <div className="font-bold text-sm drop-shadow-sm">{currentProgram.nome}</div>}
+                              <div className="text-[8px] opacity-70">{currentProgram.horario_inicio} — {currentProgram.horario_fim}</div>
+                              <div className="mx-auto mt-1" style={{ width: "60%", height: 3, borderRadius: 3, background: "rgba(255,255,255,0.2)", overflow: "hidden" }}>
+                                <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: 3, background: "#e1f532", transition: "width 1s linear" }} />
+                              </div>
+                            </div>
+                          )}
+                          {!currentProgram && <div className="text-[9px] opacity-40">Nenhum programa no ar</div>}
                         </div>
-                      )}
-                    </div>
-                  )}
+
+                        {/* Bottom: Music */}
+                        {musicData && (
+                          <div key={musicKey} className="flex items-center gap-1.5 self-center" style={{ padding: "4px 6px", borderRadius: 6, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)", maxWidth: "90%", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                            {musicData.capa ? (
+                              <img src={musicData.capa} alt="" className="rounded object-cover" style={{ width: 24, height: 24, flexShrink: 0 }} />
+                            ) : (
+                              <div className="rounded flex items-center justify-center" style={{ width: 24, height: 24, flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
+                                <Music size={10} style={{ opacity: 0.5 }} />
+                              </div>
+                            )}
+                            <div style={{ minWidth: 0 }}>
+                              <div className="font-bold truncate text-[8px]" style={{ color: "#fff" }}>{musicData.titulo}</div>
+                              <div className="truncate text-[7px] opacity-70" style={{ color: "#fff" }}>{musicData.artista}</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Sponsor logos */}
+                        {sponsorLogos.length > 0 && (
+                          <div className="flex flex-wrap justify-center gap-1 mt-1">
+                            {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="w-5 h-5 object-contain rounded" style={{ background: "rgba(255,255,255,0.15)", padding: 1 }} />)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Weather overlay */}
                   {activeTab === "weather" && weatherSubTab !== "satellite" && (
