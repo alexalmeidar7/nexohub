@@ -244,6 +244,8 @@ export default function CenarioTela() {
       if (payload?.tab) setActiveTab(payload.tab);
       if (payload?.subTab) setWeatherSubTab(payload.subTab);
       if (payload?.currencySubTab) setCurrencySubTab(payload.currencySubTab);
+    }).on("broadcast", { event: "rotate" }, ({ payload }: any) => {
+      if (payload && typeof payload.angle === "number") setScreenRotation(payload.angle);
     }).subscribe();
     rtDrawChannelRef.current = ch;
     return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
