@@ -761,12 +761,12 @@ export default function CenarioInterativoPage() {
   /* ─── Fetch current program + sponsor logos ─── */
   useEffect(() => {
     if (!user?.id) return;
-    const now = new Date();
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-    const today = dayNames[now.getDay()];
-    const nowTime = now.toTimeString().slice(0, 5);
+    const load = async () => {
+      const now = new Date();
+      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+      const today = dayNames[now.getDay()];
+      const nowTime = now.toTimeString().slice(0, 5);
 
-    (async () => {
       const { data: progs } = await supabase
         .from("programas")
         .select("id, nome, horario_inicio, horario_fim, dias_semana, selo, apresentador_id, apresentadores_ids")
@@ -798,7 +798,10 @@ export default function CenarioInterativoPage() {
         setCurrentProgram(null);
         setSponsorLogos([]);
       }
-    })();
+    };
+    load();
+    const interval = setInterval(load, 15000);
+    return () => clearInterval(interval);
   }, [user?.id]);
 
   /* ─── Load from DB (with local cache fallback) ─── */
