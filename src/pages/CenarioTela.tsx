@@ -351,13 +351,30 @@ export default function CenarioTela() {
     }
   }, []);
 
+  /* Helper: fetch all cenario data via public edge function (no auth needed) */
+  const fetchViaEdgeFunction = useCallback(async (uid: string) => {
+    try {
+      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}`;
+      const resp = await fetch(baseUrl, {
+        headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      });
+      if (!resp.ok) return null;
+      const json = await resp.json();
+      if (!json.ok) return null;
+      return json as { cenario_config: any; currentProgram: any; sponsorLogos: any[] };
+    } catch {
+      return null;
+    }
+  }, []);
+
   /* Load config from DB + subscribe to realtime changes */
   const initialTabLoaded = useRef(false);
+  const isAuthenticated = !!user;
   useEffect(() => {
     if (!effectiveUserId) return;
 
     const applyConfig = (raw: any, fromRealtime = false) => {
-      if (!raw || typeof raw !== "object") return;
+      if (!raw || typeof raw !== "object" || Object.keys(raw).length === 0) return;
       const { _activeTab, _weatherSubTab, _currencySubTab, ...rest } = raw;
       const merged = { ...defaultConfig, ...rest };
       setConfig(merged);
@@ -370,11 +387,23 @@ export default function CenarioTela() {
       } catch { /* silent */ }
     };
 
-    // Initial load
     const load = async () => {
-      const { data } = await supabase.from("user_settings").select("cenario_config" as any).eq("user_id", effectiveUserId).maybeSingle();
-      if ((data as any)?.cenario_config) {
-        applyConfig((data as any).cenario_config);
+      if (isAuthenticated) {
+        const { data } = await supabase.from("user_settings").select("cenario_config" as any).eq("user_id", effectiveUserId).maybeSingle();
+        if ((data as any)?.cenario_config) {
+          applyConfig((data as any).cenario_config);
+        }
+      } else {
+        // Unauthenticated (vMix browser, etc): use edge function
+        const result = await fetchViaEdgeFunction(effectiveUserId);
+        if (result?.cenario_config) applyConfig(result.cenario_config);
+        if (result?.currentProgram) {
+          setCurrentProgram(result.currentProgram);
+          setSponsorLogos(result.sponsorLogos || []);
+        } else {
+          setCurrentProgram(null);
+          setSponsorLogos([]);
+        }
       }
     };
     load();
@@ -400,7 +429,7 @@ export default function CenarioTela() {
       });
 
     return () => { setRealtimeConnected(false); supabase.removeChannel(channel); };
-  }, [effectiveUserId]);
+  }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction]);
 
   /* Keep cache synced */
   useEffect(() => {
@@ -415,28 +444,40 @@ export default function CenarioTela() {
   useEffect(() => {
     if (!effectiveUserId) return;
     const load = async () => {
-      const now = new Date();
-      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-      const today = dayNames[now.getDay()];
-      const nowTime = now.toTimeString().slice(0, 5);
-      const { data: progs } = await supabase.from("programas").select("id, nome, selo, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids").eq("user_id", effectiveUserId).eq("ativo", true);
-      const onAir = progs?.find(p => (p.dias_semana || []).includes(today) && p.horario_inicio <= nowTime && p.horario_fim > nowTime);
-      if (onAir) {
-        let apresentadorNome = "";
-        const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
-        if (apIds.length) {
-          const { data: aps } = await supabase.from("apresentadores").select("nome").in("id", apIds);
-          apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
+      if (isAuthenticated) {
+        const now = new Date();
+        const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const today = dayNames[now.getDay()];
+        const nowTime = now.toTimeString().slice(0, 5);
+        const { data: progs } = await supabase.from("programas").select("id, nome, selo, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids").eq("user_id", effectiveUserId).eq("ativo", true);
+        const onAir = progs?.find(p => (p.dias_semana || []).includes(today) && p.horario_inicio <= nowTime && p.horario_fim > nowTime);
+        if (onAir) {
+          let apresentadorNome = "";
+          const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
+          if (apIds.length) {
+            const { data: aps } = await supabase.from("apresentadores").select("nome").in("id", apIds);
+            apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
+          }
+          setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome });
+          const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", effectiveUserId).eq("ativo", true).eq("excluido", false);
+          setSponsorLogos(logos || []);
+        } else { setCurrentProgram(null); setSponsorLogos([]); }
+      } else {
+        // Unauthenticated: use edge function for program data
+        const result = await fetchViaEdgeFunction(effectiveUserId);
+        if (result?.currentProgram) {
+          setCurrentProgram(result.currentProgram);
+          setSponsorLogos(result.sponsorLogos || []);
+        } else {
+          setCurrentProgram(null);
+          setSponsorLogos([]);
         }
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome });
-        const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", effectiveUserId).eq("ativo", true).eq("excluido", false);
-        setSponsorLogos(logos || []);
-      } else { setCurrentProgram(null); setSponsorLogos([]); }
+      }
     };
     load();
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
-  }, [effectiveUserId]);
+  }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction]);
 
   /* Fetch weather */
   const weatherCity = config.weather.city || config.city;
