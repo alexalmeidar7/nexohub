@@ -876,6 +876,54 @@ export default function CenarioInterativoPage() {
                 </div>
 
                 <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
+
+                {/* Gradient background options */}
+                <div className="rounded-lg p-3 space-y-3" style={{ background: subTabBg }}>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <Palette size={12} /> Fundo em degradê
+                    </Label>
+                    <Switch checked={!!config.home.bgGradient} onCheckedChange={v => updateHome({ bgGradient: v })} />
+                  </div>
+                  {config.home.bgGradient && (
+                    <div className="space-y-3 pt-1">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Cor A</Label>
+                          <div className="flex items-center gap-2">
+                            <input type="color" value={config.home.bgGradientColorA || "#1a1a2e"} onChange={e => updateHome({ bgGradientColorA: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 p-0" />
+                            <Input value={config.home.bgGradientColorA || "#1a1a2e"} onChange={e => updateHome({ bgGradientColorA: e.target.value })} className="h-7 text-xs flex-1" />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Cor B</Label>
+                          <div className="flex items-center gap-2">
+                            <input type="color" value={config.home.bgGradientColorB || "#16213e"} onChange={e => updateHome({ bgGradientColorB: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 p-0" />
+                            <Input value={config.home.bgGradientColorB || "#16213e"} onChange={e => updateHome({ bgGradientColorB: e.target.value })} className="h-7 text-xs flex-1" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Tipo</Label>
+                          <Select value={config.home.bgGradientType || "linear"} onValueChange={(v: "linear" | "radial") => updateHome({ bgGradientType: v })}>
+                            <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="linear">Linear</SelectItem>
+                              <SelectItem value="radial">Circular (Radial)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Ângulo ({config.home.bgGradientAngle ?? 135}°)</Label>
+                          <Slider value={[config.home.bgGradientAngle ?? 135]} onValueChange={([v]) => updateHome({ bgGradientAngle: v })} min={0} max={360} step={1} disabled={(config.home.bgGradientType || "linear") === "radial"} />
+                        </div>
+                      </div>
+                      {/* Mini preview */}
+                      <div className="w-full h-10 rounded-md border" style={{ background: buildHomeGradient(config.home) }} />
+                    </div>
+                  )}
+                </div>
               </TabsContent>
 
               {/* ═══ Weather ═══ */}
