@@ -682,7 +682,12 @@ export default function CenarioTela() {
 
   /* Listen for sync messages from config page via BroadcastChannel */
   useEffect(() => {
-    const bc = new BroadcastChannel("cenario-interativo");
+    // BroadcastChannel may not be available in vMix's embedded browser
+    if (typeof BroadcastChannel === "undefined") return;
+    let bc: BroadcastChannel;
+    try {
+      bc = new BroadcastChannel("cenario-interativo");
+    } catch { return; }
     cenarioBcDrawRef.current = bc;
     bc.onmessage = (ev) => {
       if (ev.data?.type === "ping") {
@@ -693,11 +698,9 @@ export default function CenarioTela() {
         if (ev.data.subTab) setWeatherSubTab(ev.data.subTab);
         if (ev.data.currencySubTab) setCurrencySubTab(ev.data.currencySubTab);
       }
-
       if (ev.data?.type === "config-update" && ev.data.config && typeof ev.data.config === "object") {
         setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
       }
-
       if (ev.data?.type === "full-state") {
         if (ev.data.tab) setActiveTab(ev.data.tab);
         if (ev.data.subTab) setWeatherSubTab(ev.data.subTab);
@@ -706,7 +709,6 @@ export default function CenarioTela() {
           setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
         }
       }
-
       if (ev.data?.type === "draw") {
         const canvas = canvasRef.current;
         if (canvas) {
@@ -736,9 +738,8 @@ export default function CenarioTela() {
         }
       }
     };
-    // Request current state from the config page
     bc.postMessage({ type: "request-state" });
-    return () => { cenarioBcDrawRef.current = null; bc.close(); };
+    return () => { cenarioBcDrawRef.current = null; try { bc.close(); } catch {} };
   }, [drawOnCanvas]);
 
   const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
