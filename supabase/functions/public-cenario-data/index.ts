@@ -127,6 +127,7 @@ Deno.serve(async (req) => {
         horario_inicio: onAir.horario_inicio,
         horario_fim: onAir.horario_fim,
         apresentador: apresentadorNome,
+        tipo_programa: onAir.tipo_programa || null,
       };
 
       const { data: logos } = await supabase
