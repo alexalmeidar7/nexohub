@@ -276,10 +276,26 @@ export default function CenarioInterativoPage() {
   const [previewDrawColor, setPreviewDrawColor] = useState("#e1f532");
   const [previewDrawWidth, setPreviewDrawWidth] = useState(3);
   const [showPreviewDrawOptions, setShowPreviewDrawOptions] = useState(false);
+  const [previewDrawMode, setPreviewDrawMode] = useState<"pen" | "eraser" | "shape">("pen");
+  const [showShapesPanel, setShowShapesPanel] = useState(false);
+  const [selectedShape, setSelectedShape] = useState<string | null>(null);
+  const [shapeStartPos, setShapeStartPos] = useState<{ px: number; py: number } | null>(null);
+  const drawHistoryRef = useRef<ImageData[]>([]);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const previewIsDrawingRef = useRef(false);
   const PREV_DRAW_COLORS = ["#e1f532", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
   const PREV_DRAW_WIDTHS = [2, 4, 8, 14];
+  const SHAPE_OPTIONS = [
+    { id: "arrow-up", icon: ArrowUp, label: "Seta ↑" },
+    { id: "arrow-right", icon: ArrowRight, label: "Seta →" },
+    { id: "arrow-down", icon: ArrowDown, label: "Seta ↓" },
+    { id: "arrow-left", icon: ArrowLeft, label: "Seta ←" },
+    { id: "square", icon: Square, label: "Quadrado" },
+    { id: "circle", icon: Circle, label: "Círculo" },
+    { id: "triangle", icon: Triangle, label: "Triângulo" },
+    { id: "star", icon: Star, label: "Estrela" },
+    { id: "diamond", icon: Diamond, label: "Losango" },
+  ];
 
   const getPreviewCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
