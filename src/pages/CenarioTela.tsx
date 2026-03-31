@@ -983,8 +983,8 @@ export default function CenarioTela() {
                                 <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain" style={{ position: "absolute", top: "10%", left: "10%", width: "80%", height: "80%" }} />
                               </div>
                             ) : (
-                              <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)" }}>
-                                <div className="font-black text-center text-white" style={{ fontSize: `4${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
+                              <div className="flex items-center justify-center" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)", position: "relative" }}>
+                                <div className="font-black text-center text-white" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: `4${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
                               </div>
                             )}
                             {musicData && (
