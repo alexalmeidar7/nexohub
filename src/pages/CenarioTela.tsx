@@ -434,7 +434,7 @@ export default function CenarioTela() {
       } else { setCurrentProgram(null); setSponsorLogos([]); }
     };
     load();
-    const interval = setInterval(load, 30000);
+    const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
   }, [effectiveUserId]);
 
@@ -486,12 +486,12 @@ export default function CenarioTela() {
     return () => clearTimeout(t);
   }, [config.traffic.enabled, trafficCity, config.traffic.lat, config.traffic.lon]);
 
-  /* ─── Music polling from localStorage ─── */
+  /* ─── Music polling from localStorage + DB fallback ─── */
   useEffect(() => {
-    const poll = () => {
+    const pollLocal = () => {
       try {
         const raw = localStorage.getItem("masterview_music_data");
-        if (!raw) return;
+        if (!raw) return false;
         const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string };
         const key = `${d.titulo || ""}|${d.artista || ""}`;
         if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
@@ -499,12 +499,34 @@ export default function CenarioTela() {
           setMusicData({ titulo: d.titulo || "", artista: d.artista || "", capa: d.capa || "" });
           setMusicKey(k => k + 1);
         }
+        return !!(d.titulo && d.titulo !== "Sem título");
+      } catch { return false; }
+    };
+
+    const pollDb = async () => {
+      if (!effectiveUserId) return;
+      try {
+        const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", effectiveUserId).order("created_at", { ascending: false }).limit(1);
+        if (data?.[0]) {
+          const d = data[0];
+          const key = `${d.musica}|${d.artista}`;
+          if (key !== prevMusicRef.current && d.musica && d.musica !== "Sem título") {
+            prevMusicRef.current = key;
+            setMusicData({ titulo: d.musica, artista: d.artista, capa: "" });
+            setMusicKey(k => k + 1);
+          }
+        }
       } catch { /* silent */ }
     };
+
+    const poll = async () => {
+      const hasLocal = pollLocal();
+      if (!hasLocal) await pollDb();
+    };
     poll();
-    const interval = setInterval(poll, 2000);
+    const interval = setInterval(poll, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [effectiveUserId]);
 
   /* Listen for sync messages from config page via BroadcastChannel */
   useEffect(() => {
