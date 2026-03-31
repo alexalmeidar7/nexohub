@@ -1624,6 +1624,7 @@ export default function CenarioInterativoPage() {
                     </>
                   )}
                 </div>
+                </div>
 
                 {/* ── Content area with bg image ── */}
                 <div className="flex-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "transparent" : (activeTab === "home" && config.home.bgGradient ? buildHomeGradient(config.home) : "#e8e8e8"), zIndex: 1 }}>
