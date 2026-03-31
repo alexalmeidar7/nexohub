@@ -1715,30 +1715,67 @@ export default function CenarioInterativoPage() {
                           </div>
                         </div>
 
-                        {/* CENTER: Music card */}
+                        {/* CENTER: Music card or Jornalístico logo */}
                         <div className="flex-1 flex flex-col items-center justify-center" style={{ overflow: "hidden" }}>
-                          {musicData && (
-                            <div key={musicKey} className="flex flex-col items-center" style={{ width: "85%", padding: "6px 8px 8px", borderRadius: 10, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(16px)", border: "1.5px solid rgba(225,245,50,0.15)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                              {musicData.capa ? (
-                                <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5 }} />
-                              ) : (
-                                <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5, background: "rgba(255,255,255,0.08)" }}>
-                                  <Music size={28} style={{ opacity: 0.3, color: "#fff" }} />
+                          {(() => {
+                            const isJornalistico = currentProgram?.tipo_programa?.toLowerCase().includes("jornal");
+                            if (isJornalistico && currentProgram) {
+                              return (
+                                <div key={`jornal-${currentProgram.id}`} className="flex flex-col items-center" style={{ width: "85%", padding: "6px 8px 8px", borderRadius: 10, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(16px)", border: "1.5px solid rgba(225,245,50,0.15)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                                  {currentProgram.selo ? (
+                                    <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5, background: "rgba(0,0,0,0.3)", overflow: "hidden" }}>
+                                      <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain" style={{ maxWidth: "80%", maxHeight: "80%" }} />
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5, background: "rgba(255,255,255,0.08)" }}>
+                                      <div className="font-black text-center text-white" style={{ fontSize: 14, lineHeight: 1.1 }}>{currentProgram.nome}</div>
+                                    </div>
+                                  )}
+                                  {musicData && (
+                                    <>
+                                      <div className="flex items-center self-start gap-1" style={{ maxWidth: "100%" }}>
+                                        <Play size={10} style={{ color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 4px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
+                                        <div style={{ overflow: "hidden", minWidth: 0 }}>
+                                          <div className="font-black uppercase truncate text-white" style={{ fontSize: 9, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
+                                          <div className="font-bold uppercase truncate" style={{ fontSize: 7, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
+                                        </div>
+                                      </div>
+                                      <div style={{ width: "100%", height: 2, marginTop: 5, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
+                                        <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: 2, background: "#e1f532", transition: "width 1s linear" }} />
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
-                              )}
-                              <div className="flex items-center self-start gap-1" style={{ maxWidth: "100%" }}>
-                                <Play size={10} style={{ color: "#e1f532", flexShrink: 0, fill: "#e1f532" }} />
-                                <div style={{ overflow: "hidden", minWidth: 0 }}>
-                                  <div className="font-black uppercase truncate" style={{ fontSize: 9, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
-                                  <div className="font-bold uppercase truncate" style={{ fontSize: 7, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
+                              );
+                            }
+
+                            if (musicData) {
+                              return (
+                                <div key={musicKey} className="flex flex-col items-center" style={{ width: "85%", padding: "6px 8px 8px", borderRadius: 10, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(16px)", border: "1.5px solid rgba(225,245,50,0.15)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                                  {musicData.capa ? (
+                                    <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5 }} />
+                                  ) : (
+                                    <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5, background: "rgba(255,255,255,0.08)" }}>
+                                      <Music size={28} style={{ opacity: 0.3, color: "#fff" }} />
+                                    </div>
+                                  )}
+                                  <div className="flex items-center self-start gap-1" style={{ maxWidth: "100%" }}>
+                                    <Play size={10} style={{ color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 4px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
+                                    <div style={{ overflow: "hidden", minWidth: 0 }}>
+                                      <div className="font-black uppercase truncate" style={{ fontSize: 9, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
+                                      <div className="font-bold uppercase truncate" style={{ fontSize: 7, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
+                                    </div>
+                                  </div>
+                                  <div style={{ width: "100%", height: 2, marginTop: 5, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
+                                    <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: 2, background: "#e1f532", transition: "width 1s linear" }} />
+                                  </div>
                                 </div>
-                              </div>
-                              <div style={{ width: "100%", height: 2, marginTop: 5, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
-                                <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: 2, background: "#e1f532", transition: "width 1s linear" }} />
-                              </div>
-                            </div>
-                          )}
-                          {!musicData && !currentProgram && <div className="text-[9px] opacity-40" style={{ color: "#fff" }}>Nenhum programa no ar</div>}
+                              );
+                            }
+
+                            if (!currentProgram) return <div className="text-[9px] opacity-40" style={{ color: "#fff" }}>Nenhum programa no ar</div>;
+                            return null;
+                          })()}
                         </div>
 
                         {/* BOTTOM: Program logo + presenter + schedule */}
