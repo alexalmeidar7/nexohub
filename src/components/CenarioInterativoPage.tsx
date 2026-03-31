@@ -727,7 +727,7 @@ export default function CenarioInterativoPage() {
       } catch {}
     }, 2000);
     return () => clearInterval(poll);
-
+  }, []);
   /* ─── Fetch live currencies ─── */
   useEffect(() => {
     if (!config.currency.enabled || !config.currency.currencies.length) return;
