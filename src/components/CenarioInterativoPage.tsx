@@ -769,7 +769,7 @@ export default function CenarioInterativoPage() {
     (async () => {
       const { data: progs } = await supabase
         .from("programas")
-        .select("id, nome, horario_inicio, horario_fim, dias_semana, selo")
+        .select("id, nome, horario_inicio, horario_fim, dias_semana, selo, apresentador_id, apresentadores_ids")
         .eq("user_id", user.id)
         .eq("ativo", true);
 
@@ -779,7 +779,13 @@ export default function CenarioInterativoPage() {
       });
 
       if (onAir) {
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim });
+        let apresentadorNome = "";
+        const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
+        if (apIds.length) {
+          const { data: aps } = await supabase.from("apresentadores").select("nome").in("id", apIds);
+          apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
+        }
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
           .select("id, nome, logo_url")
