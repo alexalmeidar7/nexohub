@@ -629,16 +629,15 @@ export default function CenarioTela() {
 
   /* ─── Music polling from localStorage + DB fallback ─── */
   useEffect(() => {
-    const setMusicWithCoverFallback = async (titulo: string, artista: string, capa: string) => {
+    const setMusicWithCoverFallback = async (titulo: string, artista: string, capa: string, duracao?: number) => {
       const key = `${titulo}|${artista}`;
       if (key === prevMusicRef.current) return;
       prevMusicRef.current = key;
-      // If no cover, try iTunes client-side
       let finalCapa = capa;
       if (!finalCapa) {
         finalCapa = await fetchItunesCover(titulo, artista);
       }
-      setMusicData({ titulo, artista, capa: finalCapa });
+      setMusicData({ titulo, artista, capa: finalCapa, duracao });
       musicStartRef.current = Date.now();
       setMusicElapsed(0);
       setMusicKey(k => k + 1);
