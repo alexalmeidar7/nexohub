@@ -165,9 +165,11 @@ export default function CenarioTela() {
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
   const [satelliteZoom, setSatelliteZoom] = useState(6);
-  const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+  const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string; duracao?: number } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const prevMusicRef = useRef("");
+  const musicStartRef = useRef<number>(Date.now());
+  const [musicElapsed, setMusicElapsed] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
 
 
