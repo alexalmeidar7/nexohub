@@ -1118,9 +1118,9 @@ export default function CenarioTela() {
                   </div>
 
                   {/* SYNC status below progress bar */}
-                  <div className="flex items-center justify-center flex-shrink-0" style={{ gap: `0.4${vu}`, marginTop: `0.4${vu}`, opacity: 0.5 }}>
-                    <div className="rounded-full" style={{ width: `0.6${vu}`, height: `0.6${vu}`, background: realtimeConnected ? "#4ade80" : "#ef4444" }} />
-                    <span className="text-white font-medium" style={{ fontSize: `0.9${vu}` }}>
+                  <div className="flex items-center justify-center flex-shrink-0" style={{ gap: `0.5${vu}`, marginTop: `0.5${vu}`, opacity: 0.7 }}>
+                    <div className="rounded-full" style={{ width: `0.8${vu}`, height: `0.8${vu}`, background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 4px #4ade80" : "0 0 4px #ef4444" }} />
+                    <span className="text-white font-semibold uppercase tracking-wider" style={{ fontSize: `1.1${vu}` }}>
                       {realtimeConnected ? "SYNC" : "OFF"}
                     </span>
                   </div>
