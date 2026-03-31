@@ -728,13 +728,13 @@ export default function CenarioTela() {
 
           {/* Clock + date — floating top-left above sidebar */}
           {activeTab === "home" && (
-            <div className="absolute flex items-center gap-[1vh]" style={{ top: "1.5vh", left: "1.5vh", zIndex: 15, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-              <Clock style={{ width: "2vh", height: "2vh", opacity: 0.7, color: "#fff" }} />
+            <div className="absolute flex items-center" style={{ top: `1.5${vu}`, left: `1.5${vu}`, gap: `1${vu}`, zIndex: 15, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+              <Clock style={{ width: `2${vu}`, height: `2${vu}`, opacity: 0.7, color: "#fff" }} />
               <div>
-                <span className="font-bold" style={{ fontSize: "2.8vh", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", color: "#fff" }}>
+                <span className="font-bold" style={{ fontSize: `2.8${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", color: "#fff" }}>
                   {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                 </span>
-                <div className="opacity-70" style={{ fontSize: "1.2vh", color: "#fff" }}>
+                <div className="opacity-70" style={{ fontSize: `1.2${vu}`, color: "#fff" }}>
                   {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
                 </div>
               </div>
