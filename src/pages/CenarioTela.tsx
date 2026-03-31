@@ -664,9 +664,19 @@ export default function CenarioTela() {
 
   const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
 
+  const isLandscape = screenRotation === 90 || screenRotation === 270;
+
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center">
-      <div className="relative h-full" style={{ aspectRatio: "9/16", maxHeight: "100vh", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }}>
+    <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
+      <div
+        className="relative"
+        style={{
+          ...(isLandscape
+            ? { width: "100vh", height: "100vw", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
+            : { height: "100vh", aspectRatio: "9/16", maxHeight: "100vh", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
+          ),
+        }}
+      >
         <div className="absolute inset-0 flex" style={{ fontSize: "1.8vh" }}>
 
           {/* Fullscreen background layers behind sidebar */}

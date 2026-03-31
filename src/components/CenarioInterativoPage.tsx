@@ -1518,7 +1518,7 @@ export default function CenarioInterativoPage() {
                 <button
                   onClick={() => {
                     setExternalRotation(prev => {
-                      const val = (prev + 45) % 360;
+                      const val = (prev + 90) % 360;
                       cenarioBcRef.current?.postMessage({ type: "rotate", angle: val });
                       rtDrawChannelRef.current?.send({ type: "broadcast", event: "rotate", payload: { angle: val } });
                       return val;
@@ -1527,7 +1527,7 @@ export default function CenarioInterativoPage() {
                   className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
                   style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
                 >
-                  <RotateCw size={11} /> Rotacionar 45°
+                  <RotateCw size={11} /> Rotacionar 90°
                 </button>
               </div>
             </div>
