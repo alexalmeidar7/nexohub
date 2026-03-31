@@ -1026,7 +1026,7 @@ export default function CenarioTela() {
 
               // ── PORTRAIT (original vertical layout) ──
               return (
-                <div className="absolute inset-0 flex flex-col" style={{ padding: `2${vu} 3${vu} 1.5${vu} 3${vu}`, color: "#fff" }}>
+                <div className="absolute inset-0 flex flex-col" style={{ padding: `2${vu} 2${vu} 1.5${vu} 2${vu}`, color: "#fff" }}>
 
                   {/* TOP ROW: Clock + Date (left) / Next program (right) */}
                   <div className="flex justify-between items-start flex-shrink-0" style={{ zIndex: 2, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
@@ -1353,16 +1353,11 @@ export default function CenarioTela() {
           )}
 
           {/* Realtime connection indicator */}
-          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.6)", WebkitBackdropFilter: "blur(8px)", backdropFilter: "blur(8px)", zIndex: 50, fontSize: "1vh" }}>
-            <div className="rounded-full" style={{ width: "0.8vh", height: "0.8vh", background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 6px #4ade80" : "0 0 6px #ef4444", animation: realtimeConnected ? "cenario-active-blink 2s ease-in-out infinite" : "none" }} />
-            <span className="text-white/60 font-medium" style={{ fontSize: "0.9vh" }}>
+          <div className="absolute left-1/2 flex items-center gap-1" style={{ bottom: "0.4vh", transform: "translateX(-50%)", zIndex: 50, opacity: 0.4 }}>
+            <div className="rounded-full" style={{ width: "0.5vh", height: "0.5vh", background: realtimeConnected ? "#4ade80" : "#ef4444" }} />
+            <span className="text-white font-medium" style={{ fontSize: "0.7vh" }}>
               {realtimeConnected ? "SYNC" : "OFF"}
             </span>
-            {lastSyncTime && realtimeConnected && (
-              <span className="text-white/30" style={{ fontSize: "0.8vh" }}>
-                {lastSyncTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-              </span>
-            )}
           </div>
 
           {/* "Telas Conectadas" notification */}
