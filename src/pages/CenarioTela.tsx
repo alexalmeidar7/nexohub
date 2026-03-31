@@ -165,9 +165,11 @@ export default function CenarioTela() {
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
   const [satelliteZoom, setSatelliteZoom] = useState(6);
-  const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+  const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string; duracao?: number } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const prevMusicRef = useRef("");
+  const musicStartRef = useRef<number>(Date.now());
+  const [musicElapsed, setMusicElapsed] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
 
 
@@ -368,6 +370,15 @@ export default function CenarioTela() {
     const t = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  /* Music elapsed time ticker */
+  useEffect(() => {
+    if (!musicData) return;
+    const t = setInterval(() => {
+      setMusicElapsed(Math.floor((Date.now() - musicStartRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [musicData, musicKey]);
 
   /* Load cached config first (works even without auth token in new tab) */
   useEffect(() => {
@@ -618,16 +629,17 @@ export default function CenarioTela() {
 
   /* ─── Music polling from localStorage + DB fallback ─── */
   useEffect(() => {
-    const setMusicWithCoverFallback = async (titulo: string, artista: string, capa: string) => {
+    const setMusicWithCoverFallback = async (titulo: string, artista: string, capa: string, duracao?: number) => {
       const key = `${titulo}|${artista}`;
       if (key === prevMusicRef.current) return;
       prevMusicRef.current = key;
-      // If no cover, try iTunes client-side
       let finalCapa = capa;
       if (!finalCapa) {
         finalCapa = await fetchItunesCover(titulo, artista);
       }
-      setMusicData({ titulo, artista, capa: finalCapa });
+      setMusicData({ titulo, artista, capa: finalCapa, duracao });
+      musicStartRef.current = Date.now();
+      setMusicElapsed(0);
       setMusicKey(k => k + 1);
     };
 
@@ -635,10 +647,10 @@ export default function CenarioTela() {
       try {
         const raw = localStorage.getItem("masterview_music_data");
         if (!raw) return false;
-        const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string };
+        const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
         const key = `${d.titulo || ""}|${d.artista || ""}`;
         if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
-          setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "");
+          setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao);
         }
         return !!(d.titulo && d.titulo !== "Sem título");
       } catch { return false; }
@@ -972,10 +984,23 @@ export default function CenarioTela() {
                             <div className="font-bold uppercase truncate" style={{ fontSize: `1.5${vu}`, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
                           </div>
                         </div>
-                        {/* Progress bar */}
-                        <div style={{ width: "100%", height: `0.4${vu}`, marginTop: `1.2${vu}`, borderRadius: `1${vu}`, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
-                          <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 6px rgba(225,245,50,0.4)" }} />
-                        </div>
+                        {/* Music elapsed progress bar */}
+                        {(() => {
+                          const dur = musicData.duracao || 240; // fallback 4min
+                          const pct = Math.min(100, (musicElapsed / dur) * 100);
+                          const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+                          return (
+                            <>
+                              <div className="flex justify-between w-full opacity-60" style={{ fontSize: `0.9${vu}`, marginTop: `0.8${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                                <span>{fmtTime(musicElapsed)}</span>
+                                <span>{fmtTime(dur)}</span>
+                              </div>
+                              <div style={{ width: "100%", height: `0.4${vu}`, marginTop: `0.3${vu}`, borderRadius: `1${vu}`, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
+                                <div style={{ width: `${pct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 6px rgba(225,245,50,0.4)" }} />
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     )}
                     {!musicData && !currentProgram && (
