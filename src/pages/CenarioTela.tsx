@@ -419,7 +419,7 @@ export default function CenarioTela() {
       if (!resp.ok) return null;
       const json = await resp.json();
       if (!json.ok) return null;
-      return json as { cenario_config: any; currentProgram: any; nextProgram?: any; sponsorLogos: any[]; musicData?: { titulo: string; artista: string; capa: string } | null };
+      return json as { cenario_config: any; currentProgram: any; nextProgram?: any; sponsorLogos: any[]; musicData?: { titulo: string; artista: string; capa: string } | null; musicStartTime?: number | null };
     } catch {
       return null;
     }
@@ -513,7 +513,7 @@ export default function CenarioTela() {
           setSponsorLogos(result.sponsorLogos || []);
           setNextProgram(result.nextProgram || null);
         }
-        if (result?.musicData) setMusicData(result.musicData);
+        // Music is handled by the dedicated music polling effect — don't set here to avoid conflicts
       }, 2000);
     }
 
@@ -633,9 +633,9 @@ export default function CenarioTela() {
     return "";
   }, []);
 
-  /* ─── Music polling from localStorage + DB fallback ─── */
+  /* ─── Music polling from localStorage + DB (single source of truth) ─── */
   useEffect(() => {
-    const setMusicWithCoverFallback = async (titulo: string, artista: string, capa: string, duracao?: number) => {
+    const setMusicWithCoverFallback = async (titulo: string, artista: string, capa: string, duracao?: number, startTime?: number | null) => {
       const key = `${titulo}|${artista}`;
       if (key === prevMusicRef.current) return;
       prevMusicRef.current = key;
@@ -644,8 +644,9 @@ export default function CenarioTela() {
         finalCapa = await fetchItunesCover(titulo, artista);
       }
       setMusicData({ titulo, artista, capa: finalCapa, duracao });
-      musicStartRef.current = Date.now();
-      setMusicElapsed(0);
+      // Use synced start time from DB when available for cross-device accuracy
+      musicStartRef.current = startTime || Date.now();
+      setMusicElapsed(startTime ? Math.floor((Date.now() - startTime) / 1000) : 0);
       setMusicKey(k => k + 1);
     };
 
@@ -656,7 +657,10 @@ export default function CenarioTela() {
         const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
         const key = `${d.titulo || ""}|${d.artista || ""}`;
         if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
-          setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao);
+          // Read synced start time from localStorage (set by useGlobalMusicSync)
+          const startRaw = localStorage.getItem("masterview_music_start");
+          const startTime = startRaw ? parseInt(startRaw, 10) : null;
+          setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
         }
         return !!(d.titulo && d.titulo !== "Sem título");
       } catch { return false; }
@@ -669,21 +673,36 @@ export default function CenarioTela() {
         if (result?.musicData) {
           const d = result.musicData;
           if (d.titulo && d.titulo !== "Sem título") {
-            await setMusicWithCoverFallback(d.titulo, d.artista, d.capa || "");
+            await setMusicWithCoverFallback(d.titulo, d.artista, d.capa || "", undefined, result.musicStartTime);
           }
         }
       } catch { /* silent */ }
     };
 
-    const pollDb = async () => {
+    const pollDbDashboard = async () => {
       if (!effectiveUserId) return;
       try {
+        // Read from dashboard_items (single source of truth set by useGlobalMusicSync)
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("dashboard_items")
+          .eq("user_id", effectiveUserId)
+          .maybeSingle();
+        const items = (settings?.dashboard_items as Record<string, any>) || {};
+        if (items.music_current_title && items.music_current_title !== "Sem título") {
+          await setMusicWithCoverFallback(
+            items.music_current_title,
+            items.music_current_artist || "",
+            "",
+            undefined,
+            items.music_start_time || null
+          );
+          return;
+        }
+        // Fallback: last played from history
         const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", effectiveUserId).order("created_at", { ascending: false }).limit(1);
-        if (data?.[0]) {
-          const d = data[0];
-          if (d.musica && d.musica !== "Sem título") {
-            await setMusicWithCoverFallback(d.musica, d.artista, "");
-          }
+        if (data?.[0]?.musica && data[0].musica !== "Sem título") {
+          await setMusicWithCoverFallback(data[0].musica, data[0].artista, "");
         }
       } catch { /* silent */ }
     };
@@ -694,12 +713,13 @@ export default function CenarioTela() {
         if (!isAuthenticated) {
           await pollEdgeFunction();
         } else {
-          await pollDb();
+          await pollDbDashboard();
         }
       }
     };
     poll();
-    const interval = setInterval(poll, 3000);
+    // Poll every 1.5s for tighter sync
+    const interval = setInterval(poll, 1500);
     return () => clearInterval(interval);
   }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction, fetchItunesCover]);
 

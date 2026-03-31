@@ -34,7 +34,6 @@ function decodeHtmlEntities(value: string): string {
 
 function decodeXmlBuffer(buffer: ArrayBuffer, contentType: string): string {
   const utf8 = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
-  // Try declared encoding
   const charsetMatch = contentType.match(/charset=([^\s;]+)/i);
   if (charsetMatch) {
     try {
@@ -60,9 +59,8 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const userId = url.searchParams.get("uid");
-    // Client passes local time info to avoid UTC mismatch
-    const clientDay = url.searchParams.get("day"); // e.g. "Segunda"
-    const clientTime = url.searchParams.get("time"); // e.g. "22:15"
+    const clientDay = url.searchParams.get("day");
+    const clientTime = url.searchParams.get("time");
 
     if (!userId) {
       return new Response(JSON.stringify({ ok: false, error: "uid required" }), {
@@ -74,14 +72,13 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Fetch cenario config + music XML URL
+    // Fetch cenario config + music XML URL + dashboard_items (contains synced music)
     const { data: settings } = await supabase
       .from("user_settings")
-      .select("cenario_config, music_xml_url")
+      .select("cenario_config, music_xml_url, dashboard_items")
       .eq("user_id", userId)
       .maybeSingle();
 
-    // Use client-provided day/time or fallback to UTC
     const now = new Date();
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const today = clientDay || dayNames[now.getDay()];
@@ -141,29 +138,44 @@ Deno.serve(async (req) => {
       sponsorLogos = logos || [];
     }
 
-    // Fetch music data from XML URL or DB fallback
+    // ─── Music data: prefer dashboard_items (synced by useGlobalMusicSync) ───
     let musicData: { titulo: string; artista: string; capa: string } | null = null;
-    const xmlUrl = (settings as any)?.music_xml_url;
-    if (xmlUrl) {
-      try {
-        const xmlResp = await fetch(xmlUrl, {
-          headers: { "User-Agent": "Mozilla/5.0 (compatible; MusicMonitor/1.0)", Accept: "application/xml, text/xml, */*" },
-          signal: AbortSignal.timeout(5000),
-        });
-        const buffer = await xmlResp.arrayBuffer();
-        const text = decodeXmlBuffer(buffer, xmlResp.headers.get("content-type") || "");
+    let musicStartTime: number | null = null;
 
-        const titulo = decodeHtmlEntities(extractTag(text, "nome_musica", "titulo", "title")).trim();
-        const artista = decodeHtmlEntities(extractTag(text, "interprete", "nome_interprete", "artista", "artist")).trim();
-        const capa = extractTag(text, "capa", "cover", "album_art", "artwork", "imagem").trim();
-
-        if (titulo && titulo !== "Sem título") {
-          musicData = { titulo, artista, capa };
-        }
-      } catch { /* silent */ }
+    const dashItems = (settings as any)?.dashboard_items as Record<string, any> | null;
+    if (dashItems?.music_current_title && dashItems.music_current_title !== "Sem título") {
+      musicData = {
+        titulo: dashItems.music_current_title,
+        artista: dashItems.music_current_artist || "",
+        capa: "", // cover will be fetched client-side
+      };
+      musicStartTime = dashItems.music_start_time || null;
     }
 
-    // Fallback: get last played from musicas_tocadas + try iTunes cover
+    // Fallback: fetch XML directly if dashboard_items has no music
+    if (!musicData) {
+      const xmlUrl = (settings as any)?.music_xml_url;
+      if (xmlUrl) {
+        try {
+          const xmlResp = await fetch(xmlUrl, {
+            headers: { "User-Agent": "Mozilla/5.0 (compatible; MusicMonitor/1.0)", Accept: "application/xml, text/xml, */*" },
+            signal: AbortSignal.timeout(5000),
+          });
+          const buffer = await xmlResp.arrayBuffer();
+          const text = decodeXmlBuffer(buffer, xmlResp.headers.get("content-type") || "");
+
+          const titulo = decodeHtmlEntities(extractTag(text, "nome_musica", "titulo", "title")).trim();
+          const artista = decodeHtmlEntities(extractTag(text, "interprete", "nome_interprete", "artista", "artist")).trim();
+          const capa = extractTag(text, "capa", "cover", "album_art", "artwork", "imagem").trim();
+
+          if (titulo && titulo !== "Sem título") {
+            musicData = { titulo, artista, capa };
+          }
+        } catch { /* silent */ }
+      }
+    }
+
+    // Fallback: get last played from musicas_tocadas
     if (!musicData) {
       try {
         const { data: lastSong } = await supabase
@@ -175,24 +187,12 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (lastSong?.musica && lastSong.musica !== "Sem título") {
-          let capa = "";
-          // Try iTunes API for cover art
-          try {
-            const itunesResp = await fetch(
-              `https://itunes.apple.com/search?term=${encodeURIComponent(`${lastSong.artista} ${lastSong.musica}`)}&media=music&limit=1`,
-              { signal: AbortSignal.timeout(3000) }
-            );
-            const itunesData = await itunesResp.json();
-            if (itunesData?.results?.[0]?.artworkUrl100) {
-              capa = itunesData.results[0].artworkUrl100.replace("100x100", "600x600");
-            }
-          } catch { /* silent */ }
-          musicData = { titulo: lastSong.musica, artista: lastSong.artista || "", capa };
+          musicData = { titulo: lastSong.musica, artista: lastSong.artista || "", capa: "" };
         }
       } catch { /* silent */ }
     }
 
-    // Find next program (same day, starts after current time)
+    // Find next program
     let nextProgram: { nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null = null;
     if (progs) {
       const upcoming = progs
@@ -212,6 +212,7 @@ Deno.serve(async (req) => {
         nextProgram,
         sponsorLogos,
         musicData,
+        musicStartTime,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-cache" },
