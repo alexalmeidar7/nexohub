@@ -1103,7 +1103,7 @@ export default function CenarioTela() {
                       {currentProgram.apresentador && (
                         <div className="font-bold" style={{ fontSize: `2.2${vu}`, marginTop: `0.6${vu}`, textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{currentProgram.apresentador}</div>
                       )}
-                      <div className="opacity-50 font-medium" style={{ fontSize: `1.3${vu}`, marginTop: `0.3${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                      <div className="font-medium" style={{ fontSize: `1.3${vu}`, marginTop: `0.3${vu}`, fontVariantNumeric: "tabular-nums", color: "#000", opacity: 0.7 }}>
                         {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                       </div>
                     </div>
