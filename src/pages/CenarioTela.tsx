@@ -1360,13 +1360,6 @@ export default function CenarioTela() {
             </button>
           )}
 
-          {/* Realtime connection indicator */}
-          <div className="absolute left-1/2 flex items-center gap-1" style={{ bottom: "0.4vh", transform: "translateX(-50%)", zIndex: 50, opacity: 0.4 }}>
-            <div className="rounded-full" style={{ width: "0.5vh", height: "0.5vh", background: realtimeConnected ? "#4ade80" : "#ef4444" }} />
-            <span className="text-white font-medium" style={{ fontSize: "0.7vh" }}>
-              {realtimeConnected ? "SYNC" : "OFF"}
-            </span>
-          </div>
 
           {/* "Telas Conectadas" notification */}
           {showConnectedMsg && (
