@@ -731,8 +731,8 @@ export default function CenarioTela() {
                     </div>
                   </div>
 
-                  {/* Center: Program logo + info */}
-                  <div className="flex-1 flex flex-col items-center justify-center" style={{ gap: "1vh" }}>
+                  {/* Center: Program logo + music */}
+                  <div className="flex-1 flex flex-col items-center justify-center" style={{ gap: "0vh" }}>
                     {currentProgram && (
                       <div className="relative flex flex-col items-center" style={{ animation: "cenario-fade-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
                         <span className="font-bold uppercase tracking-widest" style={{ fontSize: "1.2vh", color: "#e1f532", letterSpacing: "0.3em", marginBottom: "0.5vh", textShadow: "0 0 8px rgba(225,245,50,0.4)" }}>NO AR</span>
@@ -741,7 +741,7 @@ export default function CenarioTela() {
                             src={currentProgram.selo}
                             alt={currentProgram.nome}
                             className="object-contain drop-shadow-lg"
-                            style={{ maxWidth: "60vh", maxHeight: "38vh" }}
+                            style={{ maxWidth: "55vh", maxHeight: "32vh" }}
                           />
                         )}
                       </div>
@@ -784,7 +784,7 @@ export default function CenarioTela() {
                           backdropFilter: "blur(12px)",
                           border: "1px solid rgba(255,255,255,0.12)",
                           maxWidth: "85%",
-                          marginTop: "2vh",
+                          marginTop: "1.5vh",
                           animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
                         }}
                       >
