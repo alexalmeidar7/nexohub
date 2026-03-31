@@ -359,14 +359,18 @@ export default function CenarioTela() {
   /* Helper: fetch all cenario data via public edge function (no auth needed) */
   const fetchViaEdgeFunction = useCallback(async (uid: string) => {
     try {
-      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}`;
+      const now = new Date();
+      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+      const day = dayNames[now.getDay()];
+      const time = now.toTimeString().slice(0, 5);
+      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}&day=${encodeURIComponent(day)}&time=${time}`;
       const resp = await fetch(baseUrl, {
         headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
       });
       if (!resp.ok) return null;
       const json = await resp.json();
       if (!json.ok) return null;
-      return json as { cenario_config: any; currentProgram: any; sponsorLogos: any[] };
+      return json as { cenario_config: any; currentProgram: any; sponsorLogos: any[]; musicData?: { titulo: string; artista: string; capa: string } | null };
     } catch {
       return null;
     }
