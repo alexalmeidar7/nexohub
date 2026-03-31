@@ -331,9 +331,15 @@ export default function CenarioTela() {
     if (!parent) return;
     const resize = () => { canvas.width = parent.clientWidth; canvas.height = parent.clientHeight; };
     resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(parent);
-    return () => ro.disconnect();
+    // ResizeObserver fallback for vMix's older Chromium
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(resize);
+      ro.observe(parent);
+      return () => ro.disconnect();
+    } else {
+      window.addEventListener("resize", resize);
+      return () => window.removeEventListener("resize", resize);
+    }
   }, []);
 
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
@@ -773,7 +779,7 @@ export default function CenarioTela() {
         style={{
           ...(isLandscape
             ? { width: "100vh", height: "100vw", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
-            : { height: "100vh", aspectRatio: "9/16", maxHeight: "100vh", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
+            : { width: "calc(100vh * 9 / 16)", height: "100vh", maxHeight: "100vh", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
           ),
         }}
       >
@@ -973,12 +979,12 @@ export default function CenarioTela() {
                             }}
                           >
                             {currentProgram.selo ? (
-                              <div className="relative flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
-                                <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain" style={{ maxWidth: "80%", maxHeight: "80%" }} />
+                              <div className="relative flex items-center justify-center" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)", position: "relative" }}>
+                                <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain" style={{ position: "absolute", top: "10%", left: "10%", width: "80%", height: "80%" }} />
                               </div>
                             ) : (
-                              <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)" }}>
-                                <div className="font-black text-center text-white" style={{ fontSize: `4${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
+                              <div className="flex items-center justify-center" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)", position: "relative" }}>
+                                <div className="font-black text-center text-white" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: `4${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
                               </div>
                             )}
                             {musicData && (
@@ -1030,13 +1036,13 @@ export default function CenarioTela() {
                             }}
                           >
                             {musicData.capa ? (
-                              <div className="relative" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
-                                <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", height: "100%" }} />
+                            <div className="relative" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
+                                <img src={musicData.capa} alt="" className="object-cover" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} />
                                 <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%, rgba(0,0,0,0.15) 100%)", pointerEvents: "none" }} />
                               </div>
                             ) : (
-                              <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)" }}>
-                                <Music style={{ width: `8${vu}`, height: `8${vu}`, opacity: 0.3, color: "#fff" }} />
+                              <div className="flex items-center justify-center" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)", position: "relative" }}>
+                                <Music style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: `8${vu}`, height: `8${vu}`, opacity: 0.3, color: "#fff" }} />
                               </div>
                             )}
                             <div className="flex items-center self-start" style={{ gap: `1${vu}`, maxWidth: "100%" }}>
