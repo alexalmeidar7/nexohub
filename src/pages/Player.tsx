@@ -51,6 +51,7 @@ import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio } fr
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 
 import { normalizeMusicText } from "@/lib/textEncoding";
+import { mergeUserDashboardItems } from "@/lib/userSettings";
 
 // Dynamic HLS loader — cached after first import
 let hlsModule: typeof import("hls.js") | null = null;
@@ -380,10 +381,7 @@ export default function PlayerPage() {
     localStorage.setItem("nexo_spectrum_style", s);
     // Persist to user_settings if logged in
     if (user) {
-      supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle().then(({ data }) => {
-        const items = (data?.dashboard_items as any) || {};
-        supabase.from("user_settings").upsert({ user_id: user.id, dashboard_items: { ...items, spectrum_style: s } }, { onConflict: "user_id" }).then(() => {});
-      });
+      void mergeUserDashboardItems(user.id, { spectrum_style: s }).catch(() => {});
     }
   }, [user]);
 

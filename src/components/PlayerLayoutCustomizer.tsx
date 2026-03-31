@@ -4,6 +4,7 @@ import { Palette, Save, RotateCcw, Loader2, Monitor, Play, Home, Tv, Film, LogIn
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { mergeUserDashboardItems } from "@/lib/userSettings";
 
 /* ── Background Config ── */
 export type BgType = "solid" | "image" | "gradient";
@@ -650,20 +651,11 @@ export default function PlayerLayoutCustomizer() {
     if (!user) return;
     setSaving(true);
     try {
-      const { data: existing } = await supabase
-        .from("user_settings")
-        .select("dashboard_items")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      await mergeUserDashboardItems(user.id, {
+        player_colors: colors as unknown as Record<string, unknown>,
+        player_bg_configs: bgConfigs as unknown as Record<string, unknown>,
+      });
 
-      const current = (existing?.dashboard_items && typeof existing.dashboard_items === "object") ? { ...(existing.dashboard_items as any) } : {};
-      const payload = { ...current, player_colors: colors, player_bg_configs: bgConfigs };
-
-      const { error } = await supabase
-        .from("user_settings")
-        .upsert([{ user_id: user.id, dashboard_items: payload as any, updated_at: new Date().toISOString() }], { onConflict: "user_id" });
-
-      if (error) throw error;
       toast.success("Cores do Player salvas com sucesso!");
       originalRef.current = colors;
       setHasChanges(false);
@@ -681,14 +673,11 @@ export default function PlayerLayoutCustomizer() {
     if (!user) return;
     setSaving(true);
     try {
-      const { data: existing } = await supabase
-        .from("user_settings")
-        .select("dashboard_items")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      const current = (existing?.dashboard_items && typeof existing.dashboard_items === "object") ? { ...(existing.dashboard_items as any) } : {};
-      const payload = { ...current, player_colors: defaultPlayerColors, player_bg_configs: defaultBgConfigs };
-      await supabase.from("user_settings").upsert([{ user_id: user.id, dashboard_items: payload as any, updated_at: new Date().toISOString() }], { onConflict: "user_id" });
+      await mergeUserDashboardItems(user.id, {
+        player_colors: defaultPlayerColors as unknown as Record<string, unknown>,
+        player_bg_configs: defaultBgConfigs as unknown as Record<string, unknown>,
+      });
+
       toast.success("Cores do Player restauradas ao padrão.");
       originalRef.current = defaultPlayerColors;
       setHasChanges(false);
