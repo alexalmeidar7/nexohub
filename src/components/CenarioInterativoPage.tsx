@@ -464,26 +464,58 @@ export default function CenarioInterativoPage() {
     const canvas = previewCanvasRef.current;
     if (!canvas || !previewDrawActive) return;
     e.preventDefault();
+    saveCanvasState();
     previewIsDrawingRef.current = true;
     const pos = getPreviewCanvasPos(e, canvas);
-    drawOnCanvas(canvas, "start", pos.px, pos.py, previewDrawColor, previewDrawWidth);
+    if (previewDrawMode === "shape" && selectedShape) {
+      setShapeStartPos({ px: pos.px, py: pos.py });
+      return;
+    }
+    if (previewDrawMode === "eraser") {
+      const ctx = canvas.getContext("2d");
+      if (ctx) { ctx.globalCompositeOperation = "destination-out"; }
+    }
+    drawOnCanvas(canvas, "start", pos.px, pos.py, previewDrawMode === "eraser" ? "rgba(0,0,0,1)" : previewDrawColor, previewDrawMode === "eraser" ? 20 : previewDrawWidth);
     sendDraw("start", pos.px, pos.py, previewDrawColor, previewDrawWidth);
-  }, [previewDrawActive, getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas, sendDraw]);
+  }, [previewDrawActive, previewDrawMode, selectedShape, getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas, sendDraw, saveCanvasState]);
 
   const handlePreviewDrawMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = previewCanvasRef.current;
     if (!canvas || !previewIsDrawingRef.current) return;
     e.preventDefault();
+    if (previewDrawMode === "shape" && selectedShape && shapeStartPos) return; // shapes drawn on end
     const pos = getPreviewCanvasPos(e, canvas);
-    drawOnCanvas(canvas, "move", pos.px, pos.py, previewDrawColor, previewDrawWidth);
+    if (previewDrawMode === "eraser") {
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.globalCompositeOperation = "destination-out";
+      drawOnCanvas(canvas, "move", pos.px, pos.py, "rgba(0,0,0,1)", 20);
+    } else {
+      drawOnCanvas(canvas, "move", pos.px, pos.py, previewDrawColor, previewDrawWidth);
+    }
     setPreviewHasDrawing(true);
     sendDraw("move", pos.px, pos.py, previewDrawColor, previewDrawWidth);
-  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas, sendDraw]);
+  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth, previewDrawMode, selectedShape, shapeStartPos, drawOnCanvas, sendDraw]);
 
-  const handlePreviewDrawEnd = useCallback(() => {
+  const handlePreviewDrawEnd = useCallback((e?: React.MouseEvent | React.TouchEvent) => {
+    const canvas = previewCanvasRef.current;
+    if (previewDrawMode === "shape" && selectedShape && shapeStartPos && canvas && e) {
+      const pos = getPreviewCanvasPos(e, canvas);
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.globalCompositeOperation = "source-over";
+      drawShapeOnCanvas(canvas, selectedShape, shapeStartPos.px, shapeStartPos.py, pos.px, pos.py, previewDrawColor, previewDrawWidth);
+      setPreviewHasDrawing(true);
+      setShapeStartPos(null);
+      // broadcast shape
+      cenarioBcRef.current?.postMessage({ type: "draw-shape", shape: selectedShape, startPx: shapeStartPos.px, startPy: shapeStartPos.py, endPx: pos.px, endPy: pos.py, color: previewDrawColor, width: previewDrawWidth });
+      rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw-shape", payload: { shape: selectedShape, startPx: shapeStartPos.px, startPy: shapeStartPos.py, endPx: pos.px, endPy: pos.py, color: previewDrawColor, width: previewDrawWidth } });
+    }
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.globalCompositeOperation = "source-over";
+    }
     previewIsDrawingRef.current = false;
     sendDraw("end", 0, 0, "", 0);
-  }, [sendDraw]);
+  }, [sendDraw, previewDrawMode, selectedShape, shapeStartPos, getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawShapeOnCanvas]);
 
   const clearPreviewDrawing = useCallback(() => {
     const canvas = previewCanvasRef.current;
