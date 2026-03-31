@@ -121,20 +121,33 @@ export default function CenarioTela() {
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
     if (!effectiveUserId) return;
-    const ch = supabase.channel(`cenario-presence-${effectiveUserId}`, { config: { presence: { key: "tela-externa" } } });
-    ch.on("presence", { event: "join" }, ({ key }) => {
-      if (key === "painel-controle" && !presenceShownRef.current) {
-        presenceShownRef.current = true;
-        setShowConnectedMsg(true);
-        setTimeout(() => setShowConnectedMsg(false), 4000);
-      }
-    });
-    ch.subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        await ch.track({ screen: "tela-externa", ts: Date.now() });
-      }
-    });
-    return () => { supabase.removeChannel(ch); };
+    let destroyed = false;
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    const connect = () => {
+      if (destroyed) return;
+      ch = supabase.channel(`cenario-presence-${effectiveUserId}-${Date.now()}`, { config: { presence: { key: "tela-externa" } } });
+      ch.on("presence", { event: "join" }, ({ key }) => {
+        if (key === "painel-controle" && !presenceShownRef.current) {
+          presenceShownRef.current = true;
+          setShowConnectedMsg(true);
+          setTimeout(() => setShowConnectedMsg(false), 4000);
+        }
+      });
+      ch.subscribe(async (status) => {
+        if (status === "SUBSCRIBED" && ch) {
+          await ch.track({ screen: "tela-externa", ts: Date.now() });
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          // Reconnect after delay
+          setTimeout(() => {
+            if (!destroyed && ch) { try { supabase.removeChannel(ch); } catch {} }
+            connect();
+          }, 5000);
+        }
+      });
+    };
+    connect();
+    return () => { destroyed = true; if (ch) supabase.removeChannel(ch); };
   }, [effectiveUserId]);
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === "undefined") return "home";
