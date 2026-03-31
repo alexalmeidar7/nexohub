@@ -192,11 +192,24 @@ Deno.serve(async (req) => {
       } catch { /* silent */ }
     }
 
+    // Find next program (same day, starts after current time)
+    let nextProgram: { nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null = null;
+    if (progs) {
+      const upcoming = progs
+        .filter((p: any) => (p.dias_semana || []).includes(today) && p.horario_inicio > nowTime)
+        .sort((a: any, b: any) => a.horario_inicio.localeCompare(b.horario_inicio));
+      if (upcoming.length > 0) {
+        const np = upcoming[0];
+        nextProgram = { nome: np.nome, selo: np.selo, horario_inicio: np.horario_inicio, horario_fim: np.horario_fim };
+      }
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,
         cenario_config: (settings as any)?.cenario_config || {},
         currentProgram,
+        nextProgram,
         sponsorLogos,
         musicData,
       }),
