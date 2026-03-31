@@ -434,7 +434,7 @@ export default function CenarioTela() {
       } else { setCurrentProgram(null); setSponsorLogos([]); }
     };
     load();
-    const interval = setInterval(load, 30000);
+    const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
   }, [effectiveUserId]);
 
