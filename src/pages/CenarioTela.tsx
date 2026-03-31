@@ -979,8 +979,8 @@ export default function CenarioTela() {
                             }}
                           >
                             {currentProgram.selo ? (
-                              <div className="relative flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
-                                <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain" style={{ maxWidth: "80%", maxHeight: "80%" }} />
+                              <div className="relative flex items-center justify-center" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)", position: "relative" }}>
+                                <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain" style={{ position: "absolute", top: "10%", left: "10%", width: "80%", height: "80%" }} />
                               </div>
                             ) : (
                               <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)" }}>
