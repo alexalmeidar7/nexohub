@@ -331,9 +331,15 @@ export default function CenarioTela() {
     if (!parent) return;
     const resize = () => { canvas.width = parent.clientWidth; canvas.height = parent.clientHeight; };
     resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(parent);
-    return () => ro.disconnect();
+    // ResizeObserver fallback for vMix's older Chromium
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(resize);
+      ro.observe(parent);
+      return () => ro.disconnect();
+    } else {
+      window.addEventListener("resize", resize);
+      return () => window.removeEventListener("resize", resize);
+    }
   }, []);
 
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
