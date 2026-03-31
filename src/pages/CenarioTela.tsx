@@ -545,6 +545,13 @@ export default function CenarioTela() {
           setHasDrawing(false);
         }
       }
+      if (ev.data?.type === "draw-shape") {
+        const canvas = canvasRef.current;
+        if (canvas && ev.data) {
+          drawShapeOnCanvas(canvas, ev.data.shape, ev.data.startPx, ev.data.startPy, ev.data.endPx, ev.data.endPy, ev.data.color, ev.data.width);
+          setHasDrawing(true);
+        }
+      }
     };
     // Request current state from the config page
     bc.postMessage({ type: "request-state" });
