@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -276,16 +276,140 @@ export default function CenarioInterativoPage() {
   const [previewDrawColor, setPreviewDrawColor] = useState("#e1f532");
   const [previewDrawWidth, setPreviewDrawWidth] = useState(3);
   const [showPreviewDrawOptions, setShowPreviewDrawOptions] = useState(false);
+  const [previewDrawMode, setPreviewDrawMode] = useState<"pen" | "eraser" | "shape">("pen");
+  const [showShapesPanel, setShowShapesPanel] = useState(false);
+  const [selectedShape, setSelectedShape] = useState<string | null>(null);
+  const [shapeStartPos, setShapeStartPos] = useState<{ px: number; py: number } | null>(null);
+  const drawHistoryRef = useRef<ImageData[]>([]);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const previewIsDrawingRef = useRef(false);
   const PREV_DRAW_COLORS = ["#e1f532", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
   const PREV_DRAW_WIDTHS = [2, 4, 8, 14];
+  const SHAPE_OPTIONS = [
+    { id: "arrow-up", icon: ArrowUp, label: "Seta ↑" },
+    { id: "arrow-right", icon: ArrowRight, label: "Seta →" },
+    { id: "arrow-down", icon: ArrowDown, label: "Seta ↓" },
+    { id: "arrow-left", icon: ArrowLeft, label: "Seta ←" },
+    { id: "square", icon: Square, label: "Quadrado" },
+    { id: "circle", icon: Circle, label: "Círculo" },
+    { id: "triangle", icon: Triangle, label: "Triângulo" },
+    { id: "star", icon: Star, label: "Estrela" },
+    { id: "diamond", icon: Diamond, label: "Losango" },
+  ];
 
   const getPreviewCanvasPos = useCallback((e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     return { x: clientX - rect.left, y: clientY - rect.top, px: (clientX - rect.left) / rect.width, py: (clientY - rect.top) / rect.height };
+  }, []);
+
+  const saveCanvasState = useCallback(() => {
+    const canvas = previewCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    drawHistoryRef.current.push(imgData);
+    if (drawHistoryRef.current.length > 50) drawHistoryRef.current.shift();
+  }, []);
+
+  const undoLastDraw = useCallback(() => {
+    const canvas = previewCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    if (drawHistoryRef.current.length > 0) {
+      const prev = drawHistoryRef.current.pop()!;
+      ctx.putImageData(prev, 0, 0);
+      setPreviewHasDrawing(drawHistoryRef.current.length > 0);
+      sendDrawClear();
+      // Re-broadcast full canvas state isn't simple, so just clear remote & note limitation
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setPreviewHasDrawing(false);
+      sendDrawClear();
+    }
+  }, []);
+
+  const drawShapeOnCanvas = useCallback((canvas: HTMLCanvasElement, shape: string, startPx: number, startPy: number, endPx: number, endPy: number, color: string, width: number) => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const sx = startPx * canvas.width, sy = startPy * canvas.height;
+    const ex = endPx * canvas.width, ey = endPy * canvas.height;
+    const w = ex - sx, h = ey - sy;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    switch (shape) {
+      case "square":
+        ctx.rect(sx, sy, w, h);
+        break;
+      case "circle": {
+        const rx = Math.abs(w) / 2, ry = Math.abs(h) / 2;
+        const cx = sx + w / 2, cy = sy + h / 2;
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        break;
+      }
+      case "triangle":
+        ctx.moveTo(sx + w / 2, sy);
+        ctx.lineTo(sx + w, sy + h);
+        ctx.lineTo(sx, sy + h);
+        ctx.closePath();
+        break;
+      case "diamond":
+        ctx.moveTo(sx + w / 2, sy);
+        ctx.lineTo(sx + w, sy + h / 2);
+        ctx.lineTo(sx + w / 2, sy + h);
+        ctx.lineTo(sx, sy + h / 2);
+        ctx.closePath();
+        break;
+      case "star": {
+        const cx = sx + w / 2, cy = sy + h / 2;
+        const outerR = Math.min(Math.abs(w), Math.abs(h)) / 2;
+        const innerR = outerR * 0.4;
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 === 0 ? outerR : innerR;
+          const angle = (Math.PI / 5) * i - Math.PI / 2;
+          const px = cx + r * Math.cos(angle);
+          const py = cy + r * Math.sin(angle);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        break;
+      }
+      case "arrow-up": {
+        const cx = sx + w / 2;
+        ctx.moveTo(cx, sy); ctx.lineTo(sx + w, sy + h * 0.4);
+        ctx.moveTo(cx, sy); ctx.lineTo(sx, sy + h * 0.4);
+        ctx.moveTo(cx, sy); ctx.lineTo(cx, sy + h);
+        break;
+      }
+      case "arrow-right": {
+        const cy = sy + h / 2;
+        ctx.moveTo(sx + w, cy); ctx.lineTo(sx + w * 0.6, sy);
+        ctx.moveTo(sx + w, cy); ctx.lineTo(sx + w * 0.6, sy + h);
+        ctx.moveTo(sx + w, cy); ctx.lineTo(sx, cy);
+        break;
+      }
+      case "arrow-down": {
+        const cx = sx + w / 2;
+        ctx.moveTo(cx, sy + h); ctx.lineTo(sx + w, sy + h * 0.6);
+        ctx.moveTo(cx, sy + h); ctx.lineTo(sx, sy + h * 0.6);
+        ctx.moveTo(cx, sy + h); ctx.lineTo(cx, sy);
+        break;
+      }
+      case "arrow-left": {
+        const cy = sy + h / 2;
+        ctx.moveTo(sx, cy); ctx.lineTo(sx + w * 0.4, sy);
+        ctx.moveTo(sx, cy); ctx.lineTo(sx + w * 0.4, sy + h);
+        ctx.moveTo(sx, cy); ctx.lineTo(sx + w, cy);
+        break;
+      }
+    }
+    ctx.stroke();
   }, []);
 
   const drawOnCanvas = useCallback((canvas: HTMLCanvasElement, action: string, px: number, py: number, color: string, width: number) => {
@@ -318,6 +442,12 @@ export default function CenarioInterativoPage() {
         if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
         setPreviewHasDrawing(false);
       }
+    }).on("broadcast", { event: "draw-shape" }, ({ payload }: any) => {
+      const canvas = previewCanvasRef.current;
+      if (canvas && payload) {
+        drawShapeOnCanvas(canvas, payload.shape, payload.startPx, payload.startPy, payload.endPx, payload.endPy, payload.color, payload.width);
+        setPreviewHasDrawing(true);
+      }
     }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
       if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
     }).subscribe();
@@ -340,26 +470,58 @@ export default function CenarioInterativoPage() {
     const canvas = previewCanvasRef.current;
     if (!canvas || !previewDrawActive) return;
     e.preventDefault();
+    saveCanvasState();
     previewIsDrawingRef.current = true;
     const pos = getPreviewCanvasPos(e, canvas);
-    drawOnCanvas(canvas, "start", pos.px, pos.py, previewDrawColor, previewDrawWidth);
+    if (previewDrawMode === "shape" && selectedShape) {
+      setShapeStartPos({ px: pos.px, py: pos.py });
+      return;
+    }
+    if (previewDrawMode === "eraser") {
+      const ctx = canvas.getContext("2d");
+      if (ctx) { ctx.globalCompositeOperation = "destination-out"; }
+    }
+    drawOnCanvas(canvas, "start", pos.px, pos.py, previewDrawMode === "eraser" ? "rgba(0,0,0,1)" : previewDrawColor, previewDrawMode === "eraser" ? 20 : previewDrawWidth);
     sendDraw("start", pos.px, pos.py, previewDrawColor, previewDrawWidth);
-  }, [previewDrawActive, getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas, sendDraw]);
+  }, [previewDrawActive, previewDrawMode, selectedShape, getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas, sendDraw, saveCanvasState]);
 
   const handlePreviewDrawMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = previewCanvasRef.current;
     if (!canvas || !previewIsDrawingRef.current) return;
     e.preventDefault();
+    if (previewDrawMode === "shape" && selectedShape && shapeStartPos) return; // shapes drawn on end
     const pos = getPreviewCanvasPos(e, canvas);
-    drawOnCanvas(canvas, "move", pos.px, pos.py, previewDrawColor, previewDrawWidth);
+    if (previewDrawMode === "eraser") {
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.globalCompositeOperation = "destination-out";
+      drawOnCanvas(canvas, "move", pos.px, pos.py, "rgba(0,0,0,1)", 20);
+    } else {
+      drawOnCanvas(canvas, "move", pos.px, pos.py, previewDrawColor, previewDrawWidth);
+    }
     setPreviewHasDrawing(true);
     sendDraw("move", pos.px, pos.py, previewDrawColor, previewDrawWidth);
-  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawOnCanvas, sendDraw]);
+  }, [getPreviewCanvasPos, previewDrawColor, previewDrawWidth, previewDrawMode, selectedShape, shapeStartPos, drawOnCanvas, sendDraw]);
 
-  const handlePreviewDrawEnd = useCallback(() => {
+  const handlePreviewDrawEnd = useCallback((e?: React.MouseEvent | React.TouchEvent) => {
+    const canvas = previewCanvasRef.current;
+    if (previewDrawMode === "shape" && selectedShape && shapeStartPos && canvas && e) {
+      const pos = getPreviewCanvasPos(e, canvas);
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.globalCompositeOperation = "source-over";
+      drawShapeOnCanvas(canvas, selectedShape, shapeStartPos.px, shapeStartPos.py, pos.px, pos.py, previewDrawColor, previewDrawWidth);
+      setPreviewHasDrawing(true);
+      setShapeStartPos(null);
+      // broadcast shape
+      cenarioBcRef.current?.postMessage({ type: "draw-shape", shape: selectedShape, startPx: shapeStartPos.px, startPy: shapeStartPos.py, endPx: pos.px, endPy: pos.py, color: previewDrawColor, width: previewDrawWidth });
+      rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw-shape", payload: { shape: selectedShape, startPx: shapeStartPos.px, startPy: shapeStartPos.py, endPx: pos.px, endPy: pos.py, color: previewDrawColor, width: previewDrawWidth } });
+    }
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.globalCompositeOperation = "source-over";
+    }
     previewIsDrawingRef.current = false;
     sendDraw("end", 0, 0, "", 0);
-  }, [sendDraw]);
+  }, [sendDraw, previewDrawMode, selectedShape, shapeStartPos, getPreviewCanvasPos, previewDrawColor, previewDrawWidth, drawShapeOnCanvas]);
 
   const clearPreviewDrawing = useCallback(() => {
     const canvas = previewCanvasRef.current;
@@ -472,6 +634,13 @@ export default function CenarioInterativoPage() {
           const ctx = canvas.getContext("2d");
           if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
           setPreviewHasDrawing(false);
+        }
+      }
+      if (ev.data?.type === "draw-shape") {
+        const canvas = previewCanvasRef.current;
+        if (canvas && ev.data) {
+          drawShapeOnCanvas(canvas, ev.data.shape, ev.data.startPx, ev.data.startPy, ev.data.endPx, ev.data.endPy, ev.data.color, ev.data.width);
+          setPreviewHasDrawing(true);
         }
       }
     };
@@ -1401,13 +1570,28 @@ export default function CenarioInterativoPage() {
                   <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.chat.enabled && handleTabChange("chat")} style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <MessageCircle size={16} className="text-white" />
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-1 cursor-pointer" onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) setShowPreviewDrawOptions(false); return n; }); }} style={{ background: previewDrawActive ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawActive ? "2px solid #e1f532" : "2px solid transparent", transition: "all 0.2s ease" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-1 cursor-pointer" onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} style={{ background: previewDrawActive ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawActive ? "2px solid #e1f532" : "2px solid transparent", transition: "all 0.2s ease" }}>
                     <Pen size={16} className="text-white" />
                   </div>
                   {previewDrawActive && (
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer" onClick={() => setShowPreviewDrawOptions(p => !p)} style={{ background: showPreviewDrawOptions ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: previewDrawColor }} />
-                    </div>
+                    <>
+                      {/* Color picker */}
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} style={{ background: showPreviewDrawOptions ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: previewDrawColor }} />
+                      </div>
+                      {/* Eraser */}
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} style={{ background: previewDrawMode === "eraser" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "eraser" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                        <Eraser size={13} className="text-white" />
+                      </div>
+                      {/* Undo */}
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={undoLastDraw} style={{ background: "rgba(255,255,255,0.12)", transition: "all 0.2s ease" }}>
+                        <Undo2 size={13} className="text-white" />
+                      </div>
+                      {/* Shapes */}
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} style={{ background: previewDrawMode === "shape" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "shape" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                        <Shapes size={13} className="text-white" />
+                      </div>
+                    </>
                   )}
                 </div>
 
@@ -1692,18 +1876,32 @@ export default function CenarioInterativoPage() {
                 </div>
               )}
 
+              {/* Shapes panel */}
+              {previewDrawActive && showShapesPanel && (
+                <div className="absolute flex flex-row items-center gap-1 rounded-xl" style={{ left: 60, top: "65%", transform: "translateY(-50%)", zIndex: 45, padding: "6px", background: "rgba(20,20,20,0.85)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  {SHAPE_OPTIONS.map(s => {
+                    const Icon = s.icon;
+                    return (
+                      <button key={s.id} onClick={() => { setSelectedShape(s.id); setPreviewDrawMode("shape"); }} className="rounded-lg flex items-center justify-center cursor-pointer" style={{ width: 28, height: 28, background: selectedShape === s.id ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.08)", border: selectedShape === s.id ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.15s ease" }} title={s.label}>
+                        <Icon size={14} style={{ color: previewDrawColor }} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* Drawing canvas overlay for preview — always mounted for remote sync */}
               <canvas
                 ref={previewCanvasRef}
                 className="absolute rounded-2xl"
-                style={{ top: 0, bottom: 0, right: 0, left: 52, zIndex: 40, cursor: previewDrawActive ? "crosshair" : "default", touchAction: previewDrawActive ? "none" : "auto", pointerEvents: previewDrawActive ? "auto" : "none" }}
+                style={{ top: 0, bottom: 0, right: 0, left: 52, zIndex: 40, cursor: previewDrawActive ? (previewDrawMode === "eraser" ? "cell" : "crosshair") : "default", touchAction: previewDrawActive ? "none" : "auto", pointerEvents: previewDrawActive ? "auto" : "none" }}
                 onMouseDown={handlePreviewDrawStart}
                 onMouseMove={handlePreviewDrawMove}
-                onMouseUp={handlePreviewDrawEnd}
-                onMouseLeave={handlePreviewDrawEnd}
+                onMouseUp={(e) => handlePreviewDrawEnd(e)}
+                onMouseLeave={() => { previewIsDrawingRef.current = false; setShapeStartPos(null); const canvas = previewCanvasRef.current; if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) ctx.globalCompositeOperation = "source-over"; } }}
                 onTouchStart={handlePreviewDrawStart}
                 onTouchMove={handlePreviewDrawMove}
-                onTouchEnd={handlePreviewDrawEnd}
+                onTouchEnd={(e) => handlePreviewDrawEnd(e)}
               />
 
               {/* Clear drawing button for preview */}
