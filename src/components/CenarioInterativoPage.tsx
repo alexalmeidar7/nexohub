@@ -1515,7 +1515,6 @@ export default function CenarioInterativoPage() {
               <button
                 onClick={() => {
                   setExternalRotation(prev => {
-                    const next = (prev + 45) % 180 === 0 && prev + 45 > 0 ? (prev + 45) % 360 : (prev + 45) % 360;
                     const val = (prev + 45) % 360;
                     cenarioBcRef.current?.postMessage({ type: "rotate", angle: val });
                     rtDrawChannelRef.current?.send({ type: "broadcast", event: "rotate", payload: { angle: val } });
