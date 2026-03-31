@@ -488,9 +488,11 @@ export default function CenarioTela() {
         if (result?.currentProgram) {
           setCurrentProgram(result.currentProgram);
           setSponsorLogos(result.sponsorLogos || []);
+          setNextProgram(result.nextProgram || null);
         } else {
           setCurrentProgram(null);
           setSponsorLogos([]);
+          setNextProgram(null);
         }
       }
     };
