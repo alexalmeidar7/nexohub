@@ -554,6 +554,7 @@ export default function CenarioInterativoPage() {
   useEffect(() => { currencySubTabRef.current = currencySubTab; }, [currencySubTab]);
 
   const [externalConnected, setExternalConnected] = useState(false);
+  const [externalRotation, setExternalRotation] = useState(0);
   const [showConnectedMsg, setShowConnectedMsg] = useState(false);
   const lastPongRef = useRef(0);
   const presenceConnectedRef = useRef(false);
