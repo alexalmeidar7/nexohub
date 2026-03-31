@@ -374,9 +374,14 @@ export default function CenarioTela() {
     try {
       const raw = localStorage.getItem("cenario_interativo_config_cache_v1");
       if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<CenarioConfig>;
+      const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === "object") {
-        setConfig(prev => ({ ...prev, ...parsed }));
+        const { _activeTab, _weatherSubTab, _currencySubTab, _screenRotation, ...rest } = parsed;
+        setConfig(prev => ({ ...prev, ...rest }));
+        if (_activeTab) setActiveTab(_activeTab);
+        if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
+        if (_currencySubTab) setCurrencySubTab(_currencySubTab);
+        if (typeof _screenRotation === "number") setScreenRotation(_screenRotation);
       }
     } catch {
       // silent
