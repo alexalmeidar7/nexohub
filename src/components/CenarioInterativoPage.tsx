@@ -410,6 +410,7 @@ export default function CenarioInterativoPage() {
       }
     }
     ctx.stroke();
+  }, []);
 
   const drawOnCanvas = useCallback((canvas: HTMLCanvasElement, action: string, px: number, py: number, color: string, width: number) => {
     const ctx = canvas.getContext("2d");
