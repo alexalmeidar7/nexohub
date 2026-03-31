@@ -770,7 +770,7 @@ export default function CenarioInterativoPage() {
 
       const { data: progs } = await supabase
         .from("programas")
-        .select("id, nome, horario_inicio, horario_fim, dias_semana, selo, apresentador_id, apresentadores_ids")
+        .select("id, nome, horario_inicio, horario_fim, dias_semana, selo, apresentador_id, apresentadores_ids, tipo_programa")
         .eq("user_id", user.id)
         .eq("ativo", true);
 
