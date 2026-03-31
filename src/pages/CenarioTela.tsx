@@ -526,7 +526,7 @@ export default function CenarioTela() {
           )}
 
           {/* Sidebar — always on top */}
-          <div className="flex-shrink-0 flex flex-col items-center justify-center px-[0.5vh] gap-[0.6vh] relative" style={{ width: "8%", background: isMapTab ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 10, backdropFilter: isMapTab ? "blur(4px)" : "none" }}>
+          <div className={`flex-shrink-0 flex flex-col items-center justify-center px-[0.5vh] gap-[0.6vh] relative ${isMapTab ? "vmix-blur-4" : ""}`} style={{ width: "8%", background: isMapTab ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 10 }}>
             <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
               <Home style={{ width: "1.7vh", height: "1.7vh" }} className="text-white" />
             </button>
