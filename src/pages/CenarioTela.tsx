@@ -750,6 +750,7 @@ export default function CenarioTela() {
   const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
 
   const isLandscape = screenRotation === 90 || screenRotation === 270;
+  const isClockwiseLandscape = screenRotation === 90;
   // In landscape, the visual unit should adapt — use vw for "height" since container is rotated
   const vu = isLandscape ? "vw" : "vh"; // visual unit matching the container's visual height
 
@@ -931,18 +932,22 @@ export default function CenarioTela() {
 
               // ── LANDSCAPE: Reference layout matching provided mockup ──
               if (isLandscape) {
+                const readableLandscapeTransform = isClockwiseLandscape ? "rotate(180deg)" : "none";
+                const readableLandscapeAlign = isClockwiseLandscape ? "flex-start" as const : "flex-end" as const;
+                const readableLandscapeTextAlign = isClockwiseLandscape ? "left" as const : "right" as const;
+
                 return (
                   <div className="absolute inset-0 flex" style={{ color: "#fff" }}>
 
                     {/* LEFT COLUMN: Presenter name (vertical) + schedule */}
                     <div className="flex flex-col items-center justify-center flex-shrink-0" style={{ width: `10${vu}`, padding: `2${vu} 0` }}>
                       {currentProgram?.apresentador && (
-                        <div style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)" }}>
+                        <div className="flex flex-col justify-center" style={{ transform: readableLandscapeTransform, transformOrigin: "center center", alignItems: readableLandscapeAlign, textAlign: readableLandscapeTextAlign }}>
                           <span className="font-black" style={{ fontSize: `3.5${vu}`, letterSpacing: "0.02em", lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.apresentador}</span>
                         </div>
                       )}
                       {currentProgram && (
-                        <div className="opacity-60" style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)", marginTop: `1.5${vu}`, fontSize: `1.6${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                        <div className="opacity-60" style={{ transform: readableLandscapeTransform, transformOrigin: "center center", marginTop: `1.5${vu}`, fontSize: `1.6${vu}`, fontVariantNumeric: "tabular-nums", textAlign: readableLandscapeTextAlign }}>
                           {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                         </div>
                       )}
@@ -978,9 +983,9 @@ export default function CenarioTela() {
                         <div className="flex flex-col items-center flex-shrink-0" style={{ marginRight: `2${vu}` }}>
                           <div style={{ width: 0, height: 0, borderLeft: `1${vu} solid transparent`, borderRight: `1${vu} solid transparent`, borderTop: `1.5${vu} solid #e1f532`, marginBottom: `1.2${vu}` }} />
                           <div style={{ width: "2px", height: `5${vu}`, background: "rgba(255,255,255,0.3)", marginBottom: `1.2${vu}` }} />
-                          <div style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)" }}>
-                            <div className="font-black uppercase" style={{ fontSize: `2.5${vu}`, letterSpacing: "0.05em", lineHeight: 1.2 }}>{musicData.titulo}</div>
-                            <div className="font-semibold uppercase opacity-70" style={{ fontSize: `1.6${vu}`, letterSpacing: "0.08em", marginTop: `1${vu}` }}>{musicData.artista}</div>
+                          <div className="flex flex-col justify-center" style={{ transform: readableLandscapeTransform, transformOrigin: "center center", alignItems: readableLandscapeAlign, textAlign: readableLandscapeTextAlign, maxWidth: `18${vu}` }}>
+                            <div className="font-black uppercase" style={{ fontSize: `2.5${vu}`, letterSpacing: "0.05em", lineHeight: 1.2, wordBreak: "break-word" }}>{musicData.titulo}</div>
+                            <div className="font-semibold uppercase opacity-70" style={{ fontSize: `1.6${vu}`, letterSpacing: "0.08em", marginTop: `1${vu}`, wordBreak: "break-word" }}>{musicData.artista}</div>
                           </div>
                         </div>
                       )}
@@ -1004,7 +1009,7 @@ export default function CenarioTela() {
                       {/* Next program (bottom-right corner) */}
                       {nextProgram && (
                         <div className="absolute flex items-end" style={{ bottom: `2${vu}`, right: `2${vu}` }}>
-                          <div style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
+                          <div className="flex flex-col" style={{ transform: readableLandscapeTransform, transformOrigin: "center center", alignItems: readableLandscapeAlign, textAlign: readableLandscapeTextAlign }}>
                             <span className="opacity-50 font-medium" style={{ fontSize: `1.2${vu}` }}>a seguir</span>
                             <span className="font-bold" style={{ fontSize: `1.6${vu}`, marginTop: `0.4${vu}` }}>{nextProgram.nome}</span>
                           </div>
@@ -1021,7 +1026,7 @@ export default function CenarioTela() {
 
                     {/* RIGHT COLUMN: Clock + date (vertical) */}
                     <div className="flex flex-col items-center justify-start flex-shrink-0" style={{ width: `8${vu}`, paddingTop: `3${vu}` }}>
-                      <div style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
+                      <div className="flex flex-col" style={{ transform: readableLandscapeTransform, transformOrigin: "center center", alignItems: readableLandscapeAlign, textAlign: readableLandscapeTextAlign }}>
                         <span className="font-black" style={{ fontSize: `5${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
                           {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                         </span>
