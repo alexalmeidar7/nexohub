@@ -1557,7 +1557,8 @@ export default function CenarioInterativoPage() {
                   </div>
                 )}
                 {/* ── Dark sidebar ── */}
-                <div className="w-[52px] flex-shrink-0 flex flex-col items-center justify-center gap-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 10, backdropFilter: (activeTab === "weather" && weatherSubTab === "satellite") || (activeTab === "traffic" && config.traffic.enabled) ? "blur(4px)" : "none" }}>
+                <div className="w-[52px] flex-shrink-0 flex items-center relative" style={{ zIndex: 10 }}>
+                <div className="flex flex-col items-center gap-1 px-1 py-2" style={{ borderRadius: "0 12px 12px 0", background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "rgba(26,26,26,0.7)" : "rgba(26,26,26,0.85)", backdropFilter: (activeTab === "weather" && weatherSubTab === "satellite") || (activeTab === "traffic" && config.traffic.enabled) ? "blur(4px)" : "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: "none" }}>
                   <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2 cursor-pointer" onClick={() => handleTabChange("home")} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <Home size={16} className="text-white" />
                   </div>
@@ -1622,6 +1623,7 @@ export default function CenarioInterativoPage() {
                       </div>
                     </>
                   )}
+                </div>
                 </div>
 
                 {/* ── Content area with bg image ── */}
