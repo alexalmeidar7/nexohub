@@ -849,8 +849,8 @@ export default function CenarioTela() {
 
   const isLandscape = screenRotation === 90 || screenRotation === 270;
   const isClockwiseLandscape = screenRotation === 90;
-  // In landscape, the visual unit should adapt — use vw for "height" since container is rotated
-  const vu = isLandscape ? "vw" : "vh"; // visual unit matching the container's visual height
+  // Always use vh for consistent sizing — vw is ~1.8x larger on 16:9 screens and causes text overflow
+  const vu = "vh";
 
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
