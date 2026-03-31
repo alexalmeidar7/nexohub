@@ -442,6 +442,12 @@ export default function CenarioInterativoPage() {
         if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
         setPreviewHasDrawing(false);
       }
+    }).on("broadcast", { event: "draw-shape" }, ({ payload }: any) => {
+      const canvas = previewCanvasRef.current;
+      if (canvas && payload) {
+        drawShapeOnCanvas(canvas, payload.shape, payload.startPx, payload.startPy, payload.endPx, payload.endPy, payload.color, payload.width);
+        setPreviewHasDrawing(true);
+      }
     }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
       if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
     }).subscribe();
