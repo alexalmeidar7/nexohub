@@ -1243,18 +1243,18 @@ export default function CenarioTela() {
                       </div>
                     </>)}
                     {weatherSubTab === "forecast" && (<>
-                      <div className="flex items-start justify-between" style={{ marginBottom: `2${vu}` }}>
+                      <div className="flex items-start justify-between" style={{ marginBottom: `${isLandscape ? 1 : 2}${vu}` }}>
                         <div>
-                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `${isLandscape ? 3 : 4.5}${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
-                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: "#e1f532", marginTop: `0.5${vu}` }}>próximos dias</div>
+                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `${isLandscape ? 2.5 : 4.5}${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
+                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${isLandscape ? 1.2 : 1.8}${vu}`, color: "#e1f532", marginTop: `0.3${vu}` }}>próximos dias</div>
                         </div>
-                        <CalendarDays style={{ width: `5${vu}`, height: `5${vu}`, opacity: 0.8 }} />
+                        <CalendarDays style={{ width: `${isLandscape ? 3 : 5}${vu}`, height: `${isLandscape ? 3 : 5}${vu}`, opacity: 0.8 }} />
                       </div>
-                      <div className={`flex-1 rounded-2xl flex ${isLandscape ? "flex-row" : "flex-col"}`} style={{ padding: `2${vu}`, gap: `1.5${vu}`, background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
-                        {liveWeather.daily.slice(1, isLandscape ? 6 : 4).map((d, i) => (
-                          <div key={i} className={`flex items-center justify-between rounded-xl ${isLandscape ? "flex-1 flex-col text-center" : ""}`} style={{ fontSize: `1.8${vu}`, padding: `1.5${vu} 2${vu}`, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <div className={`flex-1 rounded-2xl flex ${isLandscape ? "flex-row" : "flex-col"}`} style={{ padding: `${isLandscape ? 1 : 2}${vu}`, gap: `${isLandscape ? 1 : 1.5}${vu}`, background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+                        {liveWeather.daily.slice(1, isLandscape ? 7 : 4).map((d, i) => (
+                          <div key={i} className={`flex items-center justify-between rounded-xl ${isLandscape ? "flex-1 flex-col text-center" : ""}`} style={{ fontSize: `${isLandscape ? 1.4 : 1.8}${vu}`, padding: `${isLandscape ? 1 : 1.5}${vu} ${isLandscape ? 0.8 : 2}${vu}`, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.08)" }}>
                             <span className="font-bold" style={{ width: isLandscape ? "auto" : "30%" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
-                            <div style={{ width: `4${vu}`, height: `4${vu}` }}><WeatherIcon code={d.code} size={32} forceDay /></div>
+                            <div style={{ width: `${isLandscape ? 3.5 : 4}${vu}`, height: `${isLandscape ? 3.5 : 4}${vu}` }}><WeatherIcon code={d.code} size={32} forceDay /></div>
                             <span className="font-semibold" style={{ width: isLandscape ? "auto" : "30%", textAlign: isLandscape ? "center" : "right" }}>↓{d.min}° ↑{d.max}°</span>
                           </div>
                         ))}
