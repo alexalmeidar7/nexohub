@@ -553,6 +553,22 @@ export default function CenarioTela() {
       } catch { return false; }
     };
 
+    const pollEdgeFunction = async () => {
+      if (!effectiveUserId) return;
+      try {
+        const result = await fetchViaEdgeFunction(effectiveUserId);
+        if (result?.musicData) {
+          const d = result.musicData;
+          const key = `${d.titulo}|${d.artista}`;
+          if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
+            prevMusicRef.current = key;
+            setMusicData({ titulo: d.titulo, artista: d.artista, capa: d.capa || "" });
+            setMusicKey(k => k + 1);
+          }
+        }
+      } catch { /* silent */ }
+    };
+
     const pollDb = async () => {
       if (!effectiveUserId) return;
       try {
@@ -571,12 +587,19 @@ export default function CenarioTela() {
 
     const poll = async () => {
       const hasLocal = pollLocal();
-      if (!hasLocal) await pollDb();
+      if (!hasLocal) {
+        // For unauthenticated (vMix browser), use edge function which also fetches XML
+        if (!isAuthenticated) {
+          await pollEdgeFunction();
+        } else {
+          await pollDb();
+        }
+      }
     };
     poll();
     const interval = setInterval(poll, 3000);
     return () => clearInterval(interval);
-  }, [effectiveUserId]);
+  }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction]);
 
   /* Listen for sync messages from config page via BroadcastChannel */
   useEffect(() => {
