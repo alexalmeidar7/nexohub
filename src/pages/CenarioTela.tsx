@@ -985,10 +985,23 @@ export default function CenarioTela() {
                             <div className="font-bold uppercase truncate" style={{ fontSize: `1.5${vu}`, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
                           </div>
                         </div>
-                        {/* Progress bar */}
-                        <div style={{ width: "100%", height: `0.4${vu}`, marginTop: `1.2${vu}`, borderRadius: `1${vu}`, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
-                          <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 6px rgba(225,245,50,0.4)" }} />
-                        </div>
+                        {/* Music elapsed progress bar */}
+                        {(() => {
+                          const dur = musicData.duracao || 240; // fallback 4min
+                          const pct = Math.min(100, (musicElapsed / dur) * 100);
+                          const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+                          return (
+                            <>
+                              <div className="flex justify-between w-full opacity-60" style={{ fontSize: `0.9${vu}`, marginTop: `0.8${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                                <span>{fmtTime(musicElapsed)}</span>
+                                <span>{fmtTime(dur)}</span>
+                              </div>
+                              <div style={{ width: "100%", height: `0.4${vu}`, marginTop: `0.3${vu}`, borderRadius: `1${vu}`, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
+                                <div style={{ width: `${pct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 6px rgba(225,245,50,0.4)" }} />
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     )}
                     {!musicData && !currentProgram && (
