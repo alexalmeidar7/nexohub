@@ -491,6 +491,12 @@ export default function CenarioTela() {
       pollInterval = setInterval(async () => {
         const result = await fetchViaEdgeFunction(effectiveUserId);
         if (result?.cenario_config) applyConfig(result.cenario_config);
+        if (result?.currentProgram) {
+          setCurrentProgram(result.currentProgram);
+          setSponsorLogos(result.sponsorLogos || []);
+          setNextProgram(result.nextProgram || null);
+        }
+        if (result?.musicData) setMusicData(result.musicData);
       }, 2000);
     }
 
