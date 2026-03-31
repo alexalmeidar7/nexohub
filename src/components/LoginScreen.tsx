@@ -166,7 +166,7 @@ export default function LoginScreen() {
               onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
             />
 
-            {error && <p className="text-red-500 text-center" style={{ fontSize: "12px" }}>{error}</p>}
+            {error && <p className="text-center font-medium" style={{ fontSize: "12px", color: "#0f1058" }}>{error}</p>}
 
             <div className="flex justify-between items-center pt-2">
               <button
