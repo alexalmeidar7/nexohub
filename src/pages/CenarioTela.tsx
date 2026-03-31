@@ -645,6 +645,7 @@ export default function CenarioTela() {
               </button>
             )}
           </div>
+          </div>
 
           {/* Drawing options panel */}
           {drawingActive && showDrawOptions && (
