@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/imageCompressor";
+import { mergeUserDashboardItems } from "@/lib/userSettings";
 
 // --- Contrast Analysis Utilities ---
 function hexToRgb(hex: string): [number, number, number] {
@@ -285,32 +286,9 @@ export default function LayoutCustomizer() {
     if (!user) return false;
 
     try {
-      const { data: existing, error: readError } = await supabase
-        .from("user_settings")
-        .select("dashboard_items")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (readError) throw readError;
-
-      const current = normalizeDashboardSettingsPayload(existing?.dashboard_items);
-      const payload: DashboardSettingsPayload = {
-        ...current,
-        layout_colors: c,
-      };
-
-      const { error: writeError } = await supabase
-        .from("user_settings")
-        .upsert(
-          [{
-            user_id: user.id,
-            dashboard_items: payload as any,
-            updated_at: new Date().toISOString(),
-          }],
-          { onConflict: "user_id" }
-        );
-
-      if (writeError) throw writeError;
+      await mergeUserDashboardItems(user.id, {
+        layout_colors: c as unknown as Record<string, unknown>,
+      });
 
       return true;
     } catch (error) {
