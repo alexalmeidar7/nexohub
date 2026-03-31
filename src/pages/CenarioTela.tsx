@@ -15,7 +15,14 @@ interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: strin
 interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; }
 interface CenarioConfig { city: string; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
 
-const defaultConfig: CenarioConfig = {
+function buildHomeGradient(h: HomeConfig): string {
+  const a = h.bgGradientColorA || "#1a1a2e";
+  const b = h.bgGradientColorB || "#16213e";
+  const type = h.bgGradientType || "linear";
+  const angle = h.bgGradientAngle ?? 135;
+  return type === "radial" ? `radial-gradient(circle, ${a}, ${b})` : `linear-gradient(${angle}deg, ${a}, ${b})`;
+}
+
   city: "", home: { bgImage: "" },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
