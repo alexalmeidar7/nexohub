@@ -263,7 +263,7 @@ export default function LoginScreen() {
                     onClick={closeForgot}
                     className="flex items-center gap-1 transition-colors duration-200 text-white"
                     style={{ fontSize: "12px" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#be0101")}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
                   >
                     <X size={14} /> Fechar
