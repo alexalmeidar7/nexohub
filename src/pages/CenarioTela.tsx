@@ -23,6 +23,7 @@ function buildHomeGradient(h: HomeConfig): string {
   return type === "radial" ? `radial-gradient(circle, ${a}, ${b})` : `linear-gradient(${angle}deg, ${a}, ${b})`;
 }
 
+const defaultConfig: CenarioConfig = {
   city: "", home: { bgImage: "" },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
