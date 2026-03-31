@@ -1036,8 +1036,8 @@ export default function CenarioTela() {
                             }}
                           >
                             {musicData.capa ? (
-                              <div className="relative" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
-                                <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", height: "100%" }} />
+                            <div className="relative" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
+                                <img src={musicData.capa} alt="" className="object-cover" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} />
                                 <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%, rgba(0,0,0,0.15) 100%)", pointerEvents: "none" }} />
                               </div>
                             ) : (
