@@ -762,7 +762,7 @@ export default function CenarioInterativoPage() {
       });
 
       if (onAir) {
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id });
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
           .select("id, nome, logo_url")
