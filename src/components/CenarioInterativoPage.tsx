@@ -1538,15 +1538,14 @@ export default function CenarioInterativoPage() {
               }}
             >
               <div className="absolute inset-0 flex" style={{ fontSize: 10 }}>
-                {/* Satellite fullscreen behind sidebar */}
+                {/* Fullscreen background layers behind sidebar */}
                 {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
-                  <div className="absolute inset-0" style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}>
+                  <div className="absolute inset-0" style={{ zIndex: 5 }}>
                     <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={(z) => { setSatelliteZoom(z); cenarioBcRef.current?.postMessage({ type: "zoom-change", zoom: z }); rtDrawChannelRef.current?.send({ type: "broadcast", event: "zoom-change", payload: { zoom: z } }); }} />
                   </div>
                 )}
-                {/* Traffic (Leaflet) fullscreen behind sidebar */}
                 {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
-                  <div className="absolute inset-0" style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}>
+                  <div className="absolute inset-0" style={{ zIndex: 5 }}>
                     <TrafficMap
                       lat={config.traffic.lat ?? trafficCoords.lat}
                       lon={config.traffic.lon ?? trafficCoords.lon}
@@ -1554,6 +1553,25 @@ export default function CenarioInterativoPage() {
                       interactive
                       onMove={(lat, lon, zoom) => updateTraffic({ lat, lon, zoom })}
                     />
+                  </div>
+                )}
+                {!((activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled)) && (
+                  <div className="absolute inset-0" style={{ background: activeTab === "home" && config.home.bgGradient ? buildHomeGradient(config.home) : "#e8e8e8", zIndex: 0 }}>
+                    {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && (
+                      <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    )}
+                    {activeTab === "weather" && config.weather.bgImage && (
+                      <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    )}
+                    {activeTab === "traffic" && config.traffic.bgImage && (
+                      <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    )}
+                    {activeTab === "currency" && config.currency.bgImage && (
+                      <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    )}
+                    {activeTab === "chat" && config.chat.bgImage && (
+                      <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    )}
                   </div>
                 )}
                 {/* ── Dark sidebar ── */}
@@ -1627,24 +1645,7 @@ export default function CenarioInterativoPage() {
                 </div>
 
                 {/* ── Content area with bg image ── */}
-                <div className="flex-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "transparent" : (activeTab === "home" && config.home.bgGradient ? buildHomeGradient(config.home) : "#e8e8e8"), zIndex: 1 }}>
-                  {/* Show bg image based on active tab */}
-                  {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && (
-                    <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  )}
-                  {activeTab === "weather" && config.weather.bgImage && (
-                    <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  )}
-                  {activeTab === "traffic" && config.traffic.bgImage && (
-                    <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  )}
-                  {activeTab === "currency" && config.currency.bgImage && (
-                    <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  )}
-                  {activeTab === "chat" && config.chat.bgImage && (
-                    <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  )}
-
+                <div className="flex-1 relative" style={{ zIndex: 1 }}>
                   {/* Animated page wrapper */}
                   <div
                     key={activeTab + (activeTab === "weather" ? `-${weatherSubTab}` : "") + (activeTab === "currency" ? `-${currencySubTab}` : "")}
