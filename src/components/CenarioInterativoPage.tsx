@@ -1863,18 +1863,32 @@ export default function CenarioInterativoPage() {
                 </div>
               )}
 
+              {/* Shapes panel */}
+              {previewDrawActive && showShapesPanel && (
+                <div className="absolute flex flex-row items-center gap-1 rounded-xl" style={{ left: 60, top: "65%", transform: "translateY(-50%)", zIndex: 45, padding: "6px", background: "rgba(20,20,20,0.85)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  {SHAPE_OPTIONS.map(s => {
+                    const Icon = s.icon;
+                    return (
+                      <button key={s.id} onClick={() => { setSelectedShape(s.id); setPreviewDrawMode("shape"); }} className="rounded-lg flex items-center justify-center cursor-pointer" style={{ width: 28, height: 28, background: selectedShape === s.id ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.08)", border: selectedShape === s.id ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.15s ease" }} title={s.label}>
+                        <Icon size={14} style={{ color: previewDrawColor }} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* Drawing canvas overlay for preview — always mounted for remote sync */}
               <canvas
                 ref={previewCanvasRef}
                 className="absolute rounded-2xl"
-                style={{ top: 0, bottom: 0, right: 0, left: 52, zIndex: 40, cursor: previewDrawActive ? "crosshair" : "default", touchAction: previewDrawActive ? "none" : "auto", pointerEvents: previewDrawActive ? "auto" : "none" }}
+                style={{ top: 0, bottom: 0, right: 0, left: 52, zIndex: 40, cursor: previewDrawActive ? (previewDrawMode === "eraser" ? "cell" : "crosshair") : "default", touchAction: previewDrawActive ? "none" : "auto", pointerEvents: previewDrawActive ? "auto" : "none" }}
                 onMouseDown={handlePreviewDrawStart}
                 onMouseMove={handlePreviewDrawMove}
-                onMouseUp={handlePreviewDrawEnd}
-                onMouseLeave={handlePreviewDrawEnd}
+                onMouseUp={(e) => handlePreviewDrawEnd(e)}
+                onMouseLeave={() => { previewIsDrawingRef.current = false; setShapeStartPos(null); const canvas = previewCanvasRef.current; if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) ctx.globalCompositeOperation = "source-over"; } }}
                 onTouchStart={handlePreviewDrawStart}
                 onTouchMove={handlePreviewDrawMove}
-                onTouchEnd={handlePreviewDrawEnd}
+                onTouchEnd={(e) => handlePreviewDrawEnd(e)}
               />
 
               {/* Clear drawing button for preview */}
