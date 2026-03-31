@@ -631,7 +631,7 @@ export default function CenarioTela() {
 
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center">
-      <div className="relative h-full" style={{ aspectRatio: "9/16", maxHeight: "100vh" }}>
+      <div className="relative h-full" style={{ aspectRatio: "9/16", maxHeight: "100vh", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }}>
         <div className="absolute inset-0 flex" style={{ fontSize: "1.8vh" }}>
 
           {/* Fullscreen background layers behind sidebar */}
