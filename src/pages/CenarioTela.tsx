@@ -784,7 +784,7 @@ export default function CenarioTela() {
                           backdropFilter: "blur(12px)",
                           border: "1px solid rgba(255,255,255,0.12)",
                           maxWidth: "85%",
-                          marginTop: "2vh",
+                          marginTop: "1.5vh",
                           animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
                         }}
                       >
