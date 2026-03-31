@@ -184,20 +184,20 @@ export default function LoginScreen() {
                 onClick={handleSubmit}
                 disabled={loading}
                 className="group relative flex items-center gap-3 px-6 py-2 rounded-full font-medium disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent hover:bg-transparent"
-                style={{ fontSize: "12px", backgroundColor: "#0f1058" }}
+                style={{ fontSize: "12px", backgroundColor: "#268ffa" }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.borderColor = "#0c0440";
-                  e.currentTarget.style.color = "#0c0440";
+                  e.currentTarget.style.borderColor = "#268ffa";
+                  e.currentTarget.style.color = "#0f1058";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#0f1058";
+                  e.currentTarget.style.backgroundColor = "#268ffa";
                   e.currentTarget.style.borderColor = "transparent";
                   e.currentTarget.style.color = "#ffffff";
                 }}
               >
                 {loading ? (
-                  <Loader2 size={20} className="animate-spin" style={{ color: "#be0101" }} />
+                  <Loader2 size={20} className="animate-spin" style={{ color: "#ffffff" }} />
                 ) : (
                   <>
                     entrar
