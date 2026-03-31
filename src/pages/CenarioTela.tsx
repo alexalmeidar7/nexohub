@@ -503,14 +503,7 @@ export default function CenarioTela() {
     return () => { destroyed = true; setRealtimeConnected(false); if (channel) supabase.removeChannel(channel); if (pollInterval) clearInterval(pollInterval); };
   }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction]);
 
-  /* Keep cache synced */
-  useEffect(() => {
-    try {
-      localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(config));
-    } catch {
-      // silent
-    }
-  }, [config]);
+  /* Keep cache synced — handled entirely by applyConfig, remove standalone sync to avoid overwriting _screenRotation etc */
 
   /* Fetch current program + sponsor logos */
   useEffect(() => {
