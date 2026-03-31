@@ -794,21 +794,6 @@ export default function CenarioTela() {
             </div>
           )}
 
-          {/* Clock + date — floating top-left above sidebar */}
-          {activeTab === "home" && !isLandscape && (
-            <div className="absolute flex items-center" style={{ top: `1.5${vu}`, left: `1.5${vu}`, gap: `1${vu}`, zIndex: 15, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-              <Clock style={{ width: `2${vu}`, height: `2${vu}`, opacity: 0.7, color: "#fff" }} />
-              <div>
-                <span className="font-bold" style={{ fontSize: `2.8${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", color: "#fff" }}>
-                  {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                </span>
-                <div className="opacity-70" style={{ fontSize: `1.2${vu}`, color: "#fff" }}>
-                  {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Sidebar — always on top */}
           <div className="flex-shrink-0 flex items-center relative" style={{ width: isLandscape ? "5%" : "8%", zIndex: 10 }}>
           <div className={`flex flex-col items-center gap-[0.6${vu}] ${isMapTab ? "vmix-blur-4" : ""}`} style={{ padding: `0.5${vu} 0.5${vu}`, borderRadius: `0 2${vu} 2${vu} 0`, background: isMapTab ? "rgba(26,26,26,0.7)" : "rgba(26,26,26,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: "none", marginLeft: "-1px" }}>
