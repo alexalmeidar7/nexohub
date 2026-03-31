@@ -691,7 +691,10 @@ export default function CenarioInterativoPage() {
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
+  const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+  const [musicKey, setMusicKey] = useState(0);
+  const prevMusicRef = useRef("");
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
