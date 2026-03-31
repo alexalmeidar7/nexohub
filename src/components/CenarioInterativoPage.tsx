@@ -1655,49 +1655,49 @@ export default function CenarioInterativoPage() {
                       if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
                     }
                     return (
-                      <div className="absolute inset-0 flex flex-col p-2" style={{ color: textColor }}>
+                      <div className="absolute inset-0 flex flex-col p-2" style={{ color: "#fff" }}>
                         {/* Top-left: small clock + date */}
                         <div>
                           <div className="flex items-center gap-1">
                             <Clock size={10} style={{ opacity: 0.7 }} />
-                            <span className="font-bold text-sm" style={{ fontVariantNumeric: "tabular-nums" }}>
+                            <span className="font-bold text-sm" style={{ fontVariantNumeric: "tabular-nums", color: "#fff" }}>
                               {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                             </span>
                           </div>
-                          <div className="text-[8px] opacity-70 ml-3">
+                          <div className="text-[8px] opacity-70 ml-3" style={{ color: "#fff" }}>
                             {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
                           </div>
                         </div>
 
                         {/* Center: Program logo + progress */}
-                        <div className="flex-1 flex flex-col items-center justify-center gap-1">
+                        <div className="flex-1 flex flex-col items-center justify-center gap-1" style={{ marginBottom: "2vh" }}>
                           {currentProgram?.selo && (
                             <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: "60%", maxHeight: "40%" }} />
                           )}
                           {currentProgram && (
                             <div className="text-center">
-                              {!currentProgram.selo && <div className="font-bold text-sm drop-shadow-sm">{currentProgram.nome}</div>}
-                              <div className="text-[8px] opacity-70">{currentProgram.horario_inicio} — {currentProgram.horario_fim}</div>
+                              {!currentProgram.selo && <div className="font-bold text-sm drop-shadow-sm" style={{ color: "#fff" }}>{currentProgram.nome}</div>}
+                              <div className="text-[8px] opacity-70" style={{ color: "#fff" }}>{currentProgram.horario_inicio.slice(0,5)} — {currentProgram.horario_fim.slice(0,5)}</div>
                               <div className="mx-auto mt-1" style={{ width: "60%", height: 3, borderRadius: 3, background: "rgba(255,255,255,0.2)", overflow: "hidden" }}>
                                 <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: 3, background: "#e1f532", transition: "width 1s linear" }} />
                               </div>
                             </div>
                           )}
-                          {!currentProgram && <div className="text-[9px] opacity-40">Nenhum programa no ar</div>}
+                          {!currentProgram && <div className="text-[9px] opacity-40" style={{ color: "#fff" }}>Nenhum programa no ar</div>}
                         </div>
 
-                        {/* Bottom: Music */}
+                        {/* Music — bigger cover, positioned higher */}
                         {musicData && (
-                          <div key={musicKey} className="flex items-center gap-1.5 self-center" style={{ padding: "4px 6px", borderRadius: 6, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)", maxWidth: "90%", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                          <div key={musicKey} className="flex items-center gap-2 self-center" style={{ padding: "6px 8px", borderRadius: 8, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.12)", maxWidth: "92%", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", marginBottom: "1vh" }}>
                             {musicData.capa ? (
-                              <img src={musicData.capa} alt="" className="rounded object-cover" style={{ width: 24, height: 24, flexShrink: 0 }} />
+                              <img src={musicData.capa} alt="" className="rounded-md object-cover" style={{ width: 40, height: 40, flexShrink: 0 }} />
                             ) : (
-                              <div className="rounded flex items-center justify-center" style={{ width: 24, height: 24, flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
-                                <Music size={10} style={{ opacity: 0.5 }} />
+                              <div className="rounded-md flex items-center justify-center" style={{ width: 40, height: 40, flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
+                                <Music size={16} style={{ opacity: 0.5, color: "#fff" }} />
                               </div>
                             )}
                             <div style={{ minWidth: 0 }}>
-                              <div className="font-bold truncate text-[8px]" style={{ color: "#fff" }}>{musicData.titulo}</div>
+                              <div className="font-bold truncate text-[9px]" style={{ color: "#fff" }}>{musicData.titulo}</div>
                               <div className="truncate text-[7px] opacity-70" style={{ color: "#fff" }}>{musicData.artista}</div>
                             </div>
                           </div>
