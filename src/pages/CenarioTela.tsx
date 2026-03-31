@@ -953,60 +953,124 @@ export default function CenarioTela() {
 
                   {/* CENTER: Music card */}
                   <div className="flex-1 flex flex-col items-center justify-center" style={{ overflow: "hidden" }}>
-                    {musicData && (
-                      <div
-                        key={musicKey}
-                        className="flex flex-col items-center"
-                        style={{
-                          width: "85%",
-                          maxWidth: `42${vu}`,
-                          padding: `1.5${vu} 2${vu} 2${vu}`,
-                          borderRadius: `2${vu}`,
-                          background: "rgba(0,0,0,0.5)",
-                          WebkitBackdropFilter: "blur(16px)", backdropFilter: "blur(16px)",
-                          border: "2px solid rgba(225,245,50,0.15)",
-                          animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
-                        }}
-                      >
-                        {musicData.capa ? (
-                          <div className="relative" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
-                            <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", height: "100%" }} />
-                            <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%, rgba(0,0,0,0.15) 100%)", pointerEvents: "none" }} />
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)" }}>
-                            <Music style={{ width: `8${vu}`, height: `8${vu}`, opacity: 0.3, color: "#fff" }} />
-                          </div>
-                        )}
-                        <div className="flex items-center self-start" style={{ gap: `1${vu}`, maxWidth: "100%" }}>
-                          <Play style={{ width: `2.2${vu}`, height: `2.2${vu}`, color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 6px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
-                          <div style={{ overflow: "hidden", minWidth: 0 }}>
-                            <div className="font-black uppercase truncate" style={{ fontSize: `2${vu}`, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
-                            <div className="font-bold uppercase truncate" style={{ fontSize: `1.5${vu}`, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
-                          </div>
-                        </div>
-                        {/* Music elapsed progress bar */}
-                        {(() => {
-                          const dur = musicData.duracao || 240; // fallback 4min
-                          const pct = Math.min(100, (musicElapsed / dur) * 100);
-                          const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-                          return (
-                            <>
-                              <div className="flex justify-between w-full opacity-60" style={{ fontSize: `0.9${vu}`, marginTop: `0.8${vu}`, fontVariantNumeric: "tabular-nums" }}>
-                                <span>{fmtTime(musicElapsed)}</span>
-                                <span>{fmtTime(dur)}</span>
+                    {(() => {
+                      const isJornalistico = currentProgram?.tipo_programa?.toLowerCase().includes("jornal");
+                      if (isJornalistico && currentProgram) {
+                        // Jornalístico: show program logo instead of music cover
+                        return (
+                          <div
+                            key={`jornal-${currentProgram.id}`}
+                            className="flex flex-col items-center"
+                            style={{
+                              width: "85%",
+                              maxWidth: `42${vu}`,
+                              padding: `1.5${vu} 2${vu} 2${vu}`,
+                              borderRadius: `2${vu}`,
+                              background: "rgba(0,0,0,0.5)",
+                              WebkitBackdropFilter: "blur(16px)", backdropFilter: "blur(16px)",
+                              border: "2px solid rgba(225,245,50,0.15)",
+                              animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
+                            }}
+                          >
+                            {currentProgram.selo ? (
+                              <div className="relative flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
+                                <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain" style={{ maxWidth: "80%", maxHeight: "80%" }} />
                               </div>
-                              <div style={{ width: "100%", height: `0.4${vu}`, marginTop: `0.3${vu}`, borderRadius: `1${vu}`, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
-                                <div style={{ width: `${pct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 6px rgba(225,245,50,0.4)" }} />
+                            ) : (
+                              <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)" }}>
+                                <div className="font-black text-center text-white" style={{ fontSize: `4${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
                               </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    )}
-                    {!musicData && !currentProgram && (
-                      <div className="opacity-40 text-center" style={{ fontSize: `1.8${vu}` }}>Nenhum programa no ar</div>
-                    )}
+                            )}
+                            {musicData && (
+                              <>
+                                <div className="flex items-center self-start" style={{ gap: `1${vu}`, maxWidth: "100%" }}>
+                                  <Play style={{ width: `2.2${vu}`, height: `2.2${vu}`, color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 6px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
+                                  <div style={{ overflow: "hidden", minWidth: 0 }}>
+                                    <div className="font-black uppercase truncate text-white" style={{ fontSize: `2${vu}`, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
+                                    <div className="font-bold uppercase truncate" style={{ fontSize: `1.5${vu}`, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
+                                  </div>
+                                </div>
+                                {(() => {
+                                  const dur = musicData.duracao || 240;
+                                  const pct = Math.min(100, (musicElapsed / dur) * 100);
+                                  const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+                                  return (
+                                    <>
+                                      <div className="flex justify-between w-full opacity-60" style={{ fontSize: `0.9${vu}`, marginTop: `0.8${vu}`, fontVariantNumeric: "tabular-nums", color: "#fff" }}>
+                                        <span>{fmtTime(musicElapsed)}</span>
+                                        <span>{fmtTime(dur)}</span>
+                                      </div>
+                                      <div style={{ width: "100%", height: `0.4${vu}`, marginTop: `0.3${vu}`, borderRadius: `1${vu}`, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
+                                        <div style={{ width: `${pct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 6px rgba(225,245,50,0.4)" }} />
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      // Default: music card with cover
+                      if (musicData) {
+                        return (
+                          <div
+                            key={musicKey}
+                            className="flex flex-col items-center"
+                            style={{
+                              width: "85%",
+                              maxWidth: `42${vu}`,
+                              padding: `1.5${vu} 2${vu} 2${vu}`,
+                              borderRadius: `2${vu}`,
+                              background: "rgba(0,0,0,0.5)",
+                              WebkitBackdropFilter: "blur(16px)", backdropFilter: "blur(16px)",
+                              border: "2px solid rgba(225,245,50,0.15)",
+                              animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
+                            }}
+                          >
+                            {musicData.capa ? (
+                              <div className="relative" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
+                                <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", height: "100%" }} />
+                                <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%, rgba(0,0,0,0.15) 100%)", pointerEvents: "none" }} />
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)" }}>
+                                <Music style={{ width: `8${vu}`, height: `8${vu}`, opacity: 0.3, color: "#fff" }} />
+                              </div>
+                            )}
+                            <div className="flex items-center self-start" style={{ gap: `1${vu}`, maxWidth: "100%" }}>
+                              <Play style={{ width: `2.2${vu}`, height: `2.2${vu}`, color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 6px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
+                              <div style={{ overflow: "hidden", minWidth: 0 }}>
+                                <div className="font-black uppercase truncate" style={{ fontSize: `2${vu}`, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
+                                <div className="font-bold uppercase truncate" style={{ fontSize: `1.5${vu}`, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
+                              </div>
+                            </div>
+                            {(() => {
+                              const dur = musicData.duracao || 240;
+                              const pct = Math.min(100, (musicElapsed / dur) * 100);
+                              const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+                              return (
+                                <>
+                                  <div className="flex justify-between w-full opacity-60" style={{ fontSize: `0.9${vu}`, marginTop: `0.8${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                                    <span>{fmtTime(musicElapsed)}</span>
+                                    <span>{fmtTime(dur)}</span>
+                                  </div>
+                                  <div style={{ width: "100%", height: `0.4${vu}`, marginTop: `0.3${vu}`, borderRadius: `1${vu}`, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
+                                    <div style={{ width: `${pct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 6px rgba(225,245,50,0.4)" }} />
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        );
+                      }
+
+                      if (!currentProgram) {
+                        return <div className="opacity-40 text-center" style={{ fontSize: `1.8${vu}` }}>Nenhum programa no ar</div>;
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   {/* BOTTOM: Program logo + presenter + schedule */}
