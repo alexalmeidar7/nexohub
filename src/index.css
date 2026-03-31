@@ -623,6 +623,11 @@ table:not([data-no-row-hover]) tbody tr:hover {
   100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
 }
 
+/* ─── vMix Chromium 103 compatibility: webkit backdrop-filter ─── */
+[style*="backdrop-filter"] {
+  -webkit-backdrop-filter: var(--bf);
+}
+
 /* ─── SkyGlass Button Utilities ─── */
 .btn-skyglass {
   display: inline-flex;
