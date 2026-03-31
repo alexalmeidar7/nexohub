@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
       sponsorLogos = logos || [];
     }
 
-    // Fetch music data from XML URL
+    // Fetch music data from XML URL or DB fallback
     let musicData: { titulo: string; artista: string; capa: string } | null = null;
     const xmlUrl = (settings as any)?.music_xml_url;
     if (xmlUrl) {
@@ -158,6 +158,35 @@ Deno.serve(async (req) => {
 
         if (titulo && titulo !== "Sem título") {
           musicData = { titulo, artista, capa };
+        }
+      } catch { /* silent */ }
+    }
+
+    // Fallback: get last played from musicas_tocadas + try iTunes cover
+    if (!musicData) {
+      try {
+        const { data: lastSong } = await supabase
+          .from("musicas_tocadas")
+          .select("musica, artista")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (lastSong?.musica && lastSong.musica !== "Sem título") {
+          let capa = "";
+          // Try iTunes API for cover art
+          try {
+            const itunesResp = await fetch(
+              `https://itunes.apple.com/search?term=${encodeURIComponent(`${lastSong.artista} ${lastSong.musica}`)}&media=music&limit=1`,
+              { signal: AbortSignal.timeout(3000) }
+            );
+            const itunesData = await itunesResp.json();
+            if (itunesData?.results?.[0]?.artworkUrl100) {
+              capa = itunesData.results[0].artworkUrl100.replace("100x100", "600x600");
+            }
+          } catch { /* silent */ }
+          musicData = { titulo: lastSong.musica, artista: lastSong.artista || "", capa };
         }
       } catch { /* silent */ }
     }
