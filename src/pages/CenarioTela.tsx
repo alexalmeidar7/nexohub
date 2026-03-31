@@ -661,6 +661,21 @@ export default function CenarioTela() {
             </div>
           )}
 
+          {/* Clock + date — floating top-left above sidebar */}
+          {activeTab === "home" && (
+            <div className="absolute flex items-center gap-[1vh]" style={{ top: "1.5vh", left: "1.5vh", zIndex: 15, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+              <Clock style={{ width: "2vh", height: "2vh", opacity: 0.7, color: "#fff" }} />
+              <div>
+                <span className="font-bold" style={{ fontSize: "2.8vh", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", color: "#fff" }}>
+                  {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                </span>
+                <div className="opacity-70" style={{ fontSize: "1.2vh", color: "#fff" }}>
+                  {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Sidebar — always on top */}
           <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10 }}>
           <div className={`flex flex-col items-center px-[0.5vh] py-[1vh] gap-[0.6vh] ${isMapTab ? "vmix-blur-4" : ""}`} style={{ borderRadius: "0 2vh 2vh 0", background: isMapTab ? "rgba(26,26,26,0.7)" : "rgba(26,26,26,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: "none", marginLeft: "-1px" }}>
@@ -759,18 +774,6 @@ export default function CenarioTela() {
               }
               return (
                 <div className="absolute inset-0 flex flex-col" style={{ padding: "1.5vh 3vh 2.5vh 3vh", color: "#fff" }}>
-                  {/* Top-left: small clock + date */}
-                  <div style={{ animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                    <div className="flex items-center gap-[0.8vh]">
-                      <Clock style={{ width: "2vh", height: "2vh", opacity: 0.7, color: "#fff" }} />
-                      <span className="font-bold" style={{ fontSize: "2.8vh", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", color: "#fff" }}>
-                        {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                      </span>
-                    </div>
-                    <div className="opacity-70" style={{ fontSize: "1.4vh", marginTop: "0.3vh", marginLeft: "2.8vh", color: "#fff" }}>
-                      {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                    </div>
-                  </div>
 
                   {/* Center: Program logo + music */}
                   <div className="flex-1 flex flex-col items-center justify-center" style={{ gap: "0vh", overflow: "hidden" }}>
@@ -820,13 +823,13 @@ export default function CenarioTela() {
                       <div className="opacity-40 text-center" style={{ fontSize: "1.8vh", color: "#fff" }}>Nenhum programa no ar</div>
                     )}
 
-                    {/* Music cover — positioned inside center area */}
+                    {/* Music cover — vertical layout with text above cover */}
                     {musicData && (
                       <div
                         key={musicKey}
-                        className="flex items-center gap-[2vh] self-center"
+                        className="flex flex-col items-center self-center"
                         style={{
-                          padding: "1.5vh 2vh",
+                          padding: "1.5vh 2vh 2vh",
                           borderRadius: "1.5vh",
                           background: "rgba(0,0,0,0.45)",
                           WebkitBackdropFilter: "blur(12px)",
@@ -837,17 +840,17 @@ export default function CenarioTela() {
                           animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
                         }}
                       >
+                        <div className="text-center" style={{ marginBottom: "1vh", maxWidth: "100%" }}>
+                          <div className="font-bold truncate" style={{ fontSize: "1.8vh", color: "#fff" }}>{musicData.titulo}</div>
+                          <div className="truncate opacity-70" style={{ fontSize: "1.3vh", color: "#fff" }}>{musicData.artista}</div>
+                        </div>
                         {musicData.capa ? (
-                          <img src={musicData.capa} alt="" className="rounded-xl object-cover" style={{ width: "9vh", height: "9vh", flexShrink: 0 }} />
+                          <img src={musicData.capa} alt="" className="rounded-xl object-cover" style={{ width: "14vh", height: "14vh", flexShrink: 0 }} />
                         ) : (
-                          <div className="rounded-xl flex items-center justify-center" style={{ width: "9vh", height: "9vh", flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
-                            <Music style={{ width: "3.5vh", height: "3.5vh", opacity: 0.5, color: "#fff" }} />
+                          <div className="rounded-xl flex items-center justify-center" style={{ width: "14vh", height: "14vh", flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
+                            <Music style={{ width: "5vh", height: "5vh", opacity: 0.5, color: "#fff" }} />
                           </div>
                         )}
-                        <div style={{ minWidth: 0 }}>
-                          <div className="font-bold truncate" style={{ fontSize: "2vh", color: "#fff" }}>{musicData.titulo}</div>
-                          <div className="truncate opacity-70" style={{ fontSize: "1.5vh", color: "#fff" }}>{musicData.artista}</div>
-                        </div>
                       </div>
                     )}
                   </div>
