@@ -122,6 +122,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     classificacao_etaria: string;
     descricao: string;
     apresentador_nome: string;
+    tipo_programa: string;
+    is_hd: boolean;
+    is_stereo: boolean;
   }
   const [onAirProgram, setOnAirProgram] = useState<OnAirProgram | null>(null);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string } | null>(null);
@@ -133,7 +136,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     const fetchOnAir = async () => {
       const { data } = await supabase
         .from("programas")
-        .select("nome, selo, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, apresentadores(nome)")
+        .select("nome, selo, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, tipo_programa, estudio, apresentadores(nome)")
         .eq("user_id", user.id)
         .eq("ativo", true);
       if (cancelled || !data) return;
@@ -145,7 +148,29 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         horaAtual >= p.horario_inicio &&
         horaAtual < p.horario_fim
       );
-      setOnAirProgram(current ? {
+      if (!current) {
+        setOnAirProgram(null);
+        return;
+      }
+
+      // Fetch channel specs (is_hd, is_stereo) for the studio
+      let isHd = false;
+      let isStereo = false;
+      if (current.estudio) {
+        const { data: channels } = await supabase
+          .from("streaming_channels")
+          .select("is_hd, is_stereo")
+          .eq("user_id", user.id)
+          .eq("active", true)
+          .ilike("estudio", current.estudio)
+          .limit(1);
+        if (channels && channels.length > 0) {
+          isHd = !!channels[0].is_hd;
+          isStereo = !!channels[0].is_stereo;
+        }
+      }
+
+      setOnAirProgram({
         nome: current.nome,
         selo: current.selo || "",
         horario_inicio: current.horario_inicio,
@@ -153,7 +178,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         classificacao_etaria: current.classificacao_etaria || "L",
         descricao: current.descricao || "",
         apresentador_nome: (current.apresentadores as any)?.nome || "",
-      } : null);
+        tipo_programa: current.tipo_programa || "",
+        is_hd: isHd,
+        is_stereo: isStereo,
+      });
     };
     fetchOnAir();
     const interval = setInterval(fetchOnAir, 30000);
@@ -406,25 +434,62 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* On-Air Program Info */}
       {onAirProgram && (
         <div className="mb-4 animate-fade-in">
-          <div className="flex flex-col items-start gap-3">
+          <div className="flex items-start gap-5">
             {/* Selo / Logo do programa */}
             {onAirProgram.selo && (
                <img
                  src={onAirProgram.selo}
                  alt={onAirProgram.nome}
-                 className="w-28 h-28 sm:w-36 sm:h-36 lg:w-44 lg:h-44 rounded-xl object-contain"
+                 className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-xl object-contain flex-shrink-0"
                />
             )}
             <div className="flex-1 min-w-0">
-            {/* Ao vivo + horário + classificação */}
-            <div className="flex items-center gap-3 mb-2">
+            {/* Ao Vivo */}
+            <div className="flex items-center gap-1.5 mb-1">
               <div className="flex items-center gap-1.5">
                 <Circle size={8} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse" />
                 <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
               </div>
-              <span className="text-[10px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+            </div>
+
+            {/* Horário */}
+            <div className="flex items-center gap-1.5 mb-1">
+              <Clock size={11} style={{ color: "var(--layout-icon-color, #888)" }} />
+              <span className="text-[10px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>
                 {onAirProgram.horario_inicio} — {onAirProgram.horario_fim}
               </span>
+            </div>
+
+            {/* Apresentador(a) */}
+            {onAirProgram.apresentador_nome && (
+              <div className="flex items-center gap-1.5 mb-1">
+                <User size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
+                <span className="text-[11px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)" }}>{onAirProgram.apresentador_nome}</span>
+              </div>
+            )}
+
+            {/* Descrição / Tipo de programa */}
+            {(onAirProgram.descricao || onAirProgram.tipo_programa) && (
+              <p className="text-[10px] leading-relaxed line-clamp-2 mb-1.5" style={{ maxWidth: 360, color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>
+                {onAirProgram.tipo_programa && <span className="capitalize">{onAirProgram.tipo_programa.replace(/_/g, " ")}</span>}
+                {onAirProgram.tipo_programa && onAirProgram.descricao && " — "}
+                {onAirProgram.descricao}
+              </p>
+            )}
+
+            {/* Ícones: Full HD + Stereo + Classificação */}
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              {onAirProgram.is_hd && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                  <span className="text-[7px]">1080p</span> FULL HD
+                </span>
+              )}
+              {onAirProgram.is_stereo && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg>
+                  STEREO
+                </span>
+              )}
               {onAirProgram.classificacao_etaria && (
                 <span
                   className="inline-flex items-center justify-center w-5 h-5 rounded text-[9px] font-extrabold text-white leading-none"
@@ -442,19 +507,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 </span>
               )}
             </div>
-
-            {/* Descrição */}
-            {onAirProgram.descricao && (
-              <p className="text-[11px] leading-relaxed line-clamp-2 sm:line-clamp-3 mb-2" style={{ maxWidth: 400, color: "var(--layout-nav-text, #fff)" }}>{onAirProgram.descricao}</p>
-            )}
-
-            {/* Apresentador */}
-            {onAirProgram.apresentador_nome && (
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <User size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
-                <span className="text-[11px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)" }}>{onAirProgram.apresentador_nome}</span>
-              </div>
-            )}
 
             {/* Música tocando */}
             {currentMusic && (
