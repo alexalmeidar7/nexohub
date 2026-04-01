@@ -1083,7 +1083,7 @@ export default function CenarioTela() {
                 <div className="absolute inset-0 flex flex-col" style={{ padding: `2${vu} 1.5${vu} 1.5${vu} 1.5${vu}`, color: "#fff" }}>
 
                   {/* TOP ROW: Clock + Date (left) / Next program (right) */}
-                  <div className="flex justify-between items-start flex-shrink-0" style={{ zIndex: 2, padding: `0 0.5${vu}`, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                  <div className="flex justify-between items-start flex-shrink-0" style={{ zIndex: 2, padding: `0 0.5${vu}`, marginTop: isLandscape ? "100px" : undefined, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                     <div>
                       <div className="font-black" style={{ fontSize: `4${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
                         {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
@@ -1113,7 +1113,7 @@ export default function CenarioTela() {
                             className="flex flex-col items-center"
                             style={{
                               width: "85%",
-                              maxWidth: `42${vu}`,
+                              maxWidth: `${isLandscape ? 59 : 42}${vu}`,
                               padding: `1.5${vu} 2${vu} 2${vu}`,
                               borderRadius: `2${vu}`,
                               background: "rgba(0,0,0,0.5)",
@@ -1170,7 +1170,7 @@ export default function CenarioTela() {
                             className="flex flex-col items-center"
                             style={{
                               width: "85%",
-                              maxWidth: `42${vu}`,
+                              maxWidth: `${isLandscape ? 59 : 42}${vu}`,
                               padding: `1.5${vu} 2${vu} 2${vu}`,
                               borderRadius: `2${vu}`,
                               background: "rgba(0,0,0,0.5)",
