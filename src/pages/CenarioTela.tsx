@@ -1093,10 +1093,10 @@ export default function CenarioTela() {
                       </div>
                     </div>
                     {nextProgram && (
-                      <div className="text-right" style={{ animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both", lineHeight: 1.2 }}>
-                        <div className="opacity-60 font-medium" style={{ fontSize: `1.2${vu}` }}>a seguir</div>
-                        <div className="font-bold" style={{ fontSize: `1.6${vu}` }}>{nextProgram.nome}</div>
-                        <div className="opacity-50 font-medium" style={{ fontSize: `1.1${vu}`, fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}</div>
+                      <div className="text-right" style={{ animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both", lineHeight: 1.2, marginRight: "80px" }}>
+                        <div className="opacity-60 font-medium" style={{ fontSize: `${1.2 * 1.5}${vu}` }}>a seguir</div>
+                        <div className="font-bold" style={{ fontSize: `${1.6 * 1.5}${vu}` }}>{nextProgram.nome}</div>
+                        <div className="opacity-50 font-medium" style={{ fontSize: `${1.1 * 1.5}${vu}`, fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}</div>
                       </div>
                     )}
                   </div>
