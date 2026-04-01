@@ -846,6 +846,7 @@ export default function VmixPage() {
             if (!cmds || !Array.isArray(cmds) || cmds.length === 0) continue;
 
             console.log(`[local-scheduler] Executing button "${btn.nome}" at ${timeKey}`);
+            addLog(`[Agendador] Botão "${btn.nome}"`, "pending", `Disparado às ${timeKey}`, "scheduler");
             for (const cmd of cmds) {
               const fn = (cmd as any).fn || "";
               const input = (cmd as any).input || "";
