@@ -513,7 +513,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
             {/* Música tocando */}
             {currentMusic && (
-              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
                 <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
                 <div className="min-w-0">
                   <p className="text-[11px] font-medium truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>
