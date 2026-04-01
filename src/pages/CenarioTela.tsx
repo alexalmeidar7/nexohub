@@ -430,8 +430,9 @@ export default function CenarioTela() {
       return publicFetchInFlightRef.current;
     }
     const bo = publicBackoffRef.current;
-    const minGap = Math.min(bo.BASE * Math.pow(1.5, bo.consecutive), bo.MAX);
-    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < Math.min(minGap, 8000)) {
+    const jitter = Math.random() * 3000;
+    const minGap = Math.min(bo.BASE * Math.pow(1.8, bo.consecutive), bo.MAX) + jitter;
+    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < Math.min(minGap, 10000)) {
       return publicFetchLastResultRef.current;
     }
 

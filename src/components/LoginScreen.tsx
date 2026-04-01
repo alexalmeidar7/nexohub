@@ -112,35 +112,43 @@ export default function LoginScreen() {
       setError("Preencha email e senha.");
       return;
     }
-
+    if (loading) return; // prevent double submit
     setLoading(true);
     setError("");
 
     const request = () => supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
 
-    try {
-      const { error } = await withTimeout(request(), AUTH_TIMEOUT_FAST_MS, "Tempo de conexão excedido.");
-
-      if (error) {
-        setError(getFriendlyAuthMessage(error.message));
-      }
-    } catch (firstError) {
-      if (!isConnectionLikeError(firstError)) {
-        const rawMessage = getErrorMessage(firstError);
-        setError(rawMessage ? getFriendlyAuthMessage(rawMessage) : "Não foi possível autenticar. Tente novamente.");
-      } else {
-        try {
-          const { error } = await withTimeout(request(), AUTH_TIMEOUT_RETRY_MS, "Tempo de conexão excedido.");
-          if (error) {
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const { error } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
+        if (error) {
+          if (isCredentialError(error.message)) {
             setError(getFriendlyAuthMessage(error.message));
+            break; // no retry for bad credentials
           }
-        } catch {
-          setError("Servidor ainda iniciando. Aguarde alguns segundos e tente novamente.");
+          // Server-side error, retry
+          if (attempt === MAX_RETRIES - 1) {
+            setError(getFriendlyAuthMessage(error.message));
+          } else {
+            await new Promise(r => setTimeout(r, backoffDelay(attempt)));
+            continue;
+          }
+        }
+        break; // success
+      } catch (err) {
+        if (!isConnectionLikeError(err)) {
+          const rawMessage = getErrorMessage(err);
+          setError(rawMessage ? getFriendlyAuthMessage(rawMessage) : "Não foi possível autenticar. Tente novamente.");
+          break;
+        }
+        if (attempt === MAX_RETRIES - 1) {
+          setError("Backend indisponível. Verifique sua conexão e tente novamente.");
+        } else {
+          await new Promise(r => setTimeout(r, backoffDelay(attempt)));
         }
       }
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const closeForgot = () => {
