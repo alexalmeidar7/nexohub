@@ -421,7 +421,7 @@ export default function CenarioTela() {
   }, []);
 
   /* Helper: fetch all cenario data via public edge function (no auth needed) */
-  const publicBackoffRef = useRef({ consecutive: 0, BASE: 12000, MAX: 120000 });
+  const publicBackoffRef = useRef({ consecutive: 0, BASE: 15000, MAX: 180000 });
   const fetchViaEdgeFunction = useCallback(async (uid: string) => {
     if (!uid) return null;
 
@@ -430,8 +430,9 @@ export default function CenarioTela() {
       return publicFetchInFlightRef.current;
     }
     const bo = publicBackoffRef.current;
-    const minGap = Math.min(bo.BASE * Math.pow(1.5, bo.consecutive), bo.MAX);
-    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < Math.min(minGap, 8000)) {
+    const jitter = Math.random() * 3000;
+    const minGap = Math.min(bo.BASE * Math.pow(1.8, bo.consecutive), bo.MAX) + jitter;
+    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < Math.min(minGap, 10000)) {
       return publicFetchLastResultRef.current;
     }
 

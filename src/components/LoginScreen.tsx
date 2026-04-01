@@ -3,21 +3,28 @@ import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoNexo from "@/assets/logo-nexo.png";
 
-const AUTH_TIMEOUT_FAST_MS = 12000;
-const AUTH_TIMEOUT_RETRY_MS = 25000;
+const AUTH_TIMEOUT_MS = 15000;
+const MAX_RETRIES = 3;
 
 const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
   });
-
   try {
     return await Promise.race([promise, timeoutPromise]);
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
   }
+};
+
+/** Exponential backoff with jitter */
+const backoffDelay = (attempt: number) =>
+  Math.min(2000 * Math.pow(2, attempt), 20000) + Math.random() * 1000;
+
+const isCredentialError = (msg: string) => {
+  const n = msg.toLowerCase();
+  return n.includes("invalid login credentials") || n.includes("email not confirmed");
 };
 
 const getErrorMessage = (value: unknown) => {
@@ -71,7 +78,6 @@ export default function LoginScreen() {
       setForgotError("Preencha o email.");
       return;
     }
-
     setForgotLoading(true);
     setForgotError("");
 
@@ -80,25 +86,25 @@ export default function LoginScreen() {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
-    try {
-      const { error } = await withTimeout(request(), AUTH_TIMEOUT_FAST_MS, "Tempo de conexão excedido.");
-      if (error) setForgotError(error.message);
-      else setForgotSent(true);
-    } catch (firstError) {
-      if (!isConnectionLikeError(firstError)) {
-        setForgotError("Não foi possível enviar o link. Tente novamente.");
-      } else {
-        try {
-          const { error } = await withTimeout(request(), AUTH_TIMEOUT_RETRY_MS, "Tempo de conexão excedido.");
-          if (error) setForgotError(error.message);
-          else setForgotSent(true);
-        } catch {
-          setForgotError("Servidor ainda iniciando. Aguarde alguns segundos e tente novamente.");
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const { error } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
+        if (error) { setForgotError(error.message); break; }
+        setForgotSent(true);
+        break;
+      } catch (err) {
+        if (!isConnectionLikeError(err)) {
+          setForgotError("Não foi possível enviar o link. Tente novamente.");
+          break;
+        }
+        if (attempt === MAX_RETRIES - 1) {
+          setForgotError("Backend indisponível. Verifique sua conexão e tente novamente.");
+        } else {
+          await new Promise(r => setTimeout(r, backoffDelay(attempt)));
         }
       }
-    } finally {
-      setForgotLoading(false);
     }
+    setForgotLoading(false);
   };
 
   const handleSubmit = async () => {
@@ -106,35 +112,43 @@ export default function LoginScreen() {
       setError("Preencha email e senha.");
       return;
     }
-
+    if (loading) return; // prevent double submit
     setLoading(true);
     setError("");
 
     const request = () => supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
 
-    try {
-      const { error } = await withTimeout(request(), AUTH_TIMEOUT_FAST_MS, "Tempo de conexão excedido.");
-
-      if (error) {
-        setError(getFriendlyAuthMessage(error.message));
-      }
-    } catch (firstError) {
-      if (!isConnectionLikeError(firstError)) {
-        const rawMessage = getErrorMessage(firstError);
-        setError(rawMessage ? getFriendlyAuthMessage(rawMessage) : "Não foi possível autenticar. Tente novamente.");
-      } else {
-        try {
-          const { error } = await withTimeout(request(), AUTH_TIMEOUT_RETRY_MS, "Tempo de conexão excedido.");
-          if (error) {
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const { error } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
+        if (error) {
+          if (isCredentialError(error.message)) {
             setError(getFriendlyAuthMessage(error.message));
+            break; // no retry for bad credentials
           }
-        } catch {
-          setError("Servidor ainda iniciando. Aguarde alguns segundos e tente novamente.");
+          // Server-side error, retry
+          if (attempt === MAX_RETRIES - 1) {
+            setError(getFriendlyAuthMessage(error.message));
+          } else {
+            await new Promise(r => setTimeout(r, backoffDelay(attempt)));
+            continue;
+          }
+        }
+        break; // success
+      } catch (err) {
+        if (!isConnectionLikeError(err)) {
+          const rawMessage = getErrorMessage(err);
+          setError(rawMessage ? getFriendlyAuthMessage(rawMessage) : "Não foi possível autenticar. Tente novamente.");
+          break;
+        }
+        if (attempt === MAX_RETRIES - 1) {
+          setError("Backend indisponível. Verifique sua conexão e tente novamente.");
+        } else {
+          await new Promise(r => setTimeout(r, backoffDelay(attempt)));
         }
       }
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const closeForgot = () => {
