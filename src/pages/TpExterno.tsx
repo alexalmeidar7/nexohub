@@ -59,7 +59,11 @@ export default function TpExterno() {
   }
 
   if (step === "mensagem" && user) {
-    return <TpMessage user={user} onBack={() => setStep("menu")} />;
+    return (
+      <div className="h-screen flex items-center justify-center bg-tp">
+        <TpMessage user={user} onBack={() => setStep("menu")} />
+      </div>
+    );
   }
 
   if (step === "controlar") {
