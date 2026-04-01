@@ -1319,7 +1319,7 @@ export default function CenarioTela() {
                       <div className="flex items-start justify-between" style={{ marginBottom: `1.5${vu}` }}>
                         <div>
                           <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `4.5${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
-                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: "#e1f532", marginTop: `0.5${vu}` }}>hoje</div>
+                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: "#e1f532", marginTop: `0.5${vu}` }}>agora</div>
                         </div>
                         <div style={{ width: `6${vu}`, height: `6${vu}` }}>
                           <WeatherIcon code={liveWeather.current.code} size={64} />
