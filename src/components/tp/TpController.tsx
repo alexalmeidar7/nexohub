@@ -92,6 +92,11 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       return Promise.resolve(true);
     }
 
+    // If forcing, clear any pending promise so we actually reconnect
+    if (force) {
+      cmdConnectPromiseRef.current = null;
+    }
+
     if (cmdConnectPromiseRef.current) return cmdConnectPromiseRef.current;
 
     cmdConnectPromiseRef.current = new Promise<boolean>((resolve) => {
@@ -110,12 +115,15 @@ export default function TpController({ user, onBack }: TpControllerProps) {
         cmdChannelRef.current = null;
       }
 
-      const ch = supabase.channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } });
-      cmdChannelRef.current = ch;
       cmdReadyRef.current = false;
       setCmdReady(false);
 
+      const channelName = `tp-control-${user.id}-${Date.now()}`;
+      const ch = supabase.channel(channelName, { config: { broadcast: { self: true } } });
+      cmdChannelRef.current = ch;
+
       ch.subscribe((status) => {
+        console.log("[TP Controller] cmd channel status:", status);
         const ready = status === "SUBSCRIBED";
         cmdReadyRef.current = ready;
         setCmdReady(ready);
@@ -131,7 +139,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
         }
       });
 
-      setTimeout(() => finish(cmdReadyRef.current), 2500);
+      setTimeout(() => finish(cmdReadyRef.current), 3000);
     });
 
     return cmdConnectPromiseRef.current;
