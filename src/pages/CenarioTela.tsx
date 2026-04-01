@@ -1257,7 +1257,7 @@ export default function CenarioTela() {
                   )}
 
                   {/* Full-width program progress bar */}
-                  <div className="flex-shrink-0" style={{ width: "100%", height: 10, background: "#000", marginTop: `0.5${vu}` }}>
+                  <div className="flex-shrink-0" style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 10, background: "#000" }}>
                     <div style={{ width: `${progressPct}%`, height: "100%", background: "#fff", transition: "width 1s linear" }} />
                   </div>
 
