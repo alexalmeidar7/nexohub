@@ -127,6 +127,7 @@ export default function CenarioTela() {
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [showConnectedMsg, setShowConnectedMsg] = useState(false);
   const presenceShownRef = useRef(false);
+  const [backendHealth, setBackendHealth] = useState<"online" | "slow" | "offline">("online");
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
@@ -446,22 +447,27 @@ export default function CenarioTela() {
         });
         if (!resp.ok) {
           bo.consecutive = Math.min(bo.consecutive + 1, 8);
+          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
           return publicFetchLastResultRef.current;
         }
 
         const json = await resp.json();
         if (!json?.ok) {
           bo.consecutive = Math.min(bo.consecutive + 1, 8);
+          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
           return publicFetchLastResultRef.current;
         }
 
         bo.consecutive = 0;
+        setBackendHealth("online");
         const parsed = json as PublicCenarioPayload;
         publicFetchLastResultRef.current = parsed;
         publicFetchLastAtRef.current = Date.now();
         return parsed;
       } catch {
-        return null;
+        bo.consecutive = Math.min(bo.consecutive + 1, 8);
+        setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
+        return publicFetchLastResultRef.current;
       }
     })();
 
@@ -1542,6 +1548,38 @@ export default function CenarioTela() {
             >
               <div className="rounded-full" style={{ width: "1vh", height: "1vh", background: "#4ade80", boxShadow: "0 0 8px #4ade80" }} />
               <span className="text-white font-semibold" style={{ fontSize: "1.4vh" }}>Telas conectadas</span>
+            </div>
+          )}
+
+          {/* Backend health indicator (public/unauthenticated only) */}
+          {!isAuthenticated && backendHealth !== "online" && (
+            <div
+              className="absolute flex items-center gap-1.5 rounded-full"
+              style={{
+                bottom: "2vh",
+                left: "2vh",
+                zIndex: 60,
+                padding: "0.4vh 1.2vh",
+                background: backendHealth === "offline" ? "rgba(239,68,68,0.25)" : "rgba(250,204,21,0.2)",
+                WebkitBackdropFilter: "blur(12px)",
+                backdropFilter: "blur(12px)",
+                border: `1px solid ${backendHealth === "offline" ? "rgba(239,68,68,0.5)" : "rgba(250,204,21,0.4)"}`,
+                animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both",
+              }}
+            >
+              <div
+                className="rounded-full"
+                style={{
+                  width: "0.8vh",
+                  height: "0.8vh",
+                  background: backendHealth === "offline" ? "#ef4444" : "#facc15",
+                  boxShadow: `0 0 6px ${backendHealth === "offline" ? "#ef4444" : "#facc15"}`,
+                  animation: "dualSourceBlink 2s ease-in-out infinite",
+                }}
+              />
+              <span className="text-white/80 font-medium" style={{ fontSize: "1.1vh" }}>
+                {backendHealth === "offline" ? "Conexão indisponível — tentando reconectar…" : "Conexão lenta — aguarde…"}
+              </span>
             </div>
           )}
 
