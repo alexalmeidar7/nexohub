@@ -420,6 +420,7 @@ export default function CenarioTela() {
   }, []);
 
   /* Helper: fetch all cenario data via public edge function (no auth needed) */
+  const publicBackoffRef = useRef({ consecutive: 0, BASE: 12000, MAX: 120000 });
   const fetchViaEdgeFunction = useCallback(async (uid: string) => {
     if (!uid) return null;
 
@@ -427,7 +428,9 @@ export default function CenarioTela() {
     if (publicFetchInFlightRef.current) {
       return publicFetchInFlightRef.current;
     }
-    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < 8000) {
+    const bo = publicBackoffRef.current;
+    const minGap = Math.min(bo.BASE * Math.pow(1.5, bo.consecutive), bo.MAX);
+    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < Math.min(minGap, 8000)) {
       return publicFetchLastResultRef.current;
     }
 
@@ -441,11 +444,18 @@ export default function CenarioTela() {
         const resp = await fetch(baseUrl, {
           headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
         });
-        if (!resp.ok) return null;
+        if (!resp.ok) {
+          bo.consecutive = Math.min(bo.consecutive + 1, 8);
+          return publicFetchLastResultRef.current;
+        }
 
         const json = await resp.json();
-        if (!json?.ok) return null;
+        if (!json?.ok) {
+          bo.consecutive = Math.min(bo.consecutive + 1, 8);
+          return publicFetchLastResultRef.current;
+        }
 
+        bo.consecutive = 0;
         const parsed = json as PublicCenarioPayload;
         publicFetchLastResultRef.current = parsed;
         publicFetchLastAtRef.current = Date.now();
@@ -551,10 +561,16 @@ export default function CenarioTela() {
     connectSync();
 
     // Fallback forte para navegador do vMix: polling curto da config pública
-    let pollInterval: ReturnType<typeof setInterval> | null = null;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
     let pollingPublic = false;
     if (!isAuthenticated) {
-      pollInterval = setInterval(async () => {
+      const schedulePoll = () => {
+        const bo = publicBackoffRef.current;
+        const delay = Math.min(bo.BASE * Math.pow(1.5, bo.consecutive), bo.MAX);
+        pollTimer = setTimeout(doPoll, delay);
+      };
+      const doPoll = async () => {
+        if (destroyed) return;
         if (pollingPublic) return;
         pollingPublic = true;
         try {
@@ -576,11 +592,13 @@ export default function CenarioTela() {
           }
         } finally {
           pollingPublic = false;
+          if (!destroyed) schedulePoll();
         }
-      }, 12000);
+      };
+      schedulePoll();
     }
 
-    return () => { destroyed = true; setRealtimeConnected(false); if (channel) supabase.removeChannel(channel); if (pollInterval) clearInterval(pollInterval); };
+    return () => { destroyed = true; setRealtimeConnected(false); if (channel) supabase.removeChannel(channel); if (pollTimer) clearTimeout(pollTimer); };
   }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction]);
 
   /* Keep cache synced — handled entirely by applyConfig, remove standalone sync to avoid overwriting _screenRotation etc */
