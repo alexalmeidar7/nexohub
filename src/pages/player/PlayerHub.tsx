@@ -15,7 +15,6 @@ type Step = "splash" | "access" | "welcome" | "home";
 export default function PlayerHub() {
   usePageTitle("Player");
   useLayoutColors();
-  const { colors: playerColors, bgConfigs: playerBgConfigs } = usePlayerColors();
   const { user, loading } = useAuth();
   const { userSlug } = useParams();
   const [searchParams] = useSearchParams();
@@ -25,6 +24,8 @@ export default function PlayerHub() {
   const [channelName, setChannelName] = useState("");
   const [fadeOut, setFadeOut] = useState(false);
   const [pendingStep, setPendingStep] = useState<Step | null>(null);
+  const [publicUserId, setPublicUserId] = useState<string | null>(null);
+  const { colors: playerColors, bgConfigs: playerBgConfigs } = usePlayerColors(publicUserId);
 
   useEffect(() => {
     const fetchLogo = async () => {
@@ -45,6 +46,7 @@ export default function PlayerHub() {
             body: { slug: userSlug },
           });
           if (!error && data && !data.error) {
+            if (data.userId) setPublicUserId(data.userId);
             if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
           } else {

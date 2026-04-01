@@ -315,7 +315,8 @@ function MarqueeText({ text, className }: { text: string; className?: string }) 
 export default function PlayerPage() {
   usePageTitle("Player");
   useLayoutColors();
-  usePlayerColors();
+  const [playerColorUserId, setPlayerColorUserId] = useState<string | null>(null);
+  usePlayerColors(playerColorUserId);
   const { userSlug } = useParams<{ userSlug?: string }>();
   const [searchParams] = useSearchParams();
   const requestedChannelId = searchParams.get("ch");
@@ -687,6 +688,7 @@ export default function PlayerPage() {
           }
 
           setPublicUserId(data.userId);
+          setPlayerColorUserId(data.userId);
           setCanais(((data.channels || []) as Canal[]).filter(c => c.type !== "catalog" || c.id === requestedChannelId));
           setProgramas((data.programas || []) as Programa[]);
           setApresentadores((data.apresentadores || []) as Apresentador[]);
@@ -756,19 +758,7 @@ export default function PlayerPage() {
         let canaisData = channelsRes.data as Canal[] | null;
         let channelsError = channelsRes.error;
 
-        if (!channelsError && (!canaisData || canaisData.length === 0)) {
-          const fallbackChannelsRes = await supabase
-            .from("streaming_channels")
-            .select("*")
-            .eq("active", true)
-            .order("numero_canal");
-
-          if (!fallbackChannelsRes.error) {
-            canaisData = fallbackChannelsRes.data as Canal[] | null;
-          } else {
-            channelsError = fallbackChannelsRes.error;
-          }
-        }
+        // No fallback to all channels — only show channels belonging to the authenticated user
 
         if (!channelsError && canaisData) {
           setCanais(canaisData.filter(c => c.type !== "catalog" || c.id === requestedChannelId));
