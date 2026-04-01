@@ -53,7 +53,7 @@ function decodeXmlBuffer(buffer: ArrayBuffer, contentType: string): string {
 
 // Simple in-memory cache per uid (absorb request bursts)
 const uidCache = new Map<string, { data: any; ts: number }>();
-const CACHE_TTL_MS = 5000; // 5s cache
+const CACHE_TTL_MS = 15000; // 15s cache (increased from 5s to reduce DB pressure)
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check cache first
+    // Check cache first (longer TTL to survive DB outages)
     const cached = uidCache.get(userId);
     if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
       return new Response(JSON.stringify(cached.data), {
@@ -82,26 +82,45 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = createClient(supabaseUrl, serviceKey, {
+      db: { schema: "public" },
+      global: {
+        headers: { "x-connection-timeout": "5000" }, // hint for connection pool
+      },
+    });
 
     const now = new Date();
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const today = clientDay || dayNames[now.getDay()];
     const nowTime = clientTime || now.toTimeString().slice(0, 5);
 
-    // Parallelise independent DB reads
-    const [settingsResult, progsResult] = await Promise.all([
-      supabase
-        .from("user_settings")
-        .select("cenario_config, music_xml_url, dashboard_items")
-        .eq("user_id", userId)
-        .maybeSingle(),
-      supabase
-        .from("programas")
-        .select("id, nome, selo, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, tipo_programa")
-        .eq("user_id", userId)
-        .eq("ativo", true),
-    ]);
+    // Wrap DB calls with a hard timeout to prevent 150s hangs
+    const DB_TIMEOUT_MS = 8000;
+
+    const withTimeout = <T>(promise: Promise<T>, label: string): Promise<T> =>
+      Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+          setTimeout(() => reject(new Error(`DB timeout: ${label}`)), DB_TIMEOUT_MS)
+        ),
+      ]);
+
+    // Parallelise independent DB reads with timeout
+    const [settingsResult, progsResult] = await withTimeout(
+      Promise.all([
+        supabase
+          .from("user_settings")
+          .select("cenario_config, music_xml_url, dashboard_items")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase
+          .from("programas")
+          .select("id, nome, selo, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, tipo_programa")
+          .eq("user_id", userId)
+          .eq("ativo", true),
+      ]),
+      "settings+progs"
+    );
 
     const settings = settingsResult.data;
     const progs = progsResult.data;
@@ -124,18 +143,21 @@ Deno.serve(async (req) => {
         ? [onAir.apresentador_id]
         : [];
 
-      const [apsResult, logosResult] = await Promise.all([
-        apIds.length
-          ? supabase.from("apresentadores").select("nome").in("id", apIds)
-          : Promise.resolve({ data: null }),
-        supabase
-          .from("logos_patrocinadores")
-          .select("id, nome, logo_url")
-          .eq("programa_id", onAir.id)
-          .eq("user_id", userId)
-          .eq("ativo", true)
-          .eq("excluido", false),
-      ]);
+      const [apsResult, logosResult] = await withTimeout(
+        Promise.all([
+          apIds.length
+            ? supabase.from("apresentadores").select("nome").in("id", apIds)
+            : Promise.resolve({ data: null }),
+          supabase
+            .from("logos_patrocinadores")
+            .select("id, nome, logo_url")
+            .eq("programa_id", onAir.id)
+            .eq("user_id", userId)
+            .eq("ativo", true)
+            .eq("excluido", false),
+        ]),
+        "aps+logos"
+      );
 
       const apresentadorNome = apsResult.data?.map((a: any) => a.nome).join(", ") || "";
 
@@ -166,14 +188,14 @@ Deno.serve(async (req) => {
       musicStartTime = dashItems.music_start_time || null;
     }
 
-    // Fallback: fetch XML only if dashboard has no music (skip under pressure)
+    // Fallback: fetch XML only if dashboard has no music
     if (!musicData) {
       const xmlUrl = (settings as any)?.music_xml_url;
       if (xmlUrl) {
         try {
           const xmlResp = await fetch(xmlUrl, {
             headers: { "User-Agent": "Mozilla/5.0 (compatible; MusicMonitor/1.0)", Accept: "application/xml, text/xml, */*" },
-            signal: AbortSignal.timeout(3000), // reduced from 5s
+            signal: AbortSignal.timeout(3000),
           });
           const buffer = await xmlResp.arrayBuffer();
           const text = decodeXmlBuffer(buffer, xmlResp.headers.get("content-type") || "");
@@ -189,22 +211,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fallback: last played (lightweight query)
-    if (!musicData) {
-      try {
-        const { data: lastSong } = await supabase
-          .from("musicas_tocadas")
-          .select("musica, artista")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (lastSong?.musica && lastSong.musica !== "Sem título") {
-          musicData = { titulo: lastSong.musica, artista: lastSong.artista || "", capa: "" };
-        }
-      } catch { /* silent */ }
-    }
+    // Skip musicas_tocadas fallback query to reduce DB load
+    // (it was a third DB round-trip that rarely provided value)
 
     // Find next program
     let nextProgram: { nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null = null;
@@ -240,6 +248,20 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-cache" },
     });
   } catch (err) {
+    // On DB timeout, serve stale cache if available
+    try {
+      const url = new URL(req.url);
+      const userId = url.searchParams.get("uid");
+      if (userId) {
+        const stale = uidCache.get(userId);
+        if (stale) {
+          return new Response(JSON.stringify({ ...stale.data, _stale: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    } catch { /* ignore */ }
+
     return new Response(
       JSON.stringify({ ok: false, error: String(err) }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
