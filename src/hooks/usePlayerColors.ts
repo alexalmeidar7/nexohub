@@ -42,22 +42,20 @@ function hexToHsl(hex: string): string | null {
  * Loads saved player colors + bg configs from user_settings.dashboard_items
  * and applies them as CSS custom properties on :root so all player screens pick them up.
  */
-export function usePlayerColors() {
+export function usePlayerColors(externalUserId?: string | null) {
   const { user } = useAuth();
   const [colors, setColors] = useState<PlayerColors>(defaultPlayerColors);
   const [bgConfigs, setBgConfigs] = useState<ScreenBgConfigs>(defaultBgConfigs);
 
-  const fetchColors = useCallback(async () => {
-    // Try authenticated user first
-    let userId = user?.id;
+  const effectiveUserId = user?.id || externalUserId || null;
 
-    // Also try fetching via slug for public access
-    if (!userId) return;
+  const fetchColors = useCallback(async () => {
+    if (!effectiveUserId) return;
 
     const { data } = await supabase
       .from("user_settings")
       .select("dashboard_items")
-      .eq("user_id", userId)
+      .eq("user_id", effectiveUserId)
       .maybeSingle();
 
     if (data?.dashboard_items && typeof data.dashboard_items === "object") {
@@ -69,7 +67,7 @@ export function usePlayerColors() {
         setBgConfigs({ ...defaultBgConfigs, ...di.player_bg_configs });
       }
     }
-  }, [user]);
+  }, [effectiveUserId]);
 
   useEffect(() => {
     fetchColors();
