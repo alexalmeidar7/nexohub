@@ -958,6 +958,7 @@ export default function CenarioInterativoPage() {
 
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSaveRef = useRef<string>("");
+  const pendingSaveRef = useRef<(() => Promise<void>) | null>(null);
   useEffect(() => {
     if (!user?.id || !loaded) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
@@ -969,9 +970,10 @@ export default function CenarioInterativoPage() {
       _screenRotation: externalRotation,
     };
     const serialized = JSON.stringify(configWithTabs);
-    if (serialized === prevSaveRef.current) return;
-    saveTimeout.current = setTimeout(async () => {
+    if (serialized === prevSaveRef.current) { pendingSaveRef.current = null; return; }
+    const doSave = async () => {
       prevSaveRef.current = serialized;
+      pendingSaveRef.current = null;
       setSaving(true);
       const payload = { user_id: user.id, cenario_config: configWithTabs } as any;
       const { error } = await supabase
@@ -981,8 +983,14 @@ export default function CenarioInterativoPage() {
         console.error("Erro ao salvar cenário:", error);
       }
       setSaving(false);
-    }, 150);
-    return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
+    };
+    pendingSaveRef.current = doSave;
+    saveTimeout.current = setTimeout(doSave, 150);
+    return () => {
+      if (saveTimeout.current) clearTimeout(saveTimeout.current);
+      // Flush pending save on unmount so data is never lost
+      if (pendingSaveRef.current) { pendingSaveRef.current(); }
+    };
   }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab, externalRotation]);
 
   const updateHome = (partial: Partial<HomeConfig>) =>
