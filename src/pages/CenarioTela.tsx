@@ -421,7 +421,7 @@ export default function CenarioTela() {
   }, []);
 
   /* Helper: fetch all cenario data via public edge function (no auth needed) */
-  const publicBackoffRef = useRef({ consecutive: 0, BASE: 15000, MAX: 180000 });
+  const publicBackoffRef = useRef({ consecutive: 0, BASE: 30000, MAX: 300000 });
   const fetchViaEdgeFunction = useCallback(async (uid: string) => {
     if (!uid) return null;
 
@@ -430,9 +430,9 @@ export default function CenarioTela() {
       return publicFetchInFlightRef.current;
     }
     const bo = publicBackoffRef.current;
-    const jitter = Math.random() * 3000;
-    const minGap = Math.min(bo.BASE * Math.pow(1.8, bo.consecutive), bo.MAX) + jitter;
-    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < Math.min(minGap, 10000)) {
+    const jitter = Math.random() * 5000;
+    const minGap = Math.min(bo.BASE * Math.pow(2, bo.consecutive), bo.MAX) + jitter;
+    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < Math.min(minGap, 25000)) {
       return publicFetchLastResultRef.current;
     }
 
@@ -443,7 +443,9 @@ export default function CenarioTela() {
         const day = dayNames[now.getDay()];
         const time = now.toTimeString().slice(0, 5);
         const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}&day=${encodeURIComponent(day)}&time=${time}`;
-        const resp = await fetch(baseUrl);
+        const resp = await fetch(baseUrl, {
+          headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        });
         if (!resp.ok) {
           bo.consecutive = Math.min(bo.consecutive + 1, 8);
           setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
