@@ -100,6 +100,16 @@ interface LiveWeather {
   daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number }[];
 }
 
+type PublicCenarioPayload = {
+  ok: boolean;
+  cenario_config: any;
+  currentProgram: any;
+  nextProgram?: any;
+  sponsorLogos: any[];
+  musicData?: { titulo: string; artista: string; capa: string } | null;
+  musicStartTime?: number | null;
+};
+
 const mockMessages = [
   { user: "João Silva", text: "Boa tarde! 🎉" },
   { user: "Maria", text: "Excelente programa hoje!" },
@@ -171,6 +181,10 @@ export default function CenarioTela() {
   const musicStartRef = useRef<number>(Date.now());
   const [musicElapsed, setMusicElapsed] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
+
+  const publicFetchInFlightRef = useRef<Promise<PublicCenarioPayload | null> | null>(null);
+  const publicFetchLastResultRef = useRef<PublicCenarioPayload | null>(null);
+  const publicFetchLastAtRef = useRef(0);
 
 
   /* ─── Screen Rotation ─── */
@@ -407,21 +421,45 @@ export default function CenarioTela() {
 
   /* Helper: fetch all cenario data via public edge function (no auth needed) */
   const fetchViaEdgeFunction = useCallback(async (uid: string) => {
+    if (!uid) return null;
+
+    const nowMs = Date.now();
+    if (publicFetchInFlightRef.current) {
+      return publicFetchInFlightRef.current;
+    }
+    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < 8000) {
+      return publicFetchLastResultRef.current;
+    }
+
+    const request = (async (): Promise<PublicCenarioPayload | null> => {
+      try {
+        const now = new Date();
+        const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const day = dayNames[now.getDay()];
+        const time = now.toTimeString().slice(0, 5);
+        const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}&day=${encodeURIComponent(day)}&time=${time}`;
+        const resp = await fetch(baseUrl, {
+          headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        });
+        if (!resp.ok) return null;
+
+        const json = await resp.json();
+        if (!json?.ok) return null;
+
+        const parsed = json as PublicCenarioPayload;
+        publicFetchLastResultRef.current = parsed;
+        publicFetchLastAtRef.current = Date.now();
+        return parsed;
+      } catch {
+        return null;
+      }
+    })();
+
+    publicFetchInFlightRef.current = request;
     try {
-      const now = new Date();
-      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-      const day = dayNames[now.getDay()];
-      const time = now.toTimeString().slice(0, 5);
-      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}&day=${encodeURIComponent(day)}&time=${time}`;
-      const resp = await fetch(baseUrl, {
-        headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-      });
-      if (!resp.ok) return null;
-      const json = await resp.json();
-      if (!json.ok) return null;
-      return json as { cenario_config: any; currentProgram: any; nextProgram?: any; sponsorLogos: any[]; musicData?: { titulo: string; artista: string; capa: string } | null; musicStartTime?: number | null };
-    } catch {
-      return null;
+      return await request;
+    } finally {
+      publicFetchInFlightRef.current = null;
     }
   }, []);
 
@@ -464,6 +502,16 @@ export default function CenarioTela() {
           setCurrentProgram(null);
           setSponsorLogos([]);
           setNextProgram(null);
+        }
+
+        if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
+          void setMusicWithCoverFallbackRef.current?.(
+            result.musicData.titulo,
+            result.musicData.artista || "",
+            result.musicData.capa || "",
+            undefined,
+            result.musicStartTime || null
+          );
         }
       }
     };
@@ -517,7 +565,15 @@ export default function CenarioTela() {
             setSponsorLogos(result.sponsorLogos || []);
             setNextProgram(result.nextProgram || null);
           }
-          // Music is handled by the dedicated music polling effect — don't set here to avoid conflicts
+          if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
+            void setMusicWithCoverFallbackRef.current?.(
+              result.musicData.titulo,
+              result.musicData.artista || "",
+              result.musicData.capa || "",
+              undefined,
+              result.musicStartTime || null
+            );
+          }
         } finally {
           pollingPublic = false;
         }
@@ -736,22 +792,8 @@ export default function CenarioTela() {
       })();
     }
 
-    // ─── 4. Fallback polling for vMix (no Realtime support) — slower interval ───
+    // ─── 4. Unauthenticated polling is centralized in config effect to avoid duplicate backend calls ───
     let fallbackInterval: ReturnType<typeof setInterval> | null = null;
-    let pollingMusic = false;
-    if (!isAuthenticated && effectiveUserId) {
-      fallbackInterval = setInterval(async () => {
-        if (pollingMusic) return;
-        pollingMusic = true;
-        try {
-          const result = await fetchViaEdgeFunction(effectiveUserId);
-          if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
-            await setMusicWithCoverFallback(result.musicData.titulo, result.musicData.artista, result.musicData.capa || "", undefined, result.musicStartTime);
-          }
-        } catch { /* silent */ }
-        finally { pollingMusic = false; }
-      }, 12000);
-    }
 
     // ─── 5. Same-tab polling for localStorage changes (useGlobalMusicSync writes here) ───
     let localPollInterval: ReturnType<typeof setInterval> | null = null;
