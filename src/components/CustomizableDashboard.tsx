@@ -513,11 +513,18 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
             {/* Música tocando */}
             {currentMusic && (
-              <div className="flex items-center gap-1.5">
-                <Music size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
-                <span className="text-[11px]" style={{ color: "var(--layout-nav-text, #fff)" }}>
-                  {currentMusic.titulo}{currentMusic.artista ? ` — ${currentMusic.artista}` : ""}
-                </span>
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>
+                    {currentMusic.titulo?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')}
+                  </p>
+                  {currentMusic.artista && (
+                    <p className="text-[9px] truncate" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                      {currentMusic.artista.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
             </div>
