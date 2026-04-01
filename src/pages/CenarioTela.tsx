@@ -1113,7 +1113,7 @@ export default function CenarioTela() {
                             className="flex flex-col items-center"
                             style={{
                               width: "85%",
-                              maxWidth: `42${vu}`,
+                              maxWidth: `${isLandscape ? 59 : 42}${vu}`,
                               padding: `1.5${vu} 2${vu} 2${vu}`,
                               borderRadius: `2${vu}`,
                               background: "rgba(0,0,0,0.5)",
