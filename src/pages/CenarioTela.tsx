@@ -1171,18 +1171,18 @@ export default function CenarioTela() {
                             style={{
                               width: "85%",
                               maxWidth: `${isLandscape ? 59 : 42}${vu}`,
-                              padding: `1.5${vu} 2${vu} 2${vu}`,
-                              borderRadius: `2${vu}`,
-                              background: "rgba(0,0,0,0.5)",
-                              WebkitBackdropFilter: "blur(16px)", backdropFilter: "blur(16px)",
-                              border: "2px solid rgba(225,245,50,0.15)",
+                              padding: `1.8${vu} 2.2${vu} 2.2${vu}`,
+                              borderRadius: `2.4${vu}`,
+                              background: "rgba(10,10,10,0.35)",
+                              WebkitBackdropFilter: "blur(24px)", backdropFilter: "blur(24px)",
+                              border: "1px solid rgba(255,255,255,0.08)",
+                              boxShadow: "0 24px 64px -12px rgba(0,0,0,0.5), 0 8px 24px -8px rgba(0,0,0,0.3)",
                               animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
                             }}
                           >
                             {musicData.capa ? (
-                            <div className="relative" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
+                            <div className="relative" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.6${vu}`, marginBottom: `1.4${vu}`, overflow: "hidden", boxShadow: "0 16px 48px -8px rgba(0,0,0,0.45)" }}>
                                 <img src={musicData.capa} alt="" className="object-cover" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} />
-                                <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%, rgba(0,0,0,0.15) 100%)", pointerEvents: "none" }} />
                               </div>
                             ) : (
                               <div className="flex items-center justify-center" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)", position: "relative" }}>
