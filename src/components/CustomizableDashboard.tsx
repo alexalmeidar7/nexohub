@@ -1611,14 +1611,24 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
 
       {/* Video area - grows above controls */}
       {showVideo && isVideo && (
-        <div className="relative -mx-4 -mt-4 mb-2 rounded-t-2xl overflow-hidden flex-shrink-0">
-          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "130px", background: "#000" }} />
+        <div className="relative -mx-4 -mt-4 mb-2 overflow-hidden flex-shrink-0 rounded-t-2xl" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
+          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-cover" style={{ aspectRatio: "16/9", maxHeight: "160px", background: "#000" }} />
           {videoLoading && (
-            <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.6)" }}>
-              <Loader2 size={24} className="text-white/60 animate-spin" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+              <Loader2 size={20} className="text-white/70 animate-spin" />
+              <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
             </div>
           )}
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, rgba(10,10,10,0.7) 100%)" }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 40%, rgba(10,10,10,0.85) 100%)" }} />
+          {/* Live badge on video */}
+          <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded" style={{ background: "rgba(220,38,38,0.85)", backdropFilter: "blur(4px)" }}>
+            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            <span className="text-white text-[7px] font-bold tracking-wider uppercase">Live</span>
+          </div>
+          {/* Channel name overlay */}
+          <div className="absolute bottom-1.5 left-2.5">
+            <p className="text-white text-[10px] font-semibold drop-shadow-lg">{activeChannel?.name}</p>
+          </div>
         </div>
       )}
 
