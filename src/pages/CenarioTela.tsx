@@ -447,22 +447,27 @@ export default function CenarioTela() {
         });
         if (!resp.ok) {
           bo.consecutive = Math.min(bo.consecutive + 1, 8);
+          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
           return publicFetchLastResultRef.current;
         }
 
         const json = await resp.json();
         if (!json?.ok) {
           bo.consecutive = Math.min(bo.consecutive + 1, 8);
+          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
           return publicFetchLastResultRef.current;
         }
 
         bo.consecutive = 0;
+        setBackendHealth("online");
         const parsed = json as PublicCenarioPayload;
         publicFetchLastResultRef.current = parsed;
         publicFetchLastAtRef.current = Date.now();
         return parsed;
       } catch {
-        return null;
+        bo.consecutive = Math.min(bo.consecutive + 1, 8);
+        setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
+        return publicFetchLastResultRef.current;
       }
     })();
 
