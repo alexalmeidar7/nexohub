@@ -450,6 +450,10 @@ export default function CenarioInterativoPage() {
       }
     }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
       if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
+    }).on("broadcast", { event: "config-update" }, ({ payload }: any) => {
+      if (payload?.config && typeof payload.config === "object") {
+        setConfig(prev => ({ ...prev, ...(payload.config as Partial<CenarioConfig>) }));
+      }
     }).subscribe();
     rtDrawChannelRef.current = ch;
     return () => { supabase.removeChannel(ch); rtDrawChannelRef.current = null; };
@@ -875,6 +879,7 @@ export default function CenarioInterativoPage() {
     }
 
     cenarioBcRef.current?.postMessage({ type: "config-update", config });
+    rtDrawChannelRef.current?.send({ type: "broadcast", event: "config-update", payload: { config } });
   }, [config, loaded]);
 
   /* ─── Fetch weather data ─── */

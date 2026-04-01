@@ -281,6 +281,12 @@ export default function CenarioTela() {
         if (payload?.currencySubTab) setCurrencySubTab(payload.currencySubTab);
       }).on("broadcast", { event: "rotate" }, ({ payload }: any) => {
         if (payload && typeof payload.angle === "number") setScreenRotation(payload.angle);
+      }).on("broadcast", { event: "config-update" }, ({ payload }: any) => {
+        if (payload?.config && typeof payload.config === "object") {
+          setConfig(prev => ({ ...prev, ...(payload.config as Partial<CenarioConfig>) }));
+          setLastSyncTime(new Date());
+          setBackendHealth("online");
+        }
       }).subscribe((status) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           setTimeout(() => {
