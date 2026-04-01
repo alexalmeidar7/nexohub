@@ -161,7 +161,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     const fetchOnAir = async () => {
       const { data } = await supabase
         .from("programas")
-        .select("nome, selo, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, tipo_programa, estudio, apresentadores(nome)")
+        .select("nome, selo, thumb, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, tipo_programa, estudio, apresentadores(nome)")
         .eq("user_id", user.id)
         .eq("ativo", true);
       if (cancelled || !data) return;
