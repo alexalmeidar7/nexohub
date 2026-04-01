@@ -504,17 +504,24 @@ export default function CenarioTela() {
 
     // Fallback forte para navegador do vMix: polling curto da config pública
     let pollInterval: ReturnType<typeof setInterval> | null = null;
+    let pollingPublic = false;
     if (!isAuthenticated) {
       pollInterval = setInterval(async () => {
-        const result = await fetchViaEdgeFunction(effectiveUserId);
-        if (result?.cenario_config) applyConfig(result.cenario_config);
-        if (result?.currentProgram) {
-          setCurrentProgram(result.currentProgram);
-          setSponsorLogos(result.sponsorLogos || []);
-          setNextProgram(result.nextProgram || null);
+        if (pollingPublic) return;
+        pollingPublic = true;
+        try {
+          const result = await fetchViaEdgeFunction(effectiveUserId);
+          if (result?.cenario_config) applyConfig(result.cenario_config);
+          if (result?.currentProgram) {
+            setCurrentProgram(result.currentProgram);
+            setSponsorLogos(result.sponsorLogos || []);
+            setNextProgram(result.nextProgram || null);
+          }
+          // Music is handled by the dedicated music polling effect — don't set here to avoid conflicts
+        } finally {
+          pollingPublic = false;
         }
-        // Music is handled by the dedicated music polling effect — don't set here to avoid conflicts
-      }, 2000);
+      }, 12000);
     }
 
     return () => { destroyed = true; setRealtimeConnected(false); if (channel) supabase.removeChannel(channel); if (pollInterval) clearInterval(pollInterval); };
@@ -524,52 +531,38 @@ export default function CenarioTela() {
 
   /* Fetch current program + sponsor logos */
   useEffect(() => {
-    if (!effectiveUserId) return;
+    if (!effectiveUserId || !isAuthenticated) return;
     const load = async () => {
-      if (isAuthenticated) {
-        const now = new Date();
-        const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-        const today = dayNames[now.getDay()];
-        const nowTime = now.toTimeString().slice(0, 5);
-        const { data: progs } = await supabase.from("programas").select("id, nome, selo, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, tipo_programa").eq("user_id", effectiveUserId).eq("ativo", true);
-        const onAir = progs?.find(p => (p.dias_semana || []).includes(today) && p.horario_inicio <= nowTime && p.horario_fim > nowTime);
-        if (onAir) {
-          let apresentadorNome = "";
-          const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
-          if (apIds.length) {
-            const { data: aps } = await supabase.from("apresentadores").select("nome").in("id", apIds);
-            apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
-          }
-          setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, tipo_programa: onAir.tipo_programa });
-          const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", effectiveUserId).eq("ativo", true).eq("excluido", false);
-          setSponsorLogos(logos || []);
-          // Find next program
-          const upcoming = progs?.filter(p => (p.dias_semana || []).includes(today) && p.horario_inicio > nowTime).sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
-          if (upcoming?.length) {
-            const np = upcoming[0];
-            setNextProgram({ nome: np.nome, selo: np.selo, horario_inicio: np.horario_inicio, horario_fim: np.horario_fim });
-          } else {
-            setNextProgram(null);
-          }
-        } else { setCurrentProgram(null); setSponsorLogos([]); setNextProgram(null); }
-      } else {
-        // Unauthenticated: use edge function for program data
-        const result = await fetchViaEdgeFunction(effectiveUserId);
-        if (result?.currentProgram) {
-          setCurrentProgram(result.currentProgram);
-          setSponsorLogos(result.sponsorLogos || []);
-          setNextProgram(result.nextProgram || null);
+      const now = new Date();
+      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+      const today = dayNames[now.getDay()];
+      const nowTime = now.toTimeString().slice(0, 5);
+      const { data: progs } = await supabase.from("programas").select("id, nome, selo, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, tipo_programa").eq("user_id", effectiveUserId).eq("ativo", true);
+      const onAir = progs?.find(p => (p.dias_semana || []).includes(today) && p.horario_inicio <= nowTime && p.horario_fim > nowTime);
+      if (onAir) {
+        let apresentadorNome = "";
+        const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
+        if (apIds.length) {
+          const { data: aps } = await supabase.from("apresentadores").select("nome").in("id", apIds);
+          apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
+        }
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, tipo_programa: onAir.tipo_programa });
+        const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", effectiveUserId).eq("ativo", true).eq("excluido", false);
+        setSponsorLogos(logos || []);
+        // Find next program
+        const upcoming = progs?.filter(p => (p.dias_semana || []).includes(today) && p.horario_inicio > nowTime).sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
+        if (upcoming?.length) {
+          const np = upcoming[0];
+          setNextProgram({ nome: np.nome, selo: np.selo, horario_inicio: np.horario_inicio, horario_fim: np.horario_fim });
         } else {
-          setCurrentProgram(null);
-          setSponsorLogos([]);
           setNextProgram(null);
         }
-      }
+      } else { setCurrentProgram(null); setSponsorLogos([]); setNextProgram(null); }
     };
     load();
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
-  }, [effectiveUserId, isAuthenticated, fetchViaEdgeFunction]);
+  }, [effectiveUserId, isAuthenticated]);
 
   /* Fetch weather */
   const weatherCity = config.weather.city || config.city;
@@ -745,15 +738,19 @@ export default function CenarioTela() {
 
     // ─── 4. Fallback polling for vMix (no Realtime support) — slower interval ───
     let fallbackInterval: ReturnType<typeof setInterval> | null = null;
+    let pollingMusic = false;
     if (!isAuthenticated && effectiveUserId) {
       fallbackInterval = setInterval(async () => {
+        if (pollingMusic) return;
+        pollingMusic = true;
         try {
           const result = await fetchViaEdgeFunction(effectiveUserId);
           if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
             await setMusicWithCoverFallback(result.musicData.titulo, result.musicData.artista, result.musicData.capa || "", undefined, result.musicStartTime);
           }
         } catch { /* silent */ }
-      }, 3000);
+        finally { pollingMusic = false; }
+      }, 12000);
     }
 
     // ─── 5. Same-tab polling for localStorage changes (useGlobalMusicSync writes here) ───
