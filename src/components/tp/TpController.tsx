@@ -7,6 +7,7 @@ import { Roteiro, extractRoteiroHtml, tpControlBtnClasses, tpControlBtnActiveCla
 interface TpControllerProps {
   user: User | null;
   onBack: () => void;
+  onMessage?: () => void;
 }
 
 export default function TpController({ user, onBack }: TpControllerProps) {
