@@ -879,6 +879,7 @@ export default function CenarioInterativoPage() {
     }
 
     cenarioBcRef.current?.postMessage({ type: "config-update", config });
+    rtDrawChannelRef.current?.send({ type: "broadcast", event: "config-update", payload: { config } });
   }, [config, loaded]);
 
   /* ─── Fetch weather data ─── */
