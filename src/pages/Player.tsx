@@ -688,6 +688,7 @@ export default function PlayerPage() {
           }
 
           setPublicUserId(data.userId);
+          setPlayerColorUserId(data.userId);
           setCanais(((data.channels || []) as Canal[]).filter(c => c.type !== "catalog" || c.id === requestedChannelId));
           setProgramas((data.programas || []) as Programa[]);
           setApresentadores((data.apresentadores || []) as Apresentador[]);
