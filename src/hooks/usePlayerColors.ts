@@ -82,6 +82,27 @@ export function usePlayerColors(externalUserId?: string | null) {
   // Apply CSS custom properties
   useEffect(() => {
     const root = document.documentElement;
+    const inheritedWatchAccent =
+      colors.liveAccent && colors.liveAccent !== defaultPlayerColors.liveAccent
+        ? colors.liveAccent
+        : colors.homeAccent;
+
+    const resolvedWatchTopBarAccent =
+      colors.watchTopBarAccent &&
+      colors.watchTopBarAccent !== defaultPlayerColors.watchTopBarAccent
+        ? colors.watchTopBarAccent
+        : inheritedWatchAccent;
+
+    const resolvedWatchScrubber =
+      colors.watchScrubber && colors.watchScrubber !== defaultPlayerColors.watchScrubber
+        ? colors.watchScrubber
+        : inheritedWatchAccent;
+
+    const resolvedWatchMusicAccent =
+      colors.watchMusicAccent &&
+      colors.watchMusicAccent !== defaultPlayerColors.watchMusicAccent
+        ? colors.watchMusicAccent
+        : inheritedWatchAccent;
 
     // Map player colors to CSS variables
     const accentHsl = hexToHsl(colors.homeAccent);
@@ -143,15 +164,15 @@ export function usePlayerColors(externalUserId?: string | null) {
     // Watch controls
     root.style.setProperty("--player-watch-topbar-bg", colors.watchTopBarBg || "#000000cc");
     root.style.setProperty("--player-watch-topbar-text", colors.watchTopBarText || "#ffffff");
-    root.style.setProperty("--player-watch-topbar-accent", colors.watchTopBarAccent || "#dc2626");
+    root.style.setProperty("--player-watch-topbar-accent", resolvedWatchTopBarAccent);
     root.style.setProperty("--player-watch-bottombar-bg", colors.watchBottomBarBg || "#000000cc");
     root.style.setProperty("--player-watch-bottombar-text", colors.watchBottomBarText || "#ffffff");
-    root.style.setProperty("--player-watch-scrubber", colors.watchScrubber || "#dc2626");
+    root.style.setProperty("--player-watch-scrubber", resolvedWatchScrubber);
     root.style.setProperty("--player-watch-music-bg", colors.watchMusicBg || "#000000ee");
     root.style.setProperty("--player-watch-music-text", colors.watchMusicText || "#ffffff");
     root.style.setProperty("--player-watch-music-title-color", colors.watchMusicTitleColor || colors.watchMusicText || "#ffffff");
     root.style.setProperty("--player-watch-music-artist-color", colors.watchMusicArtistColor || "color-mix(in srgb, " + (colors.watchMusicText || "#ffffff") + " 85%, transparent)");
-    root.style.setProperty("--player-watch-music-accent", colors.watchMusicAccent || "#dc2626");
+    root.style.setProperty("--player-watch-music-accent", resolvedWatchMusicAccent);
 
     // Glow gradient from accent + bg
     const glowGradient = `radial-gradient(ellipse at 50% 100%, ${colors.homeAccent}55 0%, ${colors.homeBg} 50%, ${colors.homeBg} 100%)`;
