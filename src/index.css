@@ -865,3 +865,12 @@ table:not([data-no-row-hover]) tbody tr:hover {
   );
   animation: cenario-shine-sweep 10s ease-in-out infinite;
 }
+
+/* Mic icon pulse animation */
+@keyframes cenario-mic-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.85; }
+}
+.cenario-mic-pulse {
+  animation: cenario-mic-pulse 2s ease-in-out infinite;
+}

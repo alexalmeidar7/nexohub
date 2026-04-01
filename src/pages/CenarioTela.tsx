@@ -1243,7 +1243,12 @@ export default function CenarioTela() {
                         <div className="font-black text-center" style={{ fontSize: `3${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
                       )}
                       {currentProgram.apresentador && (
-                        <div className="font-bold" style={{ fontSize: `2.2${vu}`, marginTop: `0.6${vu}`, textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{currentProgram.apresentador}</div>
+                        <div className="flex flex-col items-center" style={{ marginTop: `1${vu}` }}>
+                          <div className="rounded-full flex items-center justify-center cenario-mic-pulse" style={{ width: `4${vu}`, height: `4${vu}`, background: "rgba(0,0,0,0.15)", border: "2px solid rgba(0,0,0,0.25)", marginBottom: `0.6${vu}` }}>
+                            <Mic style={{ width: `2${vu}`, height: `2${vu}`, color: "#000" }} />
+                          </div>
+                          <div className="font-black" style={{ fontSize: `3.2${vu}`, color: "#000", textShadow: "none" }}>{currentProgram.apresentador}</div>
+                        </div>
                       )}
                       <div className="font-medium" style={{ fontSize: `1.3${vu}`, marginTop: `0.3${vu}`, fontVariantNumeric: "tabular-nums", color: "#000", opacity: 0.7 }}>
                         {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
