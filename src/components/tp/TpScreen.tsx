@@ -145,6 +145,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
         if (data[0].texto_atual) {
           setDisplayText(data[0].texto_atual);
           setIsHtmlContent(data[0].is_html || false);
+          dbTextRef.current = data[0].texto_atual;
         }
       }
     })();
@@ -456,6 +457,39 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
         supabase.removeChannel(stateChannelRef.current);
         stateChannelRef.current = null;
       }
+    };
+  }, [user]);
+
+  // Realtime fallback: listen for DB changes to teleprompters table
+  // This ensures text loads even if the broadcast command doesn't arrive
+  const dbTextRef = useRef("");
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`tp-db-watch-${user.id}`)
+      .on(
+        "postgres_changes" as any,
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "teleprompters",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload: any) => {
+          const row = payload.new;
+          if (!row || !row.ativo) return;
+          const newText = row.texto_atual || "";
+          const newHtml = !!row.is_html;
+          // Only apply if text actually changed (avoid last_seen heartbeat triggers)
+          if (newText && newText !== dbTextRef.current) {
+            dbTextRef.current = newText;
+            applyLoadedText(newText, newHtml);
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
     };
   }, [user]);
 
