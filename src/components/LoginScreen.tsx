@@ -3,21 +3,28 @@ import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoNexo from "@/assets/logo-nexo.png";
 
-const AUTH_TIMEOUT_FAST_MS = 12000;
-const AUTH_TIMEOUT_RETRY_MS = 25000;
+const AUTH_TIMEOUT_MS = 15000;
+const MAX_RETRIES = 3;
 
 const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
   });
-
   try {
     return await Promise.race([promise, timeoutPromise]);
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
   }
+};
+
+/** Exponential backoff with jitter */
+const backoffDelay = (attempt: number) =>
+  Math.min(2000 * Math.pow(2, attempt), 20000) + Math.random() * 1000;
+
+const isCredentialError = (msg: string) => {
+  const n = msg.toLowerCase();
+  return n.includes("invalid login credentials") || n.includes("email not confirmed");
 };
 
 const getErrorMessage = (value: unknown) => {
