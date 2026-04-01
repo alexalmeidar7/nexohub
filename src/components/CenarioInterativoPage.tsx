@@ -548,7 +548,11 @@ export default function CenarioInterativoPage() {
   const activeTabRef = useRef(activeTab);
   const weatherSubTabRef = useRef(weatherSubTab);
   const currencySubTabRef = useRef(currencySubTab);
-  useEffect(() => { configRef.current = config; }, [config]);
+  useEffect(() => {
+    configRef.current = config;
+    // Push config to external screen instantly via BroadcastChannel
+    cenarioBcRef.current?.postMessage({ type: "config-update", config });
+  }, [config]);
   useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
   useEffect(() => { weatherSubTabRef.current = weatherSubTab; }, [weatherSubTab]);
   useEffect(() => { currencySubTabRef.current = currencySubTab; }, [currencySubTab]);

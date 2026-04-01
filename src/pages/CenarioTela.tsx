@@ -421,7 +421,7 @@ export default function CenarioTela() {
   }, []);
 
   /* Helper: fetch all cenario data via public edge function (no auth needed) */
-  const publicBackoffRef = useRef({ consecutive: 0, BASE: 30000, MAX: 300000 });
+  const publicBackoffRef = useRef({ consecutive: 0, BASE: 10000, MAX: 120000 });
   const fetchViaEdgeFunction = useCallback(async (uid: string) => {
     if (!uid) return null;
 
