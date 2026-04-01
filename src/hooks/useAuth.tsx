@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, createContext, useContext } from "react";
+import { useState, useEffect, useRef, createContext, useContext, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -27,43 +27,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const prevUserIdRef = useRef<string | null>(null);
   const manualSignOutRef = useRef(false);
+  const loadingRef = useRef(true); // mirror of loading state to avoid stale closures
+
+  const finishLoading = useCallback(() => {
+    loadingRef.current = false;
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Gradual retry strategy instead of a single hard timeout
-    let retryCount = 0;
-    const MAX_AUTH_RETRIES = 3;
-    const scheduleRetry = () => {
-      retryCount++;
-      const delay = Math.min(5000 * Math.pow(1.5, retryCount - 1), 15000);
-      return setTimeout(async () => {
-        if (!mounted || !loading) return;
-        try {
-          const { data } = await supabase.auth.getSession();
-          if (data.session) {
-            void updateAuth(data.session);
-            return;
-          }
-          const { data: refreshed } = await supabase.auth.refreshSession();
-          if (refreshed.session) {
-            void updateAuth(refreshed.session);
-            return;
-          }
-        } catch { /* silent */ }
-        if (retryCount < MAX_AUTH_RETRIES) {
-          retryTimer = scheduleRetry();
-        } else {
-          console.warn("Auth loading: max retries reached, forcing load complete");
-          if (mounted) setLoading(false);
-        }
-      }, delay);
+    const addTimer = (fn: () => void, ms: number) => {
+      const t = setTimeout(fn, ms);
+      timers.push(t);
+      return t;
     };
-    let retryTimer = setTimeout(() => {
-      if (mounted && loading) {
-        retryTimer = scheduleRetry();
+
+    // Hard safety net: if loading is still true after 15s, force it off
+    addTimer(() => {
+      if (mounted && loadingRef.current) {
+        console.warn("Auth: safety timeout reached (15s), forcing load complete");
+        finishLoading();
       }
-    }, 8000);
+    }, 15000);
+
+    const fetchRole = async (userId: string): Promise<AppRole> => {
+      try {
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId);
+        if (!error && data && data.length > 0) {
+          return data.some((r: any) => r.role === "admin") ? "admin" : "user";
+        }
+      } catch { /* silent */ }
+      return "user";
+    };
 
     const updateAuth = async (newSession: Session | null) => {
       if (!mounted) return;
@@ -71,7 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const newUser = newSession?.user ?? null;
       const newId = newUser?.id ?? null;
 
-      // Only update user state if the user ID actually changed
       if (newId !== prevUserIdRef.current) {
         prevUserIdRef.current = newId;
         setUser(newUser);
@@ -80,28 +79,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!newUser) {
         setRole(null);
-        setLoading(false);
+        if (mounted) finishLoading();
         return;
       }
 
-      try {
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", newUser.id);
+      // Race role fetch against a 5s timeout so we never hang
+      const roleResult = await Promise.race([
+        fetchRole(newUser.id),
+        new Promise<AppRole>((resolve) => addTimer(() => resolve("user"), 5000)),
+      ]);
 
-        if (!mounted) return;
-
-        if (!error && data && data.length > 0) {
-          const isAdmin = data.some((r: any) => r.role === "admin");
-          setRole(isAdmin ? "admin" : "user");
-        } else {
-          setRole("user");
-        }
-      } catch {
-        if (mounted) setRole("user");
-      }
-      if (mounted) setLoading(false);
+      if (!mounted) return;
+      setRole(roleResult);
+      finishLoading();
     };
 
     // Set up auth state listener FIRST
@@ -115,58 +105,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Never auto-logout on idle/session hiccups: try to recover silently
+        // Try to recover silently before logging out
         supabase.auth.getSession().then(async ({ data }) => {
           if (data.session) {
             void updateAuth(data.session);
             return;
           }
-
           try {
             const { data: refreshed } = await supabase.auth.refreshSession();
             if (refreshed.session) {
               void updateAuth(refreshed.session);
               return;
             }
-          } catch {
-            // keep current in-memory auth state
-          }
-
-          if (mounted) setLoading(false);
+          } catch { /* keep current state */ }
+          if (mounted) finishLoading();
         });
         return;
       }
       void updateAuth(session);
     });
 
-    // Then restore initial session from storage
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error && !session) {
-        // Try to recover by refreshing the session
-        supabase.auth.refreshSession().then(({ data: refreshed }) => {
-          if (refreshed.session) {
-            void updateAuth(refreshed.session);
-          } else {
-            prevUserIdRef.current = null;
-            setUser(null);
-            setSession(null);
-            setRole(null);
-            setLoading(false);
-          }
-        });
-        return;
-      }
-
-      void updateAuth(session);
-    }).catch(() => {
-      if (mounted) {
-        setLoading(false);
-      }
-    });
+    // Restore initial session
+    supabase.auth
+      .getSession()
+      .then(({ data: { session }, error }) => {
+        if (error && !session) {
+          return supabase.auth.refreshSession().then(({ data: refreshed }) => {
+            if (refreshed.session) {
+              void updateAuth(refreshed.session);
+            } else {
+              prevUserIdRef.current = null;
+              setUser(null);
+              setSession(null);
+              setRole(null);
+              finishLoading();
+            }
+          });
+        }
+        void updateAuth(session);
+      })
+      .catch(() => {
+        if (mounted) finishLoading();
+      });
 
     return () => {
       mounted = false;
-      if (retryTimer) clearTimeout(retryTimer);
+      timers.forEach(clearTimeout);
       subscription.unsubscribe();
     };
   }, []);
