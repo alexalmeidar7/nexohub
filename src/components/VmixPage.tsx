@@ -706,6 +706,138 @@ export default function VmixPage() {
     setRunningScene(null);
     toast({ title: "Cena executada", description: `"${scene.name}" concluída.` });
   };
+  // ── Client-side scheduler (runs commands locally since edge functions can't reach private IPs) ──
+  const schedulerExecutedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!connected || !savedUrl || !user) return;
+
+    const DAY_MAP: Record<string, number> = {
+      domingo: 0, segunda: 1, "terça": 2, terca: 2,
+      quarta: 3, quinta: 4, sexta: 5, "sábado": 6, sabado: 6,
+    };
+
+    const matchesDay = (dias: string[] | null, jsDay: number) => {
+      if (!dias || dias.length === 0) return true;
+      return dias.some((d) => {
+        const n = d.toLowerCase().replace(/[-.,]/g, "").trim();
+        for (const [key, val] of Object.entries(DAY_MAP)) {
+          if (n.startsWith(key)) return val === jsDay;
+        }
+        return false;
+      });
+    };
+
+    const checkSchedule = async () => {
+      const now = new Date();
+      const brasiliaOffset = -3 * 60;
+      const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+      const brasiliaDate = new Date(utcMs + brasiliaOffset * 60000);
+      const hh = String(brasiliaDate.getHours()).padStart(2, "0");
+      const mm = String(brasiliaDate.getMinutes()).padStart(2, "0");
+      const jsDay = brasiliaDate.getDay();
+      const timeKey = `${hh}:${mm}`;
+
+      // Reset executed set each new minute
+      const currentMinuteKey = `${hh}${mm}`;
+      for (const k of schedulerExecutedRef.current) {
+        if (!k.startsWith(currentMinuteKey + "_")) schedulerExecutedRef.current.delete(k);
+      }
+
+      // 1. Preset commands (program presets)
+      try {
+        const { data: presets } = await supabase
+          .from("preset_commands")
+          .select("id, programa_id, commands, custom_horario")
+          .eq("user_id", user.id);
+
+        if (presets && presets.length > 0) {
+          const progIds = [...new Set(presets.map((p: any) => p.programa_id))];
+          const { data: progs } = await supabase
+            .from("programas")
+            .select("id, nome, horario_inicio, dias_semana")
+            .in("id", progIds);
+
+          const progMap = new Map((progs || []).map((p: any) => [p.id, p]));
+
+          for (const preset of presets) {
+            const prog = progMap.get(preset.programa_id);
+            if (!prog) continue;
+
+            const horario = preset.custom_horario || prog.horario_inicio;
+            if (!horario) continue;
+            const parts = horario.split(":");
+            const matchH = parts[0]?.padStart(2, "0");
+            const matchM = parts[1]?.padStart(2, "0");
+            if (matchH !== hh || matchM !== mm) continue;
+            if (!matchesDay(prog.dias_semana, jsDay)) continue;
+
+            const execKey = `${currentMinuteKey}_preset_${preset.id}`;
+            if (schedulerExecutedRef.current.has(execKey)) continue;
+            schedulerExecutedRef.current.add(execKey);
+
+            const cmds = preset.commands as any[];
+            if (!cmds || !Array.isArray(cmds) || cmds.length === 0) continue;
+
+            console.log(`[local-scheduler] Executing preset for "${prog.nome}" at ${timeKey}`);
+            for (const cmd of cmds) {
+              const fn = cmd.fn || "";
+              const input = cmd.input || "";
+              const extraValue = cmd.extraValue;
+              const value = extraValue ? (cmd.value ? `${cmd.value},${extraValue}` : extraValue) : (cmd.value || "");
+              if (fn) await sendCommand(fn, input || undefined, value || undefined);
+              await new Promise((r) => setTimeout(r, 400));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("[local-scheduler] preset error:", err);
+      }
+
+      // 2. Custom buttons with schedule
+      try {
+        const { data: buttons } = await supabase
+          .from("custom_vmix_buttons")
+          .select("id, nome, commands, horario, dias_semana")
+          .eq("user_id", user.id);
+
+        if (buttons) {
+          for (const btn of buttons) {
+            if (!btn.horario || !btn.dias_semana || (btn.dias_semana as string[]).length === 0) continue;
+            const parts = btn.horario.split(":");
+            const matchH = parts[0]?.padStart(2, "0");
+            const matchM = parts[1]?.padStart(2, "0");
+            if (matchH !== hh || matchM !== mm) continue;
+            if (!matchesDay(btn.dias_semana as string[], jsDay)) continue;
+
+            const execKey = `${currentMinuteKey}_btn_${btn.id}`;
+            if (schedulerExecutedRef.current.has(execKey)) continue;
+            schedulerExecutedRef.current.add(execKey);
+
+            const cmds = btn.commands as any[];
+            if (!cmds || !Array.isArray(cmds) || cmds.length === 0) continue;
+
+            console.log(`[local-scheduler] Executing button "${btn.nome}" at ${timeKey}`);
+            for (const cmd of cmds) {
+              const fn = (cmd as any).fn || "";
+              const input = (cmd as any).input || "";
+              const extraValue = (cmd as any).extraValue;
+              const value = extraValue ? ((cmd as any).value ? `${(cmd as any).value},${extraValue}` : extraValue) : ((cmd as any).value || "");
+              if (fn) await sendCommand(fn, input || undefined, value || undefined);
+              await new Promise((r) => setTimeout(r, 400));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("[local-scheduler] button error:", err);
+      }
+    };
+
+    // Check every 30 seconds
+    checkSchedule();
+    const id = setInterval(checkSchedule, 30000);
+    return () => clearInterval(id);
+  }, [connected, savedUrl, user, sendCommand]);
 
   // Extract machine names from existing NDI inputs to suggest common sources
   const detectedMachines = useMemo(() => {
