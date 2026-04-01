@@ -24,7 +24,7 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
   };
 
   // Windy embed URL with satellite/rain overlay
-  const windyUrl = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=${currentZoom}&overlay=radar&product=radar&level=surface&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&marker=true&message=true`;
+  const windyUrl = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=${currentZoom}&overlay=clouds&product=clouds&level=surface&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&marker=true&message=true`;
 
   return (
     <div className="relative" style={{ width: "100%", height: "100%", ...style }}>
