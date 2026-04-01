@@ -1383,7 +1383,7 @@ export default function CenarioTela() {
                           </div>
                           <div className="flex-1 flex flex-col" style={{ gap: `1.5${vu}` }}>
                             {liveWeather.daily.slice(1, 5).map((d, i) => (
-                              <div key={i} className="rounded-2xl" style={{ padding: `2${vu}`, background: "rgba(255,255,255,0.08)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                              <div key={i} className={`rounded-2xl cenario-anim-row-${i + 1}`} style={{ padding: `2${vu}`, background: "rgba(255,255,255,0.08)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)" }}>
                                 <div className="flex items-center justify-between" style={{ marginBottom: `1${vu}` }}>
                                   <span className="font-bold capitalize" style={{ fontSize: `2.4${vu}` }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
                                   <div style={{ width: `5${vu}`, height: `5${vu}` }}><WeatherIcon code={d.code} size={42} forceDay /></div>
