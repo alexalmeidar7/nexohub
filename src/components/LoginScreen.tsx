@@ -92,7 +92,7 @@ export default function LoginScreen() {
           break;
         }
         if (attempt === MAX_RETRIES - 1) {
-          setForgotError("Backend indisponível. Verifique sua conexão e tente novamente.");
+          setForgotError("Não foi possível conectar ao servidor. Tente novamente em alguns segundos.");
         } else {
           await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
         }

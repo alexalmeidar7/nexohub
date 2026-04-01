@@ -573,7 +573,7 @@ export default function CenarioTela() {
     if (!isAuthenticated) {
       const schedulePoll = () => {
         const bo = publicBackoffRef.current;
-        const delay = Math.min(bo.BASE * Math.pow(1.5, bo.consecutive), bo.MAX);
+        const delay = Math.min(bo.BASE * Math.pow(2, bo.consecutive), bo.MAX) + Math.random() * 5000;
         pollTimer = setTimeout(doPoll, delay);
       };
       const doPoll = async () => {
