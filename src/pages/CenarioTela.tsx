@@ -1088,13 +1088,13 @@ export default function CenarioTela() {
                       <div className="font-black" style={{ fontSize: `4${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
                         {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                       </div>
-                      <div className="font-bold" style={{ fontSize: `1.4${vu}`, color: "#e1f532", marginTop: `0.3${vu}`, fontVariantNumeric: "tabular-nums" }}>
-                        {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                      <div className="font-bold" style={{ fontSize: `1.4${vu}`, color: "#e1f532", marginTop: `0.3${vu}` }}>
+                        {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
                       </div>
                     </div>
                     {nextProgram && (
                       <div className="text-right" style={{ animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both", lineHeight: 1.2, marginRight: "80px" }}>
-                        <div className="opacity-60 font-medium" style={{ fontSize: `${1.2 * 1.5}${vu}` }}>a seguir</div>
+                        <div className="font-medium" style={{ fontSize: `${1.2 * 1.5}${vu}`, color: "#e1f532" }}>a seguir</div>
                         <div className="font-bold" style={{ fontSize: `${1.6 * 1.5}${vu}` }}>{nextProgram.nome}</div>
                         <div className="opacity-50 font-medium" style={{ fontSize: `${1.1 * 1.5}${vu}`, fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}</div>
                       </div>
