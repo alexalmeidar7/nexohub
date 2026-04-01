@@ -443,9 +443,7 @@ export default function CenarioTela() {
         const day = dayNames[now.getDay()];
         const time = now.toTimeString().slice(0, 5);
         const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}&day=${encodeURIComponent(day)}&time=${time}`;
-        const resp = await fetch(baseUrl, {
-          headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-        });
+        const resp = await fetch(baseUrl);
         if (!resp.ok) {
           bo.consecutive = Math.min(bo.consecutive + 1, 8);
           setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");

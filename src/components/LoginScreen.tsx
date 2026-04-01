@@ -3,20 +3,7 @@ import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoNexo from "@/assets/logo-nexo.png";
 
-const AUTH_TIMEOUT_MS = 15000;
 const MAX_RETRIES = 3;
-
-const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> => {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
-  });
-  try {
-    return await Promise.race([promise, timeoutPromise]);
-  } finally {
-    if (timeoutId) clearTimeout(timeoutId);
-  }
-};
 
 /** Exponential backoff with jitter */
 const backoffDelay = (attempt: number) =>
