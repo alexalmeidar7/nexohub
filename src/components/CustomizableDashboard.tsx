@@ -75,7 +75,7 @@ const linkOptions: { label: string; page?: Page; external?: string; icon: string
   { label: "Testemunhais", page: "testemunhais", icon: "MessageSquareQuote" },
   { label: "Promoções", page: "promocoes", icon: "Tag" },
   { label: "Logos", page: "logos", icon: "Image" },
-  { label: "Pre Roll", page: "preroll", icon: "Film" },
+  { label: "Roll", page: "preroll", icon: "Film" },
   { label: "Shopping", page: "shopping", icon: "ShoppingCart" },
   { label: "vMix", page: "vmix", icon: "Monitor" },
   { label: "Corte de Vídeo", page: "cortevideo", icon: "Scissors" },
