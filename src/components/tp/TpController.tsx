@@ -118,8 +118,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       cmdReadyRef.current = false;
       setCmdReady(false);
 
-      const channelName = `tp-control-${user.id}-${Date.now()}`;
-      const ch = supabase.channel(channelName, { config: { broadcast: { self: true } } });
+      const ch = supabase.channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } });
       cmdChannelRef.current = ch;
 
       ch.subscribe((status) => {
