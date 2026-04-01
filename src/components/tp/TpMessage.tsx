@@ -76,7 +76,7 @@ export default function TpMessage({ user, onBack }: TpMessageProps) {
     <div
       tabIndex={-1}
       onKeyDown={(e) => { if (e.key === "Escape") onBack(); }}
-      className="h-screen flex flex-col items-center justify-center bg-tp font-sans gap-5 outline-none"
+      className="flex flex-col items-center justify-center font-sans gap-5 outline-none"
       ref={(el) => { if (el && !el.contains(document.activeElement)) el.focus(); }}
     >
       <div className="bg-gradient-to-br from-tp-surface to-tp-surface-light rounded-[20px] p-8 w-[min(450px,90%)] border border-tp-border shadow-[0_16px_48px_hsl(var(--tp-shadow))] relative">

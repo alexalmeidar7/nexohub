@@ -3,14 +3,15 @@ import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, FlipHori
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Roteiro, extractRoteiroHtml, tpControlBtnClasses, tpControlBtnActiveClasses } from "./tp-utils";
+import TpMessage from "./TpMessage";
 
 interface TpControllerProps {
   user: User | null;
   onBack: () => void;
-  onMessage?: () => void;
 }
 
-export default function TpController({ user, onBack, onMessage }: TpControllerProps) {
+export default function TpController({ user, onBack }: TpControllerProps) {
+  const [showMessagePopup, setShowMessagePopup] = useState(false);
   const [tpState, setTpState] = useState<any>(null);
   const [connected, setConnected] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
@@ -562,11 +563,9 @@ export default function TpController({ user, onBack, onMessage }: TpControllerPr
         <button onClick={onBack} className="bg-transparent border border-tp-border-subtle rounded-[10px] px-5 py-2 cursor-pointer text-tp-muted text-[11px] flex items-center gap-1.5">
           <LogOut size={12} /> Voltar
         </button>
-        {onMessage && (
-          <button onClick={onMessage} className="bg-transparent border border-tp-border-subtle rounded-[10px] px-5 py-2 cursor-pointer text-tp-accent text-[11px] flex items-center gap-1.5 hover:border-tp-accent transition-colors">
-            <MessageSquare size={12} /> Mandar Mensagem
-          </button>
-        )}
+        <button onClick={() => setShowMessagePopup(true)} className="bg-transparent border border-tp-border-subtle rounded-[10px] px-5 py-2 cursor-pointer text-tp-accent text-[11px] flex items-center gap-1.5 hover:border-tp-accent transition-colors">
+          <MessageSquare size={12} /> Mandar Mensagem
+        </button>
       </div>
 
       {/* Setup Modal */}
@@ -667,6 +666,13 @@ export default function TpController({ user, onBack, onMessage }: TpControllerPr
             </button>
           </div>
         </>
+      )}
+
+      {/* Message Popup Overlay */}
+      {showMessagePopup && user && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+          <TpMessage user={user} onBack={() => setShowMessagePopup(false)} />
+        </div>
       )}
     </div>
   );
