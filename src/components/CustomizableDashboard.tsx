@@ -491,19 +491,22 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 </span>
               )}
               {onAirProgram.classificacao_etaria && (
-                <span
-                  className="inline-flex items-center justify-center w-5 h-5 rounded text-[9px] font-extrabold text-white leading-none"
-                  style={{
-                    backgroundColor:
-                      onAirProgram.classificacao_etaria === "AL" || onAirProgram.classificacao_etaria === "L" ? "#14A44D" :
-                      onAirProgram.classificacao_etaria === "10" ? "#2563EB" :
-                      onAirProgram.classificacao_etaria === "12" ? "#EAB308" :
-                      onAirProgram.classificacao_etaria === "14" ? "#F97316" :
-                      onAirProgram.classificacao_etaria === "16" ? "#DC2626" :
-                      onAirProgram.classificacao_etaria === "18" ? "#1d1d1b" : "#666",
-                  }}
-                >
-                  {onAirProgram.classificacao_etaria}
+                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                   <span
+                     className="inline-flex items-center justify-center w-4 h-4 rounded text-[7px] font-extrabold text-white leading-none"
+                     style={{
+                       backgroundColor:
+                         onAirProgram.classificacao_etaria === "AL" || onAirProgram.classificacao_etaria === "L" ? "#14A44D" :
+                         onAirProgram.classificacao_etaria === "10" ? "#2563EB" :
+                         onAirProgram.classificacao_etaria === "12" ? "#EAB308" :
+                         onAirProgram.classificacao_etaria === "14" ? "#F97316" :
+                         onAirProgram.classificacao_etaria === "16" ? "#DC2626" :
+                         onAirProgram.classificacao_etaria === "18" ? "#1d1d1b" : "#666",
+                     }}
+                   >
+                     {onAirProgram.classificacao_etaria}
+                   </span>
+                   CLASS. INDICATIVA
                 </span>
               )}
             </div>
