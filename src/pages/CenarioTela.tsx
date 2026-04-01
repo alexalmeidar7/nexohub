@@ -97,7 +97,7 @@ function getWLabel(code: number) { return weatherLabels[code] ?? weatherLabels[O
 
 interface LiveWeather {
   current: { temp: number; humidity: number; code: number };
-  daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number; rainMm: number }[];
+  daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number; rainMm: number; windMax: number }[];
 }
 
 type PublicCenarioPayload = {
@@ -668,7 +668,7 @@ export default function CenarioTela() {
             const d = forecastData.data;
             setLiveWeather({
               current: { temp: Math.round(d.current?.temperature_2m ?? 0), humidity: Math.round(d.current?.relative_humidity_2m ?? 0), code: d.current?.weather_code ?? 0 },
-              daily: (d.daily?.time || []).map((date: string, i: number) => ({ date, min: Math.round(d.daily.temperature_2m_min?.[i] ?? 0), max: Math.round(d.daily.temperature_2m_max?.[i] ?? 0), code: d.daily.weather_code?.[i] ?? 0, humidity: Math.round(d.daily.relative_humidity_2m_max?.[i] ?? 0), precip: Math.round(d.daily.precipitation_probability_max?.[i] ?? 0), rainMm: Math.round((d.daily.precipitation_sum?.[i] ?? 0) * 10) / 10 })),
+              daily: (d.daily?.time || []).map((date: string, i: number) => ({ date, min: Math.round(d.daily.temperature_2m_min?.[i] ?? 0), max: Math.round(d.daily.temperature_2m_max?.[i] ?? 0), code: d.daily.weather_code?.[i] ?? 0, humidity: Math.round(d.daily.relative_humidity_2m_max?.[i] ?? 0), precip: Math.round(d.daily.precipitation_probability_max?.[i] ?? 0), rainMm: Math.round((d.daily.precipitation_sum?.[i] ?? 0) * 10) / 10, windMax: Math.round(d.daily.wind_speed_10m_max?.[i] ?? 0) })),
             });
           }
         }
@@ -1364,10 +1364,11 @@ export default function CenarioTela() {
                                 <div className="flex items-center justify-center" style={{ width: "12%" }}>
                                   <div style={{ width: `3.5${vu}`, height: `3.5${vu}` }}><WeatherIcon code={d.code} size={40} forceDay /></div>
                                 </div>
-                                <div className="flex items-center" style={{ width: "36%", gap: `1.2${vu}`, opacity: 0.7 }}>
-                                  <span className="flex items-center" style={{ fontSize: `1.3${vu}`, gap: `0.3${vu}` }}>💧{d.precip}%</span>
-                                  <span className="flex items-center" style={{ fontSize: `1.3${vu}`, gap: `0.3${vu}` }}>{d.rainMm}mm</span>
-                                  <span className="flex items-center" style={{ fontSize: `1.3${vu}`, gap: `0.3${vu}` }}>🌡{d.humidity}%</span>
+                                <div className="flex items-center" style={{ width: "42%", gap: `1${vu}`, opacity: 0.7 }}>
+                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>💧{d.precip}%</span>
+                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>{d.rainMm}mm</span>
+                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>🌡{d.humidity}%</span>
+                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>🌬{d.windMax}km/h</span>
                                 </div>
                                 <span className="font-black tabular-nums text-right" style={{ fontSize: `2${vu}`, width: "30%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{d.min}° / {d.max}°</span>
                               </div>
@@ -1389,10 +1390,11 @@ export default function CenarioTela() {
                                   <div style={{ width: `5${vu}`, height: `5${vu}` }}><WeatherIcon code={d.code} size={42} forceDay /></div>
                                   <span className="font-black tabular-nums" style={{ fontSize: `2.6${vu}` }}>{d.min}° / {d.max}°</span>
                                 </div>
-                                <div className="flex items-center justify-center" style={{ gap: `2${vu}`, opacity: 0.6, fontSize: `1.5${vu}` }}>
+                                <div className="flex items-center justify-center" style={{ gap: `1.5${vu}`, opacity: 0.6, fontSize: `1.4${vu}` }}>
                                   <span>💧 {d.precip}%</span>
                                   <span>{d.rainMm} mm</span>
                                   <span>🌡 {d.humidity}%</span>
+                                  <span>🌬 {d.windMax}km/h</span>
                                 </div>
                               </div>
                             ))}
