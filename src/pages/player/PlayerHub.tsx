@@ -46,6 +46,7 @@ export default function PlayerHub() {
             body: { slug: userSlug },
           });
           if (!error && data && !data.error) {
+            if (data.userId) setPublicUserId(data.userId);
             if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
           } else {
