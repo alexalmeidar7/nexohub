@@ -664,14 +664,16 @@ export default function VmixPage() {
 
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
+    const cmdLabel = `${fn}${input ? ` Input=${input}` : ""}${value ? ` Value=${value}` : ""}`;
     try {
       let path = `/api/?Function=${encodeURIComponent(fn)}`;
       if (input) path += `&Input=${encodeURIComponent(input)}`;
       if (value) path += `&Value=${encodeURIComponent(value)}`;
       await vmixFetch(path);
-      // Refresh state after command
+      addLog(cmdLabel, "ok", "Enviado com sucesso", "local");
       setTimeout(() => connectToVmix(), 300);
-    } catch {
+    } catch (err: any) {
+      addLog(cmdLabel, "error", err?.message || "Falha ao enviar", "local");
       toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
     }
   };
