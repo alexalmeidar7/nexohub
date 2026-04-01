@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.fetch-weather]
 verify_jwt = false
+
+[functions.public-cenario-data]
+verify_jwt = false
