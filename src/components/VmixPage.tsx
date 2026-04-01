@@ -6,7 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
-  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard
+  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
+  ScrollText, ChevronDown, ChevronUp
 } from "lucide-react";
 import { getIconForName } from "./CustomVmixButtonEditor";
 import logoMixControl from "@/assets/logo-mixcontrol.png";
