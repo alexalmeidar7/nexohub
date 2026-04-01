@@ -31,13 +31,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Safety timeout: if loading takes more than 12s, stop loading
-    const timeout = setTimeout(() => {
+    // Gradual retry strategy instead of a single hard timeout
+    let retryCount = 0;
+    const MAX_AUTH_RETRIES = 3;
+    const scheduleRetry = () => {
+      retryCount++;
+      const delay = Math.min(5000 * Math.pow(1.5, retryCount - 1), 15000);
+      return setTimeout(async () => {
+        if (!mounted || !loading) return;
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            void updateAuth(data.session);
+            return;
+          }
+          const { data: refreshed } = await supabase.auth.refreshSession();
+          if (refreshed.session) {
+            void updateAuth(refreshed.session);
+            return;
+          }
+        } catch { /* silent */ }
+        if (retryCount < MAX_AUTH_RETRIES) {
+          retryTimer = scheduleRetry();
+        } else {
+          console.warn("Auth loading: max retries reached, forcing load complete");
+          if (mounted) setLoading(false);
+        }
+      }, delay);
+    };
+    let retryTimer = setTimeout(() => {
       if (mounted && loading) {
-        console.warn("Auth loading timeout - forcing load complete");
-        setLoading(false);
+        retryTimer = scheduleRetry();
       }
-    }, 12000);
+    }, 8000);
 
     const updateAuth = async (newSession: Session | null) => {
       if (!mounted) return;
