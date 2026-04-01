@@ -97,7 +97,7 @@ function getWLabel(code: number) { return weatherLabels[code] ?? weatherLabels[O
 
 interface LiveWeather {
   current: { temp: number; humidity: number; code: number };
-  daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number }[];
+  daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number; rainMm: number }[];
 }
 
 type PublicCenarioPayload = {
