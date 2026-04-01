@@ -3,6 +3,7 @@ import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, Maximize
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Roteiro, extractRoteiroHtml, tpControlBtnClasses, tpControlBtnActiveClasses } from "./tp-utils";
+import { ensureActiveTeleprompter } from "./tp-db";
 
 interface TpScreenProps {
   user: User | null;
@@ -133,22 +134,27 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   // Load active TP and saved text on mount
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
+
     (async () => {
-      const { data } = await (supabase as any)
-        .from("teleprompters")
-        .select("id, texto_atual, is_html")
-        .eq("user_id", user.id)
-        .eq("ativo", true)
-        .limit(1);
-      if (data && data.length > 0) {
-        setActiveTpId(data[0].id);
-        if (data[0].texto_atual) {
-          setDisplayText(data[0].texto_atual);
-          setIsHtmlContent(data[0].is_html || false);
-          dbTextRef.current = data[0].texto_atual;
+      try {
+        const tp = await ensureActiveTeleprompter(user.id);
+        if (cancelled || !tp) return;
+
+        setActiveTpId(tp.id);
+        if (tp.texto_atual) {
+          setDisplayText(tp.texto_atual);
+          setIsHtmlContent(tp.is_html || false);
+          dbTextRef.current = tp.texto_atual;
         }
+      } catch (error) {
+        console.error("Erro ao garantir TP ativo:", error);
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   // Heartbeat: update last_seen every 5s so other devices know TP is open
