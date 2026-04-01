@@ -807,6 +807,7 @@ export default function VmixPage() {
             if (!cmds || !Array.isArray(cmds) || cmds.length === 0) continue;
 
             console.log(`[local-scheduler] Executing preset for "${prog.nome}" at ${timeKey}`);
+            addLog(`[Agendador] Preset "${prog.nome}"`, "pending", `Disparado às ${timeKey}`, "scheduler");
             for (const cmd of cmds) {
               const fn = cmd.fn || "";
               const input = cmd.input || "";
