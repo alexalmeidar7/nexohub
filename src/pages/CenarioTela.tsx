@@ -1289,7 +1289,7 @@ export default function CenarioTela() {
                         <div className="flex-1 flex items-center justify-center" style={{ gap: `4${vu}` }}>
                           {/* Left: City + big temp */}
                           <div className="flex flex-col items-center">
-                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: "#e1f532", marginBottom: `0.5${vu}` }}>hoje</div>
+                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: "#e1f532", marginBottom: `0.5${vu}` }}>agora</div>
                             <div className="font-black leading-none drop-shadow-lg text-center" style={{ fontSize: `4${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
                             <div style={{ width: `14${vu}`, height: `14${vu}`, marginTop: `2${vu}`, filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.25))" }}>
                               <WeatherIcon code={liveWeather.current.code} size={160} forceDay />
@@ -1319,7 +1319,7 @@ export default function CenarioTela() {
                       <div className="flex items-start justify-between" style={{ marginBottom: `1.5${vu}` }}>
                         <div>
                           <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `4.5${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
-                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: "#e1f532", marginTop: `0.5${vu}` }}>hoje</div>
+                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: "#e1f532", marginTop: `0.5${vu}` }}>agora</div>
                         </div>
                         <div style={{ width: `6${vu}`, height: `6${vu}` }}>
                           <WeatherIcon code={liveWeather.current.code} size={64} />
