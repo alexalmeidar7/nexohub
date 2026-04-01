@@ -2466,6 +2466,74 @@ export default function VmixPage() {
           onSaved={loadCustomButtons}
         />
       )}
+
+      {/* ── Command Log Panel ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50" style={{ pointerEvents: "none" }}>
+        <div className="max-w-5xl mx-auto" style={{ pointerEvents: "auto" }}>
+          {/* Toggle bar */}
+          <button
+            onClick={() => setLogsOpen(p => !p)}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-t-lg text-[11px] font-semibold transition-colors"
+            style={{ backgroundColor: "#1e1e24", color: "#aaa", border: "1px solid #333", borderBottom: "none" }}
+          >
+            <ScrollText size={13} />
+            Logs vMix ({vmixLogs.length})
+            {logsOpen ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+            {vmixLogs.length > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setVmixLogs([]); }}
+                className="ml-2 text-[10px] px-1.5 py-0.5 rounded hover:opacity-80"
+                style={{ backgroundColor: "#333", color: "#888" }}
+              >
+                Limpar
+              </button>
+            )}
+          </button>
+          {logsOpen && (
+            <div
+              className="overflow-auto font-mono text-[11px] leading-relaxed"
+              style={{ backgroundColor: "#111115", border: "1px solid #333", borderTop: "none", maxHeight: 220 }}
+            >
+              {vmixLogs.length === 0 ? (
+                <div className="px-4 py-3 text-center" style={{ color: "#555" }}>Nenhum log ainda.</div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ backgroundColor: "#1a1a20", color: "#666" }}>
+                      <th className="text-left px-3 py-1.5 font-medium">Hora</th>
+                      <th className="text-left px-3 py-1.5 font-medium">Comando</th>
+                      <th className="text-left px-3 py-1.5 font-medium">Status</th>
+                      <th className="text-left px-3 py-1.5 font-medium">Via</th>
+                      <th className="text-left px-3 py-1.5 font-medium">Detalhe</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vmixLogs.map(log => (
+                      <tr key={log.id} className="border-t" style={{ borderColor: "#222" }}>
+                        <td className="px-3 py-1" style={{ color: "#666", whiteSpace: "nowrap" }}>{log.time}</td>
+                        <td className="px-3 py-1" style={{ color: "#ccc", maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.command}</td>
+                        <td className="px-3 py-1">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
+                            style={{
+                              backgroundColor: log.status === "ok" ? "#052e16" : log.status === "error" ? "#450a0a" : "#1c1917",
+                              color: log.status === "ok" ? "#4ade80" : log.status === "error" ? "#f87171" : "#d4d4d4"
+                            }}
+                          >
+                            {log.status === "ok" ? <CheckCircle size={10} /> : log.status === "error" ? <XCircle size={10} /> : <Loader2 size={10} className="animate-spin" />}
+                            {log.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-1" style={{ color: "#888", whiteSpace: "nowrap" }}>{log.source}</td>
+                        <td className="px-3 py-1" style={{ color: "#777", maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.detail}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
