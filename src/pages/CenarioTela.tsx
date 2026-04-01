@@ -1377,14 +1377,15 @@ export default function CenarioTela() {
                         </div>
                       ) : (
                         /* ── PORTRAIT FORECAST ── */
-                        <>
-                          <div className="text-center" style={{ marginBottom: `2.5${vu}` }}>
-                            <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `5${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
-                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `2${vu}`, color: "#e1f532", marginTop: `0.5${vu}` }}>próximos dias</div>
+                        <div className="flex flex-col h-full items-center justify-center">
+                          <div className="text-center" style={{ marginBottom: `3${vu}` }}>
+                            <CalendarDays className="mx-auto drop-shadow-lg cenario-anim-icon" style={{ width: `6${vu}`, height: `6${vu}`, color: "#e1f532", opacity: 0.7, marginBottom: `1${vu}` }} />
+                            <div className="font-extrabold leading-none drop-shadow-lg cenario-anim-title" style={{ fontSize: `6${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
+                            <div className="font-bold uppercase tracking-widest cenario-anim-subtitle" style={{ fontSize: `2.8${vu}`, color: "#e1f532", marginTop: `0.4${vu}` }}>próximos dias</div>
                           </div>
-                          <div className="flex-1 flex flex-col" style={{ gap: `1.5${vu}` }}>
+                          <div className="w-full flex flex-col items-center" style={{ gap: `1.8${vu}`, maxWidth: "92%" }}>
                             {liveWeather.daily.slice(1, 5).map((d, i) => (
-                              <div key={i} className={`rounded-2xl cenario-anim-row-${i + 1}`} style={{ padding: `2${vu}`, background: "rgba(255,255,255,0.08)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                              <div key={i} className={`w-full rounded-2xl cenario-anim-row-${i + 1}`} style={{ padding: `2${vu} 2.5${vu}`, background: "rgba(255,255,255,0.06)", WebkitBackdropFilter: "blur(10px)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.08)" }}>
                                 <div className="flex items-center justify-between" style={{ marginBottom: `1${vu}` }}>
                                   <span className="font-bold capitalize" style={{ fontSize: `2.4${vu}` }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
                                   <div style={{ width: `5${vu}`, height: `5${vu}` }}><WeatherIcon code={d.code} size={42} forceDay /></div>
@@ -1399,7 +1400,7 @@ export default function CenarioTela() {
                               </div>
                             ))}
                           </div>
-                        </>
+                        </div>
                       )}
                     </>)}
                     {weatherSubTab === "satellite" && null}
