@@ -957,8 +957,8 @@ export default function CenarioTela() {
           )}
 
           {/* Sidebar — always on top */}
-          <div className="flex-shrink-0 flex items-center relative" style={{ width: isLandscape ? "5%" : "8%", zIndex: 10 }}>
-          <div className={`flex flex-col items-center gap-[0.6${vu}] ${isMapTab ? "vmix-blur-4" : ""}`} style={{ padding: `0.5${vu} 0.5${vu}`, borderRadius: `0 2${vu} 2${vu} 0`, background: isMapTab ? "rgba(26,26,26,0.7)" : "rgba(26,26,26,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: "none", marginLeft: "-1px" }}>
+          <div className="flex-shrink-0 flex items-center relative" style={{ width: isLandscape ? "5%" : "8%", zIndex: 10, pointerEvents: "none" }}>
+          <div className={`flex flex-col items-center gap-[0.6${vu}] ${isMapTab ? "vmix-blur-4" : ""}`} style={{ pointerEvents: "auto", padding: `0.5${vu} 0.5${vu}`, borderRadius: `0 2${vu} 2${vu} 0`, background: isMapTab ? "rgba(26,26,26,0.7)" : "rgba(26,26,26,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: "none", marginLeft: "-1px" }}>
             <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: `3.8${vu}`, height: `3.8${vu}`, background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
               <Home style={{ width: `1.7${vu}`, height: `1.7${vu}` }} className="text-white" />
             </button>
