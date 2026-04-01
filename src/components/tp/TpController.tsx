@@ -563,11 +563,9 @@ export default function TpController({ user, onBack }: TpControllerProps) {
         <button onClick={onBack} className="bg-transparent border border-tp-border-subtle rounded-[10px] px-5 py-2 cursor-pointer text-tp-muted text-[11px] flex items-center gap-1.5">
           <LogOut size={12} /> Voltar
         </button>
-        {onMessage && (
-          <button onClick={onMessage} className="bg-transparent border border-tp-border-subtle rounded-[10px] px-5 py-2 cursor-pointer text-tp-accent text-[11px] flex items-center gap-1.5 hover:border-tp-accent transition-colors">
-            <MessageSquare size={12} /> Mandar Mensagem
-          </button>
-        )}
+        <button onClick={() => setShowMessagePopup(true)} className="bg-transparent border border-tp-border-subtle rounded-[10px] px-5 py-2 cursor-pointer text-tp-accent text-[11px] flex items-center gap-1.5 hover:border-tp-accent transition-colors">
+          <MessageSquare size={12} /> Mandar Mensagem
+        </button>
       </div>
 
       {/* Setup Modal */}
