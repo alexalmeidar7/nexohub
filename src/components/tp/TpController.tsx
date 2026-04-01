@@ -173,14 +173,14 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       payload: { action, value },
     };
 
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const ready = await connectCmdChannel(attempt > 0);
-      if (!ready || !cmdChannelRef.current || !cmdReadyRef.current) continue;
-
+    // Try to send via broadcast channel (best effort, non-blocking)
+    if (cmdChannelRef.current && cmdReadyRef.current) {
       try {
         const sendStatus = await cmdChannelRef.current.send(message);
         if (sendStatus !== "ok") {
-          throw new Error(`tp_command_send_${sendStatus}`);
+          cmdReadyRef.current = false;
+          setCmdReady(false);
+          scheduleCmdReconnect(0);
         }
         return;
       } catch (err) {
@@ -189,6 +189,9 @@ export default function TpController({ user, onBack }: TpControllerProps) {
         scheduleCmdReconnect(0);
       }
     }
+
+    // Fallback: reconnect in background for next command
+    void connectCmdChannel(true);
   }
 
 
