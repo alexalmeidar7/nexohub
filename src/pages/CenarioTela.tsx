@@ -1228,10 +1228,10 @@ export default function CenarioTela() {
                     <div
                       key={`program-${currentProgram.id}`}
                       className="flex flex-col items-center flex-shrink-0"
-                      style={{ marginTop: `-2${vu}`, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
+                      style={{ marginTop: "120px", animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
                     >
                       {currentProgram.selo ? (
-                        <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `35${vu}`, maxHeight: `22${vu}` }} />
+                        <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `40${vu}`, maxHeight: `25${vu}` }} />
                       ) : (
                         <div className="font-black text-center" style={{ fontSize: `3${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
                       )}
