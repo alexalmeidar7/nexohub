@@ -1630,14 +1630,13 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       {/* Video area - grows above controls */}
       {showVideo && isVideo && (
         <div className="relative -mx-4 -mt-4 mb-2 overflow-hidden flex-shrink-0 rounded-t-2xl" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
-          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-cover" style={{ aspectRatio: "16/9", maxHeight: "160px", background: "#000" }} />
+          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", background: "#000" }} />
           {videoLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
               <Loader2 size={20} className="text-white/70 animate-spin" />
               <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
             </div>
           )}
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 40%, rgba(10,10,10,0.85) 100%)" }} />
         </div>
       )}
 
