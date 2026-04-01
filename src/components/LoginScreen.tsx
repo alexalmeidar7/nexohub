@@ -78,7 +78,6 @@ export default function LoginScreen() {
       setForgotError("Preencha o email.");
       return;
     }
-
     setForgotLoading(true);
     setForgotError("");
 
@@ -87,25 +86,25 @@ export default function LoginScreen() {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
-    try {
-      const { error } = await withTimeout(request(), AUTH_TIMEOUT_FAST_MS, "Tempo de conexão excedido.");
-      if (error) setForgotError(error.message);
-      else setForgotSent(true);
-    } catch (firstError) {
-      if (!isConnectionLikeError(firstError)) {
-        setForgotError("Não foi possível enviar o link. Tente novamente.");
-      } else {
-        try {
-          const { error } = await withTimeout(request(), AUTH_TIMEOUT_RETRY_MS, "Tempo de conexão excedido.");
-          if (error) setForgotError(error.message);
-          else setForgotSent(true);
-        } catch {
-          setForgotError("Servidor ainda iniciando. Aguarde alguns segundos e tente novamente.");
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const { error } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
+        if (error) { setForgotError(error.message); break; }
+        setForgotSent(true);
+        break;
+      } catch (err) {
+        if (!isConnectionLikeError(err)) {
+          setForgotError("Não foi possível enviar o link. Tente novamente.");
+          break;
+        }
+        if (attempt === MAX_RETRIES - 1) {
+          setForgotError("Backend indisponível. Verifique sua conexão e tente novamente.");
+        } else {
+          await new Promise(r => setTimeout(r, backoffDelay(attempt)));
         }
       }
-    } finally {
-      setForgotLoading(false);
     }
+    setForgotLoading(false);
   };
 
   const handleSubmit = async () => {
