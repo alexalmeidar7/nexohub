@@ -3,6 +3,7 @@ import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, FlipHori
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Roteiro, extractRoteiroHtml, tpControlBtnClasses, tpControlBtnActiveClasses } from "./tp-utils";
+import { ensureActiveTeleprompter } from "./tp-db";
 import TpMessage from "./TpMessage";
 
 interface TpControllerProps {
@@ -29,6 +30,13 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       .order("created_at", { ascending: false })
       .limit(30)
       .then(({ data }) => { if (data) setRoteiros(data); });
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    void ensureActiveTeleprompter(user.id).catch((error) => {
+      console.error("Erro ao garantir TP ativo no controle:", error);
+    });
   }, [user]);
 
   const lastStateAtRef = useRef(0);
@@ -352,6 +360,14 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     const normalized = text.trim();
     if (!normalized || !user) return;
 
+    let activeTpId: string | null = null;
+    try {
+      const tp = await ensureActiveTeleprompter(user.id);
+      activeTpId = tp.id;
+    } catch (error) {
+      console.error("Erro ao preparar TP para carregar texto:", error);
+    }
+
     setShowSetup(false);
     setInputText("");
     setTpState((prev: any) => ({
@@ -363,11 +379,13 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       scrollPos: 50,
     }));
 
-    const { error } = await (supabase as any)
+    const updateQuery = (supabase as any)
       .from("teleprompters")
-      .update({ texto_atual: normalized, is_html: html })
-      .eq("user_id", user.id)
-      .eq("ativo", true);
+      .update({ texto_atual: normalized, is_html: html });
+
+    const { error } = activeTpId
+      ? await updateQuery.eq("id", activeTpId)
+      : await updateQuery.eq("user_id", user.id).eq("ativo", true);
 
     if (error) {
       await sendCommand("loadText", { text: normalized, html });
