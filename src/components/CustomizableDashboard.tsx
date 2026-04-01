@@ -6,6 +6,31 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 
+/* Typewriter text component — animates character-by-character on text change */
+function TypewriterText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
+  const [displayed, setDisplayed] = useState("");
+  const prevText = useRef(text);
+  const [isTyping, setIsTyping] = useState(false);
+
+  useEffect(() => {
+    if (text === prevText.current && displayed === text) return;
+    prevText.current = text;
+    setIsTyping(true);
+    setDisplayed("");
+    let i = 0;
+    const iv = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) { clearInterval(iv); setIsTyping(false); }
+    }, 30);
+    return () => clearInterval(iv);
+  }, [text]);
+
+  useEffect(() => { if (!displayed && !isTyping) setDisplayed(text); }, []);
+
+  return <span className={className} style={style}>{displayed}{isTyping && <span className="animate-pulse opacity-60">|</span>}</span>;
+}
+
 const AgendaPage = lazy(() => import("./AgendaPage"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
 
@@ -502,12 +527,12 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
                 <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
                 <div className="min-w-0">
-                  <p className="text-[11px] font-medium truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>
-                    {currentMusic.titulo?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')}
+                  <p className="text-[11px] font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>
+                    <TypewriterText text={currentMusic.titulo?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') || ""} />
                   </p>
                   {currentMusic.artista && (
-                    <p className="text-[9px] truncate" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
-                      {currentMusic.artista.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')}
+                    <p className="text-[9px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                      <TypewriterText text={currentMusic.artista.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')} />
                     </p>
                   )}
                 </div>
@@ -1659,8 +1684,8 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
             </div>
             {currentMusic ? (
               <div className="mb-1">
-                <p className="text-white/70 text-[9px] truncate">{currentMusic.titulo}</p>
-                <p className="text-white/40 text-[8px] truncate">{currentMusic.artista}</p>
+                <p className="text-white/70 text-[9px] truncate"><TypewriterText text={currentMusic.titulo || ""} /></p>
+                <p className="text-white/40 text-[8px] truncate"><TypewriterText text={currentMusic.artista || ""} /></p>
               </div>
             ) : (
               <div className="flex items-center gap-1 mb-1">
