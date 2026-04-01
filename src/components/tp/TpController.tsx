@@ -8,10 +8,10 @@ import TpMessage from "./TpMessage";
 interface TpControllerProps {
   user: User | null;
   onBack: () => void;
-  onMessage?: () => void;
 }
 
-export default function TpController({ user, onBack, onMessage }: TpControllerProps) {
+export default function TpController({ user, onBack }: TpControllerProps) {
+  const [showMessagePopup, setShowMessagePopup] = useState(false);
   const [tpState, setTpState] = useState<any>(null);
   const [connected, setConnected] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
