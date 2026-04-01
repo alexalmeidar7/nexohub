@@ -166,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false;
-      clearTimeout(retryTimer);
+      if (retryTimer) clearTimeout(retryTimer);
       subscription.unsubscribe();
     };
   }, []);
