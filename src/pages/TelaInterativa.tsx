@@ -21,17 +21,8 @@ export default function TelaInterativa() {
     (async () => {
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const res = await fetch(
-          `${supabaseUrl}/functions/v1/public-player-data`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: anonKey,
-            },
-            body: JSON.stringify({ slug: userSlug }),
-          }
+          `${supabaseUrl}/functions/v1/public-player-data?slug=${encodeURIComponent(userSlug)}`
         );
         const data = await res.json();
 

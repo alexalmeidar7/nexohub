@@ -11,7 +11,21 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { slug } = await req.json();
+    const reqUrl = new URL(req.url);
+    let slug: string | null = null;
+
+    if (req.method === "GET") {
+      slug = reqUrl.searchParams.get("slug");
+    } else if (req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      slug = typeof body?.slug === "string" ? body.slug : null;
+    } else {
+      return new Response(JSON.stringify({ error: "method not allowed" }), {
+        status: 405,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!slug || typeof slug !== "string") {
       return new Response(JSON.stringify({ error: "slug is required" }), {
         status: 400,
