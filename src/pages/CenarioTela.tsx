@@ -1364,10 +1364,11 @@ export default function CenarioTela() {
                                 <div className="flex items-center justify-center" style={{ width: "12%" }}>
                                   <div style={{ width: `3.5${vu}`, height: `3.5${vu}` }}><WeatherIcon code={d.code} size={40} forceDay /></div>
                                 </div>
-                                <div className="flex items-center" style={{ width: "36%", gap: `1.2${vu}`, opacity: 0.7 }}>
-                                  <span className="flex items-center" style={{ fontSize: `1.3${vu}`, gap: `0.3${vu}` }}>💧{d.precip}%</span>
-                                  <span className="flex items-center" style={{ fontSize: `1.3${vu}`, gap: `0.3${vu}` }}>{d.rainMm}mm</span>
-                                  <span className="flex items-center" style={{ fontSize: `1.3${vu}`, gap: `0.3${vu}` }}>🌡{d.humidity}%</span>
+                                <div className="flex items-center" style={{ width: "42%", gap: `1${vu}`, opacity: 0.7 }}>
+                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>💧{d.precip}%</span>
+                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>{d.rainMm}mm</span>
+                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>🌡{d.humidity}%</span>
+                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>🌬{d.windMax}km/h</span>
                                 </div>
                                 <span className="font-black tabular-nums text-right" style={{ fontSize: `2${vu}`, width: "30%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{d.min}° / {d.max}°</span>
                               </div>
