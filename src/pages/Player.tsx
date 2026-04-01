@@ -2434,7 +2434,8 @@ export default function PlayerPage() {
             <img
               src={musicData.capa}
               alt=""
-              className="w-56 h-56 sm:w-72 sm:h-72 lg:w-[340px] lg:h-[340px] rounded-[20px] object-cover"
+              className="rounded-[20px] object-cover"
+              style={{ width: "140px", height: "140px" }}
             />
             {/* Glass reflection overlay */}
             <div className="absolute inset-0 rounded-3xl pointer-events-none" style={{
