@@ -1390,10 +1390,11 @@ export default function CenarioTela() {
                                   <div style={{ width: `5${vu}`, height: `5${vu}` }}><WeatherIcon code={d.code} size={42} forceDay /></div>
                                   <span className="font-black tabular-nums" style={{ fontSize: `2.6${vu}` }}>{d.min}° / {d.max}°</span>
                                 </div>
-                                <div className="flex items-center justify-center" style={{ gap: `2${vu}`, opacity: 0.6, fontSize: `1.5${vu}` }}>
+                                <div className="flex items-center justify-center" style={{ gap: `1.5${vu}`, opacity: 0.6, fontSize: `1.4${vu}` }}>
                                   <span>💧 {d.precip}%</span>
                                   <span>{d.rainMm} mm</span>
                                   <span>🌡 {d.humidity}%</span>
+                                  <span>🌬 {d.windMax}km/h</span>
                                 </div>
                               </div>
                             ))}
