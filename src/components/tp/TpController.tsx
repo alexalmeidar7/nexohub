@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, FlipHorizontal2, FlipVertical2, SlidersHorizontal, LogOut } from "lucide-react";
+import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, FlipHorizontal2, FlipVertical2, SlidersHorizontal, LogOut, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Roteiro, extractRoteiroHtml, tpControlBtnClasses, tpControlBtnActiveClasses } from "./tp-utils";
