@@ -1613,15 +1613,6 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
             </div>
           )}
           <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 40%, rgba(10,10,10,0.85) 100%)" }} />
-          {/* Live badge on video */}
-          <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded" style={{ background: "rgba(220,38,38,0.85)", backdropFilter: "blur(4px)" }}>
-            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            <span className="text-white text-[7px] font-bold tracking-wider uppercase">Live</span>
-          </div>
-          {/* Channel name overlay */}
-          <div className="absolute bottom-1.5 left-2.5">
-            <p className="text-white text-[10px] font-semibold drop-shadow-lg">{activeChannel?.name}</p>
-          </div>
         </div>
       )}
 
