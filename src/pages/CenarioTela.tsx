@@ -127,6 +127,7 @@ export default function CenarioTela() {
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [showConnectedMsg, setShowConnectedMsg] = useState(false);
   const presenceShownRef = useRef(false);
+  const [backendHealth, setBackendHealth] = useState<"online" | "slow" | "offline">("online");
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
