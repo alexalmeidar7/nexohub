@@ -179,6 +179,16 @@ export default function VmixPage() {
   });
   const [monitorsCollapsed, setMonitorsCollapsed] = useState(true);
 
+  // Command log panel
+  interface VmixLogEntry { id: number; time: string; command: string; status: "ok" | "error" | "pending"; detail: string; source: "local" | "server" | "scheduler"; }
+  const logIdRef = useRef(0);
+  const [vmixLogs, setVmixLogs] = useState<VmixLogEntry[]>([]);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const addLog = useCallback((command: string, status: "ok" | "error" | "pending", detail: string, source: "local" | "server" | "scheduler" = "local") => {
+    const entry: VmixLogEntry = { id: ++logIdRef.current, time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }), command, status, detail, source };
+    setVmixLogs(prev => [entry, ...prev].slice(0, 200));
+  }, []);
+
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
 
