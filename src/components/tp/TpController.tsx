@@ -3,6 +3,7 @@ import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, FlipHori
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Roteiro, extractRoteiroHtml, tpControlBtnClasses, tpControlBtnActiveClasses } from "./tp-utils";
+import TpMessage from "./TpMessage";
 
 interface TpControllerProps {
   user: User | null;
