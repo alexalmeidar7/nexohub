@@ -308,7 +308,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
     if (parentLabel === "player" && child.label === "módulo externo") {
-      window.open("/user/nexohub/player", "_blank");
+      const slug = user?.email?.split("@")[0] || "";
+      window.open(`/user/${slug}/nexohub/player`, "_blank");
       setHoveredMenu(null);
       return;
     }
