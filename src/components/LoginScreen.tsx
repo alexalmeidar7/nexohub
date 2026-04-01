@@ -75,8 +75,15 @@ export default function LoginScreen() {
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        const { error } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
-        if (error) { setForgotError(error.message); break; }
+        const { error } = await request();
+        if (error) {
+          if (attempt === MAX_RETRIES - 1) {
+            setForgotError(getFriendlyAuthMessage(error.message));
+          } else {
+            await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
+            continue;
+          }
+        }
         setForgotSent(true);
         break;
       } catch (err) {
@@ -87,7 +94,7 @@ export default function LoginScreen() {
         if (attempt === MAX_RETRIES - 1) {
           setForgotError("Backend indisponível. Verifique sua conexão e tente novamente.");
         } else {
-          await new Promise(r => setTimeout(r, backoffDelay(attempt)));
+          await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
         }
       }
     }
@@ -99,7 +106,7 @@ export default function LoginScreen() {
       setError("Preencha email e senha.");
       return;
     }
-    if (loading) return; // prevent double submit
+    if (loading) return;
     setLoading(true);
     setError("");
 
@@ -107,21 +114,20 @@ export default function LoginScreen() {
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        const { error } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
+        const { error } = await request();
         if (error) {
           if (isCredentialError(error.message)) {
             setError(getFriendlyAuthMessage(error.message));
-            break; // no retry for bad credentials
+            break;
           }
-          // Server-side error, retry
           if (attempt === MAX_RETRIES - 1) {
             setError(getFriendlyAuthMessage(error.message));
           } else {
-            await new Promise(r => setTimeout(r, backoffDelay(attempt)));
+            await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
             continue;
           }
         }
-        break; // success
+        break;
       } catch (err) {
         if (!isConnectionLikeError(err)) {
           const rawMessage = getErrorMessage(err);
@@ -131,7 +137,7 @@ export default function LoginScreen() {
         if (attempt === MAX_RETRIES - 1) {
           setError("Backend indisponível. Verifique sua conexão e tente novamente.");
         } else {
-          await new Promise(r => setTimeout(r, backoffDelay(attempt)));
+          await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
         }
       }
     }
