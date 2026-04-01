@@ -145,6 +145,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
         if (data[0].texto_atual) {
           setDisplayText(data[0].texto_atual);
           setIsHtmlContent(data[0].is_html || false);
+          dbTextRef.current = data[0].texto_atual;
         }
       }
     })();
