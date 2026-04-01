@@ -218,11 +218,10 @@ export default function TpController({ user, onBack, onMessage }: TpControllerPr
 
   useEffect(() => {
     const id = setInterval(() => {
-      const hasRecentState = !!lastStateAtRef.current && Date.now() - lastStateAtRef.current < 15000;
-      setConnected((tpPresenceOnline || dbTpOnline) && (hasRecentState || cmdReady));
+      setConnected(tpPresenceOnline || dbTpOnline);
     }, 1000);
     return () => clearInterval(id);
-  }, [tpPresenceOnline, cmdReady, dbTpOnline]);
+  }, [tpPresenceOnline, dbTpOnline]);
 
   // Fallback: if state got stale, request a fresh snapshot from TP screen
   useEffect(() => {
