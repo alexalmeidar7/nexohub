@@ -10,7 +10,7 @@ interface TpControllerProps {
   onMessage?: () => void;
 }
 
-export default function TpController({ user, onBack }: TpControllerProps) {
+export default function TpController({ user, onBack, onMessage }: TpControllerProps) {
   const [tpState, setTpState] = useState<any>(null);
   const [connected, setConnected] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
