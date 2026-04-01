@@ -685,6 +685,17 @@ export default function VmixPage() {
     try {
       const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: normalized } });
       if (res.error) throw res.error;
+
+      const results = Array.isArray((res.data as { results?: Array<{ ok?: boolean }> } | null)?.results)
+        ? (res.data as { results: Array<{ ok?: boolean }> }).results
+        : null;
+
+      // Quando o servidor não alcança o vMix (IP local), a função pode responder 200,
+      // porém com todos os comandos falhando. Nessa situação forçamos fallback local.
+      if (results && results.length > 0 && !results.some((r) => r?.ok)) {
+        throw new Error("SERVER_COULD_NOT_REACH_VMIX");
+      }
+
       setTimeout(() => connectToVmix(), 300);
       toast({ title: label, description: `${normalized.length} ação(ões) executada(s) no servidor.` });
       return;
@@ -693,7 +704,7 @@ export default function VmixPage() {
         await sendCommand(cmd.fn, cmd.input, cmd.value);
         await new Promise((r) => setTimeout(r, 400));
       }
-      toast({ title: label, description: `${normalized.length} ação(ões) executada(s).` });
+      toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
     }
   }, [connectToVmix, normalizeCommands, sendCommand, toast]);
 
