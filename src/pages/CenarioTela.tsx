@@ -1091,6 +1091,12 @@ export default function CenarioTela() {
                       <div className="font-bold" style={{ fontSize: `1.4${vu}`, color: "#e1f532", marginTop: `0.3${vu}` }}>
                         {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
                       </div>
+                      <div className="flex items-center" style={{ gap: `0.4${vu}`, marginTop: `0.4${vu}`, opacity: 0.7 }}>
+                        <div className="rounded-full" style={{ width: `0.7${vu}`, height: `0.7${vu}`, background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 4px #4ade80" : "0 0 4px #ef4444" }} />
+                        <span className="text-white font-semibold uppercase tracking-wider" style={{ fontSize: `0.9${vu}` }}>
+                          {realtimeConnected ? "SYNC" : "OFF"}
+                        </span>
+                      </div>
                     </div>
                     {nextProgram && (
                       <div className="text-right" style={{ animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both", lineHeight: 1.2, marginRight: "80px" }}>
