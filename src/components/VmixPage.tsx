@@ -6,7 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
-  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard
+  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
+  ScrollText, ChevronDown, ChevronUp
 } from "lucide-react";
 import { getIconForName } from "./CustomVmixButtonEditor";
 import logoMixControl from "@/assets/logo-mixcontrol.png";
@@ -177,6 +178,16 @@ export default function VmixPage() {
     try { const s = localStorage.getItem("vmix_monitor_iframe"); return s ? JSON.parse(s) : { preview: false, output: false }; } catch { return { preview: false, output: false }; }
   });
   const [monitorsCollapsed, setMonitorsCollapsed] = useState(true);
+
+  // Command log panel
+  interface VmixLogEntry { id: number; time: string; command: string; status: "ok" | "error" | "pending"; detail: string; source: "local" | "server" | "scheduler"; }
+  const logIdRef = useRef(0);
+  const [vmixLogs, setVmixLogs] = useState<VmixLogEntry[]>([]);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const addLog = useCallback((command: string, status: "ok" | "error" | "pending", detail: string, source: "local" | "server" | "scheduler" = "local") => {
+    const entry: VmixLogEntry = { id: ++logIdRef.current, time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }), command, status, detail, source };
+    setVmixLogs(prev => [entry, ...prev].slice(0, 200));
+  }, []);
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
@@ -653,14 +664,16 @@ export default function VmixPage() {
 
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
+    const cmdLabel = `${fn}${input ? ` Input=${input}` : ""}${value ? ` Value=${value}` : ""}`;
     try {
       let path = `/api/?Function=${encodeURIComponent(fn)}`;
       if (input) path += `&Input=${encodeURIComponent(input)}`;
       if (value) path += `&Value=${encodeURIComponent(value)}`;
       await vmixFetch(path);
-      // Refresh state after command
+      addLog(cmdLabel, "ok", "Enviado com sucesso", "local");
       setTimeout(() => connectToVmix(), 300);
-    } catch {
+    } catch (err: any) {
+      addLog(cmdLabel, "error", err?.message || "Falha ao enviar", "local");
       toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
     }
   };
@@ -682,6 +695,9 @@ export default function VmixPage() {
     const normalized = normalizeCommands(cmds);
     if (!normalized.length) return;
 
+    const batchLabel = `[${label}] ${normalized.length} cmd(s)`;
+    addLog(batchLabel, "pending", "Enviando via servidor...", "server");
+
     try {
       const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: normalized } });
       if (res.error) throw res.error;
@@ -690,23 +706,23 @@ export default function VmixPage() {
         ? (res.data as { results: Array<{ ok?: boolean }> }).results
         : null;
 
-      // Quando o servidor não alcança o vMix (IP local), a função pode responder 200,
-      // porém com todos os comandos falhando. Nessa situação forçamos fallback local.
       if (results && results.length > 0 && !results.some((r) => r?.ok)) {
         throw new Error("SERVER_COULD_NOT_REACH_VMIX");
       }
 
+      addLog(batchLabel, "ok", "Executado no servidor", "server");
       setTimeout(() => connectToVmix(), 300);
       toast({ title: label, description: `${normalized.length} ação(ões) executada(s) no servidor.` });
       return;
-    } catch {
+    } catch (err: any) {
+      addLog(batchLabel, "error", `Servidor falhou: ${err?.message || "desconhecido"} → fallback local`, "server");
       for (const cmd of normalized) {
         await sendCommand(cmd.fn, cmd.input, cmd.value);
         await new Promise((r) => setTimeout(r, 400));
       }
       toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
     }
-  }, [connectToVmix, normalizeCommands, sendCommand, toast]);
+  }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog]);
 
   const runScene = async (scene: VmixScene) => {
     setRunningScene(scene.id);
@@ -791,6 +807,7 @@ export default function VmixPage() {
             if (!cmds || !Array.isArray(cmds) || cmds.length === 0) continue;
 
             console.log(`[local-scheduler] Executing preset for "${prog.nome}" at ${timeKey}`);
+            addLog(`[Agendador] Preset "${prog.nome}"`, "pending", `Disparado às ${timeKey}`, "scheduler");
             for (const cmd of cmds) {
               const fn = cmd.fn || "";
               const input = cmd.input || "";
@@ -829,6 +846,7 @@ export default function VmixPage() {
             if (!cmds || !Array.isArray(cmds) || cmds.length === 0) continue;
 
             console.log(`[local-scheduler] Executing button "${btn.nome}" at ${timeKey}`);
+            addLog(`[Agendador] Botão "${btn.nome}"`, "pending", `Disparado às ${timeKey}`, "scheduler");
             for (const cmd of cmds) {
               const fn = (cmd as any).fn || "";
               const input = (cmd as any).input || "";
@@ -2450,6 +2468,74 @@ export default function VmixPage() {
           onSaved={loadCustomButtons}
         />
       )}
+
+      {/* ── Command Log Panel ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50" style={{ pointerEvents: "none" }}>
+        <div className="max-w-5xl mx-auto" style={{ pointerEvents: "auto" }}>
+          {/* Toggle bar */}
+          <button
+            onClick={() => setLogsOpen(p => !p)}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-t-lg text-[11px] font-semibold transition-colors"
+            style={{ backgroundColor: "#1e1e24", color: "#aaa", border: "1px solid #333", borderBottom: "none" }}
+          >
+            <ScrollText size={13} />
+            Logs vMix ({vmixLogs.length})
+            {logsOpen ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+            {vmixLogs.length > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setVmixLogs([]); }}
+                className="ml-2 text-[10px] px-1.5 py-0.5 rounded hover:opacity-80"
+                style={{ backgroundColor: "#333", color: "#888" }}
+              >
+                Limpar
+              </button>
+            )}
+          </button>
+          {logsOpen && (
+            <div
+              className="overflow-auto font-mono text-[11px] leading-relaxed"
+              style={{ backgroundColor: "#111115", border: "1px solid #333", borderTop: "none", maxHeight: 220 }}
+            >
+              {vmixLogs.length === 0 ? (
+                <div className="px-4 py-3 text-center" style={{ color: "#555" }}>Nenhum log ainda.</div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ backgroundColor: "#1a1a20", color: "#666" }}>
+                      <th className="text-left px-3 py-1.5 font-medium">Hora</th>
+                      <th className="text-left px-3 py-1.5 font-medium">Comando</th>
+                      <th className="text-left px-3 py-1.5 font-medium">Status</th>
+                      <th className="text-left px-3 py-1.5 font-medium">Via</th>
+                      <th className="text-left px-3 py-1.5 font-medium">Detalhe</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vmixLogs.map(log => (
+                      <tr key={log.id} className="border-t" style={{ borderColor: "#222" }}>
+                        <td className="px-3 py-1" style={{ color: "#666", whiteSpace: "nowrap" }}>{log.time}</td>
+                        <td className="px-3 py-1" style={{ color: "#ccc", maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.command}</td>
+                        <td className="px-3 py-1">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
+                            style={{
+                              backgroundColor: log.status === "ok" ? "#052e16" : log.status === "error" ? "#450a0a" : "#1c1917",
+                              color: log.status === "ok" ? "#4ade80" : log.status === "error" ? "#f87171" : "#d4d4d4"
+                            }}
+                          >
+                            {log.status === "ok" ? <CheckCircle size={10} /> : log.status === "error" ? <XCircle size={10} /> : <Loader2 size={10} className="animate-spin" />}
+                            {log.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-1" style={{ color: "#888", whiteSpace: "nowrap" }}>{log.source}</td>
+                        <td className="px-3 py-1" style={{ color: "#777", maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.detail}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
