@@ -1872,9 +1872,8 @@ export default function VmixPage() {
                   className="rounded-lg overflow-hidden transition-all duration-200 hover:brightness-110 cursor-pointer"
                   style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 180 }}
                   onClick={() => {
-                    // FIX: Click sends to PREVIEW, not directly to output
-                    sendCommand("PreviewInput", input.number);
-                    setPreviewInput(input.number);
+                    sendCommand("CutDirect", input.number);
+                    setActiveInput(input.number);
                   }}
                 >
                   <div
