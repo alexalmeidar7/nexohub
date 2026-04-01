@@ -92,6 +92,11 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       return Promise.resolve(true);
     }
 
+    // If forcing, clear any pending promise so we actually reconnect
+    if (force) {
+      cmdConnectPromiseRef.current = null;
+    }
+
     if (cmdConnectPromiseRef.current) return cmdConnectPromiseRef.current;
 
     cmdConnectPromiseRef.current = new Promise<boolean>((resolve) => {
@@ -110,12 +115,14 @@ export default function TpController({ user, onBack }: TpControllerProps) {
         cmdChannelRef.current = null;
       }
 
-      const ch = supabase.channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } });
-      cmdChannelRef.current = ch;
       cmdReadyRef.current = false;
       setCmdReady(false);
 
+      const ch = supabase.channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } });
+      cmdChannelRef.current = ch;
+
       ch.subscribe((status) => {
+        console.log("[TP Controller] cmd channel status:", status);
         const ready = status === "SUBSCRIBED";
         cmdReadyRef.current = ready;
         setCmdReady(ready);
@@ -131,7 +138,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
         }
       });
 
-      setTimeout(() => finish(cmdReadyRef.current), 2500);
+      setTimeout(() => finish(cmdReadyRef.current), 3000);
     });
 
     return cmdConnectPromiseRef.current;
@@ -173,14 +180,14 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       payload: { action, value },
     };
 
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const ready = await connectCmdChannel(attempt > 0);
-      if (!ready || !cmdChannelRef.current || !cmdReadyRef.current) continue;
-
+    // Try to send via broadcast channel (best effort, non-blocking)
+    if (cmdChannelRef.current && cmdReadyRef.current) {
       try {
         const sendStatus = await cmdChannelRef.current.send(message);
         if (sendStatus !== "ok") {
-          throw new Error(`tp_command_send_${sendStatus}`);
+          cmdReadyRef.current = false;
+          setCmdReady(false);
+          scheduleCmdReconnect(0);
         }
         return;
       } catch (err) {
@@ -189,6 +196,9 @@ export default function TpController({ user, onBack }: TpControllerProps) {
         scheduleCmdReconnect(0);
       }
     }
+
+    // Fallback: reconnect in background for next command
+    void connectCmdChannel(true);
   }
 
 
