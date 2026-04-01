@@ -1189,6 +1189,7 @@ export default function CenarioTela() {
                             {musicData.capa ? (
                             <div className="relative" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.6${vu}`, marginBottom: `1.4${vu}`, overflow: "hidden", boxShadow: "0 16px 48px -8px rgba(0,0,0,0.45)" }}>
                                 <img src={musicData.capa} alt="" className="object-cover" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} />
+                                <div className="cenario-cover-shine" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
                               </div>
                             ) : (
                               <div className="flex items-center justify-center" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)", position: "relative" }}>
