@@ -695,6 +695,9 @@ export default function VmixPage() {
     const normalized = normalizeCommands(cmds);
     if (!normalized.length) return;
 
+    const batchLabel = `[${label}] ${normalized.length} cmd(s)`;
+    addLog(batchLabel, "pending", "Enviando via servidor...", "server");
+
     try {
       const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: normalized } });
       if (res.error) throw res.error;
@@ -703,23 +706,23 @@ export default function VmixPage() {
         ? (res.data as { results: Array<{ ok?: boolean }> }).results
         : null;
 
-      // Quando o servidor não alcança o vMix (IP local), a função pode responder 200,
-      // porém com todos os comandos falhando. Nessa situação forçamos fallback local.
       if (results && results.length > 0 && !results.some((r) => r?.ok)) {
         throw new Error("SERVER_COULD_NOT_REACH_VMIX");
       }
 
+      addLog(batchLabel, "ok", "Executado no servidor", "server");
       setTimeout(() => connectToVmix(), 300);
       toast({ title: label, description: `${normalized.length} ação(ões) executada(s) no servidor.` });
       return;
-    } catch {
+    } catch (err: any) {
+      addLog(batchLabel, "error", `Servidor falhou: ${err?.message || "desconhecido"} → fallback local`, "server");
       for (const cmd of normalized) {
         await sendCommand(cmd.fn, cmd.input, cmd.value);
         await new Promise((r) => setTimeout(r, 400));
       }
       toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
     }
-  }, [connectToVmix, normalizeCommands, sendCommand, toast]);
+  }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog]);
 
   const runScene = async (scene: VmixScene) => {
     setRunningScene(scene.id);
