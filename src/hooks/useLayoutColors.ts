@@ -133,25 +133,27 @@ export function useLayoutColors() {
     root.style.setProperty("--layout-slider-bg", colors.sliderBg);
     root.style.setProperty("--layout-scrollbar-color", colors.scrollbarColor);
 
-    // Also update player CSS vars from accent color
-    const accentHsl = hexToHsl(colors.accentColor);
-    if (accentHsl) {
-      root.style.setProperty("--player-accent", accentHsl);
-      const hoverHsl = hexToHsl(colors.accentColor, -7);
-      if (hoverHsl) root.style.setProperty("--player-accent-hover", hoverHsl);
-      root.style.setProperty("--player-accent-soft", accentHsl);
-    }
+    // Only set player CSS vars if usePlayerColors is NOT active on this page
+    // (i.e. on the Dashboard). Player pages use usePlayerColors which has precedence.
+    const isPlayerPage = window.location.pathname.includes("/player") || window.location.pathname.includes("/watch");
+    if (!isPlayerPage) {
+      const accentHsl = hexToHsl(colors.accentColor);
+      if (accentHsl) {
+        root.style.setProperty("--player-accent", accentHsl);
+        const hoverHsl = hexToHsl(colors.accentColor, -7);
+        if (hoverHsl) root.style.setProperty("--player-accent-hover", hoverHsl);
+        root.style.setProperty("--player-accent-soft", accentHsl);
+      }
 
-    // Update player bg from homeBgColor
-    const bgHsl = hexToHsl(colors.homeBgColor);
-    if (bgHsl) {
-      root.style.setProperty("--player-bg", bgHsl);
-    }
+      const bgHsl = hexToHsl(colors.homeBgColor);
+      if (bgHsl) {
+        root.style.setProperty("--player-bg", bgHsl);
+      }
 
-    // Player glow: radial gradient at bottom center, lighter middle, darker edges
-    const glowGradient = `radial-gradient(ellipse at 50% 100%, ${colors.accentColor}55 0%, ${colors.homeBgColor} 50%, ${colors.navBg} 100%)`;
-    root.style.setProperty("--player-glow", glowGradient);
-    root.style.setProperty("--player-glow-corner", glowGradient);
+      const glowGradient = `radial-gradient(ellipse at 50% 100%, ${colors.accentColor}55 0%, ${colors.homeBgColor} 50%, ${colors.navBg} 100%)`;
+      root.style.setProperty("--player-glow", glowGradient);
+      root.style.setProperty("--player-glow-corner", glowGradient);
+    }
 
     // Widget bg for presenter card, etc.
     root.style.setProperty("--layout-widget-bg-hex", colors.widgetBg);
