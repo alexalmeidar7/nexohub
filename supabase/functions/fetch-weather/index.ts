@@ -41,7 +41,7 @@ serve(async (req) => {
         });
       }
       const forecastDays = body.forecast_days || 6;
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,relative_humidity_2m_max&timezone=auto&forecast_days=${forecastDays}`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,weather_code,relative_humidity_2m_max&timezone=auto&forecast_days=${forecastDays}`;
       const res = await fetch(url);
       const data = await res.json();
       return new Response(JSON.stringify({ ok: true, data }), {
