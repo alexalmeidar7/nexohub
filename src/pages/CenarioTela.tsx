@@ -253,7 +253,7 @@ export default function CenarioTela() {
     let ch: ReturnType<typeof supabase.channel> | null = null;
     const connect = () => {
       if (destroyed) return;
-      ch = supabase.channel(`draw-sync-${effectiveUserId}-${Date.now()}`);
+      ch = supabase.channel(`draw-sync-${effectiveUserId}`);
       ch.on("broadcast", { event: "draw" }, ({ payload }: any) => {
         const canvas = canvasRef.current;
         if (canvas && payload) {
