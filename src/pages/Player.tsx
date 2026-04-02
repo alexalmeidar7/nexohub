@@ -1225,11 +1225,24 @@ export default function PlayerPage() {
         const audio = audioRef.current;
         if (!audio) return;
         audio.volume = volumeRef.current / 100;
-        audio.muted = forceAutoplay ? true : mutedRef.current;
+        audio.muted = mutedRef.current;
         if (Hls && Hls.isSupported()) {
           const hls = new Hls({
             enableWorker: true,
-            lowLatencyMode: true,
+            lowLatencyMode: false,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            maxBufferHole: 0.5,
+            liveSyncDurationCount: 3,
+            liveMaxLatencyDurationCount: 8,
+            liveDurationInfinity: true,
+            liveBackBufferLength: 20,
+            fragLoadingMaxRetry: 8,
+            fragLoadingMaxRetryTimeout: 15000,
+            fragLoadingRetryDelay: 500,
+            manifestLoadingMaxRetry: 6,
+            levelLoadingMaxRetry: 6,
+            appendErrorMaxRetry: 5,
             xhrSetup: (xhr: XMLHttpRequest) => {
               xhr.withCredentials = false;
             },
