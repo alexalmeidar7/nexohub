@@ -278,6 +278,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return modulesSource.has("comercial");
     }
 
+    if (page === "cenario" || page === "vmix") {
+      return modulesSource.has("vmix");
+    }
+
     return modulesSource.has(page);
   };
 
