@@ -47,7 +47,9 @@ export function usePlayerColors(externalUserId?: string | null) {
   const [colors, setColors] = useState<PlayerColors>(defaultPlayerColors);
   const [bgConfigs, setBgConfigs] = useState<ScreenBgConfigs>(defaultBgConfigs);
 
-  const effectiveUserId = user?.id || externalUserId || null;
+  // If an explicit externalUserId is provided (public/slug mode), it takes priority
+  // over the logged-in user to prevent cross-user color contamination.
+  const effectiveUserId = externalUserId || user?.id || null;
 
   const fetchColors = useCallback(async () => {
     if (!effectiveUserId) return;

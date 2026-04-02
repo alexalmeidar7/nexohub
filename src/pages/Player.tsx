@@ -355,6 +355,8 @@ export default function PlayerPage() {
    const [backBtnVisible, setBackBtnVisible] = useState(false);
   const [pageFadeOut, setPageFadeOut] = useState(false);
   const [musicData, setMusicData] = useState<MusicData | null>(() => {
+    // In public mode, don't initialize from localStorage (it belongs to the logged-in user)
+    if (isPublicMode) return null;
     try {
       const stored = localStorage.getItem(MUSIC_DATA_KEY);
       return stored ? JSON.parse(stored) : null;
@@ -402,7 +404,7 @@ export default function PlayerPage() {
 
   // Load spectrum style preference from user_settings
   useEffect(() => {
-    const effectiveId = user?.id || publicUserId;
+    const effectiveId = isPublicMode ? publicUserId : (user?.id || publicUserId);
     if (!effectiveId) return;
     supabase.from("user_settings").select("dashboard_items, shopping_active").eq("user_id", effectiveId).maybeSingle().then(({ data }) => {
       const items = (data?.dashboard_items as any) || {};
@@ -944,7 +946,8 @@ export default function PlayerPage() {
   // Sync music data directly from XML
   const coverCacheRef = useRef<Record<string, string>>({});
   const noCoverCacheRef = useRef<Record<string, true>>({});
-  const effectiveUserId = user?.id || publicUserId;
+  // In public mode, always use publicUserId for music sync (never the logged-in user)
+  const effectiveUserId = isPublicMode ? publicUserId : (user?.id || publicUserId);
   useEffect(() => {
     if (!effectiveUserId) return;
 
@@ -959,7 +962,9 @@ export default function PlayerPage() {
       window.dispatchEvent(new CustomEvent<MusicData>(MUSIC_SYNC_EVENT, { detail: payload }));
     };
 
+    // In public mode, don't read music from localStorage (it belongs to the logged-in user's dashboard)
     const syncFromStorage = () => {
+      if (isPublicMode) return;
       try {
         const raw = localStorage.getItem(MUSIC_DATA_KEY);
         if (!raw) return;
