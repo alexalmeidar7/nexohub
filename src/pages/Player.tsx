@@ -355,6 +355,8 @@ export default function PlayerPage() {
    const [backBtnVisible, setBackBtnVisible] = useState(false);
   const [pageFadeOut, setPageFadeOut] = useState(false);
   const [musicData, setMusicData] = useState<MusicData | null>(() => {
+    // In public mode, don't initialize from localStorage (it belongs to the logged-in user)
+    if (isPublicMode) return null;
     try {
       const stored = localStorage.getItem(MUSIC_DATA_KEY);
       return stored ? JSON.parse(stored) : null;
