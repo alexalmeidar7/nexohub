@@ -37,40 +37,27 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Find user by email prefix using GoTrue admin API with pagination
+    // Resolve user quickly through the public profiles table instead of paging auth users
     const slugLower = slug.toLowerCase();
-    let matchedUser: any = null;
-    let page = 1;
-    const perPage = 1000;
+    const { data: matchedProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("user_id, email")
+      .ilike("email", `${slugLower}@%`)
+      .limit(1)
+      .maybeSingle();
 
-    while (!matchedUser) {
-      const gotrue = `${supabaseUrl}/auth/v1/admin/users?page=${page}&per_page=${perPage}`;
-      const res = await fetch(gotrue, {
-        headers: {
-          Authorization: `Bearer ${serviceRoleKey}`,
-          apikey: serviceRoleKey,
-        },
-      });
-      if (!res.ok) throw new Error("Failed to fetch users");
-      const payload = await res.json();
-      const users: any[] = payload.users || [];
-
-      matchedUser = users.find((u: any) =>
-        u.email && u.email.split("@")[0].toLowerCase() === slugLower
-      );
-
-      if (matchedUser || users.length < perPage) break;
-      page++;
+    if (profileError) {
+      throw profileError;
     }
 
-    if (!matchedUser) {
+    if (!matchedProfile?.user_id) {
       return new Response(JSON.stringify({ error: "User not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = matchedUser.id;
+    const userId = matchedProfile.user_id;
 
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
