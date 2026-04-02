@@ -962,7 +962,9 @@ export default function PlayerPage() {
       window.dispatchEvent(new CustomEvent<MusicData>(MUSIC_SYNC_EVENT, { detail: payload }));
     };
 
+    // In public mode, don't read music from localStorage (it belongs to the logged-in user's dashboard)
     const syncFromStorage = () => {
+      if (isPublicMode) return;
       try {
         const raw = localStorage.getItem(MUSIC_DATA_KEY);
         if (!raw) return;
