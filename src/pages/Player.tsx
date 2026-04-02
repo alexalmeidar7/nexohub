@@ -946,7 +946,8 @@ export default function PlayerPage() {
   // Sync music data directly from XML
   const coverCacheRef = useRef<Record<string, string>>({});
   const noCoverCacheRef = useRef<Record<string, true>>({});
-  const effectiveUserId = user?.id || publicUserId;
+  // In public mode, always use publicUserId for music sync (never the logged-in user)
+  const effectiveUserId = isPublicMode ? publicUserId : (user?.id || publicUserId);
   useEffect(() => {
     if (!effectiveUserId) return;
 
