@@ -1389,8 +1389,9 @@ export default function PlayerPage() {
     const mediaEl = (canal.type === "audio_live" || canal.type === "audio") ? audioRef.current : videoRef.current;
     if (!mediaEl) return;
 
+    const isAudioStream = canal.type === "audio_live" || canal.type === "audio";
     let reconnectAttempts = 0;
-    const maxReconnects = 8;
+    const maxReconnects = isAudioStream ? 4 : 8;
     let lastTimeUpdate = Date.now();
 
     const tryReconnect = () => {
@@ -1398,8 +1399,9 @@ export default function PlayerPage() {
       reconnectAttempts++;
       setStreamStalled(true);
       streamStalledRef.current = true;
-      // Faster initial retry (1.5s), then scale up more gently
-      const delay = Math.min(1500 * reconnectAttempts, 8000);
+      // Audio: longer delays to avoid rapid stop/start cycles
+      const baseDelay = isAudioStream ? 3000 : 1500;
+      const delay = Math.min(baseDelay * reconnectAttempts, 12000);
       setTimeout(() => {
         if (canal) playStream(canal.url, canal.type);
       }, delay);
@@ -1423,20 +1425,24 @@ export default function PlayerPage() {
     };
 
     const onError = () => {
-      if (Date.now() - lastTimeUpdate > 10000) {
+      const threshold = isAudioStream ? 20000 : 10000;
+      if (Date.now() - lastTimeUpdate > threshold) {
         tryReconnect();
       }
     };
 
+    // Audio streams: check less frequently with higher threshold
+    const checkInterval = isAudioStream ? 20000 : 10000;
+    const stallThreshold = isAudioStream ? 30000 : 15000;
     const healthCheck = setInterval(() => {
       if (!playing || canal?.type === "youtube") return;
       if (document.hidden) { lastTimeUpdate = Date.now(); return; }
       const elapsed = Date.now() - lastTimeUpdate;
-      if (elapsed > 15000) {
+      if (elapsed > stallThreshold) {
         console.warn("Stream health check: no data for", Math.round(elapsed / 1000), "s — reconnecting");
         tryReconnect();
       }
-    }, 10000);
+    }, checkInterval);
 
     const onVisible = () => { if (document.visibilityState === "visible") lastTimeUpdate = Date.now(); };
     document.addEventListener("visibilitychange", onVisible);
