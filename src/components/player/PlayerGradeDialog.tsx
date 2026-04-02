@@ -160,96 +160,29 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
       seen.add(p.id);
       toFetch.push(p);
     }
-    // Fetch in parallel (max 6 at a time)
-    let cancelled = false;
-    const fetchBatch = async () => {
-      for (let i = 0; i < toFetch.length; i += 6) {
-        if (cancelled) return;
-        const batch = toFetch.slice(i, i + 6);
-        const results = await Promise.allSettled(
-          batch.map(async (p) => {
-            if (aiAnalysisDisabled.current) return { id: p.id, result: { keywords: [], classificacao: "Livre", justificativa: "" } as AIAnalysis };
-            const { data, error } = await supabase.functions.invoke("analyze-program", { body: { nome: p.nome, descricao: p.descricao } });
-            const status = (error as any)?.context?.status ?? (error as any)?.status;
-            const msg = String((data as any)?.error || (error as any)?.message || "");
-            if (status === 402 || status === 429 || msg.includes("insuficientes") || msg.includes("Limite")) {
-              aiAnalysisDisabled.current = true;
-              return { id: p.id, result: { keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." } as AIAnalysis };
-            }
-            if (error || data?.error) return { id: p.id, result: { keywords: [], classificacao: "Livre", justificativa: "" } as AIAnalysis };
-            return { id: p.id, result: data as AIAnalysis };
-          })
-        );
-        if (cancelled) return;
-        const updates: Record<string, AIAnalysis> = {};
-        for (const r of results) {
-          if (r.status === "fulfilled") {
-            analysisCache.current[r.value.id] = r.value.result;
-            updates[r.value.id] = r.value.result;
-          }
-        }
-        setCellAiData(prev => ({ ...prev, ...updates }));
-      }
-    };
-    fetchBatch();
-    return () => { cancelled = true; };
+    // AI disabled – use static fallback for all programs
+    const updates: Record<string, AIAnalysis> = {};
+    for (const p of toFetch) {
+      const fallback: AIAnalysis = { keywords: [], classificacao: "Livre", justificativa: "" };
+      analysisCache.current[p.id] = fallback;
+      updates[p.id] = fallback;
+    }
+    setCellAiData(prev => ({ ...prev, ...updates }));
   }, [programas]);
 
-  // Fetch AI analysis when detail popup opens
+  // AI disabled – use static fallback for detail popup
   useEffect(() => {
     if (!detailProg) { setAiAnalysis(null); return; }
 
-    // Check cache first
     if (analysisCache.current[detailProg.id]) {
       setAiAnalysis(analysisCache.current[detailProg.id]);
       return;
     }
 
-    if (!detailProg.descricao || detailProg.descricao.trim().length === 0) {
-      setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Sem descrição disponível." });
-      return;
-    }
-
-    let cancelled = false;
-    setAiLoading(true);
-    setAiAnalysis(null);
-
-    if (aiAnalysisDisabled.current) {
-      setAiLoading(false);
-      setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
-      return;
-    }
-
-    supabase.functions.invoke("analyze-program", {
-      body: { nome: detailProg.nome, descricao: detailProg.descricao },
-    }).then(({ data, error }) => {
-      if (cancelled) return;
-      setAiLoading(false);
-      const status = (error as any)?.context?.status ?? (error as any)?.status;
-      const msg = String((data as any)?.error || (error as any)?.message || "");
-
-      if (status === 402 || status === 429 || msg.includes("insuficientes") || msg.includes("Limite")) {
-        aiAnalysisDisabled.current = true;
-        setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
-        return;
-      }
-
-      if (error || data?.error) {
-        setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Não foi possível analisar." });
-        return;
-      }
-
-      const result = data as AIAnalysis;
-      analysisCache.current[detailProg.id] = result;
-      setAiAnalysis(result);
-    }).catch(() => {
-      if (cancelled) return;
-      setAiLoading(false);
-      aiAnalysisDisabled.current = true;
-      setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
-    });
-
-    return () => { cancelled = true; };
+    setAiLoading(false);
+    const fallback: AIAnalysis = { keywords: [], classificacao: "Livre", justificativa: "" };
+    analysisCache.current[detailProg.id] = fallback;
+    setAiAnalysis(fallback);
   }, [detailProg?.id]);
 
   useEffect(() => {
