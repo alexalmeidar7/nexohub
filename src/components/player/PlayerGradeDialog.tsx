@@ -170,44 +170,19 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     setCellAiData(prev => ({ ...prev, ...updates }));
   }, [programas]);
 
-  // Fetch AI analysis when detail popup opens
+  // AI disabled – use static fallback for detail popup
   useEffect(() => {
     if (!detailProg) { setAiAnalysis(null); return; }
 
-    // Check cache first
     if (analysisCache.current[detailProg.id]) {
       setAiAnalysis(analysisCache.current[detailProg.id]);
       return;
     }
 
-    if (!detailProg.descricao || detailProg.descricao.trim().length === 0) {
-      setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Sem descrição disponível." });
-      return;
-    }
-
-    let cancelled = false;
-    setAiLoading(true);
-    setAiAnalysis(null);
-
-    if (aiAnalysisDisabled.current) {
-      setAiLoading(false);
-      setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
-      return;
-    }
-
-    supabase.functions.invoke("analyze-program", {
-      body: { nome: detailProg.nome, descricao: detailProg.descricao },
-    }).then(({ data, error }) => {
-      if (cancelled) return;
-      setAiLoading(false);
-      const status = (error as any)?.context?.status ?? (error as any)?.status;
-      const msg = String((data as any)?.error || (error as any)?.message || "");
-
-      if (status === 402 || status === 429 || msg.includes("insuficientes") || msg.includes("Limite")) {
-        aiAnalysisDisabled.current = true;
-        setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
-        return;
-      }
+    setAiLoading(false);
+    const fallback: AIAnalysis = { keywords: [], classificacao: "Livre", justificativa: "" };
+    analysisCache.current[detailProg.id] = fallback;
+    setAiAnalysis(fallback);
 
       if (error || data?.error) {
         setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Não foi possível analisar." });

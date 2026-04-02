@@ -187,19 +187,8 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
   };
 
   const handleImproveText = async () => {
-    if (!editBody.trim()) return;
-    setAiImproving(true);
-    setOriginalBody(editBody);
-    try {
-      const { data, error } = await supabase.functions.invoke("improve-text", {
-        body: { text: editBody, title: editTitle },
-      });
-      if (error) throw error;
-      if (data?.text) setEditBody(data.text);
-    } catch (e) {
-      console.error("Erro ao melhorar texto:", e);
-    }
-    setAiImproving(false);
+    // AI disabled
+    return;
   };
 
   const undoAiText = () => {

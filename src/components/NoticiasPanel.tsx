@@ -535,26 +535,8 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
   };
 
   const openSummary = async (news: SelectedNews) => {
-    setLoadingSummary(true);
-    setSummaryPopup({ title: news.title, resumo: "", tempoLeitura: "" });
-    try {
-      const { data, error } = await supabase.functions.invoke("summarize-news", {
-        body: { title: news.title, url: "" },
-      });
-      if (error) throw error;
-      setSummaryPopup({
-        title: news.title,
-        resumo: data.resumo || "Não foi possível gerar o resumo.",
-        tempoLeitura: data.tempo_leitura || "1 min",
-      });
-    } catch (err: any) {
-      setSummaryPopup({
-        title: news.title,
-        resumo: "Erro ao gerar resumo. Tente novamente.",
-        tempoLeitura: "",
-      });
-    }
-    setLoadingSummary(false);
+    // AI disabled
+    setSummaryPopup({ title: news.title, resumo: "Resumo indisponível (IA desabilitada).", tempoLeitura: "1 min" });
   };
 
   const handleImageHover = (e: React.MouseEvent, url: string) => {

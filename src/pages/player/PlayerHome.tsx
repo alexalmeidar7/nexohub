@@ -72,28 +72,11 @@ function HeroBanner({
   const aiAnalysisDisabled = useRef(false);
 
   const fetchAiAnalysis = (prog: Programa | undefined) => {
-    if (!prog?.descricao || !prog.id || aiAnalysisDisabled.current) return;
-    if (aiCache.current[prog.id]) { setAiData(prev => ({ ...prev, [prog.id!]: aiCache.current[prog.id!] })); return; }
-
-    supabase.functions.invoke("analyze-program", { body: { nome: prog.nome, descricao: prog.descricao } })
-      .then(({ data, error }) => {
-        if (error || data?.error) {
-          const status = (error as any)?.context?.status ?? (error as any)?.status;
-          const msg = String((data as any)?.error || (error as any)?.message || "");
-          if (status === 402 || status === 429 || msg.includes("insuficientes") || msg.includes("Limite")) {
-            aiAnalysisDisabled.current = true;
-          }
-          return;
-        }
-
-        const result = { keywords: data?.keywords || [], classificacao: data?.classificacao || "Livre" };
-        aiCache.current[prog.id] = result;
-        setAiData(prev => ({ ...prev, [prog.id!]: result }));
-      })
-      .catch(() => {
-        // Avoid breaking UI if AI service fails
-        aiAnalysisDisabled.current = true;
-      });
+    if (!prog?.id) return;
+    // AI disabled – use static fallback
+    const result = { keywords: [], classificacao: "Livre" };
+    aiCache.current[prog.id] = result;
+    setAiData(prev => ({ ...prev, [prog.id!]: result }));
   };
 
   useEffect(() => { fetchAiAnalysis(currentProgram); }, [currentProgram?.id]);
