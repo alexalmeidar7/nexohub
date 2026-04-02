@@ -25,21 +25,21 @@ export default function PlayerHub() {
   const [fadeOut, setFadeOut] = useState(false);
   const [pendingStep, setPendingStep] = useState<Step | null>(null);
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
+  const [dataReady, setDataReady] = useState(false);
   const { colors: playerColors, bgConfigs: playerBgConfigs } = usePlayerColors(publicUserId);
 
   useEffect(() => {
     const fetchLogo = async () => {
       const userId = user?.id;
-      // If logged in, always use direct DB query (faster, no edge function needed)
       if (userId) {
         const { data } = await supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single();
         if (data) {
           setLogoUrl(data.logo);
           setChannelName(data.nome || "");
         }
+        setDataReady(true);
         return;
       }
-      // Public access via slug (unauthenticated visitors)
       if (userSlug && userSlug !== ":userSlug") {
         try {
           const { data, error } = await supabase.functions.invoke("public-player-data", {
@@ -56,6 +56,7 @@ export default function PlayerHub() {
           console.warn("Failed to fetch player data:", e);
         }
       }
+      setDataReady(true);
     };
     fetchLogo();
   }, [user, userSlug]);
