@@ -222,13 +222,28 @@ export default function RoteiroApresentadorEdit() {
 
       <div className="max-w-3xl mx-auto px-4 py-6">
         {/* Assunto */}
-        {(roteiro.subtitulo || roteiro.titulo) && (
-          <div className="mb-4 px-4 py-3 rounded-xl" style={{ backgroundColor: "rgba(38,143,250,0.06)", borderLeft: "3px solid #268ffa" }}>
-            <p className="text-xs font-bold uppercase" style={{ color: "#268ffa" }}>Assunto da entrevista</p>
-            {roteiro.subtitulo && <p className="text-sm font-bold mt-0.5" style={{ color: "#0d0446" }}>{roteiro.subtitulo}</p>}
-            {roteiro.titulo && <p className="text-xs mt-0.5" style={{ color: "rgba(13,4,70,0.6)" }}>{roteiro.titulo}</p>}
-          </div>
-        )}
+        {(roteiro.subtitulo || roteiro.titulo) && (() => {
+          let displaySubtitulo = roteiro.subtitulo || "";
+          let displayObs = "";
+          // Parse JSON subtitulo if present
+          if (displaySubtitulo.startsWith("{")) {
+            try {
+              const parsed = JSON.parse(displaySubtitulo);
+              displaySubtitulo = parsed.titulo || parsed.subtitulo || "";
+              displayObs = parsed.obs || "";
+            } catch { /* keep raw */ }
+          }
+          // Skip express_xml:: prefix
+          if (displaySubtitulo.startsWith("express_xml::")) displaySubtitulo = "";
+          return (
+            <div className="mb-4 px-4 py-3 rounded-xl" style={{ backgroundColor: "rgba(38,143,250,0.06)", borderLeft: "3px solid #268ffa" }}>
+              <p className="text-xs font-bold uppercase" style={{ color: "#268ffa" }}>Assunto da entrevista</p>
+              {displaySubtitulo && <p className="text-sm font-bold mt-0.5" style={{ color: "#0d0446" }}>{displaySubtitulo}</p>}
+              {displayObs && <p className="text-xs mt-0.5" style={{ color: "rgba(13,4,70,0.6)" }}>{displayObs}</p>}
+              {roteiro.titulo && <p className="text-xs mt-0.5" style={{ color: "rgba(13,4,70,0.6)" }}>{roteiro.titulo}</p>}
+            </div>
+          );
+        })()}
 
         {/* Participantes editáveis */}
         {participantes.length > 0 && (
