@@ -167,26 +167,7 @@ export default function PrevisaoTempo() {
       }));
       localStorage.setItem(STORAGE_KEY, name);
       setWeather({ city: name, lat, lon, current, forecast });
-      if (!silent) {
-        setAiLoading(true);
-        setAiDescription("");
-        setForecastDescription("");
-        try {
-          const { data } = await supabase.functions.invoke("weather-description", {
-            body: {
-              city: name,
-              temp: current.temp,
-              tempMin: current.tempMin,
-              tempMax: current.tempMax,
-              humidity: current.humidity,
-              rainChance: current.rainChance,
-              condition: getWeatherLabel(current.weatherCode),
-            },
-          });
-          if (data?.description) setAiDescription(data.description);
-        } catch { /* ignore AI errors */ }
-        setAiLoading(false);
-      }
+      // AI disabled – skip weather description
     } catch { if (!silent) setError("Erro ao buscar dados meteorológicos."); }
     finally { setLoading(false); }
   }, []);
