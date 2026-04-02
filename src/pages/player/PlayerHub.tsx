@@ -78,10 +78,10 @@ export default function PlayerHub() {
   }, []);
 
   useEffect(() => {
-    if (!splashDone || loading) return;
+    if (!splashDone || loading || !dataReady) return;
     const target: Step = user ? "welcome" : "access";
     transitionTo(target);
-  }, [splashDone, loading, user, transitionTo]);
+  }, [splashDone, loading, dataReady, user, transitionTo]);
 
   const onLoginSuccess = useCallback(() => {
     transitionTo("welcome");
