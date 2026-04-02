@@ -343,6 +343,7 @@ export default function PlayerPage() {
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
+  const autoplayMutedRef = useRef(false);
   const [volume, setVolume] = useState(80);
   const volumeRef = useRef(80);
   const [volumeHover, setVolumeHover] = useState(false);
@@ -1185,13 +1186,33 @@ export default function PlayerPage() {
 
   // Play stream
   const playStream = useCallback(
-    async (url: string, type: string, forceAutoplay?: boolean) => {
+    async (url: string, type: string, forceAutoplay?: boolean, userInitiated?: boolean) => {
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       setBuffering(true);
       setPlaying(false);
       setStreamStalled(false);
 
+      const isAudioType = type === "audio_live" || type === "audio";
+      const shouldResetAutoplayMute = Boolean(userInitiated && autoplayMutedRef.current && volumeRef.current > 0);
+
+      if (forceAutoplay) {
+        autoplayMutedRef.current = true;
+        mutedRef.current = true;
+        setMuted(true);
+      } else if (shouldResetAutoplayMute) {
+        autoplayMutedRef.current = false;
+        mutedRef.current = false;
+        setMuted(false);
+      }
+
+      const shouldStartMuted = forceAutoplay
+        ? true
+        : shouldResetAutoplayMute
+          ? false
+          : mutedRef.current || volumeRef.current === 0;
+
       const handlePlayStarted = () => {
+        if (!shouldStartMuted) autoplayMutedRef.current = false;
         setPlaying(true);
         setBuffering(false);
       };
@@ -1202,26 +1223,12 @@ export default function PlayerPage() {
         setBuffering(false);
       };
 
-      // Unlock audio/video element synchronously (preserves user gesture context)
-      // For autoplay (no user gesture), start muted to comply with browser policies
-      const isAudioType = type === "audio_live" || type === "audio";
-      const shouldStartMuted = forceAutoplay ? true : mutedRef.current || volumeRef.current === 0;
-      if (isAudioType && audioRef.current) {
-        audioRef.current.volume = volumeRef.current / 100;
-        audioRef.current.muted = shouldStartMuted;
-        if (forceAutoplay) {
-          mutedRef.current = true;
-          setMuted(true);
-        }
-        audioRef.current.play().catch(() => {});
-      } else if (videoRef.current) {
-        videoRef.current.muted = shouldStartMuted;
-        if (forceAutoplay) {
-          mutedRef.current = true;
-          setMuted(true);
-        }
-        videoRef.current.play().catch(() => {});
-      }
+      const playLabel = isAudioType ? "Audio play blocked:" : "Video play blocked:";
+      const requestPlay = (media: HTMLMediaElement) => {
+        media.volume = volumeRef.current / 100;
+        media.muted = shouldStartMuted;
+        return media.play().then(handlePlayStarted).catch((e) => handlePlayBlocked(playLabel, e));
+      };
 
       const normalizedUrl = normalizeLivePlaylistUrl(url, type);
       const freshUrl = normalizedUrl.includes("?") ? `${normalizedUrl}&_t=${Date.now()}` : `${normalizedUrl}?_t=${Date.now()}`;
@@ -1236,6 +1243,12 @@ export default function PlayerPage() {
         audio.volume = volumeRef.current / 100;
         audio.muted = shouldStartMuted;
         if (Hls && Hls.isSupported()) {
+          let playRequested = false;
+          const requestAudioPlay = () => {
+            playRequested = true;
+            void requestPlay(audio);
+          };
+
           const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: false,
@@ -1259,8 +1272,9 @@ export default function PlayerPage() {
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(audio);
+          if (userInitiated || forceAutoplay) requestAudioPlay();
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            audio.play().then(handlePlayStarted).catch((e) => handlePlayBlocked("Audio play blocked:", e));
+            if (!playRequested || audio.paused) requestAudioPlay();
           });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
           hls.on(Hls.Events.ERROR, (_event, data) => {
@@ -1274,13 +1288,19 @@ export default function PlayerPage() {
         } else {
           audio.src = freshUrl;
           audio.load();
-          audio.play().then(handlePlayStarted).catch((e) => handlePlayBlocked("Audio play blocked:", e));
+          void requestPlay(audio);
         }
       } else {
         if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
         const video = videoRef.current;
         if (!video) return;
         if (Hls && Hls.isSupported()) {
+          let playRequested = false;
+          const requestVideoPlay = () => {
+            playRequested = true;
+            void requestPlay(video);
+          };
+
           const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: false,
@@ -1312,6 +1332,7 @@ export default function PlayerPage() {
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(video);
+          if (userInitiated || forceAutoplay) requestVideoPlay();
           hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
             if (data.levels && data.levels.length > 0) {
               const levels = data.levels.map((l: any, i: number) => ({
@@ -1322,7 +1343,7 @@ export default function PlayerPage() {
               setHlsLevels(levels);
               setHlsCurrentLevel(-1);
             }
-            video.play().then(handlePlayStarted).catch((e) => handlePlayBlocked("Video play blocked:", e));
+            if (!playRequested || video.paused) requestVideoPlay();
           });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
           let mediaErrorRecoveries = 0;
@@ -1372,9 +1393,8 @@ export default function PlayerPage() {
           });
         } else {
           video.src = freshUrl;
-          video.addEventListener("loadedmetadata", () => {
-            video.play().then(handlePlayStarted).catch((e) => handlePlayBlocked("Video play blocked:", e));
-          }, { once: true });
+          video.load();
+          void requestPlay(video);
         }
       }
     },
@@ -1398,6 +1418,23 @@ export default function PlayerPage() {
     const maxReconnects = isAudioStream ? 4 : 8;
     let lastTimeUpdate = Date.now();
 
+    const hasBufferedMedia = () => {
+      try {
+        return mediaEl.readyState >= 2 || mediaEl.buffered.length > 0;
+      } catch {
+        return mediaEl.readyState >= 2;
+      }
+    };
+
+    const markAlive = () => {
+      lastTimeUpdate = Date.now();
+      if (streamStalledRef.current) {
+        setStreamStalled(false);
+        streamStalledRef.current = false;
+        reconnectAttempts = 0;
+      }
+    };
+
     const tryReconnect = () => {
       if (reconnectAttempts >= maxReconnects) return;
       reconnectAttempts++;
@@ -1412,19 +1449,15 @@ export default function PlayerPage() {
     };
 
     const onTimeUpdate = () => {
-      lastTimeUpdate = Date.now();
-      if (streamStalledRef.current) {
-        setStreamStalled(false);
-        streamStalledRef.current = false;
-        reconnectAttempts = 0;
-      }
+      markAlive();
+    };
+
+    const onProgress = () => {
+      if (hasBufferedMedia()) markAlive();
     };
 
     const onPlaying = () => {
-      lastTimeUpdate = Date.now();
-      setStreamStalled(false);
-      streamStalledRef.current = false;
-      reconnectAttempts = 0;
+      markAlive();
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
     };
 
@@ -1437,10 +1470,14 @@ export default function PlayerPage() {
 
     // Audio streams: check less frequently with higher threshold
     const checkInterval = isAudioStream ? 20000 : 10000;
-    const stallThreshold = isAudioStream ? 30000 : 15000;
+    const stallThreshold = isAudioStream ? 45000 : 15000;
     const healthCheck = setInterval(() => {
       if (!playing || canal?.type === "youtube") return;
       if (document.hidden) { lastTimeUpdate = Date.now(); return; }
+      if (isAudioStream && !mediaEl.paused && hasBufferedMedia()) {
+        lastTimeUpdate = Date.now();
+        return;
+      }
       const elapsed = Date.now() - lastTimeUpdate;
       if (elapsed > stallThreshold) {
         console.warn("Stream health check: no data for", Math.round(elapsed / 1000), "s — reconnecting");
@@ -1452,11 +1489,17 @@ export default function PlayerPage() {
     document.addEventListener("visibilitychange", onVisible);
 
     mediaEl.addEventListener("timeupdate", onTimeUpdate);
+    mediaEl.addEventListener("progress", onProgress);
+    mediaEl.addEventListener("loadeddata", onProgress);
+    mediaEl.addEventListener("canplay", onProgress);
     mediaEl.addEventListener("playing", onPlaying);
     mediaEl.addEventListener("error", onError);
 
     return () => {
       mediaEl.removeEventListener("timeupdate", onTimeUpdate);
+      mediaEl.removeEventListener("progress", onProgress);
+      mediaEl.removeEventListener("loadeddata", onProgress);
+      mediaEl.removeEventListener("canplay", onProgress);
       mediaEl.removeEventListener("playing", onPlaying);
       mediaEl.removeEventListener("error", onError);
       document.removeEventListener("visibilitychange", onVisible);
@@ -1549,7 +1592,7 @@ export default function PlayerPage() {
       return;
     }
     if (canal.type === "youtube") { setPlaying(true); setBuffering(false); return; }
-    playStream(canal.url, canal.type);
+    playStream(canal.url, canal.type, false, true);
   }, [canal, playing, playStream]);
 
   const navigateChannel = useCallback((dir: 1 | -1) => {
@@ -1581,8 +1624,7 @@ export default function PlayerPage() {
       setSelectedVideoId(null);
       setSidebarOpen(false);
     } else {
-      // Always auto-start when user explicitly navigates channels
-      setTimeout(() => playStream(nextChannel.url, nextChannel.type), 100);
+      void playStream(nextChannel.url, nextChannel.type, false, true);
     }
   }, [canal, canais, liveChannels, playStream]);
 
@@ -1680,6 +1722,7 @@ export default function PlayerPage() {
     setMuted(prev => {
       const newMuted = !prev;
       mutedRef.current = newMuted;
+      if (!newMuted) autoplayMutedRef.current = false;
       if (videoRef.current) videoRef.current.muted = newMuted;
       if (audioRef.current) audioRef.current.muted = newMuted;
       return newMuted;
@@ -1692,6 +1735,7 @@ export default function PlayerPage() {
     const v = val / 100;
     if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = false; }
     if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = false; }
+    if (val > 0) autoplayMutedRef.current = false;
     const newMuted = val === 0;
     setMuted(newMuted);
     mutedRef.current = newMuted;
