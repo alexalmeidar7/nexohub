@@ -324,11 +324,6 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
 
         // AI disabled – skip weather description
         setLoadingWeatherAi(false);
-        if (false) {
-          const aiRes = { data: null } as any;
-          if (aiRes.data?.description) setWeatherAiDesc(aiRes.data.description);
-        } catch { /* ignore AI error */ }
-        setLoadingWeatherAi(false);
       } catch { /* ignore */ }
       setLoadingWeather(false);
     };

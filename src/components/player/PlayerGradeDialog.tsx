@@ -183,23 +183,6 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     const fallback: AIAnalysis = { keywords: [], classificacao: "Livre", justificativa: "" };
     analysisCache.current[detailProg.id] = fallback;
     setAiAnalysis(fallback);
-
-      if (error || data?.error) {
-        setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Não foi possível analisar." });
-        return;
-      }
-
-      const result = data as AIAnalysis;
-      analysisCache.current[detailProg.id] = result;
-      setAiAnalysis(result);
-    }).catch(() => {
-      if (cancelled) return;
-      setAiLoading(false);
-      aiAnalysisDisabled.current = true;
-      setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
-    });
-
-    return () => { cancelled = true; };
   }, [detailProg?.id]);
 
   useEffect(() => {
