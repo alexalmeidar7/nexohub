@@ -322,22 +322,10 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
         };
         setMiniWeather(weatherData);
 
-        // Fetch AI description
-        setLoadingWeatherAi(true);
-        try {
-          const condLabel = miniWeatherLabel(data.current.weather_code);
-          const rainChance = data.daily.precipitation_probability_max?.[0] ?? 0;
-          const aiRes = await supabase.functions.invoke("weather-description", {
-            body: {
-              city: primary.name,
-              temp: weatherData.temp,
-              tempMin: weatherData.min,
-              tempMax: weatherData.max,
-              humidity: weatherData.humidity,
-              rainChance,
-              condition: condLabel,
-            },
-          });
+        // AI disabled – skip weather description
+        setLoadingWeatherAi(false);
+        if (false) {
+          const aiRes = { data: null } as any;
           if (aiRes.data?.description) setWeatherAiDesc(aiRes.data.description);
         } catch { /* ignore AI error */ }
         setLoadingWeatherAi(false);
