@@ -1194,20 +1194,24 @@ export default function PlayerPage() {
       const isAudioType = type === "audio_live" || type === "audio";
       if (isAudioType && audioRef.current) {
         audioRef.current.volume = volumeRef.current / 100;
-        if (forceAutoplay) {
-          // Keep muted on autoplay to avoid browser pausing playback after 1s
-          audioRef.current.muted = true;
-          mutedRef.current = true;
-          setMuted(true);
-        } else {
-          audioRef.current.muted = mutedRef.current;
-        }
-        audioRef.current.play().catch(() => {});
+        audioRef.current.muted = mutedRef.current;
+        audioRef.current.play().catch(() => {
+          // Browser blocked unmuted autoplay — retry muted
+          if (forceAutoplay && audioRef.current) {
+            audioRef.current.muted = true;
+            mutedRef.current = true;
+            setMuted(true);
+            audioRef.current.play().catch(() => {});
+          }
+        });
       } else if (videoRef.current) {
-        if (forceAutoplay) {
-          videoRef.current.muted = true;
-        }
-        videoRef.current.play().catch(() => {});
+        videoRef.current.muted = mutedRef.current;
+        videoRef.current.play().catch(() => {
+          if (forceAutoplay && videoRef.current) {
+            videoRef.current.muted = true;
+            videoRef.current.play().catch(() => {});
+          }
+        });
       }
 
       const normalizedUrl = normalizeLivePlaylistUrl(url, type);
