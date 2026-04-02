@@ -404,7 +404,7 @@ export default function PlayerPage() {
 
   // Load spectrum style preference from user_settings
   useEffect(() => {
-    const effectiveId = user?.id || publicUserId;
+    const effectiveId = isPublicMode ? publicUserId : (user?.id || publicUserId);
     if (!effectiveId) return;
     supabase.from("user_settings").select("dashboard_items, shopping_active").eq("user_id", effectiveId).maybeSingle().then(({ data }) => {
       const items = (data?.dashboard_items as any) || {};
