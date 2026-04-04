@@ -272,12 +272,12 @@ function TopNavBar({
           )}
         </div>
       </div>
-      {/* Search Popup - rendered outside relative containers for true centering */}
-      {searchOpen && (
+      {/* Search Popup - rendered via portal for true viewport centering */}
+      {searchOpen && createPortal(
         <>
-          <div className="fixed inset-0 z-[99]" style={{ background: "transparent" }} onClick={() => setSearchOpen(false)} />
+          <div className="fixed inset-0 z-[9999]" style={{ background: "transparent" }} onClick={() => setSearchOpen(false)} />
           <div
-            className="fixed z-[100] w-[min(480px,90vw)] rounded-2xl overflow-hidden animate-scale-in"
+            className="fixed z-[10000] w-[min(480px,90vw)] rounded-2xl overflow-hidden animate-scale-in"
             style={{
               top: "120px",
               left: "50%",
@@ -379,7 +379,8 @@ function TopNavBar({
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </header>
   );
