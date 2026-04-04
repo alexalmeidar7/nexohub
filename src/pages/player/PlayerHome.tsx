@@ -583,7 +583,7 @@ function ContentRow({ title, children, scrollRoot }: { title: React.ReactNode; c
           <button
             onClick={() => scroll("left")}
             className="absolute -left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center text-white transition-all opacity-0 group-hover/row:opacity-100"
-            style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+            style={{ background: "rgba(0,0,0,0.6)" }}
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
