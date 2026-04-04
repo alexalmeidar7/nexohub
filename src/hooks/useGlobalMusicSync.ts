@@ -298,7 +298,7 @@ export function useGlobalMusicSync() {
 
     // Start immediately, poll every 3s
     fetchAndSync();
-    const interval = setInterval(fetchAndSync, 3000);
+    const interval = setInterval(fetchAndSync, 2000);
 
     // Refresh cached settings every 15s in case user changes sources
     const urlRefresh = setInterval(() => { settingsFetchedRef.current = false; }, 15000);
