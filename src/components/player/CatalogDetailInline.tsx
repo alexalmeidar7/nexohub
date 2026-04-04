@@ -390,6 +390,14 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
             </div>
           ) : (
             <div className="animate-fade-in" key="content-hero">
+              {/* Back arrow */}
+              <button
+                onClick={onBack}
+                className="mb-3 w-10 h-10 rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
+                title="Voltar"
+              >
+                <img src={backArrowImg} alt="Voltar" className="w-10 h-10" />
+              </button>
               {logoUrl ? (
                 <img
                   src={logoUrl}
