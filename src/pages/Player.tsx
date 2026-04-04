@@ -2542,7 +2542,7 @@ export default function PlayerPage() {
       )}
 
 
-      {/* Floating album cover — centered on screen for audio channels only */}
+      {/* Floating presenter photo — centered on screen for audio channels only */}
       {isAudio && playing && (
         <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
           <div
@@ -2552,21 +2552,21 @@ export default function PlayerPage() {
               animation: "playerCoverIn 0.5s ease-out",
               boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px hsla(var(--player-accent) / 0.2)`,
               border: "2px solid hsla(var(--player-accent) / 0.5)",
-              background: "rgba(0,0,0,0.4)",
+              background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.3), rgba(0,0,0,0.6))",
               padding: "8px",
               width: "min(380px, 30vw)",
               height: "min(380px, 30vw)",
             }}
           >
-            {musicData?.capa && musicData.titulo !== "Sem título" ? (
+            {currentPresenter?.foto ? (
               <img
-                src={musicData.capa}
-                alt=""
+                src={currentPresenter.foto}
+                alt={currentPresenter.nome || ""}
                 className="rounded-[20px] object-cover w-full h-full"
               />
             ) : (
               <div className="w-full h-full rounded-[20px] flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.05)" }}>
-                <Radio size={48} style={{ color: "hsla(var(--player-accent) / 0.3)" }} />
+                <Mic size={48} style={{ color: "hsla(var(--player-accent) / 0.3)" }} />
               </div>
             )}
             {/* Heart icon top-right */}
