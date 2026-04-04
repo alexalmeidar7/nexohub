@@ -2635,7 +2635,7 @@ export default function PlayerPage() {
         <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
           <div className="relative flex items-center justify-center">
             {/* Vinyl disc — half visible behind presenter on the right */}
-            {musicData?.capa && (
+            {musicData?.titulo && musicData.titulo !== "Sem título" && (
               <div
                 key={`vinyl-${musicAnimKey}`}
                 className="absolute"
