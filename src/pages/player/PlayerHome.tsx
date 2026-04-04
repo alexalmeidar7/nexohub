@@ -473,7 +473,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       )}
 
       {/* Gradient + info overlay */}
-      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
       <div className="absolute bottom-0 left-0 right-0 z-[4] text-left pointer-events-none flex flex-col">
         <div className="px-3.5 pb-1">
           <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{channel.name}</p>
