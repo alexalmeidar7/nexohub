@@ -2867,7 +2867,7 @@ export default function PlayerPage() {
                     {muted ? <VolumeX size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : volume < 50 ? <Volume1 size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : <Volume2 size={16} style={{ color: "rgba(255,255,255,0.8)" }} />}
                   </button>
                   {volumeHover && (
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 border border-white/10 shadow-2xl backdrop-blur-xl" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 border border-white/10 shadow-xl" style={{ backgroundColor: "rgba(10,10,10,0.92)" }}>
                       <span className="text-[9px] font-semibold uppercase tracking-wider text-white/50">Vol</span>
                       <input
                         type="range"
