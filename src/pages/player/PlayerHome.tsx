@@ -24,6 +24,7 @@ interface Channel {
   numero_canal?: string | null;
   is_hd?: boolean | null;
   is_stereo?: boolean | null;
+  descricao?: string | null;
 }
 
 interface Programa {
@@ -146,18 +147,35 @@ function TopNavBar({
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return { channels: [] as Channel[], programas: [] as Programa[], catalogs: [] as Channel[] };
-    const dateMatch = q.match(/^(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?$/);
+
+    // Extract date from query (anywhere in string)
+    const dateRegex = /(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/;
+    const dateMatch = q.match(dateRegex);
+    const textPart = q.replace(dateRegex, "").trim();
+
     let catalogsByDate: Channel[] = [];
     if (dateMatch) {
       const day = dateMatch[1].padStart(2, "0");
       const month = dateMatch[2].padStart(2, "0");
       const year = dateMatch[3] ? (dateMatch[3].length === 2 ? `20${dateMatch[3]}` : dateMatch[3]) : new Date().getFullYear().toString();
       const dateStr = `${year}-${month}-${day}`;
-      catalogsByDate = channels.filter(ch => ch.type === "catalog" && ch.name.toLowerCase().includes(dateStr));
+      const dateBR = `${day}/${month}/${year}`;
+      catalogsByDate = channels.filter(ch => {
+        if (ch.type !== "catalog") return false;
+        const nameMatch = ch.name.toLowerCase().includes(dateStr) || ch.name.toLowerCase().includes(dateBR) || ch.name.includes(`${day}/${month}`);
+        const descMatch = ch.descricao?.toLowerCase().includes(dateStr) || ch.descricao?.toLowerCase().includes(dateBR) || ch.descricao?.includes(`${day}/${month}`);
+        const matchesDate = nameMatch || descMatch;
+        if (!matchesDate) return false;
+        if (textPart) {
+          return ch.name.toLowerCase().includes(textPart) || (ch.catalog_name && ch.catalog_name.toLowerCase().includes(textPart)) || ch.descricao?.toLowerCase().includes(textPart);
+        }
+        return true;
+      });
     }
+
     return {
       channels: channels.filter(ch => ch.name.toLowerCase().includes(q) || (ch.catalog_name && ch.catalog_name.toLowerCase().includes(q))),
-      programas: programas.filter(p => p.nome.toLowerCase().includes(q)),
+      programas: programas.filter(p => p.nome.toLowerCase().includes(q) || p.descricao?.toLowerCase().includes(q)),
       catalogs: catalogsByDate,
     };
   }, [searchQuery, channels, programas]);
