@@ -270,6 +270,21 @@ function HeroBanner({
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
+      {/* Thumb as hero background */}
+      {heroThumb && (
+        <>
+          <img
+            key={`hero-bg-${heroThumb}`}
+            src={heroThumb}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ animation: "playerFadeSlideIn 0.8s ease-out" }}
+          />
+          {/* Dark gradient overlay for readability */}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, hsla(var(--player-bg) / 0.85) 30%, hsla(var(--player-bg) / 0.4) 60%, hsla(var(--player-bg) / 0.6) 100%)" }} />
+        </>
+      )}
+
       {/* Accent glow behind program logo */}
       <div
         className="absolute z-[1] pointer-events-none"
