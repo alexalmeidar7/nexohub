@@ -2599,23 +2599,30 @@ export default function PlayerPage() {
                   <Mic size={48} style={{ color: "hsla(var(--player-accent) / 0.3)" }} />
                 </div>
               )}
-            {/* Heart icon top-right */}
-            {musicData?.titulo && musicData.titulo !== "Sem título" && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleLike(); }}
-                className="absolute top-5 right-5 pointer-events-auto transition-all hover:scale-110"
-                style={{ zIndex: 5 }}
-              >
-                <Heart
-                  size={24}
-                  className="transition-colors drop-shadow-lg"
-                  style={{
-                    color: liked ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.7)",
-                    fill: liked ? "hsl(var(--player-accent))" : "transparent",
-                  }}
-                />
-              </button>
-            )}
+              {/* Presenter name top-left */}
+              {currentPresenter?.nome && (
+                <div className="absolute top-4 left-4 flex items-center gap-1.5 pointer-events-none" style={{ zIndex: 5 }}>
+                  <Mic size={14} style={{ color: "hsl(var(--player-accent))" }} />
+                  <span className="text-white text-xs font-semibold drop-shadow-lg">{currentPresenter.nome}</span>
+                </div>
+              )}
+              {/* Heart icon bottom-right */}
+              {musicData?.titulo && musicData.titulo !== "Sem título" && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleLike(); }}
+                  className="absolute bottom-5 right-5 pointer-events-auto transition-all hover:scale-110"
+                  style={{ zIndex: 5 }}
+                >
+                  <Heart
+                    size={24}
+                    className="transition-colors drop-shadow-lg"
+                    style={{
+                      color: liked ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.7)",
+                      fill: liked ? "hsl(var(--player-accent))" : "transparent",
+                    }}
+                  />
+                </button>
+              )}
             {/* Music info bottom-left overlay */}
             {musicData?.titulo && musicData.titulo !== "Sem título" && (
               <div key={`music-overlay-${musicAnimKey}`} className="absolute bottom-6 left-6 right-6 pointer-events-none" style={{ zIndex: 5 }}>
