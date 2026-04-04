@@ -1236,8 +1236,11 @@ export default function PlayerPage() {
       };
 
       const normalizedUrl = normalizeLivePlaylistUrl(url, type);
-      const freshUrl = normalizedUrl.includes("?") ? `${normalizedUrl}&_t=${Date.now()}` : `${normalizedUrl}?_t=${Date.now()}`;
       const useHls = normalizedUrl.includes(".m3u8");
+      // Only add cache-busting for HLS playlists; Icecast/Shoutcast direct streams may reject query params
+      const freshUrl = useHls
+        ? (normalizedUrl.includes("?") ? `${normalizedUrl}&_t=${Date.now()}` : `${normalizedUrl}?_t=${Date.now()}`)
+        : normalizedUrl;
       let Hls: typeof HlsType | null = null;
       if (useHls) Hls = await getHls();
 
@@ -1291,8 +1294,23 @@ export default function PlayerPage() {
             }
           });
         } else {
+          // Direct Icecast/Shoutcast stream — native HTML5 audio
+          audio.preload = "none";
           audio.src = freshUrl;
           audio.load();
+          // Add error handler for reconnection on stream failures
+          const onError = () => {
+            console.warn("Native audio stream error, will retry...");
+            setBuffering(true);
+            setTimeout(() => {
+              if (audio.error) {
+                audio.src = normalizedUrl;
+                audio.load();
+                void requestPlay(audio);
+              }
+            }, 2000);
+          };
+          audio.addEventListener("error", onError, { once: true });
           void requestPlay(audio);
         }
       } else {
