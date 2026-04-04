@@ -305,7 +305,7 @@ function HeroBanner({
                 key={idx}
                 onClick={() => goTo(idx)}
                 className="relative h-1 rounded-full overflow-hidden transition-all duration-300"
-                style={{ width: idx === activeIdx ? 32 : 12, background: "rgba(255,255,255,0.2)" }}
+                style={{ width: idx === activeIdx ? 32 : 12, background: "hsla(var(--player-accent) / 0.3)" }}
               >
                 {idx === activeIdx && (
                   <div
