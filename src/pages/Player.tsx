@@ -1998,8 +1998,11 @@ export default function PlayerPage() {
     };
   }, [isAudio, playing]);
 
-  // Cleanup on unmount
-  useEffect(() => { return () => { if (hlsRef.current) hlsRef.current.destroy(); }; }, []);
+  // Destroy any lingering MiniPlayer audio & cleanup on unmount
+  useEffect(() => {
+    destroyMiniAudio();
+    return () => { if (hlsRef.current) hlsRef.current.destroy(); };
+  }, []);
 
   // Periodic clock tick to re-compute currentProg every 30s
   const [musicTick, setMusicTick] = useState(0);
