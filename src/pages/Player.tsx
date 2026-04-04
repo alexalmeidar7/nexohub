@@ -973,9 +973,6 @@ export default function PlayerPage() {
   // In public mode, always use publicUserId for music sync (never the logged-in user)
   const effectiveUserId = isPublicMode ? publicUserId : (user?.id || publicUserId);
   useEffect(() => {
-    if (!effectiveUserId) return;
-    if (isPublicMode) return;
-
     const isPlaceholderTrack = (track: { titulo?: string; artista?: string }) => {
       const titulo = (track.titulo || "").trim().toLowerCase();
       const artista = (track.artista || "").trim().toLowerCase();
@@ -986,6 +983,92 @@ export default function PlayerPage() {
     const broadcastMusicSync = (payload: MusicData) => {
       window.dispatchEvent(new CustomEvent<MusicData>(MUSIC_SYNC_EVENT, { detail: payload }));
     };
+
+    if (isPublicMode) {
+      if (!userSlug) return;
+
+      let cancelled = false;
+      let inFlight = false;
+
+      const applyPublicMusic = (incoming: Partial<MusicData> | null | undefined, musicStartTime?: number | null) => {
+        if (!incoming) return;
+
+        const normalized: MusicData = {
+          titulo: normalizeMusicText(incoming.titulo || "") || "Sem título",
+          artista: normalizeMusicText(incoming.artista || "") || "Desconhecido",
+          duracao: Number(incoming.duracao) > 0 ? Number(incoming.duracao) : 0,
+          capa: incoming.capa || "",
+          horario: incoming.horario || "",
+        };
+
+        if (typeof musicStartTime === "number" && musicStartTime > 0) {
+          localStorage.setItem(MUSIC_START_KEY, String(musicStartTime));
+        }
+
+        setMusicData((prev) => {
+          const prevHasRealTrack = !!prev && !isPlaceholderTrack(prev);
+          const incomingIsPlaceholder = isPlaceholderTrack(normalized);
+          if (prevHasRealTrack && incomingIsPlaceholder) return prev;
+
+          const songChanged = !prev || prev.titulo !== normalized.titulo || prev.artista !== normalized.artista;
+          if (songChanged) {
+            if (!(typeof musicStartTime === "number" && musicStartTime > 0)) {
+              localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
+            }
+            return normalized;
+          }
+
+          const hasMetaDiff = (normalized.capa && prev.capa !== normalized.capa)
+            || (normalized.horario && prev.horario !== normalized.horario)
+            || (normalized.duracao > 0 && prev.duracao !== normalized.duracao);
+
+          if (hasMetaDiff) {
+            return { ...prev, ...normalized, capa: normalized.capa || prev.capa };
+          }
+
+          return prev;
+        });
+      };
+
+      const fetchPublicMusic = async () => {
+        if (cancelled || inFlight) return;
+        inFlight = true;
+        try {
+          const { data, error } = await supabase.functions.invoke("public-player-data", {
+            body: { slug: userSlug, section: "now_playing" },
+          });
+          if (cancelled || error || !data) return;
+
+          const incoming = data.musicData || (data.musica
+            ? {
+                titulo: data.musica,
+                artista: data.artista || "Desconhecido",
+                capa: data.capa || "",
+                duracao: Number(data.duracao) > 0 ? Number(data.duracao) : 0,
+                horario: data.horario || "",
+              }
+            : null);
+
+          applyPublicMusic(incoming, typeof data.musicStartTime === "number" ? data.musicStartTime : null);
+        } catch {
+        } finally {
+          inFlight = false;
+        }
+      };
+
+      fetchPublicMusic();
+      const interval = setInterval(fetchPublicMusic, 3000);
+      const onVisibility = () => { if (!document.hidden && !cancelled) fetchPublicMusic(); };
+      document.addEventListener("visibilitychange", onVisibility);
+
+      return () => {
+        cancelled = true;
+        clearInterval(interval);
+        document.removeEventListener("visibilitychange", onVisibility);
+      };
+    }
+
+    if (!effectiveUserId) return;
 
     const syncFromStorage = () => {
       try {
@@ -1200,7 +1283,7 @@ export default function PlayerPage() {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener(MUSIC_SYNC_EVENT, onMusicSync as EventListener);
     };
-  }, [effectiveUserId, isPublicMode]);
+  }, [effectiveUserId, isPublicMode, userSlug]);
 
   // Play stream
   const playStream = useCallback(
