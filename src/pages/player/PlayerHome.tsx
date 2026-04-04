@@ -1575,6 +1575,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       onLogout={handleSignOut}
                       onSignup={onBackToAccess}
                       onEditProfile={user ? () => setProfileDialogOpen(true) : undefined}
+                      channels={channels}
+                      programas={programas}
+                      onPlayChannel={(ch) => goToPlayer(ch.id)}
                     />
                   </>
                 )}
