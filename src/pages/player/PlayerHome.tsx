@@ -1114,6 +1114,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
       if (data?.empresa?.nome) setChannelName(data.empresa.nome);
       setProgramas((data?.programas ?? []) as any);
+      setApresentadores((data?.apresentadores ?? []) as Apresentador[]);
       setShopProducts((data?.shopProducts ?? []) as any);
       if (typeof data?.shopActive === "boolean") setShopActive(data.shopActive);
       setDataLoaded(true);
