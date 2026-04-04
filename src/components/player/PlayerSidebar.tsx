@@ -74,9 +74,7 @@ export default function PlayerSidebar({
         onMouseLeave={() => autoHide && setHovered(false)}
         className="w-[52px] flex flex-col items-center py-6 pl-2 gap-2 z-40 fixed left-0 top-0 bottom-0 transition-all duration-300 ease-in-out"
         style={{
-          background: "rgba(0,0,0,0.3)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
+          background: "rgba(0,0,0,0.45)",
           borderRight: "1px solid rgba(255,255,255,0.06)",
           transform: isShown ? "translateX(0)" : "translateX(-100%)",
           opacity: isShown ? 1 : 0,
@@ -107,11 +105,10 @@ export default function PlayerSidebar({
               <div
                 className="rounded-2xl px-5 py-4 flex flex-col gap-3 whitespace-nowrap"
                 style={{
-                  background: "rgba(0,0,0,0.9)",
-                  backdropFilter: "blur(24px)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
-                }}
+                   background: "rgba(10,10,10,0.95)",
+                   border: "1px solid rgba(255,255,255,0.08)",
+                   boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+                 }}
               >
                 {/* Header */}
                 <div className="flex items-center gap-3">
@@ -176,12 +173,11 @@ export default function PlayerSidebar({
                 onClick={item.action}
                 className="group/btn relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 focus-visible:outline-none"
                 style={{
-                  background: isActive
-                    ? "rgba(255,255,255,0.1)"
-                    : "transparent",
-                  boxShadow: isActive ? "inset 0 0 0 1px rgba(255,255,255,0.15)" : "none",
-                  border: isActive ? "1px solid rgba(255,255,255,0.12)" : "1px solid transparent",
-                }}
+                   background: isActive
+                     ? "rgba(255,255,255,0.08)"
+                     : "transparent",
+                   border: isActive ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
+                 }}
                 title={item.label}
                 aria-label={item.label}
               >
@@ -197,11 +193,10 @@ export default function PlayerSidebar({
                 >
                   <span
                     className="block whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
-                    style={{
-                      background: "rgba(0,0,0,0.85)",
-                      backdropFilter: "blur(12px)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                    }}
+                   style={{
+                       background: "rgba(10,10,10,0.92)",
+                       border: "1px solid rgba(255,255,255,0.08)",
+                     }}
                   >
                     {item.label}
                   </span>

@@ -185,10 +185,9 @@ function HeroBanner({
         );
       })}
 
-      {/* Gradient overlays */}
-      <div className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.1) 70%, transparent 100%)" }} />
-      <div className="absolute inset-0 z-[2]" style={{ background: `linear-gradient(to top, hsl(var(--player-bg)) 0%, transparent 60%)` }} />
-      <div className="absolute inset-0 z-[1]" style={{ background: `radial-gradient(ellipse at 50% 100%, hsla(var(--player-accent) / 0.15) 0%, transparent 60%)` }} />
+      {/* Simplified gradient overlays — flat style */}
+      <div className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)" }} />
+      <div className="absolute inset-0 z-[2]" style={{ background: `linear-gradient(to top, hsl(var(--player-bg)) 0%, transparent 50%)` }} />
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 px-8 sm:px-12 pb-10 z-10 player-hero-content" style={{ maxWidth: "680px" }}>
@@ -274,12 +273,11 @@ function HeroBanner({
         <div className="flex items-center gap-3">
           <button
             onClick={onPlay}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105 backdrop-blur-2xl"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 hover:brightness-110"
             style={{
-              background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.2)",
+              background: "rgba(255,255,255,0.12)",
+              border: "1px solid rgba(255,255,255,0.15)",
               color: "#fff",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.3)",
             }}
           >
             <Play className="h-4 w-4 fill-current" />
@@ -287,12 +285,11 @@ function HeroBanner({
           </button>
           <button
             onClick={onGrade}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105 backdrop-blur-2xl"
+            className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:brightness-110"
             style={{
-              background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.08)",
               color: "rgba(255,255,255,0.75)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
             }}
           >
             <LayoutGrid className="h-4 w-4" />
@@ -414,18 +411,14 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "rgba(255,255,255,0.05)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
-        transform: "none",
-        boxShadow: hovered
-          ? "0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px hsla(var(--player-accent) / 0.4), inset 0 1px 0 rgba(255,255,255,0.1)"
-          : "0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
-        border: hovered ? "1px solid hsla(var(--player-accent) / 0.5)" : "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.04)",
+        border: hovered ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.06)",
+        boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.3)" : "none",
+        transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.3s, border 0.3s",
       }}
     >
       {/* Cover image – pinned to left 160px */}
@@ -464,7 +457,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       {/* Live badge */}
       <span
         className="absolute top-2.5 left-2.5 z-10 text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-lg flex items-center gap-1.5"
-        style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(16px)", color: "#fff", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
+        style={{ background: "rgba(0,0,0,0.5)", color: "#fff" }}
       >
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
         ao vivo
@@ -473,14 +466,14 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       {/* Play overlay on hover — frosted glass */}
       {!isVideo && (
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-          <div className="w-11 h-11 rounded-xl backdrop-blur-2xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 16px rgba(0,0,0,0.3)" }}>
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
             <Play className="h-4 w-4 text-white fill-white" />
           </div>
         </div>
       )}
 
       {/* Gradient + info overlay */}
-      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
       <div className="absolute bottom-0 left-0 right-0 z-[4] text-left pointer-events-none flex flex-col">
         <div className="px-3.5 pb-1">
           <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{channel.name}</p>
@@ -590,7 +583,7 @@ function ContentRow({ title, children, scrollRoot }: { title: React.ReactNode; c
           <button
             onClick={() => scroll("left")}
             className="absolute -left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center text-white transition-all opacity-0 group-hover/row:opacity-100"
-            style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+            style={{ background: "rgba(0,0,0,0.6)" }}
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -599,7 +592,7 @@ function ContentRow({ title, children, scrollRoot }: { title: React.ReactNode; c
           <button
             onClick={() => scroll("right")}
             className="absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center text-white transition-all opacity-0 group-hover/row:opacity-100"
-            style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+            style={{ background: "rgba(0,0,0,0.6)" }}
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -755,15 +748,11 @@ function TrendingCard({ item, idx, channels, onClick }: {
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "rgba(255,255,255,0.05)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
+        background: "rgba(255,255,255,0.04)",
         zIndex: hovered ? 20 : 1,
-        boxShadow: hovered
-          ? "0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px hsla(var(--player-accent) / 0.4), inset 0 1px 0 rgba(255,255,255,0.1)"
-          : "0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
-        border: hovered ? "1px solid hsla(var(--player-accent) / 0.5)" : "1px solid rgba(255,255,255,0.08)",
-        transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.4s ease, border 0.3s ease",
+        boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.3)" : "none",
+        border: hovered ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.06)",
+        transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.3s, border 0.3s",
       }}
     >
       {/* Cover image – pinned to left 150px */}
@@ -776,7 +765,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
           </div>
         )}
         {/* Text overlay always visible on the cover side */}
-        <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+        <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
         <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
           <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{item.title}</p>
           {item.subtitle && <p className="text-[10px] text-white/50 mt-1 font-medium">{item.subtitle}</p>}
@@ -817,7 +806,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
       {/* Ranking badge */}
       <div
         className="absolute top-2.5 left-2.5 z-10 w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-black"
-        style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
+        style={{ background: "rgba(0,0,0,0.5)" }}
       >
         {idx + 1}
       </div>
@@ -844,23 +833,20 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
       style={{
         width: "160px",
         aspectRatio: "2/3",
-        background: "rgba(255,255,255,0.05)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.06)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.5)";
-        e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px hsla(var(--player-accent) / 0.4), inset 0 1px 0 rgba(255,255,255,0.1)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+        e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.3)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-        e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
       {image ? (
@@ -880,13 +866,13 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
 
       {/* Play overlay — frosted glass */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-        <div className="w-11 h-11 rounded-xl backdrop-blur-2xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 16px rgba(0,0,0,0.3)" }}>
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
           <Play className="h-4 w-4 text-white fill-white" />
         </div>
       </div>
 
       {/* Gradient + info */}
-      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
       <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
         <p className="text-[10px] font-bold text-white line-clamp-2 leading-tight drop-shadow-lg">{title}</p>
         {subtitle && <p className="text-[9px] text-white/50 mt-1 font-medium">{subtitle}</p>}
@@ -899,23 +885,20 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
       style={{
         width: "160px",
         aspectRatio: "2/3",
-        background: "rgba(255,255,255,0.04)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.06)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.5)";
-        e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+        e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.3)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
       {item.channel_cover_url ? (
@@ -932,13 +915,13 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
 
       {/* Play overlay */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-        <div className="w-11 h-11 rounded-full backdrop-blur-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
+        <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
           <Play className="h-4 w-4 text-white fill-white" />
         </div>
       </div>
 
       {/* Gradient + info */}
-      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
       <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
         <p className="text-xs font-bold text-white truncate drop-shadow-lg">{item.channel_name}</p>
         <p className="text-[9px] text-white/50 flex items-center gap-1 mt-1">
@@ -1339,7 +1322,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   return (
     <div
       className={`fixed inset-0 text-white flex transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
-      style={{ background: `linear-gradient(180deg, hsl(var(--player-bg)) 0%, hsl(var(--player-bg)) 60%, hsla(var(--player-accent) / 0.08) 100%)` }}
+      style={{ background: `hsl(var(--player-bg))` }}
     >
       {/* Sidebar */}
       <PlayerSidebar
@@ -1393,7 +1376,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               </div>
 
               {/* All sections stacked vertically */}
-              <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `linear-gradient(180deg, hsl(var(--player-bg)) 0%, hsla(var(--player-accent) / 0.06) 100%)` }}>
+              <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `hsl(var(--player-bg))` }}>
 
                 {/* Streaming ao vivo */}
                 <section id="section-streaming" className="scroll-mt-4">
@@ -1520,7 +1503,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                           <div
                             key={product.id}
                             className="group rounded-xl overflow-hidden transition-all duration-300"
-                            style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)" }}
+                            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)"; }}
                             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
                           >
@@ -1532,7 +1515,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                                   <ShoppingBag className="h-8 w-8 text-white/20" />
                                 </div>
                               )}
-                              <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                              <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}>
                                 R$ {product.price.toFixed(2).replace(".", ",")}
                               </div>
                               {product.stock <= 3 && (
@@ -1550,7 +1533,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
-                                  style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}
+                                  style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)" }}
                                 >
                                   Comprar
                                 </a>
@@ -1598,7 +1581,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     <div
                       key={product.id}
                       className="group rounded-xl overflow-hidden transition-all duration-300"
-                      style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)" }}
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
                     >
@@ -1610,7 +1593,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             <ShoppingBag className="h-8 w-8 text-white/20" />
                           </div>
                         )}
-                        <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                        <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}>
                           R$ {product.price.toFixed(2).replace(".", ",")}
                         </div>
                         {product.stock <= 3 && (
@@ -1628,7 +1611,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
-                            style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}
+                            style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)" }}
                           >
                             Comprar
                           </a>

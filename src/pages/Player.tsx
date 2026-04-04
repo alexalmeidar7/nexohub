@@ -2729,12 +2729,12 @@ export default function PlayerPage() {
         </div>
       </div>
 
-      {/* Bottom minimal controls — Sky Glass inspired glass panel */}
+      {/* Bottom minimal controls — flat panel */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
         <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "110px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
           <div
-            className="absolute left-0 right-0 bottom-0 mx-auto px-5 sm:px-10 pb-5 pt-3 transition-all duration-400 ease-in-out backdrop-blur-2xl"
-            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none", background: `linear-gradient(0deg, var(--player-watch-music-bg, rgba(0,0,0,0.5)) 0%, color-mix(in srgb, var(--player-watch-music-bg, rgba(0,0,0,0.5)) 40%, transparent) 100%)` }}
+            className="absolute left-0 right-0 bottom-0 mx-auto px-5 sm:px-10 pb-5 pt-3 transition-all duration-400 ease-in-out"
+            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none", background: `linear-gradient(0deg, var(--player-watch-music-bg, rgba(0,0,0,0.6)) 0%, transparent 100%)` }}
           >
             {/* Single row: Play | Title+Artist | Slider | Like+Volume */}
             <div className="flex items-center gap-4">
@@ -2832,8 +2832,8 @@ export default function PlayerPage() {
                   <div className="relative">
                     <button
                       onClick={toggleLike}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105 backdrop-blur-xl"
-                      style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105"
+                      style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
                       title={liked ? "Descurtir" : "Curtir"}
                     >
                       <Heart
@@ -2860,14 +2860,14 @@ export default function PlayerPage() {
                 <div className="relative" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
                   <button
                     onClick={toggleMuteWithOsd}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105 backdrop-blur-xl"
-                    style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105"
+                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
                     title={muted ? "Ativar som" : "Desativar som"}
                   >
                     {muted ? <VolumeX size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : volume < 50 ? <Volume1 size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : <Volume2 size={16} style={{ color: "rgba(255,255,255,0.8)" }} />}
                   </button>
                   {volumeHover && (
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 border border-white/10 shadow-2xl backdrop-blur-xl" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 border border-white/10 shadow-xl" style={{ backgroundColor: "rgba(10,10,10,0.92)" }}>
                       <span className="text-[9px] font-semibold uppercase tracking-wider text-white/50">Vol</span>
                       <input
                         type="range"
@@ -2898,7 +2898,7 @@ export default function PlayerPage() {
           style={{ width: "80%", paddingLeft: "8px", paddingRight: "8px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
         >
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/10 px-2 sm:px-5 py-2 sm:py-3 backdrop-blur-xl" style={{ backgroundColor: "var(--player-watch-bottombar-bg, rgba(0, 0, 0, 0.5))", boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/8 px-2 sm:px-5 py-2 sm:py-3" style={{ backgroundColor: "var(--player-watch-bottombar-bg, rgba(0, 0, 0, 0.6))" }}>
 
            {/* Channel logo + Catalog controls */}
            <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
@@ -3007,7 +3007,7 @@ export default function PlayerPage() {
                 <span className="text-[10px] font-bold min-w-[28px] text-center tabular-nums">{muted ? "0%" : `${volume}%`}</span>
               </button>
               {volumeHover && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 bg-player-bg/95 border border-player-border shadow-2xl backdrop-blur-sm">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 bg-player-bg/95 border border-player-border shadow-xl">
                   <span className="text-[9px] font-semibold uppercase tracking-wider text-player-muted-foreground">Vol</span>
                   <input
                     type="range"
@@ -3054,7 +3054,7 @@ export default function PlayerPage() {
           style={{ width: "80%", paddingLeft: "8px", paddingRight: "8px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
         >
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/10 px-2 sm:px-5 py-2 sm:py-3 backdrop-blur-xl" style={{ backgroundColor: "var(--player-watch-bottombar-bg, rgba(0, 0, 0, 0.5))", boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/8 px-2 sm:px-5 py-2 sm:py-3" style={{ backgroundColor: "var(--player-watch-bottombar-bg, rgba(0, 0, 0, 0.6))" }}>
            <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
             {canal?.background_url && canal.background_url.trim() !== "" ? (
               <img src={canal.background_url} alt="" className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg object-contain" />
