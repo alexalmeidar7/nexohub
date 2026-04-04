@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
