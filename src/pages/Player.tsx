@@ -2589,13 +2589,12 @@ export default function PlayerPage() {
         />
       )}
 
-      {/* Top Header Bar — auto-hides after 2s for live channels — Sky Glass inspired glass */}
+      {/* Top Header Bar — new layout: logo | channel nav | agora: program | right: a seguir */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
         <div
-          className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3 transition-all duration-500 ease-in-out backdrop-blur-2xl"
+          className="absolute top-0 left-0 right-0 z-50 flex items-center gap-4 px-4 sm:px-8 py-3 sm:py-4 transition-all duration-500 ease-in-out"
            style={{
-            background: `linear-gradient(180deg, var(--player-watch-topbar-bg, rgba(0,0,0,0.7)) 0%, color-mix(in srgb, var(--player-watch-topbar-bg, rgba(0,0,0,0.7)) 65%, transparent) 100%)`,
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: "linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%)",
             opacity: topBarVisible ? 1 : 0,
             pointerEvents: topBarVisible ? "auto" : "none",
             transform: topBarVisible ? "translateY(0)" : "translateY(-100%)",
@@ -2603,122 +2602,68 @@ export default function PlayerPage() {
           onMouseEnter={() => { setTopBarVisible(true); if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current); }}
           onMouseLeave={resetTopBarTimer}
         >
-          {/* Home + Channel nav + name */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0 pr-4 sm:pr-6 border-r border-white/[0.06]">
+          {/* Logo da empresa */}
+          {empresaLogo ? (
+            <img
+              src={empresaLogo}
+              alt="Logo"
+              className="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-lg shrink-0 cursor-pointer"
+              onClick={handleHomeClick}
+            />
+          ) : (
             <button
               onClick={handleHomeClick}
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl hover:scale-105"
-              style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
-              title="Voltar ao Hub"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg flex items-center justify-center shrink-0 transition-all hover:scale-105"
+              style={{ background: "hsla(var(--player-accent) / 0.15)", border: "1px solid hsla(var(--player-accent) / 0.3)" }}
             >
-              <Home size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} />
+              <Home size={20} style={{ color: "hsl(var(--player-accent))" }} />
             </button>
-            <div className="flex flex-col items-center gap-0.5">
-              {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(-1)} className="hover:opacity-100 transition-colors p-0.5" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.4))" }}><ChevronUp size={16} /></button>
-              )}
-              {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(1)} className="hover:opacity-100 transition-colors p-0.5" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.4))" }}><ChevronDown size={16} /></button>
-              )}
-            </div>
-            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-              <span key={`chnum-${channelAnimKey}`} className="text-xl sm:text-2xl font-black tabular-nums" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))", animation: `playerSlide${channelNavDir > 0 ? "Up" : "Down"} 0.35s ease-out` }}>{canal?.numero_canal || "--"}</span>
-              <span key={`chname-${channelAnimKey}`} className="text-base sm:text-lg font-bold truncate max-w-[180px]" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))", animation: `playerSlide${channelNavDir > 0 ? "Up" : "Down"} 0.35s ease-out 0.05s both` }}>{canal?.name || "Sem canal"}</span>
-            </div>
-          </div>
+          )}
 
-          {/* Program info: "no ar" */}
-          <div className="hidden sm:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06] overflow-hidden" style={{ flex: "0 0 280px", maxWidth: "350px" }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>no ar</span>
-            <span key={`noar-${currentProg?.nome}-${channelAnimKey}`} className="text-lg sm:text-xl font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))", animation: "playerFadeSlideIn 0.4s ease-out" }}>{currentProg?.nome || "—"}</span>
-            <div key={`noar-sub-${currentProg?.nome}-${channelAnimKey}`} className="flex items-center gap-2 text-xs" style={{ color: "color-mix(in srgb, var(--player-watch-topbar-text, #ffffff) 50%, transparent)", animation: "playerFadeSlideIn 0.4s ease-out 0.1s both" }}>
-              <span className="truncate">{currentPresenter?.nome || ""}</span>
-              {currentProg && (
-                <span className="shrink-0">{currentProg.horario_inicio.slice(0, 5)}/{currentProg.horario_fim.slice(0, 5)}</span>
+          {/* Channel number + nav arrows */}
+          <div className="flex items-center gap-1 shrink-0">
+            <div className="flex flex-col items-center gap-0">
+              {liveChannels.length > 1 && (
+                <button onClick={() => navigateChannel(-1)} className="hover:opacity-100 transition-colors p-0.5" style={{ color: "hsl(var(--player-accent))" }}><ChevronUp size={18} /></button>
+              )}
+              {liveChannels.length > 1 && (
+                <button onClick={() => navigateChannel(1)} className="hover:opacity-100 transition-colors p-0.5" style={{ color: "hsl(var(--player-accent))" }}><ChevronDown size={18} /></button>
               )}
             </div>
-            {/* Program progress line */}
-            <div className="w-full h-0.5 mt-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.08)" }}>
-              <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }} />
-            </div>
-          </div>
-
-          {/* Next program: "a seguir" */}
-          <div className="hidden lg:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06] overflow-hidden" style={{ flex: "0 0 200px", maxWidth: "220px" }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>a seguir</span>
-            <span key={`aseguir-${nextProg?.nome}-${channelAnimKey}`} className="text-lg font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))", animation: "playerFadeSlideIn 0.4s ease-out 0.15s both" }}>{nextProg?.nome || "—"}</span>
-            <span className="text-xs" style={{ color: "color-mix(in srgb, var(--player-watch-topbar-text, #ffffff) 35%, transparent)" }}>
-              {nextProg ? `${nextProg.horario_inicio.slice(0, 5)}` : "..."}
+            <span key={`chnum-${channelAnimKey}`} className="text-2xl sm:text-3xl font-black tabular-nums text-white/90" style={{ animation: `playerSlide${channelNavDir > 0 ? "Up" : "Down"} 0.35s ease-out` }}>
+              #{canal?.numero_canal || "000"}
             </span>
           </div>
 
-          {/* Glass icon buttons */}
-          <div className="flex items-center gap-2 ml-auto shrink-0">
-
-            {/* Karaoke */}
-            {(isAudio || isVideo) && musicData?.titulo && musicData.titulo !== "Sem título" && (
-              <button
-                onClick={() => setKaraokeEnabled(!karaokeEnabled)}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl hover:scale-105 ${karaokeEnabled ? "" : ""}`}
-                style={karaokeEnabled
-                  ? { background: "hsla(var(--player-accent) / 0.25)", border: "1px solid hsla(var(--player-accent) / 0.5)", boxShadow: "0 0 12px hsla(var(--player-accent) / 0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }
-                  : { background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }
-                }
-                title={karaokeEnabled ? "Desativar Karaoke" : "Ativar Karaoke"}
-              >
-                <MicVocal size={15} className={karaokeEnabled ? "text-player-accent" : "text-white/80"} />
-              </button>
-            )}
-
-            {/* Cast */}
-            <button
-              onClick={() => { if (navigator.mediaDevices && "getDisplayMedia" in navigator.mediaDevices) navigator.mediaDevices.getDisplayMedia({ video: true }).catch(() => {}); }}
-              className="hidden sm:flex w-9 h-9 rounded-xl items-center justify-center transition-all backdrop-blur-xl hover:scale-105"
-              style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
-              title="Transmitir"
-            >
-              <Cast size={15} className="text-white/80" />
-            </button>
-
-            {/* Shop */}
-            {shopActive && (
-            <button
-              onClick={() => setShopOpen(!shopOpen)}
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl relative hover:scale-105"
-              style={shopOpen
-                ? { background: "hsla(var(--player-accent) / 0.25)", border: "1px solid hsla(var(--player-accent) / 0.5)", boxShadow: "0 0 12px hsla(var(--player-accent) / 0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }
-                : { background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }
-              }
-              title="Shopping ao Vivo"
-            >
-              <ShoppingCart size={15} className={shopOpen ? "text-player-accent" : "text-white/80"} />
-              {showShopIcon && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse bg-player-accent" />}
-            </button>
-            )}
-
-            {/* Chat */}
-            <button
-              onClick={() => setChatOpen(!chatOpen)}
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl hover:scale-105"
-              style={chatOpen
-                ? { background: "hsla(var(--player-accent) / 0.25)", border: "1px solid hsla(var(--player-accent) / 0.5)", boxShadow: "0 0 12px hsla(var(--player-accent) / 0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }
-                : { background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }
-              }
-              title="Chat ao Vivo"
-            >
-              <MessageSquare size={15} className={chatOpen ? "text-player-accent" : "text-white/80"} />
-            </button>
-
-            {/* Fullscreen */}
-            <button
-              onClick={toggleFullscreen}
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl hover:scale-105"
-              style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
-              title={fullscreen ? "Sair tela cheia" : "Tela cheia"}
-            >
-              {fullscreen ? <Minimize size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} /> : <Maximize size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} />}
-            </button>
+          {/* agora: program name + presenter */}
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="text-xs sm:text-sm font-black italic" style={{ color: "hsl(var(--player-accent))" }}>agora:</span>
+            <span key={`noar-${currentProg?.nome}-${channelAnimKey}`} className="text-xl sm:text-2xl font-black text-white leading-tight truncate" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
+              {currentProg?.nome || canal?.name || "—"}
+            </span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <Mic size={12} style={{ color: "hsl(var(--player-accent))" }} />
+              <span className="text-xs sm:text-sm font-bold text-white/70 truncate">{currentPresenter?.nome || ""}</span>
+            </div>
           </div>
+
+          {/* Right: a seguir */}
+          {nextProg && (
+            <div className="hidden lg:flex items-center gap-3 shrink-0 ml-auto">
+              <div className="flex flex-col items-end min-w-0">
+                <span className="text-xs font-medium" style={{ color: "hsl(var(--player-accent))" }}>a seguir:</span>
+                <span className="text-sm sm:text-base font-bold text-white leading-tight truncate max-w-[200px]">{nextProg.nome}</span>
+              </div>
+              {/* Next presenter avatar */}
+              {nextPresenter?.foto ? (
+                <img src={nextPresenter.foto} alt={nextPresenter.nome} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover" style={{ border: "2px solid hsl(var(--player-accent))" }} />
+              ) : (
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}>
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
