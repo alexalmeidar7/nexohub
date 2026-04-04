@@ -139,6 +139,16 @@ const matchesCampaignDay = (diasSemana: string[] | null | undefined, now: Date) 
   return diasSemana.includes(todayShort) || diasSemana.includes(todayFull);
 };
 
+const filterCampaignsByType = (campaigns: any[] | null | undefined, now: Date, isMidroll: boolean) => {
+  const todayStr = now.toISOString().slice(0, 10);
+  return (campaigns || []).filter((p: any) => {
+    if (!matchesCampaignDay(p.dias_semana, now)) return false;
+    if (p.data_inicial && todayStr < p.data_inicial) return false;
+    if (p.data_final && todayStr > p.data_final) return false;
+    return Boolean(p.is_midroll) === isMidroll;
+  });
+};
+
 const normalizeChannelNumber = (num?: string | null) => (num || "").replace(/\s+/g, "").toLowerCase();
 
 const normalizeLivePlaylistUrl = (url: string, type: string) => {
@@ -708,13 +718,7 @@ export default function PlayerPage() {
           if (data.empresa?.logo) setEmpresaLogo(data.empresa.logo);
 
           const now = new Date();
-          const todayStr = now.toISOString().slice(0, 10);
-          const prerolls = (data.prerolls || []).filter((p: any) => {
-            if (!matchesCampaignDay(p.dias_semana, now)) return false;
-            if (p.data_inicial && todayStr < p.data_inicial) return false;
-            if (p.data_final && todayStr > p.data_final) return false;
-            return true;
-          });
+          const prerolls = filterCampaignsByType(data.prerolls || [], now, false);
 
           if (prerolls.length > 0 && !prerollDone) {
             const selected = prerolls[Math.floor(Math.random() * prerolls.length)];
@@ -778,13 +782,7 @@ export default function PlayerPage() {
         }
 
         if (!prerollDone && prerollRes.data && prerollRes.data.length > 0) {
-          const todayStr = now.toISOString().slice(0, 10);
-          const matching = prerollRes.data.filter((p: any) => {
-            if (!matchesCampaignDay(p.dias_semana, now)) return false;
-            if (p.data_inicial && todayStr < p.data_inicial) return false;
-            if (p.data_final && todayStr > p.data_final) return false;
-            return true;
-          });
+          const matching = filterCampaignsByType(prerollRes.data || [], now, false);
           if (matching.length > 0) {
             const selected = matching[Math.floor(Math.random() * matching.length)];
             setPrerollUrl(selected.video_url);
@@ -1591,20 +1589,14 @@ export default function PlayerPage() {
 
   // Recurring pre-roll every 15 minutes
   const fetchAndShowPreroll = useCallback(async () => {
-    if (!user || prerollShowing) return;
+    if (!user || prerollShowing || isYoutube) return;
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
     const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true });
 
     if (data && data.length > 0) {
-      const todayStr = now.toISOString().slice(0, 10);
-      const matching = data.filter((p: any) => {
-        if (!matchesCampaignDay(p.dias_semana, now)) return false;
-        if (p.data_inicial && todayStr < p.data_inicial) return false;
-        if (p.data_final && todayStr > p.data_final) return false;
-        return true;
-      });
+      const matching = filterCampaignsByType(data, now, false);
       if (matching.length > 0) {
         const selected = matching[Math.floor(Math.random() * matching.length)];
         setPrerollUrl(selected.video_url);
@@ -1617,13 +1609,13 @@ export default function PlayerPage() {
         setPrerollShowing(true);
       }
     }
-  }, [user, prerollShowing]);
+  }, [user, prerollShowing, isYoutube]);
 
   useEffect(() => {
-    if (!prerollDone || !playing) return;
+    if (!prerollDone || !playing || isYoutube) return;
     prerollIntervalRef.current = setInterval(fetchAndShowPreroll, 15 * 60 * 1000);
     return () => { if (prerollIntervalRef.current) clearInterval(prerollIntervalRef.current); };
-  }, [prerollDone, playing, fetchAndShowPreroll]);
+  }, [prerollDone, playing, isYoutube, fetchAndShowPreroll]);
 
   const handleQualityChange = useCallback((levelIndex: number) => {
     if (!hlsRef.current) return;
@@ -2138,17 +2130,9 @@ export default function PlayerPage() {
             if (!user) return;
             const now = new Date();
             const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-            const todayStr = now.toISOString().slice(0, 10);
             const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
             if (data && data.length > 0) {
-              const matching = data.filter((p: any) => {
-                if (!matchesCampaignDay(p.dias_semana, now)) return false;
-                if (p.data_inicial && todayStr < p.data_inicial) return false;
-                if (p.data_final && todayStr > p.data_final) return false;
-                return true;
-              });
-              // Only show mid-rolls (is_midroll=true) during video breaks — never pre-rolls
-              const pool = matching.filter((p: any) => p.is_midroll);
+              const pool = filterCampaignsByType(data, now, true);
               if (pool.length > 0) {
                 // Shuffle and pick up to 3
                 const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
