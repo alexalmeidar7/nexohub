@@ -225,6 +225,92 @@ function TopNavBar({
           )}
         </div>
       </div>
+
+      {/* Search Popup */}
+      {searchOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]"
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setSearchOpen(false); }}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl overflow-hidden animate-scale-in"
+            style={{
+              background: "hsl(var(--player-bg))",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+            }}
+          >
+            {/* Search input */}
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <Search className="w-5 h-5 text-white/40 shrink-0" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar canais, programas..."
+                autoFocus
+                className="flex-1 bg-transparent text-white text-sm placeholder:text-white/30 outline-none caret-[hsl(var(--player-accent))]"
+                onKeyDown={(e) => { if (e.key === "Escape") setSearchOpen(false); }}
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="text-white/30 hover:text-white/60 transition-colors text-xs">
+                  Limpar
+                </button>
+              )}
+            </div>
+
+            {/* Results */}
+            <div className="max-h-[50vh] overflow-y-auto px-2 py-2">
+              {!searchQuery.trim() ? (
+                <p className="text-center text-white/25 text-xs py-8">Digite para buscar...</p>
+              ) : (searchResults.channels.length === 0 && searchResults.programas.length === 0) ? (
+                <p className="text-center text-white/25 text-xs py-8">Nenhum resultado encontrado</p>
+              ) : (
+                <>
+                  {searchResults.channels.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Canais</p>
+                      {searchResults.channels.map(ch => (
+                        <button
+                          key={ch.id}
+                          onClick={() => { setSearchOpen(false); onPlayChannel?.(ch); }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left"
+                        >
+                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
+                            {ch.logo_url ? <img src={ch.logo_url} className="w-full h-full object-cover" /> : <Radio className="w-4 h-4 text-white/30" />}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm text-white truncate block">{ch.name}</span>
+                            <span className="text-[11px] text-white/30">{ch.type === "video_live" ? "TV ao vivo" : ch.type === "audio_live" ? "Rádio" : "Catálogo"}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {searchResults.programas.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Programas</p>
+                      {searchResults.programas.map((p, i) => (
+                        <div key={p.id || i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
+                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
+                            {p.selo ? <img src={p.selo} className="w-full h-full object-contain" /> : <Film className="w-4 h-4 text-white/30" />}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm text-white truncate block">{p.nome}</span>
+                            <span className="text-[11px] text-white/30">{p.horario_inicio} — {p.horario_fim}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
