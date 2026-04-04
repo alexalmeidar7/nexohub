@@ -2812,7 +2812,7 @@ export default function PlayerPage() {
 
           {/* agora: program name + presenter */}
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-xs sm:text-sm font-black italic" style={{ color: "hsl(var(--player-accent))" }}>agora:</span>
+            <span className="text-[10px] sm:text-xs font-normal" style={{ color: "hsl(var(--player-accent))" }}>agora:</span>
             <span key={`noar-${currentProg?.nome}-${channelAnimKey}`} className="text-xl sm:text-2xl font-black text-white leading-tight truncate" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
               {currentProg?.nome || canal?.name || "—"}
             </span>
