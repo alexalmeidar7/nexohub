@@ -582,7 +582,7 @@ function HeroBanner({
         )}
 
         {displayProgram && (
-          <div className="mb-4 space-y-1 text-xs sm:text-sm text-white/65">
+          <div className="mb-4 space-y-1 text-sm text-white/65">
             <div className="flex items-center gap-2 flex-wrap">
               <Clock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
               <span>{displayProgram.horario_inicio} — {displayProgram.horario_fim}</span>
