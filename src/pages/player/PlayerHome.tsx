@@ -31,9 +31,11 @@ interface Programa {
   horario_inicio: string;
   horario_fim: string;
   dias_semana: string[] | null;
+  selo?: string | null;
   capa: string | null;
   thumb: string | null;
   descricao?: string | null;
+  classificacao_etaria?: string | null;
   apresentador_id?: string | null;
   apresentadores_ids?: string[] | null;
 }
@@ -263,10 +265,9 @@ function HeroBanner({
     pct = total > 0 ? (elapsed / total) * 100 : 0;
   }
 
-  // Program seal/logo (selo or capa)
-  const programSeal = displayProgram?.capa || null;
-  // Thumb for hero background
-  const heroThumb = displayProgram?.thumb || displayProgram?.capa || null;
+  // Program assets for hero
+  const programSeal = displayProgram?.selo || displayProgram?.capa || null;
+  const heroThumb = displayProgram?.thumb || null;
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
@@ -274,14 +275,18 @@ function HeroBanner({
       {heroThumb && (
         <>
           <img
-            key={`hero-bg-${heroThumb}`}
+            key={`hero-bg-${displayProgram?.id || heroThumb}`}
             src={heroThumb}
-            alt=""
+            alt={displayProgram?.nome ? `Thumb do programa ${displayProgram.nome}` : ""}
             className="absolute inset-0 w-full h-full object-cover"
             style={{ animation: "playerFadeSlideIn 0.8s ease-out" }}
           />
-          {/* Dark gradient overlay for readability */}
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, hsla(var(--player-bg) / 0.85) 30%, hsla(var(--player-bg) / 0.4) 60%, hsla(var(--player-bg) / 0.6) 100%)" }} />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, hsla(var(--player-bg) / 0.92) 26%, hsla(var(--player-bg) / 0.55) 58%, hsla(var(--player-bg) / 0.68) 100%)",
+            }}
+          />
         </>
       )}
 
@@ -300,21 +305,19 @@ function HeroBanner({
       />
 
       {/* Content positioned at bottom-left */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-8 sm:px-12 pb-12" style={{ maxWidth: "700px" }}>
-        {/* Program logo above music info */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-8 sm:px-12 pb-12" style={{ maxWidth: "760px" }}>
         {programSeal && (
-          <div className="mb-3">
+          <div className="mb-4">
             <img
-              key={`program-logo-${displayProgram?.id}`}
+              key={`program-logo-${displayProgram?.id || programSeal}`}
               src={programSeal}
               alt={displayProgram?.nome || ""}
-              className="h-16 sm:h-20 object-contain"
+              className="h-16 sm:h-20 lg:h-24 object-contain"
               style={{ animation: "playerFadeSlideIn 0.6s ease-out" }}
             />
           </div>
         )}
 
-        {/* If no seal, show program name as text */}
         {!programSeal && displayProgram && (
           <h1
             className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-4"
@@ -324,27 +327,38 @@ function HeroBanner({
           </h1>
         )}
 
-        {/* Presenter + Music info row */}
-        <div className="flex items-center gap-5 mb-3 flex-wrap">
-          {(presenterName || displayProgram) && (
-            <div className="flex items-center gap-1.5">
-              <Mic className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-              <span className="text-sm text-white/70 font-medium">{presenterName || displayProgram?.nome}</span>
-            </div>
-          )}
-          {nowPlaying?.musica && (
+        {nowPlaying?.musica && (
+          <div className="mb-2 overflow-hidden">
             <div className="flex items-center gap-1.5 overflow-hidden">
               <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
               <span
                 key={`hero-music-${nowPlaying.musica}-${nowPlaying.artista}`}
-                className="text-sm text-white/60"
+                className="text-sm text-white/80"
                 style={{ animation: "playerSlideInLeft 0.5s ease-out" }}
               >
                 {nowPlaying.musica}{nowPlaying.artista ? ` — ${nowPlaying.artista}` : ""}
               </span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {displayProgram && (
+          <div className="mb-4 space-y-1 text-xs sm:text-sm text-white/65">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Clock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
+              <span>{displayProgram.horario_inicio} — {displayProgram.horario_fim}</span>
+            </div>
+            {(presenterName || displayProgram) && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Mic className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
+                <span>{presenterName || displayProgram.nome}</span>
+              </div>
+            )}
+            {displayProgram.descricao && (
+              <p className="max-w-2xl leading-relaxed">{displayProgram.descricao}</p>
+            )}
+          </div>
+        )}
 
         {/* Badge + Play */}
         <div className="flex items-center gap-3">
@@ -1093,7 +1107,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       const [chRes, empRes, progRes, histRes, shopRes, settingsRes, apresRes] = await Promise.all([
         supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
-        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
+        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
         supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).order("watched_at", { ascending: false }).limit(10),
         supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
         supabase.from("user_settings").select("shopping_active").eq("user_id", userId).maybeSingle(),
