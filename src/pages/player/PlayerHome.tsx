@@ -239,6 +239,16 @@ function TopNavBar({
         <button className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors" style={{ background: "rgba(255,255,255,0.06)" }}>
           <Bell className="w-4 h-4" />
         </button>
+        <button
+          onClick={() => {
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen?.();
+          }}
+          className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors"
+          style={{ background: "rgba(255,255,255,0.06)" }}
+        >
+          <Maximize className="w-4 h-4" />
+        </button>
 
         {/* Profile */}
         <div ref={profileRef} className="relative">
