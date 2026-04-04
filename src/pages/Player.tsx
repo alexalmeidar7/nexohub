@@ -2694,6 +2694,15 @@ export default function PlayerPage() {
                   <span className="text-white text-xs font-semibold drop-shadow-lg">{currentPresenter.nome}</span>
                 </div>
               )}
+              {/* Company logo top-right inside presenter card */}
+              {empresaLogo && (
+                <img
+                  src={empresaLogo}
+                  alt="Logo"
+                  className="absolute top-3 right-3 object-contain rounded-lg drop-shadow-lg pointer-events-none"
+                  style={{ width: 48, height: 48, zIndex: 5 }}
+                />
+              )}
               {/* Heart icon bottom-right */}
               {musicData?.titulo && musicData.titulo !== "Sem título" && (
                 <div className="absolute bottom-5 right-5" style={{ zIndex: 5 }}>
