@@ -455,54 +455,47 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       )}
 
       {/* Live badge */}
-      <span
-        className="absolute top-2.5 left-2.5 z-10 text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-lg flex items-center gap-1.5"
-        style={{ background: "rgba(0,0,0,0.5)", color: "#fff" }}
-      >
-        <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-        ao vivo
-      </span>
+      {/* removed AO VIVO badge */}
 
-      {/* Play overlay on hover — frosted glass */}
-      {!isVideo && (
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-          <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.2)" }}>
-            <Play className="h-4 w-4 text-white fill-white" />
-          </div>
-        </div>
-      )}
+      {/* Play overlay removed per user request */}
 
       {/* Gradient + info overlay */}
       <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
       <div className="absolute bottom-0 left-0 right-0 z-[4] text-left pointer-events-none flex flex-col">
         <div className="px-3.5 pb-1">
-          <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{channel.name}</p>
-          {currentProgram && (
+          {currentProgram ? (
             <p
               key={`prog-${progKey}`}
-              className="text-[10px] text-white/50 mt-1 font-medium truncate"
-              style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}
+              className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg"
+              style={{ animation: "playerFadeSlideIn 0.5s ease-out" }}
             >
               {currentProgram.nome}
             </p>
+          ) : (
+            <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{channel.name}</p>
           )}
           {nowPlaying?.musica && (
-            <div className="flex items-center gap-1 mt-1.5" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
+            <div className="flex items-center gap-1 mt-1.5">
               <Music className="h-3 w-3 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
               <div className="min-w-0 flex flex-col">
                 <p
+                  key={`music-${musicKey}`}
+                  className="text-[10px] text-white/60 truncate lowercase"
+                  style={{ animation: "playerFadeSlideIn 0.4s ease-out 0.15s both" }}
+                >
+                  {nowPlaying.musica}
+                </p>
+                <p
                   key={`artist-${artistKey}`}
-                  className="text-[10px] text-white/50 truncate lowercase"
-                  style={{ animation: "playerFadeSlideIn 0.35s ease-out" }}
+                  className="text-[10px] text-white/40 truncate lowercase"
+                  style={{ animation: "playerFadeSlideIn 0.35s ease-out 0.3s both" }}
                 >
                   {nowPlaying.artista}
                 </p>
-                <p
-                  key={`music-${musicKey}`}
-                  className="text-[10px] text-white/40 truncate lowercase"
-                  style={{ animation: "playerFadeSlideIn 0.35s ease-out 0.05s both" }}
-                >
-                  {nowPlaying.musica}
+              </div>
+            </div>
+          )}
+        </div>
                 </p>
               </div>
             </div>
