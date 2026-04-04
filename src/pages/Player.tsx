@@ -2729,12 +2729,12 @@ export default function PlayerPage() {
         </div>
       </div>
 
-      {/* Bottom minimal controls — Sky Glass inspired glass panel */}
+      {/* Bottom minimal controls — flat panel */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
         <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "110px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
           <div
-            className="absolute left-0 right-0 bottom-0 mx-auto px-5 sm:px-10 pb-5 pt-3 transition-all duration-400 ease-in-out backdrop-blur-2xl"
-            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none", background: `linear-gradient(0deg, var(--player-watch-music-bg, rgba(0,0,0,0.5)) 0%, color-mix(in srgb, var(--player-watch-music-bg, rgba(0,0,0,0.5)) 40%, transparent) 100%)` }}
+            className="absolute left-0 right-0 bottom-0 mx-auto px-5 sm:px-10 pb-5 pt-3 transition-all duration-400 ease-in-out"
+            style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none", background: `linear-gradient(0deg, var(--player-watch-music-bg, rgba(0,0,0,0.6)) 0%, transparent 100%)` }}
           >
             {/* Single row: Play | Title+Artist | Slider | Like+Volume */}
             <div className="flex items-center gap-4">
