@@ -227,7 +227,7 @@ function TopNavBar({
           {/* Search Dropdown */}
           {searchOpen && (
             <>
-              <div className="fixed inset-0 z-[99]" onClick={() => setSearchOpen(false)} />
+              <div className="fixed inset-0 z-[99] bg-transparent" onClick={() => setSearchOpen(false)} />
               <div
                 className="absolute right-0 top-[calc(100%+8px)] z-[100] w-[min(420px,90vw)] rounded-2xl overflow-hidden animate-scale-in"
                 style={{
