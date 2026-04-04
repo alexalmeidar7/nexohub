@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 
 interface SplashScreenProps {
   logoUrl?: string | null;
@@ -47,8 +46,7 @@ export default function SplashScreen({ logoUrl, channelName, onFinish }: SplashS
       </div>
 
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin" style={{ color: `var(--player-loading-spinner, hsl(var(--player-accent)))` }} />
-        <p className="text-sm font-normal tracking-wide" style={{ color: `var(--player-loading-text, hsl(var(--player-muted-foreground)))` }}>
+        <p className="text-sm font-normal tracking-wide animate-pulse" style={{ color: `var(--player-loading-text, hsl(var(--player-muted-foreground)))` }}>
           carregando {channelName || "Positiva Play"}
         </p>
       </div>
