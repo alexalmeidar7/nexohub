@@ -179,11 +179,19 @@ export default function AudioSpectrum({ audioElement, barColor, style = "bars", 
 
   useEffect(() => { styleRef.current = style; }, [style]);
 
-  // Connect to real audio when safe to do so
+  // Connect to real audio only after the media source is known and safe
   useEffect(() => {
     if (!audioElement || style === "off") return;
 
     const currentSrc = (audioElement.currentSrc || audioElement.src || "").trim();
+
+    // Wait until the media element actually has a source before touching Web Audio.
+    if (!currentSrc) {
+      analyserRef.current = null;
+      freqDataRef.current = null;
+      return;
+    }
+
     const isDirectLiveStream = /^https?:/i.test(currentSrc) && !/\.m3u8(\?|$)/i.test(currentSrc);
 
     // Direct radio streams (Icecast/Shoutcast/AAC+) can stop after rerouting the
@@ -199,7 +207,7 @@ export default function AudioSpectrum({ audioElement, barColor, style = "bars", 
     if (analyser) {
       freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
     }
-  }, [audioElement, style]);
+  }, [audioElement, style, audioElement?.currentSrc, audioElement?.src]);
 
   useEffect(() => {
     if (style === "off") {
