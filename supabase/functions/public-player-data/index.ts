@@ -13,75 +13,71 @@ type MusicPayload = {
   duracao?: number;
 };
 
-async function resolvePublicMusicData(settings: {
-  music_xml_url?: string | null;
-  dashboard_items?: Record<string, any> | null;
-}) {
-  const dashboardItems = settings.dashboard_items ?? null;
-  let musicData: MusicPayload | null = null;
-  let musicStartTime: number | null = typeof dashboardItems?.music_start_time === "number"
-    ? dashboardItems.music_start_time
-    : null;
-
-  if (dashboardItems?.music_current_title && dashboardItems.music_current_title !== "Sem título") {
-    musicData = {
-      titulo: dashboardItems.music_current_title,
+/**
+ * Fast path: read music from dashboard_items (DB only, no external fetch).
+ * Returns null when dashboard_items has no valid music.
+ */
+function readMusicFromDashboard(dashboardItems: Record<string, any> | null) {
+  if (!dashboardItems?.music_current_title) return null;
+  const title = dashboardItems.music_current_title;
+  if (title === "Sem título" || title === "Sem titulo") return null;
+  return {
+    musicData: {
+      titulo: title,
       artista: dashboardItems.music_current_artist || "",
       capa: dashboardItems.music_current_cover || "",
-    };
-  }
+    } as MusicPayload,
+    musicStartTime: typeof dashboardItems.music_start_time === "number"
+      ? dashboardItems.music_start_time
+      : null,
+  };
+}
 
-  if (settings.music_xml_url) {
-    try {
-      const xmlResp = await fetch(settings.music_xml_url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; PublicPlayer/1.0)",
-          Accept: "application/xml, text/xml, */*",
-        },
-        signal: AbortSignal.timeout(3000),
-      });
+/**
+ * Slow path: fetch XML from external URL (used as fallback only).
+ */
+async function fetchMusicFromXml(xmlUrl: string): Promise<MusicPayload | null> {
+  try {
+    const xmlResp = await fetch(xmlUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; PublicPlayer/1.0)",
+        Accept: "application/xml, text/xml, */*",
+      },
+      signal: AbortSignal.timeout(1500),
+    });
+    if (!xmlResp.ok) return null;
+    const xmlText = await xmlResp.text();
 
-      if (xmlResp.ok) {
-        const xmlText = await xmlResp.text();
-        const extractTag = (...tags: string[]) => {
-          for (const tag of tags) {
-            const match = xmlText.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
-            if (match?.[1]?.trim()) return match[1].trim();
-          }
-          return "";
-        };
-
-        const titulo = extractTag("nome_musica", "titulo", "title");
-        const artista = extractTag("interprete", "nome_interprete", "artista", "artist");
-        const capa = extractTag("capa", "cover", "album_art", "artwork", "imagem");
-        const horario = extractTag("horario");
-        const duracaoRaw = extractTag("duracao", "duration");
-        let duracao = 0;
-
-        if (duracaoRaw.includes(":")) {
-          const parts = duracaoRaw.split(":").map(Number);
-          if (parts.length === 2) duracao = parts[0] * 60 + parts[1];
-          else if (parts.length === 3) duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
-        } else {
-          duracao = parseFloat(duracaoRaw) || 0;
-          if (duracao > 600) duracao = duracao / 1000;
-        }
-
-        if (titulo && titulo.toLowerCase() !== "sem título" && titulo.toLowerCase() !== "sem titulo") {
-          musicData = {
-            titulo,
-            artista: artista || musicData?.artista || "Desconhecido",
-            capa: capa || musicData?.capa || "",
-            horario: horario || undefined,
-            duracao: duracao || undefined,
-          };
-        }
+    const extractTag = (...tags: string[]) => {
+      for (const tag of tags) {
+        const match = xmlText.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
+        if (match?.[1]?.trim()) return match[1].trim();
       }
-    } catch {
-    }
-  }
+      return "";
+    };
 
-  return { musicData, musicStartTime };
+    const titulo = extractTag("nome_musica", "titulo", "title");
+    if (!titulo || titulo.toLowerCase() === "sem título" || titulo.toLowerCase() === "sem titulo") return null;
+
+    const artista = extractTag("interprete", "nome_interprete", "artista", "artist");
+    const capa = extractTag("capa", "cover", "album_art", "artwork", "imagem");
+    const horario = extractTag("horario");
+    const duracaoRaw = extractTag("duracao", "duration");
+    let duracao = 0;
+
+    if (duracaoRaw.includes(":")) {
+      const parts = duracaoRaw.split(":").map(Number);
+      if (parts.length === 2) duracao = parts[0] * 60 + parts[1];
+      else if (parts.length === 3) duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else {
+      duracao = parseFloat(duracaoRaw) || 0;
+      if (duracao > 600) duracao = duracao / 1000;
+    }
+
+    return { titulo, artista: artista || "Desconhecido", capa, horario: horario || undefined, duracao: duracao || undefined };
+  } catch {
+    return null;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -127,9 +123,7 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    if (profileError) {
-      throw profileError;
-    }
+    if (profileError) throw profileError;
 
     if (!matchedProfile?.user_id) {
       return new Response(JSON.stringify({ error: "User not found" }), {
@@ -140,6 +134,7 @@ Deno.serve(async (req) => {
 
     const userId = matchedProfile.user_id;
 
+    // ── FAST PATH: now_playing ──────────────────────────────────────
     if (section === "now_playing") {
       const { data: settingsData, error: settingsError } = await supabase
         .from("user_settings")
@@ -149,7 +144,31 @@ Deno.serve(async (req) => {
 
       if (settingsError) throw settingsError;
 
-      const { musicData, musicStartTime } = await resolvePublicMusicData(settingsData ?? {});
+      const dashboardItems = (settingsData?.dashboard_items ?? null) as Record<string, any> | null;
+
+      // 1) Try dashboard_items first (instant, no network)
+      const dbMusic = readMusicFromDashboard(dashboardItems);
+      if (dbMusic?.musicData) {
+        // If dashboard has data, return immediately — XML enrichment is async on admin side
+        return new Response(
+          JSON.stringify({
+            musica: dbMusic.musicData.titulo,
+            artista: dbMusic.musicData.artista,
+            capa: dbMusic.musicData.capa,
+            duracao: dbMusic.musicData.duracao || 0,
+            horario: dbMusic.musicData.horario || "",
+            musicData: dbMusic.musicData,
+            musicStartTime: dbMusic.musicStartTime,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // 2) Fallback: fetch XML directly (slower, 1.5s timeout)
+      let musicData: MusicPayload | null = null;
+      if (settingsData?.music_xml_url) {
+        musicData = await fetchMusicFromXml(settingsData.music_xml_url);
+      }
 
       return new Response(
         JSON.stringify({
@@ -159,12 +178,13 @@ Deno.serve(async (req) => {
           duracao: musicData?.duracao || 0,
           horario: musicData?.horario || "",
           musicData,
-          musicStartTime,
+          musicStartTime: typeof dashboardItems?.music_start_time === "number" ? dashboardItems.music_start_time : null,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // ── FULL BOOTSTRAP ──────────────────────────────────────────────
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
@@ -180,7 +200,19 @@ Deno.serve(async (req) => {
       ]);
 
     const isShopActive = settingsRes.data?.shopping_active !== false;
-    const { musicData, musicStartTime } = await resolvePublicMusicData(settingsRes.data ?? {});
+    const dashboardItems = (settingsRes.data?.dashboard_items ?? null) as Record<string, any> | null;
+
+    // Try dashboard first, fallback to XML
+    let musicResult = readMusicFromDashboard(dashboardItems);
+    if (!musicResult?.musicData && settingsRes.data?.music_xml_url) {
+      const xmlMusic = await fetchMusicFromXml(settingsRes.data.music_xml_url);
+      if (xmlMusic) {
+        musicResult = {
+          musicData: xmlMusic,
+          musicStartTime: typeof dashboardItems?.music_start_time === "number" ? dashboardItems.music_start_time : null,
+        };
+      }
+    }
 
     return new Response(
       JSON.stringify({
@@ -192,8 +224,8 @@ Deno.serve(async (req) => {
         empresa: empresaRes.data || null,
         shopProducts: isShopActive ? (shopRes.data || []) : [],
         shopActive: isShopActive,
-        musicData,
-        musicStartTime,
+        musicData: musicResult?.musicData || null,
+        musicStartTime: musicResult?.musicStartTime || null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
