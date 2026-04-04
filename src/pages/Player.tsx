@@ -2506,14 +2506,6 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Audio Spectrum — visible behind content for audio channels */}
-      {isAudio && playing && (
-        <Suspense fallback={null}>
-          <div className="absolute inset-0 z-[1] flex items-end justify-center pointer-events-none" style={{ opacity: 0.3 }}>
-            <AudioSpectrum audioElement={audioRef.current} style={spectrumStyle} onStyleChange={handleSpectrumStyleChange} />
-          </div>
-        </Suspense>
-      )}
 
       {/* Floating album cover — centered on screen for audio channels only */}
       {isAudio && playing && musicData?.capa && musicData.titulo !== "Sem título" && (
