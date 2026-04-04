@@ -143,6 +143,12 @@ export function useGlobalMusicSync() {
         })();
       } else if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
+        // Persist cover to DB so public users get it too
+        (async () => {
+          try {
+            await mergeUserDashboardItems(user.id, { music_current_cover: data.capa });
+          } catch {}
+        })();
       }
 
       if (!isPlaceholderTrack(data)) {
