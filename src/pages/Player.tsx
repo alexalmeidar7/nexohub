@@ -2905,6 +2905,16 @@ export default function PlayerPage() {
           >
             {/* New layout: Play circle | Scrubber | Circular icon buttons */}
             <div className="flex items-center gap-4 sm:gap-6">
+              {/* Back button — round, same size as play */}
+              <button
+                onClick={handleHomeClick}
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
+                style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "#fff" }}
+                title="Voltar"
+              >
+                <ChevronLeft size={24} />
+              </button>
+
               {/* Play/Pause — large accent circle */}
               <button
                 onClick={handlePlayCanal}
