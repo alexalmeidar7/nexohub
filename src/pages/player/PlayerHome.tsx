@@ -1172,6 +1172,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     return candidates[0] || undefined;
   }, [programas, currentProgram]);
 
+  // Resolve presenter name for current program
+  const currentPresenterName = useMemo(() => {
+    if (!currentProgram?.apresentador_id) return null;
+    const ap = apresentadores.find(a => a.id === currentProgram.apresentador_id);
+    return ap?.nome || null;
+  }, [currentProgram, apresentadores]);
+
+
   const streamingChannels = channels.filter(ch => ch.type === "video_live" || ch.type === "audio_live");
   const catalogChannels = channels.filter(ch => ch.type === "catalog");
   const catalogGroups: Record<string, Channel[]> = {};
