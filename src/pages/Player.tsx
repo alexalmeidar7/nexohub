@@ -2724,32 +2724,20 @@ export default function PlayerPage() {
             className="absolute left-0 right-0 bottom-0 mx-auto px-5 sm:px-10 pb-5 pt-3 transition-all duration-400 ease-in-out"
             style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none", background: `linear-gradient(0deg, var(--player-watch-music-bg, rgba(0,0,0,0.6)) 0%, transparent 100%)` }}
           >
-            {/* Single row: Play | Title+Artist | Slider | Like+Volume */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center shrink-0">
-                {/* Play/Pause circle */}
-                <button
-                  onClick={handlePlayCanal}
-                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
-                  style={{ backgroundColor: "var(--player-watch-music-accent, hsl(var(--player-accent)))", color: "#000" }}
-                  title={playing ? "Pausar" : "Reproduzir"}
-                >
-                  {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
-                </button>
-              </div>
+            {/* New layout: Play circle | Scrubber | Circular icon buttons */}
+            <div className="flex items-center gap-4 sm:gap-6">
+              {/* Play/Pause — large accent circle */}
+              <button
+                onClick={handlePlayCanal}
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
+                style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000", boxShadow: "0 0 20px hsla(var(--player-accent) / 0.4)" }}
+                title={playing ? "Pausar" : "Reproduzir"}
+              >
+                {playing ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-0.5" />}
+              </button>
 
-              {/* Center: Title/Artist + Slider */}
+              {/* Scrubber bar */}
               <div className="flex-1 min-w-0">
-                {/* Title + Artist */}
-                <div key={`music-info-${musicAnimKey}`} className="flex flex-col mb-1.5" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
-                   <span className="text-sm sm:text-base font-black italic leading-tight truncate" style={{ color: "var(--player-watch-music-title-color, var(--player-watch-music-text, #ffffff))" }}>
-                    {musicData?.titulo && musicData.titulo !== "Sem título" ? musicData.titulo : ""}
-                  </span>
-                  <span className="text-xs sm:text-sm font-bold leading-tight truncate" style={{ color: "var(--player-watch-music-artist-color, color-mix(in srgb, var(--player-watch-music-text, #ffffff) 85%, transparent))" }}>
-                    {musicData?.artista && musicData.artista !== "Desconhecido" ? musicData.artista : ""}
-                  </span>
-                </div>
-                {/* Slider */}
                 {(() => {
                   void musicTick;
                   let musicElapsed = 0;
@@ -2773,95 +2761,32 @@ export default function PlayerPage() {
                   }
                   const musicPct = musicTotal > 0 ? Math.min(100, (musicElapsed / musicTotal) * 100) : 0;
                   return (
-                    <div className="relative">
-                      <div className="w-full group cursor-pointer">
-                        <div className="w-full h-[2px] rounded-full overflow-hidden group-hover:h-[4px] transition-all" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
-                          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "var(--player-watch-scrubber, #ffffff)" }} />
-                        </div>
+                    <div className="w-full group cursor-pointer">
+                      <div className="w-full h-[3px] rounded-full overflow-hidden group-hover:h-[5px] transition-all" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
+                        <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "hsl(var(--player-accent))", boxShadow: `0 0 8px hsla(var(--player-accent) / 0.5)` }} />
                       </div>
-                    </div>
-                  );
-                })()}
-                {/* Times below slider — left and right aligned */}
-                {(() => {
-                  void musicTick;
-                  let musicElapsed = 0;
-                  let musicTotal = musicData?.duracao || 0;
-                  if (musicTotal > 0) {
-                    if (musicData?.horario) {
-                      const now = new Date();
-                      const parts = musicData.horario.split(":").map(Number);
-                      const startDate = new Date(now);
-                      startDate.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
-                      musicElapsed = Math.max(0, (now.getTime() - startDate.getTime()) / 1000);
-                      if (musicElapsed > musicTotal) musicElapsed = musicTotal;
-                    }
-                    if (musicElapsed <= 0) {
-                      const startStr = localStorage.getItem("masterview_music_start");
-                      if (startStr) {
-                        musicElapsed = Math.max(0, (Date.now() - parseInt(startStr, 10)) / 1000);
-                        if (musicElapsed > musicTotal) musicElapsed = musicTotal;
-                      }
-                    }
-                  }
-                  return (
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "color-mix(in srgb, var(--player-watch-music-text, #ffffff) 60%, transparent)" }}>{fmtTime(musicElapsed)}</span>
-                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "color-mix(in srgb, var(--player-watch-music-text, #ffffff) 60%, transparent)" }}>{fmtTime(musicTotal)}</span>
                     </div>
                   );
                 })()}
               </div>
 
-              {/* Like + Volume — dark circles */}
-              <div className="flex items-center gap-2.5 shrink-0">
-                {/* Like */}
-                {(isAudio || isVideo) && musicData?.titulo && (
-                  <div className="relative">
-                    <button
-                      onClick={toggleLike}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105"
-                      style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
-                      title={liked ? "Descurtir" : "Curtir"}
-                    >
-                      <Heart
-                        size={16}
-                        className="transition-colors"
-                        style={{
-                          color: liked ? "#fff" : "rgba(255,255,255,0.8)",
-                          fill: liked ? "#fff" : "rgba(255,255,255,0.8)",
-                        }}
-                      />
-                    </button>
-                    {floatingHearts.map((h) => (
-                      <Heart
-                        key={h.id}
-                        size={12 + Math.random() * 6}
-                        className="absolute pointer-events-none fill-player-accent text-player-accent"
-                        style={{ left: `calc(50% + ${h.x}px)`, bottom: "100%", opacity: 0, animation: `floatHeart 1.2s ease-out ${h.delay}s forwards` }}
-                      />
-                    ))}
-                  </div>
-                )}
-
+              {/* Circular icon buttons — accent colored */}
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                 {/* Volume */}
                 <div className="relative" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
                   <button
                     onClick={toggleMuteWithOsd}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105"
-                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                    style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
                     title={muted ? "Ativar som" : "Desativar som"}
                   >
-                    {muted ? <VolumeX size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : volume < 50 ? <Volume1 size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : <Volume2 size={16} style={{ color: "rgba(255,255,255,0.8)" }} />}
+                    {muted ? <VolumeX size={18} /> : volume < 50 ? <Volume1 size={18} /> : <Volume2 size={18} />}
                   </button>
                   {volumeHover && (
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 border border-white/10 shadow-xl" style={{ backgroundColor: "rgba(10,10,10,0.92)" }}>
                       <span className="text-[9px] font-semibold uppercase tracking-wider text-white/50">Vol</span>
                       <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={volume}
+                        type="range" min={0} max={100} value={volume}
                         onChange={(e) => handleVolumeChangeWithOsd(Number(e.target.value))}
                         className="h-[100px] appearance-none cursor-pointer"
                         style={{ writingMode: "vertical-lr", direction: "rtl", width: "6px", accentColor: "hsl(var(--player-accent))" }}
@@ -2871,6 +2796,39 @@ export default function PlayerPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Chat */}
+                <button
+                  onClick={() => setChatOpen(!chatOpen)}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                  style={{ backgroundColor: chatOpen ? "hsl(var(--player-accent))" : "hsl(var(--player-accent))", color: "#000" }}
+                  title="Chat ao Vivo"
+                >
+                  <MessageSquare size={18} />
+                </button>
+
+                {/* Shop */}
+                {shopActive && (
+                  <button
+                    onClick={() => setShopOpen(!shopOpen)}
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 relative"
+                    style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
+                    title="Shopping ao Vivo"
+                  >
+                    <ShoppingCart size={18} />
+                    {showShopIcon && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-white border-2" style={{ borderColor: "hsl(var(--player-accent))" }} />}
+                  </button>
+                )}
+
+                {/* Settings/Fullscreen */}
+                <button
+                  onClick={toggleFullscreen}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                  style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
+                  title={fullscreen ? "Sair tela cheia" : "Tela cheia"}
+                >
+                  <Settings2 size={18} />
+                </button>
               </div>
             </div>
           </div>
