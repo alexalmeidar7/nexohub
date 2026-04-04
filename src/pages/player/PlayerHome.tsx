@@ -563,7 +563,7 @@ function HeroBanner({
             <div className="flex items-center gap-1.5 overflow-hidden">
               {/* Presenter name to the left of music */}
               {(presenterName || displayProgram?.nome) && (
-                <span className="flex items-center gap-1 text-sm text-white/50 flex-shrink-0">
+                <span className="flex items-center gap-1 text-sm text-white/50 flex-shrink-0 whitespace-nowrap">
                   <Mic className="w-3.5 h-3.5" style={{ color: "hsl(var(--player-accent))" }} />
                   <span>{presenterName || displayProgram?.nome}</span>
                   <span className="mx-1 text-white/20">|</span>
@@ -582,7 +582,7 @@ function HeroBanner({
         )}
 
         {displayProgram && (
-          <div className="mb-4 space-y-1 text-xs sm:text-sm text-white/65">
+          <div className="mb-4 space-y-1 text-sm text-white/65">
             <div className="flex items-center gap-2 flex-wrap">
               <Clock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
               <span>{displayProgram.horario_inicio} — {displayProgram.horario_fim}</span>
