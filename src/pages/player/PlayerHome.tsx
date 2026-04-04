@@ -416,7 +416,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
         background: "hsla(var(--player-accent) / 0.06)",
-        border: hovered ? "1px solid hsla(var(--player-accent) / 0.3)" : "1px solid hsla(var(--player-accent) / 0.1)",
+        border: hovered ? "3px solid #fff" : "1px solid hsla(var(--player-accent) / 0.1)",
         boxShadow: hovered ? "0 4px 20px hsla(var(--player-accent) / 0.15)" : "none",
         transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.3s, border 0.3s",
       }}
@@ -456,14 +456,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 
       {/* removed AO VIVO badge */}
 
-      {/* Play overlay on hover — frosted glass */}
-      {!isVideo && (
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-          <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.2)" }}>
-            <Play className="h-4 w-4 text-white fill-white" />
-          </div>
-        </div>
-      )}
+      {/* Play overlay removed per user request */}
 
       {/* Gradient + info overlay */}
       <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
