@@ -536,7 +536,7 @@ function HeroBanner({
       />
 
       {/* Content positioned at bottom-left */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-8 sm:px-12 pb-12" style={{ maxWidth: "760px" }}>
+      <div className="absolute left-0 right-0 z-10 px-8 sm:px-12" style={{ maxWidth: "760px", top: "50%", transform: "translateY(-50%)" }}>
         {programSeal && (
           <div className="mb-4">
             <img
