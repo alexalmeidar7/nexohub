@@ -1503,7 +1503,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 </section>
 
                 {/* Loja */}
-                {user && (
+                {user && shopActive && (
                   <section id="section-shop" className="scroll-mt-4 pt-4">
                     <h2 className="text-lg font-bold mb-4 text-white">Loja</h2>
                     {!dataLoaded ? (
