@@ -1353,7 +1353,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     <TopNavBar
                       logoUrl={logoUrl}
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
-                      activeKey={visibleSection === "catalog-detail" ? "content" : activeSection}
+                      activeKey={activeSection}
                       avatarUrl={profileAvatar}
                       userName={userName}
                       showLogout={!!user}
