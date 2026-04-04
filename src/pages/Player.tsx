@@ -722,6 +722,18 @@ export default function PlayerPage() {
           setShopProducts(data.shopProducts || []);
           if (data.empresa?.telefone_participacao) setWhatsappPhone(data.empresa.telefone_participacao);
           if (data.empresa?.logo) setEmpresaLogo(data.empresa.logo);
+          if (data.musicData?.titulo && data.musicData.titulo !== "Sem título") {
+            setMusicData({
+              titulo: data.musicData.titulo,
+              artista: data.musicData.artista || "Desconhecido",
+              capa: data.musicData.capa || "",
+              duracao: Number(data.musicData.duracao) > 0 ? Number(data.musicData.duracao) : 0,
+              horario: data.musicData.horario || "",
+            });
+            if (data.musicStartTime) {
+              localStorage.setItem(MUSIC_START_KEY, String(data.musicStartTime));
+            }
+          }
 
           const now = new Date();
           const prerolls = filterCampaignsByType(data.prerolls || [], now, false);
@@ -962,6 +974,7 @@ export default function PlayerPage() {
   const effectiveUserId = isPublicMode ? publicUserId : (user?.id || publicUserId);
   useEffect(() => {
     if (!effectiveUserId) return;
+    if (isPublicMode) return;
 
     const isPlaceholderTrack = (track: { titulo?: string; artista?: string }) => {
       const titulo = (track.titulo || "").trim().toLowerCase();
@@ -974,9 +987,7 @@ export default function PlayerPage() {
       window.dispatchEvent(new CustomEvent<MusicData>(MUSIC_SYNC_EVENT, { detail: payload }));
     };
 
-    // In public mode, don't read music from localStorage (it belongs to the logged-in user's dashboard)
     const syncFromStorage = () => {
-      if (isPublicMode) return;
       try {
         const raw = localStorage.getItem(MUSIC_DATA_KEY);
         if (!raw) return;
@@ -1004,10 +1015,8 @@ export default function PlayerPage() {
           return { ...prev, ...normalized };
         });
       } catch {
-        // ignore invalid storage payload
       }
     };
-
 
     const parseXml = (xmlStr: string) => {
       try {
@@ -1052,7 +1061,6 @@ export default function PlayerPage() {
       inFlight = true;
       lockStartedAt = nowMs;
       try {
-        // Re-fetch XML URL if not cached or after repeated failures
         if (!cachedXmlUrl || xmlFetchFails > 3) {
           const { data: settings } = await supabase.from("user_settings").select("music_xml_url").eq("user_id", effectiveUserId).maybeSingle();
           cachedXmlUrl = settings?.music_xml_url || null;
@@ -1060,13 +1068,11 @@ export default function PlayerPage() {
         }
         if (!cachedXmlUrl || cancelled) return;
 
-        // Reset direct fetch flag every 20 cycles to re-test CORS
         fetchCycleCount++;
         if (fetchCycleCount % 20 === 0) directFetchOk = null;
 
         let text = "";
 
-        // Fast path: try direct fetch first (~200ms vs ~1-2s via edge)
         if (directFetchOk !== false) {
           try {
             const directRes = await fetch(cachedXmlUrl, {
@@ -1082,7 +1088,6 @@ export default function PlayerPage() {
           }
         }
 
-        // Fallback: edge function
         if (!text) {
           try {
             const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
@@ -1097,7 +1102,6 @@ export default function PlayerPage() {
         const data = parseXml(text);
         if (!data || cancelled) return;
 
-        // Apply music data IMMEDIATELY, fetch cover in background
         setMusicData(prev => {
           const prevHasRealTrack = !!prev && !isPlaceholderTrack(prev);
           const incomingIsPlaceholder = isPlaceholderTrack(data);
@@ -1125,7 +1129,6 @@ export default function PlayerPage() {
           return prev;
         });
 
-        // Non-blocking cover fetch
         if (!data.capa) {
           const cacheKey = `${data.artista}-${data.titulo}`;
           if (coverCacheRef.current[cacheKey]) {
@@ -1182,12 +1185,10 @@ export default function PlayerPage() {
     window.addEventListener("storage", onStorage);
     window.addEventListener(MUSIC_SYNC_EVENT, onMusicSync as EventListener);
 
-    fetchAndSync(); // immediate first fetch
+    fetchAndSync();
     const interval = setInterval(fetchAndSync, 1500);
-    // Also poll localStorage frequently to catch updates from useGlobalMusicSync in same tab
     const storagePoll = setInterval(syncFromStorage, 800);
 
-    // Resume sync immediately when page becomes visible again (e.g. after alt-tab in fullscreen)
     const onVisibility = () => { if (!document.hidden && !cancelled) fetchAndSync(); };
     document.addEventListener("visibilitychange", onVisibility);
 
@@ -1199,7 +1200,7 @@ export default function PlayerPage() {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener(MUSIC_SYNC_EVENT, onMusicSync as EventListener);
     };
-  }, [effectiveUserId]);
+  }, [effectiveUserId, isPublicMode]);
 
   // Play stream
   const playStream = useCallback(
