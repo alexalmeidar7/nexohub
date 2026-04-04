@@ -2314,8 +2314,8 @@ export default function PlayerPage() {
           {/* Counter badge */}
           {midrollTotal > 1 && (
             <div className="absolute top-4 left-4 z-[70] flex items-center gap-2">
-              <span className="px-3 py-1.5 rounded-full text-xs font-bold" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#fff", backdropFilter: "blur(8px)" }}>
-                📺 Anúncio {midrollIndex + 1}/{midrollTotal}
+              <span className="px-3 py-1.5 rounded-full text-xs font-bold" style={{ backgroundColor: "hsl(var(--player-accent, 0 72% 51%))", color: "#fff", backdropFilter: "blur(8px)" }}>
+                anúncio {midrollIndex + 1}/{midrollTotal}
               </span>
             </div>
           )}
