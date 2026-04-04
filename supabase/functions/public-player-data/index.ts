@@ -74,6 +74,8 @@ Deno.serve(async (req) => {
         supabase.from("user_settings").select("shopping_active").eq("user_id", userId).maybeSingle(),
       ]);
 
+    const isShopActive = settingsRes.data?.shopping_active !== false;
+
     return new Response(
       JSON.stringify({
         userId,
@@ -82,7 +84,8 @@ Deno.serve(async (req) => {
         apresentadores: apresentadoresRes.data || [],
         prerolls: prerollRes.data || [],
         empresa: empresaRes.data || null,
-        shopProducts: shopRes.data || [],
+        shopProducts: isShopActive ? (shopRes.data || []) : [],
+        shopActive: isShopActive,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
