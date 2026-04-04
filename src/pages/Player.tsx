@@ -2860,8 +2860,8 @@ export default function PlayerPage() {
                 <div className="relative" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
                   <button
                     onClick={toggleMuteWithOsd}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105 backdrop-blur-xl"
-                    style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105"
+                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
                     title={muted ? "Ativar som" : "Desativar som"}
                   >
                     {muted ? <VolumeX size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : volume < 50 ? <Volume1 size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : <Volume2 size={16} style={{ color: "rgba(255,255,255,0.8)" }} />}
