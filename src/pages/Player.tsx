@@ -1200,21 +1200,15 @@ export default function PlayerPage() {
       const isAudioType = type === "audio_live" || type === "audio";
       const shouldResetAutoplayMute = Boolean(userInitiated && autoplayMutedRef.current && volumeRef.current > 0);
 
-      if (forceAutoplay) {
-        autoplayMutedRef.current = true;
-        mutedRef.current = true;
-        setMuted(true);
-      } else if (shouldResetAutoplayMute) {
+      if (shouldResetAutoplayMute) {
         autoplayMutedRef.current = false;
         mutedRef.current = false;
         setMuted(false);
       }
 
-      const shouldStartMuted = forceAutoplay
-        ? true
-        : shouldResetAutoplayMute
-          ? false
-          : mutedRef.current || volumeRef.current === 0;
+      const shouldStartMuted = shouldResetAutoplayMute
+        ? false
+        : mutedRef.current || volumeRef.current === 0;
 
       const handlePlayStarted = () => {
         if (!shouldStartMuted) autoplayMutedRef.current = false;
@@ -1224,6 +1218,19 @@ export default function PlayerPage() {
 
       const handlePlayBlocked = (label: string, error: unknown) => {
         console.warn(label, error);
+        // If play was blocked and we weren't muted, retry muted (autoplay policy)
+        if (!shouldStartMuted && forceAutoplay) {
+          console.log("Retrying playback muted due to autoplay policy...");
+          autoplayMutedRef.current = true;
+          mutedRef.current = true;
+          setMuted(true);
+          const media = isAudioType ? audioRef.current : videoRef.current;
+          if (media) {
+            media.muted = true;
+            media.play().then(() => { setPlaying(true); setBuffering(false); }).catch(() => { setPlaying(false); setBuffering(false); });
+          }
+          return;
+        }
         setPlaying(false);
         setBuffering(false);
       };
