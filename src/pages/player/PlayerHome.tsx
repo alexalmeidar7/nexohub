@@ -1121,16 +1121,7 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
         </div>
       )}
 
-      {/* Channel logo top-right */}
-      {logoUrl && (
-        <div className="absolute top-2 right-2 z-[15] w-10 h-7 flex items-center justify-center">
-          <img src={logoUrl} alt="" className="max-w-full max-h-full object-contain" />
-        </div>
-      )}
-
-      {/* Play overlay removed */}
-
-      {/* Gradient + info */}
+      {/* Gradient + info at bottom only */}
       <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
       <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
         <p className="text-[10px] font-bold text-white line-clamp-2 leading-tight drop-shadow-lg">{title}</p>
