@@ -1,0 +1,1 @@
+UPDATE streaming_channels SET cover_url = 'https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/capas/video-streaming-cover.png' WHERE id = '63d808c1-f51f-4e81-9fc1-fd075a6f6445';
