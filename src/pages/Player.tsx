@@ -2521,30 +2521,60 @@ export default function PlayerPage() {
 
 
       {/* Floating album cover — centered on screen for audio channels only */}
-      {isAudio && playing && musicData?.capa && musicData.titulo !== "Sem título" && (
+      {isAudio && playing && (
         <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
           <div
             key={`cover-wrap-${musicAnimKey}`}
-            className="relative rounded-3xl overflow-hidden backdrop-blur-sm"
+            className="relative rounded-3xl overflow-hidden"
             style={{
               animation: "playerCoverIn 0.5s ease-out",
-              boxShadow: "0 30px 80px rgba(0,0,0,0.6), 0 0 120px rgba(0,0,0,0.25), 0 0 40px hsl(var(--player-accent) / 0.15)",
-              border: "1px solid rgba(255,255,255,0.18)",
-              outline: "1px solid rgba(255,255,255,0.06)",
-              outlineOffset: "4px",
-              background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)",
-              padding: "6px",
+              boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px hsla(var(--player-accent) / 0.2)`,
+              border: "2px solid hsla(var(--player-accent) / 0.5)",
+              background: "rgba(0,0,0,0.4)",
+              padding: "8px",
+              width: "min(380px, 30vw)",
+              height: "min(380px, 30vw)",
             }}
           >
-            <img
-              src={musicData.capa}
-              alt=""
-              className="rounded-[20px] object-cover"
-              style={{ width: "140px", height: "140px" }}
-            />
-            {/* Glass reflection overlay */}
+            {musicData?.capa && musicData.titulo !== "Sem título" ? (
+              <img
+                src={musicData.capa}
+                alt=""
+                className="rounded-[20px] object-cover w-full h-full"
+              />
+            ) : (
+              <div className="w-full h-full rounded-[20px] flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.05)" }}>
+                <Radio size={48} style={{ color: "hsla(var(--player-accent) / 0.3)" }} />
+              </div>
+            )}
+            {/* Heart icon top-right */}
+            {musicData?.titulo && musicData.titulo !== "Sem título" && (
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleLike(); }}
+                className="absolute top-5 right-5 pointer-events-auto transition-all hover:scale-110"
+                style={{ zIndex: 5 }}
+              >
+                <Heart
+                  size={24}
+                  className="transition-colors drop-shadow-lg"
+                  style={{
+                    color: liked ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.7)",
+                    fill: liked ? "hsl(var(--player-accent))" : "transparent",
+                  }}
+                />
+              </button>
+            )}
+            {/* Music info bottom-left overlay */}
+            {musicData?.titulo && musicData.titulo !== "Sem título" && (
+              <div key={`music-overlay-${musicAnimKey}`} className="absolute bottom-6 left-6 right-6 pointer-events-none" style={{ animation: "playerFadeSlideIn 0.4s ease-out", zIndex: 5 }}>
+                <span className="text-white/60 text-xs font-medium block mb-0.5">tocando:</span>
+                <span className="text-white text-xl sm:text-2xl font-black italic leading-tight block truncate">{musicData.titulo}</span>
+                <span className="text-white/80 text-sm sm:text-base font-bold block truncate">{musicData.artista && musicData.artista !== "Desconhecido" ? musicData.artista : ""}</span>
+              </div>
+            )}
+            {/* Subtle inner glow */}
             <div className="absolute inset-0 rounded-3xl pointer-events-none" style={{
-              background: "linear-gradient(160deg, rgba(255,255,255,0.15) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.03) 100%)",
+              background: "linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.6) 100%)",
             }} />
           </div>
         </div>
