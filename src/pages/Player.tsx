@@ -2999,14 +2999,24 @@ export default function PlayerPage() {
                   </button>
                 )}
 
-                {/* Settings/Fullscreen */}
+                {/* Karaoke */}
+                <button
+                  onClick={() => setKaraokeEnabled(!karaokeEnabled)}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                  style={{ backgroundColor: karaokeEnabled ? "hsl(var(--player-accent))" : "hsl(var(--player-accent))", color: "#000" }}
+                  title={karaokeEnabled ? "Desativar Karaokê" : "Karaokê"}
+                >
+                  <MicVocal size={18} />
+                </button>
+
+                {/* Fullscreen */}
                 <button
                   onClick={toggleFullscreen}
                   className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105"
                   style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
                   title={fullscreen ? "Sair tela cheia" : "Tela cheia"}
                 >
-                  <Settings2 size={18} />
+                  {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
                 </button>
               </div>
             </div>
