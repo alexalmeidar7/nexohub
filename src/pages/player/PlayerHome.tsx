@@ -275,8 +275,8 @@ function HeroBanner({
             onClick={onPlay}
             className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 hover:brightness-110"
             style={{
-              background: "rgba(255,255,255,0.12)",
-              border: "1px solid rgba(255,255,255,0.15)",
+              background: "hsla(var(--player-accent) / 0.15)",
+              border: "1px solid hsla(var(--player-accent) / 0.25)",
               color: "#fff",
             }}
           >
@@ -287,8 +287,8 @@ function HeroBanner({
             onClick={onGrade}
             className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:brightness-110"
             style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "hsla(var(--player-accent) / 0.08)",
+              border: "1px solid hsla(var(--player-accent) / 0.12)",
               color: "rgba(255,255,255,0.75)",
             }}
           >
@@ -305,7 +305,7 @@ function HeroBanner({
                 key={idx}
                 onClick={() => goTo(idx)}
                 className="relative h-1 rounded-full overflow-hidden transition-all duration-300"
-                style={{ width: idx === activeIdx ? 32 : 12, background: "rgba(255,255,255,0.2)" }}
+                style={{ width: idx === activeIdx ? 32 : 12, background: "hsla(var(--player-accent) / 0.3)" }}
               >
                 {idx === activeIdx && (
                   <div
@@ -415,9 +415,9 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "rgba(255,255,255,0.04)",
-        border: hovered ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.06)",
-        boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.3)" : "none",
+        background: "hsla(var(--player-accent) / 0.06)",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.3)" : "1px solid hsla(var(--player-accent) / 0.1)",
+        boxShadow: hovered ? "0 4px 20px hsla(var(--player-accent) / 0.15)" : "none",
         transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.3s, border 0.3s",
       }}
     >
@@ -466,7 +466,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       {/* Play overlay on hover — frosted glass */}
       {!isVideo && (
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-          <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.2)" }}>
             <Play className="h-4 w-4 text-white fill-white" />
           </div>
         </div>
@@ -509,7 +509,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
           )}
         </div>
         {/* Program progress slider */}
-        <div className="w-full h-[3px] mt-1" style={{ background: "rgba(255,255,255,0.1)" }}>
+        <div className="w-full h-[3px] mt-1" style={{ background: "hsla(var(--player-accent) / 0.15)" }}>
           <div
             className="h-full transition-all duration-1000"
             style={{ width: `${progress}%`, backgroundColor: "hsl(var(--player-accent))", borderRadius: "0 2px 2px 0" }}
@@ -748,10 +748,10 @@ function TrendingCard({ item, idx, channels, onClick }: {
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "rgba(255,255,255,0.04)",
+        background: "hsla(var(--player-accent) / 0.06)",
         zIndex: hovered ? 20 : 1,
-        boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.3)" : "none",
-        border: hovered ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.06)",
+        boxShadow: hovered ? "0 4px 20px hsla(var(--player-accent) / 0.15)" : "none",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.3)" : "1px solid hsla(var(--player-accent) / 0.1)",
         transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.3s, border 0.3s",
       }}
     >
@@ -837,15 +837,15 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
       style={{
         width: "160px",
         aspectRatio: "2/3",
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "hsla(var(--player-accent) / 0.06)",
+        border: "1px solid hsla(var(--player-accent) / 0.1)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
-        e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.3)";
+        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.3)";
+        e.currentTarget.style.boxShadow = "0 4px 20px hsla(var(--player-accent) / 0.15)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.1)";
         e.currentTarget.style.boxShadow = "none";
       }}
     >
@@ -866,7 +866,7 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
 
       {/* Play overlay — frosted glass */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.2)" }}>
           <Play className="h-4 w-4 text-white fill-white" />
         </div>
       </div>
@@ -889,15 +889,15 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
       style={{
         width: "160px",
         aspectRatio: "2/3",
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "hsla(var(--player-accent) / 0.05)",
+        border: "1px solid hsla(var(--player-accent) / 0.1)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
-        e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.3)";
+        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.3)";
+        e.currentTarget.style.boxShadow = "0 4px 20px hsla(var(--player-accent) / 0.15)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.1)";
         e.currentTarget.style.boxShadow = "none";
       }}
     >
@@ -915,7 +915,7 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
 
       {/* Play overlay */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-        <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
+        <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.2)" }}>
           <Play className="h-4 w-4 text-white fill-white" />
         </div>
       </div>
@@ -1503,9 +1503,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                           <div
                             key={product.id}
                             className="group rounded-xl overflow-hidden transition-all duration-300"
-                            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
+                            style={{ background: "hsla(var(--player-accent) / 0.06)", border: "1px solid hsla(var(--player-accent) / 0.1)" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px hsla(var(--player-accent) / 0.15)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.1)"; e.currentTarget.style.boxShadow = "none"; }}
                           >
                             <div className="aspect-square overflow-hidden relative">
                               {product.image_url ? (
@@ -1515,7 +1515,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                                   <ShoppingBag className="h-8 w-8 text-white/20" />
                                 </div>
                               )}
-                              <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                              <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid hsla(var(--player-accent) / 0.2)" }}>
                                 R$ {product.price.toFixed(2).replace(".", ",")}
                               </div>
                               {product.stock <= 3 && (
@@ -1533,7 +1533,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
-                                  style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)" }}
+                                  style={{ background: "hsla(var(--player-accent) / 0.15)", border: "1px solid hsla(var(--player-accent) / 0.25)" }}
                                 >
                                   Comprar
                                 </a>
@@ -1581,9 +1581,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     <div
                       key={product.id}
                       className="group rounded-xl overflow-hidden transition-all duration-300"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
+                      style={{ background: "hsla(var(--player-accent) / 0.06)", border: "1px solid hsla(var(--player-accent) / 0.1)" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px hsla(var(--player-accent) / 0.15)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.1)"; e.currentTarget.style.boxShadow = "none"; }}
                     >
                       <div className="aspect-square overflow-hidden relative">
                         {product.image_url ? (
@@ -1593,7 +1593,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             <ShoppingBag className="h-8 w-8 text-white/20" />
                           </div>
                         )}
-                        <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                        <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid hsla(var(--player-accent) / 0.2)" }}>
                           R$ {product.price.toFixed(2).replace(".", ",")}
                         </div>
                         {product.stock <= 3 && (
@@ -1611,7 +1611,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
-                            style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)" }}
+                            style={{ background: "hsla(var(--player-accent) / 0.15)", border: "1px solid hsla(var(--player-accent) / 0.25)" }}
                           >
                             Comprar
                           </a>
