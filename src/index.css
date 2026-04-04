@@ -196,6 +196,11 @@
   100% { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes playerSlideInLeft {
+  0% { opacity: 0; transform: translateX(-20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
 @keyframes dualSourceBlink {
   0%, 100% {
     box-shadow: 0 0 0 0 hsl(142 72% 42% / 0.25), 0 0 0 hsl(142 72% 42% / 0);
