@@ -471,12 +471,6 @@ function HeroBanner({
               <Clock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
               <span>{displayProgram.horario_inicio} — {displayProgram.horario_fim}</span>
             </div>
-            {(presenterName || displayProgram) && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <Mic className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-                <span>{presenterName || displayProgram.nome}</span>
-              </div>
-            )}
             {displayProgram.descricao && (
               <p className="max-w-2xl leading-relaxed">{displayProgram.descricao}</p>
             )}
