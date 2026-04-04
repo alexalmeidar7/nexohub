@@ -4,7 +4,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from "react-rout
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus } from "lucide-react";
+import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus, Maximize } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
