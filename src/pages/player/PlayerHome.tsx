@@ -24,6 +24,7 @@ interface Channel {
   numero_canal?: string | null;
   is_hd?: boolean | null;
   is_stereo?: boolean | null;
+  descricao?: string | null;
 }
 
 interface Programa {
