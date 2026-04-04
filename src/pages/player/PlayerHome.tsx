@@ -287,8 +287,8 @@ function HeroBanner({
             onClick={onGrade}
             className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:brightness-110"
             style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "hsla(var(--player-accent) / 0.08)",
+              border: "1px solid hsla(var(--player-accent) / 0.12)",
               color: "rgba(255,255,255,0.75)",
             }}
           >
