@@ -983,6 +983,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string; capa?: string } | null>(null);
   const [shopProducts, setShopProducts] = useState<any[]>([]);
+  const [shopActive, setShopActive] = useState(true);
   const [showGrade, setShowGrade] = useState(false);
   const [activeCatalog, setActiveCatalog] = useState<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
