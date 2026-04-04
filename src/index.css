@@ -198,8 +198,8 @@
 }
 
 @keyframes playerFadeSlideIn {
-  0% { opacity: 0; transform: translateY(8px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; transform: translateX(-12px) translateY(4px); filter: blur(2px); }
+  100% { opacity: 1; transform: translateX(0) translateY(0); filter: blur(0); }
 }
 
 @keyframes playerSlideInLeft {
