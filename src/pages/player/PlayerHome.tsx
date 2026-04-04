@@ -466,7 +466,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       {/* Play overlay on hover — frosted glass */}
       {!isVideo && (
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-          <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.2)" }}>
             <Play className="h-4 w-4 text-white fill-white" />
           </div>
         </div>
