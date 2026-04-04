@@ -1192,6 +1192,7 @@ export default function PlayerPage() {
   // Play stream
   const playStream = useCallback(
     async (url: string, type: string, forceAutoplay?: boolean, userInitiated?: boolean) => {
+      destroyMiniAudio();
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       setBuffering(true);
       setPlaying(false);
