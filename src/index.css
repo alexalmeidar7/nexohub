@@ -246,6 +246,12 @@
 }
 
 /* Card row hover: dim siblings, scale hovered */
+.card-row-hover {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  margin-top: -12px;
+  margin-bottom: -12px;
+}
 .card-row-hover > * {
   transition: opacity 0.35s ease, transform 0.35s ease;
 }
