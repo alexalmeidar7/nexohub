@@ -482,6 +482,7 @@ function HeroBanner({
 
   const displayProgram = slides[activeIdx]?.program;
   const activeLabel = slides[activeIdx]?.label || "ao vivo";
+  const displayPresenter = activeIdx === 0 ? presenterName : nextPresenterName;
 
   // Progress bar
   let pct = 0;
