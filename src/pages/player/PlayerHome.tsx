@@ -31,9 +31,11 @@ interface Programa {
   horario_inicio: string;
   horario_fim: string;
   dias_semana: string[] | null;
+  selo?: string | null;
   capa: string | null;
   thumb: string | null;
   descricao?: string | null;
+  classificacao_etaria?: string | null;
   apresentador_id?: string | null;
   apresentadores_ids?: string[] | null;
 }
