@@ -921,7 +921,7 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
       </div>
 
       {/* Gradient + info */}
-      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
       <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
         <p className="text-xs font-bold text-white truncate drop-shadow-lg">{item.channel_name}</p>
         <p className="text-[9px] text-white/50 flex items-center gap-1 mt-1">
