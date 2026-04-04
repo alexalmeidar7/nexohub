@@ -83,16 +83,16 @@ function TopNavBar({
 
   return (
     <header className="absolute top-0 left-0 right-0 z-30 flex items-center px-6 sm:px-10 py-4 gap-6">
-      {/* Company logo */}
-      <div className="w-16 h-16 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "hsla(var(--player-accent) / 0.12)", border: "1px solid hsla(var(--player-accent) / 0.2)" }}>
+      {/* Company logo – no box background */}
+      <div className="w-20 h-20 overflow-hidden flex items-center justify-center flex-shrink-0">
         {logoUrl ? (
-          <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+          <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
         ) : (
-          <Radio className="w-6 h-6 text-white/30" />
+          <Radio className="w-8 h-8 text-white/30" />
         )}
       </div>
 
-      {/* Nav links */}
+      {/* Nav links with glow underline */}
       <nav className="flex items-center gap-1 sm:gap-2">
         {items.map((item) => {
           const isActive = activeKey === item.key;
@@ -100,14 +100,32 @@ function TopNavBar({
             <button
               key={item.key}
               onClick={item.action}
-              className="px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200"
+              className="group relative px-4 py-2 text-sm font-semibold transition-all duration-200"
               style={{
                 color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
-                borderBottom: isActive ? "2px solid hsl(var(--player-accent))" : "2px solid transparent",
                 background: "transparent",
               }}
             >
               {item.label}
+              {/* Underline indicator */}
+              <span
+                className="absolute bottom-0 left-0 w-full h-[1.5px] transition-all duration-300 ease-out"
+                style={{
+                  background: isActive ? "hsl(var(--player-accent))" : "transparent",
+                  boxShadow: isActive ? "0 0 8px hsl(var(--player-accent)), 0 0 16px hsla(var(--player-accent) / 0.4)" : "none",
+                  transform: isActive ? "scaleX(1)" : "scaleX(0)",
+                }}
+              />
+              {/* Hover underline */}
+              {!isActive && (
+                <span
+                  className="absolute bottom-0 left-0 w-full h-[1.5px] transition-all duration-300 ease-out origin-left scale-x-0 group-hover:scale-x-100"
+                  style={{
+                    background: "hsl(var(--player-accent))",
+                    boxShadow: "0 0 8px hsl(var(--player-accent)), 0 0 16px hsla(var(--player-accent) / 0.4)",
+                  }}
+                />
+              )}
             </button>
           );
         })}
