@@ -1581,7 +1581,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </Suspense>
           )}
 
-          {visibleSection === "shop" && (
+          {visibleSection === "shop" && shopActive && (
             <div className="px-6 sm:px-10 pt-8 pb-8">
               <h1 className="text-2xl font-bold mb-6 text-white">Loja</h1>
               {!dataLoaded ? (
