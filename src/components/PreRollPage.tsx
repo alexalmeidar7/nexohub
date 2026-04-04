@@ -480,19 +480,7 @@ export default function PreRollPage() {
 
             {/* ──── SEÇÃO 5: PRÉ-VISUALIZAÇÃO ──── */}
             {sectionHeader(<Sparkles size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Pré-visualização")}
-            <button type="button" onClick={() => setShowPreview(!showPreview)}
-              className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
-              style={{
-                backgroundColor: showPreview ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
-                color: showPreview ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)",
-                border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)",
-              }}>
-              <Monitor size={14} />
-              {showPreview ? "Ocultar Preview" : "Visualizar"}
-            </button>
-
-            {showPreview && (
-              <div className={`grid gap-4 ${isMidroll ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+            <div className={`grid gap-4 ${isMidroll ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
                 {/* Pre-Roll Preview */}
                 <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
                   <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}>
