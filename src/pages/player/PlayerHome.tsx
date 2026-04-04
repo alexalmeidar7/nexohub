@@ -415,9 +415,9 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "rgba(255,255,255,0.04)",
-        border: hovered ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.06)",
-        boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.3)" : "none",
+        background: "hsla(var(--player-accent) / 0.06)",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.3)" : "1px solid hsla(var(--player-accent) / 0.1)",
+        boxShadow: hovered ? "0 4px 20px hsla(var(--player-accent) / 0.15)" : "none",
         transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.3s, border 0.3s",
       }}
     >
