@@ -191,6 +191,7 @@ function HeroBanner({
   nextProgram,
   nowPlaying,
   channelName,
+  presenterName,
   onPlay,
   onGrade,
   logoUrl,
@@ -199,6 +200,7 @@ function HeroBanner({
   nextProgram?: Programa;
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
   channelName?: string;
+  presenterName?: string | null;
   onPlay: () => void;
   onGrade: () => void;
   logoUrl?: string | null;
