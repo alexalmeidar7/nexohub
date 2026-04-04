@@ -35,6 +35,7 @@ interface Programa {
   thumb: string | null;
   descricao?: string | null;
   apresentador_id?: string | null;
+  apresentadores_ids?: string[] | null;
 }
 
 interface Apresentador {
