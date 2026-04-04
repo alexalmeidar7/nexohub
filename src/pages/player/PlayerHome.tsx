@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from "react-rout
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc } from "lucide-react";
+import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
@@ -384,6 +384,49 @@ function TopNavBar({
   );
 }
 
+/* ─── Expandable Description ─── */
+function ExpandableDescription({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight);
+    }
+  }, [text]);
+
+  return (
+    <div className="max-w-2xl relative">
+      <div
+        style={{
+          maxHeight: expanded ? `${contentHeight}px` : "2.8em",
+          overflow: "hidden",
+          transition: "max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      >
+        <p ref={contentRef} className="leading-relaxed">{text}</p>
+      </div>
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium transition-colors"
+        style={{ color: "hsl(var(--player-accent))" }}
+      >
+        <span
+          className="w-4 h-4 rounded-full flex items-center justify-center border transition-transform duration-300"
+          style={{
+            borderColor: "hsl(var(--player-accent))",
+            transform: expanded ? "rotate(45deg)" : "rotate(0deg)",
+          }}
+        >
+          <Plus className="w-2.5 h-2.5" />
+        </span>
+        {expanded ? "Menos" : "Mais"}
+      </button>
+    </div>
+  );
+}
+
 /* ─── Hero Banner ─── */
 function HeroBanner({
   currentProgram,
@@ -541,7 +584,7 @@ function HeroBanner({
               <span>{displayProgram.horario_inicio} — {displayProgram.horario_fim}</span>
             </div>
             {displayProgram.descricao && (
-              <p className="max-w-2xl leading-relaxed">{displayProgram.descricao}</p>
+              <ExpandableDescription text={displayProgram.descricao} />
             )}
           </div>
         )}
