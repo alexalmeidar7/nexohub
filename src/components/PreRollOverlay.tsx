@@ -367,7 +367,7 @@ export default function PreRollOverlay({
                   ? "cursor-pointer hover:brightness-110"
                   : "cursor-not-allowed opacity-80"
               }`}
-              style={{ backgroundColor: "hsl(0 100% 40%)", color: "white" }}
+              style={{ backgroundColor: "hsl(var(--player-accent, 0 100% 40%))", color: "white" }}
               disabled={!canSkip}
             >
               pular{!canSkip && ` ${countdown}s`}
