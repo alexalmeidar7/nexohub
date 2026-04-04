@@ -1011,27 +1011,36 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   // Poll for current music data
   useEffect(() => {
-    const userId = user?.id;
     const fetchMusic = async () => {
-      // Try localStorage first
-      try {
-        const raw = localStorage.getItem("masterview_music_data");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed.titulo) { setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "", capa: parsed.capa || "" }); return; }
-        }
-      } catch {}
-      // Fallback to DB
-      const targetId = userId || undefined;
-      if (!targetId && (!userSlug || userSlug === ":userSlug")) return;
-      try {
-        if (targetId) {
-          const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", targetId).order("created_at", { ascending: false }).limit(1).maybeSingle();
-          if (data) setNowPlaying({ musica: data.musica, artista: data.artista });
-        } else if (userSlug) {
+      // Em modo público/slug, sempre prioriza os dados do usuário da URL
+      if (userSlug && userSlug !== ":userSlug") {
+        try {
           const { data } = await supabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
-          if (data?.musica) setNowPlaying({ musica: data.musica, artista: data.artista || "", capa: data.capa || "" });
-        }
+          if (data?.musica) {
+            setNowPlaying({ musica: data.musica, artista: data.artista || "", capa: data.capa || "" });
+            return;
+          }
+        } catch {}
+      }
+
+      const userId = user?.id;
+
+      // Try localStorage first only for authenticated owner mode
+      if (userId) {
+        try {
+          const raw = localStorage.getItem("masterview_music_data");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.titulo) { setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "", capa: parsed.capa || "" }); return; }
+          }
+        } catch {}
+      }
+
+      // Fallback to DB
+      if (!userId) return;
+      try {
+        const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+        if (data) setNowPlaying({ musica: data.musica, artista: data.artista });
       } catch {}
     };
     fetchMusic();
