@@ -1091,6 +1091,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       setChannels(channelsData as any);
       if (empRes.data) { setLogoUrl(empRes.data.logo); setChannelName(empRes.data.nome || ""); }
       setProgramas(programasData as any);
+      setApresentadores((apresRes.data ?? []) as Apresentador[]);
 
       if (histRes.data) {
         const seen = new Set<string>();
