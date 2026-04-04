@@ -2818,7 +2818,7 @@ export default function PlayerPage() {
             </span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <Mic size={12} style={{ color: "hsl(var(--player-accent))" }} />
-              <span className="text-xs sm:text-sm font-bold text-white/70 truncate">{currentPresenter?.nome || ""}</span>
+              <span className="text-xs sm:text-sm font-normal text-white/70 truncate">{currentPresenter?.nome || ""}</span>
             </div>
           </div>
 
