@@ -53,6 +53,18 @@ interface PlaylistVideo {
 
 type Section = "home" | "streaming" | "content" | "shop" | "catalog-detail";
 
+const formatTrackText = (value?: string | null) => {
+  if (!value) return "";
+  return value
+    .toLowerCase()
+    .split(/(\s+|-|\/|—)/)
+    .map((part) => {
+      if (!part.trim() || /^(\s+|-|\/|—)$/.test(part)) return part;
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    })
+    .join("");
+};
+
 /* ─── Top Navigation Bar ─── */
 function TopNavBar({
   logoUrl,
@@ -1021,7 +1033,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         try {
           const { data } = await supabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
           if (data?.musica) {
-            setNowPlaying({ musica: data.musica, artista: data.artista || "", capa: data.capa || "" });
+            setNowPlaying({ musica: formatTrackText(data.musica), artista: formatTrackText(data.artista || ""), capa: data.capa || "" });
             return;
           }
         } catch {}
@@ -1035,7 +1047,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           const raw = localStorage.getItem("masterview_music_data");
           if (raw) {
             const parsed = JSON.parse(raw);
-            if (parsed.titulo) { setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "", capa: parsed.capa || "" }); return; }
+            if (parsed.titulo) { setNowPlaying({ musica: formatTrackText(parsed.titulo), artista: formatTrackText(parsed.artista || ""), capa: parsed.capa || "" }); return; }
           }
         } catch {}
       }
@@ -1044,7 +1056,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (!userId) return;
       try {
         const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle();
-        if (data) setNowPlaying({ musica: data.musica, artista: data.artista });
+        if (data) setNowPlaying({ musica: formatTrackText(data.musica), artista: formatTrackText(data.artista) });
       } catch {}
     };
     fetchMusic();
