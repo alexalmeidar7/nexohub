@@ -327,7 +327,7 @@ export default function PreRollOverlay({
           <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-4 animate-fade-in">
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "hsl(0 100% 40%)" }}
+              style={{ backgroundColor: "hsl(var(--player-accent, 0 100% 40%))" }}
             >
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="5 3 19 12 5 21 5 3" />
