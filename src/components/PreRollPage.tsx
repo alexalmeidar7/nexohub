@@ -548,7 +548,7 @@ export default function PreRollPage() {
                   </div>
                 )}
               </div>
-            )}
+            </div>
 
             {/* Submit */}
             <button type="submit" disabled={saving}
