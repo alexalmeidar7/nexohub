@@ -193,11 +193,10 @@ export default function PlayerSidebar({
                 >
                   <span
                     className="block whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
-                    style={{
-                      background: "rgba(0,0,0,0.85)",
-                      backdropFilter: "blur(12px)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                    }}
+                   style={{
+                       background: "rgba(10,10,10,0.92)",
+                       border: "1px solid rgba(255,255,255,0.08)",
+                     }}
                   >
                     {item.label}
                   </span>
