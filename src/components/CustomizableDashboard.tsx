@@ -1640,8 +1640,8 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
         </div>
       )}
 
-      {/* Spacer to push controls to bottom & center vertically */}
-      <div className="flex-1 min-h-0" />
+      {/* Spacer to push controls to bottom & center vertically (only when no video) */}
+      {!(showVideo && isVideo) && <div className="flex-1 min-h-0" />}
 
       {/* Controls row - vertically centered & bottom-aligned */}
       {channels.length === 0 ? (
