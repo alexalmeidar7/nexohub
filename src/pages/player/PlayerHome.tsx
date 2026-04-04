@@ -1148,7 +1148,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [activeCatalog, setActiveCatalog] = useState<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
 
-  const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(() => loadMiniPlayerData());
+  const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(null);
+
+  // On mount: destroy any lingering audio from Player page to ensure silence on Home
+  useEffect(() => {
+    destroyMiniAudio();
+    clearMiniPlayerData();
+  }, []);
 
   // Open catalog detail from query param (e.g. returning from /watch)
   const catalogParamHandled = useRef(false);
