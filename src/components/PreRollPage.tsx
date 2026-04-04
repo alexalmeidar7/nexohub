@@ -503,7 +503,7 @@ export default function PreRollPage() {
                         <span className="px-3 py-1 rounded-full text-[10px] font-medium" style={{ backgroundColor: "var(--layout-button-bg, #2563eb)", color: "white" }}>pular 5s</span>
                       </div>
                       {linkUrl && (
-                        <div className="absolute top-3 left-3 z-10 flex flex-col items-center p-2 rounded-lg" style={{ backgroundColor: "hsl(0 100% 40%)" }}>
+                        <div className="absolute top-3 left-3 z-10 flex flex-col items-center p-2 rounded-lg" style={{ backgroundColor: "var(--layout-button-bg, #2563eb)" }}>
                           <div className="bg-white rounded p-1 w-10 h-10 flex items-center justify-center">
                             <QRCodeSVG value={linkUrl} size={32} level="M" bgColor="#ffffff" fgColor="#000000" />
                           </div>
