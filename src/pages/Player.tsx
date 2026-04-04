@@ -2602,7 +2602,7 @@ export default function PlayerPage() {
               {/* Presenter name top-left */}
               {currentPresenter?.nome && (
                 <div className="absolute top-4 left-4 flex items-center gap-1.5 pointer-events-none" style={{ zIndex: 5 }}>
-                  <Mic size={14} style={{ color: "hsl(var(--player-accent))" }} />
+                  <Mic size={14} className="text-white drop-shadow-lg" />
                   <span className="text-white text-xs font-semibold drop-shadow-lg">{currentPresenter.nome}</span>
                 </div>
               )}
