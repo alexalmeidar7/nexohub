@@ -2653,7 +2653,11 @@ export default function PlayerPage() {
                 >
                   <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(circle, #1a1a1a 30%, #0d0d0d 60%, #222 61%, #0d0d0d 62%, #1a1a1a 80%, #111 100%)" }} />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <img src={musicData.capa} alt="" className="rounded-full object-cover" style={{ width: "40%", height: "40%", border: "3px solid #333" }} />
+                    {musicData?.capa ? (
+                      <img src={musicData.capa} alt="" className="rounded-full object-cover" style={{ width: "40%", height: "40%", border: "3px solid #333" }} />
+                    ) : (
+                      <div className="rounded-full" style={{ width: "40%", height: "40%", border: "3px solid #333", background: "radial-gradient(circle, #333 0%, #1a1a1a 100%)" }} />
+                    )}
                   </div>
                   <div className="absolute inset-0 rounded-full" style={{ background: "repeating-radial-gradient(circle, transparent 0px, transparent 3px, rgba(255,255,255,0.03) 3px, rgba(255,255,255,0.03) 4px)" }} />
                   <div className="absolute rounded-full" style={{ width: "8%", height: "8%", top: "46%", left: "46%", background: "#000", border: "2px solid #333" }} />
