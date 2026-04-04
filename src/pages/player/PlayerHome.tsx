@@ -4,7 +4,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from "react-rout
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus } from "lucide-react";
+import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus, Maximize } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
@@ -238,6 +238,16 @@ function TopNavBar({
         </div>
         <button className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors" style={{ background: "rgba(255,255,255,0.06)" }}>
           <Bell className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => {
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen?.();
+          }}
+          className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors"
+          style={{ background: "rgba(255,255,255,0.06)" }}
+        >
+          <Maximize className="w-4 h-4" />
         </button>
 
         {/* Profile */}
