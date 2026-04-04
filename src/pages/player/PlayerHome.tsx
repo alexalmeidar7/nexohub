@@ -45,101 +45,170 @@ interface PlaylistVideo {
 
 type Section = "home" | "streaming" | "content" | "shop" | "catalog-detail";
 
-/* ─── Hero Banner Carousel ─── */
+/* ─── Top Navigation Bar ─── */
+function TopNavBar({
+  logoUrl,
+  items,
+  activeKey,
+  avatarUrl,
+  userName,
+  showLogout,
+  showSignup,
+  onLogout,
+  onSignup,
+  onEditProfile,
+}: {
+  logoUrl: string | null;
+  items: { label: string; key: string; action: () => void }[];
+  activeKey: string;
+  avatarUrl?: string | null;
+  userName?: string;
+  showLogout?: boolean;
+  showSignup?: boolean;
+  onLogout?: () => void;
+  onSignup?: () => void;
+  onEditProfile?: () => void;
+}) {
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!profileOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [profileOpen]);
+
+  return (
+    <header className="absolute top-0 left-0 right-0 z-30 flex items-center px-6 sm:px-10 py-4 gap-6">
+      {/* Company logo */}
+      <div className="w-16 h-16 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "hsla(var(--player-accent) / 0.12)", border: "1px solid hsla(var(--player-accent) / 0.2)" }}>
+        {logoUrl ? (
+          <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+        ) : (
+          <Radio className="w-6 h-6 text-white/30" />
+        )}
+      </div>
+
+      {/* Nav links */}
+      <nav className="flex items-center gap-1 sm:gap-2">
+        {items.map((item) => {
+          const isActive = activeKey === item.key;
+          return (
+            <button
+              key={item.key}
+              onClick={item.action}
+              className="px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200"
+              style={{
+                color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
+                borderBottom: isActive ? "2px solid hsl(var(--player-accent))" : "2px solid transparent",
+                background: "transparent",
+              }}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="flex-1" />
+
+      {/* Right icons */}
+      <div className="flex items-center gap-3">
+        <button className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <Search className="w-4 h-4" />
+        </button>
+        <button className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <Bell className="w-4 h-4" />
+        </button>
+
+        {/* Profile */}
+        <div ref={profileRef} className="relative">
+          <button
+            onClick={() => setProfileOpen(v => !v)}
+            className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-110"
+            style={{ background: "hsl(var(--player-accent))", border: "2px solid hsla(var(--player-accent) / 0.5)" }}
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={userName} className="w-full h-full object-contain" />
+            ) : (
+              <User className="w-4 h-4 text-white" />
+            )}
+          </button>
+          {profileOpen && (
+            <div className="absolute right-0 top-[calc(100%+8px)] z-50 animate-fade-in" style={{ minWidth: "200px" }}>
+              <div className="rounded-2xl px-4 py-3 flex flex-col gap-2" style={{ background: "rgba(10,10,10,0.95)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 16px rgba(0,0,0,0.4)" }}>
+                <span className="text-sm font-bold text-white">{userName}</span>
+                <div className="w-full h-px bg-white/10" />
+                {onEditProfile && (
+                  <button onClick={() => { setProfileOpen(false); onEditProfile(); }} className="text-xs text-white/60 hover:text-white text-left py-1">Editar perfil</button>
+                )}
+                {showLogout && onLogout && (
+                  <button onClick={() => { setProfileOpen(false); onLogout(); }} className="text-xs text-white/50 hover:text-red-400 text-left py-1">Sair</button>
+                )}
+                {showSignup && onSignup && (
+                  <button onClick={() => { setProfileOpen(false); onSignup(); }} className="text-xs text-left py-1" style={{ color: "hsl(var(--player-accent))" }}>Cadastre-se</button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* ─── Hero Banner ─── */
 function HeroBanner({
   currentProgram,
   nextProgram,
   nowPlaying,
   channelName,
-  channelIsHd,
-  channelIsStereo,
   onPlay,
   onGrade,
+  logoUrl,
 }: {
   currentProgram?: Programa;
   nextProgram?: Programa;
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
   channelName?: string;
-  channelIsHd?: boolean;
-  channelIsStereo?: boolean;
   onPlay: () => void;
   onGrade: () => void;
+  logoUrl?: string | null;
 }) {
   const INTERVAL = 8000;
-  const [aiData, setAiData] = useState<Record<string, { keywords: string[]; classificacao: string }>>({});
-  const aiCache = useRef<Record<string, { keywords: string[]; classificacao: string }>>({});
-  const aiAnalysisDisabled = useRef(false);
 
-  const fetchAiAnalysis = (prog: Programa | undefined) => {
-    if (!prog?.id) return;
-    // AI disabled – use static fallback
-    const result = { keywords: [], classificacao: "Livre" };
-    aiCache.current[prog.id] = result;
-    setAiData(prev => ({ ...prev, [prog.id!]: result }));
-  };
-
-  useEffect(() => { fetchAiAnalysis(currentProgram); }, [currentProgram?.id]);
-  useEffect(() => { fetchAiAnalysis(nextProgram); }, [nextProgram?.id]);
-
-  const RATING_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-    "Livre": { bg: "#22c55e", text: "#ffffff", label: "L" },
-    "6": { bg: "#facc15", text: "#000000", label: "6" },
-    "10": { bg: "#3b82f6", text: "#ffffff", label: "10" },
-    "12": { bg: "#f59e0b", text: "#000000", label: "12" },
-    "14": { bg: "#f97316", text: "#ffffff", label: "14" },
-    "16": { bg: "#ef4444", text: "#ffffff", label: "16" },
-    "18": { bg: "#000000", text: "#ffffff", label: "18" },
-  };
-
-  // Build slides: current program thumb + next program thumb (if available)
   const slides = useMemo(() => {
-    const s: { thumb: string | null; program: Programa | undefined; label: string }[] = [];
-    s.push({ thumb: currentProgram?.thumb || null, program: currentProgram, label: "Agora" });
-    if (nextProgram?.thumb) {
-      s.push({ thumb: nextProgram.thumb, program: nextProgram, label: "A seguir" });
-    }
+    const s: { program: Programa | undefined; label: string }[] = [];
+    s.push({ program: currentProgram, label: "ao vivo" });
+    if (nextProgram) s.push({ program: nextProgram, label: "A seguir" });
     return s;
-  }, [currentProgram?.thumb, nextProgram?.thumb, currentProgram, nextProgram]);
+  }, [currentProgram, nextProgram]);
 
   const [activeIdx, setActiveIdx] = useState(0);
-  const [prevIdx, setPrevIdx] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Auto-rotate
   useEffect(() => {
     if (slides.length <= 1) return;
-    timerRef.current = setInterval(() => {
-      setActiveIdx(prev => {
-        setPrevIdx(prev);
-        return (prev + 1) % slides.length;
-      });
-    }, INTERVAL);
+    timerRef.current = setInterval(() => setActiveIdx(prev => (prev + 1) % slides.length), INTERVAL);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [slides.length]);
 
-  // Clear prevIdx after crossfade
-  useEffect(() => {
-    if (prevIdx === null) return;
-    const t = setTimeout(() => setPrevIdx(null), 1000);
-    return () => clearTimeout(t);
-  }, [prevIdx]);
-
   const goTo = (idx: number) => {
     if (idx === activeIdx) return;
-    setPrevIdx(activeIdx);
     setActiveIdx(idx);
     if (timerRef.current) clearInterval(timerRef.current);
     if (slides.length > 1) {
-      timerRef.current = setInterval(() => {
-        setActiveIdx(prev => { setPrevIdx(prev); return (prev + 1) % slides.length; });
-      }, INTERVAL);
+      timerRef.current = setInterval(() => setActiveIdx(prev => (prev + 1) % slides.length), INTERVAL);
     }
   };
 
-  const activeSlide = slides[activeIdx];
-  const displayProgram = activeSlide?.program;
+  const displayProgram = slides[activeIdx]?.program;
+  const activeLabel = slides[activeIdx]?.label || "ao vivo";
 
-  // Progress bar for current program
+  // Progress bar
   let pct = 0;
   if (currentProgram) {
     const [hi, mi] = currentProgram.horario_inicio.split(":").map(Number);
@@ -154,168 +223,112 @@ function HeroBanner({
     pct = total > 0 ? (elapsed / total) * 100 : 0;
   }
 
+  // Program seal/logo (selo or capa)
+  const programSeal = displayProgram?.capa || displayProgram?.thumb || null;
+
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: "clamp(340px, 56vh, 560px)", backgroundColor: "black" }}>
-      {/* Crossfade images */}
-      {slides.map((slide, idx) => {
-        if (!slide.thumb) return (
+    <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
+      {/* Accent glow behind program logo */}
+      <div
+        className="absolute z-[1] pointer-events-none"
+        style={{
+          width: "600px",
+          height: "600px",
+          left: "15%",
+          top: "30%",
+          transform: "translate(-50%, -50%)",
+          background: `radial-gradient(ellipse at center, hsla(var(--player-accent) / 0.25) 0%, hsla(var(--player-accent) / 0.08) 40%, transparent 70%)`,
+          filter: "blur(40px)",
+        }}
+      />
+
+      {/* Content positioned at bottom-left */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-8 sm:px-12 pb-12" style={{ maxWidth: "700px" }}>
+        {/* Program logo/seal — large box */}
+        {programSeal && (
           <div
-            key={`slide-${idx}`}
-            className="absolute inset-0 w-full h-full bg-black"
+            className="mb-4 rounded-2xl overflow-hidden transition-all duration-700"
             style={{
-              opacity: idx === activeIdx ? 1 : 0,
-              transition: "opacity 1s ease-in-out",
-              zIndex: idx === activeIdx ? 1 : idx === prevIdx ? 0 : -1,
+              width: "clamp(200px, 30vw, 400px)",
+              aspectRatio: "16/9",
+              background: "hsla(var(--player-accent) / 0.1)",
+              border: "1px solid hsla(var(--player-accent) / 0.15)",
             }}
-          />
-        );
-        return (
-          <img
-            key={`slide-${idx}`}
-            src={slide.thumb}
-            alt={slide.program?.nome || "Banner"}
-            className="absolute inset-0 w-full h-full object-cover object-top"
-            style={{
-              opacity: idx === activeIdx ? 1 : idx === prevIdx ? 0 : 0,
-              transition: "opacity 1s ease-in-out",
-              zIndex: idx === activeIdx ? 1 : idx === prevIdx ? 0 : -1,
-            }}
-          />
-        );
-      })}
+          >
+            <img
+              key={displayProgram?.id || "seal"}
+              src={programSeal}
+              alt={displayProgram?.nome || ""}
+              className="w-full h-full object-contain"
+              style={{ animation: "playerFadeSlideIn 0.6s ease-out" }}
+            />
+          </div>
+        )}
 
-      {/* Simplified gradient overlays — flat style */}
-      <div className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)" }} />
-      <div className="absolute inset-0 z-[2]" style={{ background: `linear-gradient(to top, hsl(var(--player-bg)) 0%, transparent 50%)` }} />
-
-      {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 px-8 sm:px-12 pb-10 z-10 player-hero-content" style={{ maxWidth: "680px" }}>
-        {/* Slide label badge */}
-        <div className="flex items-center gap-2 mb-3" style={{ animation: "player-hero-content 0.6s ease-out both" }}>
-          <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-semibold bg-player-accent/90 px-2.5 py-1 rounded-md text-white">
-            <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse" />
-            {activeSlide?.label || "ao vivo"}
-          </span>
-        </div>
-        {/* Program name */}
-        {displayProgram ? (
-          <>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-2 drop-shadow-lg" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
-              {displayProgram.nome}
-            </h1>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-sm text-white/70">{displayProgram.horario_inicio} – {displayProgram.horario_fim}</span>
-              {activeIdx === 0 && (
-                <div className="w-32 h-1 rounded-full bg-white/20 overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
-                </div>
-              )}
-            </div>
-            {displayProgram.descricao && (
-              <p className="text-xs text-white/50 line-clamp-1 mb-2 max-w-md">{displayProgram.descricao}</p>
-            )}
-            {/* Keywords + Age rating */}
-            {displayProgram.id && aiData[displayProgram.id] && (
-              <div className="flex items-center gap-2 mb-4 flex-wrap">
-                {aiData[displayProgram.id].keywords.map((kw, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-medium"
-                    style={{
-                      backgroundColor: "hsla(var(--player-accent) / 0.12)",
-                      color: "hsl(var(--player-accent))",
-                      border: "1px solid hsla(var(--player-accent) / 0.2)",
-                    }}
-                  >
-                    <Tag size={8} />
-                    {kw}
-                  </span>
-                ))}
-                {(() => {
-                  const cls = aiData[displayProgram.id].classificacao;
-                  const rating = RATING_COLORS[cls] || RATING_COLORS["Livre"];
-                  return (
-                    <span
-                      className="inline-flex items-center justify-center text-[9px] font-bold tracking-wide rounded border border-white/15"
-                      style={{
-                        color: rating.text,
-                        minWidth: "20px",
-                        height: "20px",
-                        padding: "0 5px",
-                      }}
-                    >
-                      {rating.label}
-                    </span>
-                  );
-                })()}
-                {channelIsHd && (
-                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/60 border border-white/20" style={{ fontFamily: "monospace" }}>
-                    1080P <span className="text-[7px] font-extrabold tracking-widest ml-0.5 px-1 rounded" style={{ background: "hsla(var(--player-accent) / 0.3)", color: "hsl(var(--player-accent))" }}>FULL HD</span>
-                  </span>
-                )}
-                {channelIsStereo && (
-                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
-                    STEREO
-                  </span>
-                )}
-              </div>
-            )}
-          </>
-        ) : channelName ? (
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-4 drop-shadow-lg" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
-            {channelName}
+        {/* If no seal, show program name as text */}
+        {!programSeal && displayProgram && (
+          <h1
+            className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-4"
+            style={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}
+          >
+            {displayProgram.nome}
           </h1>
-        ) : null}
+        )}
 
+        {/* Presenter + Music info row */}
+        <div className="flex items-center gap-5 mb-3 flex-wrap">
+          {displayProgram && (
+            <div className="flex items-center gap-1.5">
+              <Mic className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
+              <span className="text-sm text-white/70 font-medium">{displayProgram.nome}</span>
+            </div>
+          )}
+          {nowPlaying?.musica && (
+            <div className="flex items-center gap-1.5">
+              <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
+              <span className="text-sm text-white/60">
+                {nowPlaying.musica}{nowPlaying.artista ? ` — ${nowPlaying.artista}` : ""}
+              </span>
+            </div>
+          )}
+        </div>
 
-        {/* Action buttons — Sky Glass inspired frosted glass */}
+        {/* Badge + Play */}
         <div className="flex items-center gap-3">
+          <span
+            className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full"
+            style={{ border: "1px solid hsla(var(--player-accent) / 0.4)", color: "hsl(var(--player-accent))" }}
+          >
+            <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "hsl(var(--player-accent))" }} />
+            {activeLabel}
+          </span>
           <button
             onClick={onPlay}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 hover:brightness-110"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:brightness-110"
             style={{
               background: "hsla(var(--player-accent) / 0.15)",
-              border: "1px solid hsla(var(--player-accent) / 0.25)",
+              border: "1px solid hsla(var(--player-accent) / 0.3)",
               color: "#fff",
             }}
           >
             <Play className="h-4 w-4 fill-current" />
-            Assistir agora
-          </button>
-          <button
-            onClick={onGrade}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:brightness-110"
-            style={{
-              background: "hsla(var(--player-accent) / 0.08)",
-              border: "1px solid hsla(var(--player-accent) / 0.12)",
-              color: "rgba(255,255,255,0.75)",
-            }}
-          >
-            <LayoutGrid className="h-4 w-4" />
-            Grade
+            Play
           </button>
         </div>
 
-        {/* Carousel indicators */}
+        {/* Carousel dots */}
         {slides.length > 1 && (
-          <div className="flex items-center gap-2 mt-5">
-            {slides.map((slide, idx) => (
+          <div className="flex items-center gap-2 mt-6">
+            {slides.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => goTo(idx)}
-                className="relative h-1 rounded-full overflow-hidden transition-all duration-300"
-                style={{ width: idx === activeIdx ? 32 : 12, background: "hsla(var(--player-accent) / 0.3)" }}
-              >
-                {idx === activeIdx && (
-                  <div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: "hsl(var(--player-accent))",
-                      animation: `shrinkBarReverse ${INTERVAL}ms linear both`,
-                    }}
-                  />
-                )}
-              </button>
+                className="w-2.5 h-2.5 rounded-full transition-all duration-300"
+                style={{
+                  background: idx === activeIdx ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.25)",
+                  transform: idx === activeIdx ? "scale(1.2)" : "scale(1)",
+                }}
+              />
             ))}
           </div>
         )}
