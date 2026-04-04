@@ -438,6 +438,7 @@ function HeroBanner({
   nowPlaying,
   channelName,
   presenterName,
+  nextPresenterName,
   onPlay,
   onGrade,
   logoUrl,
@@ -447,6 +448,7 @@ function HeroBanner({
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
   channelName?: string;
   presenterName?: string | null;
+  nextPresenterName?: string | null;
   onPlay: () => void;
   onGrade: () => void;
   logoUrl?: string | null;
@@ -480,6 +482,7 @@ function HeroBanner({
 
   const displayProgram = slides[activeIdx]?.program;
   const activeLabel = slides[activeIdx]?.label || "ao vivo";
+  const displayPresenter = activeIdx === 0 ? presenterName : nextPresenterName;
 
   // Progress bar
   let pct = 0;
@@ -562,10 +565,10 @@ function HeroBanner({
           <div className="mb-2 overflow-hidden">
             <div className="flex items-center gap-1.5 overflow-hidden">
               {/* Presenter name to the left of music */}
-              {(presenterName || displayProgram?.nome) && (
+              {(displayPresenter || displayProgram?.nome) && (
                 <span className="flex items-center gap-1 text-sm text-white/50 flex-shrink-0 whitespace-nowrap">
                   <Mic className="w-3.5 h-3.5" style={{ color: "hsl(var(--player-accent))" }} />
-                  <span>{presenterName || displayProgram?.nome}</span>
+                  <span>{displayPresenter || displayProgram?.nome}</span>
                   <span className="mx-1 text-white/20">|</span>
                 </span>
               )}
@@ -1439,23 +1442,23 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     return candidates[0] || undefined;
   }, [programas, currentProgram]);
 
-  // Resolve presenter name for current program
-  const currentPresenterName = useMemo(() => {
-    if (!currentProgram) return null;
-    const presenterIds = currentProgram.apresentadores_ids?.length
-      ? currentProgram.apresentadores_ids
-      : currentProgram.apresentador_id
-        ? [currentProgram.apresentador_id]
+  // Resolve presenter name for a program
+  const resolvePresenter = useCallback((prog: Programa | undefined) => {
+    if (!prog) return null;
+    const presenterIds = prog.apresentadores_ids?.length
+      ? prog.apresentadores_ids
+      : prog.apresentador_id
+        ? [prog.apresentador_id]
         : [];
-
     if (!presenterIds.length) return null;
-
     const names = presenterIds
       .map((id) => apresentadores.find((a) => a.id === id)?.nome)
       .filter(Boolean) as string[];
-
     return names.length ? names.join(" • ") : null;
-  }, [currentProgram, apresentadores]);
+  }, [apresentadores]);
+
+  const currentPresenterName = useMemo(() => resolvePresenter(currentProgram), [currentProgram, resolvePresenter]);
+  const nextPresenterName = useMemo(() => resolvePresenter(nextProgram), [nextProgram, resolvePresenter]);
 
 
   const streamingChannels = channels.filter(ch => ch.type === "video_live" || ch.type === "audio_live");
@@ -1663,6 +1666,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       nowPlaying={nowPlaying}
                       channelName={channelName}
                       presenterName={currentPresenterName}
+                      nextPresenterName={nextPresenterName}
                       onPlay={() => goToPlayer(streamingChannels[0]?.id)}
                       onGrade={() => setShowGrade(true)}
                       logoUrl={logoUrl}
