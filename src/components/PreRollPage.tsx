@@ -314,103 +314,96 @@ export default function PreRollPage() {
               </div>
             )}
 
-            {/* Aspect Ratio + Position */}
+            {/* ──── SEÇÃO PRE-ROLL & MID-ROLL LADO A LADO ──── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Aspect Ratio */}
-              <div>
-                <label className="text-xs font-semibold block mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Proporção do Vídeo</label>
-                <div className="flex gap-3">
-                  {(["16:9", "9:16", "full"] as const).map((ratio) => (
-                    <button key={ratio} type="button" onClick={() => setAspectRatio(ratio)}
-                      className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all"
-                      style={{
-                        border: aspectRatio === ratio ? "2px solid var(--layout-accent-color, #2563eb)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
-                        backgroundColor: aspectRatio === ratio ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)" : "transparent",
-                      }}
-                    >
-                      <div
-                        className="rounded"
+              {/* ── PRE-ROLL ── */}
+              <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 3%, transparent)" }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" }}>
+                    <Film size={13} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Pré-Roll</span>
+                </div>
+
+                <div className="mb-4">
+                  <label className="text-xs font-semibold block mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Proporção do Vídeo</label>
+                  <div className="flex gap-3">
+                    {(["16:9", "9:16", "full"] as const).map((ratio) => (
+                      <button key={ratio} type="button" onClick={() => setAspectRatio(ratio)}
+                        className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all"
                         style={{
-                          width: ratio === "16:9" ? 48 : ratio === "9:16" ? 24 : 48,
-                          height: ratio === "16:9" ? 27 : ratio === "9:16" ? 42 : 32,
-                          backgroundColor: aspectRatio === ratio ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)",
-                          transition: "background-color 0.2s",
-                        }}
-                      />
-                      <span className="text-[10px] font-bold" style={{ color: aspectRatio === ratio ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                        {ratio === "full" ? "Full" : ratio}
-                      </span>
-                    </button>
-                  ))}
+                          border: aspectRatio === ratio ? "2px solid var(--layout-accent-color, #2563eb)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                          backgroundColor: aspectRatio === ratio ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)" : "transparent",
+                        }}>
+                        <div className="rounded" style={{ width: ratio === "16:9" ? 48 : ratio === "9:16" ? 24 : 48, height: ratio === "16:9" ? 27 : ratio === "9:16" ? 42 : 32, backgroundColor: aspectRatio === ratio ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)", transition: "background-color 0.2s" }} />
+                        <span className="text-[10px] font-bold" style={{ color: aspectRatio === ratio ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{ratio === "full" ? "Full" : ratio}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Video Position */}
-              <div>
-                <label className="text-xs font-semibold block mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Posição do Vídeo</label>
-                <div className="flex gap-3">
-                  {([
-                    { value: "left", label: "Esquerda", align: "flex-start" },
-                    { value: "center", label: "Centro", align: "center" },
-                    { value: "right", label: "Direita", align: "flex-end" },
-                  ] as const).map((pos) => (
-                    <button key={pos.value} type="button" onClick={() => setVideoPosition(pos.value)}
-                      className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all flex-1"
-                      style={{
-                        border: videoPosition === pos.value ? "2px solid var(--layout-accent-color, #2563eb)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
-                        backgroundColor: videoPosition === pos.value ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)" : "transparent",
-                      }}
-                    >
-                      <div className="w-12 h-8 rounded overflow-hidden flex" style={{
-                        backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
-                        justifyContent: pos.align,
-                        alignItems: "center",
-                        padding: "2px",
-                      }}>
-                        <div className="rounded-sm" style={{
-                          width: aspectRatio === "16:9" ? 20 : 10,
-                          height: aspectRatio === "16:9" ? 12 : 22,
-                          backgroundColor: videoPosition === pos.value ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)",
-                          transition: "background-color 0.2s",
-                          flexShrink: 0,
-                        }} />
+                <div className="mb-4">
+                  <label className="text-xs font-semibold block mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Posição do Vídeo</label>
+                  <div className="flex gap-3">
+                    {([{ value: "left", label: "Esquerda", align: "flex-start" }, { value: "center", label: "Centro", align: "center" }, { value: "right", label: "Direita", align: "flex-end" }] as const).map((pos) => (
+                      <button key={pos.value} type="button" onClick={() => setVideoPosition(pos.value)}
+                        className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all flex-1"
+                        style={{
+                          border: videoPosition === pos.value ? "2px solid var(--layout-accent-color, #2563eb)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                          backgroundColor: videoPosition === pos.value ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)" : "transparent",
+                        }}>
+                        <div className="w-12 h-8 rounded overflow-hidden flex" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", justifyContent: pos.align, alignItems: "center", padding: "2px" }}>
+                          <div className="rounded-sm" style={{ width: aspectRatio === "16:9" ? 20 : 10, height: aspectRatio === "16:9" ? 12 : 22, backgroundColor: videoPosition === pos.value ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)", transition: "background-color 0.2s", flexShrink: 0 }} />
+                        </div>
+                        <span className="text-[10px] font-bold" style={{ color: videoPosition === pos.value ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{pos.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold flex items-center gap-1.5 mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <Image size={13} style={{ color: "var(--layout-icon-color, #888888)" }} /> Background (opcional)
+                  </label>
+                  <p className="text-[10px] mb-2.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Imagem de fundo exibida atrás do vídeo.</p>
+                  <input ref={bgInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setBackgroundFile(f); setBackgroundPreview(URL.createObjectURL(f)); } }} />
+                  <div className="flex items-center gap-3">
+                    <button type="button" onClick={() => bgInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1.5 hover:shadow-md"
+                      style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}>
+                      <Image size={12} style={{ color: "var(--layout-icon-color, #888888)" }} /> Escolher
+                    </button>
+                    {backgroundPreview && (
+                      <div className="flex items-center gap-2">
+                        <img src={backgroundPreview} alt="Background" className="w-14 h-9 object-cover rounded-lg" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
+                        <button type="button" onClick={() => { setBackgroundFile(null); setBackgroundPreview(""); }} className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ color: "#dc2626", backgroundColor: "rgba(220,38,38,0.08)" }}>✕</button>
                       </div>
-                      <span className="text-[10px] font-bold" style={{ color: videoPosition === pos.value ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                        {pos.label}
-                      </span>
-                    </button>
-                  ))}
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Background image */}
-            <div>
-              <label className="text-xs font-semibold flex items-center gap-1.5 mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                <Image size={13} style={{ color: "var(--layout-icon-color, #888888)" }} />
-                Background do Pré-Roll (opcional)
-              </label>
-              <p className="text-[10px] mb-2.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                Imagem de fundo exibida atrás do vídeo. Se não enviar, será usado o gradiente padrão.
-              </p>
-              <input ref={bgInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) { setBackgroundFile(f); setBackgroundPreview(URL.createObjectURL(f)); }
-              }} />
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={() => bgInputRef.current?.click()}
-                  className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 hover:shadow-md"
-                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
-                >
-                  <Image size={14} style={{ color: "var(--layout-icon-color, #888888)" }} /> Escolher imagem
-                </button>
-                {backgroundPreview && (
-                  <div className="flex items-center gap-2">
-                    <img src={backgroundPreview} alt="Background" className="w-16 h-10 object-cover rounded-lg" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
-                    <button type="button" onClick={() => { setBackgroundFile(null); setBackgroundPreview(""); }}
-                      className="text-[10px] px-2.5 py-1 rounded-full font-medium" style={{ color: "#dc2626", backgroundColor: "rgba(220,38,38,0.08)" }}>
-                      Remover
-                    </button>
+              {/* ── MID-ROLL ── */}
+              <div className="rounded-xl p-4 flex flex-col" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-button-bg, #2563eb) 3%, transparent)" }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-button-bg, #2563eb) 12%, transparent)" }}>
+                    <Play size={13} style={{ color: "var(--layout-button-bg, #2563eb)" }} />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Mid-Roll</span>
+                </div>
+                <div className="rounded-xl p-4 flex-1" style={{ backgroundColor: "color-mix(in srgb, var(--layout-button-bg, #2563eb) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-button-bg, #2563eb) 15%, transparent)" }}>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={isMidroll} onChange={(e) => setIsMidroll(e.target.checked)} className="w-4 h-4 rounded mt-0.5" style={{ accentColor: "var(--layout-button-bg, #2563eb)" }} />
+                    <div>
+                      <span className="text-xs font-bold block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Ativar como Mid-Roll</span>
+                      <p className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Este vídeo também será utilizado como comercial de intervalo nos canais de catálogo. Máximo de 3 mid-rolls consecutivos.</p>
+                    </div>
+                  </label>
+                </div>
+                {isMidroll && (
+                  <div className="mt-3 px-3 py-2 rounded-lg text-[10px] font-medium flex items-center gap-2" style={{ backgroundColor: "color-mix(in srgb, var(--layout-button-bg, #2563eb) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <Play size={11} style={{ color: "var(--layout-button-bg, #2563eb)" }} />
+                    Este anúncio aparecerá como pré-roll <strong>e</strong> mid-roll
                   </div>
                 )}
               </div>
@@ -418,8 +411,6 @@ export default function PreRollPage() {
 
             {/* ──── SEÇÃO 3: AGENDAMENTO ──── */}
             {sectionHeader(<CalendarLucide size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Agendamento")}
-
-            {/* Days */}
             <div>
               <label className="text-xs font-semibold block mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Dias da Semana</label>
               <div className="flex flex-wrap gap-2">
@@ -429,37 +420,25 @@ export default function PreRollPage() {
                     style={diasSemana.includes(dia)
                       ? { backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 30%, transparent)" }
                       : { backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }
-                    }
-                  >
-                    {dia.slice(0, 3)}
-                  </button>
+                    }>{dia.slice(0, 3)}</button>
                 ))}
               </div>
               {diasSemana.length === 0 && <p className="text-[10px] mt-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Todos os dias se nenhum selecionado.</p>}
             </div>
-
-            {/* Schedule grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Horário Início</label>
-                <input type="time" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
-                  className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle}
-                  onFocus={focusHandler} onBlur={blurHandler}
-                />
+                <input type="time" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)} className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
               </div>
               <div>
                 <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Horário Fim</label>
-                <input type="time" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
-                  className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle}
-                  onFocus={focusHandler} onBlur={blurHandler}
-                />
+                <input type="time" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)} className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
               </div>
               <div>
                 <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Data Inicial</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start text-left text-sm font-normal", !dataInicial && "text-muted-foreground")}
-                      style={{ ...inputStyle, display: "flex" }}>
+                    <Button variant="outline" className={cn("w-full justify-start text-left text-sm font-normal", !dataInicial && "text-muted-foreground")} style={{ ...inputStyle, display: "flex" }}>
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {dataInicial ? format(dataInicial, "dd/MM/yyyy") : "Selecionar"}
                     </Button>
@@ -473,8 +452,7 @@ export default function PreRollPage() {
                 <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Data Final</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start text-left text-sm font-normal", !dataFinal && "text-muted-foreground")}
-                      style={{ ...inputStyle, display: "flex" }}>
+                    <Button variant="outline" className={cn("w-full justify-start text-left text-sm font-normal", !dataFinal && "text-muted-foreground")} style={{ ...inputStyle, display: "flex" }}>
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {dataFinal ? format(dataFinal, "dd/MM/yyyy") : "Selecionar"}
                     </Button>
@@ -488,112 +466,99 @@ export default function PreRollPage() {
 
             {/* ──── SEÇÃO 4: CONFIGURAÇÕES ──── */}
             {sectionHeader(<Settings2 size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Configurações")}
-
-            {/* Mid-Roll checkbox */}
-            <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={isMidroll} onChange={(e) => setIsMidroll(e.target.checked)}
-                  className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} />
-                <div>
-                  <span className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Mid-Roll (Intervalo)</span>
-                  <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                    Marque para usar este vídeo como comercial de intervalo nos canais de catálogo. Máx. 3 seguidos.
-                  </p>
-                </div>
-              </label>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Link */}
               <div>
                 <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Link do Anúncio (opcional)</label>
-                <input type="url" placeholder="https://exemplo.com/oferta" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)}
-                  className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle}
-                  onFocus={focusHandler} onBlur={blurHandler}
-                />
+                <input type="url" placeholder="https://exemplo.com/oferta" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
                 <p className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Exibirá QR Code durante o pré-roll.</p>
               </div>
-              {/* Priority */}
               <div>
                 <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Prioridade</label>
-                <input type="number" min="1" value={priority} onChange={(e) => setPriority(e.target.value)}
-                  className="w-32 px-4 py-2 text-sm outline-none transition-all" style={inputStyle}
-                  onFocus={focusHandler} onBlur={blurHandler}
-                />
+                <input type="number" min="1" value={priority} onChange={(e) => setPriority(e.target.value)} className="w-32 px-4 py-2 text-sm outline-none transition-all" style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
               </div>
             </div>
 
             {/* ──── SEÇÃO 5: PRÉ-VISUALIZAÇÃO ──── */}
             {sectionHeader(<Sparkles size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Pré-visualização")}
-
             <button type="button" onClick={() => setShowPreview(!showPreview)}
               className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
               style={{
                 backgroundColor: showPreview ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
                 color: showPreview ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)",
                 border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)",
-              }}
-            >
+              }}>
               <Monitor size={14} />
-              {showPreview ? "Ocultar Preview" : "Visualizar Pré-Roll"}
+              {showPreview ? "Ocultar Preview" : "Visualizar"}
             </button>
 
             {showPreview && (
-              <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
-                <div
-                  className="relative w-full flex items-center p-4"
-                  style={{
+              <div className={`grid gap-4 ${isMidroll ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+                {/* Pre-Roll Preview */}
+                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}>
+                    <Film size={11} className="inline mr-1" /> Pré-Roll
+                  </div>
+                  <div className="relative w-full flex items-center p-4" style={{
                     aspectRatio: "16 / 9",
-                    background: backgroundPreview
-                      ? `url(${backgroundPreview}) center/cover no-repeat`
-                      : "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
+                    background: backgroundPreview ? `url(${backgroundPreview}) center/cover no-repeat` : "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
                     justifyContent: videoPosition === "left" ? "flex-start" : videoPosition === "right" ? "flex-end" : "center",
-                  }}
-                >
-                  <div
-                    className="relative shadow-2xl overflow-hidden"
-                    style={{
-                      aspectRatio: aspectRatio === "16:9" ? "16 / 9" : "9 / 16",
-                      height: aspectRatio === "16:9" ? "85%" : "90%",
-                      backgroundColor: "hsl(0 0% 0%)",
-                      borderRadius: "1rem",
-                    }}
-                  >
-                    {mediaType === "youtube" && youtubeUrl && extractYoutubeId(youtubeUrl) ? (
-                      <img
-                        src={`https://img.youtube.com/vi/${extractYoutubeId(youtubeUrl)}/hqdefault.jpg`}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : videoPreview ? (
-                      <video src={videoPreview} muted className="w-full h-full object-contain" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Play size={32} style={{ color: "rgba(255,255,255,0.3)" }} />
+                  }}>
+                    <div className="relative shadow-2xl overflow-hidden" style={{ aspectRatio: aspectRatio === "16:9" ? "16 / 9" : "9 / 16", height: aspectRatio === "16:9" ? "85%" : "90%", backgroundColor: "hsl(0 0% 0%)", borderRadius: "1rem" }}>
+                      {mediaType === "youtube" && youtubeUrl && extractYoutubeId(youtubeUrl) ? (
+                        <img src={`https://img.youtube.com/vi/${extractYoutubeId(youtubeUrl)}/hqdefault.jpg`} alt="Preview" className="w-full h-full object-cover" />
+                      ) : videoPreview ? (
+                        <video src={videoPreview} muted className="w-full h-full object-contain" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><Play size={32} style={{ color: "rgba(255,255,255,0.3)" }} /></div>
+                      )}
+                      <div className="absolute top-3 right-3 z-10">
+                        <span className="px-3 py-1 rounded-full text-[10px] font-medium" style={{ backgroundColor: "hsl(0 100% 40%)", color: "white" }}>pular 5s</span>
                       </div>
-                    )}
-
-                    <div className="absolute top-3 right-3 z-10">
-                      <span className="px-3 py-1 rounded-full text-[10px] font-medium" style={{ backgroundColor: "hsl(0 100% 40%)", color: "white" }}>
-                        pular 5s
-                      </span>
-                    </div>
-
-                    {linkUrl && (
-                      <div className="absolute top-3 left-3 z-10 flex flex-col items-center p-2 rounded-lg" style={{ backgroundColor: "hsl(0 100% 40%)" }}>
-                        <div className="bg-white rounded p-1 w-10 h-10 flex items-center justify-center">
-                          <QRCodeSVG value={linkUrl} size={32} level="M" bgColor="#ffffff" fgColor="#000000" />
+                      {linkUrl && (
+                        <div className="absolute top-3 left-3 z-10 flex flex-col items-center p-2 rounded-lg" style={{ backgroundColor: "hsl(0 100% 40%)" }}>
+                          <div className="bg-white rounded p-1 w-10 h-10 flex items-center justify-center">
+                            <QRCodeSVG value={linkUrl} size={32} level="M" bgColor="#ffffff" fgColor="#000000" />
+                          </div>
+                          <span className="text-white text-[7px] mt-1 font-semibold">clique/escaneie</span>
                         </div>
-                        <span className="text-white text-[7px] mt-1 font-semibold">clique/escaneie</span>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                  </div>
+                  <div className="px-3 py-2 text-center" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" }}>
+                    <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                      Proporção {aspectRatio} • Posição {videoPosition === "center" ? "centro" : videoPosition === "left" ? "esquerda" : "direita"}
+                    </span>
                   </div>
                 </div>
-                <div className="px-3 py-2 text-center" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" }}>
-                  <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                    Preview aproximado — proporção {aspectRatio}, posição {videoPosition === "center" ? "centro" : videoPosition === "left" ? "esquerda" : "direita"}
-                  </span>
-                </div>
+
+                {/* Mid-Roll Preview */}
+                {isMidroll && (
+                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
+                    <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: "color-mix(in srgb, var(--layout-button-bg, #2563eb) 8%, transparent)", color: "var(--layout-button-bg, #2563eb)" }}>
+                      <Play size={11} className="inline mr-1" /> Mid-Roll
+                    </div>
+                    <div className="relative w-full flex items-center justify-center" style={{ aspectRatio: "16 / 9", background: "linear-gradient(135deg, hsl(0 0% 5%), hsl(0 0% 12%))" }}>
+                      <div className="relative shadow-2xl overflow-hidden" style={{ width: "100%", height: "100%" }}>
+                        {mediaType === "youtube" && youtubeUrl && extractYoutubeId(youtubeUrl) ? (
+                          <img src={`https://img.youtube.com/vi/${extractYoutubeId(youtubeUrl)}/hqdefault.jpg`} alt="Preview" className="w-full h-full object-cover" />
+                        ) : videoPreview ? (
+                          <video src={videoPreview} muted className="w-full h-full object-contain" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><Play size={32} style={{ color: "rgba(255,255,255,0.3)" }} /></div>
+                        )}
+                        <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10">
+                          <span className="px-2.5 py-1 rounded-full text-[9px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", backdropFilter: "blur(8px)" }}>Intervalo 1/3</span>
+                        </div>
+                        <div className="absolute top-3 right-3 z-10">
+                          <span className="px-2.5 py-1 rounded-full text-[9px] font-medium" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", backdropFilter: "blur(8px)" }}>0:15</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-3 py-2 text-center" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" }}>
+                      <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Tela cheia • Sem botão pular • Máx. 3 consecutivos</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
