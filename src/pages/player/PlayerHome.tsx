@@ -264,7 +264,9 @@ function HeroBanner({
   }
 
   // Program seal/logo (selo or capa)
-  const programSeal = displayProgram?.capa || displayProgram?.thumb || null;
+  const programSeal = displayProgram?.capa || null;
+  // Thumb for hero background
+  const heroThumb = displayProgram?.thumb || displayProgram?.capa || null;
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
