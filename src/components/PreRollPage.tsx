@@ -534,11 +534,10 @@ export default function PreRollPage() {
                         ) : (
                           <div className="w-full h-full flex items-center justify-center"><Play size={32} style={{ color: "rgba(255,255,255,0.3)" }} /></div>
                         )}
-                        <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10">
-                          <span className="px-2.5 py-1 rounded-full text-[9px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", backdropFilter: "blur(8px)" }}>Intervalo 1/3</span>
-                        </div>
-                        <div className="absolute top-3 right-3 z-10">
-                          <span className="px-2.5 py-1 rounded-full text-[9px] font-medium" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", backdropFilter: "blur(8px)" }}>0:15</span>
+                        <div className="absolute top-3 right-3 flex items-center z-10">
+                          <span className="px-3 py-1.5 rounded-full text-[9px] font-bold" style={{ backgroundColor: "var(--layout-button-bg, #2563eb)", color: "white" }}>
+                            anúncio&nbsp;&nbsp;1/3&nbsp;&nbsp;0:15
+                          </span>
                         </div>
                       </div>
                     </div>
