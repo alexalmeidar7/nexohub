@@ -27,7 +27,7 @@ async function resolvePublicMusicData(settings: {
     musicData = {
       titulo: dashboardItems.music_current_title,
       artista: dashboardItems.music_current_artist || "",
-      capa: "",
+      capa: dashboardItems.music_current_cover || "",
     };
   }
 

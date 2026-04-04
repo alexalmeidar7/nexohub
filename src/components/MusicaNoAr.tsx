@@ -442,6 +442,7 @@ export default function MusicaNoAr() {
               music_start_time: now,
               music_current_title: data.titulo,
               music_current_artist: data.artista,
+              music_current_cover: data.capa || "",
             });
           } catch {}
         })();
