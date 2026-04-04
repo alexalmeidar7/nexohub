@@ -2608,20 +2608,38 @@ export default function PlayerPage() {
               )}
               {/* Heart icon bottom-right */}
               {musicData?.titulo && musicData.titulo !== "Sem título" && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleLike(); }}
-                  className="absolute bottom-5 right-5 pointer-events-auto transition-all hover:scale-110"
-                  style={{ zIndex: 5 }}
-                >
-                  <Heart
-                    size={24}
-                    className="transition-colors drop-shadow-lg"
-                    style={{
-                      color: liked ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.7)",
-                      fill: liked ? "hsl(var(--player-accent))" : "transparent",
-                    }}
-                  />
-                </button>
+                <div className="absolute bottom-5 right-5" style={{ zIndex: 5 }}>
+                  {/* Floating hearts explosion */}
+                  {floatingHearts.map((h) => (
+                    <Heart
+                      key={h.id}
+                      size={12}
+                      className="absolute pointer-events-none"
+                      style={{
+                        color: "hsl(var(--player-accent))",
+                        fill: "hsl(var(--player-accent))",
+                        animation: `heartFloat 0.8s ease-out ${h.delay}s forwards`,
+                        left: `calc(50% + ${h.x}px)`,
+                        bottom: 0,
+                        opacity: 0,
+                      }}
+                    />
+                  ))}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleLike(); }}
+                    className="pointer-events-auto transition-all hover:scale-110"
+                  >
+                    <Heart
+                      size={24}
+                      className={`drop-shadow-lg ${likeAnimating ? "animate-ping" : ""}`}
+                      style={{
+                        color: liked ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.9)",
+                        fill: liked ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.9)",
+                        transition: "color 0.3s, fill 0.3s",
+                      }}
+                    />
+                  </button>
+                </div>
               )}
             {/* Music info bottom-left overlay */}
             {musicData?.titulo && musicData.titulo !== "Sem título" && (
