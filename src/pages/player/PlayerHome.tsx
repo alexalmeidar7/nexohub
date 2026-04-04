@@ -565,10 +565,10 @@ function HeroBanner({
           <div className="mb-2 overflow-hidden">
             <div className="flex items-center gap-1.5 overflow-hidden">
               {/* Presenter name to the left of music */}
-              {(presenterName || displayProgram?.nome) && (
+              {(displayPresenter || displayProgram?.nome) && (
                 <span className="flex items-center gap-1 text-sm text-white/50 flex-shrink-0 whitespace-nowrap">
                   <Mic className="w-3.5 h-3.5" style={{ color: "hsl(var(--player-accent))" }} />
-                  <span>{presenterName || displayProgram?.nome}</span>
+                  <span>{displayPresenter || displayProgram?.nome}</span>
                   <span className="mx-1 text-white/20">|</span>
                 </span>
               )}
