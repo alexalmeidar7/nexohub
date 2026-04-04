@@ -2835,7 +2835,7 @@ export default function PlayerPage() {
               </div>
               {/* Next presenter avatar */}
               {nextPresenter?.foto ? (
-                <img src={nextPresenter.foto} alt={nextPresenter.nome} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover" style={{ border: "2px solid hsl(var(--player-accent))" }} />
+                <img src={nextPresenter.foto} alt={nextPresenter.nome} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover" style={{ backgroundColor: "hsl(var(--player-accent) / 0.3)" }} />
               ) : (
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}>
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
