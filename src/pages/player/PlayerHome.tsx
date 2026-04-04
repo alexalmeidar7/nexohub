@@ -866,7 +866,7 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
 
       {/* Play overlay — frosted glass */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-        <div className="w-11 h-11 rounded-xl backdrop-blur-2xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 16px rgba(0,0,0,0.3)" }}>
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
           <Play className="h-4 w-4 text-white fill-white" />
         </div>
       </div>
