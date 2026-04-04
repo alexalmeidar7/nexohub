@@ -447,6 +447,7 @@ function HeroBanner({
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
   channelName?: string;
   presenterName?: string | null;
+  nextPresenterName?: string | null;
   onPlay: () => void;
   onGrade: () => void;
   logoUrl?: string | null;
