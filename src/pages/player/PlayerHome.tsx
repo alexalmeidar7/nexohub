@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from "react-rout
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic } from "lucide-react";
+import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
@@ -82,6 +82,7 @@ function TopNavBar({
   channels = [],
   programas = [],
   onPlayChannel,
+  userId,
 }: {
   logoUrl: string | null;
   items: { label: string; key: string; action: () => void }[];
@@ -96,19 +97,50 @@ function TopNavBar({
   channels?: Channel[];
   programas?: Programa[];
   onPlayChannel?: (ch: Channel) => void;
+  userId?: string | null;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [musicResults, setMusicResults] = useState<{ musica: string; artista: string }[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const musicSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (searchOpen) {
       setSearchQuery("");
+      setMusicResults([]);
       setTimeout(() => searchInputRef.current?.focus(), 50);
     }
   }, [searchOpen]);
+
+  // Debounced music search
+  useEffect(() => {
+    if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current);
+    const q = searchQuery.trim();
+    if (!q || !userId) { setMusicResults([]); return; }
+    musicSearchTimer.current = setTimeout(async () => {
+      const { data } = await supabase
+        .from("musicas_tocadas")
+        .select("musica, artista")
+        .eq("user_id", userId)
+        .or(`musica.ilike.%${q}%,artista.ilike.%${q}%`)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (data) {
+        // Deduplicate by musica+artista
+        const seen = new Set<string>();
+        setMusicResults(data.filter(m => {
+          const key = `${m.musica}|${m.artista}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        }));
+      }
+    }, 300);
+    return () => { if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current); };
+  }, [searchQuery, userId]);
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -118,6 +150,8 @@ function TopNavBar({
       programas: programas.filter(p => p.nome.toLowerCase().includes(q)),
     };
   }, [searchQuery, channels, programas]);
+
+  const hasResults = searchResults.channels.length > 0 || searchResults.programas.length > 0 || musicResults.length > 0;
 
   useEffect(() => {
     if (!profileOpen) return;
@@ -229,12 +263,12 @@ function TopNavBar({
       {/* Search Popup */}
       {searchOpen && (
         <div
-          className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]"
-          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setSearchOpen(false); }}
         >
           <div
-            className="w-full max-w-lg rounded-2xl overflow-hidden animate-scale-in"
+            className="w-full max-w-xl rounded-2xl overflow-hidden animate-scale-in"
             style={{
               background: "hsl(var(--player-bg))",
               border: "1px solid rgba(255,255,255,0.1)",
@@ -242,16 +276,17 @@ function TopNavBar({
             }}
           >
             {/* Search input */}
-            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <Search className="w-5 h-5 text-white/40 shrink-0" />
+            <div className="flex items-center gap-3 px-6 py-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <Search className="w-5 h-5 shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar canais, programas..."
+                placeholder="Buscar canais, programas, músicas..."
                 autoFocus
-                className="flex-1 bg-transparent text-white text-sm placeholder:text-white/30 outline-none caret-[hsl(var(--player-accent))]"
+                className="flex-1 bg-transparent text-lg font-light placeholder:text-white/25 outline-none"
+                style={{ color: "hsl(var(--player-accent))", caretColor: "hsl(var(--player-accent))" }}
                 onKeyDown={(e) => { if (e.key === "Escape") setSearchOpen(false); }}
               />
               {searchQuery && (
@@ -264,9 +299,9 @@ function TopNavBar({
             {/* Results */}
             <div className="max-h-[50vh] overflow-y-auto px-2 py-2">
               {!searchQuery.trim() ? (
-                <p className="text-center text-white/25 text-xs py-8">Digite para buscar...</p>
-              ) : (searchResults.channels.length === 0 && searchResults.programas.length === 0) ? (
-                <p className="text-center text-white/25 text-xs py-8">Nenhum resultado encontrado</p>
+                <p className="text-center text-white/20 text-sm py-10">Digite para buscar...</p>
+              ) : !hasResults ? (
+                <p className="text-center text-white/20 text-sm py-10">Nenhum resultado encontrado</p>
               ) : (
                 <>
                   {searchResults.channels.length > 0 && (
@@ -290,8 +325,8 @@ function TopNavBar({
                     </div>
                   )}
                   {searchResults.programas.length > 0 && (
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Programas</p>
+                    <div className="mb-2">
+                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Programação</p>
                       {searchResults.programas.map((p, i) => (
                         <div key={p.id || i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
                           <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
@@ -300,6 +335,22 @@ function TopNavBar({
                           <div className="min-w-0">
                             <span className="text-sm text-white truncate block">{p.nome}</span>
                             <span className="text-[11px] text-white/30">{p.horario_inicio} — {p.horario_fim}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {musicResults.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Músicas Tocadas</p>
+                      {musicResults.map((m, i) => (
+                        <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
+                          <div className="w-9 h-9 rounded-lg shrink-0 bg-white/5 flex items-center justify-center">
+                            <Disc className="w-4 h-4 text-white/30" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm text-white truncate block">{formatTrackText(m.musica)}</span>
+                            <span className="text-[11px] text-white/30">{formatTrackText(m.artista)}</span>
                           </div>
                         </div>
                       ))}
@@ -1586,6 +1637,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       channels={channels}
                       programas={programas}
                       onPlayChannel={(ch) => goToPlayer(ch.id)}
+                      userId={user?.id}
                     />
                   </>
                 )}
