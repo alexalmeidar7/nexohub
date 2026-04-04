@@ -481,7 +481,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </div>
           <div>
             <h3 className="text-base font-bold drop-shadow-sm">{editingId ? "Editar Programa Express" : "Programa Express"}</h3>
-            <p className="text-xs drop-shadow-sm flex items-center gap-1.5" style={{ opacity: 0.8 }}>
+            <p className="text-xs drop-shadow-sm flex items-center gap-1.5" style={{ opacity: 1, color: "rgba(255,255,255,0.92)", textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>
               {autoSaving ? <><Loader2 size={10} className="animate-spin" /> Salvando...</> : lastAutoSaved ? <><CheckCircle2 size={10} style={{ color: "#22c55e" }} /> Salvo automaticamente</> : "Monte seu roteiro de forma rápida"}
             </p>
           </div>
