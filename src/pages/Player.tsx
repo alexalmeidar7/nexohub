@@ -722,6 +722,18 @@ export default function PlayerPage() {
           setShopProducts(data.shopProducts || []);
           if (data.empresa?.telefone_participacao) setWhatsappPhone(data.empresa.telefone_participacao);
           if (data.empresa?.logo) setEmpresaLogo(data.empresa.logo);
+          if (data.musicData?.titulo && data.musicData.titulo !== "Sem título") {
+            setMusicData({
+              titulo: data.musicData.titulo,
+              artista: data.musicData.artista || "Desconhecido",
+              capa: data.musicData.capa || "",
+              duracao: Number(data.musicData.duracao) > 0 ? Number(data.musicData.duracao) : 0,
+              horario: data.musicData.horario || "",
+            });
+            if (data.musicStartTime) {
+              localStorage.setItem(MUSIC_START_KEY, String(data.musicStartTime));
+            }
+          }
 
           const now = new Date();
           const prerolls = filterCampaignsByType(data.prerolls || [], now, false);
