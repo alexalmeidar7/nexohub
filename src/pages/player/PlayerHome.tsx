@@ -432,8 +432,8 @@ function HeroBanner({
   }
 
   // Program assets for hero
-  const programSeal = displayProgram?.selo || displayProgram?.capa || null;
-  const heroThumb = displayProgram?.thumb || null;
+  const programSeal = displayProgram?.selo || null;
+  const heroThumb = displayProgram?.thumb || displayProgram?.capa || null;
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
