@@ -632,6 +632,7 @@ function HeroBanner({
             >
               {idx === activeIdx && (
                 <span
+                  key={`fill-${activeIdx}`}
                   className="absolute inset-0 rounded-full"
                   style={{
                     background: "hsl(var(--player-accent))",
