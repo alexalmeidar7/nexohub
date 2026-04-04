@@ -615,23 +615,24 @@ function HeroBanner({
           </button>
         </div>
 
-        {/* Carousel dots */}
-        {slides.length > 1 && (
-          <div className="flex items-center gap-2 mt-6">
-            {slides.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => goTo(idx)}
-                className="w-2.5 h-2.5 rounded-full transition-all duration-300"
-                style={{
-                  background: idx === activeIdx ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.25)",
-                  transform: idx === activeIdx ? "scale(1.2)" : "scale(1)",
-                }}
-              />
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Carousel dots + progress bar at bottom */}
+      {slides.length > 1 && (
+        <div className="absolute bottom-6 left-8 sm:left-12 z-10 flex items-center gap-2">
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => goTo(idx)}
+              className="w-2.5 h-2.5 rounded-full transition-all duration-300"
+              style={{
+                background: idx === activeIdx ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.25)",
+                transform: idx === activeIdx ? "scale(1.2)" : "scale(1)",
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
