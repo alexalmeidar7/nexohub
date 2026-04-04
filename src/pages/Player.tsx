@@ -436,9 +436,7 @@ export default function PlayerPage() {
     });
   }, [user, publicUserId]);
 
-function toTitleCase(str: string): string {
-  return str.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-}
+
 
 
   const [ytCurrentTime, setYtCurrentTime] = useState(0);
