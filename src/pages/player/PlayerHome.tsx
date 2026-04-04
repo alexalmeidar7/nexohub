@@ -761,17 +761,23 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       {/* Gradient + info overlay */}
       <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
       <div className="absolute bottom-0 left-0 right-0 z-[4] text-left pointer-events-none flex flex-col">
-        <div className="px-3.5 pb-2">
-          <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
+        <div className="px-3.5 pb-3">
+          <p className="text-xs font-normal text-white leading-tight line-clamp-2 drop-shadow-lg">
             {currentProgram?.nome || channel.name}
           </p>
-        </div>
-        {/* Program progress slider */}
-        <div className="w-full h-[3px]" style={{ background: "hsla(var(--player-accent) / 0.15)" }}>
-          <div
-            className="h-full transition-all duration-1000"
-            style={{ width: `${progress}%`, backgroundColor: "hsl(var(--player-accent))", borderRadius: "0 2px 2px 0" }}
-          />
+          {currentProgram && (
+            <p className="text-[9px] text-white/40 mt-0.5">
+              {currentProgram.horario_inicio} — {currentProgram.horario_fim}
+            </p>
+          )}
+          {currentProgram && (
+            <div className="w-full h-[2px] mt-1.5 rounded-full overflow-hidden" style={{ background: "hsla(var(--player-accent) / 0.15)" }}>
+              <div
+                className="h-full transition-all duration-1000 rounded-full"
+                style={{ width: `${progress}%`, backgroundColor: "hsl(var(--player-accent))" }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </button>
