@@ -496,11 +496,6 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
             </div>
           )}
         </div>
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
         {/* Program progress slider */}
         <div className="w-full h-[3px] mt-1" style={{ background: "hsla(var(--player-accent) / 0.15)" }}>
           <div
