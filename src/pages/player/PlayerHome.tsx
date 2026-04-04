@@ -34,6 +34,13 @@ interface Programa {
   capa: string | null;
   thumb: string | null;
   descricao?: string | null;
+  apresentador_id?: string | null;
+}
+
+interface Apresentador {
+  id: string;
+  nome: string;
+  foto?: string | null;
 }
 
 interface PlaylistVideo {
