@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     const [channelsRes, programasRes, apresentadoresRes, prerollRes, empresaRes, shopRes, settingsRes] =
       await Promise.all([
         supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
-        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
+        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
         supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
         supabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true }),
         supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle(),
