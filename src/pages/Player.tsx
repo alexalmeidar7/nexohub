@@ -2534,8 +2534,8 @@ export default function PlayerPage() {
         <img
           src={empresaLogo}
           alt="Logo"
-          className="absolute top-4 right-4 z-30 object-contain rounded-lg"
-          style={{ width: 100, height: 100 }}
+          className="absolute right-4 z-30 object-contain rounded-lg"
+          style={{ width: 100, height: 100, top: 72 }}
         />
       )}
 
