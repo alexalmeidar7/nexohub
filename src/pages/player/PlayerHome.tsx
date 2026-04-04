@@ -107,7 +107,7 @@ function TopNavBar({
             <button
               key={item.key}
               onClick={item.action}
-              className="group relative px-4 py-2 text-sm font-semibold transition-all duration-200"
+              className="group relative px-4 py-2 text-sm font-light tracking-wide transition-all duration-200"
               style={{
                 color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
                 background: "transparent",
