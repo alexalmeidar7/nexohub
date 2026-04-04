@@ -740,6 +740,8 @@ export default function AgendaPage() {
                 .agenda-calendar .rdp-day_today:hover { background-color: var(--layout-page-text, #1a1a1a) !important; color: #ffffff !important; }
                 .agenda-calendar [class*="day_today"] { background-color: var(--layout-page-text, #1a1a1a) !important; color: #ffffff !important; font-weight: 700 !important; }
                 .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; font-weight: bold; }
+                .agenda-calendar .is-feriado-day { position: relative; }
+                .agenda-calendar .is-feriado-day::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background-color: #ef4444; }
               `}</style>
               <Calendar
                 mode="single"
@@ -747,9 +749,15 @@ export default function AgendaPage() {
                 onSelect={setSelectedDate}
                 className={cn("p-2 pointer-events-auto agenda-calendar")}
                 locale={ptBR}
-                modifiers={{ hasEvent: eventDates }}
-                modifiersClassNames={{ hasEvent: "has-event-day" }}
+                modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
+                modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day" }}
               />
+              {getFeriadoNome(selectedDate) && (
+                <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5" style={{ color: "#ef4444" }}>
+                  <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                  {getFeriadoNome(selectedDate)}
+                </div>
+              )}
             </div>
           </div>
 
