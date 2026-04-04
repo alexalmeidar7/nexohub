@@ -311,9 +311,13 @@ function HeroBanner({
             </div>
           )}
           {nowPlaying?.musica && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 overflow-hidden">
               <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-              <span className="text-sm text-white/60">
+              <span
+                key={`hero-music-${nowPlaying.musica}-${nowPlaying.artista}`}
+                className="text-sm text-white/60"
+                style={{ animation: "playerSlideInLeft 0.5s ease-out" }}
+              >
                 {nowPlaying.musica}{nowPlaying.artista ? ` — ${nowPlaying.artista}` : ""}
               </span>
             </div>
