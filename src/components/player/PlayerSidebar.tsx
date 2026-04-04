@@ -173,12 +173,11 @@ export default function PlayerSidebar({
                 onClick={item.action}
                 className="group/btn relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 focus-visible:outline-none"
                 style={{
-                  background: isActive
-                    ? "rgba(255,255,255,0.1)"
-                    : "transparent",
-                  boxShadow: isActive ? "inset 0 0 0 1px rgba(255,255,255,0.15)" : "none",
-                  border: isActive ? "1px solid rgba(255,255,255,0.12)" : "1px solid transparent",
-                }}
+                   background: isActive
+                     ? "rgba(255,255,255,0.08)"
+                     : "transparent",
+                   border: isActive ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
+                 }}
                 title={item.label}
                 aria-label={item.label}
               >
