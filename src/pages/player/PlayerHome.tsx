@@ -983,6 +983,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string; capa?: string } | null>(null);
   const [shopProducts, setShopProducts] = useState<any[]>([]);
+  const [shopActive, setShopActive] = useState(true);
   const [showGrade, setShowGrade] = useState(false);
   const [activeCatalog, setActiveCatalog] = useState<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
@@ -1049,12 +1050,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       const userId = user?.id;
       if (!userId || cancelled) return;
 
-      const [chRes, empRes, progRes, histRes, shopRes] = await Promise.all([
+      const [chRes, empRes, progRes, histRes, shopRes, settingsRes] = await Promise.all([
         supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
         supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
         supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).order("watched_at", { ascending: false }).limit(10),
         supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
+        supabase.from("user_settings").select("shopping_active").eq("user_id", userId).maybeSingle(),
       ]);
 
       if (cancelled) return;
@@ -1090,6 +1092,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       } else setWatchHistory([]);
 
       setShopProducts((shopRes.data ?? []) as any);
+      if (settingsRes.data && typeof (settingsRes.data as any).shopping_active === "boolean") {
+        setShopActive((settingsRes.data as any).shopping_active);
+      }
       setDataLoaded(true);
     };
 
@@ -1102,6 +1107,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
       if (data?.empresa?.nome) setChannelName(data.empresa.nome);
       setProgramas((data?.programas ?? []) as any);
+      setShopProducts((data?.shopProducts ?? []) as any);
+      if (typeof data?.shopActive === "boolean") setShopActive(data.shopActive);
       setDataLoaded(true);
     };
 
@@ -1286,7 +1293,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     { icon: Home, label: "Home", key: "home", action: () => { setActiveCatalog(null); handleSectionChange("home"); } },
     { icon: Radio, label: "Streaming", key: "streaming", action: () => { setActiveCatalog(null); handleSectionChange("streaming"); } },
     { icon: Film, label: "Catálogo", key: "content", action: () => { setActiveCatalog(null); handleSectionChange("content"); } },
-    ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
+    ...(user && shopActive ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
   ];
 
   // Track which section is in view for sidebar highlight
@@ -1496,7 +1503,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 </section>
 
                 {/* Loja */}
-                {user && (
+                {user && shopActive && (
                   <section id="section-shop" className="scroll-mt-4 pt-4">
                     <h2 className="text-lg font-bold mb-4 text-white">Loja</h2>
                     {!dataLoaded ? (
@@ -1574,7 +1581,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </Suspense>
           )}
 
-          {visibleSection === "shop" && (
+          {visibleSection === "shop" && shopActive && (
             <div className="px-6 sm:px-10 pt-8 pb-8">
               <h1 className="text-2xl font-bold mb-6 text-white">Loja</h1>
               {!dataLoaded ? (

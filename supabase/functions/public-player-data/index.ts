@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
     // Fetch all player data in parallel
-    const [channelsRes, programasRes, apresentadoresRes, prerollRes, empresaRes, shopRes] =
+    const [channelsRes, programasRes, apresentadoresRes, prerollRes, empresaRes, shopRes, settingsRes] =
       await Promise.all([
         supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
         supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
@@ -71,7 +71,10 @@ Deno.serve(async (req) => {
         supabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true }),
         supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", userId).eq("active", true).gt("stock", 0),
+        supabase.from("user_settings").select("shopping_active").eq("user_id", userId).maybeSingle(),
       ]);
+
+    const isShopActive = settingsRes.data?.shopping_active !== false;
 
     return new Response(
       JSON.stringify({
@@ -81,7 +84,8 @@ Deno.serve(async (req) => {
         apresentadores: apresentadoresRes.data || [],
         prerolls: prerollRes.data || [],
         empresa: empresaRes.data || null,
-        shopProducts: shopRes.data || [],
+        shopProducts: isShopActive ? (shopRes.data || []) : [],
+        shopActive: isShopActive,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
