@@ -829,11 +829,11 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
         border: "1px solid hsla(var(--player-accent) / 0.1)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.3)";
+        e.currentTarget.style.border = "3px solid #fff";
         e.currentTarget.style.boxShadow = "0 4px 20px hsla(var(--player-accent) / 0.15)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.1)";
+        e.currentTarget.style.border = "1px solid hsla(var(--player-accent) / 0.1)";
         e.currentTarget.style.boxShadow = "none";
       }}
     >
