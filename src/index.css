@@ -159,6 +159,12 @@
   100% { opacity: 1; transform: scale(1); }
 }
 
+/* ─── Vinyl Spin ─── */
+@keyframes vinylSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* ─── Player Hub Animations ─── */
 @keyframes player-hero-reveal {
   0% { opacity: 0; transform: scale(1.05); }
