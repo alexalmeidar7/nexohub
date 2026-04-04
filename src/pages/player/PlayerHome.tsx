@@ -1384,6 +1384,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       nextProgram={nextProgram}
                       nowPlaying={nowPlaying}
                       channelName={channelName}
+                      presenterName={currentPresenterName}
                       onPlay={() => goToPlayer(streamingChannels[0]?.id)}
                       onGrade={() => setShowGrade(true)}
                       logoUrl={logoUrl}
