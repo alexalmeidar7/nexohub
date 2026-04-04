@@ -1611,7 +1611,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
-                            style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)" }}
+                            style={{ background: "hsla(var(--player-accent) / 0.15)", border: "1px solid hsla(var(--player-accent) / 0.25)" }}
                           >
                             Comprar
                           </a>
