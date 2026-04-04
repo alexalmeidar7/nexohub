@@ -1515,7 +1515,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                                   <ShoppingBag className="h-8 w-8 text-white/20" />
                                 </div>
                               )}
-                              <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                              <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid hsla(var(--player-accent) / 0.2)" }}>
                                 R$ {product.price.toFixed(2).replace(".", ",")}
                               </div>
                               {product.stock <= 3 && (
