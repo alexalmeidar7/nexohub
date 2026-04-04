@@ -454,14 +454,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
         </div>
       )}
 
-      {/* Live badge */}
-      <span
-        className="absolute top-2.5 left-2.5 z-10 text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-lg flex items-center gap-1.5"
-        style={{ background: "rgba(0,0,0,0.5)", color: "#fff" }}
-      >
-        <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-        ao vivo
-      </span>
+      {/* removed AO VIVO badge */}
 
       {/* Play overlay on hover — frosted glass */}
       {!isVideo && (
