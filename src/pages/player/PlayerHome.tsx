@@ -1366,16 +1366,28 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     });
   }, [user]);
 
+  const normalizeWeekday = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
   const DAY_MAP: Record<string, string> = { "0": "dom", "1": "seg", "2": "ter", "3": "qua", "4": "qui", "5": "sex", "6": "sab" };
+
+  const matchesProgramDay = (diasSemana: string[] | null | undefined, date: Date) => {
+    if (!diasSemana || diasSemana.length === 0) return true;
+    const today = DAY_MAP[String(date.getDay())];
+    return diasSemana.some((dia) => normalizeWeekday(dia).startsWith(today));
+  };
 
   const getCurrentProgram = useCallback(() => {
     const now = new Date();
     const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const today = DAY_MAP[String(now.getDay())];
-    return programas.find(p => {
-      const inTime = hhmm >= p.horario_inicio && hhmm < p.horario_fim;
-      const inDay = !p.dias_semana || p.dias_semana.length === 0 || p.dias_semana.some(d => d.toLowerCase().startsWith(today));
-      return inTime && inDay;
+    return programas.find((p) => {
+      const startTime = p.horario_inicio.slice(0, 5);
+      const endTime = p.horario_fim.slice(0, 5);
+      const inTime = hhmm >= startTime && hhmm < endTime;
+      return inTime && matchesProgramDay(p.dias_semana, now);
     });
   }, [programas]);
 
@@ -1385,12 +1397,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const nextProgram = useMemo(() => {
     if (!currentProgram) return undefined;
     const now = new Date();
-    const today = DAY_MAP[String(now.getDay())];
-    const endTime = currentProgram.horario_fim;
-    // Find program that starts at or after current ends, on the same day, sorted by start time
+    const endTime = currentProgram.horario_fim.slice(0, 5);
     const candidates = programas
-      .filter(p => p.id !== currentProgram.id && p.horario_inicio >= endTime)
-      .filter(p => !p.dias_semana || p.dias_semana.length === 0 || p.dias_semana.some(d => d.toLowerCase().startsWith(today)))
+      .filter((p) => p.id !== currentProgram.id && p.horario_inicio.slice(0, 5) >= endTime)
+      .filter((p) => matchesProgramDay(p.dias_semana, now))
       .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
     return candidates[0] || undefined;
   }, [programas, currentProgram]);
