@@ -539,8 +539,10 @@ export default function PlayerPage() {
   const resetTopBarTimer = useCallback(() => {
     setTopBarVisible(true);
     if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current);
+    // Audio channels: top bar stays visible always
+    if (isAudio) return;
     topBarTimerRef.current = setTimeout(() => setTopBarVisible(false), 2000);
-  }, []);
+  }, [isAudio]);
 
   useEffect(() => {
     if (playing && !isCatalog && !isYoutube) {
