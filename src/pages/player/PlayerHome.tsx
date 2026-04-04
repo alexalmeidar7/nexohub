@@ -185,10 +185,9 @@ function HeroBanner({
         );
       })}
 
-      {/* Gradient overlays */}
-      <div className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.1) 70%, transparent 100%)" }} />
-      <div className="absolute inset-0 z-[2]" style={{ background: `linear-gradient(to top, hsl(var(--player-bg)) 0%, transparent 60%)` }} />
-      <div className="absolute inset-0 z-[1]" style={{ background: `radial-gradient(ellipse at 50% 100%, hsla(var(--player-accent) / 0.15) 0%, transparent 60%)` }} />
+      {/* Simplified gradient overlays — flat style */}
+      <div className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)" }} />
+      <div className="absolute inset-0 z-[2]" style={{ background: `linear-gradient(to top, hsl(var(--player-bg)) 0%, transparent 50%)` }} />
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 px-8 sm:px-12 pb-10 z-10 player-hero-content" style={{ maxWidth: "680px" }}>
