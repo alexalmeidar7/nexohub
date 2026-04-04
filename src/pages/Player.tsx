@@ -2589,9 +2589,9 @@ export default function PlayerPage() {
             {/* Music info bottom-left overlay */}
             {musicData?.titulo && musicData.titulo !== "Sem título" && (
               <div key={`music-overlay-${musicAnimKey}`} className="absolute bottom-6 left-6 right-6 pointer-events-none" style={{ animation: "playerFadeSlideIn 0.4s ease-out", zIndex: 5 }}>
-                <span className="text-white/60 text-xs font-medium block mb-0.5">tocando:</span>
-                <span className="text-white text-xl sm:text-2xl font-black italic leading-tight block truncate">{musicData.titulo}</span>
-                <span className="text-white/80 text-sm sm:text-base font-bold block truncate">{musicData.artista && musicData.artista !== "Desconhecido" ? musicData.artista : ""}</span>
+                <span className="uppercase tracking-[0.25em] text-white/50 text-[10px] font-light block mb-1.5" style={{ fontFamily: "'Poppins', sans-serif" }}>♫ tocando agora</span>
+                <span className="text-white text-xl sm:text-2xl font-extralight italic leading-tight block truncate tracking-wide" style={{ fontFamily: "'Poppins', sans-serif", textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>{musicData.titulo}</span>
+                <span className="text-white/70 text-sm sm:text-base font-light block truncate mt-0.5 tracking-wider" style={{ fontFamily: "'Poppins', sans-serif" }}>{musicData.artista && musicData.artista !== "Desconhecido" ? musicData.artista : ""}</span>
               </div>
             )}
             {/* Subtle inner glow */}
