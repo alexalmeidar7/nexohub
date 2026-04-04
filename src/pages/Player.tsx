@@ -2620,15 +2620,6 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Empresa logo on 991-1 */}
-      {normalizeChannelNumber(canal?.numero_canal) === "991-1" && empresaLogo && playing && (
-        <img
-          src={empresaLogo}
-          alt="Logo"
-          className="absolute right-4 z-30 object-contain rounded-lg"
-          style={{ width: 100, height: 100, top: 72 }}
-        />
-      )}
 
       {/* Buffering overlay — hidden for catalog channels */}
       {streamStalled && playing && !isCatalog && (
