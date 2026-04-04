@@ -2559,7 +2559,7 @@ export default function PlayerPage() {
                 style={{
                   width: "min(380px, 30vw)",
                   height: "min(380px, 30vw)",
-                  left: "calc(50% - 15%)",
+                  left: "calc(50% + 5%)",
                   animation: "vinylSpin 4s linear infinite",
                   zIndex: 0,
                 }}
