@@ -2237,31 +2237,12 @@ export default function PlayerPage() {
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
 
-      {/* Dynamic background: program thumb fills entire screen */}
+      {/* Dynamic background: gradient from user colors for audio, thumb for video/catalog */}
       {(() => {
-        const audioBgMode = getComputedStyle(document.documentElement).getPropertyValue("--player-live-audio-bg-mode").trim() || "cover";
-        const useGradientBg = isAudio && audioBgMode === "gradient";
         const bgThumb = currentProg?.thumb || currentProg?.capa;
-        if (!useGradientBg && bgThumb) {
-          return (
-            <>
-              <img
-                key={bgThumb}
-                src={bgThumb}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
-                style={{ opacity: 0.95, zIndex: 0 }}
-              />
-              {/* Accent color tint overlay */}
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{ background: "hsla(var(--player-accent) / 0.25)", zIndex: 0, mixBlendMode: "multiply" }}
-              />
-            </>
-          );
-        }
-        if (useGradientBg) {
-          const c1 = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-color1").trim() || "#dc2626";
+        // Audio channels always use gradient background (no thumb)
+        if (isAudio) {
+          const c1 = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-color1").trim() || "hsl(var(--player-accent))";
           const c2 = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-color2").trim() || "#000000";
           const gType = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-type").trim() || "radial";
           const gPos = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-position").trim() || "bottom";
@@ -2271,7 +2252,38 @@ export default function PlayerPage() {
           const bg = gType === "linear"
             ? `linear-gradient(${gAngle}deg, ${c1} 0%, ${c2} ${gMid}%)`
             : `radial-gradient(ellipse ${posMap[gPos] || "at bottom center"}, ${c1} 0%, ${c2} ${gMid}%)`;
-          return <div className="absolute inset-0 pointer-events-none" style={{ background: bg, zIndex: 0 }} />;
+          return (
+            <>
+              <div className="absolute inset-0 pointer-events-none" style={{ background: bg, zIndex: 0 }} />
+              {/* Accent glow — top-right corner */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  top: 0, right: 0, width: "50%", height: "60%",
+                  background: "radial-gradient(ellipse at 100% 0%, hsla(var(--player-accent) / 0.18), transparent 70%)",
+                  zIndex: 0,
+                }}
+              />
+            </>
+          );
+        }
+        // Non-audio channels: use thumb if available
+        if (bgThumb) {
+          return (
+            <>
+              <img
+                key={bgThumb}
+                src={bgThumb}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
+                style={{ opacity: 0.95, zIndex: 0 }}
+              />
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: "hsla(var(--player-accent) / 0.25)", zIndex: 0, mixBlendMode: "multiply" }}
+              />
+            </>
+          );
         }
         return (
           <>
@@ -2282,7 +2294,6 @@ export default function PlayerPage() {
                 zIndex: 0,
               }}
             />
-            {/* Accent glow — top-right corner */}
             <div
               className="absolute pointer-events-none"
               style={{
