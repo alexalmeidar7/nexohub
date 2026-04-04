@@ -227,13 +227,13 @@ function TopNavBar({
           {/* Search Dropdown */}
           {searchOpen && (
             <>
-              <div className="fixed inset-0 z-[99] bg-transparent" onClick={() => setSearchOpen(false)} />
+              <div className="fixed inset-0 z-[99]" style={{ background: "transparent" }} onClick={() => setSearchOpen(false)} />
               <div
-                className="absolute right-0 top-[calc(100%+8px)] z-[100] w-[min(420px,90vw)] rounded-2xl overflow-hidden animate-scale-in"
+                className="fixed left-1/2 top-[120px] -translate-x-1/2 z-[100] w-[min(480px,90vw)] rounded-2xl overflow-hidden animate-scale-in"
                 style={{
                   background: "hsl(var(--player-bg))",
                   border: "1px solid rgba(255,255,255,0.1)",
-                  boxShadow: "0 12px 48px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.4)",
+                  boxShadow: "0 12px 48px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)",
                 }}
               >
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
@@ -245,7 +245,7 @@ function TopNavBar({
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Buscar canais, programas, músicas..."
                     autoFocus
-                    className="flex-1 bg-transparent text-lg font-light placeholder:text-white/25 outline-none"
+                    className="flex-1 bg-transparent text-xl font-bold placeholder:text-white/25 placeholder:font-light outline-none"
                     style={{ color: "hsl(var(--player-accent))", caretColor: "hsl(var(--player-accent))" }}
                     onKeyDown={(e) => { if (e.key === "Escape") setSearchOpen(false); }}
                   />
