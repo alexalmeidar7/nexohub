@@ -2622,6 +2622,7 @@ export default function PlayerPage() {
             <div className="absolute inset-0 rounded-3xl pointer-events-none" style={{
               background: "linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.6) 100%)",
             }} />
+           </div>
           </div>
         </div>
       )}
