@@ -889,8 +889,8 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
       style={{
         width: "160px",
         aspectRatio: "2/3",
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "hsla(var(--player-accent) / 0.05)",
+        border: "1px solid hsla(var(--player-accent) / 0.1)",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
