@@ -265,10 +265,9 @@ function HeroBanner({
     pct = total > 0 ? (elapsed / total) * 100 : 0;
   }
 
-  // Program seal/logo (selo or capa)
-  const programSeal = displayProgram?.capa || null;
-  // Thumb for hero background
-  const heroThumb = displayProgram?.thumb || displayProgram?.capa || null;
+  // Program assets for hero
+  const programSeal = displayProgram?.selo || displayProgram?.capa || null;
+  const heroThumb = displayProgram?.thumb || null;
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
@@ -276,14 +275,18 @@ function HeroBanner({
       {heroThumb && (
         <>
           <img
-            key={`hero-bg-${heroThumb}`}
+            key={`hero-bg-${displayProgram?.id || heroThumb}`}
             src={heroThumb}
-            alt=""
+            alt={displayProgram?.nome ? `Thumb do programa ${displayProgram.nome}` : ""}
             className="absolute inset-0 w-full h-full object-cover"
             style={{ animation: "playerFadeSlideIn 0.8s ease-out" }}
           />
-          {/* Dark gradient overlay for readability */}
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, hsla(var(--player-bg) / 0.85) 30%, hsla(var(--player-bg) / 0.4) 60%, hsla(var(--player-bg) / 0.6) 100%)" }} />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, hsla(var(--player-bg) / 0.92) 26%, hsla(var(--player-bg) / 0.55) 58%, hsla(var(--player-bg) / 0.68) 100%)",
+            }}
+          />
         </>
       )}
 
@@ -302,21 +305,19 @@ function HeroBanner({
       />
 
       {/* Content positioned at bottom-left */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-8 sm:px-12 pb-12" style={{ maxWidth: "700px" }}>
-        {/* Program logo above music info */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-8 sm:px-12 pb-12" style={{ maxWidth: "760px" }}>
         {programSeal && (
-          <div className="mb-3">
+          <div className="mb-4">
             <img
-              key={`program-logo-${displayProgram?.id}`}
+              key={`program-logo-${displayProgram?.id || programSeal}`}
               src={programSeal}
               alt={displayProgram?.nome || ""}
-              className="h-16 sm:h-20 object-contain"
+              className="h-16 sm:h-20 lg:h-24 object-contain"
               style={{ animation: "playerFadeSlideIn 0.6s ease-out" }}
             />
           </div>
         )}
 
-        {/* If no seal, show program name as text */}
         {!programSeal && displayProgram && (
           <h1
             className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-4"
@@ -326,27 +327,41 @@ function HeroBanner({
           </h1>
         )}
 
-        {/* Presenter + Music info row */}
-        <div className="flex items-center gap-5 mb-3 flex-wrap">
+        <div className="mb-3 flex items-center gap-5 flex-wrap">
           {(presenterName || displayProgram) && (
             <div className="flex items-center gap-1.5">
               <Mic className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
               <span className="text-sm text-white/70 font-medium">{presenterName || displayProgram?.nome}</span>
             </div>
           )}
-          {nowPlaying?.musica && (
+        </div>
+
+        {nowPlaying?.musica && (
+          <div className="mb-2 overflow-hidden">
             <div className="flex items-center gap-1.5 overflow-hidden">
               <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
               <span
                 key={`hero-music-${nowPlaying.musica}-${nowPlaying.artista}`}
-                className="text-sm text-white/60"
+                className="text-sm text-white/80"
                 style={{ animation: "playerSlideInLeft 0.5s ease-out" }}
               >
                 {nowPlaying.musica}{nowPlaying.artista ? ` — ${nowPlaying.artista}` : ""}
               </span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {displayProgram && (
+          <div className="mb-4 space-y-1 text-xs sm:text-sm text-white/65">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Clock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
+              <span>{displayProgram.horario_inicio} — {displayProgram.horario_fim}</span>
+            </div>
+            {displayProgram.descricao && (
+              <p className="max-w-2xl leading-relaxed">{displayProgram.descricao}</p>
+            )}
+          </div>
+        )}
 
         {/* Badge + Play */}
         <div className="flex items-center gap-3">
