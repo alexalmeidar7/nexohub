@@ -341,7 +341,7 @@ export default function PreRollOverlay({
               <div
                 className="h-full rounded-full"
                 style={{
-                  backgroundColor: "hsl(0 100% 50%)",
+                  backgroundColor: "hsl(var(--player-accent, 0 100% 50%))",
                   animation: "preroll-progress 3s linear forwards",
                 }}
               />
