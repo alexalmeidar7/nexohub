@@ -179,9 +179,21 @@ export default function AudioSpectrum({ audioElement, barColor, style = "bars", 
 
   useEffect(() => { styleRef.current = style; }, [style]);
 
-  // Connect to real audio when available
+  // Connect to real audio when safe to do so
   useEffect(() => {
     if (!audioElement || style === "off") return;
+
+    const currentSrc = (audioElement.currentSrc || audioElement.src || "").trim();
+    const isDirectLiveStream = /^https?:/i.test(currentSrc) && !/\.m3u8(\?|$)/i.test(currentSrc);
+
+    // Direct radio streams (Icecast/Shoutcast/AAC+) can stop after rerouting the
+    // media element through Web Audio. Keep native playback untouched for them.
+    if (isDirectLiveStream) {
+      analyserRef.current = null;
+      freqDataRef.current = null;
+      return;
+    }
+
     const analyser = getOrCreateAnalyser(audioElement);
     analyserRef.current = analyser;
     if (analyser) {
