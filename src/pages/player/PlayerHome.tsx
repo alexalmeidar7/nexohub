@@ -275,8 +275,8 @@ function HeroBanner({
             onClick={onPlay}
             className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 hover:brightness-110"
             style={{
-              background: "rgba(255,255,255,0.12)",
-              border: "1px solid rgba(255,255,255,0.15)",
+              background: "hsla(var(--player-accent) / 0.15)",
+              border: "1px solid hsla(var(--player-accent) / 0.25)",
               color: "#fff",
             }}
           >
