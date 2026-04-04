@@ -327,7 +327,7 @@ export default function PreRollOverlay({
           <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-4 animate-fade-in">
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "hsl(0 100% 40%)" }}
+              style={{ backgroundColor: "hsl(var(--player-accent, 0 100% 40%))" }}
             >
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="5 3 19 12 5 21 5 3" />
@@ -341,7 +341,7 @@ export default function PreRollOverlay({
               <div
                 className="h-full rounded-full"
                 style={{
-                  backgroundColor: "hsl(0 100% 50%)",
+                  backgroundColor: "hsl(var(--player-accent, 0 100% 50%))",
                   animation: "preroll-progress 3s linear forwards",
                 }}
               />
@@ -367,7 +367,7 @@ export default function PreRollOverlay({
                   ? "cursor-pointer hover:brightness-110"
                   : "cursor-not-allowed opacity-80"
               }`}
-              style={{ backgroundColor: "hsl(0 100% 40%)", color: "white" }}
+              style={{ backgroundColor: "hsl(var(--player-accent, 0 100% 40%))", color: "white" }}
               disabled={!canSkip}
             >
               pular{!canSkip && ` ${countdown}s`}
@@ -383,7 +383,7 @@ export default function PreRollOverlay({
             target="_blank"
             rel="noopener noreferrer"
             className="absolute bottom-6 left-6 z-10 flex flex-col items-center justify-center p-3 rounded-xl transition-transform hover:scale-105"
-            style={{ backgroundColor: "hsl(0 100% 40%)" }}
+            style={{ backgroundColor: "hsl(var(--player-accent, 0 100% 40%))" }}
           >
             <div className="bg-white rounded-md p-2 w-20 h-20 flex items-center justify-center">
               <QRCodeSVG

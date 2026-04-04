@@ -488,7 +488,7 @@ export default function PreRollPage() {
                   </div>
                   <div className="relative w-full flex items-center p-4" style={{
                     aspectRatio: "16 / 9",
-                    background: backgroundPreview ? `url(${backgroundPreview}) center/cover no-repeat` : "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
+                    background: backgroundPreview ? `url(${backgroundPreview}) center/cover no-repeat` : "linear-gradient(to bottom right, hsl(var(--player-accent, 0 100% 50%)), hsl(0 0% 0%) 40%)",
                     justifyContent: videoPosition === "left" ? "flex-start" : videoPosition === "right" ? "flex-end" : "center",
                   }}>
                     <div className="relative shadow-2xl overflow-hidden" style={{ aspectRatio: aspectRatio === "16:9" ? "16 / 9" : "9 / 16", height: aspectRatio === "16:9" ? "85%" : "90%", backgroundColor: "hsl(0 0% 0%)", borderRadius: "1rem" }}>
@@ -500,10 +500,10 @@ export default function PreRollPage() {
                         <div className="w-full h-full flex items-center justify-center"><Play size={32} style={{ color: "rgba(255,255,255,0.3)" }} /></div>
                       )}
                       <div className="absolute top-3 right-3 z-10">
-                        <span className="px-3 py-1 rounded-full text-[10px] font-medium" style={{ backgroundColor: "hsl(0 100% 40%)", color: "white" }}>pular 5s</span>
+                        <span className="px-3 py-1 rounded-full text-[10px] font-medium" style={{ backgroundColor: "var(--layout-button-bg, #2563eb)", color: "white" }}>pular 5s</span>
                       </div>
                       {linkUrl && (
-                        <div className="absolute top-3 left-3 z-10 flex flex-col items-center p-2 rounded-lg" style={{ backgroundColor: "hsl(0 100% 40%)" }}>
+                        <div className="absolute top-3 left-3 z-10 flex flex-col items-center p-2 rounded-lg" style={{ backgroundColor: "var(--layout-button-bg, #2563eb)" }}>
                           <div className="bg-white rounded p-1 w-10 h-10 flex items-center justify-center">
                             <QRCodeSVG value={linkUrl} size={32} level="M" bgColor="#ffffff" fgColor="#000000" />
                           </div>
@@ -534,11 +534,10 @@ export default function PreRollPage() {
                         ) : (
                           <div className="w-full h-full flex items-center justify-center"><Play size={32} style={{ color: "rgba(255,255,255,0.3)" }} /></div>
                         )}
-                        <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10">
-                          <span className="px-2.5 py-1 rounded-full text-[9px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", backdropFilter: "blur(8px)" }}>Intervalo 1/3</span>
-                        </div>
-                        <div className="absolute top-3 right-3 z-10">
-                          <span className="px-2.5 py-1 rounded-full text-[9px] font-medium" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", backdropFilter: "blur(8px)" }}>0:15</span>
+                        <div className="absolute top-3 right-3 flex items-center z-10">
+                          <span className="px-3 py-1.5 rounded-full text-[9px] font-bold" style={{ backgroundColor: "var(--layout-button-bg, #2563eb)", color: "white" }}>
+                            anúncio&nbsp;&nbsp;1/3&nbsp;&nbsp;0:15
+                          </span>
                         </div>
                       </div>
                     </div>
