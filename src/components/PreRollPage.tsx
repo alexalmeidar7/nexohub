@@ -488,7 +488,7 @@ export default function PreRollPage() {
                   </div>
                   <div className="relative w-full flex items-center p-4" style={{
                     aspectRatio: "16 / 9",
-                    background: backgroundPreview ? `url(${backgroundPreview}) center/cover no-repeat` : "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
+                    background: backgroundPreview ? `url(${backgroundPreview}) center/cover no-repeat` : "linear-gradient(to bottom right, hsl(var(--player-accent, 0 100% 50%)), hsl(0 0% 0%) 40%)",
                     justifyContent: videoPosition === "left" ? "flex-start" : videoPosition === "right" ? "flex-end" : "center",
                   }}>
                     <div className="relative shadow-2xl overflow-hidden" style={{ aspectRatio: aspectRatio === "16:9" ? "16 / 9" : "9 / 16", height: aspectRatio === "16:9" ? "85%" : "90%", backgroundColor: "hsl(0 0% 0%)", borderRadius: "1rem" }}>
