@@ -852,12 +852,7 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
         </div>
       )}
 
-      {/* Play overlay — frosted glass */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.2)" }}>
-          <Play className="h-4 w-4 text-white fill-white" />
-        </div>
-      </div>
+      {/* Play overlay removed */}
 
       {/* Gradient + info */}
       <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
