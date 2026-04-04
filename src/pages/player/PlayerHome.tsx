@@ -1581,9 +1581,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     <div
                       key={product.id}
                       className="group rounded-xl overflow-hidden transition-all duration-300"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
+                      style={{ background: "hsla(var(--player-accent) / 0.06)", border: "1px solid hsla(var(--player-accent) / 0.1)" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px hsla(var(--player-accent) / 0.15)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.1)"; e.currentTarget.style.boxShadow = "none"; }}
                     >
                       <div className="aspect-square overflow-hidden relative">
                         {product.image_url ? (
