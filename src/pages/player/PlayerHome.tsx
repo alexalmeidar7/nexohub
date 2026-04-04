@@ -438,6 +438,7 @@ function HeroBanner({
   nowPlaying,
   channelName,
   presenterName,
+  nextPresenterName,
   onPlay,
   onGrade,
   logoUrl,
