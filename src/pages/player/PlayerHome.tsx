@@ -79,6 +79,9 @@ function TopNavBar({
   onLogout,
   onSignup,
   onEditProfile,
+  channels = [],
+  programas = [],
+  onPlayChannel,
 }: {
   logoUrl: string | null;
   items: { label: string; key: string; action: () => void }[];
@@ -90,9 +93,31 @@ function TopNavBar({
   onLogout?: () => void;
   onSignup?: () => void;
   onEditProfile?: () => void;
+  channels?: Channel[];
+  programas?: Programa[];
+  onPlayChannel?: (ch: Channel) => void;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (searchOpen) {
+      setSearchQuery("");
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [searchOpen]);
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return { channels: [] as Channel[], programas: [] as Programa[] };
+    return {
+      channels: channels.filter(ch => ch.name.toLowerCase().includes(q)),
+      programas: programas.filter(p => p.nome.toLowerCase().includes(q)),
+    };
+  }, [searchQuery, channels, programas]);
 
   useEffect(() => {
     if (!profileOpen) return;
