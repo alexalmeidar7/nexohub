@@ -1316,57 +1316,53 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   return (
     <div
-      className={`fixed inset-0 text-white flex transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
+      className={`fixed inset-0 text-white flex flex-col transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
       style={{ background: `hsl(var(--player-bg))` }}
     >
-      {/* Sidebar */}
-      <PlayerSidebar
-        items={sidebarItems}
-        activeKey={visibleSection === "catalog-detail" ? "content" : activeSection}
-        avatarUrl={profileAvatar}
-        userName={userName}
-        userEmail={profileEmail}
-        userCity={profileCity}
-        showLogout={!!user}
-        showSignup={!user && !!onBackToAccess}
-        onLogout={handleSignOut}
-        onSignup={onBackToAccess}
-        onEditProfile={user ? () => setProfileDialogOpen(true) : undefined}
-        loading={!dataLoaded}
-      />
-
       {/* Main content */}
-      <div ref={contentScrollRef} className={`flex-1 ml-[52px] h-full ${visibleSection === "catalog-detail" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
+      <div ref={contentScrollRef} className={`flex-1 h-full ${visibleSection === "catalog-detail" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
         <div className={`transition-all duration-500 ease-in-out ${visibleSection === "catalog-detail" ? "h-full" : ""}`} style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
 
           {visibleSection !== "catalog-detail" && (
             <>
-              {/* Hero Banner — sticky at top */}
-              <div className="sticky top-0 z-20" id="section-home">
+              {/* Hero Banner with Top Nav inside */}
+              <div className="relative" id="section-home">
                 {!dataLoaded ? (
-                  <div style={{ height: "clamp(340px, 56vh, 560px)" }} className="relative">
+                  <div style={{ height: "100vh" }} className="relative">
                     <Skeleton className="absolute inset-0 bg-white/5" />
-                    <div className="absolute bottom-10 left-12 space-y-3">
-                      <Skeleton className="h-4 w-20 bg-white/10" />
-                      <Skeleton className="h-10 w-72 bg-white/10" />
+                    <div className="absolute bottom-16 left-12 space-y-3">
+                      <Skeleton className="h-40 w-72 rounded-2xl bg-white/10" />
                       <Skeleton className="h-4 w-48 bg-white/8" />
                       <div className="flex gap-3">
-                        <Skeleton className="h-11 w-40 rounded-lg bg-white/10" />
-                        <Skeleton className="h-11 w-28 rounded-lg bg-white/8" />
+                        <Skeleton className="h-10 w-24 rounded-full bg-white/10" />
+                        <Skeleton className="h-10 w-20 rounded-full bg-white/8" />
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <HeroBanner
-                    currentProgram={currentProgram || undefined}
-                    nextProgram={nextProgram}
-                    nowPlaying={nowPlaying}
-                    channelName={channelName}
-                    channelIsHd={streamingChannels[0]?.is_hd ?? false}
-                    channelIsStereo={streamingChannels[0]?.is_stereo ?? false}
-                    onPlay={() => goToPlayer(streamingChannels[0]?.id)}
-                    onGrade={() => setShowGrade(true)}
-                  />
+                  <>
+                    <HeroBanner
+                      currentProgram={currentProgram || undefined}
+                      nextProgram={nextProgram}
+                      nowPlaying={nowPlaying}
+                      channelName={channelName}
+                      onPlay={() => goToPlayer(streamingChannels[0]?.id)}
+                      onGrade={() => setShowGrade(true)}
+                      logoUrl={logoUrl}
+                    />
+                    <TopNavBar
+                      logoUrl={logoUrl}
+                      items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
+                      activeKey={visibleSection === "catalog-detail" ? "content" : activeSection}
+                      avatarUrl={profileAvatar}
+                      userName={userName}
+                      showLogout={!!user}
+                      showSignup={!user && !!onBackToAccess}
+                      onLogout={handleSignOut}
+                      onSignup={onBackToAccess}
+                      onEditProfile={user ? () => setProfileDialogOpen(true) : undefined}
+                    />
+                  </>
                 )}
               </div>
 
