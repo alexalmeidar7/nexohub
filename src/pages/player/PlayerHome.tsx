@@ -273,12 +273,11 @@ function HeroBanner({
         <div className="flex items-center gap-3">
           <button
             onClick={onPlay}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105 backdrop-blur-2xl"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 hover:brightness-110"
             style={{
-              background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.2)",
+              background: "rgba(255,255,255,0.12)",
+              border: "1px solid rgba(255,255,255,0.15)",
               color: "#fff",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.3)",
             }}
           >
             <Play className="h-4 w-4 fill-current" />
@@ -286,12 +285,11 @@ function HeroBanner({
           </button>
           <button
             onClick={onGrade}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105 backdrop-blur-2xl"
+            className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:brightness-110"
             style={{
-              background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.08)",
               color: "rgba(255,255,255,0.75)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
             }}
           >
             <LayoutGrid className="h-4 w-4" />
