@@ -539,15 +539,22 @@ export default function PlayerPage() {
   const resetTopBarTimer = useCallback(() => {
     setTopBarVisible(true);
     if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current);
+    // Audio channels: top bar stays visible always
+    if (isAudio) return;
     topBarTimerRef.current = setTimeout(() => setTopBarVisible(false), 2000);
-  }, []);
+  }, [isAudio]);
 
   useEffect(() => {
     if (playing && !isCatalog && !isYoutube) {
-      resetTopBarTimer();
+      if (isAudio) {
+        setTopBarVisible(true);
+        if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current);
+      } else {
+        resetTopBarTimer();
+      }
     }
     return () => { if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current); };
-  }, [playing, isCatalog, isYoutube, resetTopBarTimer]);
+  }, [playing, isCatalog, isYoutube, isAudio, resetTopBarTimer]);
 
   // Mid-roll state for YouTube
   const [midrollActive, setMidrollActive] = useState(false);
@@ -2805,13 +2812,13 @@ export default function PlayerPage() {
 
           {/* agora: program name + presenter */}
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-xs sm:text-sm font-black italic" style={{ color: "hsl(var(--player-accent))" }}>agora:</span>
+            <span className="text-[10px] sm:text-xs font-normal" style={{ color: "hsl(var(--player-accent))" }}>agora:</span>
             <span key={`noar-${currentProg?.nome}-${channelAnimKey}`} className="text-xl sm:text-2xl font-black text-white leading-tight truncate" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
               {currentProg?.nome || canal?.name || "—"}
             </span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <Mic size={12} style={{ color: "hsl(var(--player-accent))" }} />
-              <span className="text-xs sm:text-sm font-bold text-white/70 truncate">{currentPresenter?.nome || ""}</span>
+              <span className="text-xs sm:text-sm font-normal text-white/70 truncate">{currentPresenter?.nome || ""}</span>
             </div>
           </div>
 
