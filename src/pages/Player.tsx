@@ -150,6 +150,14 @@ const normalizeLivePlaylistUrl = (url: string, type: string) => {
   return url.replace(/\/chunklist_w\d+\.m3u8(\?.*)?$/i, "/playlist.m3u8");
 };
 
+const resetMediaElement = (media: HTMLMediaElement | null) => {
+  if (!media) return;
+  try { media.pause(); } catch {}
+  try { media.removeAttribute("src"); } catch {}
+  try { media.srcObject = null; } catch {}
+  try { media.load(); } catch {}
+};
+
 const YOUTUBE_VIDEO_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
 
 const normalizeYoutubeVideoId = (value?: string | null) => {
@@ -1194,6 +1202,10 @@ export default function PlayerPage() {
     async (url: string, type: string, forceAutoplay?: boolean, userInitiated?: boolean) => {
       destroyMiniAudio();
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
+      resetMediaElement(audioRef.current);
+      resetMediaElement(videoRef.current);
+      setHlsLevels([]);
+      setHlsCurrentLevel(-1);
       setBuffering(true);
       setPlaying(false);
       setStreamStalled(false);
@@ -1253,7 +1265,6 @@ export default function PlayerPage() {
       if (useHls) Hls = await getHls();
 
       if (isAudioType) {
-        if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
         const audio = audioRef.current;
         if (!audio) return;
         audio.volume = volumeRef.current / 100;
@@ -1322,7 +1333,6 @@ export default function PlayerPage() {
           void requestPlay(audio);
         }
       } else {
-        if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
         const video = videoRef.current;
         if (!video) return;
         if (Hls && Hls.isSupported()) {
@@ -1431,6 +1441,18 @@ export default function PlayerPage() {
     },
     []
   );
+
+  useEffect(() => {
+    if (!isAudio) {
+      const audio = audioRef.current;
+      if (audio) audio.muted = true;
+      resetMediaElement(audio);
+    }
+
+    if (!isVideo) {
+      resetMediaElement(videoRef.current);
+    }
+  }, [canal?.id, isAudio, isVideo]);
 
   // Detect stream stall and auto-reconnect — conservative approach for live streams
   const streamStalledRef = useRef(false);
@@ -2474,7 +2496,7 @@ export default function PlayerPage() {
 
       {/* Video element */}
       <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || isYoutube ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} />
-      <audio ref={audioRef} />
+      <audio ref={audioRef} muted={!isAudio || muted} preload="none" />
 
       {/* Volume OSD — centered overlay */}
       {volumeOsd && (
