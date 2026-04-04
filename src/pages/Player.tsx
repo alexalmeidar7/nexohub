@@ -546,10 +546,15 @@ export default function PlayerPage() {
 
   useEffect(() => {
     if (playing && !isCatalog && !isYoutube) {
-      resetTopBarTimer();
+      if (isAudio) {
+        setTopBarVisible(true);
+        if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current);
+      } else {
+        resetTopBarTimer();
+      }
     }
     return () => { if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current); };
-  }, [playing, isCatalog, isYoutube, resetTopBarTimer]);
+  }, [playing, isCatalog, isYoutube, isAudio, resetTopBarTimer]);
 
   // Mid-roll state for YouTube
   const [midrollActive, setMidrollActive] = useState(false);
