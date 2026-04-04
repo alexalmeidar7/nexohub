@@ -1637,7 +1637,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       channels={channels}
                       programas={programas}
                       onPlayChannel={(ch) => goToPlayer(ch.id)}
-                      userId={user?.id || ownerUserId}
+                      userId={user?.id}
                     />
                   </>
                 )}
