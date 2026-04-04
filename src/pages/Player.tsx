@@ -2611,17 +2611,6 @@ export default function PlayerPage() {
 
           {/* Glass icon buttons */}
           <div className="flex items-center gap-2 ml-auto shrink-0">
-            {/* Spectrum config (audio only) */}
-            {isAudio && (
-              <button
-                onClick={() => handleSpectrumStyleChange(spectrumStyle === "bars" ? "wave" : spectrumStyle === "wave" ? "circular" : spectrumStyle === "circular" ? "off" : "bars")}
-                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl hover:scale-105"
-                style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
-                title="Estilo do espectro"
-              >
-                <Settings2 size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} />
-              </button>
-            )}
 
             {/* Karaoke */}
             {(isAudio || isVideo) && musicData?.titulo && musicData.titulo !== "Sem título" && (
