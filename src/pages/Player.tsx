@@ -2125,9 +2125,8 @@ export default function PlayerPage() {
                 if (p.data_final && todayStr > p.data_final) return false;
                 return true;
               });
-              // Prefer mid-rolls; fallback to any preroll
-              const midrolls = matching.filter((p: any) => p.is_midroll);
-              const pool = midrolls.length > 0 ? midrolls : matching;
+              // Only show mid-rolls (is_midroll=true) during video breaks — never pre-rolls
+              const pool = matching.filter((p: any) => p.is_midroll);
               if (pool.length > 0) {
                 // Shuffle and pick up to 3
                 const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
