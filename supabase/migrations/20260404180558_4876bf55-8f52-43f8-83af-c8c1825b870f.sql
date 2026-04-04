@@ -1,0 +1,1 @@
+UPDATE programas SET capa = 'https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/capas/primeira-hora-positiva.png' WHERE LOWER(nome) LIKE '%primeira hora%';
