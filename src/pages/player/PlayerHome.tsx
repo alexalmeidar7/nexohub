@@ -469,33 +469,34 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
       <div className="absolute bottom-0 left-0 right-0 z-[4] text-left pointer-events-none flex flex-col">
         <div className="px-3.5 pb-1">
-          <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{channel.name}</p>
-          {currentProgram && (
+          {currentProgram ? (
             <p
               key={`prog-${progKey}`}
-              className="text-[10px] text-white/50 mt-1 font-medium truncate"
-              style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}
+              className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg"
+              style={{ animation: "playerFadeSlideIn 0.5s ease-out" }}
             >
               {currentProgram.nome}
             </p>
+          ) : (
+            <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{channel.name}</p>
           )}
           {nowPlaying?.musica && (
-            <div className="flex items-center gap-1 mt-1.5" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
+            <div className="flex items-center gap-1 mt-1.5">
               <Music className="h-3 w-3 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
               <div className="min-w-0 flex flex-col">
                 <p
-                  key={`artist-${artistKey}`}
-                  className="text-[10px] text-white/50 truncate lowercase"
-                  style={{ animation: "playerFadeSlideIn 0.35s ease-out" }}
-                >
-                  {nowPlaying.artista}
-                </p>
-                <p
                   key={`music-${musicKey}`}
-                  className="text-[10px] text-white/40 truncate lowercase"
-                  style={{ animation: "playerFadeSlideIn 0.35s ease-out 0.05s both" }}
+                  className="text-[10px] text-white/60 truncate lowercase"
+                  style={{ animation: "playerFadeSlideIn 0.4s ease-out 0.15s both" }}
                 >
                   {nowPlaying.musica}
+                </p>
+                <p
+                  key={`artist-${artistKey}`}
+                  className="text-[10px] text-white/40 truncate lowercase"
+                  style={{ animation: "playerFadeSlideIn 0.35s ease-out 0.3s both" }}
+                >
+                  {nowPlaying.artista}
                 </p>
               </div>
             </div>
