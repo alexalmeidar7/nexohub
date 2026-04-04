@@ -1639,54 +1639,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   )}
                 </section>
 
-                {/* Em Alta - Trending */}
-                {!dataLoaded ? (
-                  <div className="mb-8">
-                    <Skeleton className="h-5 w-32 bg-white/10 mb-3" />
-                    <div className="flex gap-3">
-                      {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-2xl bg-white/8" style={{ width: 150, height: 225 }} />)}
-                    </div>
-                  </div>
-                ) : (() => {
-                  const trendingItems: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string; videoId?: string; logoUrl?: string | null }[] = [];
-
-                  Object.values(playlistVideos).flat().slice(0, 8).forEach(v => {
-                    const ch = catalogChannels.find(c => playlistVideos[c.id]?.some(pv => pv.videoId === v.videoId));
-                    if (ch) {
-                      trendingItems.push({
-                        id: `cat-${v.videoId}`,
-                        image: ch.cover_url || v.thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, '/maxresdefault.jpg') || v.thumbnail,
-                        title: v.title,
-                        subtitle: v.published ? new Date(v.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : undefined,
-                        type: "catalog",
-                        channelId: ch.id,
-                        videoId: v.videoId,
-                        logoUrl: ch.background_url || ch.logo_url,
-                      });
-                    }
-                  });
-
-                  if (trendingItems.length === 0) return null;
-
-                  return (
-                    <ContentRow scrollRoot={contentScrollRef} title={
-                      <span className="flex items-center gap-2">
-                        <Flame className="h-5 w-5" style={{ color: "hsl(var(--player-accent))" }} />
-                        Em Alta
-                      </span>
-                    }>
-                      {trendingItems.slice(0, 5).map((item, idx) => (
-                        <TrendingCard
-                          key={item.id}
-                          item={item}
-                          idx={idx}
-                          channels={channels}
-                          onClick={() => goToPlayer(item.channelId, item.type === "catalog" ? item.videoId : undefined)}
-                        />
-                      ))}
-                    </ContentRow>
-                  );
-                })()}
 
                 {/* Catálogo */}
                 <section id="section-content" className="scroll-mt-4">
