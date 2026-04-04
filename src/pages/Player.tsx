@@ -47,7 +47,7 @@ const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDial
 const KaraokeOverlay = lazy(() => import("@/components/KaraokeOverlay"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
-import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio } from "@/components/player/MiniPlayerWidget";
+import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio, destroyMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 
 import { normalizeMusicText } from "@/lib/textEncoding";
@@ -1192,6 +1192,7 @@ export default function PlayerPage() {
   // Play stream
   const playStream = useCallback(
     async (url: string, type: string, forceAutoplay?: boolean, userInitiated?: boolean) => {
+      destroyMiniAudio();
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       setBuffering(true);
       setPlaying(false);
@@ -1998,8 +1999,11 @@ export default function PlayerPage() {
     };
   }, [isAudio, playing]);
 
-  // Cleanup on unmount
-  useEffect(() => { return () => { if (hlsRef.current) hlsRef.current.destroy(); }; }, []);
+  // Destroy any lingering MiniPlayer audio & cleanup on unmount
+  useEffect(() => {
+    destroyMiniAudio();
+    return () => { if (hlsRef.current) hlsRef.current.destroy(); };
+  }, []);
 
   // Periodic clock tick to re-compute currentProg every 30s
   const [musicTick, setMusicTick] = useState(0);
