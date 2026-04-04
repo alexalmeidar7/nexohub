@@ -33,7 +33,6 @@ export default function PlayerSkeleton({ status }: { status?: string }) {
 
         {/* Center loading indicator */}
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10">
-          <div className="w-16 h-16 rounded-full border-4 border-white/10 border-t-red-600 animate-spin" />
           {status && <p className="text-white/60 text-sm animate-pulse">{status}</p>}
         </div>
       </div>

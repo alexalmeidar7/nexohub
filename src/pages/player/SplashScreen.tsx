@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 
 interface SplashScreenProps {
   logoUrl?: string | null;
