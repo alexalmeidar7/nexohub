@@ -144,14 +144,24 @@ function TopNavBar({
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return { channels: [] as Channel[], programas: [] as Programa[] };
+    if (!q) return { channels: [] as Channel[], programas: [] as Programa[], catalogs: [] as Channel[] };
+    const dateMatch = q.match(/^(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?$/);
+    let catalogsByDate: Channel[] = [];
+    if (dateMatch) {
+      const day = dateMatch[1].padStart(2, "0");
+      const month = dateMatch[2].padStart(2, "0");
+      const year = dateMatch[3] ? (dateMatch[3].length === 2 ? `20${dateMatch[3]}` : dateMatch[3]) : new Date().getFullYear().toString();
+      const dateStr = `${year}-${month}-${day}`;
+      catalogsByDate = channels.filter(ch => ch.type === "catalog" && ch.name.toLowerCase().includes(dateStr));
+    }
     return {
-      channels: channels.filter(ch => ch.name.toLowerCase().includes(q)),
+      channels: channels.filter(ch => ch.name.toLowerCase().includes(q) || (ch.catalog_name && ch.catalog_name.toLowerCase().includes(q))),
       programas: programas.filter(p => p.nome.toLowerCase().includes(q)),
+      catalogs: catalogsByDate,
     };
   }, [searchQuery, channels, programas]);
 
-  const hasResults = searchResults.channels.length > 0 || searchResults.programas.length > 0 || musicResults.length > 0;
+  const hasResults = searchResults.channels.length > 0 || searchResults.programas.length > 0 || musicResults.length > 0 || searchResults.catalogs.length > 0;
 
   useEffect(() => {
     if (!profileOpen) return;
