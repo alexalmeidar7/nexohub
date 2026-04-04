@@ -301,22 +301,14 @@ function HeroBanner({
 
       {/* Content positioned at bottom-left */}
       <div className="absolute bottom-0 left-0 right-0 z-10 px-8 sm:px-12 pb-12" style={{ maxWidth: "700px" }}>
-        {/* Program logo/seal — large box */}
+        {/* Program logo above music info */}
         {programSeal && (
-          <div
-            className="mb-4 rounded-2xl overflow-hidden transition-all duration-700"
-            style={{
-              width: "clamp(200px, 30vw, 400px)",
-              aspectRatio: "16/9",
-              background: "hsla(var(--player-accent) / 0.1)",
-              border: "1px solid hsla(var(--player-accent) / 0.15)",
-            }}
-          >
+          <div className="mb-3">
             <img
-              key={displayProgram?.id || "seal"}
+              key={`program-logo-${displayProgram?.id}`}
               src={programSeal}
               alt={displayProgram?.nome || ""}
-              className="w-full h-full object-contain"
+              className="h-16 sm:h-20 object-contain"
               style={{ animation: "playerFadeSlideIn 0.6s ease-out" }}
             />
           </div>
