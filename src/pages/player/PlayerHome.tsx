@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
@@ -271,16 +272,18 @@ function TopNavBar({
           )}
         </div>
       </div>
-      {/* Search Popup - rendered outside relative containers for true centering */}
-      {searchOpen && (
+      {/* Search Popup - rendered via portal for true viewport centering */}
+      {searchOpen && createPortal(
         <>
-          <div className="fixed inset-0 z-[99]" style={{ background: "transparent" }} onClick={() => setSearchOpen(false)} />
+          <div className="fixed inset-0 z-[9999]" style={{ background: "transparent" }} onClick={() => setSearchOpen(false)} />
           <div
-            className="fixed z-[100] w-[min(480px,90vw)] rounded-2xl overflow-hidden animate-scale-in"
+            className="fixed z-[10000] w-[min(480px,90vw)] rounded-2xl overflow-hidden animate-fade-in"
             style={{
               top: "120px",
-              left: "50%",
-              transform: "translateX(-50%)",
+              left: "0",
+              right: "0",
+              marginLeft: "auto",
+              marginRight: "auto",
               background: "hsl(var(--player-bg))",
               border: "1px solid rgba(255,255,255,0.1)",
               boxShadow: "0 12px 48px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)",
@@ -378,7 +381,8 @@ function TopNavBar({
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </header>
   );
