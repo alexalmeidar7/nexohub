@@ -326,7 +326,7 @@ function HeroBanner({
             className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full"
             style={{ border: "1px solid hsla(var(--player-accent) / 0.4)", color: "hsl(var(--player-accent))" }}
           >
-            <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "hsl(var(--player-accent))" }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "hsl(var(--player-accent))" }} />
             {activeLabel}
           </span>
           <button
