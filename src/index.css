@@ -165,6 +165,15 @@
   to { transform: rotate(360deg); }
 }
 
+/* ─── Vinyl Slide Out (retract then reveal) ─── */
+@keyframes vinylReveal {
+  0%   { transform: translateX(0); opacity: 1; }
+  30%  { transform: translateX(-60%); opacity: 0; }
+  31%  { transform: translateX(-60%); opacity: 0; }
+  60%  { transform: translateX(-60%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
 /* ─── Heart Float ─── */
 @keyframes heartFloat {
   0% { opacity: 1; transform: translateY(0) scale(1); }
