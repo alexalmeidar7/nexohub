@@ -34,6 +34,13 @@ interface Programa {
   capa: string | null;
   thumb: string | null;
   descricao?: string | null;
+  apresentador_id?: string | null;
+}
+
+interface Apresentador {
+  id: string;
+  nome: string;
+  foto?: string | null;
 }
 
 interface PlaylistVideo {
@@ -184,6 +191,7 @@ function HeroBanner({
   nextProgram,
   nowPlaying,
   channelName,
+  presenterName,
   onPlay,
   onGrade,
   logoUrl,
@@ -192,6 +200,7 @@ function HeroBanner({
   nextProgram?: Programa;
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
   channelName?: string;
+  presenterName?: string | null;
   onPlay: () => void;
   onGrade: () => void;
   logoUrl?: string | null;
@@ -295,10 +304,10 @@ function HeroBanner({
 
         {/* Presenter + Music info row */}
         <div className="flex items-center gap-5 mb-3 flex-wrap">
-          {displayProgram && (
+          {presenterName && (
             <div className="flex items-center gap-1.5">
               <Mic className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-              <span className="text-sm text-white/70 font-medium">{displayProgram.nome}</span>
+              <span className="text-sm text-white/70 font-medium">{presenterName}</span>
             </div>
           )}
           {nowPlaying?.musica && (
@@ -980,6 +989,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [shopProducts, setShopProducts] = useState<any[]>([]);
   const [shopActive, setShopActive] = useState(true);
   const [showGrade, setShowGrade] = useState(false);
+  const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [activeCatalog, setActiveCatalog] = useState<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
 
@@ -1045,13 +1055,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       const userId = user?.id;
       if (!userId || cancelled) return;
 
-      const [chRes, empRes, progRes, histRes, shopRes, settingsRes] = await Promise.all([
+      const [chRes, empRes, progRes, histRes, shopRes, settingsRes, apresRes] = await Promise.all([
         supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
         supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
         supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).order("watched_at", { ascending: false }).limit(10),
         supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
         supabase.from("user_settings").select("shopping_active").eq("user_id", userId).maybeSingle(),
+        supabase.from("apresentadores").select("id, nome, foto").eq("user_id", userId).eq("ativo", true),
       ]);
 
       if (cancelled) return;
@@ -1080,6 +1091,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       setChannels(channelsData as any);
       if (empRes.data) { setLogoUrl(empRes.data.logo); setChannelName(empRes.data.nome || ""); }
       setProgramas(programasData as any);
+      setApresentadores((apresRes.data ?? []) as Apresentador[]);
 
       if (histRes.data) {
         const seen = new Set<string>();
@@ -1102,6 +1114,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
       if (data?.empresa?.nome) setChannelName(data.empresa.nome);
       setProgramas((data?.programas ?? []) as any);
+      setApresentadores((data?.apresentadores ?? []) as Apresentador[]);
       setShopProducts((data?.shopProducts ?? []) as any);
       if (typeof data?.shopActive === "boolean") setShopActive(data.shopActive);
       setDataLoaded(true);
@@ -1158,6 +1171,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
     return candidates[0] || undefined;
   }, [programas, currentProgram]);
+
+  // Resolve presenter name for current program
+  const currentPresenterName = useMemo(() => {
+    if (!currentProgram?.apresentador_id) return null;
+    const ap = apresentadores.find(a => a.id === currentProgram.apresentador_id);
+    return ap?.nome || null;
+  }, [currentProgram, apresentadores]);
+
 
   const streamingChannels = channels.filter(ch => ch.type === "video_live" || ch.type === "audio_live");
   const catalogChannels = channels.filter(ch => ch.type === "catalog");
@@ -1363,6 +1384,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       nextProgram={nextProgram}
                       nowPlaying={nowPlaying}
                       channelName={channelName}
+                      presenterName={currentPresenterName}
                       onPlay={() => goToPlayer(streamingChannels[0]?.id)}
                       onGrade={() => setShowGrade(true)}
                       logoUrl={logoUrl}
