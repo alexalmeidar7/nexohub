@@ -328,6 +328,56 @@ export default function AgendaPage() {
   };
   const eventDates = getEventDatesForCalendar();
 
+  // Feriados nacionais obrigatórios do Brasil
+  const feriadosNacionais = useMemo(() => {
+    const year = new Date().getFullYear();
+    // Cálculo da Páscoa (algoritmo de Meeus)
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    const pascoa = new Date(year, month - 1, day);
+    const carnaval = new Date(pascoa.getTime() - 47 * 86400000);
+    const sextaSanta = new Date(pascoa.getTime() - 2 * 86400000);
+    const corpusChristi = new Date(pascoa.getTime() + 60 * 86400000);
+
+    const fixos = [
+      { date: new Date(year, 0, 1), nome: "Confraternização Universal" },
+      { date: carnaval, nome: "Carnaval" },
+      { date: sextaSanta, nome: "Sexta-feira Santa" },
+      { date: new Date(year, 3, 21), nome: "Tiradentes" },
+      { date: new Date(year, 4, 1), nome: "Dia do Trabalho" },
+      { date: corpusChristi, nome: "Corpus Christi" },
+      { date: new Date(year, 8, 7), nome: "Independência do Brasil" },
+      { date: new Date(year, 9, 12), nome: "N. Sra. Aparecida" },
+      { date: new Date(year, 10, 2), nome: "Finados" },
+      { date: new Date(year, 10, 15), nome: "Proclamação da República" },
+      { date: new Date(year, 10, 20), nome: "Dia da Consciência Negra" },
+      { date: new Date(year, 11, 25), nome: "Natal" },
+    ];
+    return fixos;
+  }, []);
+
+  const feriadoDates = useMemo(() => feriadosNacionais.map(f => f.date), [feriadosNacionais]);
+
+  const getFeriadoNome = (date: Date | undefined) => {
+    if (!date) return null;
+    const f = feriadosNacionais.find(
+      h => h.date.getDate() === date.getDate() && h.date.getMonth() === date.getMonth()
+    );
+    return f ? f.nome : null;
+  };
+
   const selectedPrograma = programas.find((p) => p.id === formProgramaId);
 
   // Upcoming events for the next 7 days
@@ -690,6 +740,8 @@ export default function AgendaPage() {
                 .agenda-calendar .rdp-day_today:hover { background-color: var(--layout-page-text, #1a1a1a) !important; color: #ffffff !important; }
                 .agenda-calendar [class*="day_today"] { background-color: var(--layout-page-text, #1a1a1a) !important; color: #ffffff !important; font-weight: 700 !important; }
                 .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; font-weight: bold; }
+                .agenda-calendar .is-feriado-day { position: relative; }
+                .agenda-calendar .is-feriado-day::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background-color: #ef4444; }
               `}</style>
               <Calendar
                 mode="single"
@@ -697,9 +749,15 @@ export default function AgendaPage() {
                 onSelect={setSelectedDate}
                 className={cn("p-2 pointer-events-auto agenda-calendar")}
                 locale={ptBR}
-                modifiers={{ hasEvent: eventDates }}
-                modifiersClassNames={{ hasEvent: "has-event-day" }}
+                modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
+                modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day" }}
               />
+              {getFeriadoNome(selectedDate) && (
+                <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5" style={{ color: "#ef4444" }}>
+                  <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                  {getFeriadoNome(selectedDate)}
+                </div>
+              )}
             </div>
           </div>
 
