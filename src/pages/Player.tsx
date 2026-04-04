@@ -53,6 +53,10 @@ import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 
+function toTitleCase(str: string): string {
+  return str.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
 // Dynamic HLS loader — cached after first import
 let hlsModule: typeof import("hls.js") | null = null;
 const getHls = async () => {
