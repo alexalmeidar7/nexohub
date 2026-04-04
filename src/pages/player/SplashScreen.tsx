@@ -27,29 +27,52 @@ export default function SplashScreen({ logoUrl, channelName, onFinish }: SplashS
   }, [onFinish]);
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-600 ${fadeOut ? "opacity-0" : "opacity-100"}`}
-      style={{ background: `var(--player-loading-background, var(--player-glow))` }}
-    >
+    <>
+      <style>{`
+        @keyframes playerLoadingTopBar {
+          0% { transform: translateX(-120%); }
+          55% { transform: translateX(120%); }
+          100% { transform: translateX(220%); }
+        }
+      `}</style>
       <div
-        className={`mb-16 transition-all duration-700 ease-out ${
-          showLogo ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
-        }`}
+        className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-600 ${fadeOut ? "opacity-0" : "opacity-100"}`}
+        style={{ background: `var(--player-loading-background, var(--player-glow))` }}
       >
-        {cachedLogo ? (
-          <img src={cachedLogo} alt={channelName || "Logo"} className="h-[9.5rem] w-auto object-contain drop-shadow-lg" />
-        ) : (
-          <div className="h-[9.5rem] w-[9.5rem] rounded-full bg-player-muted flex items-center justify-center">
-            <span className="text-player-muted-foreground text-5xl font-bold">P</span>
-          </div>
-        )}
-      </div>
+        <div
+          className="absolute left-0 right-0 top-0 h-1 overflow-hidden"
+          style={{ backgroundColor: "hsla(var(--player-accent) / 0.16)" }}
+          aria-hidden="true"
+        >
+          <div
+            className="h-full w-1/3 rounded-full"
+            style={{
+              background: "linear-gradient(90deg, hsla(var(--player-accent) / 0) 0%, hsl(var(--player-accent)) 50%, hsla(var(--player-accent) / 0) 100%)",
+              animation: "playerLoadingTopBar 1.8s ease-in-out infinite",
+            }}
+          />
+        </div>
 
-      <div className="flex flex-col items-center gap-3">
-        <p className="text-sm font-normal tracking-wide animate-pulse" style={{ color: `var(--player-loading-text, hsl(var(--player-muted-foreground)))` }}>
-          carregando {channelName || "Positiva Play"}
-        </p>
+        <div
+          className={`mb-16 transition-all duration-700 ease-out ${
+            showLogo ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+          }`}
+        >
+          {cachedLogo ? (
+            <img src={cachedLogo} alt={channelName || "Logo"} className="h-[9.5rem] w-auto object-contain drop-shadow-lg" />
+          ) : (
+            <div className="h-[9.5rem] w-[9.5rem] rounded-full bg-player-muted flex items-center justify-center">
+              <span className="text-player-muted-foreground text-5xl font-bold">P</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-sm font-normal tracking-wide animate-pulse" style={{ color: `var(--player-loading-text, hsl(var(--player-muted-foreground)))` }}>
+            carregando {channelName || "Positiva Play"}
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
