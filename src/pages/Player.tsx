@@ -1045,7 +1045,7 @@ export default function PlayerPage() {
       if (cancelled) return;
 
       const nowMs = Date.now();
-      const lockIsFresh = inFlight && nowMs - lockStartedAt < 3500;
+      const lockIsFresh = inFlight && nowMs - lockStartedAt < 2000;
       if (lockIsFresh) return;
 
       const requestId = ++activeRequestId;
