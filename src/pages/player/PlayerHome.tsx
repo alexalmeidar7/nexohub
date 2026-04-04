@@ -411,18 +411,14 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "rgba(255,255,255,0.05)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
-        transform: "none",
-        boxShadow: hovered
-          ? "0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px hsla(var(--player-accent) / 0.4), inset 0 1px 0 rgba(255,255,255,0.1)"
-          : "0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
-        border: hovered ? "1px solid hsla(var(--player-accent) / 0.5)" : "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.04)",
+        border: hovered ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.06)",
+        boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.3)" : "none",
+        transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.3s, border 0.3s",
       }}
     >
       {/* Cover image – pinned to left 160px */}
