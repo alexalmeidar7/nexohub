@@ -1064,7 +1064,7 @@ export default function PlayerPage() {
       };
 
       fetchPublicMusic();
-      const interval = setInterval(fetchPublicMusic, 3000);
+      const interval = setInterval(fetchPublicMusic, 2000);
       const onVisibility = () => { if (!document.hidden && !cancelled) fetchPublicMusic(); };
       document.addEventListener("visibilitychange", onVisibility);
 
