@@ -53,6 +53,10 @@ import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 
+function toTitleCase(str: string): string {
+  return str.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
 // Dynamic HLS loader — cached after first import
 let hlsModule: typeof import("hls.js") | null = null;
 const getHls = async () => {
@@ -435,6 +439,8 @@ export default function PlayerPage() {
       }
     });
   }, [user, publicUserId]);
+
+
 
 
   const [ytCurrentTime, setYtCurrentTime] = useState(0);
@@ -2614,7 +2620,7 @@ export default function PlayerPage() {
             {musicData?.titulo && musicData.titulo !== "Sem título" && (
               <div key={`music-overlay-${musicAnimKey}`} className="absolute bottom-6 left-6 right-6 pointer-events-none" style={{ animation: "playerFadeSlideIn 0.4s ease-out", zIndex: 5 }}>
                 <span className="uppercase tracking-[0.25em] text-white/50 text-[9px] font-light block mb-0.5 leading-none" style={{ fontFamily: "'Poppins', sans-serif" }}>♫ tocando agora</span>
-                <span className="text-white text-base sm:text-lg font-extralight leading-tight block truncate tracking-wide" style={{ fontFamily: "'Poppins', sans-serif", textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>{musicData.titulo}</span>
+                <span className="text-white text-base sm:text-lg font-extralight leading-tight block truncate tracking-wide" style={{ fontFamily: "'Poppins', sans-serif", textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>{toTitleCase(musicData.titulo)}</span>
                 <span className="text-white/70 text-xs sm:text-sm font-light block truncate leading-tight tracking-wider" style={{ fontFamily: "'Poppins', sans-serif" }}>{musicData.artista && musicData.artista !== "Desconhecido" ? musicData.artista : ""}</span>
               </div>
             )}

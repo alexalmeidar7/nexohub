@@ -495,7 +495,7 @@ export default function AudioDualCard({
                 )}
                 {musicTitle && (
                   <span className={`text-white font-bold ${isMobile ? "text-sm" : "text-lg md:text-xl"} leading-tight drop-shadow-lg`}>
-                    {musicTitle}
+                    {musicTitle.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())}
                   </span>
                 )}
                 {musicArtist && (
