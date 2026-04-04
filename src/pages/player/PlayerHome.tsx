@@ -748,10 +748,10 @@ function TrendingCard({ item, idx, channels, onClick }: {
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "rgba(255,255,255,0.04)",
+        background: "hsla(var(--player-accent) / 0.06)",
         zIndex: hovered ? 20 : 1,
-        boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.3)" : "none",
-        border: hovered ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.06)",
+        boxShadow: hovered ? "0 4px 20px hsla(var(--player-accent) / 0.15)" : "none",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.3)" : "1px solid hsla(var(--player-accent) / 0.1)",
         transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.3s, border 0.3s",
       }}
     >
