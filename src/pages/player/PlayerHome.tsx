@@ -1092,6 +1092,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       } else setWatchHistory([]);
 
       setShopProducts((shopRes.data ?? []) as any);
+      if (settingsRes.data && typeof (settingsRes.data as any).shopping_active === "boolean") {
+        setShopActive((settingsRes.data as any).shopping_active);
+      }
       setDataLoaded(true);
     };
 
