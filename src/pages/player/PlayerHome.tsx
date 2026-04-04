@@ -53,6 +53,18 @@ interface PlaylistVideo {
 
 type Section = "home" | "streaming" | "content" | "shop" | "catalog-detail";
 
+const formatTrackText = (value?: string | null) => {
+  if (!value) return "";
+  return value
+    .toLowerCase()
+    .split(/(\s+|-|\/|—)/)
+    .map((part) => {
+      if (!part.trim() || /^(\s+|-|\/|—)$/.test(part)) return part;
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    })
+    .join("");
+};
+
 /* ─── Top Navigation Bar ─── */
 function TopNavBar({
   logoUrl,
