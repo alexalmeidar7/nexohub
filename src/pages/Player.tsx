@@ -2581,7 +2581,7 @@ export default function PlayerPage() {
                 animation: "playerCoverIn 0.5s ease-out",
                 boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px hsla(var(--player-accent) / 0.2)`,
                 border: "2px solid hsla(var(--player-accent) / 0.5)",
-                background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.3), rgba(0,0,0,0.6))",
+                background: "linear-gradient(135deg, hsl(var(--player-accent)), rgba(0,0,0,0.8))",
                 padding: "8px",
                 width: "min(380px, 30vw)",
                 height: "min(380px, 30vw)",
