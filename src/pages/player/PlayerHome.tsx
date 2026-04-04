@@ -322,13 +322,13 @@ function HeroBanner({
           </span>
           <button
             onClick={onPlay}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-200 hover:brightness-110"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all duration-200 hover:brightness-110"
             style={{
               background: "hsla(var(--player-accent) / 0.15)",
               color: "#fff",
             }}
           >
-            <Play className="h-4 w-4 fill-current" />
+            <Play className="h-3 w-3 fill-current" />
             Play
           </button>
         </div>
