@@ -159,7 +159,7 @@ export function useGlobalMusicSync() {
       const fetchCover = async () => {
         try {
           const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
-          const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(5000) });
+          const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(3000) });
           const itunesData = await itunesRes.json();
           if (itunesData.results?.length > 0) {
             const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
@@ -298,7 +298,7 @@ export function useGlobalMusicSync() {
 
     // Start immediately, poll every 3s
     fetchAndSync();
-    const interval = setInterval(fetchAndSync, 3000);
+    const interval = setInterval(fetchAndSync, 2000);
 
     // Refresh cached settings every 15s in case user changes sources
     const urlRefresh = setInterval(() => { settingsFetchedRef.current = false; }, 15000);

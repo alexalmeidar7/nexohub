@@ -1045,7 +1045,7 @@ export default function PlayerPage() {
       if (cancelled) return;
 
       const nowMs = Date.now();
-      const lockIsFresh = inFlight && nowMs - lockStartedAt < 3500;
+      const lockIsFresh = inFlight && nowMs - lockStartedAt < 2000;
       if (lockIsFresh) return;
 
       const requestId = ++activeRequestId;
@@ -1070,7 +1070,7 @@ export default function PlayerPage() {
         if (directFetchOk !== false) {
           try {
             const directRes = await fetch(cachedXmlUrl, {
-              signal: AbortSignal.timeout(1500),
+              signal: AbortSignal.timeout(1200),
               cache: "no-store",
             });
             if (directRes.ok) {
@@ -1143,7 +1143,7 @@ export default function PlayerPage() {
             (async () => {
               try {
                 const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
-                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(5000) });
+                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(3000) });
                 const itunesData = await itunesRes.json();
                 if (itunesData.results?.length > 0) {
                   const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
