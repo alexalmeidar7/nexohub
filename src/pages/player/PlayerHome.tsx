@@ -216,13 +216,14 @@ function TopNavBar({
 
       {/* Right icons */}
       <div className="flex items-center gap-3">
-        <button
-          onClick={() => setSearchOpen(true)}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors"
-          style={{ background: "rgba(255,255,255,0.06)" }}
-        >
-          <Search className="w-4 h-4" />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setSearchOpen(v => !v)}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors"
+            style={{ background: "rgba(255,255,255,0.06)" }}
+          >
+            <Search className="w-4 h-4" />
+          </button>
         <button className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors" style={{ background: "rgba(255,255,255,0.06)" }}>
           <Bell className="w-4 h-4" />
         </button>
