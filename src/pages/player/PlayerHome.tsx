@@ -617,20 +617,37 @@ function HeroBanner({
 
       </div>
 
-      {/* Carousel dots + progress bar at bottom */}
+      {/* Carousel progress indicators */}
       {slides.length > 1 && (
-        <div className="absolute bottom-6 left-8 sm:left-12 z-10 flex items-center gap-2">
+        <div className="absolute bottom-6 left-8 sm:left-12 z-10 flex items-center gap-1.5">
           {slides.map((_, idx) => (
             <button
               key={idx}
               onClick={() => goTo(idx)}
-              className="w-2.5 h-2.5 rounded-full transition-all duration-300"
+              className="relative h-[5px] rounded-full overflow-hidden transition-all duration-300"
               style={{
-                background: idx === activeIdx ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.25)",
-                transform: idx === activeIdx ? "scale(1.2)" : "scale(1)",
+                width: idx === activeIdx ? 28 : 8,
+                background: "rgba(255,255,255,0.2)",
               }}
-            />
+            >
+              {idx === activeIdx && (
+                <span
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: "hsl(var(--player-accent))",
+                    animation: `hero-fill ${INTERVAL}ms linear forwards`,
+                  }}
+                />
+              )}
+              {idx < activeIdx && (
+                <span
+                  className="absolute inset-0 rounded-full"
+                  style={{ background: "rgba(255,255,255,0.45)" }}
+                />
+              )}
+            </button>
           ))}
+          <style>{`@keyframes hero-fill { from { width: 0% } to { width: 100% } }`}</style>
         </div>
       )}
     </div>
