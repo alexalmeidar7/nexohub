@@ -2016,7 +2016,11 @@ export default function PlayerPage() {
   // Destroy any lingering MiniPlayer audio & cleanup on unmount
   useEffect(() => {
     destroyMiniAudio();
-    return () => { if (hlsRef.current) hlsRef.current.destroy(); };
+    return () => {
+      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
+      if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    };
   }, []);
 
   // Periodic clock tick to re-compute currentProg every 30s
