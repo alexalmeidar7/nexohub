@@ -2274,13 +2274,24 @@ export default function PlayerPage() {
           return <div className="absolute inset-0 pointer-events-none" style={{ background: bg, zIndex: 0 }} />;
         }
         return (
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: "radial-gradient(ellipse at 50% 100%, hsla(var(--player-accent) / 0.15), transparent 70%), linear-gradient(to bottom, #0a0a0a, #000)",
-              zIndex: 0,
-            }}
-          />
+          <>
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: "linear-gradient(to bottom, #0a0a0a, #000)",
+                zIndex: 0,
+              }}
+            />
+            {/* Accent glow — top-right corner */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                top: 0, right: 0, width: "50%", height: "60%",
+                background: "radial-gradient(ellipse at 100% 0%, hsla(var(--player-accent) / 0.18), transparent 70%)",
+                zIndex: 0,
+              }}
+            />
+          </>
         );
       })()}
 
