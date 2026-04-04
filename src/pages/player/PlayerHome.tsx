@@ -102,15 +102,45 @@ function TopNavBar({
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [musicResults, setMusicResults] = useState<{ musica: string; artista: string }[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const musicSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (searchOpen) {
       setSearchQuery("");
+      setMusicResults([]);
       setTimeout(() => searchInputRef.current?.focus(), 50);
     }
   }, [searchOpen]);
+
+  // Debounced music search
+  useEffect(() => {
+    if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current);
+    const q = searchQuery.trim();
+    if (!q || !userId) { setMusicResults([]); return; }
+    musicSearchTimer.current = setTimeout(async () => {
+      const { data } = await supabase
+        .from("musicas_tocadas")
+        .select("musica, artista")
+        .eq("user_id", userId)
+        .or(`musica.ilike.%${q}%,artista.ilike.%${q}%`)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (data) {
+        // Deduplicate by musica+artista
+        const seen = new Set<string>();
+        setMusicResults(data.filter(m => {
+          const key = `${m.musica}|${m.artista}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        }));
+      }
+    }, 300);
+    return () => { if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current); };
+  }, [searchQuery, userId]);
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -120,6 +150,8 @@ function TopNavBar({
       programas: programas.filter(p => p.nome.toLowerCase().includes(q)),
     };
   }, [searchQuery, channels, programas]);
+
+  const hasResults = searchResults.channels.length > 0 || searchResults.programas.length > 0 || musicResults.length > 0;
 
   useEffect(() => {
     if (!profileOpen) return;
