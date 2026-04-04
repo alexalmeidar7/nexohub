@@ -2620,15 +2620,6 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Empresa logo on 991-1 */}
-      {normalizeChannelNumber(canal?.numero_canal) === "991-1" && empresaLogo && playing && (
-        <img
-          src={empresaLogo}
-          alt="Logo"
-          className="absolute right-4 z-30 object-contain rounded-lg"
-          style={{ width: 100, height: 100, top: 72 }}
-        />
-      )}
 
       {/* Buffering overlay — hidden for catalog channels */}
       {streamStalled && playing && !isCatalog && (
@@ -2702,6 +2693,15 @@ export default function PlayerPage() {
                   <Mic size={14} className="text-white drop-shadow-lg" />
                   <span className="text-white text-xs font-semibold drop-shadow-lg">{currentPresenter.nome}</span>
                 </div>
+              )}
+              {/* Company logo top-right inside presenter card */}
+              {empresaLogo && (
+                <img
+                  src={empresaLogo}
+                  alt="Logo"
+                  className="absolute top-3 right-3 object-contain rounded-lg drop-shadow-lg pointer-events-none"
+                  style={{ width: 48, height: 48, zIndex: 5 }}
+                />
               )}
               {/* Heart icon bottom-right */}
               {musicData?.titulo && musicData.titulo !== "Sem título" && (
