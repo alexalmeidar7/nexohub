@@ -1133,8 +1133,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     const fetchData = async () => {
       if (authLoading) return;
       setDataLoaded(false);
-      if (user?.id) { await fetchAuthenticatedData(); return; }
       if (userSlug && userSlug !== ":userSlug") { await fetchPublicData(userSlug); return; }
+      if (user?.id) { await fetchAuthenticatedData(); return; }
       setChannels([]); setProgramas([]); setWatchHistory([]); setShopProducts([]); setDataLoaded(true);
     };
 
