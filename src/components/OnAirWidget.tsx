@@ -35,6 +35,7 @@ async function getProgramas(): Promise<Programa[]> {
     horarioInicio: p.horario_inicio,
     horarioFim: p.horario_fim,
     estudio: p.estudio || "",
+    classificacaoEtaria: p.classificacao_etaria || "",
   }));
 }
 
