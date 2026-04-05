@@ -136,6 +136,7 @@ const pageTitle: Record<Page, string> = {
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
   cenario: "vMix — Cenário Interativo",
+  fans: "Player — Fãs",
 };
 
 interface DashboardProps {
