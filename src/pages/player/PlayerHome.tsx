@@ -1242,6 +1242,26 @@ interface PlayerHomeProps {
   onBackToAccess?: () => void;
 }
 
+/* ─── Local cache helpers ─── */
+const CACHE_KEY = "player_home_cache";
+const CACHE_TTL = 5 * 60 * 1000; // 5 min
+
+function readCache(cacheId: string) {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY + "_" + cacheId);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - (parsed._ts || 0) > CACHE_TTL) return null;
+    return parsed;
+  } catch { return null; }
+}
+
+function writeCache(cacheId: string, data: Record<string, any>) {
+  try {
+    localStorage.setItem(CACHE_KEY + "_" + cacheId, JSON.stringify({ ...data, _ts: Date.now() }));
+  } catch {}
+}
+
 export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { user, signOut, loading: authLoading } = useAuth();
   useGlobalMusicSync();
@@ -1249,20 +1269,25 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+
+  // Determine cache key early
+  const cacheId = userSlug && userSlug !== ":userSlug" ? `pub_${userSlug}` : user?.id || "";
+  const cached = useMemo(() => readCache(cacheId), [cacheId]);
+
   const [activeSection, setActiveSection] = useState<Section>("home");
   const [visibleSection, setVisibleSection] = useState<Section>("home");
   const [sectionFading, setSectionFading] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [channelName, setChannelName] = useState("");
-  const [profileName, setProfileName] = useState("");
-  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
-  const [profileEmail, setProfileEmail] = useState("");
-  const [profileCity, setProfileCity] = useState("");
+  const [channels, setChannels] = useState<Channel[]>(() => cached?.channels ?? []);
+  const [logoUrl, setLogoUrl] = useState<string | null>(() => cached?.logoUrl ?? null);
+  const [channelName, setChannelName] = useState(() => cached?.channelName ?? "");
+  const [profileName, setProfileName] = useState(() => cached?.profileName ?? "");
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(() => cached?.profileAvatar ?? null);
+  const [profileEmail, setProfileEmail] = useState(() => cached?.profileEmail ?? "");
+  const [profileCity, setProfileCity] = useState(() => cached?.profileCity ?? "");
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
-  const [programas, setProgramas] = useState<Programa[]>([]);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const [programas, setProgramas] = useState<Programa[]>(() => cached?.programas ?? []);
+  const [dataLoaded, setDataLoaded] = useState(() => !!cached);
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string; capa?: string } | null>(null);
@@ -1406,6 +1431,17 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         setShopActive((settingsRes.data as any).shopping_active);
       }
       setDataLoaded(true);
+      // Write to local cache for instant next load
+      writeCache(cacheId, {
+        channels: channelsData,
+        logoUrl: empRes.data?.logo || null,
+        channelName: empRes.data?.nome || "",
+        programas: programasData,
+        profileName: profileRes.data?.nome || "",
+        profileAvatar: profileRes.data?.avatar_url || null,
+        profileEmail: profileRes.data?.email || "",
+        profileCity: [profileRes.data?.cidade, profileRes.data?.estado].filter(Boolean).join(", "),
+      });
     };
 
     const fetchPublicData = async (slug: string, attempt = 0) => {
@@ -1421,11 +1457,18 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       setShopProducts((data?.shopProducts ?? []) as any);
       if (typeof data?.shopActive === "boolean") setShopActive(data.shopActive);
       setDataLoaded(true);
+      // Cache public data
+      writeCache(cacheId, {
+        channels: data?.channels ?? [],
+        logoUrl: data?.empresa?.logo || null,
+        channelName: data?.empresa?.nome || "",
+        programas: data?.programas ?? [],
+      });
     };
 
     const fetchData = async () => {
       if (authLoading) return;
-      setDataLoaded(false);
+      if (!cached) setDataLoaded(false);
       if (userSlug && userSlug !== ":userSlug") { await fetchPublicData(userSlug); return; }
       if (user?.id) { await fetchAuthenticatedData(); return; }
       setChannels([]); setProgramas([]); setWatchHistory([]); setShopProducts([]); setDataLoaded(true);
