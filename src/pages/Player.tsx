@@ -3253,6 +3253,7 @@ export default function PlayerPage() {
                               <div className="min-w-0 flex-1">
                                 <p className="text-white/90 text-xs truncate">{t.musica}</p>
                                 <p className="text-white/40 text-[10px] truncate">{t.artista}</p>
+                                {t.programa && <p className="text-white/25 text-[8px] truncate">{t.programa}</p>}
                               </div>
                             </div>
                           ))}
