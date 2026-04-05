@@ -1861,13 +1861,35 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       </span>
                     } scrollRoot={contentScrollRef}>
                       {user && (
-                        <CatalogCard
+                        <button
                           key="__top10__"
-                          image={profileAvatar}
-                          title="Meu Top 10"
-                          subtitle="♥ músicas curtidas"
                           onClick={() => goToTop10()}
-                        />
+                          className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer flex flex-col items-center justify-center gap-3"
+                          style={{
+                            width: "160px",
+                            aspectRatio: "2/3",
+                            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.5) 0%, hsl(var(--player-bg)) 50%, hsla(var(--player-accent) / 0.3) 100%)",
+                            border: "1px solid hsla(var(--player-accent) / 0.15)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.border = "3px solid #fff";
+                            e.currentTarget.style.boxShadow = "0 4px 20px hsla(var(--player-accent) / 0.15)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.border = "1px solid hsla(var(--player-accent) / 0.15)";
+                            e.currentTarget.style.boxShadow = "none";
+                          }}
+                        >
+                          <div className="w-16 h-16 rounded-full overflow-hidden border-2 shadow-lg transition-transform duration-300 group-hover:scale-110" style={{ borderColor: "hsla(var(--player-accent) / 0.5)" }}>
+                            <img src={profileAvatar || "/avatars/usr-default.png"} alt="" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex flex-col items-center gap-0.5 px-2">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "hsla(var(--player-accent) / 0.8)" }}>♫ playlist</span>
+                            <span className="text-base font-black text-white leading-tight">Meu</span>
+                            <span className="text-2xl font-black leading-none" style={{ color: "hsl(var(--player-accent))" }}>TOP 10</span>
+                            <span className="text-[9px] text-white/40 mt-1">♥ músicas curtidas</span>
+                          </div>
+                        </button>
                       )}
                       {Object.entries(catalogGroups).map(([groupName, items]) => {
                         const primary = items[0];
