@@ -1830,6 +1830,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               {/* All sections stacked vertically */}
               <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `hsl(var(--player-bg))` }}>
 
+                {/* Canais ao Vivo + Catálogo lado a lado */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Streaming ao vivo */}
                 <section id="section-streaming" className="scroll-mt-4">
                   {!dataLoaded ? (
