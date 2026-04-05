@@ -2958,7 +2958,7 @@ export default function PlayerPage() {
         <div
           className="absolute top-0 left-0 right-0 z-[51] h-14 pointer-events-auto"
           style={{ pointerEvents: topBarVisible ? "none" : "auto" }}
-          onMouseEnter={resetTopBarTimer}
+          onMouseEnter={() => { resetTopBarTimer(); showBar(); }}
         />
       )}
 
