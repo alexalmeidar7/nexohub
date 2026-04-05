@@ -797,6 +797,7 @@ export default function PlayerPage() {
           setShopProducts(data.shopProducts || []);
           if (data.empresa?.telefone_participacao) setWhatsappPhone(data.empresa.telefone_participacao);
           if (data.empresa?.logo) setEmpresaLogo(data.empresa.logo);
+          if (data.empresa?.nome) setEmpresaNome(data.empresa.nome);
           if (data.musicData?.titulo && data.musicData.titulo !== "Sem título") {
             setMusicData({
               titulo: data.musicData.titulo,
