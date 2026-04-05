@@ -285,17 +285,24 @@ function TopNavBar({
               <User className="w-4 h-4 text-white" />
             )}
           </button>
-          {profileOpen && (
+          {profileOpen && userId && (
+            <Suspense fallback={null}>
+              <WatchProfilePopup
+                userId={userId}
+                userName={userName || "Visitante"}
+                avatarUrl={avatarUrl || null}
+                radioName={radioName}
+                onClose={() => setProfileOpen(false)}
+                onEditProfile={onEditProfile}
+                onLogout={showLogout ? onLogout : undefined}
+              />
+            </Suspense>
+          )}
+          {profileOpen && !userId && (
             <div className="absolute right-0 top-[calc(100%+8px)] z-50 animate-fade-in" style={{ minWidth: "200px" }}>
               <div className="rounded-2xl px-4 py-3 flex flex-col gap-2" style={{ background: "rgba(10,10,10,0.95)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 16px rgba(0,0,0,0.4)" }}>
                 <span className="text-sm font-bold text-white">{userName}</span>
                 <div className="w-full h-px bg-white/10" />
-                {onEditProfile && (
-                  <button onClick={() => { setProfileOpen(false); onEditProfile(); }} className="text-xs text-white/60 hover:text-white text-left py-1">Editar perfil</button>
-                )}
-                {showLogout && onLogout && (
-                  <button onClick={() => { setProfileOpen(false); onLogout(); }} className="text-xs text-white/50 hover:text-red-400 text-left py-1">Sair</button>
-                )}
                 {showSignup && onSignup && (
                   <button onClick={() => { setProfileOpen(false); onSignup(); }} className="text-xs text-left py-1" style={{ color: "hsl(var(--player-accent))" }}>Cadastre-se</button>
                 )}
