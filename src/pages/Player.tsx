@@ -3281,6 +3281,13 @@ export default function PlayerPage() {
                 <ChevronLeft size={22} />
               </button>
 
+              {/* Previous track (Top 10 playlist) */}
+              {isTop10Mode && youtubeVideos.length > 1 && (
+                <button onClick={ytPrevVideo} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }} title="Clipe anterior">
+                  <SkipBack size={16} />
+                </button>
+              )}
+
               {/* -10s (catalog only) */}
               {isCatalog && selectedVideoId && (
                 <button onClick={() => ytPostMessage("seekTo", [Math.max(0, ytCurrentTime - 10), true])} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }} title="Retroceder 10s">
@@ -3302,6 +3309,13 @@ export default function PlayerPage() {
               {isCatalog && selectedVideoId && (
                 <button onClick={() => ytPostMessage("seekTo", [Math.min(ytDuration, ytCurrentTime + 10), true])} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }} title="Avançar 10s">
                   <span className="text-[10px] font-bold">+10</span>
+                </button>
+              )}
+
+              {/* Next track (Top 10 playlist) */}
+              {isTop10Mode && youtubeVideos.length > 1 && (
+                <button onClick={ytNextVideo} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }} title="Próximo clipe">
+                  <SkipForward size={16} />
                 </button>
               )}
 
