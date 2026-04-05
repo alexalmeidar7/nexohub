@@ -2757,7 +2757,7 @@ export default function PlayerPage() {
 
       {/* Floating presenter photo — centered on screen for audio channels only */}
       {isAudio && playing && (
-        <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
+        <div className={`absolute inset-0 z-[2] flex items-center pointer-events-none transition-all duration-700 ease-out ${artistBgUrl ? "justify-start pl-[5%]" : "justify-center"}`}>
           <div className="relative flex items-center justify-center">
             {/* Vinyl disc — half visible behind presenter on the right */}
             {musicData?.titulo && musicData.titulo !== "Sem título" && !isBreakTrack && (
