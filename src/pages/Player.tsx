@@ -478,7 +478,9 @@ export default function PlayerPage() {
   const isVideo = canal?.type === "video" || canal?.type === "video_live";
 
   // Fetch artist background image from Deezer
+  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break";
   useEffect(() => {
+    if (isBreakTrack) { setArtistBgUrl(null); return; }
     const artist = musicData?.artista;
     if (!artist || artist === "Desconhecido" || !isAudio) return;
     const cacheKey = artist.toLowerCase();
@@ -500,7 +502,7 @@ export default function PlayerPage() {
       } catch {}
     })();
     return () => { cancelled = true; };
-  }, [musicData?.artista, isAudio]);
+  }, [musicData?.artista, isAudio, isBreakTrack]);
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
   
