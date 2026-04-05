@@ -69,7 +69,7 @@ function getYoutubeErrorMessage(code?: number): string {
 export default function PreRollOverlay({
   prerollUrl, prerollVideoRef, prerollLinkUrl, prerollMediaType, prerollYoutubeUrl,
   prerollBackgroundUrl, prerollAspectRatio = "16:9", prerollVideoPosition = "center",
-  onSkip, onEnded, hideSkip,
+  onSkip, onEnded, hideSkip, fullscreen,
 }: Props) {
   const [countdown, setCountdown] = useState(SKIP_DELAY);
   const [currentTime, setCurrentTime] = useState(0);
