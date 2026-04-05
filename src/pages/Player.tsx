@@ -2180,6 +2180,9 @@ export default function PlayerPage() {
     return () => { clearTimeout(unmuteTimer); clearTimeout(syncTimer); };
   }, [volume, muted, isYoutube, selectedVideoId, ytPostMessage]);
 
+  // Ref for auto-advance (avoids declaration order issue with ytNextVideo)
+  const ytNextVideoRef = useRef<() => void>(() => {});
+
   // Listen for YouTube player state messages to track currentTime/duration
   useEffect(() => {
     if (!isYoutube || !selectedVideoId) { setYtCurrentTime(0); setYtDuration(0); return; }
@@ -2191,7 +2194,7 @@ export default function PlayerPage() {
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
           // playerState 0 = ENDED → auto-advance to next video
           if (typeof data.info.playerState === "number" && data.info.playerState === 0) {
-            ytNextVideo();
+            ytNextVideoRef.current();
           }
         }
         // When iframe is ready, start listening and force HD quality
@@ -2216,7 +2219,7 @@ export default function PlayerPage() {
     const t3 = setTimeout(sendListening, 3000);
 
     return () => { window.removeEventListener("message", onMessage); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [isYoutube, selectedVideoId, ytPostMessage, ytNextVideo]);
+  }, [isYoutube, selectedVideoId, ytPostMessage]);
 
   const ytPrevVideo = useCallback(() => {
     if (youtubeVideos.length === 0) return;
