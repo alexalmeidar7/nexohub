@@ -23,6 +23,7 @@ import {
   MessageSquare,
   Loader2,
   List,
+  ListMusic,
   X,
   Captions,
   CaptionsOff,
@@ -625,7 +626,28 @@ export default function PlayerPage() {
   const [karaokeEnabled, setKaraokeEnabled] = useState(false);
   const [karaokeVisible, setKaraokeVisible] = useState(false);
 
-  // SpeechRecognition-based CC: transcribes audio in real-time
+  // Playlist popup state
+  const [playlistOpen, setPlaylistOpen] = useState(false);
+  const [recentTracks, setRecentTracks] = useState<{ musica: string; artista: string; horario: string }[]>([]);
+  const playlistRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!playlistOpen || !user) return;
+    supabase.from("musicas_tocadas").select("musica, artista, horario").eq("user_id", user.id)
+      .order("created_at", { ascending: false }).limit(20)
+      .then(({ data }) => { if (data) setRecentTracks(data); });
+  }, [playlistOpen, user]);
+
+  // Close playlist on outside click
+  useEffect(() => {
+    if (!playlistOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (playlistRef.current && !playlistRef.current.contains(e.target as Node)) setPlaylistOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [playlistOpen]);
+
   const startCCRecognition = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -3201,6 +3223,44 @@ export default function PlayerPage() {
                 >
                   <MicVocal size={16} />
                 </button>
+
+                {/* Playlist - últimas tocadas */}
+                <div className="relative" ref={playlistRef}>
+                  <button
+                    onClick={() => setPlaylistOpen(!playlistOpen)}
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 border-2 hover:border-white/70"
+                    style={{ backgroundColor: playlistOpen ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.08)", color: playlistOpen ? "#000" : "#fff", borderColor: playlistOpen ? "hsl(var(--player-accent))" : "transparent" }}
+                    title="Últimas tocadas"
+                  >
+                    <ListMusic size={16} />
+                  </button>
+                  {playlistOpen && (
+                    <div
+                      className="absolute bottom-full right-0 mb-2 w-72 max-h-80 overflow-y-auto rounded-xl border border-white/10 shadow-2xl animate-fade-in"
+                      style={{ background: "var(--player-watch-music-bg, rgba(0,0,0,0.85))", animationDuration: "0.2s" }}
+                    >
+                      <div className="sticky top-0 px-3 py-2 border-b border-white/10 flex items-center gap-2" style={{ background: "var(--player-watch-music-bg, rgba(0,0,0,0.85))" }}>
+                        <ListMusic size={14} style={{ color: "hsl(var(--player-accent))" }} />
+                        <span className="text-white/80 text-xs font-semibold">Últimas Tocadas</span>
+                      </div>
+                      {recentTracks.length === 0 ? (
+                        <p className="text-white/40 text-xs text-center py-6">Nenhuma música registrada</p>
+                      ) : (
+                        <div className="py-1">
+                          {recentTracks.map((t, i) => (
+                            <div key={i} className="flex items-center gap-2 px-3 py-2 hover:bg-white/5 transition-colors">
+                              <span className="text-white/30 text-[10px] tabular-nums w-7 text-right shrink-0">{t.horario?.slice(0, 5)}</span>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-white/90 text-xs truncate">{t.musica}</p>
+                                <p className="text-white/40 text-[10px] truncate">{t.artista}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Fullscreen */}
                 <button
