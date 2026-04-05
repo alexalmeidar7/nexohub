@@ -3198,17 +3198,6 @@ export default function PlayerPage() {
                   )}
                 </div>
 
-                {/* Playlist (catalog) */}
-                {isCatalog && (
-                  <button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 border-2 hover:border-white/70"
-                    style={{ backgroundColor: sidebarOpen ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.08)", color: sidebarOpen ? "#000" : "#fff", borderColor: sidebarOpen ? "hsl(var(--player-accent))" : "transparent" }}
-                    title={sidebarOpen ? "Fechar Playlist" : "Abrir Playlist"}
-                  >
-                    <List size={16} />
-                  </button>
-                )}
 
                 {/* Chat */}
                 {!isCatalog && (
