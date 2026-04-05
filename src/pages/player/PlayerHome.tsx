@@ -1966,6 +1966,19 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </Suspense>
           )}
 
+          {visibleSection === "top10" && (
+            <Suspense fallback={
+              <div className="flex flex-col h-full">
+                <Skeleton className="flex-1 bg-white/5" />
+              </div>
+            }>
+              <Top10DetailInline
+                avatarUrl={profileAvatar}
+                onBack={goBackFromTop10}
+              />
+            </Suspense>
+          )}
+
           {visibleSection === "shop" && shopActive && (
             <div className="px-6 sm:px-10 pt-8 pb-8">
               <h1 className="text-2xl font-bold mb-6 text-white">Loja</h1>
