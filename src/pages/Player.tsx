@@ -397,6 +397,9 @@ export default function PlayerPage() {
   const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+  const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
+  const artistBgCacheRef = useRef<Record<string, string>>({});
+
 
   // Spectrum style preference
   const [spectrumStyle, setSpectrumStyle] = useState<import("@/components/AudioSpectrum").SpectrumStyle>(() => {
@@ -469,6 +472,29 @@ export default function PlayerPage() {
   const isYoutube = canal?.type === "youtube" || canal?.type === "catalog";
   const isCatalog = canal?.type === "catalog";
   const isVideo = canal?.type === "video" || canal?.type === "video_live";
+
+  // Fetch artist background image from Deezer
+  useEffect(() => {
+    const artist = musicData?.artista;
+    if (!artist || artist === "Desconhecido" || !isAudio) return;
+    const cacheKey = artist.toLowerCase();
+    if (artistBgCacheRef.current[cacheKey]) {
+      setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
+          body: { artist },
+        });
+        if (cancelled || error || !data?.ok || !data?.url) return;
+        artistBgCacheRef.current[cacheKey] = data.url;
+        setArtistBgUrl(data.url);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [musicData?.artista, isAudio]);
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
   
@@ -2351,7 +2377,17 @@ export default function PlayerPage() {
             : `radial-gradient(ellipse ${posMap[gPos] || "at bottom center"}, ${c1} 0%, ${c2} ${gMid}%)`;
           return (
             <>
-              <div className="absolute inset-0 pointer-events-none" style={{ background: bg, zIndex: 0 }} />
+              {/* Artist background image from Deezer */}
+              {artistBgUrl && (
+                <img
+                  key={artistBgUrl}
+                  src={artistBgUrl}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
+                  style={{ opacity: 0.35, zIndex: 0, filter: "blur(30px) saturate(1.2)" }}
+                />
+              )}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: bg, zIndex: 0, opacity: artistBgUrl ? 0.7 : 1 }} />
               {/* Accent glow — top-right corner */}
               <div
                 className="absolute pointer-events-none"
