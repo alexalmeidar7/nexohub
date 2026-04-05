@@ -403,7 +403,8 @@ export default function PlayerPage() {
   // Fetch artist background image from Deezer
   useEffect(() => {
     const artist = musicData?.artista;
-    if (!artist || artist === "Desconhecido" || !isAudio) {
+    const audioType = canal?.type === "audio_live" || canal?.type === "audio";
+    if (!artist || artist === "Desconhecido" || !audioType) {
       return;
     }
     const cacheKey = artist.toLowerCase();
@@ -423,7 +424,7 @@ export default function PlayerPage() {
       } catch {}
     })();
     return () => { cancelled = true; };
-  }, [musicData?.artista, isAudio]);
+  }, [musicData?.artista, canal?.type]);
 
   // Spectrum style preference
   const [spectrumStyle, setSpectrumStyle] = useState<import("@/components/AudioSpectrum").SpectrumStyle>(() => {
