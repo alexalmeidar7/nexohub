@@ -2976,7 +2976,7 @@ export default function PlayerPage() {
       )}
 
       {/* Top hover zone — triggers top bar visibility */}
-      {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
+      {(isCatalog || !isYoutube) && !isPrerollVisible && !midrollActive && playing && (
         <div
           className="absolute top-0 left-0 right-0 z-[51] h-14 pointer-events-auto"
           style={{ pointerEvents: topBarVisible ? "none" : "auto" }}
