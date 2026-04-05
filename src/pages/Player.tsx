@@ -23,6 +23,7 @@ import {
   MessageSquare,
   Loader2,
   List,
+  ListMusic,
   X,
   Captions,
   CaptionsOff,
