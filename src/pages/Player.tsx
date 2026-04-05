@@ -2216,7 +2216,7 @@ export default function PlayerPage() {
     const t3 = setTimeout(sendListening, 3000);
 
     return () => { window.removeEventListener("message", onMessage); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [isYoutube, selectedVideoId, ytPostMessage]);
+  }, [isYoutube, selectedVideoId, ytPostMessage, ytNextVideo]);
 
   const ytPrevVideo = useCallback(() => {
     if (youtubeVideos.length === 0) return;
