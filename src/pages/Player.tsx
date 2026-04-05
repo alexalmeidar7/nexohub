@@ -617,6 +617,12 @@ export default function PlayerPage() {
   const [midrollIndex, setMidrollIndex] = useState(0);
   const [midrollTotal, setMidrollTotal] = useState(0);
 
+  // Top 10 inter-clip transitions: fade-out 10s before end, pre-roll between clips, fade-in 1.5s
+  const [top10Fading, setTop10Fading] = useState<"out" | "in" | null>(null);
+  const [top10InterPreroll, setTop10InterPreroll] = useState(false); // showing inter-clip preroll
+  const top10PendingNextRef = useRef<string | null>(null);
+  const top10FadeTriggeredRef = useRef(false);
+
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
   const [streamStalled, setStreamStalled] = useState(false);
@@ -2193,8 +2199,8 @@ export default function PlayerPage() {
         if (data?.event === "infoDelivery" && data?.info) {
           if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
-          // playerState 0 = ENDED → auto-advance to next video
-          if (typeof data.info.playerState === "number" && data.info.playerState === 0) {
+          // playerState 0 = ENDED → auto-advance to next video (skip for Top 10 — handled by fade-out logic)
+          if (typeof data.info.playerState === "number" && data.info.playerState === 0 && !isTop10Mode) {
             ytNextVideoRef.current();
           }
         }
@@ -2392,7 +2398,66 @@ export default function PlayerPage() {
     midrollTriggeredRef.current = new Set();
     setMidrollActive(false);
     setMidrollPreroll(null);
+    // Reset Top 10 fade state for new clip
+    top10FadeTriggeredRef.current = false;
+    if (isTop10Mode) {
+      setTop10Fading("in"); // Fade-in new clip over 1.5s
+      setTimeout(() => setTop10Fading(null), 1600);
+    }
   }, [selectedVideoId]);
+
+  // Top 10: fade-out 10 seconds before end and auto-advance with inter-clip pre-roll
+  useEffect(() => {
+    if (!isTop10Mode || !isYoutube || !selectedVideoId || ytDuration < 20) return;
+    if (top10FadeTriggeredRef.current) return;
+    const timeRemaining = ytDuration - ytCurrentTime;
+    if (timeRemaining <= 10 && timeRemaining > 0) {
+      top10FadeTriggeredRef.current = true;
+      setTop10Fading("out");
+      // Fade volume out over the remaining time
+      ytPostMessage("setVolume", [Math.round(volume * 0.5)]);
+      setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.2)]), 3000);
+      setTimeout(() => ytPostMessage("setVolume", [0]), 6000);
+      // After 8 seconds of fade, pause and show inter-clip preroll then advance
+      setTimeout(() => {
+        ytPostMessage("pauseVideo");
+        // Determine next video
+        const idx = youtubeVideos.findIndex(v => v.videoId === selectedVideoId);
+        const next = idx < youtubeVideos.length - 1 ? idx + 1 : 0;
+        const nextId = youtubeVideos[next]?.videoId;
+        if (!nextId) return;
+        top10PendingNextRef.current = nextId;
+        // Fetch and show pre-roll between clips
+        (async () => {
+          if (user) {
+            const now = new Date();
+            const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+            const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
+            if (data && data.length > 0) {
+              const pool = filterCampaignsByType(data, now, false);
+              if (pool.length > 0) {
+                const selected = pool[Math.floor(Math.random() * pool.length)];
+                setPrerollUrl(selected.video_url);
+                setPrerollLinkUrl((selected as any).link_url || null);
+                setPrerollMediaType((selected as any).media_type || "video");
+                setPrerollYoutubeUrl((selected as any).youtube_url || null);
+                setPrerollBackgroundUrl((selected as any).background_url || null);
+                setPrerollAspectRatio((selected as any).aspect_ratio || "16:9");
+                setPrerollVideoPosition((selected as any).video_position || "center");
+                setTop10InterPreroll(true);
+                setPrerollShowing(true);
+                return;
+              }
+            }
+          }
+          // No preroll available — advance directly
+          setTop10Fading(null);
+          handleSelectVideo(top10PendingNextRef.current!);
+          top10PendingNextRef.current = null;
+        })();
+      }, 8000);
+    }
+  }, [ytCurrentTime, ytDuration, isTop10Mode, isYoutube, selectedVideoId, volume, user, ytPostMessage, youtubeVideos, handleSelectVideo]);
 
   // Monitor currentTime and trigger mid-roll at break points
   useEffect(() => {
@@ -2648,8 +2713,26 @@ export default function PlayerPage() {
           prerollBackgroundUrl={prerollBackgroundUrl}
           prerollAspectRatio={prerollAspectRatio}
           prerollVideoPosition={prerollVideoPosition}
-          onSkip={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center"); }}
-          onEnded={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center"); }}
+          onSkip={() => {
+            const wasTop10Inter = top10InterPreroll;
+            setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center");
+            setTop10InterPreroll(false);
+            if (wasTop10Inter && top10PendingNextRef.current) {
+              setTop10Fading(null);
+              handleSelectVideo(top10PendingNextRef.current);
+              top10PendingNextRef.current = null;
+            }
+          }}
+          onEnded={() => {
+            const wasTop10Inter = top10InterPreroll;
+            setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center");
+            setTop10InterPreroll(false);
+            if (wasTop10Inter && top10PendingNextRef.current) {
+              setTop10Fading(null);
+              handleSelectVideo(top10PendingNextRef.current);
+              top10PendingNextRef.current = null;
+            }
+          }}
         />
       )}
 
@@ -2704,8 +2787,8 @@ export default function PlayerPage() {
             className="absolute pointer-events-none"
             style={{
               width: "100%", height: "100%", top: "0", left: "0", border: "none",
-              transition: "opacity 2s ease-in-out",
-              opacity: midrollFading === "out" ? 0 : 1,
+              transition: top10Fading === "in" ? "opacity 1.5s ease-in" : top10Fading === "out" ? "opacity 3s ease-out" : "opacity 2s ease-in-out",
+              opacity: midrollFading === "out" || top10Fading === "out" ? 0 : 1,
             }}
             src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd1080&origin=${window.location.origin}`}
             allow="autoplay; encrypted-media"
