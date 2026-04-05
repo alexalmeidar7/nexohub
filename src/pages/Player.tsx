@@ -958,13 +958,14 @@ export default function PlayerPage() {
 
     const virtualChannel: Canal = {
       id: "__top10__",
+      numero_canal: "",
       name: "Meu Top 10",
+      logo_url: "",
       url: `https://www.youtube.com/playlist?list=top10`,
       type: "catalog",
       active: true,
-      user_id: userId || "",
-      created_at: "",
-      updated_at: "",
+      cover_url: "",
+      background_url: "",
     };
 
     setCanais([virtualChannel]);
