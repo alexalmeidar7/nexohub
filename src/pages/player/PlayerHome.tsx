@@ -1457,6 +1457,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       setShopProducts((data?.shopProducts ?? []) as any);
       if (typeof data?.shopActive === "boolean") setShopActive(data.shopActive);
       setDataLoaded(true);
+      // Cache public data
+      writeCache(cacheId, {
+        channels: data?.channels ?? [],
+        logoUrl: data?.empresa?.logo || null,
+        channelName: data?.empresa?.nome || "",
+        programas: data?.programas ?? [],
+      });
     };
 
     const fetchData = async () => {
