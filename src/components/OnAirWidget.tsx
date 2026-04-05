@@ -95,6 +95,13 @@ export default function OnAirWidget() {
         if (data?.avatar_url) setUserAvatar(data.avatar_url);
       });
   }, [user]);
+
+  // Fetch stereo from streaming channel
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("streaming_channels").select("is_stereo").eq("user_id", user.id).eq("active", true).ilike("estudio", "%fm%").limit(1).maybeSingle()
+      .then(({ data }) => { setIsStereo(!!data?.is_stereo); });
+  }, [user]);
   useEffect(() => {
     const update = async () => {
       const [programas, apresentadores] = await Promise.all([getProgramas(), getApresentadores()]);
