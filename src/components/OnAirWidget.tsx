@@ -1,7 +1,9 @@
 import { useState, useEffect, lazy, Suspense } from "react";
-import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music } from "lucide-react";
+import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music, User } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const DashboardGradeDialog = lazy(() => import("./DashboardGradeDialog"));
 
@@ -71,6 +73,7 @@ interface ApresentadorInfo {
 }
 
 export default function OnAirWidget() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [onAir, setOnAir] = useState<{ programa: Programa; progress: number } | null>(null);
   const [apresentadorNome, setApresentadorNome] = useState("");
@@ -80,6 +83,16 @@ export default function OnAirWidget() {
   const [isHovered, setIsHovered] = useState(false);
   const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string } | null>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+
+  // Fetch user avatar
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("avatar_url, nome").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data?.avatar_url) setUserAvatar(data.avatar_url);
+      });
+  }, [user]);
   useEffect(() => {
     const update = async () => {
       const [programas, apresentadores] = await Promise.all([getProgramas(), getApresentadores()]);
@@ -209,8 +222,14 @@ export default function OnAirWidget() {
             </p>
           </div>
 
-          <div className="z-10 mb-4 pl-1">
+          <div className="z-10 mb-4 pl-1 flex items-center gap-2">
             <p className="font-semibold text-white/80 text-xs">{firstNextAp?.nome}</p>
+            <Avatar className="h-5 w-5 border border-white/20">
+              {userAvatar ? <AvatarImage src={userAvatar} alt="Você" /> : null}
+              <AvatarFallback className="bg-white/10 text-white/60 text-[8px]">
+                <User size={10} />
+              </AvatarFallback>
+            </Avatar>
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 z-10">
