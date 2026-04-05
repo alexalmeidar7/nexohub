@@ -394,7 +394,7 @@ export default function KaraokeOverlay({
     <>
       <div
         className="absolute left-0 right-0 z-[60] flex flex-col items-center animate-fade-in"
-        style={{ bottom: controlsVisible ? "90px" : "0px", transition: "bottom 0.4s ease" }}
+        style={{ bottom: controlsVisible ? "100px" : "10px", transition: "bottom 0.4s ease" }}
         onMouseEnter={handleLyricsMouseEnter}
         onMouseLeave={handleLyricsMouseLeave}
         onWheel={(e) => {
