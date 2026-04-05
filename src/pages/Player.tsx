@@ -2180,6 +2180,9 @@ export default function PlayerPage() {
     return () => { clearTimeout(unmuteTimer); clearTimeout(syncTimer); };
   }, [volume, muted, isYoutube, selectedVideoId, ytPostMessage]);
 
+  // Ref for auto-advance (avoids declaration order issue with ytNextVideo)
+  const ytNextVideoRef = useRef<() => void>(() => {});
+
   // Listen for YouTube player state messages to track currentTime/duration
   useEffect(() => {
     if (!isYoutube || !selectedVideoId) { setYtCurrentTime(0); setYtDuration(0); return; }
@@ -2189,6 +2192,10 @@ export default function PlayerPage() {
         if (data?.event === "infoDelivery" && data?.info) {
           if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
+          // playerState 0 = ENDED → auto-advance to next video
+          if (typeof data.info.playerState === "number" && data.info.playerState === 0) {
+            ytNextVideoRef.current();
+          }
         }
         // When iframe is ready, start listening and force HD quality
         if (data?.event === "onReady" || data?.event === "initialDelivery") {
@@ -2229,6 +2236,9 @@ export default function PlayerPage() {
     handleSelectVideo(youtubeVideos[next].videoId);
     setSidebarOpen(false);
   }, [youtubeVideos, selectedVideoId, handleSelectVideo]);
+
+  // Keep ref in sync for auto-advance
+  useEffect(() => { ytNextVideoRef.current = ytNextVideo; }, [ytNextVideo]);
 
   const ytTogglePlay = useCallback(() => {
     if (ytPlaying) { ytPostMessage("pauseVideo"); setYtPlaying(false); }
