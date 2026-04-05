@@ -402,6 +402,8 @@ export default function PlayerPage() {
   const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+  const [watchProfileOpen, setWatchProfileOpen] = useState(false);
+  const [empresaNome, setEmpresaNome] = useState<string | null>(null);
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
   const artistBgCacheRef = useRef<Record<string, string>>({});
 
