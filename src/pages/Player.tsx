@@ -633,7 +633,7 @@ export default function PlayerPage() {
 
   useEffect(() => {
     if (!playlistOpen || !user) return;
-    supabase.from("musicas_tocadas").select("musica, artista, horario").eq("user_id", user.id)
+    supabase.from("musicas_tocadas").select("musica, artista, horario, programa").eq("user_id", user.id)
       .order("created_at", { ascending: false }).limit(20)
       .then(({ data }) => { if (data) setRecentTracks(data); });
   }, [playlistOpen, user]);
