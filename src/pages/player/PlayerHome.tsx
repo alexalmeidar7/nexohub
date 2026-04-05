@@ -11,6 +11,7 @@ const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 const CatalogDetailInline = lazy(() => import("@/components/player/CatalogDetailInline"));
 const ProfileDialog = lazy(() => import("@/components/player/ProfileDialog"));
+const Top10DetailInline = lazy(() => import("@/components/player/Top10DetailInline"));
 
 interface Channel {
   id: string;
@@ -55,7 +56,7 @@ interface PlaylistVideo {
   published: string;
 }
 
-type Section = "home" | "streaming" | "content" | "shop" | "catalog-detail";
+type Section = "home" | "streaming" | "content" | "shop" | "catalog-detail" | "top10";
 
 const formatTrackText = (value?: string | null) => {
   if (!value) return "";
@@ -1612,6 +1613,29 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     setTimeout(() => { setVisibleSection("catalog-detail"); setSectionFading(false); }, 200);
   };
 
+  const goToTop10 = () => {
+    setSectionFading(true);
+    setTimeout(() => { setVisibleSection("top10"); setSectionFading(false); }, 200);
+  };
+
+  const goBackFromTop10 = () => {
+    setSectionFading(true);
+    setTimeout(() => {
+      setVisibleSection("home");
+      setSectionFading(false);
+      setTimeout(() => {
+        const container = contentScrollRef.current;
+        const el = document.getElementById("section-content");
+        if (container && el) {
+          const containerRect = container.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
+          const offset = elRect.top - containerRect.top + container.scrollTop;
+          container.scrollTo({ top: Math.max(0, offset - 8), behavior: "smooth" });
+        }
+      }, 50);
+    }, 200);
+  };
+
   const goBackFromCatalog = () => {
     setActiveCatalog(null);
     setSectionFading(true);
@@ -1740,10 +1764,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </div>
       )}
       {/* Main content */}
-      <div ref={contentScrollRef} className={`flex-1 h-full ${visibleSection === "catalog-detail" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
-        <div className={`transition-all duration-500 ease-in-out ${visibleSection === "catalog-detail" ? "h-full" : ""}`} style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
+      <div ref={contentScrollRef} className={`flex-1 h-full ${(visibleSection === "catalog-detail" || visibleSection === "top10") ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
+        <div className={`transition-all duration-500 ease-in-out ${(visibleSection === "catalog-detail" || visibleSection === "top10") ? "h-full" : ""}`} style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
 
-          {visibleSection !== "catalog-detail" && (
+          {visibleSection !== "catalog-detail" && visibleSection !== "top10" && (
             <>
               {/* Hero Banner with Top Nav inside */}
               <div className="relative" id="section-home">
@@ -1829,13 +1853,22 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         {[1, 2, 3, 4].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
                       </div>
                     </div>
-                  ) : Object.keys(catalogGroups).length > 0 && (
+                  ) : (
                     <ContentRow title={
                       <span className="flex items-center gap-2">
                         <LayoutGrid className="h-5 w-5" style={{ color: "hsl(var(--player-accent))" }} />
                         Catálogo
                       </span>
                     } scrollRoot={contentScrollRef}>
+                      {user && (
+                        <CatalogCard
+                          key="__top10__"
+                          image={profileAvatar}
+                          title="Meu Top 10"
+                          subtitle="♥ músicas curtidas"
+                          onClick={() => goToTop10()}
+                        />
+                      )}
                       {Object.entries(catalogGroups).map(([groupName, items]) => {
                         const primary = items[0];
                         const videoCount = items.reduce((sum, item) => sum + (playlistVideos[item.id]?.length || 0), 0);
@@ -1929,6 +1962,19 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 catalogName={activeCatalog}
                 onBack={goBackFromCatalog}
                 onPlayVideo={(chId, vidId) => goToPlayer(chId, vidId)}
+              />
+            </Suspense>
+          )}
+
+          {visibleSection === "top10" && (
+            <Suspense fallback={
+              <div className="flex flex-col h-full">
+                <Skeleton className="flex-1 bg-white/5" />
+              </div>
+            }>
+              <Top10DetailInline
+                avatarUrl={profileAvatar}
+                onBack={goBackFromTop10}
               />
             </Suspense>
           )}
