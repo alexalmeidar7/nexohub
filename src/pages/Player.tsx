@@ -485,9 +485,11 @@ export default function PlayerPage() {
     let cancelled = false;
     (async () => {
       try {
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 4000);
         const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
           body: { artist },
-        });
+        }).finally(() => clearTimeout(timeout));
         if (cancelled || error || !data?.ok || !data?.url) return;
         artistBgCacheRef.current[cacheKey] = data.url;
         setArtistBgUrl(data.url);
