@@ -502,6 +502,7 @@ export default function PlayerPage() {
 
   const handleHomeClick = useCallback(() => {
     clearMiniPlayerData();
+    setStreamRequested(false);
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
