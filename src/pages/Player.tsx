@@ -3006,8 +3006,8 @@ export default function PlayerPage() {
             )}
           </div>
 
-          {/* Right: a seguir */}
-          {nextProg && (
+          {/* Right: a seguir (hide for catalog) */}
+          {!isCatalog && nextProg && (
             <div className="hidden lg:flex items-center gap-3 shrink-0 ml-auto">
               <div className="flex flex-col items-end min-w-0">
                 <span className="text-xs font-medium" style={{ color: "hsl(var(--player-accent))" }}>a seguir:</span>
@@ -3089,10 +3089,10 @@ export default function PlayerPage() {
                 <ChevronLeft size={22} />
               </button>
 
-              {/* Skip Prev (catalog only) */}
+              {/* -10s (catalog only) */}
               {isCatalog && selectedVideoId && (
-                <button onClick={ytPrevVideo} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }} title="Vídeo anterior">
-                  <SkipBack size={18} />
+                <button onClick={() => ytPostMessage("seekTo", [Math.max(0, ytCurrentTime - 10), true])} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }} title="Retroceder 10s">
+                  <span className="text-[10px] font-bold">-10</span>
                 </button>
               )}
 
@@ -3106,10 +3106,10 @@ export default function PlayerPage() {
                 {(isCatalog ? ytPlaying : playing) ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
               </button>
 
-              {/* Skip Next (catalog only) */}
+              {/* +10s (catalog only) */}
               {isCatalog && selectedVideoId && (
-                <button onClick={ytNextVideo} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }} title="Próximo vídeo">
-                  <SkipForward size={18} />
+                <button onClick={() => ytPostMessage("seekTo", [Math.min(ytDuration, ytCurrentTime + 10), true])} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }} title="Avançar 10s">
+                  <span className="text-[10px] font-bold">+10</span>
                 </button>
               )}
 
@@ -3198,17 +3198,6 @@ export default function PlayerPage() {
                   )}
                 </div>
 
-                {/* Playlist (catalog) */}
-                {isCatalog && (
-                  <button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 border-2 hover:border-white/70"
-                    style={{ backgroundColor: sidebarOpen ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.08)", color: sidebarOpen ? "#000" : "#fff", borderColor: sidebarOpen ? "hsl(var(--player-accent))" : "transparent" }}
-                    title={sidebarOpen ? "Fechar Playlist" : "Abrir Playlist"}
-                  >
-                    <List size={16} />
-                  </button>
-                )}
 
                 {/* Chat */}
                 {!isCatalog && (
