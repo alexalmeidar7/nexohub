@@ -2846,7 +2846,7 @@ export default function PlayerPage() {
                           }}
                           className="pointer-events-auto w-full flex items-center gap-2.5 px-3 py-2.5 text-white/90 hover:bg-white/10 transition-colors text-xs"
                         >
-                          <Instagram size={14} className="text-pink-400" />
+                          <Instagram size={14} style={{ color: "hsl(var(--player-accent))" }} />
                           <span>Siga {currentPresenter.nome}</span>
                         </button>
                       )}
