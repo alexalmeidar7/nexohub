@@ -2401,17 +2401,18 @@ export default function PlayerPage() {
             : `radial-gradient(ellipse ${posMap[gPos] || "at bottom center"}, ${c1} 0%, ${c2} ${gMid}%)`;
           return (
             <>
-              {/* Artist background image from Deezer */}
+              {/* Artist background image from Deezer — full, no blur */}
               {artistBgUrl && (
                 <img
                   key={artistBgUrl}
                   src={artistBgUrl}
                   alt=""
                   className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
-                  style={{ opacity: 0.35, zIndex: 0, filter: "blur(30px) saturate(1.2)" }}
+                  style={{ opacity: 0.55, zIndex: 0 }}
                 />
               )}
-              <div className="absolute inset-0 pointer-events-none" style={{ background: bg, zIndex: 0, opacity: artistBgUrl ? 0.7 : 1 }} />
+              {/* Gradient overlay — stronger when artist image present for readability */}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: artistBgUrl ? "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.6) 100%)" : bg, zIndex: 0, opacity: 1 }} />
               {/* Accent glow — top-right corner */}
               <div
                 className="absolute pointer-events-none"
