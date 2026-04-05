@@ -3015,7 +3015,8 @@ export default function PlayerPage() {
             </button>
           )}
 
-          {/* Channel number + nav arrows */}
+          {/* Channel number + nav arrows (hide for catalog) */}
+          {!isCatalog && (
           <div className="flex items-center gap-1 shrink-0">
             <div className="flex flex-col items-center gap-0">
               {liveChannels.length > 1 && (
@@ -3029,17 +3030,23 @@ export default function PlayerPage() {
               #{canal?.numero_canal || "000"}
             </span>
           </div>
+          )}
 
           {/* agora: program name + presenter */}
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-[10px] sm:text-xs font-normal" style={{ color: "hsl(var(--player-accent))" }}>agora:</span>
+            <span className="text-[10px] sm:text-xs font-normal" style={{ color: "hsl(var(--player-accent))" }}>{isCatalog ? "assistindo:" : "agora:"}</span>
             <span key={`noar-${currentProg?.nome}-${channelAnimKey}`} className="text-xl sm:text-2xl font-black text-white leading-tight truncate" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
-              {currentProg?.nome || canal?.name || "—"}
+              {isCatalog ? (channelLabel || canal?.name || "—") : (currentProg?.nome || canal?.name || "—")}
             </span>
+            {!isCatalog && (
             <div className="flex items-center gap-1.5 mt-0.5">
               <Mic size={12} style={{ color: "hsl(var(--player-accent))" }} />
               <span className="text-xs sm:text-sm font-normal text-white/70 truncate">{currentPresenter?.nome || ""}</span>
             </div>
+            )}
+            {isCatalog && programLabel && (
+              <span className="text-xs sm:text-sm font-normal text-white/60 truncate mt-0.5">{programLabel}</span>
+            )}
           </div>
 
           {/* Right: a seguir */}
