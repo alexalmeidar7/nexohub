@@ -3031,13 +3031,31 @@ export default function PlayerPage() {
 
           {/* User avatar — far right */}
           {user && (
-            <div className={`shrink-0 ${!isCatalog && nextProg ? "" : "ml-auto"}`}>
-              <img
-                src={profileAvatar || "/avatars/usr-default.png"}
-                alt=""
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2"
+            <div className={`shrink-0 relative ${!isCatalog && nextProg ? "" : "ml-auto"}`}>
+              <button
+                onClick={() => setWatchProfileOpen(v => !v)}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden object-cover border-2 cursor-pointer transition-transform duration-200 hover:scale-110"
                 style={{ borderColor: "hsla(var(--player-accent) / 0.5)" }}
-              />
+              >
+                <img
+                  src={profileAvatar || "/avatars/usr-default.png"}
+                  alt=""
+                  className="w-full h-full object-contain"
+                />
+              </button>
+              {watchProfileOpen && (
+                <Suspense fallback={null}>
+                  <WatchProfilePopup
+                    userId={user.id}
+                    userName={userDisplayName}
+                    avatarUrl={profileAvatar}
+                    radioName={empresaNome || undefined}
+                    onClose={() => setWatchProfileOpen(false)}
+                    onEditProfile={undefined}
+                    onLogout={async () => { await signOut(); navigate("/"); }}
+                  />
+                </Suspense>
+              )}
             </div>
           )}
         </div>
