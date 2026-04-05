@@ -200,13 +200,14 @@ Deno.serve(async (req) => {
     const isShopActive = settingsRes.data?.shopping_active !== false;
     const dashboardItems = (settingsRes.data?.dashboard_items ?? null) as Record<string, any> | null;
 
-    // Try dashboard first, fallback to XML
+    // Try dashboard first, and enrich missing cover from XML when needed
     let musicResult = readMusicFromDashboard(dashboardItems);
-    if (!musicResult?.musicData && settingsRes.data?.music_xml_url) {
+    if ((!musicResult?.musicData || !musicResult.musicData.capa) && settingsRes.data?.music_xml_url) {
       const xmlMusic = await fetchMusicFromXml(settingsRes.data.music_xml_url);
-      if (xmlMusic) {
+      const mergedMusic = mergeMusicPayload(musicResult?.musicData ?? null, xmlMusic);
+      if (mergedMusic) {
         musicResult = {
-          musicData: xmlMusic,
+          musicData: mergedMusic,
           musicStartTime: typeof dashboardItems?.music_start_time === "number" ? dashboardItems.music_start_time : null,
         };
       }
