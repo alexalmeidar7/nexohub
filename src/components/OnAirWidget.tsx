@@ -1,7 +1,9 @@
 import { useState, useEffect, lazy, Suspense } from "react";
-import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music } from "lucide-react";
+import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music, User } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const DashboardGradeDialog = lazy(() => import("./DashboardGradeDialog"));
 
