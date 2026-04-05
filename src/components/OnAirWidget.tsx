@@ -16,6 +16,7 @@ interface Programa {
   horarioInicio: string;
   horarioFim: string;
   estudio: string;
+  classificacaoEtaria: string;
 }
 
 const DIAS_MAP: Record<number, string> = {
