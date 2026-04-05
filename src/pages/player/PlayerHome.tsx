@@ -1435,16 +1435,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     return () => { cancelled = true; if (retryTimer) clearTimeout(retryTimer); };
   }, [authLoading, user?.id, userSlug]);
 
-  // Fetch profile
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("profiles").select("nome, avatar_url, email, cidade, estado").eq("user_id", user.id).single().then(({ data }) => {
-      if (data?.nome) setProfileName(data.nome);
-      setProfileAvatar(data?.avatar_url && data.avatar_url.trim() !== '' ? data.avatar_url : '/avatars/usr-default.png');
-      if (data?.email) setProfileEmail(data.email);
-      setProfileCity([data?.cidade, data?.estado].filter(Boolean).join(", "));
-    });
-  }, [user]);
+  // Profile is now fetched inside the main data Promise.all above
 
   const normalizeWeekday = (value: string) =>
     value
