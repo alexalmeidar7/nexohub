@@ -588,7 +588,7 @@ export default function PlayerPage() {
   }, [isAudio]);
 
   useEffect(() => {
-    if (playing && !isCatalog && !isYoutube) {
+    if (playing && (isCatalog || (!isYoutube))) {
       if (isAudio) {
         setTopBarVisible(true);
         if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current);
