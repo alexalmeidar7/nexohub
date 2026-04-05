@@ -2379,7 +2379,7 @@ export default function PlayerPage() {
 
   // Mid-roll break points: divide video into 6 segments → 5 break points
   const midrollBreakPoints = useMemo(() => {
-    if (!isYoutube || ytDuration < 60) return []; // skip for very short videos
+    if (!isYoutube || ytDuration < 60 || isTop10Mode) return []; // skip for very short videos and Top 10 playlist
     const points: number[] = [];
     for (let i = 1; i <= 5; i++) {
       points.push((ytDuration / 6) * i);
