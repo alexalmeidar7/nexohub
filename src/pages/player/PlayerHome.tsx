@@ -1666,6 +1666,19 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       className={`fixed inset-0 text-white flex flex-col transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
       style={{ background: `hsl(var(--player-bg))` }}
     >
+      {/* Top loading bar */}
+      {!dataLoaded && (
+        <div className="absolute top-0 left-0 right-0 z-50 h-1 overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: "40%",
+              background: "linear-gradient(90deg, transparent, hsl(var(--player-accent)), transparent)",
+              animation: "player-hub-loading-bar 1.8s ease-in-out infinite",
+            }}
+          />
+        </div>
+      )}
       {/* Main content */}
       <div ref={contentScrollRef} className={`flex-1 h-full ${visibleSection === "catalog-detail" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
         <div className={`transition-all duration-500 ease-in-out ${visibleSection === "catalog-detail" ? "h-full" : ""}`} style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
