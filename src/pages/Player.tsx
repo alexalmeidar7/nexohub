@@ -626,7 +626,28 @@ export default function PlayerPage() {
   const [karaokeEnabled, setKaraokeEnabled] = useState(false);
   const [karaokeVisible, setKaraokeVisible] = useState(false);
 
-  // SpeechRecognition-based CC: transcribes audio in real-time
+  // Playlist popup state
+  const [playlistOpen, setPlaylistOpen] = useState(false);
+  const [recentTracks, setRecentTracks] = useState<{ musica: string; artista: string; horario: string }[]>([]);
+  const playlistRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!playlistOpen || !user) return;
+    supabase.from("musicas_tocadas").select("musica, artista, horario").eq("user_id", user.id)
+      .order("created_at", { ascending: false }).limit(20)
+      .then(({ data }) => { if (data) setRecentTracks(data); });
+  }, [playlistOpen, user]);
+
+  // Close playlist on outside click
+  useEffect(() => {
+    if (!playlistOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (playlistRef.current && !playlistRef.current.contains(e.target as Node)) setPlaylistOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [playlistOpen]);
+
   const startCCRecognition = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
