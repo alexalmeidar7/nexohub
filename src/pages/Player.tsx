@@ -753,6 +753,20 @@ export default function PlayerPage() {
     const hearts = Array.from({ length: 6 }, (_, i) => ({ id: Date.now() + i, x: Math.random() * 40 - 20, delay: Math.random() * 0.3 }));
     setFloatingHearts(hearts);
     setTimeout(() => setFloatingHearts([]), 1500);
+
+    // Fire-and-forget: pre-cache YouTube search for this song
+    const query = `${musicData.artista} ${musicData.titulo}`;
+    supabase.functions.invoke("youtube-search", { body: { queries: [query] } }).then(({ data }) => {
+      if (data?.results?.[0]?.videoId) {
+        supabase.from("music_likes_youtube_cache" as any).upsert({
+          user_id: user.id,
+          artista: musicData.artista,
+          titulo: musicData.titulo,
+          video_id: data.results[0].videoId,
+          thumbnail: data.results[0].thumbnail || "",
+        }, { onConflict: "user_id,artista,titulo" }).then(() => {});
+      }
+    }).catch(() => {});
   }, [user, musicData, liked]);
 
   // Fetch all initial data — 3 stages for fastest possible first paint
