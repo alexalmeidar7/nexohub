@@ -2377,7 +2377,17 @@ export default function PlayerPage() {
             : `radial-gradient(ellipse ${posMap[gPos] || "at bottom center"}, ${c1} 0%, ${c2} ${gMid}%)`;
           return (
             <>
-              <div className="absolute inset-0 pointer-events-none" style={{ background: bg, zIndex: 0 }} />
+              {/* Artist background image from Deezer */}
+              {artistBgUrl && (
+                <img
+                  key={artistBgUrl}
+                  src={artistBgUrl}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
+                  style={{ opacity: 0.35, zIndex: 0, filter: "blur(30px) saturate(1.2)" }}
+                />
+              )}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: bg, zIndex: 0, opacity: artistBgUrl ? 0.7 : 1 }} />
               {/* Accent glow — top-right corner */}
               <div
                 className="absolute pointer-events-none"
