@@ -2946,7 +2946,7 @@ export default function PlayerPage() {
         <div
           className="absolute top-0 left-0 right-0 z-50 flex items-center gap-4 px-4 sm:px-8 py-3 sm:py-4 transition-all duration-500 ease-in-out"
            style={{
-            background: "linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%)",
+            background: "linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)",
             opacity: topBarVisible ? 1 : 0,
             pointerEvents: topBarVisible ? "auto" : "none",
             transform: topBarVisible ? "translateY(0)" : "translateY(-100%)",
