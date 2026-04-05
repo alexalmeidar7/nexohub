@@ -2442,10 +2442,11 @@ export default function PlayerPage() {
               {artistBgUrl && (
                 <img
                   key={artistBgUrl}
-                  src={artistBgUrl}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
-                  style={{ opacity: 0.55, zIndex: 0 }}
+                   src={artistBgUrl}
+                   alt=""
+                   className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
+                   style={{ opacity: 0.55, zIndex: 0 }}
+                   onError={() => setArtistBgUrl(null)}
                 />
               )}
               {/* Gradient overlay — stronger when artist image present for readability */}
