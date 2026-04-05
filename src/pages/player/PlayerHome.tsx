@@ -1431,6 +1431,17 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         setShopActive((settingsRes.data as any).shopping_active);
       }
       setDataLoaded(true);
+      // Write to local cache for instant next load
+      writeCache(cacheId, {
+        channels: channelsData,
+        logoUrl: empRes.data?.logo || null,
+        channelName: empRes.data?.nome || "",
+        programas: programasData,
+        profileName: profileRes.data?.nome || "",
+        profileAvatar: profileRes.data?.avatar_url || null,
+        profileEmail: profileRes.data?.email || "",
+        profileCity: [profileRes.data?.cidade, profileRes.data?.estado].filter(Boolean).join(", "),
+      });
     };
 
     const fetchPublicData = async (slug: string, attempt = 0) => {
