@@ -2594,6 +2594,7 @@ export default function PlayerPage() {
             onSkip={handleMidrollEnd}
             onEnded={handleMidrollEnd}
             hideSkip={isCatalog}
+            fullscreen
           />
         </div>
       )}
