@@ -159,28 +159,13 @@ Deno.serve(async (req) => {
 
       const dashboardItems = (settingsData?.dashboard_items ?? null) as Record<string, any> | null;
 
-      // 1) Try dashboard_items first (instant, no network)
       const dbMusic = readMusicFromDashboard(dashboardItems);
-      if (dbMusic?.musicData) {
-        // If dashboard has data, return immediately — XML enrichment is async on admin side
-        return new Response(
-          JSON.stringify({
-            musica: dbMusic.musicData.titulo,
-            artista: dbMusic.musicData.artista,
-            capa: dbMusic.musicData.capa,
-            duracao: dbMusic.musicData.duracao || 0,
-            horario: dbMusic.musicData.horario || "",
-            musicData: dbMusic.musicData,
-            musicStartTime: dbMusic.musicStartTime,
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+      let musicData = dbMusic?.musicData ?? null;
 
-      // 2) Fallback: fetch XML directly (slower, 1.5s timeout)
-      let musicData: MusicPayload | null = null;
-      if (settingsData?.music_xml_url) {
-        musicData = await fetchMusicFromXml(settingsData.music_xml_url);
+      // If the DB snapshot still has no cover, try to enrich it from XML before returning.
+      if ((!musicData || !musicData.capa) && settingsData?.music_xml_url) {
+        const xmlMusic = await fetchMusicFromXml(settingsData.music_xml_url);
+        musicData = mergeMusicPayload(musicData, xmlMusic);
       }
 
       return new Response(
@@ -191,7 +176,7 @@ Deno.serve(async (req) => {
           duracao: musicData?.duracao || 0,
           horario: musicData?.horario || "",
           musicData,
-          musicStartTime: typeof dashboardItems?.music_start_time === "number" ? dashboardItems.music_start_time : null,
+          musicStartTime: dbMusic?.musicStartTime ?? (typeof dashboardItems?.music_start_time === "number" ? dashboardItems.music_start_time : null),
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
