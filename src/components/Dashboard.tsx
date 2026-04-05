@@ -44,6 +44,7 @@ const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
 const PropostasPage = lazy(() => import("./PropostasPage"));
 const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
+const FansPage = lazy(() => import("./FansPage"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
