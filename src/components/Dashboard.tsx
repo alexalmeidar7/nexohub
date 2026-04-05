@@ -288,7 +288,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   useEffect(() => {
-    if (currentPage !== "dashboard" && currentPage !== "configuracoes" && currentPage !== "playerconfig" && !isModuleEnabled(currentPage)) {
+    if (currentPage !== "dashboard" && currentPage !== "configuracoes" && currentPage !== "playerconfig" && currentPage !== "fans" && !isModuleEnabled(currentPage)) {
       setCurrentPage("dashboard");
     }
   }, [currentPage, enabledModules, planModules]);
