@@ -952,7 +952,48 @@ export default function PlayerPage() {
     return () => { cancelled = true; };
   }, [authLoading, isPublicMode, userId, userSlug]);
 
-  // While pre-roll is visible, warm up channel 991-1 (or first audio channel) in background
+  // Top 10 mode: inject virtual catalog channel with playlist
+  useEffect(() => {
+    if (!isTop10Mode || !top10Playlist || top10Playlist.length === 0) return;
+
+    const virtualChannel: Canal = {
+      id: "__top10__",
+      name: "Meu Top 10",
+      url: `https://www.youtube.com/playlist?list=top10`,
+      type: "catalog",
+      active: true,
+      user_id: userId || "",
+      created_at: "",
+      updated_at: "",
+    };
+
+    setCanais([virtualChannel]);
+    setCurrentIndex(0);
+
+    // Set YouTube videos from playlist
+    setYoutubeVideos(top10Playlist.map(v => ({
+      videoId: v.videoId,
+      title: v.title,
+      thumbnail: v.thumbnail,
+    })));
+
+    // Auto-select requested video
+    if (requestedVideoId) {
+      setSelectedVideoId(requestedVideoId);
+      setPlaying(true);
+      setBuffering(false);
+      setYtPlaying(true);
+    } else {
+      setSelectedVideoId(top10Playlist[0].videoId);
+      setPlaying(true);
+      setBuffering(false);
+      setYtPlaying(true);
+    }
+
+    setPrerollDone(true);
+    setLoading(false);
+  }, [isTop10Mode, top10Playlist]);
+
   useEffect(() => {
     if (!isPrerollVisible || canais.length === 0) return;
 
