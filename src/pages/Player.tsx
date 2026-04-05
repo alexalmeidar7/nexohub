@@ -2151,7 +2151,7 @@ export default function PlayerPage() {
 
 
 
-  const showBar = () => { clearTimeout(hideTimeout.current); setBarVisible(true); };
+  const showBar = () => { clearTimeout(hideTimeout.current); setBarVisible(true); resetTopBarTimer(); };
   const hideBar = () => {
     if (isAudio) return;
     clearTimeout(hideTimeout.current);
@@ -2958,7 +2958,7 @@ export default function PlayerPage() {
         <div
           className="absolute top-0 left-0 right-0 z-[51] h-14 pointer-events-auto"
           style={{ pointerEvents: topBarVisible ? "none" : "auto" }}
-          onMouseEnter={resetTopBarTimer}
+          onMouseEnter={() => { resetTopBarTimer(); showBar(); }}
         />
       )}
 
@@ -2972,8 +2972,8 @@ export default function PlayerPage() {
             pointerEvents: topBarVisible ? "auto" : "none",
             transform: topBarVisible ? "translateY(0)" : "translateY(-100%)",
           }}
-          onMouseEnter={() => { setTopBarVisible(true); if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current); }}
-          onMouseLeave={resetTopBarTimer}
+          onMouseEnter={() => { setTopBarVisible(true); if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current); showBar(); }}
+          onMouseLeave={() => { resetTopBarTimer(); hideBar(); }}
         >
           {/* Logo da empresa */}
           {empresaLogo ? (
