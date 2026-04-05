@@ -2972,8 +2972,8 @@ export default function PlayerPage() {
             pointerEvents: topBarVisible ? "auto" : "none",
             transform: topBarVisible ? "translateY(0)" : "translateY(-100%)",
           }}
-          onMouseEnter={() => { setTopBarVisible(true); if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current); }}
-          onMouseLeave={resetTopBarTimer}
+          onMouseEnter={() => { setTopBarVisible(true); if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current); showBar(); }}
+          onMouseLeave={() => { resetTopBarTimer(); hideBar(); }}
         >
           {/* Logo da empresa */}
           {empresaLogo ? (
