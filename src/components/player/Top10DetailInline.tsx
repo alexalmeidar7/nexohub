@@ -51,31 +51,91 @@ export default function Top10DetailInline({ avatarUrl, onBack }: Top10DetailInli
         return true;
       }).slice(0, 10);
 
-      const queries = unique.map(l => `${l.artista} ${l.titulo}`);
+      // Check cache first
+      const { data: cached } = await supabase
+        .from("music_likes_youtube_cache" as any)
+        .select("artista, titulo, video_id, thumbnail")
+        .eq("user_id", user.id);
 
+      if (cancelled) return;
+
+      const cacheMap = new Map<string, { video_id: string; thumbnail: string }>();
+      if (cached) {
+        for (const c of cached as any[]) {
+          cacheMap.set(`${c.artista}||${c.titulo}`, { video_id: c.video_id, thumbnail: c.thumbnail });
+        }
+      }
+
+      const results: PlaylistVideo[] = [];
+      const uncachedQueries: string[] = [];
+      const uncachedIndices: number[] = [];
+
+      for (let i = 0; i < unique.length; i++) {
+        const song = unique[i];
+        const key = `${song.artista}||${song.titulo}`;
+        const hit = cacheMap.get(key);
+        if (hit) {
+          results.push({
+            videoId: hit.video_id,
+            title: song.titulo,
+            thumbnail: hit.thumbnail || song.capa || "",
+            artist: song.artista,
+          });
+        } else {
+          uncachedQueries.push(`${song.artista} ${song.titulo}`);
+          uncachedIndices.push(i);
+          results.push({ videoId: "", title: song.titulo, thumbnail: song.capa || "", artist: song.artista });
+        }
+        if (!cancelled) setSearchProgress(i + 1);
+      }
+
+      // If all cached, we're done
+      if (uncachedQueries.length === 0) {
+        if (!cancelled) { setVideos(results); setLoading(false); }
+        return;
+      }
+
+      // Show cached results immediately
+      const cachedOnly = results.filter(r => r.videoId);
+      if (cachedOnly.length > 0 && !cancelled) setVideos(cachedOnly);
+
+      // Search only uncached songs
       try {
         const { data, error } = await supabase.functions.invoke("youtube-search", {
-          body: { queries },
+          body: { queries: uncachedQueries },
         });
 
         if (cancelled) return;
 
         if (!error && data?.results) {
-          const results: PlaylistVideo[] = [];
-          for (let i = 0; i < unique.length; i++) {
-            const song = unique[i];
-            const found = data.results.find((r: any) => r.query === queries[i]);
+          const upserts: any[] = [];
+          for (let j = 0; j < uncachedQueries.length; j++) {
+            const idx = uncachedIndices[j];
+            const song = unique[idx];
+            const found = data.results.find((r: any) => r.query === uncachedQueries[j]);
             if (found) {
-              results.push({
+              results[idx] = {
                 videoId: found.videoId,
                 title: song.titulo,
                 thumbnail: found.thumbnail || song.capa || "",
                 artist: song.artista,
+              };
+              upserts.push({
+                user_id: user.id,
+                artista: song.artista,
+                titulo: song.titulo,
+                video_id: found.videoId,
+                thumbnail: found.thumbnail || "",
               });
             }
-            if (!cancelled) setSearchProgress(i + 1);
           }
-          if (!cancelled) setVideos(results);
+          // Save to cache (fire-and-forget)
+          if (upserts.length > 0) {
+            supabase.from("music_likes_youtube_cache" as any)
+              .upsert(upserts, { onConflict: "user_id,artista,titulo" })
+              .then(() => {});
+          }
+          if (!cancelled) setVideos(results.filter(r => r.videoId));
         }
       } catch (err) {
         console.error("YouTube search failed:", err);
