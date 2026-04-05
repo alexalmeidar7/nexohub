@@ -2189,6 +2189,10 @@ export default function PlayerPage() {
         if (data?.event === "infoDelivery" && data?.info) {
           if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
+          // playerState 0 = ENDED → auto-advance to next video
+          if (typeof data.info.playerState === "number" && data.info.playerState === 0) {
+            ytNextVideo();
+          }
         }
         // When iframe is ready, start listening and force HD quality
         if (data?.event === "onReady" || data?.event === "initialDelivery") {
