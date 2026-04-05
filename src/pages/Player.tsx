@@ -49,6 +49,7 @@ const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 const AudioDualCard = lazy(() => import("@/components/AudioDualCard"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 const KaraokeOverlay = lazy(() => import("@/components/KaraokeOverlay"));
+const WatchProfilePopup = lazy(() => import("@/components/player/WatchProfilePopup"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio, destroyMiniAudio } from "@/components/player/MiniPlayerWidget";
@@ -402,6 +403,8 @@ export default function PlayerPage() {
   const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+  const [watchProfileOpen, setWatchProfileOpen] = useState(false);
+  const [empresaNome, setEmpresaNome] = useState<string | null>(null);
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
   const artistBgCacheRef = useRef<Record<string, string>>({});
 
@@ -795,6 +798,7 @@ export default function PlayerPage() {
           setShopProducts(data.shopProducts || []);
           if (data.empresa?.telefone_participacao) setWhatsappPhone(data.empresa.telefone_participacao);
           if (data.empresa?.logo) setEmpresaLogo(data.empresa.logo);
+          if (data.empresa?.nome) setEmpresaNome(data.empresa.nome);
           if (data.musicData?.titulo && data.musicData.titulo !== "Sem título") {
             setMusicData({
               titulo: data.musicData.titulo,
@@ -897,7 +901,7 @@ export default function PlayerPage() {
         const [programasRes, apresentadoresRes, empresaRes] = await Promise.all([
           supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
           supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
-          supabase.from("empresa_config").select("telefone_participacao, logo").eq("user_id", userId).maybeSingle(),
+          supabase.from("empresa_config").select("telefone_participacao, logo, nome").eq("user_id", userId).maybeSingle(),
         ]);
         if (cancelled) return;
 
@@ -906,6 +910,7 @@ export default function PlayerPage() {
         if (!apresentadoresRes.error && apresentadoresRes.data) setApresentadores(apresentadoresRes.data as Apresentador[]);
         if (!empresaRes.error && empresaRes.data?.telefone_participacao) setWhatsappPhone(empresaRes.data.telefone_participacao);
         if (!empresaRes.error && empresaRes.data?.logo) setEmpresaLogo(empresaRes.data.logo);
+        if (!empresaRes.error && empresaRes.data?.nome) setEmpresaNome(empresaRes.data.nome);
 
         // STAGE 3 — Deferred: shop products
         const currentProg = getCurrentProgram(fetchedProgramas);
@@ -3026,13 +3031,31 @@ export default function PlayerPage() {
 
           {/* User avatar — far right */}
           {user && (
-            <div className={`shrink-0 ${!isCatalog && nextProg ? "" : "ml-auto"}`}>
-              <img
-                src={profileAvatar || "/avatars/usr-default.png"}
-                alt=""
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2"
+            <div className={`shrink-0 relative ${!isCatalog && nextProg ? "" : "ml-auto"}`}>
+              <button
+                onClick={() => setWatchProfileOpen(v => !v)}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden object-cover border-2 cursor-pointer transition-transform duration-200 hover:scale-110"
                 style={{ borderColor: "hsla(var(--player-accent) / 0.5)" }}
-              />
+              >
+                <img
+                  src={profileAvatar || "/avatars/usr-default.png"}
+                  alt=""
+                  className="w-full h-full object-contain"
+                />
+              </button>
+              {watchProfileOpen && (
+                <Suspense fallback={null}>
+                  <WatchProfilePopup
+                    userId={user.id}
+                    userName={userDisplayName}
+                    avatarUrl={profileAvatar}
+                    radioName={empresaNome || undefined}
+                    onClose={() => setWatchProfileOpen(false)}
+                    onEditProfile={undefined}
+                    onLogout={async () => { await signOut(); navigate("/"); }}
+                  />
+                </Suspense>
+              )}
             </div>
           )}
         </div>
