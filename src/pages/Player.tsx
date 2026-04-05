@@ -778,7 +778,8 @@ export default function PlayerPage() {
     let cancelled = false;
     const slug = userSlug ?? null;
 
-    // PUBLIC MODE: fetch via edge function (bootstrap only once per slug)
+    // Skip fetch if Top 10 mode — playlist comes from navigation state
+    if (isTop10Mode) return;
     if (isPublicMode) {
       const alreadyBootstrapped = publicBootstrapRef.current.loaded && publicBootstrapRef.current.slug === slug;
       if (alreadyBootstrapped) {
