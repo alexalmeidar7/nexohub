@@ -2398,7 +2398,66 @@ export default function PlayerPage() {
     midrollTriggeredRef.current = new Set();
     setMidrollActive(false);
     setMidrollPreroll(null);
+    // Reset Top 10 fade state for new clip
+    top10FadeTriggeredRef.current = false;
+    if (isTop10Mode) {
+      setTop10Fading("in"); // Fade-in new clip over 1.5s
+      setTimeout(() => setTop10Fading(null), 1600);
+    }
   }, [selectedVideoId]);
+
+  // Top 10: fade-out 10 seconds before end and auto-advance with inter-clip pre-roll
+  useEffect(() => {
+    if (!isTop10Mode || !isYoutube || !selectedVideoId || ytDuration < 20) return;
+    if (top10FadeTriggeredRef.current) return;
+    const timeRemaining = ytDuration - ytCurrentTime;
+    if (timeRemaining <= 10 && timeRemaining > 0) {
+      top10FadeTriggeredRef.current = true;
+      setTop10Fading("out");
+      // Fade volume out over the remaining time
+      ytPostMessage("setVolume", [Math.round(volume * 0.5)]);
+      setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.2)]), 3000);
+      setTimeout(() => ytPostMessage("setVolume", [0]), 6000);
+      // After 8 seconds of fade, pause and show inter-clip preroll then advance
+      setTimeout(() => {
+        ytPostMessage("pauseVideo");
+        // Determine next video
+        const idx = youtubeVideos.findIndex(v => v.videoId === selectedVideoId);
+        const next = idx < youtubeVideos.length - 1 ? idx + 1 : 0;
+        const nextId = youtubeVideos[next]?.videoId;
+        if (!nextId) return;
+        top10PendingNextRef.current = nextId;
+        // Fetch and show pre-roll between clips
+        (async () => {
+          if (user) {
+            const now = new Date();
+            const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+            const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
+            if (data && data.length > 0) {
+              const pool = filterCampaignsByType(data, now, false);
+              if (pool.length > 0) {
+                const selected = pool[Math.floor(Math.random() * pool.length)];
+                setPrerollUrl(selected.video_url);
+                setPrerollLinkUrl((selected as any).link_url || null);
+                setPrerollMediaType((selected as any).media_type || "video");
+                setPrerollYoutubeUrl((selected as any).youtube_url || null);
+                setPrerollBackgroundUrl((selected as any).background_url || null);
+                setPrerollAspectRatio((selected as any).aspect_ratio || "16:9");
+                setPrerollVideoPosition((selected as any).video_position || "center");
+                setTop10InterPreroll(true);
+                setPrerollShowing(true);
+                return;
+              }
+            }
+          }
+          // No preroll available — advance directly
+          setTop10Fading(null);
+          handleSelectVideo(top10PendingNextRef.current!);
+          top10PendingNextRef.current = null;
+        })();
+      }, 8000);
+    }
+  }, [ytCurrentTime, ytDuration, isTop10Mode, isYoutube, selectedVideoId, volume, user, ytPostMessage, youtubeVideos, handleSelectVideo]);
 
   // Monitor currentTime and trigger mid-roll at break points
   useEffect(() => {
