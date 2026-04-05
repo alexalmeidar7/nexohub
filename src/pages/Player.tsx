@@ -2237,6 +2237,9 @@ export default function PlayerPage() {
     setSidebarOpen(false);
   }, [youtubeVideos, selectedVideoId, handleSelectVideo]);
 
+  // Keep ref in sync for auto-advance
+  useEffect(() => { ytNextVideoRef.current = ytNextVideo; }, [ytNextVideo]);
+
   const ytTogglePlay = useCallback(() => {
     if (ytPlaying) { ytPostMessage("pauseVideo"); setYtPlaying(false); }
     else { ytPostMessage("playVideo"); setYtPlaying(true); }
