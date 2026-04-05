@@ -1613,6 +1613,29 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     setTimeout(() => { setVisibleSection("catalog-detail"); setSectionFading(false); }, 200);
   };
 
+  const goToTop10 = () => {
+    setSectionFading(true);
+    setTimeout(() => { setVisibleSection("top10"); setSectionFading(false); }, 200);
+  };
+
+  const goBackFromTop10 = () => {
+    setSectionFading(true);
+    setTimeout(() => {
+      setVisibleSection("home");
+      setSectionFading(false);
+      setTimeout(() => {
+        const container = contentScrollRef.current;
+        const el = document.getElementById("section-content");
+        if (container && el) {
+          const containerRect = container.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
+          const offset = elRect.top - containerRect.top + container.scrollTop;
+          container.scrollTo({ top: Math.max(0, offset - 8), behavior: "smooth" });
+        }
+      }, 50);
+    }, 200);
+  };
+
   const goBackFromCatalog = () => {
     setActiveCatalog(null);
     setSectionFading(true);
