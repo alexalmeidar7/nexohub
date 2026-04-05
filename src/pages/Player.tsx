@@ -2209,12 +2209,13 @@ export default function PlayerPage() {
     const interval = setInterval(() => setClock(c => c + 1), 30000);
     return () => clearInterval(interval);
   }, []);
-  // Fast tick for music progress bar (every 1s)
+  // Fast tick for music progress bar (every 1s) — always tick when musicData has duration
   useEffect(() => {
-    if (!playing || isYoutube) return;
+    if (isYoutube) return;
+    if (!playing && !(musicData && musicData.duracao > 0)) return;
     const interval = setInterval(() => setMusicTick(t => t + 1), 1000);
     return () => clearInterval(interval);
-  }, [playing, isYoutube]);
+  }, [playing, isYoutube, musicData?.duracao]);
 
   // Filter programs by the current channel's estudio (if set)
   const filteredProgramas = useMemo(() => {
