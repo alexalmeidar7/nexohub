@@ -485,9 +485,11 @@ export default function PlayerPage() {
     let cancelled = false;
     (async () => {
       try {
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 4000);
         const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
           body: { artist },
-        });
+        }).finally(() => clearTimeout(timeout));
         if (cancelled || error || !data?.ok || !data?.url) return;
         artistBgCacheRef.current[cacheKey] = data.url;
         setArtistBgUrl(data.url);
@@ -502,6 +504,7 @@ export default function PlayerPage() {
 
   const handleHomeClick = useCallback(() => {
     clearMiniPlayerData();
+    setStreamRequested(false);
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
@@ -597,6 +600,8 @@ export default function PlayerPage() {
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
   const [streamStalled, setStreamStalled] = useState(false);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [streamRequested, setStreamRequested] = useState(false);
+  const connectRetryRef = useRef<{ chId: string | null; n: number }>({ chId: null, n: 0 });
 
   // HLS Quality selector state
   const [hlsLevels, setHlsLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
@@ -1090,7 +1095,7 @@ export default function PlayerPage() {
       };
 
       fetchPublicMusic();
-      const interval = setInterval(fetchPublicMusic, 2000);
+      const interval = setInterval(fetchPublicMusic, 3000);
       const onVisibility = () => { if (!document.hidden && !cancelled) fetchPublicMusic(); };
       document.addEventListener("visibilitychange", onVisibility);
 
@@ -1262,7 +1267,7 @@ export default function PlayerPage() {
             (async () => {
               try {
                 const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
-                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(3000) });
+                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(4000) });
                 const itunesData = await itunesRes.json();
                 if (itunesData.results?.length > 0) {
                   const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
@@ -1330,6 +1335,7 @@ export default function PlayerPage() {
       setBuffering(true);
       setPlaying(false);
       setStreamStalled(false);
+      setStreamRequested(true);
 
       const isAudioType = type === "audio_live" || type === "audio";
       const shouldResetAutoplayMute = Boolean(userInitiated && autoplayMutedRef.current && volumeRef.current > 0);
@@ -1701,6 +1707,7 @@ export default function PlayerPage() {
 
     setCurrentIndex(startIndex);
     if (first.type === "youtube" || first.type === "catalog") {
+      setStreamRequested(false);
       setPlaying(true);
       setBuffering(false);
       setSelectedVideoId(null);
@@ -1709,6 +1716,22 @@ export default function PlayerPage() {
       setTimeout(() => playStream(first.url, first.type, true), 120);
     }
   }, [canais, playing, playStream, prerollDone, isAutoplayChannel, requestedChannelId]);
+
+  // Safety net: if stream was requested but playing never became true, auto-retry once
+  useEffect(() => {
+    if (!canal || isYoutube || isCatalog || playing || !streamRequested) return;
+    if (connectRetryRef.current.chId !== canal.id) {
+      connectRetryRef.current = { chId: canal.id, n: 0 };
+    }
+    const timer = setTimeout(() => {
+      if (playing || !canal || connectRetryRef.current.chId !== canal.id) return;
+      if (connectRetryRef.current.n >= 2) return;
+      connectRetryRef.current.n += 1;
+      console.warn("[PLAYER] Auto-retry stream for", canal.name, "attempt", connectRetryRef.current.n);
+      void playStream(canal.url, canal.type, true);
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [canal, isCatalog, isYoutube, playStream, playing, streamRequested]);
 
   // Recurring pre-roll every 15 minutes
   const fetchAndShowPreroll = useCallback(async () => {
@@ -1778,6 +1801,7 @@ export default function PlayerPage() {
     setChannelNavDir(dir);
     setChannelAnimKey(prev => prev + 1);
     setCurrentIndex(nextIndex);
+    setStreamRequested(false);
 
     // Stop any playing audio/video when switching channels — full cleanup
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
@@ -2442,6 +2466,37 @@ export default function PlayerPage() {
       {/* Content wrapper with fade transition */}
       <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
 
+      {/* Fallback overlay: shown when stream requested but not yet playing */}
+      {(() => {
+        const hasMedia = Boolean(audioRef.current?.src) || Boolean(videoRef.current?.src);
+        const show = Boolean(canal) && !playing && !isYoutube && !isCatalog && (streamRequested || buffering || streamStalled || !hasMedia);
+        if (!show) return null;
+        const title = streamStalled ? "Reconectando canal..." : buffering ? "Conectando..." : "Toque para ouvir";
+        return (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-20 px-4">
+            <div className="w-full max-w-sm rounded-3xl px-6 py-7 text-center backdrop-blur-2xl" style={{ backgroundColor: "rgba(8,8,8,0.55)", border: "1px solid hsla(var(--player-accent) / 0.22)", boxShadow: "0 24px 80px rgba(0,0,0,0.45)" }}>
+              {canal?.logo_url ? (
+                <img src={canal.logo_url} alt={canal.name} className="w-20 h-20 mx-auto mb-4 object-contain rounded-2xl" />
+              ) : (
+                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center text-2xl font-black text-white/90" style={{ background: "hsla(var(--player-accent) / 0.2)" }}>{canal?.numero_canal || "?"}</div>
+              )}
+              <h1 className="text-white text-xl font-semibold">{canal?.name || "Canal"}</h1>
+              {canal?.numero_canal && <p className="text-white/55 text-xs mt-1">Canal {canal.numero_canal}</p>}
+              <div className="mt-4 flex items-center justify-center gap-2 text-white/90">
+                {(buffering || streamStalled) && <Loader2 className="animate-spin" size={18} />}
+                <span className="text-sm font-medium">{title}</span>
+              </div>
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <button onClick={handleHomeClick} className="px-4 py-2 rounded-full text-sm text-white/85 transition-opacity hover:opacity-100" style={{ backgroundColor: "rgba(255,255,255,0.08)" }}>Voltar</button>
+                <button onClick={handlePlayCanal} className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-transform hover:scale-[1.02]" style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}>
+                  <Play size={16} fill="currentColor" /> {isAudio ? "Ouvir" : "Assistir"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Catalog: Back button — top-left, styled like control bar */}
       {isCatalog && (
         <>
@@ -2895,20 +2950,6 @@ export default function PlayerPage() {
             onLyricsFound={() => setKaraokeVisible(true)}
           />
         </Suspense>
-      )}
-
-      {/* Idle state — only show if never played (no stream loaded) */}
-      {!playing && !audioRef.current?.src && !videoRef.current?.src && !isYoutube && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a1a] z-10 px-4">
-          {canal?.logo_url && <img src={canal.logo_url} alt={canal.name} className="w-20 h-20 sm:w-32 sm:h-32 object-contain mb-4 sm:mb-6 rounded-xl" />}
-          <h1 className="text-white text-xl sm:text-3xl font-bold mb-2 text-center">{canal?.name || "Nenhum canal"}</h1>
-          {canal && <p className="text-white/50 text-xs sm:text-sm mb-6 sm:mb-8">Canal {canal.numero_canal}</p>}
-          {canal && (
-            <button onClick={handlePlayCanal} className="flex items-center gap-2 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-bold text-base sm:text-lg transition-all" style={{ backgroundColor: "hsl(var(--player-accent))" }}>
-              <Play size={18} fill="white" /> Assistir
-            </button>
-          )}
-        </div>
       )}
 
       {/* Grade Dialog — lazy loaded */}
