@@ -1287,7 +1287,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [profileCity, setProfileCity] = useState(() => cached?.profileCity ?? "");
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [programas, setProgramas] = useState<Programa[]>(() => cached?.programas ?? []);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(() => !!cached);
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string; capa?: string } | null>(null);
