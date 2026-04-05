@@ -2787,8 +2787,8 @@ export default function PlayerPage() {
             className="absolute pointer-events-none"
             style={{
               width: "100%", height: "100%", top: "0", left: "0", border: "none",
-              transition: "opacity 2s ease-in-out",
-              opacity: midrollFading === "out" ? 0 : 1,
+              transition: top10Fading === "in" ? "opacity 1.5s ease-in" : top10Fading === "out" ? "opacity 3s ease-out" : "opacity 2s ease-in-out",
+              opacity: midrollFading === "out" || top10Fading === "out" ? 0 : 1,
             }}
             src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd1080&origin=${window.location.origin}`}
             allow="autoplay; encrypted-media"
