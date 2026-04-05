@@ -1504,32 +1504,43 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     catalogGroups[groupName].push(ch);
   });
 
-  // Fetch playlist videos
+  // Fetch playlist videos (deferred & parallel)
   useEffect(() => {
     if (!dataLoaded) return;
     const cats = channels.filter(ch => ch.type === "catalog");
     if (cats.length === 0) return;
+    let cancelled = false;
     const fetchPlaylists = async () => {
-      const results: Record<string, PlaylistVideo[]> = {};
-      for (const ch of cats) {
-        if (!ch.url) continue;
-        const plMatch = ch.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-        const playlistId = plMatch?.[1];
-        if (!playlistId) continue;
-        try {
-          const { data, error } = await supabase.functions.invoke("youtube-playlist", { body: { playlistId } });
+      const entries = cats
+        .map(ch => {
+          if (!ch.url) return null;
+          const plMatch = ch.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+          return plMatch?.[1] ? { id: ch.id, playlistId: plMatch[1] } : null;
+        })
+        .filter(Boolean) as { id: string; playlistId: string }[];
+      if (entries.length === 0) return;
+      const settled = await Promise.allSettled(
+        entries.map(async (e) => {
+          const { data, error } = await supabase.functions.invoke("youtube-playlist", { body: { playlistId: e.playlistId } });
           if (!error && data?.videos) {
-            const sorted = [...data.videos].sort((a: any, b: any) => {
-              if (a.published && b.published) return new Date(b.published).getTime() - new Date(a.published).getTime();
-              return 0;
-            });
-            results[ch.id] = sorted.slice(0, 20);
+            const sorted = [...data.videos].sort((a: any, b: any) =>
+              (a.published && b.published) ? new Date(b.published).getTime() - new Date(a.published).getTime() : 0
+            );
+            return { id: e.id, videos: sorted.slice(0, 20) };
           }
-        } catch {}
-      }
+          return null;
+        })
+      );
+      if (cancelled) return;
+      const results: Record<string, PlaylistVideo[]> = {};
+      settled.forEach(r => { if (r.status === "fulfilled" && r.value) results[r.value.id] = r.value.videos; });
       setPlaylistVideos(results);
     };
-    fetchPlaylists();
+    // Defer playlist fetch to after initial paint
+    const id = typeof requestIdleCallback !== "undefined"
+      ? requestIdleCallback(() => fetchPlaylists())
+      : setTimeout(() => fetchPlaylists(), 500) as unknown as number;
+    return () => { cancelled = true; typeof cancelIdleCallback !== "undefined" ? cancelIdleCallback(id) : clearTimeout(id); };
   }, [dataLoaded, channels]);
 
   const goToPlayer = (channelId?: string, videoId?: string) => {
