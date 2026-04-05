@@ -93,6 +93,7 @@ export default function OnAirWidget() {
         if (data?.avatar_url) setUserAvatar(data.avatar_url);
       });
   }, [user]);
+  useEffect(() => {
     const update = async () => {
       const [programas, apresentadores] = await Promise.all([getProgramas(), getApresentadores()]);
       const current = findCurrentProgram(programas);
