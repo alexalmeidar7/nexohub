@@ -173,17 +173,26 @@ export function useGlobalMusicSync() {
             if (cover) {
               coverCacheRef.current[cacheKey] = cover;
               const curRaw = localStorage.getItem(MUSIC_DATA_KEY);
-              if (curRaw) {
-                const cur = JSON.parse(curRaw);
-                if (cur.titulo === data.titulo && cur.artista === data.artista && !cur.capa) {
-                  localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...cur, capa: cover }));
-                }
+              if (!curRaw) return;
+
+              const cur = JSON.parse(curRaw) as { titulo?: string; artista?: string; capa?: string };
+              const sameTrack = cur.titulo === data.titulo && cur.artista === data.artista;
+              if (!sameTrack || cur.capa === cover) return;
+
+              localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...cur, capa: cover }));
+
+              if (user?.id) {
+                void mergeUserDashboardItems(user.id, {
+                  music_current_title: data.titulo,
+                  music_current_artist: data.artista,
+                  music_current_cover: cover,
+                }).catch(() => {});
               }
             }
           }
         } catch {}
       };
-      fetchCover();
+      void fetchCover();
     };
 
     const fetchXmlFromUrl = async (url: string): Promise<string | null> => {
