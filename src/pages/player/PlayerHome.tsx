@@ -1853,7 +1853,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         {[1, 2, 3, 4].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
                       </div>
                     </div>
-                  ) : Object.keys(catalogGroups).length > 0 && (
+                  ) : (
                     <ContentRow title={
                       <span className="flex items-center gap-2">
                         <LayoutGrid className="h-5 w-5" style={{ color: "hsl(var(--player-accent))" }} />
