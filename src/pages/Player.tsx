@@ -2985,7 +2985,7 @@ export default function PlayerPage() {
       )}
 
       {/* Top Header Bar — new layout: logo | channel nav | agora: program | right: a seguir */}
-      {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
+      {(isCatalog || !isYoutube) && !isPrerollVisible && !midrollActive && playing && (
         <div
           className="absolute top-0 left-0 right-0 z-50 flex items-center gap-4 px-4 sm:px-8 py-3 sm:py-4 transition-all duration-500 ease-in-out"
            style={{
