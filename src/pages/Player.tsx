@@ -617,6 +617,12 @@ export default function PlayerPage() {
   const [midrollIndex, setMidrollIndex] = useState(0);
   const [midrollTotal, setMidrollTotal] = useState(0);
 
+  // Top 10 inter-clip transitions: fade-out 10s before end, pre-roll between clips, fade-in 1.5s
+  const [top10Fading, setTop10Fading] = useState<"out" | "in" | null>(null);
+  const [top10InterPreroll, setTop10InterPreroll] = useState(false); // showing inter-clip preroll
+  const top10PendingNextRef = useRef<string | null>(null);
+  const top10FadeTriggeredRef = useRef(false);
+
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
   const [streamStalled, setStreamStalled] = useState(false);
