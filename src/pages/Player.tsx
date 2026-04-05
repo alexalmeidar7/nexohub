@@ -2980,73 +2980,76 @@ export default function PlayerPage() {
             className="absolute left-0 right-0 bottom-0 mx-auto px-5 sm:px-10 pb-5 pt-3 transition-all duration-400 ease-in-out"
             style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none", background: `linear-gradient(0deg, var(--player-watch-music-bg, rgba(0,0,0,0.6)) 0%, transparent 100%)` }}
           >
-            {/* New layout: Play circle | Scrubber | Circular icon buttons */}
-            <div className="flex items-center gap-4 sm:gap-6">
+            {/* New layout: Play circle | Time | Scrubber | Time | Icon buttons */}
+            <div className="flex items-center gap-3 sm:gap-5">
               {/* Back button — round, same size as play */}
               <button
                 onClick={handleHomeClick}
-                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
-                style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "#fff" }}
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
                 title="Voltar"
               >
-                <ChevronLeft size={24} />
+                <ChevronLeft size={22} />
               </button>
 
               {/* Play/Pause — large accent circle */}
               <button
                 onClick={handlePlayCanal}
-                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
                 style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000", boxShadow: "0 0 20px hsla(var(--player-accent) / 0.4)" }}
                 title={playing ? "Pausar" : "Reproduzir"}
               >
-                {playing ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-0.5" />}
+                {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
               </button>
 
-              {/* Scrubber bar */}
-              <div className="flex-1 min-w-0">
-                {(() => {
-                  void musicTick;
-                  let musicElapsed = 0;
-                  let musicTotal = musicData?.duracao || 0;
-                  if (musicTotal > 0) {
-                    if (musicData?.horario) {
-                      const now = new Date();
-                      const parts = musicData.horario.split(":").map(Number);
-                      const startDate = new Date(now);
-                      startDate.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
-                      musicElapsed = Math.max(0, (now.getTime() - startDate.getTime()) / 1000);
+              {/* Elapsed time + Scrubber + Total time */}
+              {(() => {
+                void musicTick;
+                let musicElapsed = 0;
+                let musicTotal = musicData?.duracao || 0;
+                if (musicTotal > 0) {
+                  if (musicData?.horario) {
+                    const now = new Date();
+                    const parts = musicData.horario.split(":").map(Number);
+                    const startDate = new Date(now);
+                    startDate.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+                    musicElapsed = Math.max(0, (now.getTime() - startDate.getTime()) / 1000);
+                    if (musicElapsed > musicTotal) musicElapsed = musicTotal;
+                  }
+                  if (musicElapsed <= 0) {
+                    const startStr = localStorage.getItem("masterview_music_start");
+                    if (startStr) {
+                      musicElapsed = Math.max(0, (Date.now() - parseInt(startStr, 10)) / 1000);
                       if (musicElapsed > musicTotal) musicElapsed = musicTotal;
                     }
-                    if (musicElapsed <= 0) {
-                      const startStr = localStorage.getItem("masterview_music_start");
-                      if (startStr) {
-                        musicElapsed = Math.max(0, (Date.now() - parseInt(startStr, 10)) / 1000);
-                        if (musicElapsed > musicTotal) musicElapsed = musicTotal;
-                      }
-                    }
                   }
-                  const musicPct = musicTotal > 0 ? Math.min(100, (musicElapsed / musicTotal) * 100) : 0;
-                  return (
-                    <div className="w-full group cursor-pointer">
-                      <div className="w-full h-[3px] rounded-full overflow-hidden group-hover:h-[5px] transition-all" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
+                }
+                const musicPct = musicTotal > 0 ? Math.min(100, (musicElapsed / musicTotal) * 100) : 0;
+                const fmtMusicTime = (s: number) => { const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, "0")}`; };
+                return (
+                  <div className="flex-1 min-w-0 flex items-center gap-2.5">
+                    <span className="text-[11px] tabular-nums text-white/60 shrink-0 w-9 text-right">{musicTotal > 0 ? fmtMusicTime(musicElapsed) : "0:00"}</span>
+                    <div className="flex-1 min-w-0 group cursor-pointer">
+                      <div className="w-full h-[3px] rounded-full overflow-hidden group-hover:h-[5px] transition-all" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
                         <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "hsl(var(--player-accent))", boxShadow: `0 0 8px hsla(var(--player-accent) / 0.5)` }} />
                       </div>
                     </div>
-                  );
-                })()}
-              </div>
+                    <span className="text-[11px] tabular-nums text-white/60 shrink-0 w-9">{musicTotal > 0 ? fmtMusicTime(musicTotal) : "0:00"}</span>
+                  </div>
+                );
+              })()}
 
-              {/* Circular icon buttons — accent colored */}
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Icon buttons — white outlined style */}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {/* Volume */}
                 <div className="relative" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
                   <button
                     onClick={toggleMuteWithOsd}
-                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105"
-                    style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 border-2 border-transparent hover:border-white/70"
+                    style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
                     title={muted ? "Ativar som" : "Desativar som"}
                   >
-                    {muted ? <VolumeX size={18} /> : volume < 50 ? <Volume1 size={18} /> : <Volume2 size={18} />}
+                    {muted ? <VolumeX size={16} /> : volume < 50 ? <Volume1 size={16} /> : <Volume2 size={16} />}
                   </button>
                   {volumeHover && (
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 border border-white/10 shadow-xl" style={{ backgroundColor: "rgba(10,10,10,0.92)" }}>
@@ -3066,22 +3069,22 @@ export default function PlayerPage() {
                 {/* Chat */}
                 <button
                   onClick={() => setChatOpen(!chatOpen)}
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105"
-                  style={{ backgroundColor: chatOpen ? "hsl(var(--player-accent))" : "hsl(var(--player-accent))", color: "#000" }}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 border-2 hover:border-white/70"
+                  style={{ backgroundColor: chatOpen ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.08)", color: chatOpen ? "#000" : "#fff", borderColor: chatOpen ? "hsl(var(--player-accent))" : "transparent" }}
                   title="Chat ao Vivo"
                 >
-                  <MessageSquare size={18} />
+                  <MessageSquare size={16} />
                 </button>
 
                 {/* Shop */}
                 {shopActive && (
                   <button
                     onClick={() => setShopOpen(!shopOpen)}
-                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 relative"
-                    style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 relative border-2 hover:border-white/70"
+                    style={{ backgroundColor: shopOpen ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.08)", color: shopOpen ? "#000" : "#fff", borderColor: shopOpen ? "hsl(var(--player-accent))" : "transparent" }}
                     title="Shopping ao Vivo"
                   >
-                    <ShoppingCart size={18} />
+                    <ShoppingCart size={16} />
                     {showShopIcon && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-white border-2" style={{ borderColor: "hsl(var(--player-accent))" }} />}
                   </button>
                 )}
@@ -3089,21 +3092,21 @@ export default function PlayerPage() {
                 {/* Karaoke */}
                 <button
                   onClick={() => setKaraokeEnabled(!karaokeEnabled)}
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105"
-                  style={{ backgroundColor: karaokeEnabled ? "hsl(var(--player-accent))" : "hsl(var(--player-accent))", color: "#000" }}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 border-2 hover:border-white/70"
+                  style={{ backgroundColor: karaokeEnabled ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.08)", color: karaokeEnabled ? "#000" : "#fff", borderColor: karaokeEnabled ? "hsl(var(--player-accent))" : "transparent" }}
                   title={karaokeEnabled ? "Desativar Karaokê" : "Karaokê"}
                 >
-                  <MicVocal size={18} />
+                  <MicVocal size={16} />
                 </button>
 
                 {/* Fullscreen */}
                 <button
                   onClick={toggleFullscreen}
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105"
-                  style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 border-2 border-transparent hover:border-white/70"
+                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
                   title={fullscreen ? "Sair tela cheia" : "Tela cheia"}
                 >
-                  {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+                  {fullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
                 </button>
               </div>
             </div>
