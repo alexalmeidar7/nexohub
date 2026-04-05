@@ -2558,49 +2558,6 @@ export default function PlayerPage() {
         );
       })()}
 
-      {/* Catalog: Back button — top-left, styled like control bar */}
-      {isCatalog && (
-        <>
-          {/* Top-left hover zone — only shows back button, NOT control bar */}
-          <div
-            className="absolute top-0 left-0 z-[61] w-48 h-20"
-            onMouseEnter={() => setBackBtnVisible(true)}
-            onMouseLeave={() => setBackBtnVisible(false)}
-          >
-            <div
-              className="absolute top-4 left-5 transition-all duration-300 ease-out"
-              style={{
-                opacity: backBtnVisible || barVisible ? 1 : 0,
-                transform: backBtnVisible || barVisible ? "translateY(0)" : "translateY(-12px)",
-                pointerEvents: backBtnVisible || barVisible ? "auto" : "none",
-              }}
-            >
-              <button
-                onClick={() => {
-                  setPageFadeOut(true);
-                  const navState = (location.state ?? {}) as { fromPath?: string; fromCatalog?: string | null };
-                  if (navState.fromPath) {
-                    setTimeout(() => navigate(navState.fromPath), 300);
-                    return;
-                  }
-                  const basePath = userSlug
-                    ? `/user/${userSlug}/nexohub/player`
-                    : "/user/nexohub/player";
-                  const catalogName = navState.fromCatalog || canal?.catalog_name;
-                  const catalogParam = catalogName ? `?catalog=${encodeURIComponent(catalogName)}` : "";
-                  setTimeout(() => navigate(`${basePath}${catalogParam}`), 300);
-                }}
-                className="group flex items-center gap-2 pl-2.5 pr-4 py-2 rounded-full text-player-foreground/80 hover:text-player-foreground text-xs font-semibold tracking-wide transition-all duration-200 backdrop-blur-2xl border border-player-border hover:border-player-foreground/20 bg-player-surface hover:bg-player-surface-hover shadow-lg hover:shadow-xl"
-              >
-                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-player-foreground/10 group-hover:bg-player-accent transition-colors duration-200">
-                  <ChevronLeft size={13} className="group-hover:text-player-foreground transition-colors" />
-                </span>
-                Voltar
-              </button>
-            </div>
-          </div>
-        </>
-      )}
       {/* Pre-Roll Overlay */}
       {((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing)) && (
         <PreRollOverlay
