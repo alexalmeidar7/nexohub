@@ -16,6 +16,7 @@ interface Programa {
   horarioInicio: string;
   horarioFim: string;
   estudio: string;
+  classificacaoEtaria: string;
 }
 
 const DIAS_MAP: Record<number, string> = {
@@ -34,6 +35,7 @@ async function getProgramas(): Promise<Programa[]> {
     horarioInicio: p.horario_inicio,
     horarioFim: p.horario_fim,
     estudio: p.estudio || "",
+    classificacaoEtaria: p.classificacao_etaria || "",
   }));
 }
 
@@ -83,6 +85,7 @@ export default function OnAirWidget() {
   const [isHovered, setIsHovered] = useState(false);
   const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string } | null>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
+  const [isStereo, setIsStereo] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
   // Fetch user avatar
@@ -92,6 +95,13 @@ export default function OnAirWidget() {
       .then(({ data }) => {
         if (data?.avatar_url) setUserAvatar(data.avatar_url);
       });
+  }, [user]);
+
+  // Fetch stereo from streaming channel
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("streaming_channels").select("is_stereo").eq("user_id", user.id).eq("active", true).ilike("estudio", "%fm%").limit(1).maybeSingle()
+      .then(({ data }) => { setIsStereo(!!data?.is_stereo); });
   }, [user]);
   useEffect(() => {
     const update = async () => {
@@ -274,7 +284,31 @@ export default function OnAirWidget() {
         </div>
 
         <div className="flex-1 flex flex-col justify-center z-10">
-          <p className="font-bold text-white text-lg leading-tight line-clamp-2" style={{ maxWidth: "55%" }}>{programa.nome}</p>
+          <div className="flex items-center gap-1.5" style={{ maxWidth: "55%" }}>
+            <p className="font-bold text-white text-lg leading-tight line-clamp-2">{programa.nome}</p>
+            {programa.classificacaoEtaria && (
+              <span className="shrink-0 rounded px-1 py-0.5 text-[8px] font-bold leading-none text-white"
+                style={{
+                  backgroundColor:
+                    programa.classificacaoEtaria === "L" ? "#00a651" :
+                    programa.classificacaoEtaria === "10" ? "#0095d9" :
+                    programa.classificacaoEtaria === "12" ? "#f5a623" :
+                    programa.classificacaoEtaria === "14" ? "#e67e22" :
+                    programa.classificacaoEtaria === "16" ? "#e74c3c" :
+                    programa.classificacaoEtaria === "18" ? "#1a1a1a" : "#666",
+                }}
+              >
+                {programa.classificacaoEtaria === "L" ? "L" : `${programa.classificacaoEtaria}`}
+              </span>
+            )}
+            {isStereo && (
+              <span className="shrink-0 rounded px-1 py-0.5 text-[7px] font-bold leading-none tracking-wide"
+                style={{ color: "var(--layout-accent-color)", border: "1px solid var(--layout-accent-color)", opacity: 0.7 }}
+              >
+                STEREO
+              </span>
+            )}
+          </div>
           <p className="text-white/50 text-[10px] whitespace-nowrap mt-1">
             {programa.horarioInicio} — {programa.horarioFim}
           </p>

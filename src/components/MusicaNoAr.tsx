@@ -368,6 +368,7 @@ export default function MusicaNoAr() {
         horarioInicio: p.horario_inicio,
         horarioFim: p.horario_fim,
         estudio: p.estudio || "",
+        classificacaoEtaria: p.classificacao_etaria || "",
       }));
       const current = findCurrentProgram(programas);
       if (current) {
