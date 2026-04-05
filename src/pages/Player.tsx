@@ -3006,8 +3006,8 @@ export default function PlayerPage() {
             )}
           </div>
 
-          {/* Right: a seguir */}
-          {nextProg && (
+          {/* Right: a seguir (hide for catalog) */}
+          {!isCatalog && nextProg && (
             <div className="hidden lg:flex items-center gap-3 shrink-0 ml-auto">
               <div className="flex flex-col items-end min-w-0">
                 <span className="text-xs font-medium" style={{ color: "hsl(var(--player-accent))" }}>a seguir:</span>
