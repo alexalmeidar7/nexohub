@@ -1105,14 +1105,37 @@ export default function PlayerPage() {
       };
 
       fetchPublicMusic();
-      const interval = setInterval(fetchPublicMusic, 3000);
+      const interval = setInterval(fetchPublicMusic, 5000); // Fallback polling (Realtime is primary)
       const onVisibility = () => { if (!document.hidden && !cancelled) fetchPublicMusic(); };
       document.addEventListener("visibilitychange", onVisibility);
+
+      // Realtime subscription on user_settings for instant music updates
+      let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+      if (publicUserId) {
+        realtimeChannel = supabase
+          .channel(`public-music-${publicUserId}`)
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "user_settings", filter: `user_id=eq.${publicUserId}` },
+            (payload) => {
+              if (cancelled) return;
+              const items = (payload.new as any)?.dashboard_items;
+              if (items && typeof items === "object") {
+                const m = items.musicData || items.music;
+                if (m) applyPublicMusic(m, typeof m.startTime === "number" ? m.startTime : null);
+              }
+              // Also trigger a full fetch for any data the Realtime payload may not include
+              fetchPublicMusic();
+            }
+          )
+          .subscribe();
+      }
 
       return () => {
         cancelled = true;
         clearInterval(interval);
         document.removeEventListener("visibilitychange", onVisibility);
+        if (realtimeChannel) supabase.removeChannel(realtimeChannel);
       };
     }
 
