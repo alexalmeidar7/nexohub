@@ -85,7 +85,7 @@ export default function OnAirWidget() {
   const [isHovered, setIsHovered] = useState(false);
   const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string } | null>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [isStereo, setIsStereo] = useState(false);
 
   // Fetch user avatar
   useEffect(() => {
