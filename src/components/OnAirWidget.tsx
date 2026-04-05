@@ -222,8 +222,14 @@ export default function OnAirWidget() {
             </p>
           </div>
 
-          <div className="z-10 mb-4 pl-1">
+          <div className="z-10 mb-4 pl-1 flex items-center gap-2">
             <p className="font-semibold text-white/80 text-xs">{firstNextAp?.nome}</p>
+            <Avatar className="h-5 w-5 border border-white/20">
+              {userAvatar ? <AvatarImage src={userAvatar} alt="Você" /> : null}
+              <AvatarFallback className="bg-white/10 text-white/60 text-[8px]">
+                <User size={10} />
+              </AvatarFallback>
+            </Avatar>
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 z-10">
