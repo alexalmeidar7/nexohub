@@ -278,18 +278,27 @@ export default function PreRollOverlay({
 
   return (
     <div
-      className="absolute inset-0 z-[70] flex items-center p-8"
+      className="absolute inset-0 z-[70] flex items-center"
       style={{
-        background: hasCustomBg
-          ? `url(${prerollBackgroundUrl}) center/cover no-repeat`
-          : "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
-        justifyContent: containerJustify,
+        ...(fullscreen
+          ? { background: "#000", justifyContent: "center", padding: 0 }
+          : {
+              background: hasCustomBg
+                ? `url(${prerollBackgroundUrl}) center/cover no-repeat`
+                : "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
+              justifyContent: containerJustify,
+              padding: "2rem",
+            }),
       }}
     >
       {/* Container principal */}
       <div
-        className="relative shadow-2xl overflow-hidden"
-        style={{
+        className={`relative overflow-hidden ${fullscreen ? "" : "shadow-2xl"}`}
+        style={fullscreen ? {
+          width: "100%",
+          height: "100%",
+          backgroundColor: "#000",
+        } : {
           aspectRatio: prerollAspectRatio === "9:16" ? "9 / 16" : "16 / 9",
           ...(prerollAspectRatio === "9:16"
             ? { height: "80%", maxHeight: "calc(100vh - 8rem)" }
