@@ -44,11 +44,12 @@ const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
 const PropostasPage = lazy(() => import("./PropostasPage"));
 const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
+const FansPage = lazy(() => import("./FansPage"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans";
 
 // Sidebar structured menu
 interface MenuItem {
@@ -74,6 +75,7 @@ const sidebarMenu: MenuItem[] = [
     icon: MonitorPlay, label: "player", children: [
       { icon: Settings, label: "configurações", page: "playerconfig" },
       { icon: Film, label: "roll", page: "preroll" },
+      { icon: Heart, label: "fãs", page: "fans" },
       { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
     ]
   },
@@ -135,6 +137,7 @@ const pageTitle: Record<Page, string> = {
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
   cenario: "vMix — Cenário Interativo",
+  fans: "Player — Fãs",
 };
 
 interface DashboardProps {
@@ -269,7 +272,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [user, initialLoading, findCurrentOnAirThumb]);
 
   const isModuleEnabled = (page: Page): boolean => {
-    if (page === "dashboard" || page === "configuracoes" || page === "playerconfig" || page === "cortevideo" || page === "tp") return true;
+    if (page === "dashboard" || page === "configuracoes" || page === "playerconfig" || page === "cortevideo" || page === "tp" || page === "fans") return true;
 
     const modulesSource = planModules ?? enabledModules;
     if (!modulesSource) return true;
@@ -286,7 +289,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   useEffect(() => {
-    if (currentPage !== "dashboard" && currentPage !== "configuracoes" && currentPage !== "playerconfig" && !isModuleEnabled(currentPage)) {
+    if (currentPage !== "dashboard" && currentPage !== "configuracoes" && currentPage !== "playerconfig" && currentPage !== "fans" && !isModuleEnabled(currentPage)) {
       setCurrentPage("dashboard");
     }
   }, [currentPage, enabledModules, planModules]);
@@ -671,6 +674,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "propostas" && <PropostasPage />}
               {currentPage === "tp" && <TeleprompterPage />}
               {currentPage === "cenario" && <CenarioInterativoPage />}
+              {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
             </Suspense>
           </div>
         </main>
