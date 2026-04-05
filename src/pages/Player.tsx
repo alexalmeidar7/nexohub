@@ -472,6 +472,29 @@ export default function PlayerPage() {
   const isYoutube = canal?.type === "youtube" || canal?.type === "catalog";
   const isCatalog = canal?.type === "catalog";
   const isVideo = canal?.type === "video" || canal?.type === "video_live";
+
+  // Fetch artist background image from Deezer
+  useEffect(() => {
+    const artist = musicData?.artista;
+    if (!artist || artist === "Desconhecido" || !isAudio) return;
+    const cacheKey = artist.toLowerCase();
+    if (artistBgCacheRef.current[cacheKey]) {
+      setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
+          body: { artist },
+        });
+        if (cancelled || error || !data?.ok || !data?.url) return;
+        artistBgCacheRef.current[cacheKey] = data.url;
+        setArtistBgUrl(data.url);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [musicData?.artista, isAudio]);
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
   
