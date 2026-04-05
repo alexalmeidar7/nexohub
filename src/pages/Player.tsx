@@ -1105,7 +1105,7 @@ export default function PlayerPage() {
       };
 
       fetchPublicMusic();
-      const interval = setInterval(fetchPublicMusic, 5000); // Fallback polling (Realtime is primary)
+      const interval = setInterval(fetchPublicMusic, 3000); // Fallback polling every 3s (Realtime is primary)
       const onVisibility = () => { if (!document.hidden && !cancelled) fetchPublicMusic(); };
       document.addEventListener("visibilitychange", onVisibility);
 
