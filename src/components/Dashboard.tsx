@@ -674,6 +674,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "propostas" && <PropostasPage />}
               {currentPage === "tp" && <TeleprompterPage />}
               {currentPage === "cenario" && <CenarioInterativoPage />}
+              {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
             </Suspense>
           </div>
         </main>
