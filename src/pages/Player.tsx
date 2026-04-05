@@ -3014,7 +3014,6 @@ export default function PlayerPage() {
                 <span className="text-xs font-medium" style={{ color: "hsl(var(--player-accent))" }}>a seguir:</span>
                 <span className="text-sm sm:text-base font-bold text-white leading-tight truncate max-w-[200px]">{nextProg.nome}</span>
               </div>
-              {/* Next presenter avatar */}
               {nextPresenter?.foto ? (
                 <img src={nextPresenter.foto} alt={nextPresenter.nome} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover" style={{ backgroundColor: "hsl(var(--player-accent) / 0.3)" }} />
               ) : (
@@ -3022,6 +3021,18 @@ export default function PlayerPage() {
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* User avatar — far right */}
+          {user && (
+            <div className={`shrink-0 ${!isCatalog && nextProg ? "" : "ml-auto"}`}>
+              <img
+                src={profileAvatar || "/avatars/usr-default.png"}
+                alt=""
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2"
+                style={{ borderColor: "hsla(var(--player-accent) / 0.5)" }}
+              />
             </div>
           )}
         </div>
