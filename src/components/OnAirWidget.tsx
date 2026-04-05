@@ -73,6 +73,7 @@ interface ApresentadorInfo {
 }
 
 export default function OnAirWidget() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [onAir, setOnAir] = useState<{ programa: Programa; progress: number } | null>(null);
   const [apresentadorNome, setApresentadorNome] = useState("");
@@ -82,7 +83,16 @@ export default function OnAirWidget() {
   const [isHovered, setIsHovered] = useState(false);
   const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string } | null>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+
+  // Fetch user avatar
   useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("avatar_url, nome").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data?.avatar_url) setUserAvatar(data.avatar_url);
+      });
+  }, [user]);
     const update = async () => {
       const [programas, apresentadores] = await Promise.all([getProgramas(), getApresentadores()]);
       const current = findCurrentProgram(programas);
