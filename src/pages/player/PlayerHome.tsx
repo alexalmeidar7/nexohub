@@ -1860,6 +1860,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         Catálogo
                       </span>
                     } scrollRoot={contentScrollRef}>
+                      {user && (
+                        <CatalogCard
+                          key="__top10__"
+                          image={profileAvatar}
+                          title="Meu Top 10"
+                          subtitle="♥ músicas curtidas"
+                          onClick={() => goToTop10()}
+                        />
+                      )}
                       {Object.entries(catalogGroups).map(([groupName, items]) => {
                         const primary = items[0];
                         const videoCount = items.reduce((sum, item) => sum + (playlistVideos[item.id]?.length || 0), 0);
