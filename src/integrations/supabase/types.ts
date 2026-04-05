@@ -544,6 +544,36 @@ export type Database = {
         }
         Relationships: []
       }
+      music_likes_youtube_cache: {
+        Row: {
+          artista: string
+          created_at: string
+          id: string
+          thumbnail: string
+          titulo: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          artista: string
+          created_at?: string
+          id?: string
+          thumbnail?: string
+          titulo: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          artista?: string
+          created_at?: string
+          id?: string
+          thumbnail?: string
+          titulo?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
       musicas_tocadas: {
         Row: {
           artista: string
