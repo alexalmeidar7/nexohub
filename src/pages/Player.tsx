@@ -348,12 +348,16 @@ export default function PlayerPage() {
   const [searchParams] = useSearchParams();
   const requestedChannelId = searchParams.get("ch");
   const requestedVideoId = searchParams.get("vid");
+  const isTop10Mode = searchParams.get("top10") === "1";
   const navigate = useNavigate();
   const location = useLocation();
   const isPublicMode = !!userSlug;
   const playerHomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home", [userSlug]);
   const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
+
+  // Top 10 playlist from navigation state
+  const top10Playlist = (location.state as any)?.top10Playlist as { videoId: string; title: string; thumbnail: string; artist: string }[] | undefined;
 
   // Diagnostic logs — disabled in production
   // useEffect(() => { console.log("[PLAYER-DIAG] Auth/user state changed", { userId, authLoading }); }, [userId, authLoading]);
@@ -948,7 +952,49 @@ export default function PlayerPage() {
     return () => { cancelled = true; };
   }, [authLoading, isPublicMode, userId, userSlug]);
 
-  // While pre-roll is visible, warm up channel 991-1 (or first audio channel) in background
+  // Top 10 mode: inject virtual catalog channel with playlist
+  useEffect(() => {
+    if (!isTop10Mode || !top10Playlist || top10Playlist.length === 0) return;
+
+    const virtualChannel: Canal = {
+      id: "__top10__",
+      numero_canal: "",
+      name: "Meu Top 10",
+      logo_url: "",
+      url: `https://www.youtube.com/playlist?list=top10`,
+      type: "catalog",
+      active: true,
+      cover_url: "",
+      background_url: "",
+    };
+
+    setCanais([virtualChannel]);
+    setCurrentIndex(0);
+
+    // Set YouTube videos from playlist
+    setYoutubeVideos(top10Playlist.map(v => ({
+      videoId: v.videoId,
+      title: v.title,
+      thumbnail: v.thumbnail,
+    })));
+
+    // Auto-select requested video
+    if (requestedVideoId) {
+      setSelectedVideoId(requestedVideoId);
+      setPlaying(true);
+      setBuffering(false);
+      setYtPlaying(true);
+    } else {
+      setSelectedVideoId(top10Playlist[0].videoId);
+      setPlaying(true);
+      setBuffering(false);
+      setYtPlaying(true);
+    }
+
+    setPrerollDone(true);
+    setLoading(false);
+  }, [isTop10Mode, top10Playlist]);
+
   useEffect(() => {
     if (!isPrerollVisible || canais.length === 0) return;
 
@@ -1003,6 +1049,9 @@ export default function PlayerPage() {
 
   // Fetch YouTube playlist videos OR handle individual video URLs
   useEffect(() => {
+    // Skip if Top 10 mode — playlist is already set from navigation state
+    if (isTop10Mode) return;
+
     if (!isYoutube || !canal?.url) {
       setYoutubeVideos([]);
       setSelectedVideoId(null);
@@ -1057,7 +1106,7 @@ export default function PlayerPage() {
     setPlaying(true);
     setBuffering(false);
     setYtPlaying(true);
-  }, [canal?.url, isYoutube, requestedVideoId]);
+  }, [canal?.url, isYoutube, requestedVideoId, isTop10Mode]);
 
   // Sync music data directly from XML
   const coverCacheRef = useRef<Record<string, string>>({});
