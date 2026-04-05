@@ -2008,6 +2008,21 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               <Top10DetailInline
                 avatarUrl={profileAvatar}
                 onBack={goBackFromTop10}
+                onPlayVideo={(videoId, playlist) => {
+                  setFadeOut(true);
+                  const params = new URLSearchParams();
+                  params.set("top10", "1");
+                  params.set("vid", videoId);
+                  const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
+                  setTimeout(() => {
+                    navigate(`${watchPath}?${params.toString()}`, {
+                      state: {
+                        fromPath: location.pathname,
+                        top10Playlist: playlist,
+                      },
+                    });
+                  }, 400);
+                }}
               />
             </Suspense>
           )}
