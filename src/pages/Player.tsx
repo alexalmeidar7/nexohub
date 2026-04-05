@@ -1333,6 +1333,7 @@ export default function PlayerPage() {
       setBuffering(true);
       setPlaying(false);
       setStreamStalled(false);
+      setStreamRequested(true);
 
       const isAudioType = type === "audio_live" || type === "audio";
       const shouldResetAutoplayMute = Boolean(userInitiated && autoplayMutedRef.current && volumeRef.current > 0);
@@ -1704,6 +1705,7 @@ export default function PlayerPage() {
 
     setCurrentIndex(startIndex);
     if (first.type === "youtube" || first.type === "catalog") {
+      setStreamRequested(false);
       setPlaying(true);
       setBuffering(false);
       setSelectedVideoId(null);
@@ -1712,6 +1714,22 @@ export default function PlayerPage() {
       setTimeout(() => playStream(first.url, first.type, true), 120);
     }
   }, [canais, playing, playStream, prerollDone, isAutoplayChannel, requestedChannelId]);
+
+  // Safety net: if stream was requested but playing never became true, auto-retry once
+  useEffect(() => {
+    if (!canal || isYoutube || isCatalog || playing || !streamRequested) return;
+    if (connectRetryRef.current.chId !== canal.id) {
+      connectRetryRef.current = { chId: canal.id, n: 0 };
+    }
+    const timer = setTimeout(() => {
+      if (playing || !canal || connectRetryRef.current.chId !== canal.id) return;
+      if (connectRetryRef.current.n >= 2) return;
+      connectRetryRef.current.n += 1;
+      console.warn("[PLAYER] Auto-retry stream for", canal.name, "attempt", connectRetryRef.current.n);
+      void playStream(canal.url, canal.type, true);
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [canal, isCatalog, isYoutube, playStream, playing, streamRequested]);
 
   // Recurring pre-roll every 15 minutes
   const fetchAndShowPreroll = useCallback(async () => {
@@ -1781,6 +1799,7 @@ export default function PlayerPage() {
     setChannelNavDir(dir);
     setChannelAnimKey(prev => prev + 1);
     setCurrentIndex(nextIndex);
+    setStreamRequested(false);
 
     // Stop any playing audio/video when switching channels — full cleanup
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
