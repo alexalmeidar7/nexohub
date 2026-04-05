@@ -588,7 +588,7 @@ export default function PlayerPage() {
   }, [isAudio]);
 
   useEffect(() => {
-    if (playing && !isCatalog && !isYoutube) {
+    if (playing && (isCatalog || (!isYoutube))) {
       if (isAudio) {
         setTopBarVisible(true);
         if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current);
@@ -2976,7 +2976,7 @@ export default function PlayerPage() {
       )}
 
       {/* Top hover zone — triggers top bar visibility */}
-      {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
+      {(isCatalog || !isYoutube) && !isPrerollVisible && !midrollActive && playing && (
         <div
           className="absolute top-0 left-0 right-0 z-[51] h-14 pointer-events-auto"
           style={{ pointerEvents: topBarVisible ? "none" : "auto" }}
@@ -2985,7 +2985,7 @@ export default function PlayerPage() {
       )}
 
       {/* Top Header Bar — new layout: logo | channel nav | agora: program | right: a seguir */}
-      {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
+      {(isCatalog || !isYoutube) && !isPrerollVisible && !midrollActive && playing && (
         <div
           className="absolute top-0 left-0 right-0 z-50 flex items-center gap-4 px-4 sm:px-8 py-3 sm:py-4 transition-all duration-500 ease-in-out"
            style={{
@@ -3015,7 +3015,8 @@ export default function PlayerPage() {
             </button>
           )}
 
-          {/* Channel number + nav arrows */}
+          {/* Channel number + nav arrows (hide for catalog) */}
+          {!isCatalog && (
           <div className="flex items-center gap-1 shrink-0">
             <div className="flex flex-col items-center gap-0">
               {liveChannels.length > 1 && (
@@ -3029,17 +3030,23 @@ export default function PlayerPage() {
               #{canal?.numero_canal || "000"}
             </span>
           </div>
+          )}
 
           {/* agora: program name + presenter */}
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-[10px] sm:text-xs font-normal" style={{ color: "hsl(var(--player-accent))" }}>agora:</span>
+            <span className="text-[10px] sm:text-xs font-normal" style={{ color: "hsl(var(--player-accent))" }}>{isCatalog ? "assistindo:" : "agora:"}</span>
             <span key={`noar-${currentProg?.nome}-${channelAnimKey}`} className="text-xl sm:text-2xl font-black text-white leading-tight truncate" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
-              {currentProg?.nome || canal?.name || "—"}
+              {isCatalog ? (channelLabel || canal?.name || "—") : (currentProg?.nome || canal?.name || "—")}
             </span>
+            {!isCatalog && (
             <div className="flex items-center gap-1.5 mt-0.5">
               <Mic size={12} style={{ color: "hsl(var(--player-accent))" }} />
               <span className="text-xs sm:text-sm font-normal text-white/70 truncate">{currentPresenter?.nome || ""}</span>
             </div>
+            )}
+            {isCatalog && programLabel && (
+              <span className="text-xs sm:text-sm font-normal text-white/60 truncate mt-0.5">{programLabel}</span>
+            )}
           </div>
 
           {/* Right: a seguir */}
@@ -3099,7 +3106,7 @@ export default function PlayerPage() {
       </div>
 
       {/* Bottom minimal controls — flat panel */}
-      {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
+      {(isCatalog || !isYoutube) && !isPrerollVisible && !midrollActive && playing && (
         <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "110px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
           <div
             className="absolute left-0 right-0 bottom-0 mx-auto px-5 sm:px-10 pb-5 pt-3 transition-all duration-400 ease-in-out"
@@ -3109,7 +3116,15 @@ export default function PlayerPage() {
             <div className="flex items-center gap-3 sm:gap-5">
               {/* Back button — round, same size as play */}
               <button
-                onClick={handleHomeClick}
+                onClick={isCatalog ? () => {
+                  setPageFadeOut(true);
+                  const navState = (location.state ?? {}) as { fromPath?: string; fromCatalog?: string | null };
+                  if (navState.fromPath) { setTimeout(() => navigate(navState.fromPath!), 300); return; }
+                  const basePath = userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player";
+                  const catalogName = navState.fromCatalog || canal?.catalog_name;
+                  const catalogParam = catalogName ? `?catalog=${encodeURIComponent(catalogName)}` : "";
+                  setTimeout(() => navigate(`${basePath}${catalogParam}`), 300);
+                } : handleHomeClick}
                 className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80"
                 style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
                 title="Voltar"
@@ -3117,18 +3132,52 @@ export default function PlayerPage() {
                 <ChevronLeft size={22} />
               </button>
 
+              {/* Skip Prev (catalog only) */}
+              {isCatalog && selectedVideoId && (
+                <button onClick={ytPrevVideo} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }} title="Vídeo anterior">
+                  <SkipBack size={18} />
+                </button>
+              )}
+
               {/* Play/Pause — large accent circle */}
               <button
-                onClick={handlePlayCanal}
+                onClick={isCatalog ? ytTogglePlay : handlePlayCanal}
                 className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
                 style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000", boxShadow: "0 0 20px hsla(var(--player-accent) / 0.4)" }}
-                title={playing ? "Pausar" : "Reproduzir"}
+                title={(isCatalog ? ytPlaying : playing) ? "Pausar" : "Reproduzir"}
               >
-                {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
+                {(isCatalog ? ytPlaying : playing) ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
               </button>
 
+              {/* Skip Next (catalog only) */}
+              {isCatalog && selectedVideoId && (
+                <button onClick={ytNextVideo} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:border-2 hover:border-white/80" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }} title="Próximo vídeo">
+                  <SkipForward size={18} />
+                </button>
+              )}
+
               {/* Elapsed time + Scrubber + Total time */}
-              {(() => {
+              {isCatalog ? (
+                /* YouTube VOD scrubber with midroll markers */
+                <div className="flex-1 min-w-0 flex items-center gap-2.5">
+                  <span className="text-[11px] tabular-nums text-white/60 shrink-0 w-9 text-right">{fmtTime(ytCurrentTime)}</span>
+                  <div className="flex-1 min-w-0 group cursor-pointer relative"
+                    onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const pct = (e.clientX - rect.left) / rect.width; ytPostMessage("seekTo", [pct * ytDuration, true]); }}
+                    onMouseMove={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); const time = pct * ytDuration; const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement; if (tooltip) { tooltip.style.left = `${pct * 100}%`; tooltip.style.opacity = "1"; tooltip.textContent = fmtTime(time); } }}
+                    onMouseLeave={(e) => { const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement; if (tooltip) tooltip.style.opacity = "0"; }}
+                  >
+                    <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
+                    <div className="w-full h-[3px] rounded-full overflow-visible group-hover:h-[5px] transition-all relative" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                      <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "hsl(var(--player-accent))", boxShadow: `0 0 8px hsla(var(--player-accent) / 0.5)` }} />
+                    </div>
+                    {midrollBreakPoints.map((bp, i) => (
+                      <div key={i} className="absolute top-0 w-[6px] rounded-full bg-white" style={{ left: `${(bp / ytDuration) * 100}%`, height: "100%", minHeight: "4px", transform: "translateX(-50%)", opacity: 0.9 }} title={`Intervalo ${i + 1} — ${fmtTime(bp)}`} />
+                    ))}
+                  </div>
+                  <span className="text-[11px] tabular-nums text-white/60 shrink-0 w-9">{fmtTime(ytDuration)}</span>
+                </div>
+              ) : (
+              (() => {
                 void musicTick;
                 let musicElapsed = 0;
                 let musicTotal = musicData?.duracao || 0;
@@ -3162,7 +3211,8 @@ export default function PlayerPage() {
                     <span className="text-[11px] tabular-nums text-white/60 shrink-0 w-9">{musicTotal > 0 ? fmtMusicTime(musicTotal) : "0:00"}</span>
                   </div>
                 );
-              })()}
+              })()
+              )}
 
               {/* Icon buttons — white outlined style */}
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -3191,7 +3241,20 @@ export default function PlayerPage() {
                   )}
                 </div>
 
+                {/* Playlist (catalog) */}
+                {isCatalog && (
+                  <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 border-2 hover:border-white/70"
+                    style={{ backgroundColor: sidebarOpen ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.08)", color: sidebarOpen ? "#000" : "#fff", borderColor: sidebarOpen ? "hsl(var(--player-accent))" : "transparent" }}
+                    title={sidebarOpen ? "Fechar Playlist" : "Abrir Playlist"}
+                  >
+                    <List size={16} />
+                  </button>
+                )}
+
                 {/* Chat */}
+                {!isCatalog && (
                 <button
                   onClick={() => setChatOpen(!chatOpen)}
                   className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 border-2 hover:border-white/70"
@@ -3200,9 +3263,10 @@ export default function PlayerPage() {
                 >
                   <MessageSquare size={16} />
                 </button>
+                )}
 
                 {/* Shop */}
-                {shopActive && (
+                {shopActive && !isCatalog && (
                   <button
                     onClick={() => setShopOpen(!shopOpen)}
                     className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 relative border-2 hover:border-white/70"
@@ -3215,6 +3279,7 @@ export default function PlayerPage() {
                 )}
 
                 {/* Karaoke */}
+                {!isCatalog && (
                 <button
                   onClick={() => setKaraokeEnabled(!karaokeEnabled)}
                   className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 border-2 hover:border-white/70"
@@ -3223,8 +3288,10 @@ export default function PlayerPage() {
                 >
                   <MicVocal size={16} />
                 </button>
+                )}
 
                 {/* Playlist - últimas tocadas */}
+                {!isCatalog && (
                 <div className="relative" ref={playlistRef}>
                   <button
                     onClick={() => setPlaylistOpen(!playlistOpen)}
@@ -3262,6 +3329,19 @@ export default function PlayerPage() {
                     </div>
                   )}
                 </div>
+                )}
+
+                {/* PiP (catalog) */}
+                {isCatalog && (
+                  <button
+                    onClick={() => { const v = videoRef.current || audioRef.current; if (document.pictureInPictureElement) document.exitPictureInPicture().catch(() => {}); else if (v && "requestPictureInPicture" in v) (v as HTMLVideoElement).requestPictureInPicture().catch(() => {}); }}
+                    className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-full items-center justify-center transition-all hover:scale-105 border-2 border-transparent hover:border-white/70"
+                    style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
+                    title="Picture-in-Picture"
+                  >
+                    <PictureInPicture size={16} />
+                  </button>
+                )}
 
                 {/* Fullscreen */}
                 <button
@@ -3278,162 +3358,7 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Control bar for CATALOG channels — keep original behavior */}
-      {isCatalog && !isPrerollVisible && !midrollActive && (
-      <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "140px" }} onMouseEnter={showBar} onMouseLeave={hideBar}
-        onClick={() => setBarVisible(v => !v)}
-      >
-        <div className="absolute left-0 right-0 bottom-2 sm:bottom-5 mx-auto transition-all duration-400 ease-in-out"
-          style={{ width: "80%", paddingLeft: "8px", paddingRight: "8px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
-          onClick={(e) => e.stopPropagation()}
-        >
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/8 px-2 sm:px-5 py-2 sm:py-3" style={{ backgroundColor: "var(--player-watch-bottombar-bg, rgba(0, 0, 0, 0.6))" }}>
-
-           {/* Channel logo + Catalog controls */}
-           <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
-            {canal?.background_url && canal.background_url.trim() !== "" ? (
-              <img src={canal.background_url} alt="" className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg object-contain" />
-            ) : canal?.logo_url && canal.logo_url.trim() !== "" ? (
-              <img src={canal.logo_url} alt="" className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg object-contain" />
-            ) : (
-              <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg bg-white/10 flex items-center justify-center text-white text-sm sm:text-lg font-bold">{canal?.numero_canal || "?"}</div>
-            )}
-
-            {selectedVideoId && (
-              <div className="flex items-center gap-1">
-                <button onClick={ytPrevVideo} className="text-white/60 hover:text-white transition-colors rounded-md p-1" title="Vídeo anterior"><SkipBack size={15} /></button>
-                <button onClick={ytTogglePlay} className="w-8 h-8 rounded-full border-2 border-player-accent flex items-center justify-center transition-all hover:bg-player-accent/20" title={ytPlaying ? "Pausar" : "Reproduzir"}>
-                  {ytPlaying ? <Pause size={14} className="text-player-accent" /> : <Play size={14} className="text-player-accent fill-player-accent" />}
-                </button>
-                <button onClick={ytNextVideo} className="text-white/60 hover:text-white transition-colors rounded-md p-1" title="Próximo vídeo"><SkipForward size={15} /></button>
-              </div>
-            )}
-            {!selectedVideoId && (
-              <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-player-accent flex items-center justify-center transition-all hover:bg-player-accent/20" title="Reproduzir">
-                <Play size={14} className="text-player-accent fill-player-accent" />
-              </button>
-            )}
-          </div>
-
-          {/* Program Info */}
-          <div className="hidden sm:block px-5 min-w-0" style={{ flex: "0 1 450px" }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>No Ar:</span>
-            <MarqueeText className="text-lg font-bold leading-tight" text={channelLabel} />
-            {programLabel && (
-              <MarqueeText className="text-white/60 text-sm leading-tight" text={programLabel} />
-            )}
-            {selectedVideoId ? (
-              <div className="w-full mt-2 group cursor-pointer relative"
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const pct = (e.clientX - rect.left) / rect.width;
-                  const seekTime = pct * ytDuration;
-                  ytPostMessage("seekTo", [seekTime, true]);
-                }}
-                onMouseMove={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                  const time = pct * ytDuration;
-                  const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
-                  if (tooltip) {
-                    tooltip.style.left = `${pct * 100}%`;
-                    tooltip.style.opacity = "1";
-                    tooltip.textContent = fmtTime(time);
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
-                  if (tooltip) tooltip.style.opacity = "0";
-                }}
-              >
-                <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
-                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-3 transition-all relative">
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }} />
-                </div>
-                {midrollBreakPoints.map((bp, i) => (
-                  <div
-                    key={i}
-                    className="absolute top-0 w-[6px] rounded-full bg-white"
-                    style={{
-                      left: `${(bp / ytDuration) * 100}%`,
-                      height: "100%",
-                      minHeight: "4px",
-                      transform: "translateX(-50%)",
-                      opacity: 0.9,
-                    }}
-                    title={`Intervalo ${i + 1} — ${fmtTime(bp)}`}
-                  />
-                ))}
-              </div>
-            ) : null}
-            {selectedVideoId ? (
-              <span className="text-[10px] mt-1 inline-block" style={{ color: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }}>
-                {fmtTime(ytCurrentTime)} - {fmtTime(ytDuration)}
-              </span>
-            ) : null}
-          </div>
-
-          {/* Progress bar on mobile */}
-          <div className="sm:hidden w-full">
-            {selectedVideoId ? (
-              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }} />
-              </div>
-            ) : null}
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center gap-1.5 px-1 sm:px-3 sm:border-l border-player-border shrink-0 flex-wrap justify-center sm:justify-start">
-            {/* Volume */}
-            <div className="relative flex items-center" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
-              <button
-                onClick={toggleMuteWithOsd}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-player-border px-2.5 py-1.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent hover:opacity-80"
-                style={{ background: "var(--layout-button-bg)", color: "var(--layout-button-text)" }}
-                title={muted ? "Ativar som" : "Desativar som"}
-              >
-                {muted ? <VolumeX size={15} /> : volume < 50 ? <Volume1 size={15} /> : <Volume2 size={15} />}
-                <span className="text-[10px] font-bold min-w-[28px] text-center tabular-nums">{muted ? "0%" : `${volume}%`}</span>
-              </button>
-              {volumeHover && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 bg-player-bg/95 border border-player-border shadow-xl">
-                  <span className="text-[9px] font-semibold uppercase tracking-wider text-player-muted-foreground">Vol</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={volume}
-                    onChange={(e) => handleVolumeChangeWithOsd(Number(e.target.value))}
-                    className="h-[100px] appearance-none cursor-pointer"
-                    style={{ writingMode: "vertical-lr", direction: "rtl", width: "6px", accentColor: "hsl(var(--player-accent))" }}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <span className="text-[10px] font-bold text-player-foreground tabular-nums">{volume}%</span>
-                </div>
-              )}
-            </div>
-
-            <div className="hidden sm:block w-px h-5 bg-player-border" />
-
-            {/* Playback controls */}
-            <div className="flex items-center gap-0.5 rounded-lg border border-player-border bg-player-surface/60 px-1 py-0.5">
-              <button onClick={toggleFullscreen} className="text-player-muted-foreground hover:text-player-foreground transition-colors rounded-md p-1.5" title={fullscreen ? "Sair tela cheia" : "Tela cheia"}>
-                {fullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
-              </button>
-              <button
-                onClick={() => { const v = videoRef.current || audioRef.current; if (document.pictureInPictureElement) document.exitPictureInPicture().catch(() => {}); else if (v && "requestPictureInPicture" in v) (v as HTMLVideoElement).requestPictureInPicture().catch(() => {}); }}
-                className="hidden sm:inline-flex text-player-muted-foreground hover:text-player-foreground transition-colors rounded-md p-1.5"
-                title="Picture-in-Picture"
-              >
-                <PictureInPicture size={15} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      </div>
-      )}
-
+      {/* Old catalog control bar removed — now uses unified bottom controls above */}
       {/* YouTube non-catalog control bar — kept for YouTube channels */}
       {isYoutube && !isCatalog && !isPrerollVisible && !midrollActive && (
       <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "140px" }} onMouseEnter={showBar} onMouseLeave={hideBar}
