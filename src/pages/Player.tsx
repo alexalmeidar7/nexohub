@@ -38,6 +38,9 @@ import {
   PictureInPicture,
   Cast,
   LogOut,
+  Plus,
+  Instagram,
+  Phone,
 } from "lucide-react";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
@@ -391,6 +394,7 @@ export default function PlayerPage() {
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [presenterMenuOpen, setPresenterMenuOpen] = useState(false);
   const [clock, setClock] = useState(0);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
@@ -2785,12 +2789,76 @@ export default function PlayerPage() {
               )}
               {/* Presenter name top-left */}
               {currentPresenter?.nome && (
-                <div className="absolute top-4 left-4 flex items-center gap-1.5 pointer-events-none" style={{ zIndex: 5 }}>
-                  <Mic size={14} className="text-white drop-shadow-lg" />
-                  <span className="text-white text-xs font-semibold drop-shadow-lg">{currentPresenter.nome}</span>
+                <div className="absolute top-4 left-4 flex flex-col items-start gap-1" style={{ zIndex: 10 }}>
+                  <div className="flex items-center gap-1.5 pointer-events-none">
+                    <Mic size={14} className="text-white drop-shadow-lg" />
+                    <span className="text-white text-xs font-semibold drop-shadow-lg">{currentPresenter.nome}</span>
+                  </div>
+                  {/* + button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setPresenterMenuOpen(v => !v); }}
+                    className="pointer-events-auto w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                    style={{
+                      backgroundColor: presenterMenuOpen ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.15)",
+                      backdropFilter: "blur(8px)",
+                    }}
+                    title="Mais opções"
+                  >
+                    <Plus size={14} className="text-white" style={{ transform: presenterMenuOpen ? "rotate(45deg)" : "none", transition: "transform 0.2s" }} />
+                  </button>
+                  {/* Submenu */}
+                  {presenterMenuOpen && (
+                    <div
+                      className="mt-1 rounded-xl overflow-hidden animate-fade-in"
+                      style={{
+                        backgroundColor: "rgba(0,0,0,0.85)",
+                        backdropFilter: "blur(16px)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        minWidth: 180,
+                      }}
+                    >
+                      {whatsappPhone && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`https://wa.me/${whatsappPhone.replace(/\D/g, "")}`, "_blank");
+                            setPresenterMenuOpen(false);
+                          }}
+                          className="pointer-events-auto w-full flex items-center gap-2.5 px-3 py-2.5 text-white/90 hover:bg-white/10 transition-colors text-xs"
+                        >
+                          <Phone size={14} className="text-green-400" />
+                          <span>Manda seu Zap</span>
+                        </button>
+                      )}
+                      {currentPresenter.instagram && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const ig = currentPresenter.instagram!.replace("@", "");
+                            window.open(`https://instagram.com/${ig}`, "_blank");
+                            setPresenterMenuOpen(false);
+                          }}
+                          className="pointer-events-auto w-full flex items-center gap-2.5 px-3 py-2.5 text-white/90 hover:bg-white/10 transition-colors text-xs"
+                        >
+                          <Instagram size={14} className="text-pink-400" />
+                          <span>Siga {currentPresenter.nome}</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setChatOpen(true);
+                          setPresenterMenuOpen(false);
+                        }}
+                        className="pointer-events-auto w-full flex items-center gap-2.5 px-3 py-2.5 text-white/90 hover:bg-white/10 transition-colors text-xs"
+                      >
+                        <MessageSquare size={14} className="text-blue-400" />
+                        <span>Fale aqui no Chat</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
-              {/* Company logo top-right inside presenter card */}
               {empresaLogo && (
                 <img
                   src={empresaLogo}
