@@ -33,6 +33,19 @@ function readMusicFromDashboard(dashboardItems: Record<string, any> | null) {
   };
 }
 
+function mergeMusicPayload(primary: MusicPayload | null, fallback: MusicPayload | null): MusicPayload | null {
+  if (!primary) return fallback;
+  if (!fallback) return primary;
+
+  return {
+    titulo: primary.titulo,
+    artista: primary.artista || fallback.artista,
+    capa: primary.capa || fallback.capa,
+    horario: primary.horario || fallback.horario,
+    duracao: primary.duracao || fallback.duracao,
+  };
+}
+
 /**
  * Slow path: fetch XML from external URL (used as fallback only).
  */
