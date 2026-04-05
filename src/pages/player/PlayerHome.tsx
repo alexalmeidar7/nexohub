@@ -1764,10 +1764,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </div>
       )}
       {/* Main content */}
-      <div ref={contentScrollRef} className={`flex-1 h-full ${visibleSection === "catalog-detail" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
-        <div className={`transition-all duration-500 ease-in-out ${visibleSection === "catalog-detail" ? "h-full" : ""}`} style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
+      <div ref={contentScrollRef} className={`flex-1 h-full ${(visibleSection === "catalog-detail" || visibleSection === "top10") ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
+        <div className={`transition-all duration-500 ease-in-out ${(visibleSection === "catalog-detail" || visibleSection === "top10") ? "h-full" : ""}`} style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
 
-          {visibleSection !== "catalog-detail" && (
+          {visibleSection !== "catalog-detail" && visibleSection !== "top10" && (
             <>
               {/* Hero Banner with Top Nav inside */}
               <div className="relative" id="section-home">
