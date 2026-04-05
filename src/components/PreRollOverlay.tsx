@@ -15,6 +15,7 @@ interface Props {
   onSkip: () => void;
   onEnded: () => void;
   hideSkip?: boolean;
+  fullscreen?: boolean;
 }
 
 function extractYoutubeId(rawUrl: string): string | null {
