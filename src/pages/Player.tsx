@@ -3289,6 +3289,22 @@ export default function PlayerPage() {
                   </button>
                 )}
 
+                {/* Cast / Transmitir */}
+                <button
+                  onClick={() => {
+                    const v = videoRef.current || audioRef.current;
+                    if (!v) return;
+                    if ("remote" in v && (v as any).remote) {
+                      (v as any).remote.prompt().catch(() => {});
+                    }
+                  }}
+                  className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-full items-center justify-center transition-all hover:scale-105 border-2 border-transparent hover:border-white/70"
+                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
+                  title="Transmitir"
+                >
+                  <Cast size={16} />
+                </button>
+
                 {/* Fullscreen */}
                 <button
                   onClick={toggleFullscreen}
