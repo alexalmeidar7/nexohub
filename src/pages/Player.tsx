@@ -2832,7 +2832,7 @@ export default function PlayerPage() {
                           }}
                           className="pointer-events-auto w-full flex items-center gap-2.5 px-3 py-2.5 text-white/90 hover:bg-white/10 transition-colors text-xs"
                         >
-                          <Phone size={14} className="text-green-400" />
+                          <Phone size={14} style={{ color: "hsl(var(--player-accent))" }} />
                           <span>Manda seu Zap</span>
                         </button>
                       )}
