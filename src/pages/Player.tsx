@@ -1093,7 +1093,7 @@ export default function PlayerPage() {
       };
 
       fetchPublicMusic();
-      const interval = setInterval(fetchPublicMusic, 2000);
+      const interval = setInterval(fetchPublicMusic, 3000);
       const onVisibility = () => { if (!document.hidden && !cancelled) fetchPublicMusic(); };
       document.addEventListener("visibilitychange", onVisibility);
 
@@ -1265,7 +1265,7 @@ export default function PlayerPage() {
             (async () => {
               try {
                 const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
-                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(3000) });
+                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(4000) });
                 const itunesData = await itunesRes.json();
                 if (itunesData.results?.length > 0) {
                   const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
