@@ -534,7 +534,7 @@ function HeroBanner({
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
       {/* Thumb as hero background */}
-      {heroThumb && (
+      {heroThumb ? (
         <>
           <img
             key={`hero-bg-${displayProgram?.id || heroThumb}`}
@@ -550,6 +550,13 @@ function HeroBanner({
             }}
           />
         </>
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.25) 0%, hsl(var(--player-bg)) 50%, hsla(var(--player-accent) / 0.1) 100%)",
+          }}
+        />
       )}
 
       {/* Accent glow behind program logo */}
