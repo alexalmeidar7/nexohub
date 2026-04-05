@@ -74,6 +74,7 @@ const sidebarMenu: MenuItem[] = [
     icon: MonitorPlay, label: "player", children: [
       { icon: Settings, label: "configurações", page: "playerconfig" },
       { icon: Film, label: "roll", page: "preroll" },
+      { icon: Heart, label: "fãs", page: "fans" },
       { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
     ]
   },
