@@ -331,9 +331,16 @@ export default function OnAirWidget() {
           </div>
         )}
 
-        <div className="z-10 mb-4 flex items-center gap-1">
+        <div className="z-10 mb-4 flex items-center gap-1.5">
           <Mic size={12} style={{ color: "var(--layout-accent-color)" }} />
           <p className="font-semibold text-white/80 text-xs">{apresentadorNome}</p>
+          <button
+            onClick={() => setGradeOpen(true)}
+            className="w-5 h-5 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors cursor-pointer ml-1"
+            title="Grade de programação"
+          >
+            <span className="text-white/70 text-[10px] font-bold leading-none">+</span>
+          </button>
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 z-10">
