@@ -87,6 +87,7 @@ function TopNavBar({
   programas = [],
   onPlayChannel,
   userId,
+  radioName,
 }: {
   logoUrl: string | null;
   items: { label: string; key: string; action: () => void }[];
@@ -102,6 +103,7 @@ function TopNavBar({
   programas?: Programa[];
   onPlayChannel?: (ch: Channel) => void;
   userId?: string | null;
+  radioName?: string;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
