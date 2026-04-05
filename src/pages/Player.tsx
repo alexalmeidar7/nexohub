@@ -1049,6 +1049,9 @@ export default function PlayerPage() {
 
   // Fetch YouTube playlist videos OR handle individual video URLs
   useEffect(() => {
+    // Skip if Top 10 mode — playlist is already set from navigation state
+    if (isTop10Mode) return;
+
     if (!isYoutube || !canal?.url) {
       setYoutubeVideos([]);
       setSelectedVideoId(null);
