@@ -597,6 +597,8 @@ export default function PlayerPage() {
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
   const [streamStalled, setStreamStalled] = useState(false);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [streamRequested, setStreamRequested] = useState(false);
+  const connectRetryRef = useRef<{ chId: string | null; n: number }>({ chId: null, n: 0 });
 
   // HLS Quality selector state
   const [hlsLevels, setHlsLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
