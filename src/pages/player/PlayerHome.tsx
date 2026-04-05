@@ -1350,7 +1350,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       const userId = user?.id;
       if (!userId || cancelled) return;
 
-      const [chRes, empRes, progRes, histRes, shopRes, settingsRes, apresRes] = await Promise.all([
+      const [chRes, empRes, progRes, histRes, shopRes, settingsRes, apresRes, profileRes] = await Promise.all([
         supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
         supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
@@ -1358,9 +1358,18 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
         supabase.from("user_settings").select("shopping_active").eq("user_id", userId).maybeSingle(),
         supabase.from("apresentadores").select("id, nome, foto").eq("user_id", userId).eq("ativo", true),
+        supabase.from("profiles").select("nome, avatar_url, email, cidade, estado").eq("user_id", userId).single(),
       ]);
 
       if (cancelled) return;
+
+      // Apply profile data immediately
+      if (profileRes.data) {
+        if (profileRes.data.nome) setProfileName(profileRes.data.nome);
+        setProfileAvatar(profileRes.data.avatar_url && profileRes.data.avatar_url.trim() !== '' ? profileRes.data.avatar_url : '/avatars/usr-default.png');
+        if (profileRes.data.email) setProfileEmail(profileRes.data.email);
+        setProfileCity([profileRes.data.cidade, profileRes.data.estado].filter(Boolean).join(", "));
+      }
 
       let channelsData = (chRes.data ?? []) as any[];
       let channelError = chRes.error;
@@ -1370,7 +1379,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (!channelError && (channelsData.length === 0 || !hasLiveChannels)) {
         const fallbackChRes = await supabase.from("streaming_channels").select("*").eq("active", true).order("numero_canal");
         if (!fallbackChRes.error && fallbackChRes.data) {
-          // Merge: keep user's own + add others not already present
           const existingIds = new Set(channelsData.map((ch: any) => ch.id));
           const merged = [...channelsData, ...fallbackChRes.data.filter((ch: any) => !existingIds.has(ch.id))];
           channelsData = merged as any[];
