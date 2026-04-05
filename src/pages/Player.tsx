@@ -628,7 +628,7 @@ export default function PlayerPage() {
 
   // Playlist popup state
   const [playlistOpen, setPlaylistOpen] = useState(false);
-  const [recentTracks, setRecentTracks] = useState<{ musica: string; artista: string; horario: string }[]>([]);
+  const [recentTracks, setRecentTracks] = useState<{ musica: string; artista: string; horario: string; programa: string }[]>([]);
   const playlistRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
