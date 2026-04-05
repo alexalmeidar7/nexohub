@@ -2832,7 +2832,7 @@ export default function PlayerPage() {
                           }}
                           className="pointer-events-auto w-full flex items-center gap-2.5 px-3 py-2.5 text-white/90 hover:bg-white/10 transition-colors text-xs"
                         >
-                          <Phone size={14} className="text-green-400" />
+                          <Phone size={14} style={{ color: "hsl(var(--player-accent))" }} />
                           <span>Manda seu Zap</span>
                         </button>
                       )}
@@ -2846,7 +2846,7 @@ export default function PlayerPage() {
                           }}
                           className="pointer-events-auto w-full flex items-center gap-2.5 px-3 py-2.5 text-white/90 hover:bg-white/10 transition-colors text-xs"
                         >
-                          <Instagram size={14} className="text-pink-400" />
+                          <Instagram size={14} style={{ color: "hsl(var(--player-accent))" }} />
                           <span>Siga {currentPresenter.nome}</span>
                         </button>
                       )}
@@ -2858,7 +2858,7 @@ export default function PlayerPage() {
                         }}
                         className="pointer-events-auto w-full flex items-center gap-2.5 px-3 py-2.5 text-white/90 hover:bg-white/10 transition-colors text-xs"
                       >
-                        <MessageSquare size={14} className="text-blue-400" />
+                        <MessageSquare size={14} style={{ color: "hsl(var(--player-accent))" }} />
                         <span>Fale aqui no Chat</span>
                       </button>
                     </div>
