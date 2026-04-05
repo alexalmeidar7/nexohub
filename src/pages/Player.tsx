@@ -863,6 +863,8 @@ export default function PlayerPage() {
     publicBootstrapRef.current = { slug: null, loaded: false };
 
     // AUTHENTICATED MODE (original logic)
+    // Skip fetch if Top 10 mode — playlist comes from navigation state
+    if (isTop10Mode) return;
     if (authLoading) { setLoadingStatus("Autenticando..."); return; }
     if (!userId) { setCanais([]); setLoading(false); return; }
 
