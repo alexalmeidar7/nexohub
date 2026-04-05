@@ -1106,7 +1106,7 @@ export default function PlayerPage() {
     setPlaying(true);
     setBuffering(false);
     setYtPlaying(true);
-  }, [canal?.url, isYoutube, requestedVideoId]);
+  }, [canal?.url, isYoutube, requestedVideoId, isTop10Mode]);
 
   // Sync music data directly from XML
   const coverCacheRef = useRef<Record<string, string>>({});
