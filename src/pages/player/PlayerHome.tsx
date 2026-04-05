@@ -1821,6 +1821,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       programas={programas}
                       onPlayChannel={(ch) => goToPlayer(ch.id)}
                       userId={user?.id}
+                      radioName={channelName}
                     />
                   </>
                 )}
