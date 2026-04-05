@@ -1329,7 +1329,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       } catch {}
     };
     fetchMusic();
-    const interval = setInterval(fetchMusic, 3000);
+    const interval = setInterval(fetchMusic, 10000);
     return () => clearInterval(interval);
   }, [user, userSlug]);
 
@@ -1350,7 +1350,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       const userId = user?.id;
       if (!userId || cancelled) return;
 
-      const [chRes, empRes, progRes, histRes, shopRes, settingsRes, apresRes] = await Promise.all([
+      const [chRes, empRes, progRes, histRes, shopRes, settingsRes, apresRes, profileRes] = await Promise.all([
         supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
         supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
@@ -1358,9 +1358,18 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
         supabase.from("user_settings").select("shopping_active").eq("user_id", userId).maybeSingle(),
         supabase.from("apresentadores").select("id, nome, foto").eq("user_id", userId).eq("ativo", true),
+        supabase.from("profiles").select("nome, avatar_url, email, cidade, estado").eq("user_id", userId).single(),
       ]);
 
       if (cancelled) return;
+
+      // Apply profile data immediately
+      if (profileRes.data) {
+        if (profileRes.data.nome) setProfileName(profileRes.data.nome);
+        setProfileAvatar(profileRes.data.avatar_url && profileRes.data.avatar_url.trim() !== '' ? profileRes.data.avatar_url : '/avatars/usr-default.png');
+        if (profileRes.data.email) setProfileEmail(profileRes.data.email);
+        setProfileCity([profileRes.data.cidade, profileRes.data.estado].filter(Boolean).join(", "));
+      }
 
       let channelsData = (chRes.data ?? []) as any[];
       let channelError = chRes.error;
@@ -1370,7 +1379,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (!channelError && (channelsData.length === 0 || !hasLiveChannels)) {
         const fallbackChRes = await supabase.from("streaming_channels").select("*").eq("active", true).order("numero_canal");
         if (!fallbackChRes.error && fallbackChRes.data) {
-          // Merge: keep user's own + add others not already present
           const existingIds = new Set(channelsData.map((ch: any) => ch.id));
           const merged = [...channelsData, ...fallbackChRes.data.filter((ch: any) => !existingIds.has(ch.id))];
           channelsData = merged as any[];
@@ -1427,16 +1435,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     return () => { cancelled = true; if (retryTimer) clearTimeout(retryTimer); };
   }, [authLoading, user?.id, userSlug]);
 
-  // Fetch profile
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("profiles").select("nome, avatar_url, email, cidade, estado").eq("user_id", user.id).single().then(({ data }) => {
-      if (data?.nome) setProfileName(data.nome);
-      setProfileAvatar(data?.avatar_url && data.avatar_url.trim() !== '' ? data.avatar_url : '/avatars/usr-default.png');
-      if (data?.email) setProfileEmail(data.email);
-      setProfileCity([data?.cidade, data?.estado].filter(Boolean).join(", "));
-    });
-  }, [user]);
+  // Profile is now fetched inside the main data Promise.all above
 
   const normalizeWeekday = (value: string) =>
     value
@@ -1505,32 +1504,43 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     catalogGroups[groupName].push(ch);
   });
 
-  // Fetch playlist videos
+  // Fetch playlist videos (deferred & parallel)
   useEffect(() => {
     if (!dataLoaded) return;
     const cats = channels.filter(ch => ch.type === "catalog");
     if (cats.length === 0) return;
+    let cancelled = false;
     const fetchPlaylists = async () => {
-      const results: Record<string, PlaylistVideo[]> = {};
-      for (const ch of cats) {
-        if (!ch.url) continue;
-        const plMatch = ch.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-        const playlistId = plMatch?.[1];
-        if (!playlistId) continue;
-        try {
-          const { data, error } = await supabase.functions.invoke("youtube-playlist", { body: { playlistId } });
+      const entries = cats
+        .map(ch => {
+          if (!ch.url) return null;
+          const plMatch = ch.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+          return plMatch?.[1] ? { id: ch.id, playlistId: plMatch[1] } : null;
+        })
+        .filter(Boolean) as { id: string; playlistId: string }[];
+      if (entries.length === 0) return;
+      const settled = await Promise.allSettled(
+        entries.map(async (e) => {
+          const { data, error } = await supabase.functions.invoke("youtube-playlist", { body: { playlistId: e.playlistId } });
           if (!error && data?.videos) {
-            const sorted = [...data.videos].sort((a: any, b: any) => {
-              if (a.published && b.published) return new Date(b.published).getTime() - new Date(a.published).getTime();
-              return 0;
-            });
-            results[ch.id] = sorted.slice(0, 20);
+            const sorted = [...data.videos].sort((a: any, b: any) =>
+              (a.published && b.published) ? new Date(b.published).getTime() - new Date(a.published).getTime() : 0
+            );
+            return { id: e.id, videos: sorted.slice(0, 20) };
           }
-        } catch {}
-      }
+          return null;
+        })
+      );
+      if (cancelled) return;
+      const results: Record<string, PlaylistVideo[]> = {};
+      settled.forEach(r => { if (r.status === "fulfilled" && r.value) results[r.value.id] = r.value.videos; });
       setPlaylistVideos(results);
     };
-    fetchPlaylists();
+    // Defer playlist fetch to after initial paint
+    const id = typeof requestIdleCallback !== "undefined"
+      ? requestIdleCallback(() => fetchPlaylists())
+      : setTimeout(() => fetchPlaylists(), 500) as unknown as number;
+    return () => { cancelled = true; typeof cancelIdleCallback !== "undefined" ? cancelIdleCallback(id) : clearTimeout(id); };
   }, [dataLoaded, channels]);
 
   const goToPlayer = (channelId?: string, videoId?: string) => {
