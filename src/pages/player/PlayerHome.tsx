@@ -12,6 +12,7 @@ const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDial
 const CatalogDetailInline = lazy(() => import("@/components/player/CatalogDetailInline"));
 const ProfileDialog = lazy(() => import("@/components/player/ProfileDialog"));
 const Top10DetailInline = lazy(() => import("@/components/player/Top10DetailInline"));
+const WatchProfilePopup = lazy(() => import("@/components/player/WatchProfilePopup"));
 
 interface Channel {
   id: string;
