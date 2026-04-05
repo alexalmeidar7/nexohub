@@ -1830,18 +1830,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               {/* All sections stacked vertically */}
               <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `hsl(var(--player-bg))` }}>
 
-                {/* Canais ao Vivo + Catálogo lado a lado */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Streaming ao vivo */}
+                {/* Canais ao Vivo + Catálogo em linha contínua */}
                 <section id="section-streaming" className="scroll-mt-4">
                   {!dataLoaded ? (
                     <div className="mb-8">
                       <Skeleton className="h-5 w-44 bg-white/10 mb-3" />
                       <div className="flex gap-3">
-                        {[1, 2, 3].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
+                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
                       </div>
                     </div>
-                  ) : streamingChannels.length > 0 && (
+                  ) : (
                     <ContentRow title="Canais ao Vivo" scrollRoot={contentScrollRef}>
                       {streamingChannels.map(ch => (
                         <StreamingCard
@@ -1852,27 +1850,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                           onClick={() => goToPlayer(ch.id)}
                         />
                       ))}
-                    </ContentRow>
-                  )}
-                </section>
 
+                      {/* Separator */}
+                      {(streamingChannels.length > 0 && (Object.keys(catalogGroups).length > 0 || user)) && (
+                        <div className="flex-shrink-0 flex items-center px-2">
+                          <div className="w-px h-3/4 bg-white/10" />
+                        </div>
+                      )}
 
-                {/* Catálogo */}
-                <section id="section-content" className="scroll-mt-4">
-                  {!dataLoaded ? (
-                    <div className="mb-8">
-                      <Skeleton className="h-5 w-36 bg-white/10 mb-3" />
-                      <div className="flex gap-3">
-                        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
-                      </div>
-                    </div>
-                  ) : (
-                    <ContentRow title={
-                      <span className="flex items-center gap-2">
-                        <LayoutGrid className="h-5 w-5" style={{ color: "hsl(var(--player-accent))" }} />
-                        Catálogo
-                      </span>
-                    } scrollRoot={contentScrollRef}>
+                      {/* Catálogo cards inline */}
                       {user && (
                         <button
                           key="__top10__"
@@ -1921,7 +1907,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     </ContentRow>
                   )}
                 </section>
-                </div>
 
                 {user && shopActive && (
                   <section id="section-shop" className="scroll-mt-4 pt-4">
