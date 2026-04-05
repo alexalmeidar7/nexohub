@@ -2151,7 +2151,7 @@ export default function PlayerPage() {
 
 
 
-  const showBar = () => { clearTimeout(hideTimeout.current); setBarVisible(true); };
+  const showBar = () => { clearTimeout(hideTimeout.current); setBarVisible(true); resetTopBarTimer(); };
   const hideBar = () => {
     if (isAudio) return;
     clearTimeout(hideTimeout.current);
