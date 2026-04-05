@@ -56,7 +56,7 @@ interface PlaylistVideo {
   published: string;
 }
 
-type Section = "home" | "streaming" | "content" | "shop" | "catalog-detail";
+type Section = "home" | "streaming" | "content" | "shop" | "catalog-detail" | "top10";
 
 const formatTrackText = (value?: string | null) => {
   if (!value) return "";
