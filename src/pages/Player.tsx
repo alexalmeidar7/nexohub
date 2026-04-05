@@ -509,12 +509,16 @@ export default function PlayerPage() {
   const handleHomeClick = useCallback(() => {
     clearMiniPlayerData();
     setStreamRequested(false);
+    setPlaying(false);
+    // Fully destroy HLS first to prevent recovery handlers from restarting audio
     if (hlsRef.current) {
-      hlsRef.current.destroy();
+      try { hlsRef.current.destroy(); } catch {}
       hlsRef.current = null;
     }
-    if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    // Full media reset — pause, remove src, and call load() to abort any pending network requests
+    if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    destroyMiniAudio();
     setPageFadeOut(true);
     setTimeout(() => navigate(playerHomePath), 400);
   }, [playerHomePath, navigate]);
