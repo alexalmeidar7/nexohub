@@ -394,6 +394,7 @@ export default function PlayerPage() {
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [presenterMenuOpen, setPresenterMenuOpen] = useState(false);
   const [clock, setClock] = useState(0);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
