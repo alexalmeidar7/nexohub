@@ -482,12 +482,14 @@ export default function PlayerPage() {
   useEffect(() => {
     if (isBreakTrack) { setArtistBgUrl(null); return; }
     const artist = musicData?.artista;
-    if (!artist || artist === "Desconhecido" || !isAudio) return;
+    if (!artist || artist === "Desconhecido" || !isAudio) { setArtistBgUrl(null); return; }
     const cacheKey = artist.toLowerCase();
     if (artistBgCacheRef.current[cacheKey]) {
       setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
       return;
     }
+    // Clear previous background immediately so gradient shows while loading
+    setArtistBgUrl(null);
     let cancelled = false;
     (async () => {
       try {
@@ -496,10 +498,11 @@ export default function PlayerPage() {
         const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
           body: { artist },
         }).finally(() => clearTimeout(timeout));
-        if (cancelled || error || !data?.ok || !data?.url) return;
+        if (cancelled) return;
+        if (error || !data?.ok || !data?.url) { setArtistBgUrl(null); return; }
         artistBgCacheRef.current[cacheKey] = data.url;
         setArtistBgUrl(data.url);
-      } catch {}
+      } catch { if (!cancelled) setArtistBgUrl(null); }
     })();
     return () => { cancelled = true; };
   }, [musicData?.artista, isAudio, isBreakTrack]);
@@ -2439,10 +2442,11 @@ export default function PlayerPage() {
               {artistBgUrl && (
                 <img
                   key={artistBgUrl}
-                  src={artistBgUrl}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
-                  style={{ opacity: 0.55, zIndex: 0 }}
+                   src={artistBgUrl}
+                   alt=""
+                   className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
+                   style={{ opacity: 0.55, zIndex: 0 }}
+                   onError={() => setArtistBgUrl(null)}
                 />
               )}
               {/* Gradient overlay — stronger when artist image present for readability */}
