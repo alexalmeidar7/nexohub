@@ -240,6 +240,13 @@ export default function OnAirWidget() {
                 <User size={10} />
               </AvatarFallback>
             </Avatar>
+            <button
+              onClick={() => { setIsHovered(false); setGradeOpen(true); }}
+              className="w-5 h-5 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+              title="Grade de programação"
+            >
+              <span className="text-white/70 text-[10px] font-bold leading-none">+</span>
+            </button>
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 z-10">
