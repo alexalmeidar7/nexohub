@@ -348,12 +348,16 @@ export default function PlayerPage() {
   const [searchParams] = useSearchParams();
   const requestedChannelId = searchParams.get("ch");
   const requestedVideoId = searchParams.get("vid");
+  const isTop10Mode = searchParams.get("top10") === "1";
   const navigate = useNavigate();
   const location = useLocation();
   const isPublicMode = !!userSlug;
   const playerHomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home", [userSlug]);
   const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
+
+  // Top 10 playlist from navigation state
+  const top10Playlist = (location.state as any)?.top10Playlist as { videoId: string; title: string; thumbnail: string; artist: string }[] | undefined;
 
   // Diagnostic logs — disabled in production
   // useEffect(() => { console.log("[PLAYER-DIAG] Auth/user state changed", { userId, authLoading }); }, [userId, authLoading]);
