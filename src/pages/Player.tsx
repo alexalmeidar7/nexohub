@@ -400,31 +400,6 @@ export default function PlayerPage() {
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
   const artistBgCacheRef = useRef<Record<string, string>>({});
 
-  // Fetch artist background image from Deezer
-  useEffect(() => {
-    const artist = musicData?.artista;
-    const audioType = canal?.type === "audio_live" || canal?.type === "audio";
-    if (!artist || artist === "Desconhecido" || !audioType) {
-      return;
-    }
-    const cacheKey = artist.toLowerCase();
-    if (artistBgCacheRef.current[cacheKey]) {
-      setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
-          body: { artist },
-        });
-        if (cancelled || error || !data?.ok || !data?.url) return;
-        artistBgCacheRef.current[cacheKey] = data.url;
-        setArtistBgUrl(data.url);
-      } catch {}
-    })();
-    return () => { cancelled = true; };
-  }, [musicData?.artista, canal?.type]);
 
   // Spectrum style preference
   const [spectrumStyle, setSpectrumStyle] = useState<import("@/components/AudioSpectrum").SpectrumStyle>(() => {
