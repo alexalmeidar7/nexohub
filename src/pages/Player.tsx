@@ -482,12 +482,14 @@ export default function PlayerPage() {
   useEffect(() => {
     if (isBreakTrack) { setArtistBgUrl(null); return; }
     const artist = musicData?.artista;
-    if (!artist || artist === "Desconhecido" || !isAudio) return;
+    if (!artist || artist === "Desconhecido" || !isAudio) { setArtistBgUrl(null); return; }
     const cacheKey = artist.toLowerCase();
     if (artistBgCacheRef.current[cacheKey]) {
       setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
       return;
     }
+    // Clear previous background immediately so gradient shows while loading
+    setArtistBgUrl(null);
     let cancelled = false;
     (async () => {
       try {
@@ -496,10 +498,11 @@ export default function PlayerPage() {
         const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
           body: { artist },
         }).finally(() => clearTimeout(timeout));
-        if (cancelled || error || !data?.ok || !data?.url) return;
+        if (cancelled) return;
+        if (error || !data?.ok || !data?.url) { setArtistBgUrl(null); return; }
         artistBgCacheRef.current[cacheKey] = data.url;
         setArtistBgUrl(data.url);
-      } catch {}
+      } catch { if (!cancelled) setArtistBgUrl(null); }
     })();
     return () => { cancelled = true; };
   }, [musicData?.artista, isAudio, isBreakTrack]);
