@@ -1242,6 +1242,26 @@ interface PlayerHomeProps {
   onBackToAccess?: () => void;
 }
 
+/* ─── Local cache helpers ─── */
+const CACHE_KEY = "player_home_cache";
+const CACHE_TTL = 5 * 60 * 1000; // 5 min
+
+function readCache(cacheId: string) {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY + "_" + cacheId);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - (parsed._ts || 0) > CACHE_TTL) return null;
+    return parsed;
+  } catch { return null; }
+}
+
+function writeCache(cacheId: string, data: Record<string, any>) {
+  try {
+    localStorage.setItem(CACHE_KEY + "_" + cacheId, JSON.stringify({ ...data, _ts: Date.now() }));
+  } catch {}
+}
+
 export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { user, signOut, loading: authLoading } = useAuth();
   useGlobalMusicSync();
@@ -1249,19 +1269,24 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+
+  // Determine cache key early
+  const cacheId = userSlug && userSlug !== ":userSlug" ? `pub_${userSlug}` : user?.id || "";
+  const cached = useMemo(() => readCache(cacheId), [cacheId]);
+
   const [activeSection, setActiveSection] = useState<Section>("home");
   const [visibleSection, setVisibleSection] = useState<Section>("home");
   const [sectionFading, setSectionFading] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [channelName, setChannelName] = useState("");
-  const [profileName, setProfileName] = useState("");
-  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
-  const [profileEmail, setProfileEmail] = useState("");
-  const [profileCity, setProfileCity] = useState("");
+  const [channels, setChannels] = useState<Channel[]>(() => cached?.channels ?? []);
+  const [logoUrl, setLogoUrl] = useState<string | null>(() => cached?.logoUrl ?? null);
+  const [channelName, setChannelName] = useState(() => cached?.channelName ?? "");
+  const [profileName, setProfileName] = useState(() => cached?.profileName ?? "");
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(() => cached?.profileAvatar ?? null);
+  const [profileEmail, setProfileEmail] = useState(() => cached?.profileEmail ?? "");
+  const [profileCity, setProfileCity] = useState(() => cached?.profileCity ?? "");
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
-  const [programas, setProgramas] = useState<Programa[]>([]);
+  const [programas, setProgramas] = useState<Programa[]>(() => cached?.programas ?? []);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
