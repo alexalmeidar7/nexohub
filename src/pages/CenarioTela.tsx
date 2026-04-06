@@ -1383,7 +1383,7 @@ export default function CenarioTela() {
                         </div>
                       ) : (
                         /* ── PORTRAIT FORECAST ── */
-                        <div className="flex flex-col h-full" style={{ width: "55%", maxWidth: `55${vu}`, marginLeft: "auto" }}>
+                        <div className="flex flex-col justify-end" style={{ width: "55%", maxWidth: `55${vu}`, marginLeft: "auto", flex: 1 }}>
                           {/* Header — same pattern as currency page */}
                           <div className="text-center" style={{ marginBottom: `1.5${vu}` }}>
                             <CalendarDays className="mx-auto drop-shadow-lg cenario-anim-icon" style={{ width: `4${vu}`, height: `4${vu}`, color: "#e1f532", opacity: 0.7, marginBottom: `0.5${vu}` }} />
