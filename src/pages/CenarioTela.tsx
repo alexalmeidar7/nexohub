@@ -1321,7 +1321,7 @@ export default function CenarioTela() {
                         </div>
                       ) : (
                         /* ── PORTRAIT: original vertical layout ── */
-                        <div style={{ width: `${isLandscape ? "100%" : "55%"}`, maxWidth: isLandscape ? undefined : `55${vu}` }}>
+                        <div style={{ width: "85%", maxWidth: `42${vu}` }}>
                       <div className="flex items-start justify-between" style={{ marginBottom: `1.5${vu}` }}>
                         <div>
                           <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `4${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
@@ -1383,7 +1383,7 @@ export default function CenarioTela() {
                         </div>
                       ) : (
                         /* ── PORTRAIT FORECAST ── */
-                        <div className="flex flex-col justify-end" style={{ width: "100%", flex: 1 }}>
+                        <div className="flex flex-col items-center" style={{ width: "90%", maxWidth: `50${vu}` }}>
                           {/* Header */}
                           <div className="flex items-center justify-end" style={{ marginBottom: `2${vu}`, gap: `1.5${vu}`, paddingRight: `1${vu}` }}>
                             <div className="text-right">
