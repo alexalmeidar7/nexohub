@@ -558,7 +558,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               style={inputStyle}
             />
             <button onClick={parsePastedScript} disabled={!pasteText.trim()} className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40" style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}>
-              <Check size={12} /> Importar Roteiro
+              <Check size={12} /> {editingId ? "Atualizar Roteiro" : "Importar Roteiro"}
             </button>
           </div>
         )}
