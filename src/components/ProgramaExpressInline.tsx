@@ -40,6 +40,7 @@ export interface ExpressEditData {
   blocos: Bloco[];
   participantes?: Participante[];
   escaladaList?: {titulo: string; imagemUrl: string}[];
+  existingXmlPath?: string;
 }
 
 interface Props {
@@ -108,6 +109,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [saving, setSaving] = useState(false);
   const [collapsedBlocos, setCollapsedBlocos] = useState<Set<number>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingXmlPath, setEditingXmlPath] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [showPastePopup, setShowPastePopup] = useState(false);
   const [pasteText, setPasteText] = useState("");
@@ -175,6 +177,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       setParticipantes(editData.participantes || []);
       setEscaladaList(editData.escaladaList || []);
       setEditingId(editData.roteiroId);
+      setEditingXmlPath(editData.existingXmlPath || null);
       setInitialized(true);
     }
   }, [editData, initialized]);
@@ -208,8 +211,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
         blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
         const blob = new Blob([xmlContent], { type: "application/xml" });
-        const fileName = `express_${programaId}_${Date.now()}.xml`;
-        const filePath = `express/${user.id}/${fileName}`;
+        const filePath = editingXmlPath || `express/${user.id}/express_${programaId}_${Date.now()}.xml`;
         await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
         const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
         const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
@@ -272,6 +274,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setSaving(false);
     setCollapsedBlocos(new Set());
     setEditingId(null);
+    setEditingXmlPath(null);
     setInitialized(false);
     setParticipantes([]);
     setEscaladaList([]);
@@ -471,8 +474,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
 
       const blob = new Blob([xmlContent], { type: "application/xml" });
-      const fileName = `express_${programaId}_${Date.now()}.xml`;
-      const filePath = `express/${user.id}/${fileName}`;
+      const filePath = (editingId && editingXmlPath) ? editingXmlPath : `express/${user.id}/express_${programaId}_${Date.now()}.xml`;
       await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
