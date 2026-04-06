@@ -274,6 +274,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setSaving(false);
     setCollapsedBlocos(new Set());
     setEditingId(null);
+    setEditingXmlPath(null);
     setInitialized(false);
     setParticipantes([]);
     setEscaladaList([]);
