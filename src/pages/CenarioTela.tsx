@@ -1385,14 +1385,14 @@ export default function CenarioTela() {
                         /* ── PORTRAIT FORECAST ── */
                         <div className="flex flex-col h-full" style={{ width: "55%", maxWidth: `55${vu}`, marginLeft: "auto" }}>
                           {/* Header — same pattern as currency page */}
-                          <div className="text-center" style={{ marginBottom: `3${vu}` }}>
-                            <CalendarDays className="mx-auto drop-shadow-lg cenario-anim-icon" style={{ width: `6${vu}`, height: `6${vu}`, color: "#e1f532", opacity: 0.7, marginBottom: `1${vu}` }} />
-                            <div className="font-extrabold leading-none drop-shadow-lg cenario-anim-title" style={{ fontSize: `6${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
-                            <div className="font-bold uppercase tracking-widest cenario-anim-subtitle" style={{ fontSize: `2.8${vu}`, color: "#e1f532", marginTop: `0.4${vu}` }}>próximos dias</div>
+                          <div className="text-center" style={{ marginBottom: `1.5${vu}` }}>
+                            <CalendarDays className="mx-auto drop-shadow-lg cenario-anim-icon" style={{ width: `4${vu}`, height: `4${vu}`, color: "#e1f532", opacity: 0.7, marginBottom: `0.5${vu}` }} />
+                            <div className="font-extrabold leading-none drop-shadow-lg cenario-anim-title" style={{ fontSize: `4${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
+                            <div className="font-bold uppercase tracking-widest cenario-anim-subtitle" style={{ fontSize: `2${vu}`, color: "#e1f532", marginTop: `0.3${vu}` }}>próximos dias</div>
                           </div>
-                          <div className="w-full flex flex-col items-center" style={{ gap: `1.8${vu}`, maxWidth: "92%" }}>
+                          <div className="w-full flex flex-col" style={{ gap: `1.2${vu}` }}>
                             {liveWeather.daily.slice(1, 5).map((d, i) => (
-                              <div key={i} className={`w-full cenario-anim-row-${i + 1}`} style={{ padding: `2.2${vu} 2.5${vu}`, background: "rgba(255,255,255,0.06)", borderRadius: `1.8${vu}`, WebkitBackdropFilter: "blur(10px)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                              <div key={i} className={`w-full cenario-anim-row-${i + 1}`} style={{ padding: `1.5${vu} 1.8${vu}`, background: "rgba(255,255,255,0.06)", borderRadius: `1.2${vu}`, WebkitBackdropFilter: "blur(10px)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.08)" }}>
                                 {/* Row 1: Day + Icon + Temps */}
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center" style={{ gap: `1.5${vu}`, flex: 1, minWidth: 0 }}>
