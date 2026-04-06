@@ -1353,6 +1353,8 @@ export default function CenarioTela() {
                         </div>
                       </div>
                         </div>
+                      )}
+                    </>)}
                     {weatherSubTab === "forecast" && (<>
                       {isLandscape ? (
                         /* ── LANDSCAPE FORECAST ── */
