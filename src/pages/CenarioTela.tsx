@@ -957,8 +957,8 @@ export default function CenarioTela() {
           )}
 
           {!isMapTab && (
-            <div className="absolute inset-0" style={{ background: activeTab === "home" && config.home.bgGradient ? buildHomeGradient(config.home) : "#e8e8e8", zIndex: 0 }}>
-              {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+            <div className="absolute inset-0" style={{ background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : activeTab === "home" || activeTab === "chat" ? "#e8e8e8" : "#e8e8e8", zIndex: 0 }}>
+              {(activeTab === "home" || activeTab === "chat") && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
@@ -1537,8 +1537,7 @@ export default function CenarioTela() {
             {/* ═══ CHAT ═══ */}
             {activeTab === "chat" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                {!config.chat.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)" }} />}
-                <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.25), transparent)" }} />
+                {!config.chat.bgImage && !config.home.bgGradient && !config.home.bgImage && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.4)" }} />}
                 <div className="relative z-10 flex flex-col h-full" style={{ padding: `3${vu}` }}>
                   {config.chat.enabled ? (<>
                     <div className="flex justify-end mb-1"><MessageCircle size={isLandscape ? 32 : 48} className="drop-shadow-lg" style={{ color: "#e1f532" }} /></div>
