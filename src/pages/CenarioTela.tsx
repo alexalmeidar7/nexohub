@@ -1446,7 +1446,7 @@ export default function CenarioTela() {
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.45)" }} />}
                 {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d1117 0%, #161b22 50%, #0d1117 100%)" }} />}
-                <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${isLandscape ? 2 : 3}${vu}` }}>
+                <div className="relative z-10 flex flex-col h-full items-center justify-start" style={{ padding: `${isLandscape ? 2 : 3}${vu}`, paddingTop: `${isLandscape ? 4 : 8}${vu}` }}>
                     {config.currency.enabled ? (<>
                     {/* Header centered */}
                     <div className="text-center" style={{ marginBottom: `${isLandscape ? 1.5 : 3}${vu}` }}>
