@@ -1458,14 +1458,14 @@ export default function CenarioTela() {
                     </div>
 
                     {currencySubTab === "moedas" ? (
-                      <div className="w-full flex flex-col items-center" style={{ gap: `${isLandscape ? 1.2 : 1.8}${vu}`, maxWidth: isLandscape ? "90%" : "92%" }}>
+                      <div className="w-full flex flex-col" style={{ gap: `${isLandscape ? 1.2 : 1.2}${vu}` }}>
                         {config.currency.currencies.map((c, idx) => {
                           const opt = CURRENCY_OPTIONS.find(o => o.value === c);
                           const live = liveCurrencies.find(l => l.code === c);
                           const flagIcon = opt?.flag ? COUNTRY_FLAG_MAP[opt.flag] : "";
                           return (
                             <div key={c} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{
-                              padding: `${isLandscape ? 1.5 : 2.2}${vu} ${isLandscape ? 2 : 2.5}${vu}`,
+                              padding: `${isLandscape ? 1.5 : 1.5}${vu} ${isLandscape ? 2 : 1.8}${vu}`,
                               background: "rgba(255,255,255,0.06)",
                               borderRadius: `${isLandscape ? 1.2 : 1.8}${vu}`,
                               border: "1px solid rgba(255,255,255,0.08)",
@@ -1474,19 +1474,19 @@ export default function CenarioTela() {
                             }}>
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center" style={{ gap: `${isLandscape ? 1 : 1.5}${vu}`, minWidth: 0 }}>
-                                  <span style={{ fontSize: `${isLandscape ? 3 : 4.5}${vu}`, lineHeight: 1 }}>{flagIcon}</span>
+                                  <span style={{ fontSize: `${isLandscape ? 3 : 3}${vu}`, lineHeight: 1 }}>{flagIcon}</span>
                                   <div className="flex flex-col" style={{ minWidth: 0 }}>
-                                    <span className="font-black truncate" style={{ fontSize: `${isLandscape ? 2.2 : 3.2}${vu}`, lineHeight: 1.1 }}>{c}</span>
-                                    <span className="truncate" style={{ fontSize: `${isLandscape ? 1.1 : 1.4}${vu}`, opacity: 0.4, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
+                                    <span className="font-black truncate" style={{ fontSize: `${isLandscape ? 2.2 : 2.2}${vu}`, lineHeight: 1.1 }}>{c}</span>
+                                    <span className="truncate" style={{ fontSize: `${isLandscape ? 1.1 : 1.1}${vu}`, opacity: 0.4, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
                                   </div>
                                 </div>
                                 {live ? (
                                   <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
-                                    <span className="font-black tabular-nums" style={{ fontSize: `${isLandscape ? 2.5 : 3.6}${vu}`, lineHeight: 1.1 }}>R$ {live.value}</span>
+                                    <span className="font-black tabular-nums" style={{ fontSize: `${isLandscape ? 2.5 : 2.5}${vu}`, lineHeight: 1.1 }}>R$ {live.value}</span>
                                     <div className="flex items-center" style={{ gap: `0.4${vu}`, marginTop: `0.3${vu}` }}>
-                                      <span className="font-bold tabular-nums" style={{ fontSize: `${isLandscape ? 1.3 : 1.8}${vu}`, color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
-                                      {live.direction === "up" && <ChevronUp style={{ width: `${isLandscape ? 1.6 : 2.2}${vu}`, height: `${isLandscape ? 1.6 : 2.2}${vu}`, color: "#4ade80" }} strokeWidth={3} className="cenario-arrow-up" />}
-                                      {live.direction === "down" && <ChevronDown style={{ width: `${isLandscape ? 1.6 : 2.2}${vu}`, height: `${isLandscape ? 1.6 : 2.2}${vu}`, color: "#f87171" }} strokeWidth={3} className="cenario-arrow-down" />}
+                                      <span className="font-bold tabular-nums" style={{ fontSize: `${isLandscape ? 1.3 : 1.3}${vu}`, color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
+                                      {live.direction === "up" && <ChevronUp style={{ width: `${isLandscape ? 1.6 : 1.6}${vu}`, height: `${isLandscape ? 1.6 : 1.6}${vu}`, color: "#4ade80" }} strokeWidth={3} className="cenario-arrow-up" />}
+                                      {live.direction === "down" && <ChevronDown style={{ width: `${isLandscape ? 1.6 : 1.6}${vu}`, height: `${isLandscape ? 1.6 : 1.6}${vu}`, color: "#f87171" }} strokeWidth={3} className="cenario-arrow-down" />}
                                     </div>
                                   </div>
                                 ) : <span className="opacity-30" style={{ fontSize: `${isLandscape ? 2 : 2.5}${vu}` }}>---</span>}
