@@ -1287,7 +1287,7 @@ export default function CenarioTela() {
                 {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d47a1 0%, #1565c0 25%, #1e88e5 50%, #42a5f5 75%, #90caf9 100%)" }} />}
                 <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-0 left-0 right-0 h-1/3" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.3), transparent)" }} />
-                <div className={`relative z-10 flex flex-col h-full`} style={{ padding: `${isLandscape ? 2 : 3}${vu}` }}>
+                <div className={`relative z-10 flex flex-col h-full items-end`} style={{ padding: `${isLandscape ? 2 : 3}${vu}`, paddingTop: `${isLandscape ? 4 : 12}${vu}`, paddingRight: `${isLandscape ? 3 : 2}${vu}` }}>
                   {liveWeather ? (<>
                     {weatherSubTab === "today" && (<>
                       {isLandscape ? (
@@ -1446,7 +1446,7 @@ export default function CenarioTela() {
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.45)" }} />}
                 {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d1117 0%, #161b22 50%, #0d1117 100%)" }} />}
-                <div className="relative z-10 flex flex-col h-full items-center justify-start" style={{ padding: `${isLandscape ? 2 : 3}${vu}`, paddingTop: `${isLandscape ? 4 : 8}${vu}` }}>
+                <div className="relative z-10 flex flex-col h-full items-end justify-start" style={{ padding: `${isLandscape ? 2 : 3}${vu}`, paddingTop: `${isLandscape ? 4 : 12}${vu}`, paddingRight: `${isLandscape ? 3 : 2}${vu}` }}>
                     {config.currency.enabled ? (<>
                     {/* Header centered */}
                     <div className="text-center" style={{ marginBottom: `${isLandscape ? 1.5 : 3}${vu}` }}>
