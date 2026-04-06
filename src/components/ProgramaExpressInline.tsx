@@ -177,6 +177,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       setParticipantes(editData.participantes || []);
       setEscaladaList(editData.escaladaList || []);
       setEditingId(editData.roteiroId);
+      setEditingXmlPath(editData.existingXmlPath || null);
       setInitialized(true);
     }
   }, [editData, initialized]);
