@@ -1395,22 +1395,21 @@ export default function CenarioTela() {
                               <div key={i} className={`w-full cenario-anim-row-${i + 1}`} style={{ padding: `1.5${vu} 1.8${vu}`, background: "rgba(255,255,255,0.06)", borderRadius: `1.2${vu}`, WebkitBackdropFilter: "blur(10px)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.08)" }}>
                                 {/* Row 1: Day + Icon + Temps */}
                                 <div className="flex items-center justify-between">
-                                  <div className="flex items-center" style={{ gap: `1.5${vu}`, flex: 1, minWidth: 0 }}>
-                                    <div style={{ width: `5${vu}`, height: `5${vu}`, flexShrink: 0 }}><WeatherIcon code={d.code} size={52} forceDay /></div>
+                                  <div className="flex items-center" style={{ gap: `1${vu}`, flex: 1, minWidth: 0 }}>
+                                    <div style={{ width: `4${vu}`, height: `4${vu}`, flexShrink: 0 }}><WeatherIcon code={d.code} size={52} forceDay /></div>
                                     <div className="flex flex-col" style={{ minWidth: 0 }}>
-                                      <span className="font-black capitalize truncate" style={{ fontSize: `3.2${vu}`, lineHeight: 1.1 }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
-                                      <span className="truncate" style={{ fontSize: `1.4${vu}`, opacity: 0.4, lineHeight: 1.2 }}>{getWLabel(d.code)}</span>
+                                      <span className="font-black capitalize truncate" style={{ fontSize: `2.4${vu}`, lineHeight: 1.1 }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                                      <span className="truncate" style={{ fontSize: `1.2${vu}`, opacity: 0.4, lineHeight: 1.2 }}>{getWLabel(d.code)}</span>
                                     </div>
                                   </div>
                                   <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
-                                    <span className="font-black tabular-nums" style={{ fontSize: `3.6${vu}`, lineHeight: 1.1, color: "#fff" }}>{d.max}°</span>
-                                    <div className="flex items-center" style={{ gap: `0.4${vu}`, marginTop: `0.3${vu}` }}>
-                                      <span className="font-bold tabular-nums" style={{ fontSize: `2${vu}`, opacity: 0.5 }}>{d.min}°</span>
+                                    <span className="font-black tabular-nums" style={{ fontSize: `2.8${vu}`, lineHeight: 1.1, color: "#fff" }}>{d.max}°</span>
+                                    <div className="flex items-center" style={{ gap: `0.3${vu}`, marginTop: `0.2${vu}` }}>
+                                      <span className="font-bold tabular-nums" style={{ fontSize: `1.6${vu}`, opacity: 0.5 }}>{d.min}°</span>
                                     </div>
                                   </div>
                                 </div>
-                                {/* Row 2: Details */}
-                                <div className="flex items-center justify-between" style={{ marginTop: `1.2${vu}`, opacity: 0.55, fontSize: `1.6${vu}` }}>
+                                <div className="flex items-center justify-between" style={{ marginTop: `0.8${vu}`, opacity: 0.55, fontSize: `1.3${vu}` }}>
                                   <span>💧 {d.precip}%</span>
                                   <span>{d.rainMm}mm</span>
                                   <span>🌡 {d.humidity}%</span>
