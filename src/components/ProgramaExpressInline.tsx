@@ -285,6 +285,34 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     initialDataRef.current = null;
   };
 
+  /* Generate plain-text representation of current script for editing */
+  const generatePlainText = (): string => {
+    let text = "";
+    text += `Estúdio: ${estudio}\n`;
+    text += `Programa: ${programaNome}\n\n`;
+    if (participantes.length > 0) {
+      text += `EQUIPE:\n`;
+      participantes.forEach(p => {
+        text += `- ${p.nome}${p.cargo ? ` – ${p.cargo}` : ""}${p.instagram ? ` : ${p.instagram.startsWith("@") ? p.instagram : `@${p.instagram}`}` : ""}\n`;
+      });
+      text += "\n";
+    }
+    if (escaladaList.length > 0) {
+      text += `ESCALADA:\n`;
+      escaladaList.forEach((e, i) => { text += `${i + 1}. ${e.titulo}\n`; });
+      text += "\n";
+    }
+    blocos.forEach((b, bi) => {
+      text += `BLOCO ${bi + 1}:\n`;
+      b.noticias.forEach(n => {
+        if (!n.titulo) return;
+        text += `- ${n.titulo}\n`;
+      });
+      text += "\n";
+    });
+    return text.trim();
+  };
+
   const parsePastedScript = () => {
     if (!pasteText.trim()) { toast.error("Cole o texto do roteiro"); return; }
     const linhas = pasteText.split('\n').map(l => l.trim()).filter(l => l !== '');
@@ -329,7 +357,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     if (parsedBlocos.length > 0) setBlocos(parsedBlocos);
     setShowPastePopup(false);
     setPasteText("");
-    toast.success("Roteiro importado com sucesso!");
+    toast.success(editingId ? "Roteiro atualizado!" : "Roteiro importado com sucesso!");
     if (parsedBlocos.length > 0) {
       const linksToFetch: { bi: number; ni: number; url: string }[] = [];
       parsedBlocos.forEach((b, bi) => { b.noticias.forEach((n, ni) => { if (n.link && n.link.startsWith("http")) linksToFetch.push({ bi, ni, url: n.link }); }); });
@@ -487,7 +515,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </div>
         </div>
         <button
-          onClick={() => setShowPastePopup(true)}
+          onClick={() => {
+            if (editingId && !showPastePopup) {
+              setPasteText(generatePlainText());
+            }
+            setShowPastePopup(true);
+          }}
           className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-lg hover:opacity-80 transition-all"
           style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
         >
@@ -525,7 +558,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               style={inputStyle}
             />
             <button onClick={parsePastedScript} disabled={!pasteText.trim()} className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40" style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}>
-              <Check size={12} /> Importar Roteiro
+              <Check size={12} /> {editingId ? "Atualizar Roteiro" : "Importar Roteiro"}
             </button>
           </div>
         )}
