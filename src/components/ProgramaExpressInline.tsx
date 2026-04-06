@@ -40,6 +40,7 @@ export interface ExpressEditData {
   blocos: Bloco[];
   participantes?: Participante[];
   escaladaList?: {titulo: string; imagemUrl: string}[];
+  existingXmlPath?: string;
 }
 
 interface Props {
@@ -108,6 +109,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [saving, setSaving] = useState(false);
   const [collapsedBlocos, setCollapsedBlocos] = useState<Set<number>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingXmlPath, setEditingXmlPath] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [showPastePopup, setShowPastePopup] = useState(false);
   const [pasteText, setPasteText] = useState("");
