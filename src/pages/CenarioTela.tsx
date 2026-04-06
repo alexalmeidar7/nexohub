@@ -1360,23 +1360,23 @@ export default function CenarioTela() {
                         /* ── LANDSCAPE FORECAST ── */
                         <div className="flex flex-col h-full">
                           <div className="text-center" style={{ marginBottom: `1.5${vu}` }}>
-                            <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `3.5${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
-                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.4${vu}`, color: "#e1f532", marginTop: `0.3${vu}` }}>próximos dias</div>
+                            <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `4.5${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
+                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: "#e1f532", marginTop: `0.3${vu}` }}>próximos dias</div>
                           </div>
-                          <div className="flex-1 flex flex-col justify-center" style={{ gap: `0.8${vu}` }}>
+                          <div className="flex-1 flex flex-col justify-center" style={{ gap: `1.2${vu}` }}>
                             {liveWeather.daily.slice(1, 6).map((d, i) => (
-                              <div key={i} className={`flex items-center rounded-2xl cenario-anim-row-${i + 1}`} style={{ padding: `1${vu} 1.5${vu}`, background: "rgba(0,0,0,0.35)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                                <span className="font-bold capitalize" style={{ fontSize: `1.8${vu}`, width: "22%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
-                                <div className="flex items-center justify-center" style={{ width: "12%" }}>
-                                  <div style={{ width: `3.5${vu}`, height: `3.5${vu}` }}><WeatherIcon code={d.code} size={40} forceDay /></div>
+                              <div key={i} className={`flex items-center rounded-2xl cenario-anim-row-${i + 1}`} style={{ padding: `1.5${vu} 2${vu}`, background: "rgba(0,0,0,0.35)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                                <span className="font-bold capitalize" style={{ fontSize: `2.5${vu}`, width: "22%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                                <div className="flex items-center justify-center" style={{ width: "14%" }}>
+                                  <div style={{ width: `5.5${vu}`, height: `5.5${vu}` }}><WeatherIcon code={d.code} size={64} forceDay /></div>
                                 </div>
-                                <div className="flex items-center" style={{ width: "42%", gap: `1${vu}`, opacity: 0.7 }}>
-                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>💧{d.precip}%</span>
-                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>{d.rainMm}mm</span>
-                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>🌡{d.humidity}%</span>
-                                  <span className="flex items-center" style={{ fontSize: `1.2${vu}`, gap: `0.3${vu}` }}>🌬{d.windMax}km/h</span>
+                                <div className="flex items-center" style={{ width: "38%", gap: `1.2${vu}`, opacity: 0.7 }}>
+                                  <span className="flex items-center" style={{ fontSize: `1.8${vu}`, gap: `0.4${vu}` }}>💧{d.precip}%</span>
+                                  <span className="flex items-center" style={{ fontSize: `1.8${vu}`, gap: `0.4${vu}` }}>{d.rainMm}mm</span>
+                                  <span className="flex items-center" style={{ fontSize: `1.8${vu}`, gap: `0.4${vu}` }}>🌡{d.humidity}%</span>
+                                  <span className="flex items-center" style={{ fontSize: `1.8${vu}`, gap: `0.4${vu}` }}>🌬{d.windMax}km/h</span>
                                 </div>
-                                <span className="font-black tabular-nums text-right" style={{ fontSize: `2${vu}`, width: "30%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{d.min}° / {d.max}°</span>
+                                <span className="font-black tabular-nums text-right" style={{ fontSize: `3${vu}`, width: "26%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{d.min}° / {d.max}°</span>
                               </div>
                             ))}
                           </div>
