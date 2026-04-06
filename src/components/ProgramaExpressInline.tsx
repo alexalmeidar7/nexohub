@@ -515,7 +515,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </div>
         </div>
         <button
-          onClick={() => setShowPastePopup(true)}
+          onClick={() => {
+            if (editingId && !showPastePopup) {
+              setPasteText(generatePlainText());
+            }
+            setShowPastePopup(true);
+          }}
           className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-lg hover:opacity-80 transition-all"
           style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
         >
