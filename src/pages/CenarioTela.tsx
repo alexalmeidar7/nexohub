@@ -1383,7 +1383,7 @@ export default function CenarioTela() {
                         </div>
                       ) : (
                         /* ── PORTRAIT FORECAST ── */
-                        <div className="flex flex-col h-full items-center justify-center">
+                        <div className="flex flex-col h-full" style={{ width: "55%", maxWidth: `55${vu}`, marginLeft: "auto" }}>
                           {/* Header — same pattern as currency page */}
                           <div className="text-center" style={{ marginBottom: `3${vu}` }}>
                             <CalendarDays className="mx-auto drop-shadow-lg cenario-anim-icon" style={{ width: `6${vu}`, height: `6${vu}`, color: "#e1f532", opacity: 0.7, marginBottom: `1${vu}` }} />
@@ -1449,10 +1449,10 @@ export default function CenarioTela() {
                 <div className="relative z-10 flex flex-col h-full items-end justify-start" style={{ padding: `${isLandscape ? 2 : 3}${vu}`, paddingTop: `${isLandscape ? 4 : 12}${vu}`, paddingRight: `${isLandscape ? 3 : 2}${vu}` }}>
                     {config.currency.enabled ? (<>
                     {/* Header centered */}
-                    <div className="text-center" style={{ marginBottom: `${isLandscape ? 1.5 : 3}${vu}` }}>
-                      <DollarSign className="drop-shadow-lg cenario-anim-icon mx-auto" style={{ width: `${isLandscape ? 4 : 6}${vu}`, height: `${isLandscape ? 4 : 6}${vu}`, color: "#e1f532", opacity: 0.7, marginBottom: `1${vu}` }} />
-                      <div className="font-extrabold leading-none drop-shadow-lg cenario-anim-title" style={{ fontSize: `${isLandscape ? 3.5 : 6}${vu}`, letterSpacing: "-0.02em" }}>cotação</div>
-                      <div className="font-bold cenario-anim-subtitle" style={{ fontSize: `${isLandscape ? 1.8 : 2.8}${vu}`, color: "#e1f532", marginTop: `0.4${vu}` }}>
+                    <div className="text-center" style={{ marginBottom: `${isLandscape ? 1.5 : 2}${vu}` }}>
+                      <DollarSign className="drop-shadow-lg cenario-anim-icon mx-auto" style={{ width: `${isLandscape ? 4 : 4}${vu}`, height: `${isLandscape ? 4 : 4}${vu}`, color: "#e1f532", opacity: 0.7, marginBottom: `0.5${vu}` }} />
+                      <div className="font-extrabold leading-none drop-shadow-lg cenario-anim-title" style={{ fontSize: `${isLandscape ? 3.5 : 4}${vu}`, letterSpacing: "-0.02em" }}>cotação</div>
+                      <div className="font-bold cenario-anim-subtitle" style={{ fontSize: `${isLandscape ? 1.8 : 2}${vu}`, color: "#e1f532", marginTop: `0.3${vu}` }}>
                         {currencySubTab === "moedas" ? "moedas" : "bolsas"}
                       </div>
                     </div>
