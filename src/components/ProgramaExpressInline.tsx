@@ -473,8 +473,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
 
       const blob = new Blob([xmlContent], { type: "application/xml" });
-      const fileName = `express_${programaId}_${Date.now()}.xml`;
-      const filePath = `express/${user.id}/${fileName}`;
+      const filePath = (editingId && editingXmlPath) ? editingXmlPath : `express/${user.id}/express_${programaId}_${Date.now()}.xml`;
       await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
