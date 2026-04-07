@@ -133,6 +133,7 @@ export default function TestemunhaisPage() {
   const startEdit = (item: Testemunhal) => {
     setEditingId(item.id);
     setTexto(item.texto);
+    setTimeout(() => { if (editorRef.current) editorRef.current.innerHTML = item.texto; }, 0);
     setProgramaId(item.programa_id || "");
     setDataInicio(item.data_inicio);
     setDataFim(item.data_fim);
