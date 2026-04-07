@@ -865,11 +865,21 @@ export default function AgendaPage() {
                 <History size={12} /> Histórico de Eventos Passados
               </span>
               <div className="flex items-center gap-2">
+                {pastEventos.length > 0 && (
+                  <button
+                    onClick={handleClearAllPast}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all hover:scale-105"
+                    style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
+                    title="Limpar todo o histórico"
+                  >
+                    <Trash2 size={10} /> Limpar tudo
+                  </button>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
                       className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                      style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}
+                      style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
                       title="Filtrar por data"
                     >
                       <CalendarIcon size={14} style={{ color: "var(--layout-header-text, #ffffff)" }} />
@@ -898,7 +908,19 @@ export default function AgendaPage() {
                   Nenhum evento passado encontrado.
                 </p>
               ) : (
-                pastEventos.map((evt) => renderEventCard(evt, true))
+                pastEventos.map((evt) => (
+                  <div key={evt.id} className="relative group">
+                    {renderEventCard(evt, true)}
+                    <button
+                      onClick={() => handleDelete(evt.id)}
+                      className="absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ backgroundColor: "rgba(239,68,68,0.1)" }}
+                      title="Remover evento"
+                    >
+                      <Trash2 size={13} className="text-destructive" />
+                    </button>
+                  </div>
+                ))
               )}
             </div>
           </div>
