@@ -676,7 +676,7 @@ export default function AgendaPage() {
                 <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Prioridade</Label>
                 <div className="flex gap-2">
                   {[
-                    { value: "baixa", label: "Baixa", color: "#22c55e" },
+                    { value: "baixa", label: "Baixa", color: "var(--layout-accent-color, #2563eb)" },
                     { value: "normal", label: "Normal", color: "var(--layout-icon-color, #888888)" },
                     { value: "alta", label: "Alta", color: "#f59e0b" },
                     { value: "urgente", label: "Urgente", color: "#ef4444" },
