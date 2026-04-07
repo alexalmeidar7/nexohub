@@ -252,10 +252,37 @@ export default function PromocoesKiosk() {
     return activeScrollTarget === "promo" ? modalScrollRef : programModalScrollRef;
   }, [activeScrollTarget]);
 
-  const filteredPrograms = programas
-    .filter(p => PROGRAMAS_VISIVEIS.some(name => p.nome.toUpperCase().includes(name)))
-    .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
-    .filter((p, i, arr) => arr.findIndex(x => x.nome.toUpperCase() === p.nome.toUpperCase()) === i);
+  const normalizeProgramName = (name: string) =>
+    name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toUpperCase();
+
+  const filteredPrograms = Array.from(
+    programas
+      .filter((programa) =>
+        PROGRAMAS_VISIVEIS.some((visibleName) =>
+          normalizeProgramName(programa.nome).includes(normalizeProgramName(visibleName)),
+        ),
+      )
+      .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
+      .reduce((map, programa) => {
+        const normalizedName = normalizeProgramName(programa.nome);
+        const dedupeKey =
+          PROGRAMAS_VISIVEIS.find((visibleName) =>
+            normalizedName.includes(normalizeProgramName(visibleName)),
+          ) ?? normalizedName;
+
+        if (!map.has(dedupeKey)) {
+          map.set(dedupeKey, programa);
+        }
+
+        return map;
+      }, new Map<string, ProgramaGrade>())
+      .values(),
+  );
 
   const banners = promocoes.filter(p => p.imagem_url);
   const botoes = promocoes.filter(p => p.botao_url);
