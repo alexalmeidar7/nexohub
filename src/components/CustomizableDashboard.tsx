@@ -378,7 +378,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {items.filter(i => i.type === "link").length > 0 && (
         <div className="mb-6">
           <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Atalhos rápidos</p>
-          <div className="flex flex-wrap gap-2 sm:gap-3">
+          <div className="flex flex-wrap gap-3 sm:gap-4">
             {items.filter(i => i.type === "link").map(item => {
               const Icon = getIcon(item.linkIcon || "Link2");
               const isDragging = draggedId === item.id;
@@ -395,45 +395,43 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => handleLinkClick(item)}
                 >
                     <div
-                      className={`w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center pt-[14px] sm:pt-[18px] transition-all duration-200 hover:scale-[1.06] overflow-hidden`}
+                      className="w-[120px] h-[100px] sm:w-[140px] sm:h-[110px] rounded-3xl flex flex-col items-start justify-between p-4 transition-all duration-200 hover:scale-[1.04] overflow-hidden"
                       style={{
                         background: isDragOver
-                          ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #0f1058) 70%, white 30%), var(--layout-accent-color, #444))`
-                          : `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #0f1058) 85%, white 15%) 0%, var(--layout-button-bg, #0f1058) 50%, color-mix(in srgb, var(--layout-button-bg, #0f1058) 90%, black 10%) 100%)`,
-                        backdropFilter: "blur(30px) saturate(1.8)",
-                        WebkitBackdropFilter: "blur(30px) saturate(1.8)",
-                        border: isDragOver ? `2px solid var(--layout-button-bg, #0f1058)` : `1px solid color-mix(in srgb, var(--layout-button-text, #fff) 15%, transparent)`,
-                        boxShadow: `0 8px 24px color-mix(in srgb, var(--layout-button-bg, #0f1058) 35%, transparent), 0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.08)`,
+                          ? `color-mix(in srgb, var(--layout-accent-color, #c8ff00) 30%, rgba(0,0,0,0.4))`
+                          : `color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 75%, transparent)`,
+                        backdropFilter: "blur(40px) saturate(1.8)",
+                        WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                        border: isDragOver
+                          ? `2px solid var(--layout-accent-color, #c8ff00)`
+                          : `1px solid color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)`,
+                        boxShadow: `0 4px 20px rgba(0,0,0,0.15)`,
                       }}
                       onMouseEnter={e => {
-                        e.currentTarget.style.boxShadow = `0 12px 36px color-mix(in srgb, var(--layout-button-bg, #0f1058) 50%, transparent), 0 4px 10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.35)`;
-                        e.currentTarget.style.background = `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #0f1058) 75%, white 25%) 0%, color-mix(in srgb, var(--layout-button-bg, #0f1058) 90%, white 10%) 50%, var(--layout-button-bg, #0f1058) 100%)`;
-                        e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-button-text, #fff) 30%, transparent)`;
+                        e.currentTarget.style.boxShadow = `0 8px 30px rgba(0,0,0,0.25)`;
+                        e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-accent-color, #c8ff00) 40%, transparent)`;
                       }}
                       onMouseLeave={e => {
-                        e.currentTarget.style.background = isDragOver
-                          ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #0f1058) 70%, white 30%), var(--layout-accent-color, #444))`
-                          : `linear-gradient(160deg, color-mix(in srgb, var(--layout-button-bg, #0f1058) 85%, white 15%) 0%, var(--layout-button-bg, #0f1058) 50%, color-mix(in srgb, var(--layout-button-bg, #0f1058) 90%, black 10%) 100%)`;
-                        e.currentTarget.style.boxShadow = `0 8px 24px color-mix(in srgb, var(--layout-button-bg, #0f1058) 35%, transparent), 0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.08)`;
-                        e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-button-text, #fff) 15%, transparent)`;
+                        e.currentTarget.style.boxShadow = `0 4px 20px rgba(0,0,0,0.15)`;
+                        e.currentTarget.style.borderColor = isDragOver
+                          ? `var(--layout-accent-color, #c8ff00)`
+                          : `color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)`;
                       }}
                     >
-                      {/* Top glass shine */}
-                      <div className="absolute top-0 left-0 right-0 h-[45%] pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 60%, transparent 100%)", borderRadius: "16px 16px 0 0" }} />
-                      <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0 relative z-10" style={{ background: "rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 8px rgba(0,0,0,0.1)" }}>
-                        <Icon size={16} className="sm:hidden" style={{ color: "var(--layout-button-text, #fff)" }} /><Icon size={18} className="hidden sm:block" style={{ color: "var(--layout-button-text, #fff)" }} />
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #c8ff00) 20%, transparent)" }}>
+                        <Icon size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
                       </div>
-                      <span className="text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5 relative z-10" style={{ color: "var(--layout-button-text, #fff)", textShadow: "0 1px 3px rgba(0,0,0,0.2)" }}>{item.linkLabel}</span>
-                      {item.linkExternal && <ExternalLink size={7} className="absolute bottom-1.5 right-1.5 z-10" style={{ color: "var(--layout-button-text, #fff)", opacity: 0.4 }} />}
+                      <div className="w-full">
+                        <span className="text-[11px] font-semibold leading-tight block truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>{item.linkLabel}</span>
+                        {item.linkExternal && <ExternalLink size={8} className="mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }} />}
+                      </div>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                    className="absolute top-1.5 right-1.5 w-4 h-4 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
-                    style={{ border: "1px solid rgba(0,0,0,0.15)" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.4)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)"; }}
+                    className="absolute top-2 right-2 w-5 h-5 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
+                    style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}
                   >
-                    <X size={7} className="text-black/40" />
+                    <X size={9} style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }} />
                   </button>
                 </div>
               );
@@ -441,16 +439,16 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             {/* Add button */}
             <div
               onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-              className="w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
+              className="w-[120px] h-[100px] sm:w-[140px] sm:h-[110px] rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.04]"
               style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1.5px dashed rgba(255,255,255,0.25)",
+                background: "color-mix(in srgb, var(--layout-nav-text, #fff) 5%, transparent)",
+                border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 20%, transparent)",
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 12%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 40%, transparent)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 5%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 20%, transparent)"; }}
             >
-              <Plus size={16} className="mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }} />
-              <span className="text-[9px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Adicionar</span>
+              <Plus size={18} className="mb-1.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }} />
+              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicionar</span>
             </div>
           </div>
         </div>
