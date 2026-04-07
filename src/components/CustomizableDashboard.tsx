@@ -416,7 +416,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       }}
                     >
                       {/* Subtle gradient overlay on top */}
-                      <div className="absolute inset-0 rounded-[22px] pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 50%)" }} />
+                      <div className="absolute inset-px rounded-[21px] pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 38%, transparent 65%)" }} />
                       <div className="w-10 h-10 rounded-2xl flex items-center justify-center relative z-[1]" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 12%, transparent)" }}>
                         <Icon size={20} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
                       </div>
