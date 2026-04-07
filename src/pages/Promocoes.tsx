@@ -336,7 +336,7 @@ export default function PromocoesKiosk() {
         const elapsed = time - lastFrameTimeRef.current;
         lastFrameTimeRef.current = time;
 
-        const pixelsPerSecond = 15 + scrollSpeedRef.current * 1.8;
+        const pixelsPerSecond = 20 + scrollSpeedRef.current * 4.5;
         const pixelsToScroll = (pixelsPerSecond * elapsed) / 1000;
         ref.current.scrollTop += pixelsToScroll;
       }
