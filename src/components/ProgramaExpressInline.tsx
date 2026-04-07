@@ -303,6 +303,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setEditedFields(new Set());
     setLastAutoSaved(null);
     initialDataRef.current = null;
+    setPodcastData({ tituloTarja: "", introducao: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""] });
   };
 
   /* Generate plain-text representation of current script for editing */
