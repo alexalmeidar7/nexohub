@@ -430,10 +430,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                    className="absolute top-2 right-2 w-5 h-5 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
-                    style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}
+                    className="absolute top-2.5 right-2.5 w-5 h-5 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+                    style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}
                   >
-                    <X size={9} style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }} />
+                    <X size={9} style={{ color: "#fff", opacity: 0.7 }} />
                   </button>
                 </div>
               );
