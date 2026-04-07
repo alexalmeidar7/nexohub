@@ -284,7 +284,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [user, initialLoading, findCurrentOnAirThumb]);
 
   const isModuleEnabled = (page: Page): boolean => {
-    if (page === "dashboard" || page === "configuracoes" || page === "playerconfig" || page === "cortevideo" || page === "tp" || page === "fans") return true;
+    if (
+      page === "dashboard" ||
+      page === "configuracoes" ||
+      page === "playerconfig" ||
+      page === "cortevideo" ||
+      page === "tp" ||
+      page === "fans" ||
+      page === "p2p"
+    ) {
+      return true;
+    }
 
     const modulesSource = planModules ?? enabledModules;
     if (!modulesSource) return true;
@@ -301,7 +311,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   useEffect(() => {
-    if (currentPage !== "dashboard" && currentPage !== "configuracoes" && currentPage !== "playerconfig" && currentPage !== "fans" && !isModuleEnabled(currentPage)) {
+    if (
+      currentPage !== "dashboard" &&
+      currentPage !== "configuracoes" &&
+      currentPage !== "playerconfig" &&
+      currentPage !== "fans" &&
+      currentPage !== "p2p" &&
+      !isModuleEnabled(currentPage)
+    ) {
       setCurrentPage("dashboard");
     }
   }, [currentPage, enabledModules, planModules]);
