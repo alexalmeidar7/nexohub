@@ -559,7 +559,45 @@ table:not([data-no-row-hover]) tbody tr:hover {
   color: var(--layout-icon-color, #888888);
 }
 
-/* Dashboard widget responsive sizing */
+/* ====== Bento-style section headers inside content area ====== */
+/* Transform dark solid header bars into clean, light-styled headers */
+.mv-content-area [style*="background: var(--layout-header-bg"],
+.mv-content-area [style*="background-color: var(--layout-header-bg"] {
+  background: color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, var(--layout-page-bg, #ffffff)) !important;
+  color: var(--layout-accent-color, #2563eb) !important;
+  border-bottom: 2px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent);
+}
+.mv-content-area [style*="background: var(--layout-header-bg"] *,
+.mv-content-area [style*="background-color: var(--layout-header-bg"] * {
+  color: var(--layout-accent-color, #2563eb) !important;
+}
+.mv-content-area [style*="background: var(--layout-header-bg"] span[style*="background"],
+.mv-content-area [style*="background-color: var(--layout-header-bg"] span[style*="background"] {
+  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important;
+  color: var(--layout-accent-color, #2563eb) !important;
+}
+/* Buttons inside these light headers keep accent style */
+.mv-content-area [style*="background: var(--layout-header-bg"] button[style*="background"],
+.mv-content-area [style*="background-color: var(--layout-header-bg"] button[style*="background"] {
+  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important;
+  color: var(--layout-accent-color, #2563eb) !important;
+  border: 1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent) !important;
+}
+/* SelectTrigger inside headers - make them light */
+.mv-content-area [style*="background: var(--layout-header-bg"] [data-radix-collection-item],
+.mv-content-area [style*="background-color: var(--layout-header-bg"] [data-radix-collection-item],
+.mv-content-area [style*="background: var(--layout-header-bg"] button[role="combobox"],
+.mv-content-area [style*="background-color: var(--layout-header-bg"] button[role="combobox"] {
+  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent) !important;
+  color: var(--layout-accent-color, #2563eb) !important;
+  border: 1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent) !important;
+}
+/* SVG icons inside these headers */
+.mv-content-area [style*="background: var(--layout-header-bg"] svg,
+.mv-content-area [style*="background-color: var(--layout-header-bg"] svg {
+  color: var(--layout-accent-color, #2563eb) !important;
+}
+
 .dashboard-widget-card {
   width: 260px;
   height: 180px;
