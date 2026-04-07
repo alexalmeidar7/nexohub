@@ -577,17 +577,21 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         boxShadow: "0 16px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
                       }}
                     >
-                      {item.children.map(child => (
-                        <button
-                          key={child.label}
-                          onClick={() => handleChildClick(child, item.label)}
-                          className="w-full text-left px-4 py-2 text-[11px] transition-all rounded-lg mx-0"
-                          style={{ color: child.page && currentPage === child.page ? layoutColors.buttonBg : `${layoutColors.navText}cc` }}
-                          onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = layoutColors.buttonBg; e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; } }}
-                          onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = `${layoutColors.navText}cc`; e.currentTarget.style.backgroundColor = "transparent"; } }}
-                        >
-                          {child.label}
-                        </button>
+                      {item.children.map((child, ci) => (
+                        <div key={child.label}>
+                          {child.separator && ci > 0 && (
+                            <div className="mx-3 my-1.5 border-t" style={{ borderColor: `${layoutColors.navText}15` }} />
+                          )}
+                          <button
+                            onClick={() => handleChildClick(child, item.label)}
+                            className="w-full text-left px-4 py-2 text-[11px] transition-all rounded-lg mx-0"
+                            style={{ color: child.page && currentPage === child.page ? layoutColors.buttonBg : `${layoutColors.navText}cc` }}
+                            onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = layoutColors.buttonBg; e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; } }}
+                            onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = `${layoutColors.navText}cc`; e.currentTarget.style.backgroundColor = "transparent"; } }}
+                          >
+                            {child.label}
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -676,6 +680,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "playerconfig" && <ConfiguracoesPage section="player" />}
               {currentPage === "testemunhais" && <TestemunhaisPage />}
               {currentPage === "promocoes" && <PromocoesPage />}
+              {currentPage === "configtelapromo" && <ConfigTelaPromoPage />}
               {currentPage === "logos" && <LogosPatrocinadoresPage />}
               {currentPage === "shopping" && <ShoppingPage />}
               {currentPage === "preroll" && <PreRollPage />}
