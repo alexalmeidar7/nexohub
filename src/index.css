@@ -401,7 +401,7 @@
 .mv-content-area input[type="tel"],
 .mv-content-area textarea,
 .mv-content-area select {
-  background-color: var(--layout-page-bg, #ffffff) !important;
+  background-color: color-mix(in srgb, var(--layout-page-text, #0d0446) 5%, var(--layout-page-bg, #ffffff)) !important;
   border: none !important;
   color: var(--layout-page-text, #0d0446) !important;
   border-radius: 14px !important;
