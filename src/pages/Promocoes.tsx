@@ -254,7 +254,8 @@ export default function PromocoesKiosk() {
 
   const filteredPrograms = programas
     .filter(p => PROGRAMAS_VISIVEIS.some(name => p.nome.toUpperCase().includes(name)))
-    .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
+    .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
+    .filter((p, i, arr) => arr.findIndex(x => x.nome.toUpperCase() === p.nome.toUpperCase()) === i);
 
   const banners = promocoes.filter(p => p.imagem_url);
   const botoes = promocoes.filter(p => p.botao_url);
