@@ -645,13 +645,13 @@ export default function PromocoesKiosk() {
               {filteredPrograms.map(prog => (
                 <div
                   key={prog.id}
-                  className="min-w-[230px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
+                  className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
                   onClick={() => setSelectedProgram(prog)}
                 >
                   {prog.capa ? (
-                    <img src={prog.capa} alt={prog.nome} className="w-full h-auto object-contain" />
+                    <img src={prog.capa} alt={prog.nome} className="absolute inset-0 w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-[300px] bg-zinc-800 flex items-center justify-center">
+                    <div className="absolute inset-0 w-full h-full bg-zinc-800 flex items-center justify-center">
                       <Clock size={24} className="text-zinc-600" />
                     </div>
                   )}
