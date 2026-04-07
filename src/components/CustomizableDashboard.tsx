@@ -395,35 +395,37 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => handleLinkClick(item)}
                 >
                     <div
-                      className="w-[120px] h-[100px] sm:w-[140px] sm:h-[110px] rounded-3xl flex flex-col items-start justify-between p-4 transition-all duration-200 hover:scale-[1.04] overflow-hidden"
+                      className="w-[130px] h-[120px] sm:w-[150px] sm:h-[130px] rounded-[22px] flex flex-col items-start justify-between p-5 transition-all duration-300 hover:scale-[1.05] hover:-translate-y-1 overflow-hidden relative"
                       style={{
                         background: isDragOver
-                          ? `color-mix(in srgb, var(--layout-accent-color, #c8ff00) 30%, rgba(0,0,0,0.4))`
-                          : `color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 75%, transparent)`,
-                        backdropFilter: "blur(40px) saturate(1.8)",
-                        WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                          ? `color-mix(in srgb, var(--layout-accent-color, #c8ff00) 20%, rgba(0,0,0,0.35))`
+                          : `linear-gradient(145deg, color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 80%, transparent) 0%, color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 60%, transparent) 100%)`,
+                        backdropFilter: "blur(40px) saturate(1.6)",
+                        WebkitBackdropFilter: "blur(40px) saturate(1.6)",
                         border: isDragOver
                           ? `2px solid var(--layout-accent-color, #c8ff00)`
-                          : `1px solid color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)`,
-                        boxShadow: `0 4px 20px rgba(0,0,0,0.15)`,
+                          : `1px solid color-mix(in srgb, var(--layout-border-color, #333) 18%, transparent)`,
+                        boxShadow: `0 2px 12px rgba(0,0,0,0.08)`,
                       }}
                       onMouseEnter={e => {
-                        e.currentTarget.style.boxShadow = `0 8px 30px rgba(0,0,0,0.25)`;
-                        e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-accent-color, #c8ff00) 40%, transparent)`;
+                        e.currentTarget.style.boxShadow = `0 12px 40px rgba(0,0,0,0.18), 0 0 0 1px color-mix(in srgb, var(--layout-accent-color, #c8ff00) 25%, transparent)`;
+                        e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-accent-color, #c8ff00) 35%, transparent)`;
                       }}
                       onMouseLeave={e => {
-                        e.currentTarget.style.boxShadow = `0 4px 20px rgba(0,0,0,0.15)`;
+                        e.currentTarget.style.boxShadow = `0 2px 12px rgba(0,0,0,0.08)`;
                         e.currentTarget.style.borderColor = isDragOver
                           ? `var(--layout-accent-color, #c8ff00)`
-                          : `color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)`;
+                          : `color-mix(in srgb, var(--layout-border-color, #333) 18%, transparent)`;
                       }}
                     >
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #c8ff00) 20%, transparent)" }}>
-                        <Icon size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
+                      {/* Subtle gradient overlay on top */}
+                      <div className="absolute inset-0 rounded-[22px] pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 50%)" }} />
+                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center relative z-[1]" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 12%, transparent)" }}>
+                        <Icon size={20} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
                       </div>
-                      <div className="w-full">
-                        <span className="text-[11px] font-semibold leading-tight block truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>{item.linkLabel}</span>
-                        {item.linkExternal && <ExternalLink size={8} className="mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }} />}
+                      <div className="w-full relative z-[1]">
+                        <span className="text-[12px] font-semibold leading-tight block truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>{item.linkLabel}</span>
+                        {item.linkExternal && <ExternalLink size={9} className="mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }} />}
                       </div>
                   </div>
                   <button
