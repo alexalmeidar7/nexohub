@@ -271,7 +271,6 @@ export default function PromocoesPage() {
                       className="w-full px-4 py-2 text-sm outline-none min-h-[80px]"
                       style={{ color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "transparent" }}
                       onInput={() => setTexto(textoEditorRef.current?.innerHTML || "")}
-                      dangerouslySetInnerHTML={{ __html: texto }}
                       suppressContentEditableWarning
                     />
                   </div>
