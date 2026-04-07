@@ -24,13 +24,33 @@ const ScrollBar = React.forwardRef<
     orientation={orientation}
     className={cn(
       "flex touch-none select-none transition-colors",
-      orientation === "vertical" && "h-full w-2.5 border-l border-l-transparent p-[1px]",
-      orientation === "horizontal" && "h-2.5 flex-col border-t border-t-transparent p-[1px]",
+      orientation === "vertical" && "h-full w-[3px] border-l-0 p-0",
+      orientation === "horizontal" && "h-[3px] flex-col border-t-0 p-0",
       className,
     )}
+    style={{
+      background: orientation === "vertical"
+        ? "linear-gradient(to bottom, transparent 0%, hsl(var(--foreground) / 0.18) 2%, hsl(var(--foreground) / 0.18) 98%, transparent 100%)"
+        : "linear-gradient(to right, transparent 0%, hsl(var(--foreground) / 0.18) 2%, hsl(var(--foreground) / 0.18) 98%, transparent 100%)",
+    }}
     {...props}
   >
-    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
+    <ScrollAreaPrimitive.ScrollAreaThumb
+      className="relative rounded-full"
+      style={{
+        background: "hsl(0, 72%, 50%)",
+        width: orientation === "vertical" ? 12 : undefined,
+        height: orientation === "horizontal" ? 12 : undefined,
+        marginLeft: orientation === "vertical" ? -4.5 : undefined,
+        marginTop: orientation === "horizontal" ? -4.5 : undefined,
+        borderRadius: "50%",
+        minHeight: 12,
+        minWidth: 12,
+        maxHeight: orientation === "vertical" ? 12 : undefined,
+        maxWidth: orientation === "horizontal" ? 12 : undefined,
+        flex: "none",
+      }}
+    />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>
 ));
 ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName;
