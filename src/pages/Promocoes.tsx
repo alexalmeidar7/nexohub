@@ -155,6 +155,10 @@ export default function PromocoesKiosk() {
       setPromocoes(activePromos);
       setTestemunhais(data.testemunhais || []);
 
+      if (data.tela_promo_config) {
+        setTelaPromoConfig({ ...defaultTelaPromoConfig, ...data.tela_promo_config });
+      }
+
       const mapped = (data.programas || []).map((p: any) => ({
         id: p.id, nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
         capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
