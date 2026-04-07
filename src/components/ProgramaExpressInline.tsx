@@ -494,22 +494,39 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   const handleSave = async () => {
     if (!user || !programaId) return;
-    const totalNews = blocos.reduce((s, b) => s + b.noticias.filter(n => n.titulo).length, 0);
-    if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia"); return; }
+    if (isPodcast) {
+      if (!podcastData.tituloTarja.trim() && podcastData.perguntas.every(p => !p.trim())) {
+        toast.error("Preencha ao menos o título da tarja ou uma pergunta"); return;
+      }
+    } else {
+      const totalNews = blocos.reduce((s, b) => s + b.noticias.filter(n => n.titulo).length, 0);
+      if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia"); return; }
+    }
     setSaving(true);
     try {
       const xmlContent = generateXml();
       let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${programaNome}</h2>`;
       if (participantes.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`; participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; }); html += `</ul>`; }
-      if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
-      blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
+      if (isPodcast) {
+        html += `<h3 style="font-weight:bold;margin-top:16px;">🎙️ ROTEIRO</h3>`;
+        if (podcastData.tituloTarja) html += `<p><strong>Tarja:</strong> ${podcastData.tituloTarja}</p>`;
+        if (podcastData.introducao) html += `<p><strong>Introdução:</strong> ${podcastData.introducao}</p>`;
+        const validPerguntas = podcastData.perguntas.filter(p => p.trim());
+        if (validPerguntas.length > 0) { html += `<h4 style="font-weight:bold;margin-top:12px;">❓ Perguntas</h4><ol>`; validPerguntas.forEach(p => { html += `<li>${p}</li>`; }); html += `</ol>`; }
+        if (podcastData.concluindo) html += `<p><strong>Concluindo:</strong> ${podcastData.concluindo}</p>`;
+      } else {
+        if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
+        blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
+      }
 
       const blob = new Blob([xmlContent], { type: "application/xml" });
       const filePath = (editingId && editingXmlPath) ? editingXmlPath : `express/${user.id}/express_${programaId}_${Date.now()}.xml`;
       await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
-      const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
+      const blocosJson = isPodcast
+        ? JSON.stringify({ blocos, participantes, escaladaList, podcastData })
+        : JSON.stringify({ blocos, participantes, escaladaList });
 
       if (editingId) {
         const { error } = await supabase.from("roteiros").update({ programa_nome: programaNome, estudio, titulo: `PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, conteudo_html: html, participantes: blocosJson }).eq("id", editingId);
