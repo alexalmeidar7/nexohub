@@ -262,12 +262,19 @@ export default function PromocoesPage() {
 
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Texto da Promoção</label>
-                  <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Descrição da campanha..." rows={3} required
-                    className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[80px]"
-                    style={{ ...inputStyle, borderRadius: "12px" }}
-                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                  />
+                  <div className="overflow-hidden" style={{ ...inputStyle, borderRadius: "12px" }}>
+                    <RichTextToolbar editorRef={textoEditorRef} onInput={() => setTexto(textoEditorRef.current?.innerHTML || "")} />
+                    <div
+                      ref={textoEditorRef}
+                      contentEditable
+                      data-placeholder="Descrição da campanha..."
+                      className="w-full px-4 py-2 text-sm outline-none min-h-[80px]"
+                      style={{ color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "transparent" }}
+                      onInput={() => setTexto(textoEditorRef.current?.innerHTML || "")}
+                      dangerouslySetInnerHTML={{ __html: texto }}
+                      suppressContentEditableWarning
+                    />
+                  </div>
                 </div>
               </div>
 
