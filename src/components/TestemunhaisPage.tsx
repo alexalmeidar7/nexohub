@@ -190,6 +190,7 @@ export default function TestemunhaisPage() {
 
   const resetForm = () => {
     setTexto("");
+    if (editorRef.current) editorRef.current.innerHTML = "";
     setProgramaId("");
     setDataInicio("");
     setDataFim("");
