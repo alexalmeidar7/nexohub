@@ -473,8 +473,21 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
     xml += `  <programa>${programaNome}</programa>\n  <estudio>${estudio}</estudio>\n  <data>${new Date().toISOString().split("T")[0]}</data>\n`;
     if (participantes.length > 0) { xml += `  <participantes>\n`; participantes.forEach((p, pi) => { xml += `    <participante${pi + 1}>\n      <nome>${escXml(p.nome)}</nome>\n      <cargo>${escXml(p.cargo)}</cargo>\n      <instagram>${escXml(p.instagram)}</instagram>\n    </participante${pi + 1}>\n`; }); xml += `  </participantes>\n`; }
-    if (escaladaList.length > 0) { xml += `  <escalada>\n`; escaladaList.forEach((e, i) => { xml += `    <item ordem="${i + 1}">\n      <titulo>${escXml(e.titulo)}</titulo>\n      <imagem>${escXml(e.imagemUrl)}</imagem>\n    </item>\n`; }); xml += `  </escalada>\n`; }
-    blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
+    if (isPodcast) {
+      xml += `  <roteiro>\n`;
+      xml += `    <tituloTarja>${escXml(podcastData.tituloTarja)}</tituloTarja>\n`;
+      xml += `    <introducao>${escXml(podcastData.introducao)}</introducao>\n`;
+      xml += `    <perguntas>\n`;
+      podcastData.perguntas.filter(p => p.trim()).forEach((p, i) => { xml += `      <pergunta ordem="${i + 1}">${escXml(p)}</pergunta>\n`; });
+      xml += `    </perguntas>\n`;
+      xml += `    <concluindo>${escXml(podcastData.concluindo)}</concluindo>\n`;
+      if (podcastData.apoioImagens.some(u => u.trim())) { xml += `    <apoioImagens>\n`; podcastData.apoioImagens.filter(u => u.trim()).forEach(u => { xml += `      <imagem>${escXml(u)}</imagem>\n`; }); xml += `    </apoioImagens>\n`; }
+      if (podcastData.apoioVideos.some(u => u.trim())) { xml += `    <apoioVideos>\n`; podcastData.apoioVideos.filter(u => u.trim()).forEach(u => { xml += `      <video>${escXml(u)}</video>\n`; }); xml += `    </apoioVideos>\n`; }
+      xml += `  </roteiro>\n`;
+    } else {
+      if (escaladaList.length > 0) { xml += `  <escalada>\n`; escaladaList.forEach((e, i) => { xml += `    <item ordem="${i + 1}">\n      <titulo>${escXml(e.titulo)}</titulo>\n      <imagem>${escXml(e.imagemUrl)}</imagem>\n    </item>\n`; }); xml += `  </escalada>\n`; }
+      blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
+    }
     xml += `</programaExpress>`;
     return xml;
   };
