@@ -741,14 +741,19 @@ export default function PromocoesKiosk() {
                   title.includes("star") || title.includes("estrela") ? Star :
                   Sparkles;
 
+                const cardRadius = telaPromoConfig.card_style === "sharp" ? "4px" : telaPromoConfig.card_style === "pill" ? "50px" : "16px";
+
                 return (
                   <div
                     key={promo.id}
-                    className="flex-shrink-0 cursor-pointer transition-all duration-200 flex items-center gap-3 px-6 py-3.5 rounded-2xl font-bold text-sm outline-4 outline-transparent hover:outline-white hover:scale-105 shadow-lg"
+                    className="flex-shrink-0 cursor-pointer transition-all duration-200 flex items-center gap-3 px-6 py-3.5 font-bold text-sm outline-4 outline-transparent hover:scale-105 shadow-lg"
                     style={{
-                      background: "linear-gradient(135deg, #1a1a1a 0%, #991b1b 50%, #dc2626 100%)",
-                      color: "#fff",
+                      background: `linear-gradient(135deg, ${telaPromoConfig.btn_color_a} 0%, ${telaPromoConfig.btn_color_b} 100%)`,
+                      color: telaPromoConfig.btn_text_color,
+                      borderRadius: cardRadius,
                     }}
+                    onMouseEnter={e => { e.currentTarget.style.outline = `4px solid ${telaPromoConfig.card_border_color}`; }}
+                    onMouseLeave={e => { e.currentTarget.style.outline = "4px solid transparent"; }}
                     onClick={() => setSelectedPromo(promo)}
                   >
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
