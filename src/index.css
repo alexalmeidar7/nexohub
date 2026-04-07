@@ -369,7 +369,7 @@
   border-radius: 24px;
   color: var(--layout-page-text, #0d0446);
   box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-  border: 1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, transparent);
+  
 }
 
 .mv-content-area h2,
@@ -402,7 +402,7 @@
 .mv-content-area textarea,
 .mv-content-area select {
   background-color: var(--layout-page-bg, #ffffff) !important;
-  border: 1.5px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent) !important;
+  border: none !important;
   color: var(--layout-page-text, #0d0446) !important;
   border-radius: 14px !important;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -413,7 +413,7 @@
 .mv-content-area input:focus,
 .mv-content-area textarea:focus,
 .mv-content-area select:focus {
-  border-color: var(--layout-accent-color, #2dbef3) !important;
+  border: none !important;
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #2dbef3) 12%, transparent);
 }
@@ -426,7 +426,7 @@
   font-weight: 600;
   font-size: 13px;
   margin-bottom: 1.25rem;
-  border: 1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent);
+  
 }
 
 .mv-content-area button[type="submit"],
@@ -488,7 +488,7 @@
 .mv-content-area + [data-radix-popper-content-wrapper] [role="listbox"] {
   background-color: var(--layout-page-bg, #ffffff) !important;
   color: var(--layout-page-text, #0d0446) !important;
-  border: 1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent) !important;
+  border: none !important;
   border-radius: 14px !important;
   box-shadow: 0 8px 30px rgba(0,0,0,0.08) !important;
 }
@@ -536,7 +536,7 @@ table:not([data-no-row-hover]) tbody tr:hover {
 .mv-content-area [style*="background-color: rgb(217, 233, 250)"] {
   background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 5%, var(--layout-page-bg, #ffffff)) !important;
   background: color-mix(in srgb, var(--layout-accent-color, #2563eb) 5%, var(--layout-page-bg, #ffffff)) !important;
-  border-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent) !important;
+  border: none !important;
   border-radius: 16px !important;
 }
 
@@ -546,7 +546,7 @@ table:not([data-no-row-hover]) tbody tr:hover {
 .mv-content-area [style*="background: linear-gradient(135deg, #268ffa"] {
   background: color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #ffffff)) !important;
   color: var(--layout-accent-color, #2563eb) !important;
-  border-bottom: 1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent);
+  
   border-radius: 16px !important;
 }
 
