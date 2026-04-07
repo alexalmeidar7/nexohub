@@ -80,6 +80,7 @@ export default function TestemunhaisPage() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const editorRef = useRef<HTMLDivElement>(null);
   const [texto, setTexto] = useState("");
   const [programaId, setProgramaId] = useState("");
   const [dataInicio, setDataInicio] = useState("");
