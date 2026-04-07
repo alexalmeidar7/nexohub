@@ -404,8 +404,31 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const isDashboard = currentPage === "dashboard";
 
   return (
-    <div className="h-screen flex animate-fade-in overflow-hidden" style={{ backgroundColor: layoutColors.pageBg }}>
+    <div className="h-screen flex animate-fade-in overflow-hidden relative" style={{ backgroundColor: layoutColors.pageBg }}>
       <DashboardRuntimeEffects />
+
+      {/* Background layers (full page, behind sidebar) */}
+      {isDashboard && (
+        <>
+          <div
+            className="absolute inset-0 z-0 transition-opacity duration-1000"
+            style={{ ...layoutBg, opacity: onAirThumb ? 0 : 1 }}
+          />
+          {onAirThumb && (
+            <div
+              key={onAirThumb}
+              className="absolute inset-0 z-0 animate-fade-in"
+              style={{
+                backgroundImage: `url(${onAirThumb})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }}
+            />
+          )}
+          <div className="absolute inset-0 z-0" style={{ background: "rgba(0,0,0,0.3)" }} />
+        </>
+      )}
 
       {/* ===== LEFT SIDEBAR (desktop) ===== */}
       <div className="hidden lg:flex flex-shrink-0 z-[60] items-stretch py-3 pl-3">
@@ -542,30 +565,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </aside>
       </div>
 
-      {/* ===== RIGHT SIDE (content) ===== */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
-        {/* Background layers (only visible on dashboard home) */}
-        {isDashboard && (
-          <>
-            <div
-              className="absolute inset-0 z-0 transition-opacity duration-1000"
-              style={{ ...layoutBg, opacity: onAirThumb ? 0 : 1 }}
-            />
-            {onAirThumb && (
-              <div
-                key={onAirThumb}
-                className="absolute inset-0 z-0 animate-fade-in"
-                style={{
-                  backgroundImage: `url(${onAirThumb})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  backgroundRepeat: "no-repeat",
-                }}
-              />
-            )}
-            <div className="absolute inset-0 z-0" style={{ background: "rgba(0,0,0,0.3)" }} />
-          </>
-        )}
+      <div className="flex-1 flex flex-col min-w-0 relative z-[1]">
 
         {/* Mobile top bar */}
         <div className="lg:hidden flex items-center justify-between px-4 pt-3 pb-2 relative z-[1]">
@@ -657,9 +657,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="flex items-center gap-4">
             <img src={logoMenu} alt="NexoHUB" className="h-10 w-auto" />
             <div>
-              <p className="text-xs font-medium tracking-widest uppercase mb-0.5" style={{ color: layoutColors.accentColor }}>
-                {isDashboard ? "Dashboard" : pageTitle[currentPage]}
-              </p>
+              {!isDashboard && (
+                <p className="text-xs font-medium tracking-widest uppercase mb-0.5" style={{ color: layoutColors.accentColor }}>
+                  {pageTitle[currentPage]}
+                </p>
+              )}
               <h1 className="text-2xl font-light" style={{ color: isDashboard ? layoutColors.navText : layoutColors.pageText }}>
                 {empresa.nome || "NexoHUB"}
               </h1>
