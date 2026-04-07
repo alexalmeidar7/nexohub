@@ -1,10 +1,48 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Upload, ImageIcon, Pencil, X } from "lucide-react";
+import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Bold, Underline, Palette } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+
+const RICH_COLORS = ["#ff0000", "#ff8800", "#00aa00", "#0066ff", "#9900cc", "#000000", "#ffffff"];
+
+function RichTextToolbar({ editorRef, onInput }: { editorRef: React.RefObject<HTMLDivElement>; onInput: () => void }) {
+  const exec = (cmd: string, val?: string) => {
+    editorRef.current?.focus();
+    document.execCommand(cmd, false, val);
+    onInput();
+  };
+  const [showColors, setShowColors] = useState(false);
+
+  return (
+    <div className="flex items-center gap-1 px-2 py-1.5 border-b" style={{ borderColor: "var(--layout-border-color, #333333)" }}>
+      <button type="button" title="Negrito" onClick={() => exec("bold")}
+        className="p-1.5 rounded-lg hover:opacity-70 transition-opacity" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+        <Bold size={14} />
+      </button>
+      <button type="button" title="Sublinhado" onClick={() => exec("underline")}
+        className="p-1.5 rounded-lg hover:opacity-70 transition-opacity" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+        <Underline size={14} />
+      </button>
+      <div className="relative">
+        <button type="button" title="Cor do texto" onClick={() => setShowColors(!showColors)}
+          className="p-1.5 rounded-lg hover:opacity-70 transition-opacity" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+          <Palette size={14} />
+        </button>
+        {showColors && (
+          <div className="absolute top-full left-0 mt-1 flex gap-1 p-1.5 rounded-lg shadow-lg z-50" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)" }}>
+            {RICH_COLORS.map(c => (
+              <button key={c} type="button" className="w-5 h-5 rounded-full border border-black/20" style={{ backgroundColor: c }}
+                onClick={() => { exec("foreColor", c); setShowColors(false); }} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface Promocao {
   id: string;
@@ -36,6 +74,7 @@ export default function PromocoesPage() {
   const [dataFim, setDataFim] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
+  const textoEditorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) loadData();
@@ -58,7 +97,6 @@ export default function PromocoesPage() {
     setImagePreview(URL.createObjectURL(file));
   };
 
-
   const uploadImage = async (file: File): Promise<string> => {
     const compressed = await compressImage(file);
     const ext = compressed.name.split(".").pop();
@@ -73,6 +111,7 @@ export default function PromocoesPage() {
     setEditingId(item.id);
     setTitulo(item.botao_url || "");
     setTexto(item.texto);
+    setTimeout(() => { if (textoEditorRef.current) textoEditorRef.current.innerHTML = item.texto || ""; }, 0);
     setOferecimento(item.oferecimento || "");
     setDataInicio(item.data_inicio);
     setDataFim(item.data_fim);
@@ -133,6 +172,7 @@ export default function PromocoesPage() {
   const resetForm = () => {
     setTitulo("");
     setTexto("");
+    if (textoEditorRef.current) textoEditorRef.current.innerHTML = "";
     setOferecimento("");
     setDataInicio("");
     setDataFim("");
@@ -224,12 +264,18 @@ export default function PromocoesPage() {
 
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Texto da Promoção</label>
-                  <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Descrição da campanha..." rows={3} required
-                    className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[80px]"
-                    style={{ ...inputStyle, borderRadius: "12px" }}
-                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                  />
+                  <div className="overflow-hidden" style={{ ...inputStyle, borderRadius: "12px" }}>
+                    <RichTextToolbar editorRef={textoEditorRef} onInput={() => setTexto(textoEditorRef.current?.innerHTML || "")} />
+                    <div
+                      ref={textoEditorRef}
+                      contentEditable
+                      data-placeholder="Descrição da campanha..."
+                      className="w-full px-4 py-2 text-sm outline-none min-h-[80px]"
+                      style={{ color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "transparent" }}
+                      onInput={() => setTexto(textoEditorRef.current?.innerHTML || "")}
+                      suppressContentEditableWarning
+                    />
+                  </div>
                 </div>
               </div>
 
