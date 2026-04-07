@@ -23,31 +23,25 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Find user by email prefix using GoTrue admin API with large page size
+    // Find user by email prefix via profiles table
     const slugLower = slug.toLowerCase();
-    const gotrue = `${supabaseUrl}/auth/v1/admin/users?per_page=1000`;
-    const res = await fetch(gotrue, {
-      headers: {
-        Authorization: `Bearer ${serviceRoleKey}`,
-        apikey: serviceRoleKey,
-      },
-    });
-    if (!res.ok) throw new Error("Failed to fetch users");
-    const payload = await res.json();
-    const allUsers: any[] = payload.users || [];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, email")
+      .not("email", "is", null);
 
-    const matchedUser = allUsers.find((u: any) =>
-      u.email && u.email.split("@")[0].toLowerCase() === slugLower
+    const matchedProfile = (profiles || []).find((p: any) =>
+      p.email && p.email.split("@")[0].toLowerCase() === slugLower
     );
 
-    if (!matchedUser) {
+    if (!matchedProfile) {
       return new Response(JSON.stringify({ error: "User not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = matchedUser.id;
+    const userId = matchedProfile.user_id;
     const today = new Date().toISOString().split("T")[0];
 
     const [empresaRes, promoRes, progsRes, testRes, aprsRes] = await Promise.all([
