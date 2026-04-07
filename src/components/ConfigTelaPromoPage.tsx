@@ -143,7 +143,26 @@ export default function ConfigTelaPromoPage() {
   const cardRadius = config.card_style === "sharp" ? "4px" : config.card_style === "pill" ? "50px" : "16px";
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
+    <div className="flex flex-col gap-6">
+      {/* Action buttons - top */}
+      <div className="flex gap-3">
+        <Button onClick={handleSave} disabled={saving} className="px-6 py-2.5 text-sm font-bold shadow-lg" style={{ background: "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent))", color: "#fff", border: "none" }}>
+          {saving ? "Salvando..." : "💾 Salvar configurações"}
+        </Button>
+        <Button
+          variant="outline"
+          className="px-5 py-2.5 text-sm font-bold shadow-lg flex items-center gap-2"
+          style={{ background: "rgba(255,255,255,0.1)", borderColor: "var(--layout-accent)", color: "var(--layout-text)" }}
+          onClick={() => {
+            const slug = user?.email?.split("@")[0] || "";
+            window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+          }}
+        >
+          <ExternalLink size={14} /> Abrir Tela Promo
+        </Button>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6">
       {/* Settings panel */}
       <div className="flex-1 space-y-6 max-w-lg">
         {/* --- Background --- */}
@@ -218,22 +237,6 @@ export default function ConfigTelaPromoPage() {
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <Button onClick={handleSave} disabled={saving} className="flex-1" style={{ background: "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent))", color: "#fff" }}>
-            {saving ? "Salvando..." : "Salvar configurações"}
-          </Button>
-          <Button
-            variant="outline"
-            className="flex items-center gap-2"
-            style={{ borderColor: "rgba(255,255,255,0.15)", color: "var(--layout-text)" }}
-            onClick={() => {
-              const slug = user?.email?.split("@")[0] || "";
-              window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
-            }}
-          >
-            <ExternalLink size={14} /> Abrir Tela Promo
-          </Button>
-        </div>
       </div>
 
       {/* Preview */}
@@ -271,6 +274,7 @@ export default function ConfigTelaPromoPage() {
             ))}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
