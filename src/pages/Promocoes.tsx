@@ -507,7 +507,7 @@ export default function PromocoesKiosk() {
   }
 
   return (
-    <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ background: "url('/images/kiosk-bg.png') center center / cover no-repeat fixed", backgroundColor: "#000" }}>
+    <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ ...buildTelaPromoBgStyle(telaPromoConfig), color: telaPromoConfig.header_text_color }}>
       <style>{`
         .no-scrollbar::-webkit-scrollbar{display:none}
         .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
