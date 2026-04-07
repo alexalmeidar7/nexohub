@@ -90,6 +90,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: MessageSquareQuote, label: "testemunhais", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
       { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page },
+      { icon: Settings, label: "config tela promo", page: "configtelapromo", separator: true },
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
       { icon: FileText, label: "propostas comerciais", page: "propostas" },
     ]
@@ -145,6 +146,7 @@ const pageTitle: Record<Page, string> = {
   vmix: "vMix — Controle de Transmissão",
   cenario: "vMix — Cenário Interativo",
   fans: "Player — Fãs",
+  configtelapromo: "Comercial — Config Tela Promo",
 };
 
 interface DashboardProps {
