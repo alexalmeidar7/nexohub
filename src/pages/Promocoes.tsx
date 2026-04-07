@@ -11,6 +11,7 @@ import { getApresentadores } from "@/components/ApresentadorForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import { type TelaPromoConfig, defaultTelaPromoConfig, buildTelaPromoBgStyle } from "@/components/ConfigTelaPromoPage";
 
 interface Promocao {
   id: string;
@@ -75,6 +76,7 @@ export default function PromocoesKiosk() {
   const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<ProgramaGrade | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [telaPromoConfig, setTelaPromoConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
 
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
@@ -153,6 +155,10 @@ export default function PromocoesKiosk() {
       setPromocoes(activePromos);
       setTestemunhais(data.testemunhais || []);
 
+      if (data.tela_promo_config) {
+        setTelaPromoConfig({ ...defaultTelaPromoConfig, ...data.tela_promo_config });
+      }
+
       const mapped = (data.programas || []).map((p: any) => ({
         id: p.id, nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
         capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
@@ -168,13 +174,21 @@ export default function PromocoesKiosk() {
     };
 
     const loadAuth = async () => {
-      const [empresaData, { data: promoData }, { data: progsData }, { data: testData }] = await Promise.all([
+      const [empresaData, { data: promoData }, { data: progsData }, { data: testData }, { data: settingsData }] = await Promise.all([
         getEmpresaConfig(),
         supabase.from("promocoes").select("*").order("data_inicio"),
         supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%"),
         supabase.from("testemunhais").select("*"),
+        supabase.from("user_settings").select("cenario_config").maybeSingle(),
       ]);
       setConfig(empresaData);
+
+      if (settingsData?.cenario_config) {
+        const raw = settingsData.cenario_config as any;
+        if (raw.tela_promo_bg) {
+          setTelaPromoConfig({ ...defaultTelaPromoConfig, ...raw.tela_promo_bg });
+        }
+      }
 
       const today = new Date().toISOString().split("T")[0];
       const activePromos = (promoData || []).filter((p: any) => p.data_inicio <= today && p.data_fim >= today);
@@ -493,7 +507,7 @@ export default function PromocoesKiosk() {
   }
 
   return (
-    <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ background: "url('/images/kiosk-bg.png') center center / cover no-repeat fixed", backgroundColor: "#000" }}>
+    <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ ...buildTelaPromoBgStyle(telaPromoConfig), color: telaPromoConfig.header_text_color }}>
       <style>{`
         .no-scrollbar::-webkit-scrollbar{display:none}
         .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
@@ -673,7 +687,9 @@ export default function PromocoesKiosk() {
               {filteredPrograms.map(prog => (
                 <div
                   key={prog.id}
-                  className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-200 outline-4 outline-transparent hover:outline-white hover:scale-105"
+                  className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-200 outline-4 outline-transparent hover:scale-105"
+                  onMouseEnter={e => { e.currentTarget.style.outline = `4px solid ${telaPromoConfig.card_border_color}`; }}
+                  onMouseLeave={e => { e.currentTarget.style.outline = "4px solid transparent"; }}
                   onClick={() => setSelectedProgram(prog)}
                 >
                   {prog.capa ? (
@@ -727,14 +743,19 @@ export default function PromocoesKiosk() {
                   title.includes("star") || title.includes("estrela") ? Star :
                   Sparkles;
 
+                const cardRadius = telaPromoConfig.card_style === "sharp" ? "4px" : telaPromoConfig.card_style === "pill" ? "50px" : "16px";
+
                 return (
                   <div
                     key={promo.id}
-                    className="flex-shrink-0 cursor-pointer transition-all duration-200 flex items-center gap-3 px-6 py-3.5 rounded-2xl font-bold text-sm outline-4 outline-transparent hover:outline-white hover:scale-105 shadow-lg"
+                    className="flex-shrink-0 cursor-pointer transition-all duration-200 flex items-center gap-3 px-6 py-3.5 font-bold text-sm outline-4 outline-transparent hover:scale-105 shadow-lg"
                     style={{
-                      background: "linear-gradient(135deg, #1a1a1a 0%, #991b1b 50%, #dc2626 100%)",
-                      color: "#fff",
+                      background: `linear-gradient(135deg, ${telaPromoConfig.btn_color_a} 0%, ${telaPromoConfig.btn_color_b} 100%)`,
+                      color: telaPromoConfig.btn_text_color,
+                      borderRadius: cardRadius,
                     }}
+                    onMouseEnter={e => { e.currentTarget.style.outline = `4px solid ${telaPromoConfig.card_border_color}`; }}
+                    onMouseLeave={e => { e.currentTarget.style.outline = "4px solid transparent"; }}
                     onClick={() => setSelectedPromo(promo)}
                   >
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>

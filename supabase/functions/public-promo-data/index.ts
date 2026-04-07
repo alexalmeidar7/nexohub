@@ -44,12 +44,13 @@ Deno.serve(async (req) => {
     const userId = matchedProfile.user_id;
     const today = new Date().toISOString().split("T")[0];
 
-    const [empresaRes, promoRes, progsRes, testRes, aprsRes] = await Promise.all([
+    const [empresaRes, promoRes, progsRes, testRes, aprsRes, settingsRes] = await Promise.all([
       supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("promocoes").select("*").eq("user_id", userId).order("data_inicio"),
       supabase.from("programas").select("*").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%"),
       supabase.from("testemunhais").select("*").eq("user_id", userId),
       supabase.from("apresentadores").select("*").eq("user_id", userId).eq("ativo", true),
+      supabase.from("user_settings").select("cenario_config").eq("user_id", userId).maybeSingle(),
     ]);
 
     return new Response(
@@ -60,6 +61,7 @@ Deno.serve(async (req) => {
         programas: progsRes.data || [],
         testemunhais: testRes.data || [],
         apresentadores: aprsRes.data || [],
+        tela_promo_config: settingsRes.data?.cenario_config?.tela_promo_bg || null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
