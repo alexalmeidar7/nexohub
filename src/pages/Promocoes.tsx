@@ -687,7 +687,9 @@ export default function PromocoesKiosk() {
               {filteredPrograms.map(prog => (
                 <div
                   key={prog.id}
-                  className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-200 outline-4 outline-transparent hover:outline-white hover:scale-105"
+                  className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-200 outline-4 outline-transparent hover:scale-105"
+                  onMouseEnter={e => { e.currentTarget.style.outline = `4px solid ${telaPromoConfig.card_border_color}`; }}
+                  onMouseLeave={e => { e.currentTarget.style.outline = "4px solid transparent"; }}
                   onClick={() => setSelectedProgram(prog)}
                 >
                   {prog.capa ? (
