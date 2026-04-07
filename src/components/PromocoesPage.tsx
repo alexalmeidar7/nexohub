@@ -29,14 +29,13 @@ export default function PromocoesPage() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const [titulo, setTitulo] = useState("");
   const [texto, setTexto] = useState("");
   const [oferecimento, setOferecimento] = useState("");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
-  const [botaoFile, setBotaoFile] = useState<File | null>(null);
-  const [botaoPreview, setBotaoPreview] = useState("");
 
   useEffect(() => {
     if (user) loadData();
@@ -59,12 +58,6 @@ export default function PromocoesPage() {
     setImagePreview(URL.createObjectURL(file));
   };
 
-  const handleBotaoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setBotaoFile(file);
-    setBotaoPreview(URL.createObjectURL(file));
-  };
 
   const uploadImage = async (file: File): Promise<string> => {
     const compressed = await compressImage(file);
@@ -78,14 +71,13 @@ export default function PromocoesPage() {
 
   const startEdit = (item: Promocao) => {
     setEditingId(item.id);
+    setTitulo(item.botao_url || "");
     setTexto(item.texto);
     setOferecimento(item.oferecimento || "");
     setDataInicio(item.data_inicio);
     setDataFim(item.data_fim);
     setImagePreview(item.imagem_url || "");
     setImageFile(null);
-    setBotaoPreview(item.botao_url || "");
-    setBotaoFile(null);
   };
 
   const cancelEdit = () => {
@@ -101,8 +93,7 @@ export default function PromocoesPage() {
     try {
       let imagem_url = editingId ? imagePreview : "";
       if (imageFile) imagem_url = await uploadImage(imageFile);
-      let botao_url = editingId ? botaoPreview : "";
-      if (botaoFile) botao_url = await uploadImage(botaoFile);
+      const botao_url = titulo;
 
       if (editingId) {
         const { error } = await supabase.from("promocoes").update({
@@ -140,14 +131,13 @@ export default function PromocoesPage() {
   };
 
   const resetForm = () => {
+    setTitulo("");
     setTexto("");
     setOferecimento("");
     setDataInicio("");
     setDataFim("");
     setImageFile(null);
     setImagePreview("");
-    setBotaoFile(null);
-    setBotaoPreview("");
   };
 
   const handleDelete = async (id: string) => {
@@ -223,24 +213,13 @@ export default function PromocoesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Imagem do Botão</label>
-                  <div className="flex items-center gap-3">
-                    {botaoPreview ? (
-                      <img src={botaoPreview} alt="botão" className="w-16 h-10 rounded-lg object-contain" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
-                    ) : (
-                      <div className="w-16 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
-                        <ImageIcon size={16} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
-                      </div>
-                    )}
-                    <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold transition-all rounded-full"
-                      style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#ffffff"; (e.currentTarget as HTMLElement).style.color = "var(--layout-header-bg, #1a1a1a)"; }}
-                    >
-                      <Upload size={12} /> Enviar botão
-                      <input type="file" accept="image/*" className="hidden" onChange={handleBotaoChange} />
-                    </label>
-                  </div>
+                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Título da Promoção</label>
+                  <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex: Super Burguer Positiva"
+                    className="w-full px-4 py-1.5 text-sm outline-none"
+                    style={inputStyle}
+                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                  />
                 </div>
 
                 <div>
