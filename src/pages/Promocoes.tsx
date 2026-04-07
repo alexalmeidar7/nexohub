@@ -814,18 +814,13 @@ export default function PromocoesKiosk() {
                       {t.imagem_url && (
                         <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-2 object-contain max-h-[200px]" />
                       )}
-                      <div className="text-white whitespace-pre-line" style={{ fontSize: `${fontSize}px` }}>
-                        {t.texto.replace(/\/\//g, "\n").split("\n").map((line, i) => (
-                          <p
-                            key={i}
-                            className="px-1 py-0.5 rounded transition-colors cursor-default"
-                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#a30101")}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
-                          >
-                            {line ? renderBoldMarkdown(line) : "\u00A0"}
-                          </p>
-                        ))}
-                      </div>
+                      <div
+                        className="text-white prose prose-invert max-w-none [&_p]:my-1 [&_p]:px-1 [&_p]:py-0.5 [&_p]:rounded [&_p]:transition-colors [&_p]:cursor-default"
+                        style={{ fontSize: `${fontSize}px` }}
+                        dangerouslySetInnerHTML={{
+                          __html: t.texto.replace(/\/\//g, "<br/>"),
+                        }}
+                      />
                     </div>
                   ));
                 })()}
