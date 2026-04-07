@@ -354,6 +354,7 @@ export default function PromocoesPage() {
                           <img src={item.imagem_url} alt="" className="w-16 h-10 rounded-lg object-cover shrink-0" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
                         )}
                         <div className="flex-1 min-w-0">
+                          {item.botao_url && <p className="text-xs font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{item.botao_url}</p>}
                           <p className="text-xs truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{item.texto}</p>
                           <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{item.oferecimento || "Sem oferecimento"}</p>
                         </div>
