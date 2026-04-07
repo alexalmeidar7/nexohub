@@ -4,7 +4,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
-import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
 import { getApresentadores } from "@/components/ApresentadorForm";
@@ -710,18 +710,41 @@ export default function PromocoesKiosk() {
               <ChevronRight size={36} />
             </div>
 
-            <div ref={promoScrollRef} className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar">
-              {botoes.map(promo => (
-                <div
-                  key={promo.id}
-                  className="flex-shrink-0 cursor-pointer transition-all duration-200 flex items-center gap-3 px-7 py-4 rounded-2xl font-bold text-base border-4 border-white/20 hover:border-white hover:scale-105"
-                  style={{ backgroundColor: "rgba(255,255,255,0.12)", color: "#fff" }}
-                  onClick={() => setSelectedPromo(promo)}
-                >
-                  <ImageIcon size={20} />
-                  <span className="whitespace-nowrap">{promo.botao_url}</span>
-                </div>
-              ))}
+            <div ref={promoScrollRef} className="flex gap-5 overflow-x-auto scroll-smooth no-scrollbar py-2 -my-2 px-1 -mx-1">
+              {botoes.map(promo => {
+                const title = (promo.botao_url || "").toLowerCase();
+                const PromoIcon =
+                  title.includes("prêmio") || title.includes("premio") ? Gift :
+                  title.includes("pizza") ? Pizza :
+                  title.includes("burger") || title.includes("hambur") ? ShoppingBag :
+                  title.includes("resenha") || title.includes("happy") || title.includes("cervej") || title.includes("chop") ? Beer :
+                  title.includes("estrada") || title.includes("moviment") ? Truck :
+                  title.includes("positiva") && title.includes("parada") ? Trophy :
+                  title.includes("night") || title.includes("noite") || title.includes("cabaré") || title.includes("balada") ? PartyPopper :
+                  title.includes("music") || title.includes("karaoke") || title.includes("palco") ? Music :
+                  title.includes("amor") || title.includes("heart") || title.includes("namor") ? Heart :
+                  title.includes("ingresso") || title.includes("ticket") ? Ticket :
+                  title.includes("star") || title.includes("estrela") ? Star :
+                  Sparkles;
+
+                return (
+                  <div
+                    key={promo.id}
+                    className="flex-shrink-0 cursor-pointer transition-all duration-200 flex items-center gap-3 px-6 py-3.5 rounded-2xl font-bold text-sm outline-4 outline-transparent hover:outline-white hover:scale-105"
+                    style={{
+                      background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)",
+                      color: "#fff",
+                      backdropFilter: "blur(8px)",
+                    }}
+                    onClick={() => setSelectedPromo(promo)}
+                  >
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                      <PromoIcon size={18} />
+                    </div>
+                    <span className="whitespace-nowrap">{promo.botao_url}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
