@@ -428,7 +428,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
                     className="absolute top-2.5 right-2.5 w-5 h-5 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
-                    style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}
+                    style={{ background: "rgba(0,0,0,0.6)" }}
                   >
                     <X size={9} style={{ color: "#fff", opacity: 0.7 }} />
                   </button>
@@ -557,11 +557,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   key={item.id}
                   className={`relative group rounded-3xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
-                    background: "color-mix(in srgb, var(--layout-widget-bg) 65%, transparent)",
-                    backdropFilter: "blur(40px) saturate(1.8)",
-                    WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-                    border: isDragOver ? "2px solid var(--layout-accent-color)" : "1px solid color-mix(in srgb, var(--layout-border-color) 20%, transparent)",
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+                    background: "var(--layout-widget-bg, #1a1a1a)",
+                    boxShadow: isDragOver ? "0 0 0 2px var(--layout-accent-color), 0 4px 20px rgba(0,0,0,0.12)" : "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
                     borderRadius: "24px",
                     height: item.widgetType === "player" ? "auto" : "280px",
                     minHeight: item.widgetType === "player" ? "160px" : undefined,
@@ -654,14 +651,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Add Dialog */}
       {showAddDialog && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center" onClick={() => { setShowAddDialog(false); setAddStep("choose"); }}>
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/60" />
           <div
             className="relative rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
             style={{
-               background: "rgba(15, 15, 15, 0.75)",
-               backdropFilter: "blur(40px) saturate(1.8)",
-               WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-               border: "1px solid rgba(255,255,255,0.12)",
+               background: "rgba(18, 18, 20, 0.97)",
                boxShadow: "0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15)",
              }}
             onClick={e => e.stopPropagation()}
@@ -680,7 +674,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 <button
                   onClick={() => setAddStep("link")}
                   className="flex flex-col items-center gap-3 p-5 rounded-2xl transition-all hover:scale-[1.03]"
-                  style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                  style={{ background: "rgba(255,255,255,0.06)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
@@ -695,7 +689,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 <button
                   onClick={() => setAddStep("widget")}
                   className="flex flex-col items-center gap-3 p-5 rounded-2xl transition-all hover:scale-[1.03]"
-                  style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                  style={{ background: "rgba(255,255,255,0.06)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
@@ -725,9 +719,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all text-left hover:scale-[1.01]"
                       style={{
                         background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
-                        backdropFilter: "blur(12px)",
-                        WebkitBackdropFilter: "blur(12px)",
-                        border: "1px solid rgba(255,255,255,0.08)",
                         boxShadow: exists ? "none" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
@@ -757,9 +748,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       className="w-full flex items-start gap-3 px-4 py-4 rounded-xl text-sm transition-all text-left hover:scale-[1.01]"
                       style={{
                         background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
-                        backdropFilter: "blur(12px)",
-                        WebkitBackdropFilter: "blur(12px)",
-                        border: "1px solid rgba(255,255,255,0.08)",
                         boxShadow: exists ? "none" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
@@ -1061,10 +1049,7 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
           className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all hover:scale-105"
           style={{
             background: "rgba(255,255,255,0.08)",
-            backdropFilter: "blur(16px) saturate(1.4)",
-            WebkitBackdropFilter: "blur(16px) saturate(1.4)",
             color: "var(--layout-accent-color)",
-            border: "1px solid rgba(255,255,255,0.1)",
             boxShadow: "0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
           onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
@@ -1643,7 +1628,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
         <div className="relative -mx-4 -mt-4 mb-2 overflow-hidden flex-shrink-0 rounded-t-2xl" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.6)", maxHeight: "280px" }}>
           <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "280px", background: "#000" }} />
           {videoLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.8)" }}>
               <Loader2 size={20} className="text-white/70 animate-spin" />
               <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
             </div>
@@ -1660,7 +1645,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       ) : (
         <div className="relative z-10 flex items-center gap-2.5 flex-shrink-0 pb-0.5">
           {channels.length > 1 && (
-            <button onClick={goPrev} className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+            <button onClick={goPrev} className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; }}>
               <ChevronLeft size={14} className="text-white/70" />
             </button>
           )}
@@ -1704,7 +1689,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
               </div>
             )}
             <div className="flex items-center gap-2">
-              <button onClick={togglePlay} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))", backdropFilter: "blur(20px) saturate(1.6)", WebkitBackdropFilter: "blur(20px) saturate(1.6)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.1)" }}>
+              <button onClick={togglePlay} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08))", boxShadow: "0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.1)" }}>
                 {isPlaying ? <Pause size={13} className="text-white" /> : <Play size={13} className="text-white ml-0.5" />}
               </button>
               <button onClick={toggleMute} className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}>
@@ -1716,7 +1701,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
           </div>
 
           {channels.length > 1 && (
-            <button onClick={goNext} className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+            <button onClick={goNext} className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; }}>
               <ChevronRight size={14} className="text-white/70" />
             </button>
           )}
