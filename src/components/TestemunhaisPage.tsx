@@ -1,10 +1,55 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, CheckCircle } from "lucide-react";
+import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, CheckCircle, Bold, Italic, Underline, Palette, Droplets } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+
+const TOOLBAR_COLORS = ["#000000", "#dc2626", "#2563eb", "#16a34a", "#d97706", "#7c3aed", "#db2777", "#ffffff"];
+
+function RichTextToolbar({ editorRef, onInput }: { editorRef: React.RefObject<HTMLDivElement>; onInput: () => void }) {
+  const [showColors, setShowColors] = useState(false);
+
+  const exec = (cmd: string, value?: string) => {
+    editorRef.current?.focus();
+    document.execCommand(cmd, false, value);
+    onInput();
+  };
+
+  const btnStyle: React.CSSProperties = {
+    background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+    color: "var(--layout-page-text, #1a1a1a)",
+    border: "none",
+    borderRadius: "6px",
+    width: 28,
+    height: 28,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    position: "relative" as const,
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 4, padding: "6px 8px", borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", borderRadius: "12px 12px 0 0" }}>
+      <button type="button" style={btnStyle} onClick={() => exec("bold")} title="Negrito"><Bold size={14} /></button>
+      <button type="button" style={btnStyle} onClick={() => exec("italic")} title="Itálico"><Italic size={14} /></button>
+      <button type="button" style={btnStyle} onClick={() => exec("underline")} title="Sublinhado"><Underline size={14} /></button>
+      <div style={{ position: "relative" }}>
+        <button type="button" style={btnStyle} onClick={() => setShowColors(!showColors)} title="Cor do texto"><Palette size={14} /></button>
+        {showColors && (
+          <div style={{ position: "absolute", top: 32, left: 0, zIndex: 20, background: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", borderRadius: 8, padding: 6, display: "flex", gap: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+            {TOOLBAR_COLORS.map(c => (
+              <button key={c} type="button" onClick={() => { exec("foreColor", c); setShowColors(false); }}
+                style={{ width: 22, height: 22, borderRadius: "50%", background: c, border: c === "#ffffff" ? "1px solid #ccc" : "1px solid transparent", cursor: "pointer" }} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface Testemunhal {
   id: string;
