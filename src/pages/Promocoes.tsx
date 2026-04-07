@@ -732,7 +732,7 @@ export default function PromocoesKiosk() {
                     key={promo.id}
                     className="flex-shrink-0 cursor-pointer transition-all duration-200 flex items-center gap-3 px-6 py-3.5 rounded-2xl font-bold text-sm outline-4 outline-transparent hover:outline-white hover:scale-105 shadow-lg"
                     style={{
-                      background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)",
+                      background: "linear-gradient(135deg, #1a1a1a 0%, #991b1b 50%, #dc2626 100%)",
                       color: "#fff",
                     }}
                     onClick={() => setSelectedPromo(promo)}
