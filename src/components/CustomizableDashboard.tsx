@@ -621,16 +621,16 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         <div className="mb-6">
           <div
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-            className="w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
+            className="w-[120px] h-[100px] sm:w-[140px] sm:h-[110px] rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.04]"
             style={{
-              background: "color-mix(in srgb, var(--layout-nav-text, #fff) 8%, transparent)",
-              border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 25%, transparent)",
+              background: "color-mix(in srgb, var(--layout-nav-text, #fff) 5%, transparent)",
+              border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 20%, transparent)",
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 50%, transparent)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 8%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 25%, transparent)"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 12%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 40%, transparent)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 5%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 20%, transparent)"; }}
           >
-            <Plus size={16} className="mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }} />
-            <span className="text-[9px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Adicionar</span>
+            <Plus size={18} className="mb-1.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }} />
+            <span className="text-[10px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicionar</span>
           </div>
         </div>
       )}
