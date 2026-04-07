@@ -490,7 +490,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {/* Sidebar flyout submenu */}
                 {item.children && isOpen && (
                   <div
-                    className="absolute left-full top-0 ml-2 z-[70]"
+                    className="absolute left-full top-0 ml-2 z-[70] animate-in fade-in slide-in-from-left-2 duration-200"
                     onMouseEnter={clearMenuLeaveTimer}
                     onMouseLeave={scheduleCloseMenu}
                   >
@@ -507,7 +507,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         const ChildIcon = child.icon;
                         const childActive = currentPage === child.page;
                         return (
-                          <div key={child.label}>
+                          <div key={child.label} className="animate-in fade-in slide-in-from-left-1" style={{ animationDelay: `${ci * 30}ms`, animationFillMode: "both" }}>
                             {child.separator && ci > 0 && (
                               <div className="mx-3 my-1" style={{ borderTop: `1px solid ${layoutColors.navText}15` }} />
                             )}
