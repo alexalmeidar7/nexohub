@@ -4,14 +4,16 @@ export default function DashboardSkeleton() {
   return (
     <div className="h-screen flex overflow-hidden animate-pulse" style={{ backgroundColor: "#f8f9fc" }}>
       {/* Sidebar skeleton */}
-      <div className="hidden lg:flex flex-col items-center py-4 gap-3 w-16 flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
-        <Skeleton className="w-12 h-6 bg-white/10 rounded mt-2 mb-4" />
-        {Array.from({ length: 7 }).map((_, i) => (
-          <Skeleton key={i} className="w-10 h-10 rounded-full bg-white/10" />
-        ))}
-        <div className="flex-1" />
-        <Skeleton className="w-10 h-10 rounded-full bg-white/10" />
-        <Skeleton className="w-10 h-10 rounded-full bg-white/10" />
+      <div className="hidden lg:flex flex-shrink-0 py-3 pl-3">
+        <div className="flex flex-col items-center py-4 gap-3 rounded-2xl" style={{ width: "58px", backgroundColor: "#1a1a1a" }}>
+          <Skeleton className="w-10 h-6 bg-white/10 rounded mt-1 mb-3" />
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={i} className="w-10 h-10 rounded-full bg-white/10" />
+          ))}
+          <div className="flex-1" />
+          <Skeleton className="w-10 h-10 rounded-full bg-white/10" />
+          <Skeleton className="w-10 h-10 rounded-full bg-white/10" />
+        </div>
       </div>
 
       {/* Content area skeleton */}
