@@ -181,6 +181,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const prevThumbRef = useRef<string | null>(null);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
+  const [contentScrollProgress, setContentScrollProgress] = useState(0);
+  const [showContentScrollIndicator, setShowContentScrollIndicator] = useState(false);
 
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
 
@@ -215,6 +218,60 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     if (thumbData?.thumb) return thumbData.thumb;
     return null;
   }, [user]);
+
+  const updateContentScrollIndicator = useCallback(() => {
+    const el = contentScrollRef.current;
+
+    if (!el || currentPage === "dashboard") {
+      setShowContentScrollIndicator(false);
+      setContentScrollProgress(0);
+      return;
+    }
+
+    const maxScroll = Math.max(el.scrollHeight - el.clientHeight, 0);
+
+    if (maxScroll <= 4) {
+      setShowContentScrollIndicator(false);
+      setContentScrollProgress(0);
+      return;
+    }
+
+    setShowContentScrollIndicator(true);
+    setContentScrollProgress(Math.min(Math.max(el.scrollTop / maxScroll, 0), 1));
+  }, [currentPage]);
+
+  useEffect(() => {
+    const el = contentScrollRef.current;
+    if (!el) return;
+
+    let frame = 0;
+    const syncIndicator = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updateContentScrollIndicator);
+    };
+
+    syncIndicator();
+
+    el.addEventListener("scroll", syncIndicator, { passive: true });
+    window.addEventListener("resize", syncIndicator);
+
+    const resizeObserver = new ResizeObserver(syncIndicator);
+    resizeObserver.observe(el);
+    if (el.firstElementChild instanceof HTMLElement) {
+      resizeObserver.observe(el.firstElementChild);
+    }
+
+    const mutationObserver = new MutationObserver(syncIndicator);
+    mutationObserver.observe(el, { childList: true, subtree: true });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener("scroll", syncIndicator);
+      window.removeEventListener("resize", syncIndicator);
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, [currentPage, updateContentScrollIndicator]);
 
   // Single batched initial load — all queries in parallel (NO thumb in batch)
   useEffect(() => {
@@ -693,7 +750,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </button>
             </div>
           )}
-          <div className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
+          <div className="relative flex-1 h-full">
+            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
               {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} />}
               {currentPage === "previsao" && <PrevisaoTempo />}
@@ -719,6 +777,24 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
               
             </Suspense>
+            </div>
+            {currentPage !== "dashboard" && showContentScrollIndicator && (
+              <div className="pointer-events-none absolute inset-y-4 right-3 z-20 flex items-stretch">
+                <div className="relative h-full w-4">
+                  <div
+                    className="absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2"
+                    style={{ background: "color-mix(in srgb, var(--layout-page-text, hsl(var(--background))) 45%, transparent)" }}
+                  />
+                  <div
+                    className="absolute left-1/2 h-3 w-3 -translate-x-1/2 rounded-full transition-[top] duration-150"
+                    style={{
+                      top: `clamp(0px, calc(${contentScrollProgress * 100}% - 0.375rem), calc(100% - 0.75rem))`,
+                      background: "var(--layout-accent-color, hsl(var(--destructive)))",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
