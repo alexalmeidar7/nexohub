@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
-function Calendar({ className, classNames, showOutsideDays = true, styles, ...props }: CalendarProps) {
+function Calendar({ className, classNames, showOutsideDays = true, styles, modifiersStyles, ...props }: CalendarProps) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -35,21 +35,22 @@ function Calendar({ className, classNames, showOutsideDays = true, styles, ...pr
         day_hidden: "invisible",
         ...classNames,
       }}
-      styles={{
-        day_selected: {
+      styles={styles}
+      modifiersStyles={{
+        selected: {
           backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))",
           color: "var(--layout-header-text, hsl(var(--primary-foreground)))",
         },
-        day_today: {
+        today: {
           backgroundColor: "color-mix(in srgb, var(--layout-accent-color, hsl(var(--primary))) 18%, var(--layout-page-bg, hsl(var(--background))) 82%)",
           color: "var(--layout-page-text, hsl(var(--foreground)))",
           fontWeight: 700,
         },
-        day_range_middle: {
+        range_middle: {
           backgroundColor: "color-mix(in srgb, var(--layout-accent-color, hsl(var(--primary))) 12%, var(--layout-page-bg, hsl(var(--background))) 88%)",
           color: "var(--layout-page-text, hsl(var(--foreground)))",
         },
-        ...styles,
+        ...modifiersStyles,
       }}
       components={{
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
