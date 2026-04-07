@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { Palette, Image as ImageIcon, Layers, ExternalLink } from "lucide-react";
+import { Palette, Image as ImageIcon, Layers, ExternalLink, Save } from "lucide-react";
 
 type BgType = "cor" | "imagem" | "degrade";
 type CardStyle = "rounded" | "sharp" | "pill";
@@ -139,142 +139,144 @@ export default function ConfigTelaPromoPage() {
   }
 
   const update = (partial: Partial<TelaPromoConfig>) => setConfig(c => ({ ...c, ...partial }));
-
   const cardRadius = config.card_style === "sharp" ? "4px" : config.card_style === "pill" ? "50px" : "16px";
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Action buttons - top */}
-      <div className="flex gap-3">
-        <Button onClick={handleSave} disabled={saving} className="px-6 py-2.5 text-sm font-bold shadow-lg" style={{ background: "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent))", color: "#fff", border: "none" }}>
-          {saving ? "Salvando..." : "💾 Salvar configurações"}
-        </Button>
-        <Button
-          variant="outline"
-          className="px-5 py-2.5 text-sm font-bold shadow-lg flex items-center gap-2"
-          style={{ background: "rgba(255,255,255,0.1)", borderColor: "var(--layout-accent)", color: "var(--layout-text)" }}
-          onClick={() => {
-            const slug = user?.email?.split("@")[0] || "";
-            window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
-          }}
-        >
-          <ExternalLink size={14} /> Abrir Tela Promo
-        </Button>
+      <div className="sticky top-0 z-20 rounded-2xl border border-border bg-card p-3 shadow-lg">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            variant="accent"
+            size="lg"
+            className="min-h-12 flex-1 justify-center rounded-xl text-sm font-bold uppercase tracking-[0.08em] shadow-lg"
+          >
+            <Save size={16} />
+            {saving ? "Salvando..." : "Salvar configurações"}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            className="min-h-12 flex-1 justify-center rounded-xl border-2 border-primary/40 bg-background text-foreground shadow-lg"
+            onClick={() => {
+              const slug = user?.email?.split("@")[0] || "";
+              window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+            }}
+          >
+            <ExternalLink size={16} /> Abrir Tela Promo
+          </Button>
+        </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-      {/* Settings panel */}
-      <div className="flex-1 space-y-6 max-w-lg">
-        {/* --- Background --- */}
-        <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent)" }}>Fundo da Tela</h3>
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="flex-1 space-y-6 max-w-lg">
+          <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent)" }}>Fundo da Tela</h3>
 
-        <div className="space-y-3">
-          <Label className="text-sm font-semibold" style={{ color: "var(--layout-text)" }}>Tipo de fundo</Label>
-          <Select value={config.bg_type} onValueChange={v => update({ bg_type: v as BgType })}>
-            <SelectTrigger className="w-full" style={inputStyle}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="cor"><span className="flex items-center gap-2"><Palette size={14} /> Cor sólida</span></SelectItem>
-              <SelectItem value="imagem"><span className="flex items-center gap-2"><ImageIcon size={14} /> Imagem</span></SelectItem>
-              <SelectItem value="degrade"><span className="flex items-center gap-2"><Layers size={14} /> Degradê</span></SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {config.bg_type === "cor" && (
-          <ColorField label="Cor de fundo" value={config.bg_color} onChange={v => update({ bg_color: v })} />
-        )}
-
-        {config.bg_type === "imagem" && (
           <div className="space-y-3">
-            <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Imagem de fundo</Label>
-            <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="cursor-pointer" style={inputStyle} />
-            <Input value={config.bg_image_url} onChange={e => update({ bg_image_url: e.target.value })} placeholder="https://..." style={inputStyle} />
-          </div>
-        )}
-
-        {config.bg_type === "degrade" && (
-          <div className="space-y-4">
-            <div className="flex gap-4">
-              <ColorField label="Cor A" value={config.gradient_color_a} onChange={v => update({ gradient_color_a: v })} />
-              <ColorField label="Cor B" value={config.gradient_color_b} onChange={v => update({ gradient_color_b: v })} />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Ângulo ({config.gradient_angle}°)</Label>
-              <Slider value={[config.gradient_angle]} onValueChange={v => update({ gradient_angle: v[0] })} min={0} max={360} step={1} />
-            </div>
-          </div>
-        )}
-
-        {/* --- Buttons --- */}
-        <div className="border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-          <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: "var(--layout-accent)" }}>Botões de Promoção</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <ColorField label="Cor início" value={config.btn_color_a} onChange={v => update({ btn_color_a: v })} />
-            <ColorField label="Cor fim" value={config.btn_color_b} onChange={v => update({ btn_color_b: v })} />
-            <ColorField label="Cor do texto" value={config.btn_text_color} onChange={v => update({ btn_text_color: v })} />
-            <ColorField label="Cor da borda (hover)" value={config.card_border_color} onChange={v => update({ card_border_color: v })} />
-          </div>
-        </div>
-
-        {/* --- Cards --- */}
-        <div className="border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-          <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: "var(--layout-accent)" }}>Estilo dos Cards</h3>
-          <div className="space-y-3">
-            <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Formato</Label>
-            <Select value={config.card_style} onValueChange={v => update({ card_style: v as CardStyle })}>
+            <Label className="text-sm font-semibold" style={{ color: "var(--layout-text)" }}>Tipo de fundo</Label>
+            <Select value={config.bg_type} onValueChange={v => update({ bg_type: v as BgType })}>
               <SelectTrigger className="w-full" style={inputStyle}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="rounded">Arredondado</SelectItem>
-                <SelectItem value="sharp">Reto</SelectItem>
-                <SelectItem value="pill">Pílula</SelectItem>
+                <SelectItem value="cor"><span className="flex items-center gap-2"><Palette size={14} /> Cor sólida</span></SelectItem>
+                <SelectItem value="imagem"><span className="flex items-center gap-2"><ImageIcon size={14} /> Imagem</span></SelectItem>
+                <SelectItem value="degrade"><span className="flex items-center gap-2"><Layers size={14} /> Degradê</span></SelectItem>
               </SelectContent>
             </Select>
-            <ColorField label="Cor do texto do cabeçalho" value={config.header_text_color} onChange={v => update({ header_text_color: v })} />
+          </div>
+
+          {config.bg_type === "cor" && (
+            <ColorField label="Cor de fundo" value={config.bg_color} onChange={v => update({ bg_color: v })} />
+          )}
+
+          {config.bg_type === "imagem" && (
+            <div className="space-y-3">
+              <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Imagem de fundo</Label>
+              <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="cursor-pointer" style={inputStyle} />
+              <Input value={config.bg_image_url} onChange={e => update({ bg_image_url: e.target.value })} placeholder="https://..." style={inputStyle} />
+            </div>
+          )}
+
+          {config.bg_type === "degrade" && (
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <ColorField label="Cor A" value={config.gradient_color_a} onChange={v => update({ gradient_color_a: v })} />
+                <ColorField label="Cor B" value={config.gradient_color_b} onChange={v => update({ gradient_color_b: v })} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Ângulo ({config.gradient_angle}°)</Label>
+                <Slider value={[config.gradient_angle]} onValueChange={v => update({ gradient_angle: v[0] })} min={0} max={360} step={1} />
+              </div>
+            </div>
+          )}
+
+          <div className="border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+            <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: "var(--layout-accent)" }}>Botões de Promoção</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <ColorField label="Cor início" value={config.btn_color_a} onChange={v => update({ btn_color_a: v })} />
+              <ColorField label="Cor fim" value={config.btn_color_b} onChange={v => update({ btn_color_b: v })} />
+              <ColorField label="Cor do texto" value={config.btn_text_color} onChange={v => update({ btn_text_color: v })} />
+              <ColorField label="Cor da borda (hover)" value={config.card_border_color} onChange={v => update({ card_border_color: v })} />
+            </div>
+          </div>
+
+          <div className="border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+            <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: "var(--layout-accent)" }}>Estilo dos Cards</h3>
+            <div className="space-y-3">
+              <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Formato</Label>
+              <Select value={config.card_style} onValueChange={v => update({ card_style: v as CardStyle })}>
+                <SelectTrigger className="w-full" style={inputStyle}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rounded">Arredondado</SelectItem>
+                  <SelectItem value="sharp">Reto</SelectItem>
+                  <SelectItem value="pill">Pílula</SelectItem>
+                </SelectContent>
+              </Select>
+              <ColorField label="Cor do texto do cabeçalho" value={config.header_text_color} onChange={v => update({ header_text_color: v })} />
+            </div>
           </div>
         </div>
 
-      </div>
-
-      {/* Preview */}
-      <div className="flex-1 space-y-3">
-        <Label className="text-sm font-semibold" style={{ color: "var(--layout-text)" }}>Pré-visualização</Label>
-        <div
-          className="rounded-2xl border overflow-hidden aspect-video flex flex-col items-center justify-center gap-4 p-6"
-          style={{ ...buildTelaPromoBgStyle(config), borderColor: "rgba(255,255,255,0.1)" }}
-        >
-          <span className="text-sm font-bold uppercase tracking-widest" style={{ color: config.header_text_color }}>Promoções</span>
-          <div className="flex gap-3">
-            {["Promo 1", "Promo 2"].map(label => (
-              <div
-                key={label}
-                className="px-5 py-2.5 font-bold text-xs shadow-lg flex items-center gap-2"
-                style={{
-                  background: `linear-gradient(135deg, ${config.btn_color_a}, ${config.btn_color_b})`,
-                  color: config.btn_text_color,
-                  borderRadius: cardRadius,
-                }}
-              >
-                {label}
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-3">
-            {[1, 2].map(i => (
-              <div
-                key={i}
-                className="w-20 h-28 flex items-center justify-center"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", borderRadius: cardRadius, border: `2px solid transparent` }}
-              >
-                <span style={{ color: config.header_text_color }} className="text-[10px]">Card</span>
-              </div>
-            ))}
+        <div className="flex-1 space-y-3">
+          <Label className="text-sm font-semibold" style={{ color: "var(--layout-text)" }}>Pré-visualização</Label>
+          <div
+            className="rounded-2xl border overflow-hidden aspect-video flex flex-col items-center justify-center gap-4 p-6"
+            style={{ ...buildTelaPromoBgStyle(config), borderColor: "rgba(255,255,255,0.1)" }}
+          >
+            <span className="text-sm font-bold uppercase tracking-widest" style={{ color: config.header_text_color }}>Promoções</span>
+            <div className="flex gap-3">
+              {["Promo 1", "Promo 2"].map(label => (
+                <div
+                  key={label}
+                  className="px-5 py-2.5 font-bold text-xs shadow-lg flex items-center gap-2"
+                  style={{
+                    background: `linear-gradient(135deg, ${config.btn_color_a}, ${config.btn_color_b})`,
+                    color: config.btn_text_color,
+                    borderRadius: cardRadius,
+                  }}
+                >
+                  {label}
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              {[1, 2].map(i => (
+                <div
+                  key={i}
+                  className="w-20 h-28 flex items-center justify-center"
+                  style={{ backgroundColor: "rgba(255,255,255,0.08)", borderRadius: cardRadius, border: `2px solid transparent` }}
+                >
+                  <span style={{ color: config.header_text_color }} className="text-[10px]">Card</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
       </div>
     </div>
   );
