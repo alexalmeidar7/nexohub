@@ -417,9 +417,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
           }}
         >
-          <div className="mb-3 mt-1">
-            <img src={logoMenu} alt="NexoHUB" className="w-14 h-auto -rotate-90 opacity-90" />
-          </div>
 
         <div className="flex-1 flex flex-col items-center gap-1 overflow-y-auto scrollbar-hide px-1">
           {sidebarMenu.filter(item => {
@@ -657,13 +654,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {/* ===== TOP HEADER BAR (desktop) ===== */}
         <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]">
-          <div>
-            <p className="text-xs font-medium tracking-widest uppercase mb-0.5" style={{ color: layoutColors.accentColor }}>
-              {isDashboard ? "Dashboard" : pageTitle[currentPage]}
-            </p>
-            <h1 className="text-2xl font-light" style={{ color: isDashboard ? layoutColors.navText : layoutColors.pageText }}>
-              {empresa.nome || "NexoHUB"}
-            </h1>
+          <div className="flex items-center gap-4">
+            <img src={logoMenu} alt="NexoHUB" className="h-10 w-auto" />
+            <div>
+              <p className="text-xs font-medium tracking-widest uppercase mb-0.5" style={{ color: layoutColors.accentColor }}>
+                {isDashboard ? "Dashboard" : pageTitle[currentPage]}
+              </p>
+              <h1 className="text-2xl font-light" style={{ color: isDashboard ? layoutColors.navText : layoutColors.pageText }}>
+                {empresa.nome || "NexoHUB"}
+              </h1>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Suspense fallback={<div className="w-8 h-8 rounded-full" style={{ backgroundColor: `${layoutColors.pageText}10` }} />}>
