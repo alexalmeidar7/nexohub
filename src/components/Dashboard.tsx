@@ -533,6 +533,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
 
         <div className="flex flex-col items-center gap-2 mt-auto pb-2">
+          <Suspense fallback={<div className="w-10 h-10" />}>
+            <MessageNotification />
+          </Suspense>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -668,9 +671,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Suspense fallback={<div className="w-8 h-8 rounded-full" style={{ backgroundColor: `${layoutColors.pageText}10` }} />}>
-              <MessageNotification />
-            </Suspense>
             <ServerClock />
           </div>
         </div>
