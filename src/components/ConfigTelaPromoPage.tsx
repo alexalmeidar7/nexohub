@@ -10,43 +10,70 @@ import { toast } from "sonner";
 import { Palette, Image as ImageIcon, Layers } from "lucide-react";
 
 type BgType = "cor" | "imagem" | "degrade";
+type CardStyle = "rounded" | "sharp" | "pill";
 
-interface TelaPromoConfig {
+export interface TelaPromoConfig {
   bg_type: BgType;
   bg_color: string;
   bg_image_url: string;
   gradient_color_a: string;
   gradient_color_b: string;
   gradient_angle: number;
+  btn_color_a: string;
+  btn_color_b: string;
+  btn_text_color: string;
+  card_style: CardStyle;
+  card_border_color: string;
+  header_text_color: string;
 }
 
-const defaultConfig: TelaPromoConfig = {
+export const defaultTelaPromoConfig: TelaPromoConfig = {
   bg_type: "cor",
-  bg_color: "#1a1a2e",
+  bg_color: "#000000",
   bg_image_url: "",
   gradient_color_a: "#1a1a2e",
   gradient_color_b: "#16213e",
   gradient_angle: 135,
+  btn_color_a: "#1a1a1a",
+  btn_color_b: "#dc2626",
+  btn_text_color: "#ffffff",
+  card_style: "rounded",
+  card_border_color: "#ffffff",
+  header_text_color: "#ffffff",
 };
 
-function buildPreviewStyle(config: TelaPromoConfig): React.CSSProperties {
+export function buildTelaPromoBgStyle(config: TelaPromoConfig): React.CSSProperties {
   switch (config.bg_type) {
     case "cor":
       return { backgroundColor: config.bg_color };
     case "imagem":
       return config.bg_image_url
         ? { backgroundImage: `url(${config.bg_image_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-        : { backgroundColor: "#1a1a2e" };
+        : { backgroundColor: "#000" };
     case "degrade":
       return { background: `linear-gradient(${config.gradient_angle}deg, ${config.gradient_color_a}, ${config.gradient_color_b})` };
     default:
-      return { backgroundColor: "#1a1a2e" };
+      return { backgroundColor: "#000" };
   }
+}
+
+const inputStyle = { backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.1)" };
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs" style={{ color: "var(--layout-text)" }}>{label}</Label>
+      <div className="flex items-center gap-2">
+        <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-8 h-8 rounded border-0 cursor-pointer" />
+        <Input value={value} onChange={e => onChange(e.target.value)} style={inputStyle} className="flex-1" />
+      </div>
+    </div>
+  );
 }
 
 export default function ConfigTelaPromoPage() {
   const { user } = useAuth();
-  const [config, setConfig] = useState<TelaPromoConfig>(defaultConfig);
+  const [config, setConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -61,7 +88,7 @@ export default function ConfigTelaPromoPage() {
       if (data?.cenario_config) {
         const raw = data.cenario_config as any;
         if (raw.tela_promo_bg) {
-          setConfig({ ...defaultConfig, ...raw.tela_promo_bg });
+          setConfig({ ...defaultTelaPromoConfig, ...raw.tela_promo_bg });
         }
       }
     })();
@@ -113,70 +140,46 @@ export default function ConfigTelaPromoPage() {
 
   const update = (partial: Partial<TelaPromoConfig>) => setConfig(c => ({ ...c, ...partial }));
 
+  const cardRadius = config.card_style === "sharp" ? "4px" : config.card_style === "pill" ? "50px" : "16px";
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Settings panel */}
-      <div className="flex-1 space-y-6">
+      <div className="flex-1 space-y-6 max-w-lg">
+        {/* --- Background --- */}
+        <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent)" }}>Fundo da Tela</h3>
+
         <div className="space-y-3">
           <Label className="text-sm font-semibold" style={{ color: "var(--layout-text)" }}>Tipo de fundo</Label>
           <Select value={config.bg_type} onValueChange={v => update({ bg_type: v as BgType })}>
-            <SelectTrigger className="w-full" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.1)" }}>
+            <SelectTrigger className="w-full" style={inputStyle}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="cor">
-                <span className="flex items-center gap-2"><Palette size={14} /> Cor sólida</span>
-              </SelectItem>
-              <SelectItem value="imagem">
-                <span className="flex items-center gap-2"><ImageIcon size={14} /> Imagem</span>
-              </SelectItem>
-              <SelectItem value="degrade">
-                <span className="flex items-center gap-2"><Layers size={14} /> Degradê</span>
-              </SelectItem>
+              <SelectItem value="cor"><span className="flex items-center gap-2"><Palette size={14} /> Cor sólida</span></SelectItem>
+              <SelectItem value="imagem"><span className="flex items-center gap-2"><ImageIcon size={14} /> Imagem</span></SelectItem>
+              <SelectItem value="degrade"><span className="flex items-center gap-2"><Layers size={14} /> Degradê</span></SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {config.bg_type === "cor" && (
-          <div className="space-y-2">
-            <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Cor de fundo</Label>
-            <div className="flex items-center gap-3">
-              <input type="color" value={config.bg_color} onChange={e => update({ bg_color: e.target.value })} className="w-10 h-10 rounded-lg border-0 cursor-pointer" />
-              <Input value={config.bg_color} onChange={e => update({ bg_color: e.target.value })} className="flex-1" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.1)" }} />
-            </div>
-          </div>
+          <ColorField label="Cor de fundo" value={config.bg_color} onChange={v => update({ bg_color: v })} />
         )}
 
         {config.bg_type === "imagem" && (
           <div className="space-y-3">
             <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Imagem de fundo</Label>
-            <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="cursor-pointer" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.1)" }} />
-            {config.bg_image_url && (
-              <div className="space-y-2">
-                <Label className="text-xs" style={{ color: "var(--layout-text)" }}>ou insira a URL</Label>
-                <Input value={config.bg_image_url} onChange={e => update({ bg_image_url: e.target.value })} placeholder="https://..." style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.1)" }} />
-              </div>
-            )}
+            <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="cursor-pointer" style={inputStyle} />
+            <Input value={config.bg_image_url} onChange={e => update({ bg_image_url: e.target.value })} placeholder="https://..." style={inputStyle} />
           </div>
         )}
 
         {config.bg_type === "degrade" && (
           <div className="space-y-4">
             <div className="flex gap-4">
-              <div className="flex-1 space-y-2">
-                <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Cor A</Label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={config.gradient_color_a} onChange={e => update({ gradient_color_a: e.target.value })} className="w-8 h-8 rounded border-0 cursor-pointer" />
-                  <Input value={config.gradient_color_a} onChange={e => update({ gradient_color_a: e.target.value })} style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.1)" }} />
-                </div>
-              </div>
-              <div className="flex-1 space-y-2">
-                <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Cor B</Label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={config.gradient_color_b} onChange={e => update({ gradient_color_b: e.target.value })} className="w-8 h-8 rounded border-0 cursor-pointer" />
-                  <Input value={config.gradient_color_b} onChange={e => update({ gradient_color_b: e.target.value })} style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.1)" }} />
-                </div>
-              </div>
+              <ColorField label="Cor A" value={config.gradient_color_a} onChange={v => update({ gradient_color_a: v })} />
+              <ColorField label="Cor B" value={config.gradient_color_b} onChange={v => update({ gradient_color_b: v })} />
             </div>
             <div className="space-y-2">
               <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Ângulo ({config.gradient_angle}°)</Label>
@@ -184,6 +187,36 @@ export default function ConfigTelaPromoPage() {
             </div>
           </div>
         )}
+
+        {/* --- Buttons --- */}
+        <div className="border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+          <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: "var(--layout-accent)" }}>Botões de Promoção</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <ColorField label="Cor início" value={config.btn_color_a} onChange={v => update({ btn_color_a: v })} />
+            <ColorField label="Cor fim" value={config.btn_color_b} onChange={v => update({ btn_color_b: v })} />
+            <ColorField label="Cor do texto" value={config.btn_text_color} onChange={v => update({ btn_text_color: v })} />
+            <ColorField label="Cor da borda (hover)" value={config.card_border_color} onChange={v => update({ card_border_color: v })} />
+          </div>
+        </div>
+
+        {/* --- Cards --- */}
+        <div className="border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+          <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: "var(--layout-accent)" }}>Estilo dos Cards</h3>
+          <div className="space-y-3">
+            <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Formato</Label>
+            <Select value={config.card_style} onValueChange={v => update({ card_style: v as CardStyle })}>
+              <SelectTrigger className="w-full" style={inputStyle}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rounded">Arredondado</SelectItem>
+                <SelectItem value="sharp">Reto</SelectItem>
+                <SelectItem value="pill">Pílula</SelectItem>
+              </SelectContent>
+            </Select>
+            <ColorField label="Cor do texto do cabeçalho" value={config.header_text_color} onChange={v => update({ header_text_color: v })} />
+          </div>
+        </div>
 
         <Button onClick={handleSave} disabled={saving} className="w-full" style={{ background: "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent))", color: "#fff" }}>
           {saving ? "Salvando..." : "Salvar configurações"}
@@ -194,10 +227,36 @@ export default function ConfigTelaPromoPage() {
       <div className="flex-1 space-y-3">
         <Label className="text-sm font-semibold" style={{ color: "var(--layout-text)" }}>Pré-visualização</Label>
         <div
-          className="rounded-2xl border overflow-hidden aspect-video flex items-center justify-center"
-          style={{ ...buildPreviewStyle(config), borderColor: "rgba(255,255,255,0.1)" }}
+          className="rounded-2xl border overflow-hidden aspect-video flex flex-col items-center justify-center gap-4 p-6"
+          style={{ ...buildTelaPromoBgStyle(config), borderColor: "rgba(255,255,255,0.1)" }}
         >
-          <span className="text-white/40 text-sm font-medium">Tela Promo</span>
+          <span className="text-sm font-bold uppercase tracking-widest" style={{ color: config.header_text_color }}>Promoções</span>
+          <div className="flex gap-3">
+            {["Promo 1", "Promo 2"].map(label => (
+              <div
+                key={label}
+                className="px-5 py-2.5 font-bold text-xs shadow-lg flex items-center gap-2"
+                style={{
+                  background: `linear-gradient(135deg, ${config.btn_color_a}, ${config.btn_color_b})`,
+                  color: config.btn_text_color,
+                  borderRadius: cardRadius,
+                }}
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-3">
+            {[1, 2].map(i => (
+              <div
+                key={i}
+                className="w-20 h-28 flex items-center justify-center"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)", borderRadius: cardRadius, border: `2px solid transparent` }}
+              >
+                <span style={{ color: config.header_text_color }} className="text-[10px]">Card</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
