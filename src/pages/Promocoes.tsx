@@ -174,13 +174,21 @@ export default function PromocoesKiosk() {
     };
 
     const loadAuth = async () => {
-      const [empresaData, { data: promoData }, { data: progsData }, { data: testData }] = await Promise.all([
+      const [empresaData, { data: promoData }, { data: progsData }, { data: testData }, { data: settingsData }] = await Promise.all([
         getEmpresaConfig(),
         supabase.from("promocoes").select("*").order("data_inicio"),
         supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%"),
         supabase.from("testemunhais").select("*"),
+        supabase.from("user_settings").select("cenario_config").maybeSingle(),
       ]);
       setConfig(empresaData);
+
+      if (settingsData?.cenario_config) {
+        const raw = settingsData.cenario_config as any;
+        if (raw.tela_promo_bg) {
+          setTelaPromoConfig({ ...defaultTelaPromoConfig, ...raw.tela_promo_bg });
+        }
+      }
 
       const today = new Date().toISOString().split("T")[0];
       const activePromos = (promoData || []).filter((p: any) => p.data_inicio <= today && p.data_fim >= today);
