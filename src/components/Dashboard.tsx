@@ -42,6 +42,7 @@ const VmixPage = lazy(() => import("./VmixPage"));
 const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
 const PropostasPage = lazy(() => import("./PropostasPage"));
+const ConfigTelaPromoPage = lazy(() => import("./ConfigTelaPromoPage"));
 const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 const FansPage = lazy(() => import("./FansPage"));
@@ -49,14 +50,20 @@ import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo";
 
 // Sidebar structured menu
+interface MenuChild {
+  icon: typeof Home;
+  label: string;
+  page: Page;
+  separator?: boolean;
+}
 interface MenuItem {
   icon: typeof Home;
   label: string;
   page?: Page;
-  children?: { icon: typeof Home; label: string; page: Page }[];
+  children?: MenuChild[];
 }
 
 const sidebarMenu: MenuItem[] = [
@@ -84,7 +91,8 @@ const sidebarMenu: MenuItem[] = [
       { icon: MessageSquareQuote, label: "testemunhais", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
       { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page },
-      { icon: ShoppingCart, label: "shopping", page: "shopping" },
+      { icon: Settings, label: "config tela promo", page: "configtelapromo", separator: true },
+      { icon: ShoppingCart, label: "shopping", page: "shopping", separator: true },
       { icon: FileText, label: "propostas comerciais", page: "propostas" },
     ]
   },
@@ -97,7 +105,6 @@ const sidebarMenu: MenuItem[] = [
   },
   {
     icon: Wrench, label: "ferramentas", children: [
-      { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
       { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
@@ -139,6 +146,7 @@ const pageTitle: Record<Page, string> = {
   vmix: "vMix — Controle de Transmissão",
   cenario: "vMix — Cenário Interativo",
   fans: "Player — Fãs",
+  configtelapromo: "Comercial — Config Tela Promo",
 };
 
 interface DashboardProps {
@@ -568,17 +576,21 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         boxShadow: "0 16px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
                       }}
                     >
-                      {item.children.map(child => (
-                        <button
-                          key={child.label}
-                          onClick={() => handleChildClick(child, item.label)}
-                          className="w-full text-left px-4 py-2 text-[11px] transition-all rounded-lg mx-0"
-                          style={{ color: child.page && currentPage === child.page ? layoutColors.buttonBg : `${layoutColors.navText}cc` }}
-                          onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = layoutColors.buttonBg; e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; } }}
-                          onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = `${layoutColors.navText}cc`; e.currentTarget.style.backgroundColor = "transparent"; } }}
-                        >
-                          {child.label}
-                        </button>
+                      {item.children.map((child, ci) => (
+                        <div key={child.label}>
+                          {child.separator && ci > 0 && (
+                            <div className="mx-3 my-1.5 border-t" style={{ borderColor: `${layoutColors.navText}15` }} />
+                          )}
+                          <button
+                            onClick={() => handleChildClick(child, item.label)}
+                            className="w-full text-left px-4 py-2 text-[11px] transition-all rounded-lg mx-0"
+                            style={{ color: child.page && currentPage === child.page ? layoutColors.buttonBg : `${layoutColors.navText}cc` }}
+                            onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = layoutColors.buttonBg; e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; } }}
+                            onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = `${layoutColors.navText}cc`; e.currentTarget.style.backgroundColor = "transparent"; } }}
+                          >
+                            {child.label}
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -667,6 +679,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "playerconfig" && <ConfiguracoesPage section="player" />}
               {currentPage === "testemunhais" && <TestemunhaisPage />}
               {currentPage === "promocoes" && <PromocoesPage />}
+              {currentPage === "configtelapromo" && <ConfigTelaPromoPage />}
               {currentPage === "logos" && <LogosPatrocinadoresPage />}
               {currentPage === "shopping" && <ShoppingPage />}
               {currentPage === "preroll" && <PreRollPage />}
