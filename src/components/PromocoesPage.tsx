@@ -111,6 +111,7 @@ export default function PromocoesPage() {
     setEditingId(item.id);
     setTitulo(item.botao_url || "");
     setTexto(item.texto);
+    setTimeout(() => { if (textoEditorRef.current) textoEditorRef.current.innerHTML = item.texto || ""; }, 0);
     setOferecimento(item.oferecimento || "");
     setDataInicio(item.data_inicio);
     setDataFim(item.data_fim);
