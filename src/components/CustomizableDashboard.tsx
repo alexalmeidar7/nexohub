@@ -651,7 +651,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Add Dialog */}
       {showAddDialog && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center" onClick={() => { setShowAddDialog(false); setAddStep("choose"); }}>
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/60" />
           <div
             className="relative rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
             style={{
@@ -1628,7 +1628,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
         <div className="relative -mx-4 -mt-4 mb-2 overflow-hidden flex-shrink-0 rounded-t-2xl" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.6)", maxHeight: "280px" }}>
           <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "280px", background: "#000" }} />
           {videoLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.8)" }}>
               <Loader2 size={20} className="text-white/70 animate-spin" />
               <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
             </div>
@@ -1645,7 +1645,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       ) : (
         <div className="relative z-10 flex items-center gap-2.5 flex-shrink-0 pb-0.5">
           {channels.length > 1 && (
-            <button onClick={goPrev} className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+            <button onClick={goPrev} className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; }}>
               <ChevronLeft size={14} className="text-white/70" />
             </button>
           )}
@@ -1689,7 +1689,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
               </div>
             )}
             <div className="flex items-center gap-2">
-              <button onClick={togglePlay} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))", backdropFilter: "blur(20px) saturate(1.6)", WebkitBackdropFilter: "blur(20px) saturate(1.6)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.1)" }}>
+              <button onClick={togglePlay} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08))", boxShadow: "0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.1)" }}>
                 {isPlaying ? <Pause size={13} className="text-white" /> : <Play size={13} className="text-white ml-0.5" />}
               </button>
               <button onClick={toggleMute} className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}>
@@ -1701,7 +1701,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
           </div>
 
           {channels.length > 1 && (
-            <button onClick={goNext} className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+            <button onClick={goNext} className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; }}>
               <ChevronRight size={14} className="text-white/70" />
             </button>
           )}
