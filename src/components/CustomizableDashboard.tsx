@@ -163,7 +163,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         .from("programas")
         .select("nome, selo, thumb, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, tipo_programa, estudio, apresentadores(nome)")
         .eq("user_id", user.id)
-        .eq("ativo", true);
+        .eq("ativo", true)
+        .ilike("estudio", "%fm%");
       if (cancelled || !data) return;
       const now = new Date();
       const diaAtual = DIAS_MAP[now.getDay()];
@@ -980,7 +981,7 @@ function ProgramasPreview() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!user) return;
-    supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true)
+    supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true).ilike("estudio", "%fm%")
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
@@ -1128,6 +1129,7 @@ function MusicProgramWidget() {
         .select("*, apresentadores(nome, foto)")
         .eq("user_id", user.id)
         .eq("ativo", true)
+        .ilike("estudio", "%fm%")
         .lte("horario_inicio", currentTime)
         .gte("horario_fim", currentTime)
         .contains("dias_semana", [todayKey])
