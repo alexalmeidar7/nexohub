@@ -46,11 +46,12 @@ const ConfigTelaPromoPage = lazy(() => import("./ConfigTelaPromoPage"));
 const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 const FansPage = lazy(() => import("./FansPage"));
+const P2PDashboard = lazy(() => import("./P2PDashboard"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "p2p";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -67,6 +68,7 @@ interface MenuItem {
 }
 
 const sidebarMenu: MenuItem[] = [
+  { icon: Wallet, label: "P2P Dashboard", page: "p2p" },
   { icon: Home, label: "home", page: "dashboard" },
   {
     icon: Users, label: "cadastros", children: [
@@ -689,6 +691,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "tp" && <TeleprompterPage />}
               {currentPage === "cenario" && <CenarioInterativoPage />}
               {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
+              {currentPage === "p2p" && <P2PDashboard />}
             </Suspense>
           </div>
         </main>
