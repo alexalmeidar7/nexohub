@@ -815,10 +815,14 @@ export default function PromocoesKiosk() {
                         <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-2 object-contain max-h-[200px]" />
                       )}
                       <div
-                        className="text-white prose prose-invert max-w-none [&_p]:my-1 [&_p]:px-1 [&_p]:py-0.5 [&_p]:rounded [&_p]:transition-colors [&_p]:cursor-default"
+                        className="text-white prose prose-invert max-w-none [&_p]:my-1 [&_p]:px-1 [&_p]:py-0.5 [&_p]:rounded [&_p]:transition-colors [&_p]:cursor-default [&_span]:!text-white [&_p]:!text-white [&_a]:!text-red-400 [&_*]:!bg-transparent"
                         style={{ fontSize: `${fontSize}px` }}
                         dangerouslySetInnerHTML={{
-                          __html: t.texto.replace(/\/\//g, "<br/>"),
+                          __html: t.texto
+                            .replace(/\/\//g, "<br/>")
+                            .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
+                            .replace(/color:\s*#000(?:000)?/gi, "color: white")
+                            .replace(/background-color:\s*(?:transparent|rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "background-color: transparent"),
                         }}
                       />
                     </div>
