@@ -366,9 +366,10 @@
 /* ====== Form styling for masterview content area ====== */
 .mv-content-area {
   background-color: var(--layout-page-bg, #ffffff);
-  border-radius: 12px;
+  border-radius: 20px;
   color: var(--layout-page-text, #0d0446);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  border: 1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent);
 }
 
 .mv-content-area h2,
