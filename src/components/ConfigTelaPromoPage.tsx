@@ -57,7 +57,7 @@ export function buildTelaPromoBgStyle(config: TelaPromoConfig): React.CSSPropert
   }
 }
 
-const inputStyle = { backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.1)" };
+const inputStyle = { backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.25)" };
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
