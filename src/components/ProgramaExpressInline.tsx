@@ -126,6 +126,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
 
+  // Podcast-specific state
+  const [podcastData, setPodcastData] = useState<PodcastData>({
+    tituloTarja: "", introducao: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""],
+  });
+
+  const isPodcast = estudio.toLowerCase() === "podcast";
+
   // Track edited fields for green check indicators
   const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
   const initialDataRef = useRef<{ estudio: string; programaId: string; blocos: string; participantes: string } | null>(null);
