@@ -673,7 +673,7 @@ export default function PromocoesKiosk() {
               {filteredPrograms.map(prog => (
                 <div
                   key={prog.id}
-                  className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
+                  className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-200 border-4 border-transparent hover:border-white hover:scale-105"
                   onClick={() => setSelectedProgram(prog)}
                 >
                   {prog.capa ? (
@@ -714,12 +714,12 @@ export default function PromocoesKiosk() {
               {botoes.map(promo => (
                 <div
                   key={promo.id}
-                  className="flex-shrink-0 cursor-pointer hover:opacity-80 transition-all flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm"
-                  style={{ backgroundColor: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
+                  className="flex-shrink-0 cursor-pointer transition-all duration-200 flex items-center gap-3 px-7 py-4 rounded-2xl font-bold text-base border-4 border-white/20 hover:border-white hover:scale-105"
+                  style={{ backgroundColor: "rgba(255,255,255,0.12)", color: "#fff" }}
                   onClick={() => setSelectedPromo(promo)}
                 >
-                  <ImageIcon size={16} />
-                  <span>{promo.botao_url}</span>
+                  <ImageIcon size={20} />
+                  <span className="whitespace-nowrap">{promo.botao_url}</span>
                 </div>
               ))}
             </div>
