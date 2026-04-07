@@ -264,12 +264,21 @@ export default function TestemunhaisPage() {
 
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Texto do Testemunhal</label>
-                  <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Relato do cliente..." rows={4} required
-                    className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[80px]"
-                    style={{ ...inputStyle, borderRadius: "12px" }}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                  />
+                  <div style={{ ...inputStyle, borderRadius: "12px", overflow: "hidden" }}
+                    onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = "#be0101"; }}
+                    onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                  >
+                    <RichTextToolbar editorRef={editorRef} onInput={() => { if (editorRef.current) setTexto(editorRef.current.innerHTML); }} />
+                    <div
+                      ref={editorRef}
+                      contentEditable
+                      suppressContentEditableWarning
+                      className="w-full px-4 py-2 text-sm outline-none min-h-[80px] max-h-[200px] overflow-y-auto"
+                      style={{ color: "var(--layout-page-text, #1a1a1a)", background: "transparent" }}
+                      onInput={() => { if (editorRef.current) setTexto(editorRef.current.innerHTML); }}
+                      data-placeholder="Relato do cliente..."
+                    />
+                  </div>
                 </div>
               </div>
 
