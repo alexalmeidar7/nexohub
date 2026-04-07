@@ -4,7 +4,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
-import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
 import { getApresentadores } from "@/components/ApresentadorForm";
@@ -686,10 +686,12 @@ export default function PromocoesKiosk() {
               {botoes.map(promo => (
                 <div
                   key={promo.id}
-                  className="flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
+                  className="flex-shrink-0 cursor-pointer hover:opacity-80 transition-all flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm"
+                  style={{ backgroundColor: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
                   onClick={() => setSelectedPromo(promo)}
                 >
-                  <img src={promo.botao_url} alt={promo.texto} className="h-auto w-auto object-contain rounded-lg" />
+                  <ImageIcon size={16} />
+                  <span>{promo.botao_url}</span>
                 </div>
               ))}
             </div>
