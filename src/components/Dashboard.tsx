@@ -580,7 +580,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           >
             <LogOut size={10} /> Sair
           </button>
-          <ServerClock compact={!isDashboard} />
+          <ServerClock />
         </div>
 
         {/* Mobile menu overlay */}
@@ -666,7 +666,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <Suspense fallback={<div className="w-8 h-8 rounded-full" style={{ backgroundColor: `${layoutColors.pageText}10` }} />}>
               <MessageNotification />
             </Suspense>
-            <ServerClock compact={!isDashboard} />
+            <ServerClock />
           </div>
         </div>
 
