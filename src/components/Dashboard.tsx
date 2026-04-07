@@ -49,14 +49,20 @@ import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo";
 
 // Sidebar structured menu
+interface MenuChild {
+  icon: typeof Home;
+  label: string;
+  page: Page;
+  separator?: boolean;
+}
 interface MenuItem {
   icon: typeof Home;
   label: string;
   page?: Page;
-  children?: { icon: typeof Home; label: string; page: Page }[];
+  children?: MenuChild[];
 }
 
 const sidebarMenu: MenuItem[] = [
