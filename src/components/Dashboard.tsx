@@ -83,6 +83,7 @@ const sidebarMenu: MenuItem[] = [
     icon: ShoppingBag, label: "comercial", children: [
       { icon: MessageSquareQuote, label: "testemunhais", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
+      { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page },
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
       { icon: FileText, label: "propostas comerciais", page: "propostas" },
     ]
@@ -320,7 +321,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       setHoveredMenu(null);
       return;
     }
-    if (parentLabel === "ferramentas" && child.label === "tela promo") {
+    if ((parentLabel === "ferramentas" || parentLabel === "comercial") && child.label === "tela promo") {
       const slug = user?.email?.split("@")[0] || "";
       window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
       setHoveredMenu(null);
