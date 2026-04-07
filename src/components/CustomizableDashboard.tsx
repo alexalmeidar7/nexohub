@@ -1474,6 +1474,12 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       audio.preload = "none";
       audioRef.current = audio;
     }
+    return () => {
+      // Cleanup: stop all playback when widget unmounts
+      if (hlsRef.current) { try { hlsRef.current.destroy(); } catch {} hlsRef.current = null; }
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); audioRef.current = null; }
+      if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
+    };
   }, []);
 
   // Attach HLS when showVideo activates
