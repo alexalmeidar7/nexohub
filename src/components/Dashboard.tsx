@@ -289,8 +289,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       page === "playerconfig" ||
       page === "cortevideo" ||
       page === "tp" ||
-      page === "fans" ||
-      
+      page === "fans"
     ) {
       return true;
     }
