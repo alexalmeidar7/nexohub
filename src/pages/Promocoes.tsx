@@ -669,11 +669,11 @@ export default function PromocoesKiosk() {
               <ChevronRight size={36} />
             </div>
 
-            <div ref={scrollRef} className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar">
+            <div ref={scrollRef} className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2 -my-2 px-1 -mx-1">
               {filteredPrograms.map(prog => (
                 <div
                   key={prog.id}
-                  className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-200 border-4 border-transparent hover:border-white hover:scale-105"
+                  className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-200 outline-4 outline-transparent hover:outline-white hover:scale-105"
                   onClick={() => setSelectedProgram(prog)}
                 >
                   {prog.capa ? (
