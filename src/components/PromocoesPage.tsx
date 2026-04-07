@@ -172,6 +172,7 @@ export default function PromocoesPage() {
   const resetForm = () => {
     setTitulo("");
     setTexto("");
+    if (textoEditorRef.current) textoEditorRef.current.innerHTML = "";
     setOferecimento("");
     setDataInicio("");
     setDataFim("");
