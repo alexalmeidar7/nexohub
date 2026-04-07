@@ -286,7 +286,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const modulesSource = planModules ?? enabledModules;
     if (!modulesSource) return true;
 
-    if (page === "testemunhais" || page === "promocoes" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") {
+    if (page === "testemunhais" || page === "promocoes" || page === "configtelapromo" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") {
       return modulesSource.has("comercial");
     }
 
