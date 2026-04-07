@@ -228,7 +228,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
         blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
         const blob = new Blob([xmlContent], { type: "application/xml" });
-        const filePath = editingXmlPath || `express/${user.id}/express_${programaId}_${Date.now()}.xml`;
+        const filePath = editingXmlPath || `express/${user.id}/express_${editingId}.xml`;
+        if (!editingXmlPath) setEditingXmlPath(filePath);
         await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
         const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
         const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
@@ -519,22 +520,28 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
       }
 
-      const blob = new Blob([xmlContent], { type: "application/xml" });
-      const filePath = (editingId && editingXmlPath) ? editingXmlPath : `express/${user.id}/express_${programaId}_${Date.now()}.xml`;
-      await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
-      const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
-      const xmlUrl = urlData.publicUrl;
       const blocosJson = isPodcast
         ? JSON.stringify({ blocos, participantes, escaladaList, podcastData })
         : JSON.stringify({ blocos, participantes, escaladaList });
 
-      if (editingId) {
-        const { error } = await supabase.from("roteiros").update({ programa_nome: programaNome, estudio, titulo: `PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, conteudo_html: html, participantes: blocosJson }).eq("id", editingId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("roteiros").insert({ user_id: user.id, programa_nome: programaNome, estudio, titulo: `PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, tipo_programa: "Jornalístico", data_programa: new Date().toISOString().split("T")[0], horario: new Date().toTimeString().slice(0, 5), conteudo_html: html, participantes: blocosJson, status: "feito" });
-        if (error) throw error;
+      let roteiroId = editingId;
+      if (!roteiroId) {
+        // Insert first to get a stable ID for the XML path
+        const { data: inserted, error } = await supabase.from("roteiros").insert({ user_id: user.id, programa_nome: programaNome, estudio, titulo: `PROGRAMA EXPRESS — ${programaNome}`, subtitulo: "", tipo_programa: "Jornalístico", data_programa: new Date().toISOString().split("T")[0], horario: new Date().toTimeString().slice(0, 5), conteudo_html: html, participantes: blocosJson, status: "feito" }).select("id").single();
+        if (error || !inserted) throw error || new Error("Falha ao criar roteiro");
+        roteiroId = inserted.id;
+        setEditingId(roteiroId);
       }
+
+      const blob = new Blob([xmlContent], { type: "application/xml" });
+      const filePath = editingXmlPath || `express/${user.id}/express_${roteiroId}.xml`;
+      if (!editingXmlPath) setEditingXmlPath(filePath);
+      await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+      const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
+      const xmlUrl = urlData.publicUrl;
+
+      const { error: updErr } = await supabase.from("roteiros").update({ programa_nome: programaNome, estudio, titulo: `PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, conteudo_html: html, participantes: blocosJson }).eq("id", roteiroId);
+      if (updErr) throw updErr;
       toast.success("Roteiro salvo ✨", { duration: 3000, style: { background: "#22c55e", color: "#fff", fontWeight: 600, borderRadius: "12px", boxShadow: "0 8px 32px rgba(34,197,94,0.35)" } });
       reset();
       onFinish();
