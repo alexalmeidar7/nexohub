@@ -95,7 +95,7 @@ export default function PromocoesPage() {
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   };
-
+  const textoEditorRef = useRef<HTMLDivElement>(null);
 
   const uploadImage = async (file: File): Promise<string> => {
     const compressed = await compressImage(file);
