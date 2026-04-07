@@ -429,17 +429,20 @@
 .mv-content-area .mv-btn-primary {
   background-color: var(--layout-button-bg, #0d0446);
   color: var(--layout-button-text, #ffffff);
-  border: 2px solid var(--layout-button-bg, #0d0446);
-  border-radius: 6px;
-  font-weight: bold;
+  border: none;
+  border-radius: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  padding: 10px 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--layout-button-bg, #0d0446) 25%, transparent);
 }
 
 .mv-content-area button[type="submit"]:hover,
 .mv-content-area .mv-btn-primary:hover {
-  background-color: var(--layout-page-bg, #ffffff);
-  color: var(--layout-button-bg, #0d0446);
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--layout-button-bg, #0d0446) 35%, transparent);
 }
 
 .mv-content-area p,
