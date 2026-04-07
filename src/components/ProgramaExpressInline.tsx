@@ -2,9 +2,19 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2 } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2, MessageSquare, FileText, HelpCircle, Video, ImagePlus, Upload } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+/* ── Podcast-specific types ── */
+interface PodcastData {
+  tituloTarja: string;
+  introducao: string;
+  perguntas: string[];
+  concluindo: string;
+  apoioImagens: string[];
+  apoioVideos: string[];
+}
 
 interface Participante {
   nome: string;
@@ -115,6 +125,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [pasteText, setPasteText] = useState("");
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
+
+  // Podcast-specific state
+  const [podcastData, setPodcastData] = useState<PodcastData>({
+    tituloTarja: "", introducao: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""],
+  });
+
+  const isPodcast = estudio.toLowerCase() === "podcast";
 
   // Track edited fields for green check indicators
   const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
@@ -286,6 +303,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setEditedFields(new Set());
     setLastAutoSaved(null);
     initialDataRef.current = null;
+    setPodcastData({ tituloTarja: "", introducao: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""] });
   };
 
   /* Generate plain-text representation of current script for editing */
@@ -455,30 +473,60 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
     xml += `  <programa>${programaNome}</programa>\n  <estudio>${estudio}</estudio>\n  <data>${new Date().toISOString().split("T")[0]}</data>\n`;
     if (participantes.length > 0) { xml += `  <participantes>\n`; participantes.forEach((p, pi) => { xml += `    <participante${pi + 1}>\n      <nome>${escXml(p.nome)}</nome>\n      <cargo>${escXml(p.cargo)}</cargo>\n      <instagram>${escXml(p.instagram)}</instagram>\n    </participante${pi + 1}>\n`; }); xml += `  </participantes>\n`; }
-    if (escaladaList.length > 0) { xml += `  <escalada>\n`; escaladaList.forEach((e, i) => { xml += `    <item ordem="${i + 1}">\n      <titulo>${escXml(e.titulo)}</titulo>\n      <imagem>${escXml(e.imagemUrl)}</imagem>\n    </item>\n`; }); xml += `  </escalada>\n`; }
-    blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
+    if (isPodcast) {
+      xml += `  <roteiro>\n`;
+      xml += `    <tituloTarja>${escXml(podcastData.tituloTarja)}</tituloTarja>\n`;
+      xml += `    <introducao>${escXml(podcastData.introducao)}</introducao>\n`;
+      xml += `    <perguntas>\n`;
+      podcastData.perguntas.filter(p => p.trim()).forEach((p, i) => { xml += `      <pergunta ordem="${i + 1}">${escXml(p)}</pergunta>\n`; });
+      xml += `    </perguntas>\n`;
+      xml += `    <concluindo>${escXml(podcastData.concluindo)}</concluindo>\n`;
+      if (podcastData.apoioImagens.some(u => u.trim())) { xml += `    <apoioImagens>\n`; podcastData.apoioImagens.filter(u => u.trim()).forEach(u => { xml += `      <imagem>${escXml(u)}</imagem>\n`; }); xml += `    </apoioImagens>\n`; }
+      if (podcastData.apoioVideos.some(u => u.trim())) { xml += `    <apoioVideos>\n`; podcastData.apoioVideos.filter(u => u.trim()).forEach(u => { xml += `      <video>${escXml(u)}</video>\n`; }); xml += `    </apoioVideos>\n`; }
+      xml += `  </roteiro>\n`;
+    } else {
+      if (escaladaList.length > 0) { xml += `  <escalada>\n`; escaladaList.forEach((e, i) => { xml += `    <item ordem="${i + 1}">\n      <titulo>${escXml(e.titulo)}</titulo>\n      <imagem>${escXml(e.imagemUrl)}</imagem>\n    </item>\n`; }); xml += `  </escalada>\n`; }
+      blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
+    }
     xml += `</programaExpress>`;
     return xml;
   };
 
   const handleSave = async () => {
     if (!user || !programaId) return;
-    const totalNews = blocos.reduce((s, b) => s + b.noticias.filter(n => n.titulo).length, 0);
-    if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia"); return; }
+    if (isPodcast) {
+      if (!podcastData.tituloTarja.trim() && podcastData.perguntas.every(p => !p.trim())) {
+        toast.error("Preencha ao menos o título da tarja ou uma pergunta"); return;
+      }
+    } else {
+      const totalNews = blocos.reduce((s, b) => s + b.noticias.filter(n => n.titulo).length, 0);
+      if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia"); return; }
+    }
     setSaving(true);
     try {
       const xmlContent = generateXml();
       let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${programaNome}</h2>`;
       if (participantes.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`; participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; }); html += `</ul>`; }
-      if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
-      blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
+      if (isPodcast) {
+        html += `<h3 style="font-weight:bold;margin-top:16px;">🎙️ ROTEIRO</h3>`;
+        if (podcastData.tituloTarja) html += `<p><strong>Tarja:</strong> ${podcastData.tituloTarja}</p>`;
+        if (podcastData.introducao) html += `<p><strong>Introdução:</strong> ${podcastData.introducao}</p>`;
+        const validPerguntas = podcastData.perguntas.filter(p => p.trim());
+        if (validPerguntas.length > 0) { html += `<h4 style="font-weight:bold;margin-top:12px;">❓ Perguntas</h4><ol>`; validPerguntas.forEach(p => { html += `<li>${p}</li>`; }); html += `</ol>`; }
+        if (podcastData.concluindo) html += `<p><strong>Concluindo:</strong> ${podcastData.concluindo}</p>`;
+      } else {
+        if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
+        blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
+      }
 
       const blob = new Blob([xmlContent], { type: "application/xml" });
       const filePath = (editingId && editingXmlPath) ? editingXmlPath : `express/${user.id}/express_${programaId}_${Date.now()}.xml`;
       await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
-      const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
+      const blocosJson = isPodcast
+        ? JSON.stringify({ blocos, participantes, escaladaList, podcastData })
+        : JSON.stringify({ blocos, participantes, escaladaList });
 
       if (editingId) {
         const { error } = await supabase.from("roteiros").update({ programa_nome: programaNome, estudio, titulo: `PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, conteudo_html: html, participantes: blocosJson }).eq("id", editingId);
@@ -657,64 +705,259 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </div>
         )}
 
-        {/* Escalada */}
-        <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, #f59e0b 30%, transparent)", backgroundColor: "color-mix(in srgb, #f59e0b 5%, transparent)" }}>
-          <p className="text-xs font-bold flex items-center gap-1.5 mb-2" style={{ color: "#f59e0b" }}>
-            📢 Escalada
-            {escaladaList.length > 0 && <span className="text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>({escaladaList.length} {escaladaList.length === 1 ? "item" : "itens"})</span>}
-          </p>
-          <div className="space-y-1.5">
-            {escaladaList.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold shrink-0 w-5 text-center" style={{ color: "#f59e0b" }}>{idx + 1}.</span>
-                <div className="flex flex-col shrink-0">
-                  <button onClick={() => { if (idx === 0) return; setEscaladaList(prev => { const c = [...prev]; [c[idx - 1], c[idx]] = [c[idx], c[idx - 1]]; return c; }); }} disabled={idx === 0} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: "#f59e0b" }}><ArrowUp size={10} /></button>
-                  <button onClick={() => { if (idx === escaladaList.length - 1) return; setEscaladaList(prev => { const c = [...prev]; [c[idx], c[idx + 1]] = [c[idx + 1], c[idx]]; return c; }); }} disabled={idx === escaladaList.length - 1} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: "#f59e0b" }}><ArrowDown size={10} /></button>
-                </div>
-                {item.imagemUrl && item.imagemUrl.startsWith("http") && (
-                  <img src={item.imagemUrl} alt="" className="w-10 h-7 object-cover rounded shrink-0" onError={e => (e.currentTarget.style.display = "none")} />
-                )}
-                <input value={item.titulo} onChange={e => setEscaladaList(prev => prev.map((v, i) => i === idx ? { ...v, titulo: e.target.value } : v))} className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] outline-none min-w-0" style={inputStyle} placeholder="Título da manchete..." />
-                <button onClick={() => setEscaladaList(prev => prev.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>
+        {/* Podcast-specific form */}
+        {isPodcast ? (
+          <div className="space-y-5">
+            {/* ── Roteiro ── */}
+            <div className="rounded-xl overflow-hidden" style={{ border: "2px solid #8b5cf644", backgroundColor: "#8b5cf60a" }}>
+              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: "#8b5cf615" }}>
+                <FileText size={16} style={{ color: "#8b5cf6" }} />
+                <span className="text-sm font-bold" style={{ color: "#8b5cf6" }}>🎙️ Roteiro</span>
               </div>
-            ))}
-          </div>
-          <button onClick={() => setEscaladaList(prev => [...prev, { titulo: "", imagemUrl: "" }])} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2" style={{ color: "#f59e0b", border: "1px dashed color-mix(in srgb, #f59e0b 40%, transparent)" }}>
-            <Plus size={12} /> Adicionar manchete
-          </button>
-        </div>
+              <div className="p-4 space-y-4">
+                {/* Titulo da Tarja */}
+                <div>
+                  <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <Type size={12} style={{ color: "#8b5cf6" }} /> Título da Tarja
+                  </label>
+                  <input
+                    value={podcastData.tituloTarja}
+                    onChange={e => setPodcastData(prev => ({ ...prev, tituloTarja: e.target.value }))}
+                    placeholder="Ex: Entrevista com especialista em tecnologia"
+                    className="w-full px-3 py-2.5 rounded-lg text-[12px] outline-none"
+                    style={inputStyle}
+                  />
+                </div>
 
-        {/* Blocos */}
-        <div className="space-y-4 min-w-0 w-full">
-          {blocos.map((bloco, bi) => (
-            <div key={bi} className="rounded-xl p-3 min-w-0 w-full overflow-hidden" style={{ border: `2px solid ${BLOCK_COLORS[bi % BLOCK_COLORS.length]}44`, backgroundColor: `${BLOCK_COLORS[bi % BLOCK_COLORS.length]}0a` }}>
-              <div className="flex items-center justify-between mb-2 cursor-pointer min-w-0" onClick={() => toggleCollapse(bi)}>
-                <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: BLOCK_COLORS[bi % BLOCK_COLORS.length] }}>
-                  📺 BLOCO {bi + 1}
-                  <span className="text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>({bloco.noticias.length} {bloco.noticias.length === 1 ? "notícia" : "notícias"})</span>
-                </p>
-                <div className="flex items-center gap-1">
-                  {blocos.length > 1 && <button onClick={(e) => { e.stopPropagation(); removeBloco(bi); }} className="p-1 rounded-full hover:opacity-70" style={{ color: "#ef4444" }}><Trash2 size={13} /></button>}
-                  {collapsedBlocos.has(bi) ? <ChevronDown size={14} style={{ color: "var(--layout-page-text)" }} /> : <ChevronUp size={14} style={{ color: "var(--layout-page-text)" }} />}
+                {/* Introdução do Tema */}
+                <div>
+                  <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <MessageSquare size={12} style={{ color: "#8b5cf6" }} /> Introdução do Tema
+                  </label>
+                  <textarea
+                    value={podcastData.introducao}
+                    onChange={e => setPodcastData(prev => ({ ...prev, introducao: e.target.value }))}
+                    placeholder="Descreva o tema principal do podcast e o contexto da conversa..."
+                    className="w-full px-3 py-2.5 rounded-lg text-[12px] outline-none resize-none"
+                    rows={3}
+                    style={inputStyle}
+                  />
                 </div>
-              </div>
-              {!collapsedBlocos.has(bi) && (
-                <div className="space-y-3">
-                  {bloco.noticias.map((noticia, ni) => (
-                    <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} />
-                  ))}
-                  <button onClick={() => addNoticia(bi)} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all" style={{ color: "var(--layout-accent-color, #2ec1f7)", border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 40%, transparent)" }}>
-                    <Plus size={12} /> Adicionar notícia
+
+                <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, #8b5cf6 15%, transparent)" }} />
+
+                {/* Perguntas */}
+                <div>
+                  <label className="text-[11px] font-semibold mb-2 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <HelpCircle size={12} style={{ color: "#8b5cf6" }} /> Perguntas
+                  </label>
+                  <div className="space-y-2">
+                    {podcastData.perguntas.map((pergunta, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span className="text-[11px] font-bold mt-2.5 shrink-0 w-5 text-center" style={{ color: "#8b5cf6" }}>{idx + 1}.</span>
+                        <textarea
+                          value={pergunta}
+                          onChange={e => {
+                            const updated = [...podcastData.perguntas];
+                            updated[idx] = e.target.value;
+                            setPodcastData(prev => ({ ...prev, perguntas: updated }));
+                          }}
+                          placeholder={`Pergunta ${idx + 1}...`}
+                          className="flex-1 px-3 py-2 rounded-lg text-[12px] outline-none resize-none min-w-0"
+                          rows={2}
+                          style={inputStyle}
+                        />
+                        {podcastData.perguntas.length > 1 && (
+                          <button
+                            onClick={() => setPodcastData(prev => ({ ...prev, perguntas: prev.perguntas.filter((_, i) => i !== idx) }))}
+                            className="p-1 mt-1.5 rounded-full hover:opacity-70 shrink-0"
+                            style={{ color: "#ef4444" }}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setPodcastData(prev => ({ ...prev, perguntas: [...prev.perguntas, ""] }))}
+                    className="flex items-center gap-1.5 text-[11px] font-semibold py-2 px-4 rounded-full hover:opacity-80 transition-all mt-3"
+                    style={{ color: "#8b5cf6", border: "1px dashed color-mix(in srgb, #8b5cf6 40%, transparent)", backgroundColor: "#8b5cf608" }}
+                  >
+                    <Plus size={12} /> Adicionar + uma pergunta
                   </button>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
 
-        <button onClick={addBloco} className="w-full py-2.5 rounded-xl text-xs font-semibold transition-all hover:scale-[1.01] active:scale-[0.99]" style={{ border: "2px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 50%, transparent)", color: "var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
-          <Plus size={14} className="inline mr-1" /> Adicionar Bloco {blocos.length + 1}
-        </button>
+                <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, #8b5cf6 15%, transparent)" }} />
+
+                {/* Concluindo */}
+                <div>
+                  <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <Check size={12} style={{ color: "#8b5cf6" }} /> Concluindo
+                  </label>
+                  <textarea
+                    value={podcastData.concluindo}
+                    onChange={e => setPodcastData(prev => ({ ...prev, concluindo: e.target.value }))}
+                    placeholder="Texto de encerramento ou considerações finais..."
+                    className="w-full px-3 py-2.5 rounded-lg text-[12px] outline-none resize-none"
+                    rows={3}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ── Apoio ── */}
+            <div className="rounded-xl overflow-hidden" style={{ border: "2px solid #06b6d444", backgroundColor: "#06b6d40a" }}>
+              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: "#06b6d415" }}>
+                <Upload size={16} style={{ color: "#06b6d4" }} />
+                <span className="text-sm font-bold" style={{ color: "#06b6d4" }}>📎 Apoio</span>
+              </div>
+              <div className="p-4 space-y-5">
+                {/* Imagens */}
+                <div>
+                  <label className="text-[11px] font-semibold mb-2 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <ImagePlus size={12} style={{ color: "#06b6d4" }} /> Imagens
+                  </label>
+                  <p className="text-[10px] mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>
+                    Cole links de imagens de apoio para o programa
+                  </p>
+                  <div className="space-y-2">
+                    {podcastData.apoioImagens.map((url, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        {url && url.startsWith("http") && (
+                          <img src={url} alt="" className="w-10 h-10 object-cover rounded shrink-0" onError={e => (e.currentTarget.style.display = "none")} />
+                        )}
+                        <input
+                          value={url}
+                          onChange={e => {
+                            const updated = [...podcastData.apoioImagens];
+                            updated[idx] = e.target.value;
+                            setPodcastData(prev => ({ ...prev, apoioImagens: updated }));
+                          }}
+                          placeholder="https://link-da-imagem.jpg"
+                          className="flex-1 px-3 py-2 rounded-lg text-[11px] outline-none min-w-0"
+                          style={inputStyle}
+                        />
+                        {podcastData.apoioImagens.length > 1 && (
+                          <button onClick={() => setPodcastData(prev => ({ ...prev, apoioImagens: prev.apoioImagens.filter((_, i) => i !== idx) }))} className="p-1 rounded-full hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setPodcastData(prev => ({ ...prev, apoioImagens: [...prev.apoioImagens, ""] }))}
+                    className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2"
+                    style={{ color: "#06b6d4", border: "1px dashed color-mix(in srgb, #06b6d4 40%, transparent)" }}
+                  >
+                    <Plus size={12} /> Adicionar imagem
+                  </button>
+                </div>
+
+                <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, #06b6d4 15%, transparent)" }} />
+
+                {/* Vídeos */}
+                <div>
+                  <label className="text-[11px] font-semibold mb-2 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <Video size={12} style={{ color: "#06b6d4" }} /> Vídeos
+                  </label>
+                  <p className="text-[10px] mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>
+                    Cole links de vídeos de apoio (YouTube, Vimeo, etc.)
+                  </p>
+                  <div className="space-y-2">
+                    {podcastData.apoioVideos.map((url, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Video size={14} className="shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text) 30%, transparent)" }} />
+                        <input
+                          value={url}
+                          onChange={e => {
+                            const updated = [...podcastData.apoioVideos];
+                            updated[idx] = e.target.value;
+                            setPodcastData(prev => ({ ...prev, apoioVideos: updated }));
+                          }}
+                          placeholder="https://youtube.com/watch?v=..."
+                          className="flex-1 px-3 py-2 rounded-lg text-[11px] outline-none min-w-0"
+                          style={inputStyle}
+                        />
+                        {podcastData.apoioVideos.length > 1 && (
+                          <button onClick={() => setPodcastData(prev => ({ ...prev, apoioVideos: prev.apoioVideos.filter((_, i) => i !== idx) }))} className="p-1 rounded-full hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setPodcastData(prev => ({ ...prev, apoioVideos: [...prev.apoioVideos, ""] }))}
+                    className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2"
+                    style={{ color: "#06b6d4", border: "1px dashed color-mix(in srgb, #06b6d4 40%, transparent)" }}
+                  >
+                    <Plus size={12} /> Adicionar vídeo
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Escalada */}
+            <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, #f59e0b 30%, transparent)", backgroundColor: "color-mix(in srgb, #f59e0b 5%, transparent)" }}>
+              <p className="text-xs font-bold flex items-center gap-1.5 mb-2" style={{ color: "#f59e0b" }}>
+                📢 Escalada
+                {escaladaList.length > 0 && <span className="text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>({escaladaList.length} {escaladaList.length === 1 ? "item" : "itens"})</span>}
+              </p>
+              <div className="space-y-1.5">
+                {escaladaList.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold shrink-0 w-5 text-center" style={{ color: "#f59e0b" }}>{idx + 1}.</span>
+                    <div className="flex flex-col shrink-0">
+                      <button onClick={() => { if (idx === 0) return; setEscaladaList(prev => { const c = [...prev]; [c[idx - 1], c[idx]] = [c[idx], c[idx - 1]]; return c; }); }} disabled={idx === 0} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: "#f59e0b" }}><ArrowUp size={10} /></button>
+                      <button onClick={() => { if (idx === escaladaList.length - 1) return; setEscaladaList(prev => { const c = [...prev]; [c[idx], c[idx + 1]] = [c[idx + 1], c[idx]]; return c; }); }} disabled={idx === escaladaList.length - 1} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: "#f59e0b" }}><ArrowDown size={10} /></button>
+                    </div>
+                    {item.imagemUrl && item.imagemUrl.startsWith("http") && (
+                      <img src={item.imagemUrl} alt="" className="w-10 h-7 object-cover rounded shrink-0" onError={e => (e.currentTarget.style.display = "none")} />
+                    )}
+                    <input value={item.titulo} onChange={e => setEscaladaList(prev => prev.map((v, i) => i === idx ? { ...v, titulo: e.target.value } : v))} className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] outline-none min-w-0" style={inputStyle} placeholder="Título da manchete..." />
+                    <button onClick={() => setEscaladaList(prev => prev.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setEscaladaList(prev => [...prev, { titulo: "", imagemUrl: "" }])} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2" style={{ color: "#f59e0b", border: "1px dashed color-mix(in srgb, #f59e0b 40%, transparent)" }}>
+                <Plus size={12} /> Adicionar manchete
+              </button>
+            </div>
+
+            {/* Blocos */}
+            <div className="space-y-4 min-w-0 w-full">
+              {blocos.map((bloco, bi) => (
+                <div key={bi} className="rounded-xl p-3 min-w-0 w-full overflow-hidden" style={{ border: `2px solid ${BLOCK_COLORS[bi % BLOCK_COLORS.length]}44`, backgroundColor: `${BLOCK_COLORS[bi % BLOCK_COLORS.length]}0a` }}>
+                  <div className="flex items-center justify-between mb-2 cursor-pointer min-w-0" onClick={() => toggleCollapse(bi)}>
+                    <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: BLOCK_COLORS[bi % BLOCK_COLORS.length] }}>
+                      📺 BLOCO {bi + 1}
+                      <span className="text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>({bloco.noticias.length} {bloco.noticias.length === 1 ? "notícia" : "notícias"})</span>
+                    </p>
+                    <div className="flex items-center gap-1">
+                      {blocos.length > 1 && <button onClick={(e) => { e.stopPropagation(); removeBloco(bi); }} className="p-1 rounded-full hover:opacity-70" style={{ color: "#ef4444" }}><Trash2 size={13} /></button>}
+                      {collapsedBlocos.has(bi) ? <ChevronDown size={14} style={{ color: "var(--layout-page-text)" }} /> : <ChevronUp size={14} style={{ color: "var(--layout-page-text)" }} />}
+                    </div>
+                  </div>
+                  {!collapsedBlocos.has(bi) && (
+                    <div className="space-y-3">
+                      {bloco.noticias.map((noticia, ni) => (
+                        <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} />
+                      ))}
+                      <button onClick={() => addNoticia(bi)} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all" style={{ color: "var(--layout-accent-color, #2ec1f7)", border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 40%, transparent)" }}>
+                        <Plus size={12} /> Adicionar notícia
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <button onClick={addBloco} className="w-full py-2.5 rounded-xl text-xs font-semibold transition-all hover:scale-[1.01] active:scale-[0.99]" style={{ border: "2px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 50%, transparent)", color: "var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
+              <Plus size={14} className="inline mr-1" /> Adicionar Bloco {blocos.length + 1}
+            </button>
+          </>
+        )}
 
         {/* Save / Finish editing */}
         {editingId ? (
