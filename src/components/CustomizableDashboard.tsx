@@ -396,27 +396,23 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => handleLinkClick(item)}
                 >
                     <div
-                      className="w-[130px] h-[120px] sm:w-[150px] sm:h-[130px] rounded-[22px] flex flex-col items-start justify-between p-5 transition-all duration-300 hover:scale-[1.05] hover:-translate-y-1 overflow-hidden relative"
+                      className="w-[130px] h-[120px] sm:w-[150px] sm:h-[130px] rounded-[22px] flex flex-col items-start justify-between p-5 transition-all duration-300 hover:scale-[1.05] hover:-translate-y-1 overflow-hidden relative isolate"
                       style={{
                         background: isDragOver
-                          ? `color-mix(in srgb, var(--layout-accent-color, #c8ff00) 20%, rgba(0,0,0,0.35))`
-                          : `linear-gradient(145deg, color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 80%, transparent) 0%, color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 60%, transparent) 100%)`,
-                        backdropFilter: "blur(40px) saturate(1.6)",
-                        WebkitBackdropFilter: "blur(40px) saturate(1.6)",
-                        border: isDragOver
-                          ? `2px solid var(--layout-accent-color, #c8ff00)`
-                          : `1px solid color-mix(in srgb, var(--layout-border-color, #333) 18%, transparent)`,
-                        boxShadow: `0 2px 12px rgba(0,0,0,0.08)`,
+                          ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-accent-color, #c8ff00) 22%, var(--layout-button-bg, #8b0000)) 0%, color-mix(in srgb, var(--layout-accent-color, #c8ff00) 12%, var(--layout-button-bg, #8b0000)) 100%)`
+                          : `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #8b0000) 88%, black 12%) 0%, color-mix(in srgb, var(--layout-button-bg, #8b0000) 76%, black 24%) 100%)`,
+                        boxShadow: isDragOver
+                          ? `0 14px 36px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)`
+                          : `0 2px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)`,
+                        backgroundClip: "padding-box",
                       }}
                       onMouseEnter={e => {
-                        e.currentTarget.style.boxShadow = `0 12px 40px rgba(0,0,0,0.18), 0 0 0 1px color-mix(in srgb, var(--layout-accent-color, #c8ff00) 25%, transparent)`;
-                        e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-accent-color, #c8ff00) 35%, transparent)`;
+                        e.currentTarget.style.boxShadow = `0 12px 40px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)`;
                       }}
                       onMouseLeave={e => {
-                        e.currentTarget.style.boxShadow = `0 2px 12px rgba(0,0,0,0.08)`;
-                        e.currentTarget.style.borderColor = isDragOver
-                          ? `var(--layout-accent-color, #c8ff00)`
-                          : `color-mix(in srgb, var(--layout-border-color, #333) 18%, transparent)`;
+                        e.currentTarget.style.boxShadow = isDragOver
+                          ? `0 14px 36px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)`
+                          : `0 2px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)`;
                       }}
                     >
                       {/* Subtle gradient overlay on top */}
