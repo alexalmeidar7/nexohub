@@ -366,9 +366,10 @@
 /* ====== Form styling for masterview content area ====== */
 .mv-content-area {
   background-color: var(--layout-page-bg, #ffffff);
-  border-radius: 12px;
+  border-radius: 20px;
   color: var(--layout-page-text, #0d0446);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  border: 1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent);
 }
 
 .mv-content-area h2,
@@ -398,11 +399,12 @@
 .mv-content-area textarea,
 .mv-content-area select {
   background-color: var(--layout-page-bg, #ffffff) !important;
-  border: 1px solid var(--layout-page-text, #0d0446) !important;
+  border: 1.5px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 18%, transparent) !important;
   color: var(--layout-page-text, #0d0446) !important;
-  border-radius: 20px !important;
-  transition: border-color 0.3s ease;
-  padding: 8px 16px;
+  border-radius: 14px !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: 10px 16px;
+  font-size: 13px;
 }
 
 .mv-content-area input:focus,
@@ -416,28 +418,31 @@
 .mv-content-area .mv-form-header {
   background-color: var(--layout-header-bg, #0d0446);
   color: var(--layout-header-text, #ffffff);
-  padding: 15px 20px;
-  border-radius: 12px 12px 0 0;
-  font-weight: bold;
-  font-size: 1.2em;
-  margin: -2rem -2rem 1.5rem -2rem;
+  padding: 16px 24px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 1.1em;
+  margin-bottom: 1.5rem;
 }
 
 .mv-content-area button[type="submit"],
 .mv-content-area .mv-btn-primary {
   background-color: var(--layout-button-bg, #0d0446);
   color: var(--layout-button-text, #ffffff);
-  border: 2px solid var(--layout-button-bg, #0d0446);
-  border-radius: 6px;
-  font-weight: bold;
+  border: none;
+  border-radius: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  padding: 10px 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--layout-button-bg, #0d0446) 25%, transparent);
 }
 
 .mv-content-area button[type="submit"]:hover,
 .mv-content-area .mv-btn-primary:hover {
-  background-color: var(--layout-page-bg, #ffffff);
-  color: var(--layout-button-bg, #0d0446);
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--layout-button-bg, #0d0446) 35%, transparent);
 }
 
 .mv-content-area p,
