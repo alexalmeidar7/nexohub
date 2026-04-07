@@ -8,14 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { Palette, Image as ImageIcon, Layers, ExternalLink } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { toast } from "sonner";
-import { Palette, Image as ImageIcon, Layers } from "lucide-react";
 
 type BgType = "cor" | "imagem" | "degrade";
 type CardStyle = "rounded" | "sharp" | "pill";
