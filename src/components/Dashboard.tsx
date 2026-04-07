@@ -408,16 +408,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       <DashboardRuntimeEffects />
 
       {/* ===== LEFT SIDEBAR (desktop) ===== */}
-      <aside
-        className="hidden lg:flex flex-col items-center py-4 gap-2 flex-shrink-0 z-[60]"
-        style={{
-          width: "64px",
-          backgroundColor: layoutColors.navBg,
-        }}
-      >
-        <div className="mb-4 mt-2">
-          <img src={logoMenu} alt="NexoHUB" className="w-16 h-auto -rotate-90 opacity-90" />
-        </div>
+      <div className="hidden lg:flex flex-shrink-0 z-[60] items-stretch py-3 pl-3">
+        <aside
+          className="flex flex-col items-center py-4 gap-2 rounded-2xl"
+          style={{
+            width: "58px",
+            backgroundColor: layoutColors.navBg,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+          }}
+        >
+          <div className="mb-3 mt-1">
+            <img src={logoMenu} alt="NexoHUB" className="w-14 h-auto -rotate-90 opacity-90" />
+          </div>
 
         <div className="flex-1 flex flex-col items-center gap-1 overflow-y-auto scrollbar-hide px-1">
           {sidebarMenu.filter(item => {
