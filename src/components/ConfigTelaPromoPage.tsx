@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { Palette, Image as ImageIcon, Layers } from "lucide-react";
+import { Palette, Image as ImageIcon, Layers, ExternalLink } from "lucide-react";
 
 type BgType = "cor" | "imagem" | "degrade";
 type CardStyle = "rounded" | "sharp" | "pill";
@@ -218,9 +218,22 @@ export default function ConfigTelaPromoPage() {
           </div>
         </div>
 
-        <Button onClick={handleSave} disabled={saving} className="w-full" style={{ background: "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent))", color: "#fff" }}>
-          {saving ? "Salvando..." : "Salvar configurações"}
-        </Button>
+        <div className="flex gap-3">
+          <Button onClick={handleSave} disabled={saving} className="flex-1" style={{ background: "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent))", color: "#fff" }}>
+            {saving ? "Salvando..." : "Salvar configurações"}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            style={{ borderColor: "rgba(255,255,255,0.15)", color: "var(--layout-text)" }}
+            onClick={() => {
+              const slug = user?.email?.split("@")[0] || "";
+              window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+            }}
+          >
+            <ExternalLink size={14} /> Abrir Tela Promo
+          </Button>
+        </div>
       </div>
 
       {/* Preview */}
