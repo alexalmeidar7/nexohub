@@ -366,15 +366,16 @@
 /* ====== Form styling for masterview content area ====== */
 .mv-content-area {
   background-color: var(--layout-page-bg, #ffffff);
-  border-radius: 20px;
+  border-radius: 24px;
   color: var(--layout-page-text, #0d0446);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  border: 1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  border: 1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, transparent);
 }
 
 .mv-content-area h2,
 .mv-content-area h3 {
   color: var(--layout-page-text, #0d0446);
+  font-weight: 600;
 }
 .mv-content-area h2.text-white,
 .mv-content-area h3.text-white,
@@ -386,6 +387,8 @@
 .mv-content-area label {
   color: var(--layout-page-text, #0d0446);
   font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.01em;
 }
 
 .mv-content-area input[type="text"],
@@ -399,7 +402,7 @@
 .mv-content-area textarea,
 .mv-content-area select {
   background-color: var(--layout-page-bg, #ffffff) !important;
-  border: 1.5px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 18%, transparent) !important;
+  border: 1.5px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent) !important;
   color: var(--layout-page-text, #0d0446) !important;
   border-radius: 14px !important;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -410,19 +413,20 @@
 .mv-content-area input:focus,
 .mv-content-area textarea:focus,
 .mv-content-area select:focus {
-  border-color: var(--layout-link-color, #2dbef3);
+  border-color: var(--layout-accent-color, #2dbef3) !important;
   outline: none;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--layout-link-color, #2dbef3) 20%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #2dbef3) 12%, transparent);
 }
 
 .mv-content-area .mv-form-header {
-  background-color: var(--layout-header-bg, #0d0446);
-  color: var(--layout-header-text, #ffffff);
-  padding: 16px 24px;
+  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #ffffff));
+  color: var(--layout-accent-color, #2563eb);
+  padding: 14px 20px;
   border-radius: 16px;
   font-weight: 600;
-  font-size: 1.1em;
-  margin-bottom: 1.5rem;
+  font-size: 13px;
+  margin-bottom: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent);
 }
 
 .mv-content-area button[type="submit"],
@@ -432,17 +436,18 @@
   border: none;
   border-radius: 14px;
   font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
-  padding: 10px 20px;
+  padding: 10px 24px;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--layout-button-bg, #0d0446) 25%, transparent);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--layout-button-bg, #0d0446) 15%, transparent);
 }
 
 .mv-content-area button[type="submit"]:hover,
 .mv-content-area .mv-btn-primary:hover {
-  opacity: 0.9;
+  opacity: 0.92;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--layout-button-bg, #0d0446) 35%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--layout-button-bg, #0d0446) 25%, transparent);
 }
 
 .mv-content-area p,
@@ -470,7 +475,7 @@
 
 /* Links inside content area */
 .mv-content-area a:not(.text-white):not([style*="color"]) {
-  color: var(--layout-link-color, #2dbef3);
+  color: var(--layout-accent-color, #2dbef3);
 }
 
 /* Accent badges/tags */
@@ -481,42 +486,46 @@
 /* Select dropdown inside mv-content-area */
 .mv-content-area [data-radix-popper-content-wrapper] [role="listbox"],
 .mv-content-area + [data-radix-popper-content-wrapper] [role="listbox"] {
-  background-color: var(--layout-header-bg, #0d0446) !important;
-  color: var(--layout-header-text, #ffffff) !important;
-  border: none !important;
-  border-radius: 12px !important;
+  background-color: var(--layout-page-bg, #ffffff) !important;
+  color: var(--layout-page-text, #0d0446) !important;
+  border: 1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08) !important;
 }
 
 [data-radix-popper-content-wrapper] [role="option"] {
-  color: #ffffff !important;
+  color: var(--layout-page-text, #0d0446) !important;
 }
 
 [data-radix-popper-content-wrapper] [role="option"][data-highlighted] {
-  background-color: var(--layout-link-color, #2dbef3) !important;
-  color: #ffffff !important;
+  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent) !important;
+  color: var(--layout-accent-color, #2563eb) !important;
 }
 
 /* Tables follow layout colors */
 .mv-content-area table {
   color: var(--layout-page-text, #0d0446);
+  border-collapse: separate;
+  border-spacing: 0;
 }
 .mv-content-area table thead tr {
-  background-color: color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, var(--layout-page-bg, #ffffff)) !important;
+  background-color: color-mix(in srgb, var(--layout-page-text, #0d0446) 4%, var(--layout-page-bg, #ffffff)) !important;
 }
 .mv-content-area table thead th {
-  color: var(--layout-page-text, #0d0446) !important;
+  color: color-mix(in srgb, var(--layout-page-text, #0d0446) 60%, transparent) !important;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 .mv-content-area table tbody td {
   color: var(--layout-page-text, #0d0446);
 }
 table:not([data-no-row-hover]) tbody tr {
-  transition: outline 0.15s ease;
-  outline: 2px solid transparent;
-  outline-offset: -2px;
+  transition: background-color 0.15s ease;
 }
 table:not([data-no-row-hover]) tbody tr:hover {
-  outline: 2px solid var(--layout-link-color, #2dbef3);
-  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 5%, transparent);
 }
 
 /* Override hardcoded form section backgrounds */
@@ -525,16 +534,20 @@ table:not([data-no-row-hover]) tbody tr:hover {
 .mv-content-area [style*="background-color: #d9e9fa"],
 .mv-content-area [style*="background: #d9e9fa"],
 .mv-content-area [style*="background-color: rgb(217, 233, 250)"] {
-  background-color: color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff)) !important;
-  background: color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff)) !important;
-  border-color: color-mix(in srgb, var(--layout-header-bg, #0d0446) 15%, var(--layout-page-bg, #ffffff)) !important;
+  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 5%, var(--layout-page-bg, #ffffff)) !important;
+  background: color-mix(in srgb, var(--layout-accent-color, #2563eb) 5%, var(--layout-page-bg, #ffffff)) !important;
+  border-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent) !important;
+  border-radius: 16px !important;
 }
 
 /* Override hardcoded header backgrounds in form sections — background only, no text override */
 .mv-content-area [style*="background: linear-gradient(135deg, #0d0446"],
 .mv-content-area [style*="background-color: #0d0446"],
 .mv-content-area [style*="background: linear-gradient(135deg, #268ffa"] {
-  background: linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #0d0446) 80%, var(--layout-page-bg, #ffffff))) !important;
+  background: color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #ffffff)) !important;
+  color: var(--layout-accent-color, #2563eb) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent);
+  border-radius: 16px !important;
 }
 
 /* Override hardcoded text colors */
@@ -542,16 +555,18 @@ table:not([data-no-row-hover]) tbody tr:hover {
   color: var(--layout-page-text, #0d0446) !important;
 }
 
-/* Gradient buttons (blue accent) follow header colors */
+/* Gradient buttons (blue accent) follow accent colors */
 .mv-content-area button[style*="background: linear-gradient(135deg, #268ffa"] {
-  background: linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #0d0446) 80%, var(--layout-accent-color, #268ffa))) !important;
-  color: var(--layout-header-text, #ffffff) !important;
+  background: var(--layout-accent-color, #2563eb) !important;
+  color: var(--layout-button-text, #ffffff) !important;
+  border-radius: 14px !important;
 }
 
 /* Buttons inside mv-content-area with hardcoded backgrounds */
 .mv-content-area button[style*="background-color: #0d0446"] {
   background-color: var(--layout-button-bg, #0d0446) !important;
   color: var(--layout-button-text, #ffffff) !important;
+  border-radius: 14px !important;
 }
 
 /* Icon colors */
@@ -563,9 +578,10 @@ table:not([data-no-row-hover]) tbody tr:hover {
 /* Transform dark solid header bars into clean, light-styled headers */
 .mv-content-area [style*="background: var(--layout-header-bg"],
 .mv-content-area [style*="background-color: var(--layout-header-bg"] {
-  background: color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, var(--layout-page-bg, #ffffff)) !important;
+  background: color-mix(in srgb, var(--layout-accent-color, #2563eb) 6%, var(--layout-page-bg, #ffffff)) !important;
   color: var(--layout-accent-color, #2563eb) !important;
-  border-bottom: 2px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent);
+  border-radius: 16px !important;
 }
 .mv-content-area [style*="background: var(--layout-header-bg"] *,
 .mv-content-area [style*="background-color: var(--layout-header-bg"] * {
@@ -573,29 +589,56 @@ table:not([data-no-row-hover]) tbody tr:hover {
 }
 .mv-content-area [style*="background: var(--layout-header-bg"] span[style*="background"],
 .mv-content-area [style*="background-color: var(--layout-header-bg"] span[style*="background"] {
-  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important;
+  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent) !important;
   color: var(--layout-accent-color, #2563eb) !important;
 }
 /* Buttons inside these light headers keep accent style */
 .mv-content-area [style*="background: var(--layout-header-bg"] button[style*="background"],
 .mv-content-area [style*="background-color: var(--layout-header-bg"] button[style*="background"] {
-  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important;
+  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent) !important;
   color: var(--layout-accent-color, #2563eb) !important;
-  border: 1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important;
+  border-radius: 12px !important;
 }
 /* SelectTrigger inside headers - make them light */
 .mv-content-area [style*="background: var(--layout-header-bg"] [data-radix-collection-item],
 .mv-content-area [style*="background-color: var(--layout-header-bg"] [data-radix-collection-item],
 .mv-content-area [style*="background: var(--layout-header-bg"] button[role="combobox"],
 .mv-content-area [style*="background-color: var(--layout-header-bg"] button[role="combobox"] {
-  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent) !important;
+  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent) !important;
   color: var(--layout-accent-color, #2563eb) !important;
-  border: 1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent) !important;
+  border-radius: 12px !important;
 }
 /* SVG icons inside these headers */
 .mv-content-area [style*="background: var(--layout-header-bg"] svg,
 .mv-content-area [style*="background-color: var(--layout-header-bg"] svg {
   color: var(--layout-accent-color, #2563eb) !important;
+}
+
+/* ====== Bento card sections inside pages ====== */
+.mv-content-area .rounded-xl,
+.mv-content-area .rounded-2xl {
+  border-radius: 20px;
+}
+.mv-content-area .rounded-lg {
+  border-radius: 16px;
+}
+
+/* Softer internal card shadows */
+.mv-content-area [style*="box-shadow: 0 8px 32px"],
+.mv-content-area [style*="box-shadow: 0 2px 10px"] {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02) !important;
+}
+
+/* ====== SkyGlass accent button (btn-skyglass-accent) ====== */
+.mv-content-area .btn-skyglass-accent {
+  background-color: var(--layout-accent-color, #2563eb) !important;
+  color: #ffffff !important;
+  border-radius: 14px !important;
+  border: none !important;
+  font-weight: 600;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent);
 }
 
 .dashboard-widget-card {
