@@ -255,7 +255,20 @@ export default function AgendaPage() {
   };
 
   const handleDelete = async (id: string) => {
+    await supabase.from("agenda_participantes").delete().eq("evento_id", id);
     await supabase.from("agenda_eventos").delete().eq("id", id);
+    fetchEventos();
+  };
+
+  const handleClearAllPast = async () => {
+    if (!user) return;
+    const pastIds = pastEventos.map(e => e.id);
+    if (!pastIds.length) return;
+    for (const id of pastIds) {
+      await supabase.from("agenda_participantes").delete().eq("evento_id", id);
+    }
+    await supabase.from("agenda_eventos").delete().in("id", pastIds);
+    toast({ title: "Histórico limpo", description: `${pastIds.length} evento(s) removido(s).` });
     fetchEventos();
   };
 
@@ -676,7 +689,7 @@ export default function AgendaPage() {
                 <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Prioridade</Label>
                 <div className="flex gap-2">
                   {[
-                    { value: "baixa", label: "Baixa", color: "#22c55e" },
+                    { value: "baixa", label: "Baixa", color: "var(--layout-accent-color, #2563eb)" },
                     { value: "normal", label: "Normal", color: "var(--layout-icon-color, #888888)" },
                     { value: "alta", label: "Alta", color: "#f59e0b" },
                     { value: "urgente", label: "Urgente", color: "#ef4444" },
@@ -852,11 +865,21 @@ export default function AgendaPage() {
                 <History size={12} /> Histórico de Eventos Passados
               </span>
               <div className="flex items-center gap-2">
+                {pastEventos.length > 0 && (
+                  <button
+                    onClick={handleClearAllPast}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all hover:scale-105"
+                    style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
+                    title="Limpar todo o histórico"
+                  >
+                    <Trash2 size={10} /> Limpar tudo
+                  </button>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
                       className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                      style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}
+                      style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
                       title="Filtrar por data"
                     >
                       <CalendarIcon size={14} style={{ color: "var(--layout-header-text, #ffffff)" }} />
@@ -885,7 +908,19 @@ export default function AgendaPage() {
                   Nenhum evento passado encontrado.
                 </p>
               ) : (
-                pastEventos.map((evt) => renderEventCard(evt, true))
+                pastEventos.map((evt) => (
+                  <div key={evt.id} className="relative group">
+                    {renderEventCard(evt, true)}
+                    <button
+                      onClick={() => handleDelete(evt.id)}
+                      className="absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ backgroundColor: "rgba(239,68,68,0.1)" }}
+                      title="Remover evento"
+                    >
+                      <Trash2 size={13} className="text-destructive" />
+                    </button>
+                  </div>
+                ))
               )}
             </div>
           </div>

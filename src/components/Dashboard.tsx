@@ -685,7 +685,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 style={{
                   backgroundColor: `${layoutColors.accentColor}15`,
                   color: layoutColors.accentColor,
-                  border: `1px solid ${layoutColors.accentColor}30`,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.accentColor}25`; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.accentColor}15`; }}
