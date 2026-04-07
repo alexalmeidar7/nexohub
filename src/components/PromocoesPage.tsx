@@ -74,6 +74,7 @@ export default function PromocoesPage() {
   const [dataFim, setDataFim] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
+  const textoEditorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) loadData();
