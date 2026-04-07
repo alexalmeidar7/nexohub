@@ -401,137 +401,25 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return { background: "linear-gradient(135deg, #333333 0%, #000000 100%)" } as React.CSSProperties;
   })();
 
+  const isDashboard = currentPage === "dashboard";
+
   return (
-    <div className="h-screen flex flex-col animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#000000" }}>
+    <div className="h-screen flex animate-fade-in overflow-hidden" style={{ backgroundColor: layoutColors.pageBg }}>
       <DashboardRuntimeEffects />
-      {/* Base background layer (layout settings or default gradient) */}
-      <div
-        className="absolute inset-0 z-0 transition-opacity duration-1000"
+
+      {/* ===== LEFT SIDEBAR (desktop) ===== */}
+      <aside
+        className="hidden lg:flex flex-col items-center py-4 gap-2 flex-shrink-0 z-[60]"
         style={{
-          ...layoutBg,
-          opacity: onAirThumb ? 0 : 1,
+          width: "64px",
+          backgroundColor: layoutColors.navBg,
         }}
-      />
-      {onAirThumb && (
-        <div
-          key={onAirThumb}
-          className="absolute inset-0 z-0 animate-fade-in"
-          style={{
-            backgroundImage: `url(${onAirThumb})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            animation: "fade-in 1s ease-out forwards",
-          }}
-        />
-      )}
-      {/* Dark overlay for readability */}
-      <div className="absolute inset-0 z-0" style={{ background: "rgba(0,0,0,0.3)" }} />
-      {/* Mobile top bar */}
-      <div className="lg:hidden flex items-center justify-between px-4 pt-3 pb-2 relative z-[1]">
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
-          {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
-        </button>
-        <h1 className="font-bold text-lg truncate flex-1 ml-3" style={{ color: layoutColors.navText }}>{empresa.nome || "Dashboard"}</h1>
-        <button
-          onClick={onLogout}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all mr-2"
-          style={{ backgroundColor: `${layoutColors.navText}26`, color: layoutColors.navText }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}26`; }}
-        >
-          <LogOut size={10} /> Sair
-        </button>
-        <ServerClock />
-      </div>
-
-      {/* Mobile menu overlay */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ background: `${layoutColors.navBg}a6`, backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", borderRight: `1px solid ${layoutColors.borderColor}15`, boxShadow: "inset -1px 0 0 rgba(255,255,255,0.04)" }}>
-            <div className="flex items-center justify-between px-4 pt-3 pb-2">
-              <img src={seloNexohub} alt="NexoHUB" className="h-4" />
-              <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: layoutColors.buttonBg }}>
-                <X size={16} className="text-white" />
-              </button>
-            </div>
-            <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2">
-              {sidebarMenu.filter(item => {
-                if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
-                const modKey = menuToModuleKey[item.label];
-                if (!modKey) return true;
-                if (planModules) return planModules.has(modKey);
-                if (enabledModules) return enabledModules.has(modKey);
-                return true;
-              }).map(item => {
-                const Icon = item.icon;
-                const active = isItemActive(item);
-                const expanded = expandedMenus.has(item.label);
-                return (
-                  <div key={item.label}>
-                    <button onClick={() => handleMenuClick(item)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${active ? "text-primary bg-sidebar-accent font-semibold shadow-sm" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/50"}`}
-                      aria-label={item.label}
-                      role="menuitem"
-                    >
-                      <Icon size={16} style={{ color: active ? layoutColors.iconColor : layoutColors.navText }} />
-                      <span className="flex-1 text-left">{item.label}</span>
-                      {item.children && (expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />)}
-                    </button>
-                    {item.children && expanded && (
-                      <div className="ml-6 space-y-0.5 mt-0.5">
-                        {item.children.map(child => {
-                          const ChildIcon = child.icon;
-                          const childActive = currentPage === child.page;
-                          return (
-                            <button key={child.page} onClick={() => { setCurrentPage(child.page); setMobileMenuOpen(false); }}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${childActive ? "text-primary bg-sidebar-accent/70 font-semibold" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/30"}`}
-                              aria-label={child.label}
-                              role="menuitem"
-                            >
-                              <ChildIcon size={12} style={{ color: childActive ? layoutColors.iconColor : layoutColors.navText }} />
-                              <span>{child.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </nav>
-            <div className="px-4 py-4" style={{ borderTop: `1px solid ${layoutColors.borderColor}1a` }}>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: layoutColors.buttonBg, color: layoutColors.buttonText }}>
-                  {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold truncate" style={{ color: layoutColors.navText }}>{empresa.nome || "Empresa"}</p>
-                  <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 mt-0.5" style={{ color: layoutColors.buttonBg }}>sair</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
+      >
+        <div className="mb-4 mt-2">
+          <img src={logoMenu} alt="NexoHUB" className="w-16 h-auto -rotate-90 opacity-90" />
         </div>
-      )}
 
-      {/* Navigation bar - floating rounded box with company name */}
-      <div className="hidden lg:flex items-center gap-2 xl:gap-4 px-4 xl:px-8 pt-5 pb-1 relative z-[60]">
-        {/* Menu box */}
-        <div
-          className="flex items-center px-2 lg:px-2 xl:px-5 py-2 xl:py-2.5 flex-shrink min-w-0"
-          style={{
-            background: `${layoutColors.navBg}b3`,
-            backdropFilter: "blur(32px) saturate(1.8)",
-            WebkitBackdropFilter: "blur(32px) saturate(1.8)",
-            borderRadius: "16px",
-            border: `1px solid ${layoutColors.borderColor}22`,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15)",
-          }}
-        >
-          <img src={logoMenu} alt="NexoHUB" className="h-4 mr-2 xl:mr-5 flex-shrink-0 opacity-90" />
-
+        <div className="flex-1 flex flex-col items-center gap-1 overflow-y-auto scrollbar-hide px-1">
           {sidebarMenu.filter(item => {
             if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
             const modKey = menuToModuleKey[item.label];
@@ -539,22 +427,21 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             if (planModules) return planModules.has(modKey);
             if (enabledModules) return enabledModules.has(modKey);
             return true;
-          }).map((item, idx) => {
+          }).map((item) => {
             const active = isItemActive(item);
-            const isOpen = hoveredMenu === item.label;
             const Icon = item.icon;
+            const isOpen = hoveredMenu === item.label;
 
             return (
               <div
                 key={item.label}
-                className="relative flex items-center flex-shrink-0"
+                className="relative"
                 onMouseEnter={() => {
                   clearMenuLeaveTimer();
                   if (item.children) setHoveredMenu(item.label);
                 }}
                 onMouseLeave={scheduleCloseMenu}
               >
-                {idx > 0 && <span className="text-white/10 mx-0.5 xl:mx-2 text-[10px] select-none hidden xl:inline">•</span>}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
@@ -565,51 +452,56 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           setCurrentPage(item.page);
                         }
                       }}
-                      className="flex items-center gap-1 xl:gap-1.5 text-[11px] font-semibold py-1.5 lg:py-1 px-1.5 lg:px-2 xl:px-1.5 rounded-lg transition-all whitespace-nowrap"
+                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
                       style={{
-                        color: active ? layoutColors.navText : `${layoutColors.navText}99`,
-                        backgroundColor: active ? `${layoutColors.buttonBg}59` : "transparent",
+                        backgroundColor: active ? layoutColors.accentColor : "transparent",
                       }}
-                      onMouseEnter={e => { if (!active) { e.currentTarget.style.color = layoutColors.navText; e.currentTarget.style.backgroundColor = `${layoutColors.navText}14`; } }}
-                      onMouseLeave={e => { if (!active) { e.currentTarget.style.color = `${layoutColors.navText}99`; e.currentTarget.style.backgroundColor = "transparent"; } }}
+                      onMouseEnter={(e) => { if (!active) e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
+                      onMouseLeave={(e) => { if (!active) e.currentTarget.style.backgroundColor = "transparent"; }}
                     >
-                      <Icon size={14} className="flex-shrink-0" />
-                      <span className="hidden xl:inline">{item.label}</span>
-                      {item.children && <ChevronDown size={9} className="opacity-40 hidden xl:inline" />}
+                      <Icon size={18} style={{ color: active ? layoutColors.navText : `${layoutColors.navText}99` }} />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="xl:hidden"><p className="text-xs capitalize">{item.label}</p></TooltipContent>
+                  <TooltipContent side="right"><p className="text-xs capitalize">{item.label}</p></TooltipContent>
                 </Tooltip>
 
-                {/* Dropdown */}
+                {/* Sidebar flyout submenu */}
                 {item.children && isOpen && (
-                  <div className="absolute top-full left-0 pt-2 z-[70]" onMouseEnter={clearMenuLeaveTimer} onMouseLeave={scheduleCloseMenu}>
+                  <div
+                    className="absolute left-full top-0 ml-2 z-[70]"
+                    onMouseEnter={clearMenuLeaveTimer}
+                    onMouseLeave={scheduleCloseMenu}
+                  >
                     <div
-                      className="rounded-2xl py-1.5 min-w-[180px]"
+                      className="rounded-2xl py-2 min-w-[190px]"
                       style={{
-                        background: `${layoutColors.navBg}b3`,
-                        backdropFilter: "blur(32px) saturate(1.8)",
-                        WebkitBackdropFilter: "blur(32px) saturate(1.8)",
-                        border: `1px solid ${layoutColors.borderColor}1a`,
-                        boxShadow: "0 16px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
+                        backgroundColor: layoutColors.navBg,
+                        border: `1px solid ${layoutColors.borderColor}33`,
+                        boxShadow: "0 16px 48px rgba(0,0,0,0.3)",
                       }}
                     >
-                      {item.children.map((child, ci) => (
-                        <div key={child.label}>
-                          {child.separator && ci > 0 && (
-                            <div className="mx-3 my-1.5 border-t" style={{ borderColor: `${layoutColors.navText}15` }} />
-                          )}
-                          <button
-                            onClick={() => handleChildClick(child, item.label)}
-                            className="w-full text-left px-4 py-2 text-[11px] transition-all rounded-lg mx-0"
-                            style={{ color: child.page && currentPage === child.page ? layoutColors.buttonBg : `${layoutColors.navText}cc` }}
-                            onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = layoutColors.buttonBg; e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; } }}
-                            onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = `${layoutColors.navText}cc`; e.currentTarget.style.backgroundColor = "transparent"; } }}
-                          >
-                            {child.label}
-                          </button>
-                        </div>
-                      ))}
+                      <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: `${layoutColors.navText}66` }}>{item.label}</p>
+                      {item.children.map((child, ci) => {
+                        const ChildIcon = child.icon;
+                        const childActive = currentPage === child.page;
+                        return (
+                          <div key={child.label}>
+                            {child.separator && ci > 0 && (
+                              <div className="mx-3 my-1" style={{ borderTop: `1px solid ${layoutColors.navText}15` }} />
+                            )}
+                            <button
+                              onClick={() => handleChildClick(child, item.label)}
+                              className="w-full text-left px-4 py-2 text-xs flex items-center gap-2 transition-all"
+                              style={{ color: childActive ? layoutColors.accentColor : `${layoutColors.navText}cc` }}
+                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; e.currentTarget.style.color = layoutColors.accentColor; }}
+                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = childActive ? layoutColors.accentColor : `${layoutColors.navText}cc`; }}
+                            >
+                              <ChildIcon size={13} />
+                              <span>{child.label}</span>
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -618,72 +510,186 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           })}
         </div>
 
-        {/* Right side icons - outside menu box */}
-        <div className="flex items-center gap-2 ml-auto">
-          <Suspense fallback={<div className="w-8 h-8 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.1)" }} />}>
-            <MessageNotification />
-          </Suspense>
+        <div className="flex flex-col items-center gap-2 mt-auto pb-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={() => setCurrentPage("configuracoes")}
-                className="w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:scale-105"
-                style={{ backgroundColor: `${layoutColors.navText}14`, backdropFilter: "blur(16px)", border: `1px solid ${layoutColors.navText}1a`, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}2e`; e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.2)"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}14`; e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.06)"; }}
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-all"
+                style={{ color: `${layoutColors.navText}80` }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
               >
-                <Settings size={14} style={{ color: `${layoutColors.navText}b3` }} />
+                <Settings size={18} />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom"><p className="text-xs">Configurações</p></TooltipContent>
+            <TooltipContent side="right"><p className="text-xs">Configurações</p></TooltipContent>
           </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onLogout}
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-all"
+                style={{ color: layoutColors.accentColor }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+              >
+                <LogOut size={18} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right"><p className="text-xs">Sair</p></TooltipContent>
+          </Tooltip>
+        </div>
+      </aside>
+
+      {/* ===== RIGHT SIDE (content) ===== */}
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        {/* Background layers (only visible on dashboard home) */}
+        {isDashboard && (
+          <>
+            <div
+              className="absolute inset-0 z-0 transition-opacity duration-1000"
+              style={{ ...layoutBg, opacity: onAirThumb ? 0 : 1 }}
+            />
+            {onAirThumb && (
+              <div
+                key={onAirThumb}
+                className="absolute inset-0 z-0 animate-fade-in"
+                style={{
+                  backgroundImage: `url(${onAirThumb})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+            )}
+            <div className="absolute inset-0 z-0" style={{ background: "rgba(0,0,0,0.3)" }} />
+          </>
+        )}
+
+        {/* Mobile top bar */}
+        <div className="lg:hidden flex items-center justify-between px-4 pt-3 pb-2 relative z-[1]">
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
+            {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
+          </button>
+          <h1 className="font-bold text-lg truncate flex-1 ml-3" style={{ color: isDashboard ? layoutColors.navText : layoutColors.pageText }}>{empresa.nome || "Dashboard"}</h1>
           <button
             onClick={onLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all hover:scale-105"
-            style={{ background: `linear-gradient(135deg, ${layoutColors.buttonBg}cc, ${layoutColors.buttonBg})`, color: layoutColors.buttonText, boxShadow: `0 4px 16px ${layoutColors.buttonBg}4d, inset 0 1px 0 rgba(255,255,255,0.15)`, border: `1px solid ${layoutColors.buttonBg}66` }}
-            onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
-            onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all mr-2"
+            style={{ backgroundColor: `${layoutColors.accentColor}26`, color: layoutColors.accentColor }}
           >
             <LogOut size={10} /> Sair
           </button>
-          <ServerClock />
+          <ServerClock compact={!isDashboard} />
         </div>
-      </div>
 
-      {/* Company name below menu */}
-      <div className="hidden lg:block px-4 xl:px-8 pt-2 relative z-[50]">
-        <h1 className="font-bold text-base xl:text-lg leading-tight truncate" style={{ color: layoutColors.navText }}>{empresa.nome || "Dashboard"}</h1>
-        <p className="text-[10px] truncate" style={{ color: `${layoutColors.navText}66` }}>{user?.email || ""}</p>
-      </div>
+        {/* Mobile menu overlay */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex">
+            <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ backgroundColor: layoutColors.navBg }}>
+              <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                <img src={seloNexohub} alt="NexoHUB" className="h-4" />
+                <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: layoutColors.buttonBg }}>
+                  <X size={16} className="text-white" />
+                </button>
+              </div>
+              <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2">
+                {sidebarMenu.filter(item => {
+                  if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
+                  const modKey = menuToModuleKey[item.label];
+                  if (!modKey) return true;
+                  if (planModules) return planModules.has(modKey);
+                  if (enabledModules) return enabledModules.has(modKey);
+                  return true;
+                }).map(item => {
+                  const Icon = item.icon;
+                  const active = isItemActive(item);
+                  const expanded = expandedMenus.has(item.label);
+                  return (
+                    <div key={item.label}>
+                      <button onClick={() => handleMenuClick(item)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all"
+                        style={{ color: active ? layoutColors.accentColor : `${layoutColors.navText}cc`, backgroundColor: active ? `${layoutColors.accentColor}1a` : "transparent" }}
+                      >
+                        <Icon size={16} />
+                        <span className="flex-1 text-left capitalize">{item.label}</span>
+                        {item.children && (expanded ? <ChevronUp size={12} style={{ color: `${layoutColors.navText}40` }} /> : <ChevronDown size={12} style={{ color: `${layoutColors.navText}40` }} />)}
+                      </button>
+                      {item.children && expanded && (
+                        <div className="ml-6 space-y-0.5 mt-0.5">
+                          {item.children.map(child => {
+                            const ChildIcon = child.icon;
+                            const childActive = currentPage === child.page;
+                            return (
+                              <button key={child.label} onClick={() => handleChildClick(child, item.label)}
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] transition-all"
+                                style={{ color: childActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
+                              >
+                                <ChildIcon size={12} />
+                                <span>{child.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </nav>
+              <div className="px-4 py-4" style={{ borderTop: `1px solid ${layoutColors.borderColor}1a` }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: layoutColors.buttonBg, color: layoutColors.buttonText }}>
+                    {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold truncate" style={{ color: layoutColors.navText }}>{empresa.nome || "Empresa"}</p>
+                    <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 mt-0.5" style={{ color: layoutColors.accentColor }}>sair</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
+          </div>
+        )}
 
-      <div className="flex gap-4 lg:gap-[30px] pt-3 flex-1 min-h-0 px-3 sm:px-4 lg:px-4 xl:px-8 relative z-[1]">
+        {/* ===== TOP HEADER BAR (desktop) ===== */}
+        <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]">
+          <div>
+            <p className="text-xs font-medium tracking-widest uppercase mb-0.5" style={{ color: layoutColors.accentColor }}>
+              {isDashboard ? "Dashboard" : pageTitle[currentPage]}
+            </p>
+            <h1 className="text-2xl font-light" style={{ color: isDashboard ? layoutColors.navText : layoutColors.pageText }}>
+              {empresa.nome || "NexoHUB"}
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <Suspense fallback={<div className="w-8 h-8 rounded-full" style={{ backgroundColor: `${layoutColors.pageText}10` }} />}>
+              <MessageNotification />
+            </Suspense>
+            <ServerClock compact={!isDashboard} />
+          </div>
+        </div>
 
-        {/* === MAIN CONTENT === */}
-        <main className="flex-1 flex flex-col min-w-0">
-
-          {/* Content area */}
+        {/* ===== MAIN CONTENT AREA ===== */}
+        <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]">
           {currentPage !== "dashboard" && (
-            <div className="flex items-center gap-3 mb-2 ml-1 px-4 py-2 rounded-2xl backdrop-blur-2xl" style={{ background: `${layoutColors.headerBg}b3`, color: layoutColors.headerText, border: `1px solid ${layoutColors.borderColor}1a`, boxShadow: "0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
+            <div className="flex items-center gap-3 mb-4 ml-1">
               <button
                 onClick={() => setCurrentPage("dashboard")}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02]"
                 style={{
-                  background: "rgba(255,255,255,0.12)",
-                  backdropFilter: "blur(20px) saturate(1.6)",
-                  WebkitBackdropFilter: "blur(20px) saturate(1.6)",
-                  color: layoutColors.headerText,
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.1)",
+                  backgroundColor: `${layoutColors.accentColor}15`,
+                  color: layoutColors.accentColor,
+                  border: `1px solid ${layoutColors.accentColor}30`,
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.accentColor}25`; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.accentColor}15`; }}
               >
                 <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
               </button>
-              <span style={{ color: layoutColors.headerText }} className="font-semibold text-sm">{pageTitle[currentPage]}</span>
             </div>
           )}
-          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-xl lg:rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "0.75rem" }}>
+          <div className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
               {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} />}
               {currentPage === "previsao" && <PrevisaoTempo />}
@@ -710,15 +716,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               
             </Suspense>
           </div>
-        </main>
+        </div>
+
+        {/* Footer */}
+        <footer className="flex items-center justify-center gap-2 px-4 pb-3 pt-1 relative z-[1]">
+          <img src={logoFooter} alt="Nexo" className="h-4 opacity-60" />
+          <span className="text-[9px]" style={{ color: `${isDashboard ? layoutColors.navText : layoutColors.pageText}66` }}>© 2026 Todos os direitos reservados.</span>
+        </footer>
       </div>
-
-
-      {/* === FOOTER === */}
-      <footer className="flex flex-col items-center gap-1 px-4 pb-3 pt-3 relative z-[1]">
-        <img src={logoFooter} alt="Nexo" className="h-5 opacity-80" />
-        <span className="text-[10px]" style={{ color: `${layoutColors.navText}99` }}>Copyrighted 2026 - Todos os direitos reservados.</span>
-      </footer>
 
       <BotsStatusBox />
     </div>
