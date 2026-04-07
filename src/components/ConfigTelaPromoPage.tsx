@@ -237,22 +237,6 @@ export default function ConfigTelaPromoPage() {
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <Button onClick={handleSave} disabled={saving} className="flex-1" style={{ background: "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent))", color: "#fff" }}>
-            {saving ? "Salvando..." : "Salvar configurações"}
-          </Button>
-          <Button
-            variant="outline"
-            className="flex items-center gap-2"
-            style={{ borderColor: "rgba(255,255,255,0.15)", color: "var(--layout-text)" }}
-            onClick={() => {
-              const slug = user?.email?.split("@")[0] || "";
-              window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
-            }}
-          >
-            <ExternalLink size={14} /> Abrir Tela Promo
-          </Button>
-        </div>
       </div>
 
       {/* Preview */}
@@ -290,6 +274,7 @@ export default function ConfigTelaPromoPage() {
             ))}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
