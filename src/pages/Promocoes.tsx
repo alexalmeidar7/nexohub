@@ -816,13 +816,14 @@ export default function PromocoesKiosk() {
                       )}
                       <div
                         className="max-w-none text-white leading-[1.35] [&_*]:!bg-transparent [&_*]:leading-[1.35] [&_p]:!my-0 [&_p+p]:!mt-2 [&_p]:!text-white [&_span]:!text-white"
-                        style={{ fontSize: `${fontSize}px` }}
+                        style={{ fontSize: `${fontSize}px`, lineHeight: 1.35 }}
                         dangerouslySetInnerHTML={{
                           __html: t.texto
                             .replace(/\/\//g, "<br/>")
                             .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
                             .replace(/color:\s*#000(?:000)?/gi, "color: white")
                             .replace(/background-color:\s*(?:transparent|rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "background-color: transparent")
+                            .replace(/font-size\s*:\s*[^;\"]+;?/gi, "")
                             .replace(/line-height\s*:\s*[^;\"]+;?/gi, "")
                             .replace(/margin-(?:top|bottom)\s*:\s*[^;\"]+;?/gi, ""),
                         }}
