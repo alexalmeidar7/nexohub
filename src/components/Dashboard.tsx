@@ -431,9 +431,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       )}
 
       {/* ===== LEFT SIDEBAR (desktop) ===== */}
-      <div className="hidden lg:flex flex-shrink-0 z-[60] items-stretch py-3 pl-3">
+      <div className="hidden lg:flex flex-shrink-0 z-[60] items-stretch py-3 pl-3 overflow-visible">
         <aside
-          className="flex flex-col items-center py-4 gap-2 rounded-2xl"
+          className="flex flex-col items-center py-4 gap-2 rounded-2xl relative overflow-visible"
           style={{
             width: "58px",
             backgroundColor: layoutColors.navBg,
@@ -441,7 +441,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           }}
         >
 
-        <div className="flex-1 flex flex-col items-center gap-1 overflow-y-auto scrollbar-hide px-1">
+        <div className="flex-1 flex flex-col items-center gap-1 px-1 overflow-visible">
           {sidebarMenu.filter(item => {
             if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
             const modKey = menuToModuleKey[item.label];
