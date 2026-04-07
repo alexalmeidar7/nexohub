@@ -255,7 +255,20 @@ export default function AgendaPage() {
   };
 
   const handleDelete = async (id: string) => {
+    await supabase.from("agenda_participantes").delete().eq("evento_id", id);
     await supabase.from("agenda_eventos").delete().eq("id", id);
+    fetchEventos();
+  };
+
+  const handleClearAllPast = async () => {
+    if (!user) return;
+    const pastIds = pastEventos.map(e => e.id);
+    if (!pastIds.length) return;
+    for (const id of pastIds) {
+      await supabase.from("agenda_participantes").delete().eq("evento_id", id);
+    }
+    await supabase.from("agenda_eventos").delete().in("id", pastIds);
+    toast({ title: "Histórico limpo", description: `${pastIds.length} evento(s) removido(s).` });
     fetchEventos();
   };
 
