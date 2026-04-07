@@ -294,6 +294,7 @@ export default function PromocoesPage() {
                   <thead>
                     <tr style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
                       <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Banner</th>
+                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Título</th>
                       <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Texto</th>
                       <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Oferecimento</th>
                       <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Validade</th>
@@ -312,6 +313,9 @@ export default function PromocoesPage() {
                             ) : (
                               <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}>—</span>
                             )}
+                          </td>
+                          <td className="px-4 py-2 max-w-[150px]">
+                            <p className="truncate text-xs font-semibold">{item.botao_url || "—"}</p>
                           </td>
                           <td className="px-4 py-2 max-w-[200px]">
                             <p className="truncate text-xs">{item.texto}</p>
