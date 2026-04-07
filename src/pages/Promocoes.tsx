@@ -737,7 +737,7 @@ export default function PromocoesKiosk() {
                     }}
                     onClick={() => setSelectedPromo(promo)}
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
                       <PromoIcon size={18} />
                     </div>
                     <span className="whitespace-nowrap">{promo.botao_url}</span>
