@@ -1344,8 +1344,11 @@ export default function CenarioTela() {
                       )}
                     </div>
                   )}
-                    </div>
-                  )}
+
+                  {/* Full-width program progress bar */}
+                  <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 10, background: "#000", zIndex: 50 }}>
+                    <div style={{ width: `${progressPct}%`, height: "100%", background: "#fff", transition: "width 1s linear" }} />
+                  </div>
                 </div>
               );
             })()}
