@@ -205,7 +205,7 @@ export default function RoteiroPrograma() {
         <ProgramaExpressInline
           programas={programas}
           estudios={estudios}
-          onFinish={async () => { setExpressEditData(null); await fetchHistorico(); setHistoricoIdx(0); }}
+          onFinish={async () => { setExpressEditData(null); await fetchHistorico(); }}
           editData={expressEditData}
           afterHeader={historicoSlot}
         />
