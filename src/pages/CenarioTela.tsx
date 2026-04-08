@@ -1194,7 +1194,7 @@ export default function CenarioTela() {
                         src={currentProgram.apresentadorFoto}
                         alt={currentProgram.apresentador || ""}
                         style={{
-                          height: `45${vu}`,
+                          height: `81${vu}`,
                           objectFit: "contain",
                           objectPosition: "bottom left",
                           filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))",
