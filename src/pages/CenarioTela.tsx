@@ -1099,7 +1099,7 @@ export default function CenarioTela() {
                     <div className="font-black" style={{ fontSize: `5${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
                       {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                     </div>
-                    <div className="font-medium" style={{ fontSize: `1.6${vu}`, opacity: 0.7, marginTop: `0.4${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                    <div className="font-medium" style={{ fontSize: `1.6${vu}`, color: accentColor, marginTop: `0.4${vu}`, fontVariantNumeric: "tabular-nums" }}>
                       {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                     </div>
                   </div>
@@ -1220,7 +1220,7 @@ export default function CenarioTela() {
                       {currentProgram.apresentador && (
                         <div className="font-black" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
                       )}
-                      <div className="font-medium" style={{ fontSize: `1.4${vu}`, opacity: 0.7, fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
+                      <div className="font-medium" style={{ fontSize: `1.4${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
                         {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                       </div>
                     </div>
@@ -1241,7 +1241,7 @@ export default function CenarioTela() {
                         {/* Vertical separator line */}
                         <div style={{ width: "2px", height: `5${vu}`, background: "rgba(255,255,255,0.3)", marginTop: `0.3${vu}`, flexShrink: 0 }} />
                         <div>
-                          <div className="font-semibold" style={{ fontSize: `1.2${vu}`, opacity: 0.6, marginBottom: `0.2${vu}` }}>a seguir</div>
+                          <div className="font-semibold" style={{ fontSize: `1.2${vu}`, color: accentColor, marginBottom: `0.2${vu}` }}>a seguir</div>
                           <div className="font-bold" style={{ fontSize: `2${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
                           <div className="font-medium" style={{ fontSize: `1.3${vu}`, opacity: 0.6, fontVariantNumeric: "tabular-nums", marginTop: `0.2${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                         </div>
@@ -1250,14 +1250,13 @@ export default function CenarioTela() {
                   </div>
 
                   {/* Program progress bar — neon glow style */}
-                  <div style={{ position: "absolute", bottom: `2${vu}`, left: 0, right: 0, height: `0.3${vu}`, background: "rgba(255,255,255,0.06)", zIndex: 15, overflow: "visible" }}>
+                  <div style={{ position: "absolute", bottom: `2${vu}`, left: 0, right: 0, height: "2px", background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
                     <div style={{
                       width: `${progressPct}%`,
                       height: "100%",
                       background: accentColor,
-                      borderRadius: `0 0.15${vu} 0.15${vu} 0`,
                       transition: "width 1s linear",
-                      boxShadow: `0 0 4px ${accentRgba(0.7)}, 0 0 10px ${accentRgba(0.4)}, 0 0 20px ${accentRgba(0.2)}`,
+                      boxShadow: `0 0 3px ${accentRgba(0.8)}, 0 0 8px ${accentRgba(0.5)}, 0 0 16px ${accentRgba(0.3)}, 0 -1px 4px ${accentRgba(0.6)}`,
                     }} />
                   </div>
                 </div>
