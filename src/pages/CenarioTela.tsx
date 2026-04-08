@@ -1128,14 +1128,22 @@ export default function CenarioTela() {
                   <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", height: "0", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.6) 0%, transparent 70%)", pointerEvents: "none" }} />
 
                   {/* ── HEADER: Clock (top-left) ── */}
-                  <div style={{ position: "absolute", top: `calc(3${vu} + 120px)`, left: `3${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                    <div className="font-black" style={{ fontSize: `5${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-                      {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                    </div>
-                    <div className="font-medium" style={{ fontSize: `1.6${vu}`, color: accentColor, marginTop: `0.4${vu}`, fontVariantNumeric: "tabular-nums" }}>
-                      {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                    </div>
-                  </div>
+                  {(() => {
+                    const p = elPos("clock");
+                    const style: React.CSSProperties = p
+                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 10, transform: `scale(${p.scale})`, transformOrigin: "top left", animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }
+                      : { position: "absolute", top: `calc(3${vu} + 120px)`, left: `3${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" };
+                    return (
+                      <div style={style}>
+                        <div className="font-black" style={{ fontSize: `5${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
+                          {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                        </div>
+                        <div className="font-medium" style={{ fontSize: `1.6${vu}`, color: accentColor, marginTop: `0.4${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                          {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* ── SPONSOR (top-right) ── */}
                   {sponsorLogos.length > 0 && (
