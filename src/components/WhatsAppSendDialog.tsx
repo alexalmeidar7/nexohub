@@ -181,9 +181,9 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
             <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
               <MessageCircle size={18} style={{ color: "#fff" }} />
             </div>
-            <div>
+          <div>
               <h3 className="text-sm font-bold text-white">Enviar por WhatsApp</h3>
-              <p className="text-[10px] text-white/70">{roteiroData.programaNome} · {roteiroData.data}</p>
+              <p className="text-[10px] text-white/70">{roteiroData.programaNome} · {new Date().toLocaleDateString("pt-BR")}</p>
             </div>
           </div>
         </div>
