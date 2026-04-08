@@ -1757,7 +1757,7 @@ export default function CenarioInterativoPage() {
                       if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
                     }
                     return (
-                      <div className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
+                      <div ref={homeContentRef} className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
                         {/* Background */}
                         {config.home.bgGradient && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
                         {!config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
