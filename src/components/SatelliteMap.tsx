@@ -29,6 +29,7 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
   return (
     <div className="relative" style={{ width: "100%", height: "100%", ...style }}>
       <iframe
+        key={`sat-${currentZoom}-${lat.toFixed(2)}-${lon.toFixed(2)}`}
         src={windyUrl}
         className={className}
         style={{ width: "100%", height: "100%", border: "none", borderRadius: "inherit" }}
