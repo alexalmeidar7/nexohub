@@ -1108,7 +1108,7 @@ export default function CenarioTela() {
                   {sponsorLogos.length > 0 && (
                     <div style={{ position: "absolute", top: `3${vu}`, right: `3${vu}`, zIndex: 10, textAlign: "right", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
                       <div style={{ fontSize: `1.2${vu}`, opacity: 0.7, marginBottom: `0.6${vu}` }}>esse programa é oferecido por</div>
-                      <div className="relative flex items-center justify-end" style={{ height: `10.8${vu}` }}>
+                      <div className="relative flex items-center justify-end" style={{ height: `21${vu}` }}>
                         {sponsorLogos.map((l, i) => l.logo_url && (
                           <img
                             key={l.id}
@@ -1117,7 +1117,7 @@ export default function CenarioTela() {
                             className="object-contain"
                             style={{
                               position: "absolute",
-                              maxWidth: `25${vu}`, maxHeight: `10${vu}`,
+                              maxWidth: `50${vu}`, maxHeight: `20${vu}`,
                               right: 0,
                               opacity: i === sponsorIdx ? 1 : 0,
                               transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
