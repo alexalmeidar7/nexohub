@@ -202,6 +202,9 @@ export default function RoteiroPrograma() {
                     <button onClick={() => excluirRoteiro(r.id)} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
                       <Trash2 size={10} style={{ color: "#dc2626" }} />
                     </button>
+                    <button onClick={() => { setTxtEditRoteiroId(r.id); setTxtEditText(r.conteudo_html || ""); }} className="h-6 px-1.5 flex items-center justify-center gap-1 rounded-md hover:opacity-70 transition text-[8px] font-bold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }} title="Editar Roteiro TXT">
+                      <FileText size={10} /> TXT
+                    </button>
                   </div>
                 </div>
               );
