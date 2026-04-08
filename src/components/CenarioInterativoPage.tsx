@@ -262,6 +262,7 @@ function BgImageUpload({ value, onChange, mutedText, userId, category }: { value
 }
 
 /* ─── COMPONENT ─── */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export default function CenarioInterativoPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
