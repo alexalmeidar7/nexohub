@@ -108,6 +108,7 @@ type PublicCenarioPayload = {
   sponsorLogos: any[];
   musicData?: { titulo: string; artista: string; capa: string } | null;
   musicStartTime?: number | null;
+  accentColor?: string | null;
 };
 
 const mockMessages = [
