@@ -826,7 +826,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {/* Footer */}
         <footer className="flex items-center justify-center gap-2 px-4 pb-3 pt-1 relative z-[1]">
-          <img src={logoFooter} alt="Nexo" className="h-4 opacity-60" />
+          <img src={logoFooter} alt="Nexo" className="h-4" style={{ opacity: 0.5, filter: isDashboard ? "none" : "brightness(0) opacity(0.4)" }} />
           <span className="text-[9px]" style={{ color: `${isDashboard ? layoutColors.navText : layoutColors.pageText}66` }}>© 2026 Todos os direitos reservados.</span>
         </footer>
       </div>
