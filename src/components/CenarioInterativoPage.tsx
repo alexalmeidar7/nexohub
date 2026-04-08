@@ -1749,19 +1749,18 @@ export default function CenarioInterativoPage() {
                         <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.5) 0%, transparent 70%)", pointerEvents: "none" }} />
 
                         {/* Clock top-left */}
-                        <div style={{ position: "absolute", top: 8, left: 8, zIndex: 10 }}>
+                        <div style={{ position: "absolute", top: 28, left: 8, zIndex: 10 }}>
                           <div className="font-black" style={{ fontSize: 18, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
                             {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                           </div>
-                          <div className="font-medium" style={{ fontSize: 7, opacity: 0.7, marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
+                          <div className="font-medium" style={{ fontSize: 7, color: "var(--layout-accent-color, #888)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
                             {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                           </div>
                         </div>
 
                         {/* Sponsor top-right */}
                         {sponsorLogos.length > 0 && (
-                          <div style={{ position: "absolute", top: 8, right: 8, zIndex: 10, textAlign: "right" }}>
-                            <div className="italic" style={{ fontSize: 5, opacity: 0.7, marginBottom: 3 }}>esse programa é oferecido por</div>
+                          <div style={{ position: "absolute", top: 6, right: 8, zIndex: 10 }}>
                             <div className="relative flex justify-end" style={{ height: 22 }}>
                               {sponsorLogos.map((l, i) => l.logo_url && (
                                 <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: 50, maxHeight: 20, opacity: i === sponsorIdx ? 1 : 0, transition: "opacity 0.8s ease", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.3))" }} />
@@ -1817,7 +1816,7 @@ export default function CenarioInterativoPage() {
                             {currentProgram.apresentador && (
                               <div className="font-black" style={{ fontSize: 9, lineHeight: 1.2, textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>{currentProgram.apresentador}</div>
                             )}
-                            <div className="font-medium" style={{ fontSize: 6, opacity: 0.7, fontVariantNumeric: "tabular-nums" }}>
+                            <div className="font-medium" style={{ fontSize: 6, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>
                               {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                             </div>
                           </div>
@@ -1834,9 +1833,9 @@ export default function CenarioInterativoPage() {
                             <div className="flex items-start" style={{ gap: 4 }}>
                               <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.3)", marginTop: 1, flexShrink: 0 }} />
                               <div>
-                                <div className="font-semibold" style={{ fontSize: 5, opacity: 0.6 }}>a seguir</div>
+                                <div className="font-semibold" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)" }}>a seguir</div>
                                 <div className="font-bold" style={{ fontSize: 8, lineHeight: 1.2 }}>{nextProgram.nome}</div>
-                                <div className="font-medium" style={{ fontSize: 5, opacity: 0.6, fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                                <div className="font-medium" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                               </div>
                             </div>
                           )}
