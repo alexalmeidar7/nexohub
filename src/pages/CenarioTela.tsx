@@ -1196,16 +1196,47 @@ export default function CenarioTela() {
                               animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
                             }}
                           >
-                            {musicData.capa ? (
-                            <div className="relative" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.6${vu}`, marginBottom: `1.4${vu}`, overflow: "hidden", boxShadow: "0 16px 48px -8px rgba(0,0,0,0.45)" }}>
-                                <img src={musicData.capa} alt="" className="object-cover" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} />
-                                <div className="cenario-cover-shine" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
+                            {/* Vinyl Record */}
+                            <div className="relative" style={{ width: "100%", paddingBottom: "100%", marginBottom: `1.4${vu}` }}>
+                              <div style={{
+                                position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+                                borderRadius: "50%",
+                                background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(50,50,50,0.3) 48.5%, transparent 49.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 30deg, rgba(255,255,255,0.02) 32deg, transparent 34deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 150deg, rgba(255,255,255,0.02) 152deg, transparent 154deg, transparent 210deg, rgba(255,255,255,0.03) 212deg, transparent 214deg, transparent 270deg, rgba(255,255,255,0.02) 272deg, transparent 274deg, transparent 330deg, rgba(255,255,255,0.03) 332deg, transparent 334deg), #111`,
+                                boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.5)",
+                                animation: "vinyl-spin 3s linear infinite",
+                              }}>
+                                {/* Center label with cover art */}
+                                <div style={{
+                                  position: "absolute",
+                                  top: "50%", left: "50%",
+                                  transform: "translate(-50%, -50%)",
+                                  width: "40%", height: "40%",
+                                  borderRadius: "50%",
+                                  overflow: "hidden",
+                                  border: "2px solid rgba(255,255,255,0.1)",
+                                  boxShadow: "0 0 20px rgba(0,0,0,0.5)",
+                                }}>
+                                  {musicData.capa ? (
+                                    <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", height: "100%" }} />
+                                  ) : (
+                                    <div className="flex items-center justify-center w-full h-full" style={{ background: "rgba(255,255,255,0.08)" }}>
+                                      <Music style={{ width: `4${vu}`, height: `4${vu}`, opacity: 0.3, color: "#fff" }} />
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Center hole */}
+                                <div style={{
+                                  position: "absolute",
+                                  top: "50%", left: "50%",
+                                  transform: "translate(-50%, -50%)",
+                                  width: "6%", height: "6%",
+                                  borderRadius: "50%",
+                                  background: "#000",
+                                  border: "1px solid rgba(255,255,255,0.1)",
+                                  zIndex: 2,
+                                }} />
                               </div>
-                            ) : (
-                              <div className="flex items-center justify-center" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)", position: "relative" }}>
-                                <Music style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: `8${vu}`, height: `8${vu}`, opacity: 0.3, color: "#fff" }} />
-                              </div>
-                            )}
+                            </div>
                             <div className="flex items-center self-start" style={{ gap: `1${vu}`, maxWidth: "100%" }}>
                               <Play style={{ width: `2.2${vu}`, height: `2.2${vu}`, color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 6px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
                               <div style={{ overflow: "hidden", minWidth: 0 }}>
