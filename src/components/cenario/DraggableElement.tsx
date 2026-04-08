@@ -7,11 +7,16 @@ export interface ElementPosition {
 }
 
 export const defaultPositions: Record<string, ElementPosition> = {
-  clock:      { x: 3, y: 8, scale: 1 },
-  sponsor:    { x: 70, y: 2, scale: 1 },
-  vinyl:      { x: 50, y: 30, scale: 1 },
-  presenter:  { x: 0, y: 50, scale: 1 },
-  program:    { x: 75, y: 80, scale: 1 },
+  clock:          { x: 3, y: 8, scale: 1 },
+  sponsor:        { x: 70, y: 2, scale: 1 },
+  vinyl:          { x: 50, y: 30, scale: 1 },
+  presenterPhoto: { x: 0, y: 100, scale: 1 },
+  presenterInfo:  { x: 2, y: 90, scale: 1 },
+  programLogo:    { x: 95, y: 75, scale: 1 },
+  programNext:    { x: 95, y: 88, scale: 1 },
+  // legacy keys kept for backward compat
+  presenter:      { x: 0, y: 100, scale: 1 },
+  program:        { x: 95, y: 80, scale: 1 },
 };
 
 interface Props {
