@@ -1322,32 +1322,28 @@ export default function CenarioTela() {
                       <div className="font-medium" style={{ fontSize: `1.3${vu}`, marginTop: `0.3${vu}`, fontVariantNumeric: "tabular-nums", color: "#000", opacity: 0.7 }}>
                         {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                       </div>
+                      {/* Sponsor logos below program logo */}
+                      {sponsorLogos.length > 0 && (
+                        <div className="relative flex items-center justify-center" style={{ marginTop: `1${vu}`, height: `5${vu}` }}>
+                          {sponsorLogos.map((l, i) => l.logo_url && (
+                            <img
+                              key={l.id}
+                              src={l.logo_url}
+                              alt={l.nome}
+                              className="object-contain rounded drop-shadow-md absolute"
+                              style={{
+                                width: `4.5${vu}`, height: `4.5${vu}`,
+                                background: "rgba(255,255,255,0.15)", padding: 2,
+                                opacity: i === sponsorIdx ? 1 : 0,
+                                transform: i === sponsorIdx ? "scale(1)" : "scale(0.85)",
+                                transition: "opacity 0.8s ease, transform 0.8s ease",
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
-
-                  {/* Full-width program progress bar — spans entire screen width */}
-                  <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 10, background: "#000", zIndex: 50 }}>
-                    <div style={{ width: `${progressPct}%`, height: "100%", background: "#fff", transition: "width 1s linear" }} />
-                  </div>
-
-
-                  {sponsorLogos.length > 0 && (
-                    <div className="relative flex items-center justify-center" style={{ marginTop: `0.5${vu}`, height: `5${vu}`, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
-                      {sponsorLogos.map((l, i) => l.logo_url && (
-                        <img
-                          key={l.id}
-                          src={l.logo_url}
-                          alt={l.nome}
-                          className="object-contain rounded drop-shadow-md absolute"
-                          style={{
-                            width: `4.5${vu}`, height: `4.5${vu}`,
-                            background: "rgba(255,255,255,0.15)", padding: 2,
-                            opacity: i === sponsorIdx ? 1 : 0,
-                            transform: i === sponsorIdx ? "scale(1)" : "scale(0.85)",
-                            transition: "opacity 0.8s ease, transform 0.8s ease",
-                          }}
-                        />
-                      ))}
                     </div>
                   )}
                 </div>
