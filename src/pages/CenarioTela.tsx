@@ -1131,7 +1131,7 @@ export default function CenarioTela() {
                   )}
 
                   {/* ── SYNC indicator (below clock) ── */}
-                  <div style={{ position: "absolute", top: `10${vu}`, left: `3${vu}`, zIndex: 10 }}>
+                  <div style={{ position: "absolute", top: `10${vu}`, left: `3${vu}`, zIndex: 20 }}>
                     <div className="flex items-center" style={{ gap: `0.4${vu}`, opacity: 0.5 }}>
                       <div className="rounded-full" style={{ width: `0.6${vu}`, height: `0.6${vu}`, background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 6px #4ade80" : "0 0 6px #ef4444" }} />
                       <span className="font-semibold uppercase tracking-wider" style={{ fontSize: `0.8${vu}`, letterSpacing: "0.1em" }}>
