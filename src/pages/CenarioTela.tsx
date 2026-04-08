@@ -188,6 +188,13 @@ export default function CenarioTela() {
   const publicFetchLastResultRef = useRef<PublicCenarioPayload | null>(null);
   const publicFetchLastAtRef = useRef(0);
 
+  /* ─── User accent color (from layout settings) ─── */
+  const [accentColor, setAccentColor] = useState("#444444");
+  const accentRgba = (alpha: number) => {
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(accentColor);
+    if (!m) return `rgba(68,68,68,${alpha})`;
+    return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${alpha})`;
+  };
 
   /* ─── Screen Rotation ─── */
   const [screenRotation, setScreenRotation] = useState(0);
@@ -195,12 +202,12 @@ export default function CenarioTela() {
   /* ─── Drawing (Pen) ─── */
   const [drawingActive, setDrawingActive] = useState(false);
   const [hasDrawing, setHasDrawing] = useState(false);
-  const [drawColor, setDrawColor] = useState("#e1f532");
+  const [drawColor, setDrawColor] = useState("#ff3b3b");
   const [drawWidth, setDrawWidth] = useState(3);
   const [showDrawOptions, setShowDrawOptions] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawingRef = useRef(false);
-  const DRAW_COLORS = ["#e1f532", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
+  const DRAW_COLORS = ["#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff", "#e1f532"];
   const DRAW_WIDTHS = [2, 4, 8, 14];
 
   const cenarioBcDrawRef = useRef<BroadcastChannel | null>(null);
@@ -824,6 +831,10 @@ export default function CenarioTela() {
               .eq("user_id", effectiveUserId)
               .maybeSingle();
             const items = (settings?.dashboard_items as Record<string, any>) || {};
+            // Load user accent color
+            if (items.layout_colors?.accentColor) {
+              setAccentColor(items.layout_colors.accentColor);
+            }
             if (items.music_current_title && items.music_current_title !== "Sem título") {
               await setMusicWithCoverFallback(items.music_current_title, items.music_current_artist || "", "", undefined, items.music_start_time || null);
             }
