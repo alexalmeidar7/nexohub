@@ -42,7 +42,14 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
         .map(p => ({ nome: p.nome, whatsapp: p.whatsapp!.trim() }));
       setContatos(existing);
       if (roteiroData._expressFormatted) {
-        setFormattedText(roteiroData._expressFormatted);
+        // Replace the original date with today's date in the pre-formatted text
+        const today = new Date().toLocaleDateString("pt-BR");
+        const originalDate = roteiroData.data;
+        let text = roteiroData._expressFormatted;
+        if (originalDate && originalDate !== today) {
+          text = text.split(originalDate).join(today);
+        }
+        setFormattedText(text);
         setLoading(false);
       } else {
         setFormattedText("");
