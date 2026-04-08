@@ -61,6 +61,7 @@ interface HomeConfig {
   bgGradientColorB?: string;
   bgGradientType?: "linear" | "radial";
   bgGradientAngle?: number;
+  elementPositions?: Record<string, ElementPosition>;
 }
 
 interface CenarioConfig {
