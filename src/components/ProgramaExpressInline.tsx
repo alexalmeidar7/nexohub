@@ -457,7 +457,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           return "";
         };
         const rawTitle = getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
-        const title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
+        let title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
+        if (title.includes(" - ")) title = title.split(" - ")[0].trim();
         const image = getMetaContent("og:image") || getMetaContent("twitter:image");
         const decodeFull = (v: string) => { let s = v; for (let i = 0; i < 3; i++) { const d = decodeHtmlEntities(s); if (d === s) break; s = d; } return s; };
         if (title) updateNoticia(bi, ni, "titulo", decodeFull(title));

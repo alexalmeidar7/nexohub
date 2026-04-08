@@ -88,7 +88,8 @@ function parseRss(text: string): NewsItem[] {
   items.forEach((item, i) => {
     if (i >= 10) return;
     const rawTitle = decodeHtmlEntities(item.querySelector("title")?.textContent || "");
-    const title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
+    let title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
+    if (title.includes(" - ")) title = title.split(" - ")[0].trim();
     const link = item.querySelector("link")?.textContent || "";
     let thumbnail = "";
     const mediaContent = item.querySelector("content[url]") || item.querySelector("thumbnail[url]");
@@ -138,7 +139,7 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
       return data.items
         .slice(0, 10)
         .map((item: any) => ({
-          title: (() => { const raw = decodeHtmlEntities(item.title || ""); return raw.includes("|") ? raw.split("|")[0].trim() : raw; })(),
+          title: (() => { const raw = decodeHtmlEntities(item.title || ""); let t = raw.includes("|") ? raw.split("|")[0].trim() : raw; if (t.includes(" - ")) t = t.split(" - ")[0].trim(); return t; })(),
           link: item.link,
           thumbnail: item.thumbnail || item.enclosure?.link || "",
         }));
@@ -561,6 +562,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           if (titleMatch) {
             const decoded = decodeHtmlEntities(titleMatch[1].trim());
             title = decoded.includes("|") ? decoded.split("|")[0].trim() : decoded;
+            if (title.includes(" - ")) title = title.split(" - ")[0].trim();
           }
 
           let thumbnail = item.thumbnail || "";
