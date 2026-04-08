@@ -171,6 +171,7 @@ export default function CenarioTela() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; tipo_programa?: string | null } | null>(null);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
+  const [sponsorIdx, setSponsorIdx] = useState(0);
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
   const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
@@ -397,6 +398,13 @@ export default function CenarioTela() {
     const t = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  /* Sponsor logo cycling */
+  useEffect(() => {
+    if (sponsorLogos.length <= 1) { setSponsorIdx(0); return; }
+    const t = setInterval(() => setSponsorIdx(prev => (prev + 1) % sponsorLogos.length), 5000);
+    return () => clearInterval(t);
+  }, [sponsorLogos.length]);
 
   /* Music elapsed time ticker */
   useEffect(() => {
@@ -1304,8 +1312,22 @@ export default function CenarioTela() {
 
 
                   {sponsorLogos.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: `0.5${vu}`, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
-                      {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: `4${vu}`, height: `4${vu}`, background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
+                    <div className="relative flex items-center justify-center" style={{ marginTop: `0.5${vu}`, height: `5${vu}`, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
+                      {sponsorLogos.map((l, i) => l.logo_url && (
+                        <img
+                          key={l.id}
+                          src={l.logo_url}
+                          alt={l.nome}
+                          className="object-contain rounded drop-shadow-md absolute"
+                          style={{
+                            width: `4.5${vu}`, height: `4.5${vu}`,
+                            background: "rgba(255,255,255,0.15)", padding: 2,
+                            opacity: i === sponsorIdx ? 1 : 0,
+                            transform: i === sponsorIdx ? "scale(1)" : "scale(0.85)",
+                            transition: "opacity 0.8s ease, transform 0.8s ease",
+                          }}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
