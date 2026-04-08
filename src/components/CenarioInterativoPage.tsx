@@ -1033,6 +1033,20 @@ export default function CenarioInterativoPage() {
   const updateChat = (partial: Partial<ChatConfig>) =>
     setConfig(c => ({ ...c, chat: { ...c.chat, ...partial } }));
 
+  const getElPos = useCallback((id: string): ElementPosition => {
+    return config.home.elementPositions?.[id] ?? defaultPositions[id] ?? { x: 50, y: 50, scale: 1 };
+  }, [config.home.elementPositions]);
+
+  const handleElMove = useCallback((id: string, pos: ElementPosition) => {
+    setConfig(c => ({
+      ...c,
+      home: {
+        ...c.home,
+        elementPositions: { ...c.home.elementPositions, [id]: pos },
+      },
+    }));
+  }, []);
+
   const removeTrafficPoint = (id: string) =>
     updateTraffic({ points: config.traffic.points.filter(p => p.id !== id) });
 
