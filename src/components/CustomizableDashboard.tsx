@@ -1659,8 +1659,17 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
               </button>
             )}
 
-            {!showVideo && (
-              <div className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative" style={{ background: "rgba(255,255,255,0.05)", boxShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
+            <div
+              className="rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative"
+              style={{
+                width: showVideo ? 0 : 56,
+                height: showVideo ? 0 : 56,
+                opacity: showVideo ? 0 : 1,
+                transition: "width 0.4s cubic-bezier(0.4,0,0.2,1), height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease",
+                background: "rgba(255,255,255,0.05)",
+                boxShadow: "0 4px 15px rgba(0,0,0,0.5)",
+              }}
+            >
                 {fadingArt && (
                   <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" style={{ transition: "opacity 0.5s ease-out", opacity: 0 }} />
                 )}
@@ -1679,7 +1688,6 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
                   </div>
                 )}
               </div>
-            )}
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
