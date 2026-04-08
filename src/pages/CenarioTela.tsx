@@ -1503,8 +1503,13 @@ export default function CenarioTela() {
 
             {/* ═══ TRAFFIC ═══ */}
             {activeTab === "traffic" && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ padding: `3${vu}` }}>
-                {config.traffic.enabled && trafficCoords ? null : (
+              <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ padding: `3${vu}`, pointerEvents: "none" }}>
+                {config.traffic.enabled && trafficCoords ? (
+                  <div className="flex items-center rounded-full" style={{ padding: `0.8${vu} 2${vu}`, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)", marginBottom: `3${vu}` }}>
+                    <Car style={{ width: `2${vu}`, height: `2${vu}`, color: accentColor, marginRight: `0.8${vu}` }} />
+                    <span className="font-bold" style={{ fontSize: `2${vu}`, color: "#fff" }}>{config.traffic.city || config.city || "Trânsito"}</span>
+                  </div>
+                ) : (
                   <div className="opacity-50" style={{ color: "#333", fontSize: `1.8${vu}` }}>Trânsito desativado</div>
                 )}
               </div>
