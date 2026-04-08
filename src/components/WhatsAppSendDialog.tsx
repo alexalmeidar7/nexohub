@@ -105,7 +105,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
           titulo: roteiroData.titulo,
           programaNome: roteiroData.programaNome,
           estudio: roteiroData.estudio,
-          data: roteiroData.data,
+          data: new Date().toLocaleDateString("pt-BR"),
           horario: roteiroData.horario,
           participantes: roteiroData.participantes,
           conteudoTexto: roteiroData.conteudoTexto,
