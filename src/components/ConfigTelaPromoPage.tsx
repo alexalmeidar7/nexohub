@@ -268,10 +268,30 @@ export default function ConfigTelaPromoPage() {
 
         {/* Right: preview */}
         <div className="flex-1 space-y-2 lg:sticky lg:top-4 lg:self-start">
-          <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>Pré-visualização</Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>Pré-visualização</Label>
+            <button
+              onClick={() => setPreviewDark(d => !d)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all"
+              style={{
+                background: previewDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                color: previewDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
+                border: `1px solid ${previewDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)"}`,
+              }}
+            >
+              {previewDark ? <Moon size={12} /> : <Sun size={12} />}
+              {previewDark ? "Escuro" : "Claro"}
+            </button>
+          </div>
           <div
             className="rounded-2xl border overflow-hidden aspect-video flex flex-col items-center justify-center gap-5 p-8"
-            style={{ ...buildTelaPromoBgStyle(config), borderColor: "rgba(255,255,255,0.08)" }}
+            style={{
+              ...buildTelaPromoBgStyle(config),
+              borderColor: previewDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
+              backgroundColor: config.bg_type === "cor" ? config.bg_color : undefined,
+              ...(config.bg_type === "cor" ? {} : {}),
+              boxShadow: previewDark ? "inset 0 0 60px rgba(0,0,0,0.3)" : "inset 0 0 60px rgba(255,255,255,0.1)",
+            }}
           >
             <span className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: config.header_text_color }}>Promoções</span>
             <div className="flex gap-3">
