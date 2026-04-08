@@ -12,10 +12,21 @@ interface SatelliteMapProps {
 
 export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showControls = false, className, style }: SatelliteMapProps) {
   const [currentZoom, setCurrentZoom] = useState(zoom);
+  const [debouncedZoom, setDebouncedZoom] = useState(zoom);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setCurrentZoom(zoom);
+    setDebouncedZoom(zoom);
   }, [zoom]);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedZoom(currentZoom);
+    }, 600);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [currentZoom]);
 
   const handleZoom = (delta: number) => {
     const newZoom = Math.max(3, Math.min(15, currentZoom + delta));
@@ -23,13 +34,12 @@ export default function SatelliteMap({ lat, lon, zoom = 6, onZoomChange, showCon
     onZoomChange?.(newZoom);
   };
 
-  // Windy embed URL with satellite/rain overlay
-  const windyUrl = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=${currentZoom}&overlay=satellite&product=satellite&level=surface&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&marker=true&message=false&calendar=now&pressure=false&type=map&menu=false&detail=false&autoplay=true`;
+  const windyUrl = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=${debouncedZoom}&overlay=satellite&product=satellite&level=surface&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&marker=true&message=false&calendar=now&pressure=false&type=map&menu=false&detail=false&autoplay=true`;
 
   return (
     <div className="relative" style={{ width: "100%", height: "100%", ...style }}>
       <iframe
-        key={`sat-${currentZoom}-${lat.toFixed(2)}-${lon.toFixed(2)}`}
+        key={`sat-${debouncedZoom}-${lat.toFixed(2)}-${lon.toFixed(2)}`}
         src={windyUrl}
         className={className}
         style={{ width: "100%", height: "100%", border: "none", borderRadius: "inherit" }}
