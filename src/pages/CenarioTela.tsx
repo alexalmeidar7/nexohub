@@ -443,7 +443,7 @@ export default function CenarioTela() {
   }, []);
 
   /* Helper: fetch all cenario data via public edge function (no auth needed) */
-  const publicBackoffRef = useRef({ consecutive: 0, BASE: 10000, MAX: 120000 });
+  const publicBackoffRef = useRef({ consecutive: 0, BASE: 3000, MAX: 15000 });
   const fetchViaEdgeFunction = useCallback(async (uid: string) => {
     if (!uid) return null;
 
@@ -454,7 +454,8 @@ export default function CenarioTela() {
     const bo = publicBackoffRef.current;
     const jitter = Math.random() * 5000;
     const minGap = Math.min(bo.BASE * Math.pow(2, bo.consecutive), bo.MAX) + jitter;
-    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < Math.min(minGap, 25000)) {
+    const clientCacheWindow = bo.consecutive > 0 ? Math.min(minGap, 12000) : 2500;
+    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < clientCacheWindow) {
       return publicFetchLastResultRef.current;
     }
 
@@ -743,16 +744,43 @@ export default function CenarioTela() {
   useEffect(() => {
     const setMusicWithCoverFallback = async (titulo: string, artista: string, capa: string, duracao?: number, startTime?: number | null) => {
       const key = `${titulo}|${artista}`;
-      if (key === prevMusicRef.current) return;
-      prevMusicRef.current = key;
-      let finalCapa = capa;
-      if (!finalCapa) {
-        finalCapa = await fetchItunesCover(titulo, artista);
+      const normalizedStartTime = startTime || Date.now();
+      const sameTrack = key === prevMusicRef.current;
+
+      if (sameTrack) {
+        if (startTime && normalizedStartTime !== musicStartRef.current) {
+          musicStartRef.current = normalizedStartTime;
+          setMusicElapsed(Math.max(0, Math.floor((Date.now() - normalizedStartTime) / 1000)));
+          setMusicKey((k) => k + 1);
+        }
+
+        if (capa) {
+          setMusicData((prev) => {
+            if (!prev || prev.titulo !== titulo || prev.artista !== artista || prev.capa === capa) {
+              return prev;
+            }
+            return { ...prev, capa };
+          });
+        }
+        return;
       }
-      setMusicData({ titulo, artista, capa: finalCapa, duracao });
-      musicStartRef.current = startTime || Date.now();
-      setMusicElapsed(startTime ? Math.floor((Date.now() - startTime) / 1000) : 0);
-      setMusicKey(k => k + 1);
+
+      prevMusicRef.current = key;
+      musicStartRef.current = normalizedStartTime;
+      setMusicElapsed(startTime ? Math.floor((Date.now() - normalizedStartTime) / 1000) : 0);
+      setMusicData({ titulo, artista, capa: capa || "", duracao });
+      setMusicKey((k) => k + 1);
+
+      if (!capa) {
+        const fetchedCapa = await fetchItunesCover(titulo, artista);
+        if (!fetchedCapa || prevMusicRef.current !== key) return;
+        setMusicData((prev) => {
+          if (!prev || prev.titulo !== titulo || prev.artista !== artista || prev.capa === fetchedCapa) {
+            return prev;
+          }
+          return { ...prev, capa: fetchedCapa };
+        });
+      }
     };
     setMusicWithCoverFallbackRef.current = setMusicWithCoverFallback;
 
@@ -806,7 +834,7 @@ export default function CenarioTela() {
                 setMusicWithCoverFallback(
                   items.music_current_title,
                   items.music_current_artist || "",
-                  "",
+                  items.music_current_cover || "",
                   undefined,
                   items.music_start_time || null
                 );
@@ -839,7 +867,7 @@ export default function CenarioTela() {
               setAccentColor(items.layout_colors.accentColor);
             }
             if (items.music_current_title && items.music_current_title !== "Sem título") {
-              await setMusicWithCoverFallback(items.music_current_title, items.music_current_artist || "", "", undefined, items.music_start_time || null);
+              await setMusicWithCoverFallback(items.music_current_title, items.music_current_artist || "", items.music_current_cover || "", undefined, items.music_start_time || null);
             }
           } else {
             const result = await fetchViaEdgeFunction(effectiveUserId);
