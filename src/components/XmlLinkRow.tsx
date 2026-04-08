@@ -105,25 +105,27 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
   return (
     <div
       onClick={copy}
-      className="flex items-center gap-3 rounded-xl p-4 cursor-pointer transition-all"
+      className="group flex items-center gap-3 rounded-lg px-3.5 py-2.5 cursor-pointer transition-all"
       style={{
-        backgroundColor: "var(--layout-header-bg, #0d0446)",
-        border: "2px solid var(--layout-header-bg, #0d0446)",
+        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-border-color, #333))",
+        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)",
       }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--layout-icon-color, #268ffa)"; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #0d0446)"; }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #268ffa)"; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)"; }}
     >
-      <Code2 size={18} className="shrink-0" style={{ color: "var(--layout-icon-color, #268ffa)" }} />
-      <span className="text-xs font-bold whitespace-nowrap" style={{ color: "var(--layout-header-text, #ffffff)" }}>{label}</span>
-      <span className="text-[10px] truncate flex-1 font-mono" style={{ color: "color-mix(in srgb, var(--layout-header-text, #ffffff) 70%, transparent)" }}>
+      <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #268ffa) 12%, transparent)" }}>
+        <Code2 size={14} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
+      </div>
+      <span className="text-[10px] font-bold uppercase whitespace-nowrap tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{label}</span>
+      <span className="text-[9px] truncate flex-1 font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>
         {!ready ? "Gerando link..." : url}
       </span>
       {!ready ? (
-        <Loader2 size={16} className="shrink-0 animate-spin" style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+        <Loader2 size={14} className="shrink-0 animate-spin" style={{ color: "var(--layout-accent-color, #268ffa)" }} />
       ) : copied ? (
-        <Check size={16} className="shrink-0" style={{ color: "#22c55e" }} />
+        <Check size={14} className="shrink-0" style={{ color: "#22c55e" }} />
       ) : (
-        <Copy size={16} className="shrink-0" style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+        <Copy size={14} className="shrink-0 opacity-40 group-hover:opacity-80 transition-opacity" style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
       )}
     </div>
   );
