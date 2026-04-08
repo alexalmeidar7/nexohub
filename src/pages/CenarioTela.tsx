@@ -1124,29 +1124,29 @@ export default function CenarioTela() {
               // Layout is the same for all rotations (portrait code below handles everything)
               // ── PORTRAIT (original vertical layout) ──
               return (
-                <div className="absolute inset-0 flex flex-col" style={{ padding: `2${vu} 1.5${vu} 1.5${vu} 1.5${vu}`, color: "#fff" }}>
+                <div className="absolute inset-0 flex flex-col" style={{ padding: `2.5${vu} 2${vu} 2${vu} 2${vu}`, color: "#fff" }}>
 
                   {/* TOP ROW: Clock + Date (left) / Next program (right) */}
                   <div className="flex justify-between items-start flex-shrink-0" style={{ zIndex: 2, padding: `0 0.5${vu}`, marginTop: isLandscape ? "100px" : undefined, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                     <div>
-                      <div className="font-black" style={{ fontSize: `4${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
+                      <div className="font-black" style={{ fontSize: `${isLandscape ? 3.5 : 4.5}${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
                         {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                       </div>
-                      <div className="font-bold" style={{ fontSize: `1.4${vu}`, color: "#e1f532", marginTop: `0.3${vu}` }}>
+                      <div className="font-bold" style={{ fontSize: `1.5${vu}`, color: "#e1f532", marginTop: `0.4${vu}`, letterSpacing: "0.02em" }}>
                         {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
                       </div>
-                      <div className="flex items-center" style={{ gap: `0.4${vu}`, marginTop: `0.4${vu}`, opacity: 0.7 }}>
-                        <div className="rounded-full" style={{ width: `0.7${vu}`, height: `0.7${vu}`, background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 4px #4ade80" : "0 0 4px #ef4444" }} />
-                        <span className="text-white font-semibold uppercase tracking-wider" style={{ fontSize: `0.9${vu}` }}>
+                      <div className="flex items-center" style={{ gap: `0.4${vu}`, marginTop: `0.5${vu}`, opacity: 0.6 }}>
+                        <div className="rounded-full" style={{ width: `0.6${vu}`, height: `0.6${vu}`, background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 6px #4ade80" : "0 0 6px #ef4444" }} />
+                        <span className="text-white font-semibold uppercase tracking-wider" style={{ fontSize: `0.85${vu}`, letterSpacing: "0.1em" }}>
                           {realtimeConnected ? "SYNC" : "OFF"}
                         </span>
                       </div>
                     </div>
                     {nextProgram && (
-                      <div className="text-right" style={{ animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both", lineHeight: 1.2, marginRight: "80px" }}>
-                        <div className="font-medium" style={{ fontSize: `${1.2 * 1.5}${vu}`, color: "#e1f532" }}>a seguir</div>
-                        <div className="font-bold" style={{ fontSize: `${1.6 * 1.5}${vu}` }}>{nextProgram.nome}</div>
-                        <div className="opacity-50 font-medium" style={{ fontSize: `${1.1 * 1.5}${vu}`, fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}</div>
+                      <div className="text-right" style={{ animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both", lineHeight: 1.2, marginRight: isLandscape ? "40px" : "60px" }}>
+                        <div className="font-semibold uppercase tracking-widest" style={{ fontSize: `1.3${vu}`, color: "#e1f532", letterSpacing: "0.15em" }}>a seguir</div>
+                        <div className="font-bold" style={{ fontSize: `2.2${vu}`, marginTop: `0.2${vu}` }}>{nextProgram.nome}</div>
+                        <div className="opacity-40 font-medium" style={{ fontSize: `1.4${vu}`, fontVariantNumeric: "tabular-nums", marginTop: `0.1${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}</div>
                       </div>
                     )}
                   </div>
