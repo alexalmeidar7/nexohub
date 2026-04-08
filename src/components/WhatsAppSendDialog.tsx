@@ -105,7 +105,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
           titulo: roteiroData.titulo,
           programaNome: roteiroData.programaNome,
           estudio: roteiroData.estudio,
-          data: roteiroData.data,
+          data: new Date().toLocaleDateString("pt-BR"),
           horario: roteiroData.horario,
           participantes: roteiroData.participantes,
           conteudoTexto: roteiroData.conteudoTexto,
@@ -117,7 +117,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     } catch (err: any) {
       console.error("Erro ao formatar:", err);
       toast.error("Erro ao formatar roteiro para WhatsApp");
-      setFormattedText(`*${roteiroData.titulo || "Roteiro"}*\n${roteiroData.programaNome} · ${roteiroData.estudio}\n${roteiroData.data} ${roteiroData.horario}\n\n${roteiroData.conteudoTexto.substring(0, 3000)}`);
+      setFormattedText(`*${roteiroData.titulo || "Roteiro"}*\n${roteiroData.programaNome} · ${roteiroData.estudio}\n${new Date().toLocaleDateString("pt-BR")} ${roteiroData.horario}\n\n${roteiroData.conteudoTexto.substring(0, 3000)}`);
     } finally {
       setLoading(false);
     }
@@ -181,9 +181,9 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
             <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
               <MessageCircle size={18} style={{ color: "#fff" }} />
             </div>
-            <div>
+          <div>
               <h3 className="text-sm font-bold text-white">Enviar por WhatsApp</h3>
-              <p className="text-[10px] text-white/70">{roteiroData.programaNome} · {roteiroData.data}</p>
+              <p className="text-[10px] text-white/70">{roteiroData.programaNome} · {new Date().toLocaleDateString("pt-BR")}</p>
             </div>
           </div>
         </div>
