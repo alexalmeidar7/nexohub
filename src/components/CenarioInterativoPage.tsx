@@ -119,7 +119,7 @@ function getWLabel(code: number) { return weatherLabels[code] ?? weatherLabels[O
 
 interface LiveWeather {
   current: { temp: number; humidity: number; code: number };
-  daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number }[];
+  daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number; rainMm?: number; windMax?: number }[];
 }
 
 /* ─── Currency API mapping ─── */
@@ -946,6 +946,8 @@ export default function CenarioInterativoPage() {
               code: d.daily.weather_code?.[i] ?? 0,
               humidity: Math.round(d.daily.relative_humidity_2m_max?.[i] ?? 0),
               precip: Math.round(d.daily.precipitation_probability_max?.[i] ?? 0),
+              rainMm: Math.round((d.daily.precipitation_sum?.[i] ?? 0) * 10) / 10,
+              windMax: Math.round(d.daily.wind_speed_10m_max?.[i] ?? 0),
             })),
           });
         }
