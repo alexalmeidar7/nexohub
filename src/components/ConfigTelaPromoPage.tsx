@@ -87,6 +87,7 @@ export default function ConfigTelaPromoPage() {
   const [config, setConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [previewDark, setPreviewDark] = useState(true);
 
   useEffect(() => {
     if (!user) return;
