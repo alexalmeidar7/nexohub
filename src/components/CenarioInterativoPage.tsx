@@ -1710,7 +1710,6 @@ export default function CenarioInterativoPage() {
 
                   {/* Home overlay */}
                   {activeTab === "home" && (() => {
-                    const textColor = (config.home.bgImage || config.home.bgGradient) ? "#fff" : "#333";
                     let progressPct = 0;
                     if (currentProgram) {
                       const [sh, sm] = currentProgram.horario_inicio.split(":").map(Number);
@@ -1722,105 +1721,112 @@ export default function CenarioInterativoPage() {
                       if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
                     }
                     return (
-                      <div className="absolute inset-0 flex flex-col p-2" style={{ color: "#fff" }}>
-                        {/* TOP: Clock + Date (left) / Next program (right) */}
-                        <div className="flex justify-between items-start flex-shrink-0">
-                          <div>
-                            <div className="font-black" style={{ fontSize: 18, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
-                              {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                            </div>
-                            <div className="font-bold" style={{ fontSize: 7, color: "#e1f532", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
-                              {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                            </div>
+                      <div className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
+                        {/* Background */}
+                        {config.home.bgGradient && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
+                        {!config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+
+                        {/* Subtle radial glow */}
+                        <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.5) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+                        {/* Clock top-left */}
+                        <div style={{ position: "absolute", top: 8, left: 8, zIndex: 10 }}>
+                          <div className="font-black" style={{ fontSize: 18, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
+                            {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                          </div>
+                          <div className="font-medium" style={{ fontSize: 7, opacity: 0.7, marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
+                            {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                           </div>
                         </div>
 
-                        {/* CENTER: Music card or Jornalístico logo */}
-                        <div className="flex-1 flex flex-col items-center justify-center" style={{ overflow: "hidden" }}>
-                          {(() => {
-                            const isJornalistico = currentProgram?.tipo_programa?.toLowerCase().includes("jornal");
-                            if (isJornalistico && currentProgram) {
-                              return (
-                                <div key={`jornal-${currentProgram.id}`} className="flex flex-col items-center" style={{ width: "85%", padding: "6px 8px 8px", borderRadius: 10, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(16px)", border: "1.5px solid rgba(225,245,50,0.15)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                                  {currentProgram.selo ? (
-                                    <div className="relative" style={{ width: "100%", borderRadius: 6, marginBottom: 5, background: "rgba(0,0,0,0.3)", overflow: "hidden" }}><div style={{ paddingBottom: "100%" }} /><div className="flex items-center justify-center" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-                                      <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain" style={{ maxWidth: "80%", maxHeight: "80%" }} />
-                                    </div></div>
-                                  ) : (
-                                    <div className="relative" style={{ width: "100%", borderRadius: 6, marginBottom: 5, background: "rgba(255,255,255,0.08)" }}><div style={{ paddingBottom: "100%" }} /><div className="flex items-center justify-center" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-                                      <div className="font-black text-center text-white" style={{ fontSize: 14, lineHeight: 1.1 }}>{currentProgram.nome}</div>
-                                    </div></div>
-                                  )}
-                                  {musicData && (
-                                    <>
-                                      <div className="flex items-center self-start gap-1" style={{ maxWidth: "100%" }}>
-                                        <Play size={10} style={{ color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 4px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
-                                        <div style={{ overflow: "hidden", minWidth: 0 }}>
-                                          <div className="font-black uppercase truncate text-white" style={{ fontSize: 9, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
-                                          <div className="font-bold uppercase truncate" style={{ fontSize: 7, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
-                                        </div>
-                                      </div>
-                                      <div style={{ width: "100%", height: 2, marginTop: 5, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
-                                        <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: 2, background: "#e1f532", transition: "width 1s linear" }} />
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-                              );
-                            }
+                        {/* Sponsor top-right */}
+                        {sponsorLogos.length > 0 && (
+                          <div style={{ position: "absolute", top: 8, right: 8, zIndex: 10, textAlign: "right" }}>
+                            <div className="italic" style={{ fontSize: 5, opacity: 0.7, marginBottom: 3 }}>esse programa é oferecido por</div>
+                            <div className="relative flex justify-end" style={{ height: 22 }}>
+                              {sponsorLogos.map((l, i) => l.logo_url && (
+                                <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: 50, maxHeight: 20, opacity: i === sponsorIdx ? 1 : 0, transition: "opacity 0.8s ease", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.3))" }} />
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                            if (musicData) {
-                              return (
-                                <div key={musicKey} className="flex flex-col items-center" style={{ width: "85%", padding: "6px 8px 8px", borderRadius: 10, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(16px)", border: "1.5px solid rgba(225,245,50,0.15)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                                  {musicData.capa ? (
-                                    <div className="relative" style={{ width: "100%", borderRadius: 6, marginBottom: 5, overflow: "hidden" }}><div style={{ paddingBottom: "100%" }} /><img src={musicData.capa} alt="" className="object-cover" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", borderRadius: 6 }} /></div>
-                                  ) : (
-                                    <div className="relative" style={{ width: "100%", borderRadius: 6, marginBottom: 5, background: "rgba(255,255,255,0.08)" }}><div style={{ paddingBottom: "100%" }} /><div className="flex items-center justify-center" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-                                      <Music size={28} style={{ opacity: 0.3, color: "#fff" }} />
-                                    </div></div>
-                                  )}
-                                  <div className="flex items-center self-start gap-1" style={{ maxWidth: "100%" }}>
-                                    <Play size={10} style={{ color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 4px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
-                                    <div style={{ overflow: "hidden", minWidth: 0 }}>
-                                      <div className="font-black uppercase truncate" style={{ fontSize: 9, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
-                                      <div className="font-bold uppercase truncate" style={{ fontSize: 7, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
-                                    </div>
+                        {/* Center: Vinyl or program logo */}
+                        <div style={{ position: "absolute", top: "20%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }}>
+                          {musicData ? (
+                            <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                              {/* Mini vinyl */}
+                              <div className="relative" style={{ width: 120, height: 120 }}>
+                                <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 180deg, rgba(255,255,255,0.03) 182deg, transparent 184deg, transparent 270deg, rgba(255,255,255,0.03) 272deg, transparent 274deg), #111`, boxShadow: "0 4px 16px rgba(0,0,0,0.5)", animation: "vinyl-spin 3s linear infinite" }}>
+                                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "40%", height: "40%", borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
+                                    {musicData.capa ? (
+                                      <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    ) : (
+                                      <div className="flex items-center justify-center w-full h-full" style={{ background: "rgba(255,255,255,0.08)" }}>
+                                        <Music size={16} style={{ opacity: 0.3, color: "#fff" }} />
+                                      </div>
+                                    )}
                                   </div>
-                                  <div style={{ width: "100%", height: 2, marginTop: 5, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
-                                    <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: 2, background: "#e1f532", transition: "width 1s linear" }} />
-                                  </div>
+                                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "6%", height: "6%", borderRadius: "50%", background: "#000", border: "1px solid rgba(255,255,255,0.1)", zIndex: 2 }} />
                                 </div>
-                              );
-                            }
-
-                            if (!currentProgram) return <div className="text-[9px] opacity-40" style={{ color: "#fff" }}>Nenhum programa no ar</div>;
-                            return null;
-                          })()}
+                              </div>
+                              {/* Music info */}
+                              <div style={{ marginTop: 8, textAlign: "center", maxWidth: 140 }}>
+                                <div className="font-black truncate" style={{ fontSize: 10, lineHeight: 1.2 }}>{musicData.titulo}</div>
+                                <div className="font-medium truncate" style={{ fontSize: 7, opacity: 0.6, marginTop: 1 }}>{musicData.artista}</div>
+                              </div>
+                            </div>
+                          ) : currentProgram?.selo ? (
+                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: 120, maxHeight: 100 }} />
+                          ) : currentProgram ? (
+                            <div className="font-black text-center" style={{ fontSize: 14, lineHeight: 1.1 }}>{currentProgram.nome}</div>
+                          ) : (
+                            <div className="text-[9px] opacity-40">Nenhum programa no ar</div>
+                          )}
                         </div>
 
-                        {/* BOTTOM: Program logo + presenter + schedule */}
+                        {/* Presenter photo bottom-left */}
+                        {currentProgram?.apresentadorFoto && (
+                          <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 8 }}>
+                            <img src={currentProgram.apresentadorFoto} alt="" style={{ height: 160, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(2px 0 8px rgba(0,0,0,0.4))" }} />
+                          </div>
+                        )}
+
+                        {/* Presenter name + time bottom-left */}
                         {currentProgram && (
-                          <div className="flex flex-col items-center flex-shrink-0" style={{ marginTop: 4 }}>
-                            {currentProgram.selo ? (
-                              <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: "50%", maxHeight: 50 }} />
-                            ) : (
-                              <div className="font-black text-center" style={{ fontSize: 13, lineHeight: 1.1 }}>{currentProgram.nome}</div>
-                            )}
+                          <div style={{ position: "absolute", bottom: 10, left: 8, zIndex: 12 }}>
                             {currentProgram.apresentador && (
-                              <div className="font-bold" style={{ fontSize: 10, marginTop: 3, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>{currentProgram.apresentador}</div>
+                              <div className="font-black" style={{ fontSize: 9, lineHeight: 1.2, textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>{currentProgram.apresentador}</div>
                             )}
-                            <div className="opacity-50 font-medium" style={{ fontSize: 6, marginTop: 1, fontVariantNumeric: "tabular-nums" }}>
+                            <div className="font-medium" style={{ fontSize: 6, opacity: 0.7, fontVariantNumeric: "tabular-nums" }}>
                               {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                             </div>
                           </div>
                         )}
 
-                        {/* Sponsor logos */}
-                        {sponsorLogos.length > 0 && (
-                          <div className="flex flex-wrap justify-center gap-1 mt-1">
-                            {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="w-5 h-5 object-contain rounded" style={{ background: "rgba(255,255,255,0.15)", padding: 1 }} />)}
-                          </div>
-                        )}
+                        {/* Program logo + "a seguir" bottom-right */}
+                        <div style={{ position: "absolute", bottom: 10, right: 8, zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                          {currentProgram?.selo ? (
+                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: 70, maxHeight: 55, marginBottom: 5 }} />
+                          ) : currentProgram ? (
+                            <div className="font-black text-right" style={{ fontSize: 10, lineHeight: 1.1, maxWidth: 70, marginBottom: 5 }}>{currentProgram.nome}</div>
+                          ) : null}
+                          {nextProgram && (
+                            <div className="flex items-start" style={{ gap: 4 }}>
+                              <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.3)", marginTop: 1, flexShrink: 0 }} />
+                              <div>
+                                <div className="font-semibold" style={{ fontSize: 5, opacity: 0.6 }}>a seguir</div>
+                                <div className="font-bold" style={{ fontSize: 8, lineHeight: 1.2 }}>{nextProgram.nome}</div>
+                                <div className="font-medium" style={{ fontSize: 5, opacity: 0.6, fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Progress bar */}
+                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.1)", zIndex: 15 }}>
+                          <div style={{ width: `${progressPct}%`, height: "100%", background: "linear-gradient(90deg, #e1f532, #c8e600)", transition: "width 1s linear" }} />
+                        </div>
                       </div>
                     );
                   })()}
