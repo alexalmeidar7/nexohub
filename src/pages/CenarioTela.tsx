@@ -1057,8 +1057,7 @@ export default function CenarioTela() {
             {/* Animated page wrapper */}
             <div
               key={activeTab + (activeTab === "weather" ? `-${weatherSubTab}` : "") + (activeTab === "currency" ? `-${currencySubTab}` : "")}
-              className="absolute inset-0"
-              style={{ animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both" }}
+              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, animation: "cenario-page-enter 0.45s cubic-bezier(0.16,1,0.3,1) both" }}
             >
 
             {/* ═══ HOME ═══ */}
