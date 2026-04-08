@@ -34,6 +34,21 @@ export default function RoteiroPrograma() {
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
   const [whatsAppHistoricoData, setWhatsAppHistoricoData] = useState<any>(null);
   const [expressEditData, setExpressEditData] = useState<ExpressEditData | null>(null);
+  const [txtEditRoteiroId, setTxtEditRoteiroId] = useState<string | null>(null);
+  const [txtEditText, setTxtEditText] = useState("");
+  const [txtSaving, setTxtSaving] = useState(false);
+
+  const handleSaveTxtRoteiro = async () => {
+    if (!txtEditRoteiroId || !txtEditText.trim()) return;
+    setTxtSaving(true);
+    const { error } = await supabase.from("roteiros").update({ conteudo_html: txtEditText, updated_at: new Date().toISOString() }).eq("id", txtEditRoteiroId);
+    setTxtSaving(false);
+    if (error) { toast.error("Erro ao salvar"); return; }
+    toast.success("Roteiro atualizado!");
+    setTxtEditRoteiroId(null);
+    setTxtEditText("");
+    fetchHistorico();
+  };
 
   useEffect(() => {
     if (!user) return;
