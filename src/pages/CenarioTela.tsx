@@ -934,8 +934,15 @@ export default function CenarioTela() {
   // Always use vh for consistent sizing — vw is ~1.8x larger on 16:9 screens and causes text overflow
   const vu = "vh";
 
+  /* Sidebar button size helper */
+  const btnSize = `3.8${vu}`;
+  const iconSize = `1.7${vu}`;
+  const subBtnSize = `2.8${vu}`;
+  const subFontSize = `1.2${vu}`;
+  const sidebarPad = `0.6${vu}`;
+
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
+    <div className="fixed" style={{ top: 0, left: 0, right: 0, bottom: 0, background: "#000", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
       <div
         className="relative"
         style={{
@@ -945,7 +952,7 @@ export default function CenarioTela() {
           ),
         }}
       >
-        <div className="absolute inset-0 flex" style={{ fontSize: "1.8vh" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `1.8${vu}` }}>
 
           {/* Fullscreen background layers behind sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
