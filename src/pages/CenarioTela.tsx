@@ -1155,6 +1155,26 @@ export default function CenarioTela() {
                                 <div className="font-black text-center text-white" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: `4${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
                               </div>
                             )}
+                            {/* Sponsor logos below program logo */}
+                            {sponsorLogos.length > 0 && (
+                              <div className="relative flex items-center justify-center" style={{ height: `5${vu}`, width: "100%", marginBottom: `1${vu}` }}>
+                                {sponsorLogos.map((l, i) => l.logo_url && (
+                                  <img
+                                    key={l.id}
+                                    src={l.logo_url}
+                                    alt={l.nome}
+                                    className="object-contain rounded drop-shadow-md absolute"
+                                    style={{
+                                      width: `4.5${vu}`, height: `4.5${vu}`,
+                                      background: "rgba(255,255,255,0.15)", padding: 2,
+                                      opacity: i === sponsorIdx ? 1 : 0,
+                                      transform: i === sponsorIdx ? "scale(1)" : "scale(0.85)",
+                                      transition: "opacity 0.8s ease, transform 0.8s ease",
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            )}
                             {musicData && (
                               <>
                                 <div className="flex items-center self-start" style={{ gap: `1${vu}`, maxWidth: "100%" }}>
