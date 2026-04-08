@@ -843,6 +843,7 @@ export default function CenarioTela() {
             }
           } else {
             const result = await fetchViaEdgeFunction(effectiveUserId);
+            if (result?.accentColor) setAccentColor(result.accentColor);
             if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
               await setMusicWithCoverFallback(result.musicData.titulo, result.musicData.artista, result.musicData.capa || "", undefined, result.musicStartTime);
             }
