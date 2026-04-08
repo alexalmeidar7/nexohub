@@ -455,7 +455,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           return "";
         };
 
-        const title = getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
+        const rawTitle = getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
+        const title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
         const image = getMetaContent("og:image") || getMetaContent("twitter:image");
 
         const decodeFull = (v: string) => {
