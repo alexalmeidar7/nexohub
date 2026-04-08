@@ -718,13 +718,17 @@ table:not([data-no-row-hover]) tbody tr:hover {
   50% { box-shadow: 0 0 12px 2px rgba(220,38,38,0.5); }
 }
 @keyframes cenario-active-blink {
-  0%, 100% { border-color: #e1f532; box-shadow: 0 0 6px rgba(225,245,50,0.6); }
-  50% { border-color: transparent; box-shadow: none; }
+  0%, 100% { border-color: #e1f532; box-shadow: 0 0 8px rgba(225,245,50,0.5); }
+  50% { border-color: rgba(225,245,50,0.3); box-shadow: 0 0 2px rgba(225,245,50,0.15); }
 }
 
 .vmix-preset-onair {
   animation: vmix-onair-pulse 2s ease-in-out infinite;
 }
+
+/* Cenário — flex gap fallback for CEF 86 */
+.cenario-sidebar-btn + .cenario-sidebar-btn { margin-top: 0.5vh; }
+.cenario-sidebar-sub + .cenario-sidebar-sub { margin-top: 0.4vh; }
 
 /* Cenário Interativo — overlay entry animations */
 @keyframes cenario-slide-up {
