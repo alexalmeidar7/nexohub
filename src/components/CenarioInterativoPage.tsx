@@ -274,7 +274,7 @@ export default function CenarioInterativoPage() {
   /* ─── Preview Drawing ─── */
   const [previewDrawActive, setPreviewDrawActive] = useState(false);
   const [previewHasDrawing, setPreviewHasDrawing] = useState(false);
-  const [previewDrawColor, setPreviewDrawColor] = useState("#e1f532");
+  const [previewDrawColor, setPreviewDrawColor] = useState("#ff3b3b");
   const [previewDrawWidth, setPreviewDrawWidth] = useState(3);
   const [showPreviewDrawOptions, setShowPreviewDrawOptions] = useState(false);
   const [previewDrawMode, setPreviewDrawMode] = useState<"pen" | "eraser" | "shape">("pen");
@@ -284,7 +284,7 @@ export default function CenarioInterativoPage() {
   const drawHistoryRef = useRef<ImageData[]>([]);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const previewIsDrawingRef = useRef(false);
-  const PREV_DRAW_COLORS = ["#e1f532", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
+  const PREV_DRAW_COLORS = ["#ff3b3b", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
   const PREV_DRAW_WIDTHS = [2, 4, 8, 14];
   const SHAPE_OPTIONS = [
     { id: "arrow-up", icon: ArrowUp, label: "Seta ↑" },
@@ -1416,7 +1416,7 @@ export default function CenarioInterativoPage() {
                             value={config.traffic.zoom}
                             onChange={e => updateTraffic({ zoom: parseInt(e.target.value) })}
                             className="flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
-                            style={{ accentColor: "var(--layout-accent-color, #e1f532)" }}
+                            style={{ accentColor: "var(--layout-accent-color, #444)" }}
                           />
                           <Button
                             size="sm"
@@ -1651,58 +1651,58 @@ export default function CenarioInterativoPage() {
                 {/* ── Dark sidebar ── */}
                 <div className="w-[52px] flex-shrink-0 flex items-center relative" style={{ zIndex: 10 }}>
                 <div className="flex flex-col items-center gap-1 px-1 py-2" style={{ borderRadius: "0 12px 12px 0", background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "rgba(26,26,26,0.7)" : "rgba(26,26,26,0.85)", backdropFilter: (activeTab === "weather" && weatherSubTab === "satellite") || (activeTab === "traffic" && config.traffic.enabled) ? "blur(4px)" : "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: "none" }}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2 cursor-pointer" onClick={() => handleTabChange("home")} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2 cursor-pointer" onClick={() => handleTabChange("home")} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <Home size={16} className="text-white" />
                   </div>
                   {/* Weather icon + sub-tabs grouped */}
                   <div className="rounded-2xl py-1 px-1 flex flex-col items-center" style={{ background: "rgba(255,255,255,0.08)", opacity: config.weather.enabled ? 1 : 0.35 }}>
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "weather" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "weather" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "weather" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", animation: activeTab === "weather" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                       <CloudSun size={16} className="text-white" />
                     </div>
                     <div style={{ display: "grid", gridTemplateRows: activeTab === "weather" ? "1fr" : "0fr", transition: "grid-template-rows 0.35s cubic-bezier(0.4,0,0.2,1)" }}>
                       <div style={{ overflow: "hidden" }}>
                         <div className="flex flex-col items-center gap-1 pt-1">
                           {config.weather.enabled && config.weather.showCurrent && (
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} style={{ background: weatherSubTab === "today" && activeTab === "weather" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "today" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>1</div>
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} style={{ background: weatherSubTab === "today" && activeTab === "weather" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "today" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>1</div>
                           )}
                           {config.weather.enabled && config.weather.showForecast3Days && (
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("forecast"); }} style={{ background: weatherSubTab === "forecast" && activeTab === "weather" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "forecast" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>2</div>
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("forecast"); }} style={{ background: weatherSubTab === "forecast" && activeTab === "weather" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "forecast" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>2</div>
                           )}
                           {config.weather.enabled && config.weather.showSatellite && (
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} style={{ background: weatherSubTab === "satellite" && activeTab === "weather" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "satellite" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>3</div>
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} style={{ background: weatherSubTab === "satellite" && activeTab === "weather" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "satellite" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>3</div>
                           )}
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-2 cursor-pointer" onClick={() => config.traffic.enabled && handleTabChange("traffic")} style={{ background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "traffic" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-2 cursor-pointer" onClick={() => config.traffic.enabled && handleTabChange("traffic")} style={{ background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", animation: activeTab === "traffic" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <Car size={16} className="text-white" />
                   </div>
                   <div className="rounded-2xl flex flex-col items-center" style={{ padding: "0.3vh", background: "rgba(255,255,255,0.08)", opacity: config.currency.enabled ? 1 : 0.35 }}>
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "currency" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "currency" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "currency" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", animation: activeTab === "currency" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                       <DollarSign size={16} className="text-white" />
                     </div>
                     <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? "80px" : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
                       <div className="flex flex-col items-center gap-1" style={{ paddingTop: "4px" }}>
-                        <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); }} className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold cursor-pointer text-[10px]" style={{ background: activeTab === "currency" && currencySubTab === "moedas" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: activeTab === "currency" && currencySubTab === "moedas" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>1</button>
-                        <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("bolsas"); }} className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold cursor-pointer text-[10px]" style={{ background: activeTab === "currency" && currencySubTab === "bolsas" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: activeTab === "currency" && currencySubTab === "bolsas" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>2</button>
+                        <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); }} className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold cursor-pointer text-[10px]" style={{ background: activeTab === "currency" && currencySubTab === "moedas" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: activeTab === "currency" && currencySubTab === "moedas" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>1</button>
+                        <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("bolsas"); }} className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold cursor-pointer text-[10px]" style={{ background: activeTab === "currency" && currencySubTab === "bolsas" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: activeTab === "currency" && currencySubTab === "bolsas" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>2</button>
                       </div>
                     </div>
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.chat.enabled && handleTabChange("chat")} style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.chat.enabled && handleTabChange("chat")} style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <MessageCircle size={16} className="text-white" />
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-1 cursor-pointer" onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} style={{ background: previewDrawActive ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawActive ? "2px solid #e1f532" : "2px solid transparent", transition: "all 0.2s ease" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-1 cursor-pointer" onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} style={{ background: previewDrawActive ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawActive ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", transition: "all 0.2s ease" }}>
                     <Pen size={16} className="text-white" />
                   </div>
                   {previewDrawActive && (
                     <>
                       {/* Color picker */}
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} style={{ background: showPreviewDrawOptions ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} style={{ background: showPreviewDrawOptions ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
                         <div style={{ width: 8, height: 8, borderRadius: "50%", background: previewDrawColor }} />
                       </div>
                       {/* Eraser */}
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} style={{ background: previewDrawMode === "eraser" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "eraser" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} style={{ background: previewDrawMode === "eraser" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "eraser" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
                         <Eraser size={13} className="text-white" />
                       </div>
                       {/* Undo */}
@@ -1710,7 +1710,7 @@ export default function CenarioInterativoPage() {
                         <Undo2 size={13} className="text-white" />
                       </div>
                       {/* Shapes */}
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} style={{ background: previewDrawMode === "shape" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "shape" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} style={{ background: previewDrawMode === "shape" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "shape" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
                         <Shapes size={13} className="text-white" />
                       </div>
                     </>
@@ -1844,7 +1844,7 @@ export default function CenarioInterativoPage() {
 
                         {/* Progress bar */}
                         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.1)", zIndex: 15 }}>
-                          <div style={{ width: `${progressPct}%`, height: "100%", background: "linear-gradient(90deg, #e1f532, #c8e600)", transition: "width 1s linear" }} />
+                          <div style={{ width: `${progressPct}%`, height: "100%", background: "linear-gradient(90deg, var(--layout-accent-color, #444), var(--layout-accent-color, #444))", transition: "width 1s linear" }} />
                         </div>
                       </div>
                     );
@@ -1867,7 +1867,7 @@ export default function CenarioInterativoPage() {
                                 <div className="flex items-start justify-between mb-1.5 cenario-anim-icon">
                                   <div>
                                     <div className="text-lg font-black leading-none drop-shadow-lg cenario-anim-title" style={{ letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
-                                    <div className="text-xs font-bold uppercase tracking-widest cenario-anim-subtitle" style={{ color: "#e1f532", marginTop: 2 }}>hoje</div>
+                                    <div className="text-xs font-bold uppercase tracking-widest cenario-anim-subtitle" style={{ color: "var(--layout-accent-color, #444)", marginTop: 2 }}>hoje</div>
                                   </div>
                                   <div className="w-10 h-10">
                                     <WeatherIcon code={liveWeather.current.code} size={40} />
@@ -1902,7 +1902,7 @@ export default function CenarioInterativoPage() {
                                 <div className="flex items-start justify-between mb-2 cenario-anim-icon">
                                   <div>
                                     <div className="text-lg font-black leading-none drop-shadow-lg cenario-anim-title" style={{ letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
-                                    <div className="text-xs font-bold uppercase tracking-widest cenario-anim-subtitle" style={{ color: "#e1f532", marginTop: 2 }}>próximos dias</div>
+                                    <div className="text-xs font-bold uppercase tracking-widest cenario-anim-subtitle" style={{ color: "var(--layout-accent-color, #444)", marginTop: 2 }}>próximos dias</div>
                                   </div>
                                   <CalendarDays size={24} style={{ opacity: 0.8 }} />
                                 </div>
@@ -1956,11 +1956,11 @@ export default function CenarioInterativoPage() {
                         {config.currency.enabled ? (
                           <>
                             <div className="flex justify-end mb-1 cenario-anim-icon">
-                              <DollarSign size={32} className="drop-shadow-lg" style={{ color: "#e1f532" }} />
+                              <DollarSign size={32} className="drop-shadow-lg" style={{ color: "var(--layout-accent-color, #444)" }} />
                             </div>
                             <div className="mb-2">
                               <div className="text-2xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">cotação</div>
-                              <div className="text-base font-bold tracking-wide cenario-anim-subtitle" style={{ color: "#e1f532" }}>
+                              <div className="text-base font-bold tracking-wide cenario-anim-subtitle" style={{ color: "var(--layout-accent-color, #444)" }}>
                                 {currencySubTab === "moedas" ? "moedas" : "bolsas"}
                               </div>
                             </div>
@@ -2040,11 +2040,11 @@ export default function CenarioInterativoPage() {
                         {config.chat.enabled ? (
                           <>
                             <div className="flex justify-end mb-1 cenario-anim-icon">
-                              <MessageCircle size={32} className="drop-shadow-lg" style={{ color: "#c8e600" }} />
+                              <MessageCircle size={32} className="drop-shadow-lg" style={{ color: "var(--layout-accent-color, #444)" }} />
                             </div>
                             <div className="mb-3">
                               <div className="text-xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">mensagens</div>
-                              <div className="text-sm font-bold cenario-anim-subtitle" style={{ color: "#c8e600" }}>chat</div>
+                              <div className="text-sm font-bold cenario-anim-subtitle" style={{ color: "var(--layout-accent-color, #444)" }}>chat</div>
                             </div>
                             <div className="flex-1 rounded-xl p-3 space-y-2 cenario-anim-card" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                               <div className="text-[10px] font-bold opacity-70 mb-1">mensagens aqui</div>
@@ -2087,7 +2087,7 @@ export default function CenarioInterativoPage() {
                   {SHAPE_OPTIONS.map(s => {
                     const Icon = s.icon;
                     return (
-                      <button key={s.id} onClick={() => { setSelectedShape(s.id); setPreviewDrawMode("shape"); }} className="rounded-lg flex items-center justify-center cursor-pointer" style={{ width: 28, height: 28, background: selectedShape === s.id ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.08)", border: selectedShape === s.id ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.15s ease" }} title={s.label}>
+                      <button key={s.id} onClick={() => { setSelectedShape(s.id); setPreviewDrawMode("shape"); }} className="rounded-lg flex items-center justify-center cursor-pointer" style={{ width: 28, height: 28, background: selectedShape === s.id ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.08)", border: selectedShape === s.id ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.15s ease" }} title={s.label}>
                         <Icon size={14} style={{ color: previewDrawColor }} />
                       </button>
                     );
