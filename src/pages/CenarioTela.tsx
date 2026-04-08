@@ -1187,7 +1187,12 @@ export default function CenarioTela() {
                   </div>
 
                   {/* ── CENTER: Vinyl + Music Info ── */}
-                  <div style={{ position: "absolute", top: "18%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }}>
+                  {(() => {
+                    const p = elPos("vinyl");
+                    const style: React.CSSProperties = p
+                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, transform: `translate(-50%, -50%) scale(${p.scale})`, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }
+                      : { position: "absolute", top: "18%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 };
+                    return <div style={style}>
                     {musicData ? (
                       <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                         {/* Vinyl disc */}
