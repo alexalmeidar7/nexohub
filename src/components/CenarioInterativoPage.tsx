@@ -91,13 +91,13 @@ const defaultConfig: CenarioConfig = {
 };
 
 const CURRENCY_OPTIONS = [
-  { value: "USD", label: "Dólar Comercial (USD)" },
-  { value: "EUR", label: "Euro (EUR)" },
-  { value: "GBP", label: "Libra Esterlina (GBP)" },
-  { value: "ARS", label: "Peso Argentino (ARS)" },
-  { value: "JPY", label: "Iene Japonês (JPY)" },
-  { value: "BTC", label: "Bitcoin (BTC)" },
-  { value: "ETH", label: "Ethereum (ETH)" },
+  { value: "USD", label: "Dólar Comercial (USD)", flag: "US" },
+  { value: "EUR", label: "Euro (EUR)", flag: "EU" },
+  { value: "GBP", label: "Libra Esterlina (GBP)", flag: "GB" },
+  { value: "ARS", label: "Peso Argentino (ARS)", flag: "AR" },
+  { value: "JPY", label: "Iene Japonês (JPY)", flag: "JP" },
+  { value: "BTC", label: "Bitcoin (BTC)", flag: "BT" },
+  { value: "ETH", label: "Ethereum (ETH)", flag: "ET" },
 ];
 
 const weatherIcons: Record<number, string> = {
