@@ -38,6 +38,40 @@ export default function RoteiroPrograma() {
   const [txtEditText, setTxtEditText] = useState("");
   const [txtSaving, setTxtSaving] = useState(false);
 
+  const roteiroToPlainText = (r: any): string => {
+    let parts: any = null;
+    try { let raw = r.participantes; if (typeof raw === "string") raw = JSON.parse(raw); if (typeof raw === "string") raw = JSON.parse(raw); parts = raw; } catch { parts = {}; }
+    const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
+    const pList: any[] = parsed.participantes || [];
+    const blocosList: any[] = parsed.blocos || [];
+    const escaladaItems: any[] = parsed.escaladaList || [];
+
+    let text = "";
+    text += `Estúdio: ${r.estudio || ""}\n`;
+    text += `Programa: ${r.programa_nome || ""}\n\n`;
+    if (pList.length > 0) {
+      text += `EQUIPE:\n`;
+      pList.forEach((p: any) => {
+        text += `- ${p.nome || ""}${p.cargo ? ` – ${p.cargo}` : ""}${p.instagram ? ` : ${p.instagram.startsWith("@") ? p.instagram : `@${p.instagram}`}` : ""}\n`;
+      });
+      text += "\n";
+    }
+    if (escaladaItems.length > 0) {
+      text += `ESCALADA:\n`;
+      escaladaItems.forEach((e: any, i: number) => { text += `${i + 1}. ${e.titulo || e}\n`; });
+      text += "\n";
+    }
+    blocosList.forEach((b: any, bi: number) => {
+      text += `BLOCO ${bi + 1}:\n`;
+      (b.noticias || []).forEach((n: any) => {
+        if (!n.titulo) return;
+        text += `- ${n.titulo}\n`;
+      });
+      text += "\n";
+    });
+    return text.trim();
+  };
+
   const handleSaveTxtRoteiro = async () => {
     if (!txtEditRoteiroId || !txtEditText.trim()) return;
     setTxtSaving(true);
@@ -202,7 +236,7 @@ export default function RoteiroPrograma() {
                     <button onClick={() => excluirRoteiro(r.id)} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
                       <Trash2 size={10} style={{ color: "#dc2626" }} />
                     </button>
-                    <button onClick={() => { setTxtEditRoteiroId(r.id); setTxtEditText(r.conteudo_html || ""); }} className="h-6 px-1.5 flex items-center justify-center gap-1 rounded-md hover:opacity-70 transition text-[8px] font-bold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }} title="Editar Roteiro TXT">
+                    <button onClick={() => { setTxtEditRoteiroId(r.id); setTxtEditText(roteiroToPlainText(r)); }} className="h-6 px-1.5 flex items-center justify-center gap-1 rounded-md hover:opacity-70 transition text-[8px] font-bold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }} title="Editar Roteiro TXT">
                       <FileText size={10} /> TXT
                     </button>
                   </div>
