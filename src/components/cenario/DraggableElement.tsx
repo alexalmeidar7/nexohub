@@ -58,7 +58,7 @@ export default function DraggableElement({ id, position, onMove, children, conta
       cursor: isLocked ? "default" : "grab",
       transform: `scale(${position.scale})`,
       transformOrigin: anchor === "top-right" ? "top right" : anchor === "bottom-right" ? "bottom right" : anchor === "bottom-left" ? "bottom left" : anchor === "center" ? "center" : "top left",
-      outline: isLocked ? "none" : hovered ? "2px dashed rgba(255,255,255,0.4)" : "none",
+      outline: isLocked ? "1px dashed rgba(239,68,68,0.25)" : hovered ? "2px dashed rgba(255,255,255,0.4)" : "none",
       outlineOffset: 4,
       transition: dragging.current ? "none" : "outline 0.2s",
       pointerEvents: isLocked ? "none" : "auto",
