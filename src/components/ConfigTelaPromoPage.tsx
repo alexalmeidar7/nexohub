@@ -56,6 +56,15 @@ export function buildTelaPromoBgStyle(config: TelaPromoConfig): React.CSSPropert
   }
 }
 
+const PRESETS: { name: string; config: Partial<TelaPromoConfig> }[] = [
+  { name: "🔴 Vermelho Clássico", config: { bg_type: "degrade", gradient_color_a: "#1a1a2e", gradient_color_b: "#16213e", gradient_angle: 135, btn_color_a: "#1a1a1a", btn_color_b: "#dc2626", btn_text_color: "#ffffff", card_border_color: "#ffffff", header_text_color: "#ffffff", card_style: "rounded" } },
+  { name: "🔵 Azul Moderno", config: { bg_type: "degrade", gradient_color_a: "#0f172a", gradient_color_b: "#1e3a5f", gradient_angle: 160, btn_color_a: "#1e40af", btn_color_b: "#3b82f6", btn_text_color: "#ffffff", card_border_color: "#93c5fd", header_text_color: "#e0f2fe", card_style: "rounded" } },
+  { name: "🟢 Verde Neon", config: { bg_type: "degrade", gradient_color_a: "#022c22", gradient_color_b: "#064e3b", gradient_angle: 145, btn_color_a: "#065f46", btn_color_b: "#10b981", btn_text_color: "#ffffff", card_border_color: "#34d399", header_text_color: "#d1fae5", card_style: "pill" } },
+  { name: "🟡 Dourado Premium", config: { bg_type: "degrade", gradient_color_a: "#1c1917", gradient_color_b: "#292524", gradient_angle: 135, btn_color_a: "#92400e", btn_color_b: "#f59e0b", btn_text_color: "#1c1917", card_border_color: "#fbbf24", header_text_color: "#fef3c7", card_style: "rounded" } },
+  { name: "🟣 Roxo Vibrante", config: { bg_type: "degrade", gradient_color_a: "#1e1b4b", gradient_color_b: "#312e81", gradient_angle: 150, btn_color_a: "#5b21b6", btn_color_b: "#a78bfa", btn_text_color: "#ffffff", card_border_color: "#c4b5fd", header_text_color: "#ede9fe", card_style: "rounded" } },
+  { name: "⬛ Escuro Minimalista", config: { bg_type: "cor", bg_color: "#0a0a0a", btn_color_a: "#262626", btn_color_b: "#404040", btn_text_color: "#ffffff", card_border_color: "#525252", header_text_color: "#e5e5e5", card_style: "sharp" } },
+];
+
 const inputStyle = { backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.18)" };
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
