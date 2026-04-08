@@ -61,7 +61,7 @@ export default function DraggableElement({ id, position, onMove, children, conta
       outline: isLocked ? "1px dashed rgba(239,68,68,0.25)" : hovered ? "2px dashed rgba(255,255,255,0.4)" : "none",
       outlineOffset: 4,
       transition: dragging.current ? "none" : "outline 0.2s",
-      pointerEvents: isLocked ? "none" : "auto",
+      // locked elements still receive hover for lock toggle button
     };
     if (anchor === "top-left" || anchor === "center") {
       base.left = `${position.x}%`;
