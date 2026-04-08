@@ -1745,9 +1745,9 @@ export default function CenarioInterativoPage() {
                                       <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain" style={{ maxWidth: "80%", maxHeight: "80%" }} />
                                     </div></div>
                                   ) : (
-                                    <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5, background: "rgba(255,255,255,0.08)" }}>
+                                    <div className="relative" style={{ width: "100%", borderRadius: 6, marginBottom: 5, background: "rgba(255,255,255,0.08)" }}><div style={{ paddingBottom: "100%" }} /><div className="flex items-center justify-center" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
                                       <div className="font-black text-center text-white" style={{ fontSize: 14, lineHeight: 1.1 }}>{currentProgram.nome}</div>
-                                    </div>
+                                    </div></div>
                                   )}
                                   {musicData && (
                                     <>
@@ -1771,11 +1771,11 @@ export default function CenarioInterativoPage() {
                               return (
                                 <div key={musicKey} className="flex flex-col items-center" style={{ width: "85%", padding: "6px 8px 8px", borderRadius: 10, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(16px)", border: "1.5px solid rgba(225,245,50,0.15)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                                   {musicData.capa ? (
-                                    <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5 }} />
+                                    <div className="relative" style={{ width: "100%", borderRadius: 6, marginBottom: 5, overflow: "hidden" }}><div style={{ paddingBottom: "100%" }} /><img src={musicData.capa} alt="" className="object-cover" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", borderRadius: 6 }} /></div>
                                   ) : (
-                                    <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5, background: "rgba(255,255,255,0.08)" }}>
+                                    <div className="relative" style={{ width: "100%", borderRadius: 6, marginBottom: 5, background: "rgba(255,255,255,0.08)" }}><div style={{ paddingBottom: "100%" }} /><div className="flex items-center justify-center" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
                                       <Music size={28} style={{ opacity: 0.3, color: "#fff" }} />
-                                    </div>
+                                    </div></div>
                                   )}
                                   <div className="flex items-center self-start gap-1" style={{ maxWidth: "100%" }}>
                                     <Play size={10} style={{ color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 4px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
