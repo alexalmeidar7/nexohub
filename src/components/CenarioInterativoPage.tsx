@@ -1822,14 +1822,18 @@ export default function CenarioInterativoPage() {
                           </div>
                         </DraggableElement>
 
-                        {/* Presenter photo — draggable */}
+                        {/* Presenter PHOTO — draggable */}
                         {currentProgram?.apresentadorFoto && (
-                          <DraggableElement id="presenter" position={getElPos("presenter")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
+                          <DraggableElement id="presenterPhoto" position={getElPos("presenterPhoto")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
+                            <img src={currentProgram.apresentadorFoto} alt="" style={{ height: 160, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(2px 0 8px rgba(0,0,0,0.4))" }} />
+                          </DraggableElement>
+                        )}
+
+                        {/* Presenter NAME + TIME — draggable */}
+                        {currentProgram?.apresentador && (
+                          <DraggableElement id="presenterInfo" position={getElPos("presenterInfo")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
                             <div>
-                              <img src={currentProgram.apresentadorFoto} alt="" style={{ height: 160, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(2px 0 8px rgba(0,0,0,0.4))" }} />
-                              {currentProgram.apresentador && (
-                                <div className="font-black" style={{ fontSize: 9, lineHeight: 1.2, textShadow: "0 1px 4px rgba(0,0,0,0.6)", marginTop: 2 }}>{currentProgram.apresentador}</div>
-                              )}
+                              <div className="font-black" style={{ fontSize: 9, lineHeight: 1.2, textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>{currentProgram.apresentador}</div>
                               <div className="font-medium" style={{ fontSize: 6, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>
                                 {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                               </div>
@@ -1837,26 +1841,30 @@ export default function CenarioInterativoPage() {
                           </DraggableElement>
                         )}
 
-                        {/* Program logo + "a seguir" — draggable */}
-                        <DraggableElement id="program" position={getElPos("program")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-right">
+                        {/* Program LOGO — draggable */}
+                        <DraggableElement id="programLogo" position={getElPos("programLogo")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-right">
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
                             {currentProgram?.selo ? (
-                              <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: 70, maxHeight: 55, marginBottom: 5 }} />
+                              <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: 70, maxHeight: 55 }} />
                             ) : currentProgram ? (
-                              <div className="font-black text-right" style={{ fontSize: 10, lineHeight: 1.1, maxWidth: 70, marginBottom: 5 }}>{currentProgram.nome}</div>
+                              <div className="font-black text-right" style={{ fontSize: 10, lineHeight: 1.1, maxWidth: 70 }}>{currentProgram.nome}</div>
                             ) : null}
-                            {nextProgram && (
-                              <div className="flex items-start" style={{ gap: 4 }}>
-                                <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.3)", marginTop: 1, flexShrink: 0 }} />
-                                <div>
-                                  <div className="font-semibold" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)" }}>a seguir</div>
-                                  <div className="font-bold" style={{ fontSize: 8, lineHeight: 1.2 }}>{nextProgram.nome}</div>
-                                  <div className="font-medium" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
-                                </div>
-                              </div>
-                            )}
                           </div>
                         </DraggableElement>
+
+                        {/* "A seguir" — draggable */}
+                        {nextProgram && (
+                          <DraggableElement id="programNext" position={getElPos("programNext")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-right">
+                            <div className="flex items-start" style={{ gap: 4 }}>
+                              <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.3)", marginTop: 1, flexShrink: 0 }} />
+                              <div>
+                                <div className="font-semibold" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)" }}>a seguir</div>
+                                <div className="font-bold" style={{ fontSize: 8, lineHeight: 1.2 }}>{nextProgram.nome}</div>
+                                <div className="font-medium" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                              </div>
+                            </div>
+                          </DraggableElement>
+                        )}
 
                         {/* Progress bar */}
                         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.1)", zIndex: 15 }}>
