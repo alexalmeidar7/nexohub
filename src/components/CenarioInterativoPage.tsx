@@ -285,6 +285,7 @@ export default function CenarioInterativoPage() {
   const [shapeStartPos, setShapeStartPos] = useState<{ px: number; py: number } | null>(null);
   const drawHistoryRef = useRef<ImageData[]>([]);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const homeContentRef = useRef<HTMLDivElement>(null);
   const previewIsDrawingRef = useRef(false);
   const PREV_DRAW_COLORS = ["#ff3b3b", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
   const PREV_DRAW_WIDTHS = [2, 4, 8, 14];
