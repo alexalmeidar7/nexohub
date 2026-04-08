@@ -1709,26 +1709,22 @@ export default function CenarioInterativoPage() {
                   <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.chat.enabled && handleTabChange("chat")} style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                     <MessageCircle size={13} className="text-white" />
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-1 cursor-pointer" onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} style={{ background: previewDrawActive ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawActive ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", transition: "all 0.2s ease" }}>
-                    <Pen size={16} className="text-white" />
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center mt-0.5 cursor-pointer" onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} style={{ background: previewDrawActive ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawActive ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", transition: "all 0.2s ease" }}>
+                    <Pen size={12} className="text-white" />
                   </div>
                   {previewDrawActive && (
                     <>
-                      {/* Color picker */}
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} style={{ background: showPreviewDrawOptions ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: previewDrawColor }} />
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} style={{ background: showPreviewDrawOptions ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: previewDrawColor }} />
                       </div>
-                      {/* Eraser */}
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} style={{ background: previewDrawMode === "eraser" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "eraser" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
-                        <Eraser size={13} className="text-white" />
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center cursor-pointer" onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} style={{ background: previewDrawMode === "eraser" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "eraser" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                        <Eraser size={10} className="text-white" />
                       </div>
-                      {/* Undo */}
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={undoLastDraw} style={{ background: "rgba(255,255,255,0.12)", transition: "all 0.2s ease" }}>
-                        <Undo2 size={13} className="text-white" />
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center cursor-pointer" onClick={undoLastDraw} style={{ background: "rgba(255,255,255,0.12)", transition: "all 0.2s ease" }}>
+                        <Undo2 size={10} className="text-white" />
                       </div>
-                      {/* Shapes */}
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} style={{ background: previewDrawMode === "shape" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "shape" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
-                        <Shapes size={13} className="text-white" />
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} style={{ background: previewDrawMode === "shape" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "shape" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
+                        <Shapes size={10} className="text-white" />
                       </div>
                     </>
                   )}
