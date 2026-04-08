@@ -1623,21 +1623,28 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0.9) 100%)" }} />
       </div>
 
-      {/* Video area */}
-      {showVideo && isVideo && (
-        <div className="relative -mx-4 -mt-4 mb-2 overflow-hidden flex-shrink-0 rounded-t-2xl" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.6)", maxHeight: "280px" }}>
-          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "280px", background: "#000" }} />
-          {videoLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.8)" }}>
-              <Loader2 size={20} className="text-white/70 animate-spin" />
-              <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Video area — grows upward with animation */}
+      <div
+        className="relative -mx-4 -mt-4 overflow-hidden flex-shrink-0 rounded-t-2xl"
+        style={{
+          boxShadow: showVideo && isVideo ? "0 8px 32px rgba(0,0,0,0.6)" : "none",
+          maxHeight: showVideo && isVideo ? "280px" : "0px",
+          opacity: showVideo && isVideo ? 1 : 0,
+          transition: "max-height 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease, margin-bottom 0.45s ease",
+          marginBottom: showVideo && isVideo ? "8px" : "0px",
+        }}
+      >
+        <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "280px", background: "#000" }} />
+        {videoLoading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.8)" }}>
+            <Loader2 size={20} className="text-white/70 animate-spin" />
+            <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
+          </div>
+        )}
+      </div>
 
       {/* Spacer */}
-      {!(showVideo && isVideo) && <div className="flex-1 min-h-0" />}
+      {!(showVideo && isVideo) && <div className="flex-1 min-h-0" style={{ transition: "flex 0.4s ease" }} />}
 
       {/* Controls */}
       {channels.length === 0 ? (
@@ -1652,8 +1659,17 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
               </button>
             )}
 
-            {!showVideo && (
-              <div className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative" style={{ background: "rgba(255,255,255,0.05)", boxShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
+            <div
+              className="rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative"
+              style={{
+                width: showVideo ? 0 : 56,
+                height: showVideo ? 0 : 56,
+                opacity: showVideo ? 0 : 1,
+                transition: "width 0.4s cubic-bezier(0.4,0,0.2,1), height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease",
+                background: "rgba(255,255,255,0.05)",
+                boxShadow: "0 4px 15px rgba(0,0,0,0.5)",
+              }}
+            >
                 {fadingArt && (
                   <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" style={{ transition: "opacity 0.5s ease-out", opacity: 0 }} />
                 )}
@@ -1672,7 +1688,6 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
                   </div>
                 )}
               </div>
-            )}
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
