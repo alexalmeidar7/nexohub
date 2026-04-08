@@ -1092,6 +1092,26 @@ export default function CenarioTela() {
                       <span style={{ fontSize: `1.2${vu}`, color: "#fff", fontWeight: 500 }}>{currentProgram.apresentador}</span>
                     </div>
                   )}
+                  {/* Sponsor logos below program info */}
+                  {sponsorLogos.length > 0 && (
+                    <div className="relative flex items-center justify-center" style={{ marginTop: `1${vu}`, height: `5${vu}` }}>
+                      {sponsorLogos.map((l, i) => l.logo_url && (
+                        <img
+                          key={l.id}
+                          src={l.logo_url}
+                          alt={l.nome}
+                          className="object-contain rounded drop-shadow-md absolute"
+                          style={{
+                            width: `4.5${vu}`, height: `4.5${vu}`,
+                            background: "rgba(255,255,255,0.15)", padding: 2,
+                            opacity: i === sponsorIdx ? 1 : 0,
+                            transform: i === sponsorIdx ? "scale(1)" : "scale(0.85)",
+                            transition: "opacity 0.8s ease, transform 0.8s ease",
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
 
