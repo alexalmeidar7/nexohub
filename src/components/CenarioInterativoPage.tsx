@@ -1584,11 +1584,12 @@ export default function CenarioInterativoPage() {
               style={{
                 width: "100%",
                 maxWidth: 300,
-                aspectRatio: "9/16",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
                 border: "2px solid rgba(255,255,255,0.08)",
               }}
             >
+              {/* 9:16 aspect ratio spacer (CEF 86 compat - no aspect-ratio) */}
+              <div style={{ paddingBottom: "177.78%" }} />
               <div className="absolute inset-0 flex" style={{ fontSize: 10 }}>
                 {/* Fullscreen background layers behind sidebar */}
                 {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
@@ -1740,9 +1741,9 @@ export default function CenarioInterativoPage() {
                               return (
                                 <div key={`jornal-${currentProgram.id}`} className="flex flex-col items-center" style={{ width: "85%", padding: "6px 8px 8px", borderRadius: 10, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(16px)", border: "1.5px solid rgba(225,245,50,0.15)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                                   {currentProgram.selo ? (
-                                    <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5, background: "rgba(0,0,0,0.3)", overflow: "hidden" }}>
+                                    <div className="relative" style={{ width: "100%", borderRadius: 6, marginBottom: 5, background: "rgba(0,0,0,0.3)", overflow: "hidden" }}><div style={{ paddingBottom: "100%" }} /><div className="flex items-center justify-center" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
                                       <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain" style={{ maxWidth: "80%", maxHeight: "80%" }} />
-                                    </div>
+                                    </div></div>
                                   ) : (
                                     <div className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1/1", borderRadius: 6, marginBottom: 5, background: "rgba(255,255,255,0.08)" }}>
                                       <div className="font-black text-center text-white" style={{ fontSize: 14, lineHeight: 1.1 }}>{currentProgram.nome}</div>
