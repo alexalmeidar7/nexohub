@@ -1127,7 +1127,7 @@ export default function CenarioTela() {
                   <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", height: "0", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.6) 0%, transparent 70%)", pointerEvents: "none" }} />
 
                   {/* ── HEADER: Clock (top-left) ── */}
-                  <div style={{ position: "absolute", top: `3${vu}`, left: `3${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                  <div style={{ position: "absolute", top: `calc(3${vu} + 40px)`, left: `3${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                     <div className="font-black" style={{ fontSize: `5${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
                       {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                     </div>
@@ -1138,7 +1138,7 @@ export default function CenarioTela() {
 
                   {/* ── SPONSOR (top-right) ── */}
                   {sponsorLogos.length > 0 && (
-                    <div style={{ position: "absolute", top: `3${vu}`, right: `3${vu}`, zIndex: 10, textAlign: "right", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
+                    <div style={{ position: "absolute", top: `calc(3${vu} + 40px)`, right: `3${vu}`, zIndex: 10, textAlign: "right", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
                       <div style={{ fontSize: `1.2${vu}`, opacity: 0.7, marginBottom: `0.6${vu}` }}>esse programa é oferecido por</div>
                       <div className="relative flex items-center justify-end" style={{ height: `21${vu}` }}>
                         {sponsorLogos.map((l, i) => l.logo_url && (
