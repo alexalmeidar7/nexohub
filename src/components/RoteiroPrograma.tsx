@@ -72,10 +72,83 @@ export default function RoteiroPrograma() {
     return text.trim();
   };
 
+  const fetchLinkMeta = async (url: string): Promise<{ titulo: string; imagemUrl: string } | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-rss", { body: { url } });
+      if (!error && data?.ok && data.content) {
+        const html = data.content as string;
+        const getMetaContent = (property: string): string => {
+          const patterns = [
+            new RegExp(`<meta[^>]+property=["']${property}["'][^>]+content=["']([^"']+)["']`, "i"),
+            new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${property}["']`, "i"),
+            new RegExp(`<meta[^>]+name=["']${property}["'][^>]+content=["']([^"']+)["']`, "i"),
+            new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${property}["']`, "i"),
+          ];
+          for (const p of patterns) { const m = html.match(p); if (m?.[1]) return m[1]; }
+          return "";
+        };
+        const titulo = getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
+        const imagemUrl = getMetaContent("og:image") || getMetaContent("twitter:image");
+        if (titulo || imagemUrl) return { titulo, imagemUrl };
+      }
+    } catch {}
+    return null;
+  };
+
   const handleSaveTxtRoteiro = async () => {
     if (!txtEditRoteiroId || !txtEditText.trim()) return;
     setTxtSaving(true);
-    const { error } = await supabase.from("roteiros").update({ conteudo_html: txtEditText, updated_at: new Date().toISOString() }).eq("id", txtEditRoteiroId);
+
+    // Parse URLs from text
+    const urlRegex = /https?:\/\/[^\s,)}\]]+/gi;
+    const lines = txtEditText.split("\n");
+    const foundUrls: string[] = [];
+    lines.forEach(line => { const matches = line.match(urlRegex); if (matches) foundUrls.push(...matches); });
+
+    // Fetch metadata for all new URLs
+    let updatedParticipantes: any = null;
+    if (foundUrls.length > 0) {
+      const roteiro = historico.find(r => r.id === txtEditRoteiroId);
+      if (roteiro) {
+        let parts: any = null;
+        try { let raw = roteiro.participantes; if (typeof raw === "string") raw = JSON.parse(raw); if (typeof raw === "string") raw = JSON.parse(raw); parts = raw; } catch { parts = {}; }
+        const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
+        const blocosList: any[] = parsed.blocos || [];
+
+        // Collect existing links
+        const existingLinks = new Set<string>();
+        blocosList.forEach((b: any) => (b.noticias || []).forEach((n: any) => { if (n.link) existingLinks.add(n.link); }));
+
+        // Find new links
+        const newUrls = foundUrls.filter(u => !existingLinks.has(u));
+
+        if (newUrls.length > 0) {
+          toast.info(`Buscando dados de ${newUrls.length} link(s)...`);
+          const metaResults = await Promise.all(newUrls.map(u => fetchLinkMeta(u).then(meta => ({ url: u, meta }))));
+
+          // Add new links as noticias to the last bloco (or create one)
+          if (blocosList.length === 0) blocosList.push({ noticias: [] });
+          const lastBloco = blocosList[blocosList.length - 1];
+          if (!lastBloco.noticias) lastBloco.noticias = [];
+
+          for (const { url, meta } of metaResults) {
+            lastBloco.noticias.push({
+              titulo: meta?.titulo || url,
+              imagemUrl: meta?.imagemUrl || "",
+              escalada: false,
+              link: url,
+            });
+          }
+
+          updatedParticipantes = { ...parsed, blocos: blocosList };
+        }
+      }
+    }
+
+    const updatePayload: any = { conteudo_html: txtEditText, updated_at: new Date().toISOString() };
+    if (updatedParticipantes) updatePayload.participantes = JSON.stringify(updatedParticipantes);
+
+    const { error } = await supabase.from("roteiros").update(updatePayload).eq("id", txtEditRoteiroId);
     setTxtSaving(false);
     if (error) { toast.error("Erro ao salvar"); return; }
     toast.success("Roteiro atualizado!");
