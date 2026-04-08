@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { History, Trash2, Pencil, Code2, Copy, MessageSquare, ChevronUp, ChevronDown } from "lucide-react";
+import { History, Trash2, Pencil, Code2, Copy, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
@@ -30,7 +30,7 @@ export default function RoteiroPrograma() {
   const [loading, setLoading] = useState(true);
   const [estudios, setEstudios] = useState<string[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
-  const [historicoIdx, setHistoricoIdx] = useState(0);
+  
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
   const [whatsAppHistoricoData, setWhatsAppHistoricoData] = useState<any>(null);
   const [expressEditData, setExpressEditData] = useState<ExpressEditData | null>(null);
@@ -104,112 +104,98 @@ export default function RoteiroPrograma() {
 
   const historicoSlot = useMemo(() => {
     if (historico.length === 0) return null;
-    const r = historico[historicoIdx];
-    if (!r) return null;
-    const dataFormatada = format(new Date(r.data_programa), "dd/MM/yyyy");
-    const isAgd = r.status === "agendado";
-    const isFeito = r.status === "feito";
     return (
       <div className="px-6 pt-4 pb-2">
         <div className="rounded-xl p-3" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
           <div className="flex items-center gap-2 mb-2">
             <History size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
             <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Últimos roteiros</p>
-            <span className="text-[10px] ml-auto" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{historicoIdx + 1}/{historico.length}</span>
+            <span className="text-[10px] ml-auto" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{historico.length}</span>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  {r.programa_nome || "Sem programa"}
-                  {r.numero_roteiro && <span className="text-xs font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}> #{r.numero_roteiro}</span>}
-                </p>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{
-                  backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
-                  color: isFeito ? "#16a34a" : isAgd ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
-                }}>{isFeito ? "feito" : isAgd ? "agendado" : r.status}</span>
-              </div>
-              <p className="text-xs font-medium mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-                {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
-              </p>
-              {r.editado_at && (
-                <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                  Editado: {format(new Date(r.editado_at), "dd/MM/yyyy 'às' HH:mm")}
-                  {r.share_login ? ` por: ${r.share_login}` : ""}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-1 ml-2 flex-wrap">
-              {r.subtitulo?.startsWith("express_xml::") && (
-                <button onClick={() => { const xmlUrl = r.subtitulo.replace("express_xml::", ""); navigator.clipboard.writeText(xmlUrl).then(() => toast.success("URL do XML copiada!")).catch(() => toast.error("Erro ao copiar")); }}
-                  className="h-7 px-2 flex items-center justify-center gap-1 rounded-lg hover:opacity-70 transition text-[9px] font-bold"
-                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }} title="Copiar URL do XML">
-                  <Code2 size={12} /> XML
-                </button>
-              )}
-              <button onClick={async () => {
-                let parts: any = null;
-                try { let raw = r.participantes; if (typeof raw === "string") raw = JSON.parse(raw); if (typeof raw === "string") raw = JSON.parse(raw); parts = raw; } catch { parts = []; }
-                const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
-                const pList: any[] = parsed.participantes || [];
-                const blocosList: any[] = parsed.blocos || [];
-                const dataStr = format(new Date(r.data_programa), "dd/MM/yyyy");
-                const prog = programas.find(p => p.nome === r.programa_nome);
-                const horarioInicio = prog?.horario_inicio?.slice(0, 5) || r.horario || "";
-                const allLinks: string[] = [];
-                blocosList.forEach((b: any) => (b.noticias || []).forEach((n: any) => { if (n.link) allLinks.push(n.link); }));
-                const linkMap = new Map<string, string>();
-                if (allLinks.length > 0) {
-                  toast.info("Encurtando links...");
-                  try { const { data: shortData } = await supabase.functions.invoke("format-whatsapp", { body: { urls: allLinks } }); if (shortData?.shortened) allLinks.forEach((url, i) => linkMap.set(url, shortData.shortened[i])); } catch { allLinks.forEach(url => linkMap.set(url, url)); }
-                }
-                let msg = `*${r.programa_nome || "Programa"}*\n📅 ${dataStr}${horarioInicio ? ` às ${horarioInicio}` : ""}\n\n`;
-                if (pList.length > 0) { msg += `👥 *Participantes:*\n`; pList.forEach((p: any) => { msg += `• ${p.nome}${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (${p.instagram.startsWith("@") ? p.instagram : "@" + p.instagram})` : ""}\n`; }); msg += `\n`; }
-                const escaladaItems = blocosList.flatMap((b: any) => (b.noticias || []).filter((n: any) => n.escalada).map((n: any) => n.titulo)).filter(Boolean);
-                if (escaladaItems.length > 0) { msg += `📢 *Escalada:*\n`; escaladaItems.forEach((t: string, i: number) => { msg += `${i + 1}. ${t}\n`; }); msg += `\n`; }
-                blocosList.forEach((b: any, bi: number) => { const noticias = (b.noticias || []).filter((n: any) => n.titulo); if (noticias.length === 0) return; msg += `📺 *BLOCO ${bi + 1}:*\n`; noticias.forEach((n: any) => { msg += `• ${n.titulo}`; if (n.link) msg += `\n  🔗 ${linkMap.get(n.link) || n.link}`; msg += `\n`; }); msg += `\n`; });
-                msg += `_Nos vemos no programa ;)_`;
-                setWhatsAppHistoricoData({ titulo: r.titulo || "Roteiro", programaNome: r.programa_nome || "", estudio: r.estudio || "", data: dataStr, horario: r.horario || "", participantes: pList, conteudoTexto: "", _expressFormatted: msg });
-                setShowWhatsAppDialog(true);
-              }} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(37,211,102,0.08)" }} title="Enviar por WhatsApp">
-                <MessageSquare size={12} style={{ color: "#25d366" }} />
-              </button>
-              <button onClick={() => {
-                let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = [];
-                try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
-                const prog = programas.find(p => p.nome === r.programa_nome);
-                let existingXmlPath: string | undefined;
-                if (r.subtitulo?.startsWith("express_xml::")) {
-                  try {
-                    const xmlUrl = r.subtitulo.replace("express_xml::", "");
-                    const urlObj = new URL(xmlUrl);
-                    const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
-                    if (pathMatch) existingXmlPath = pathMatch[1];
-                  } catch {}
-                }
-                setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath });
-              }} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
-                <Pencil size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
-              </button>
-              <button onClick={() => excluirRoteiro(r.id)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
-                <Trash2 size={12} style={{ color: "#dc2626" }} />
-              </button>
-              {historico.length > 1 && (
-                <div className="flex flex-col ml-1">
-                  <button disabled={historicoIdx === 0} onClick={() => setHistoricoIdx(i => i - 1)} className="h-5 w-5 flex items-center justify-center rounded hover:opacity-70 transition disabled:opacity-30" style={{ color: "var(--layout-icon-color, #888888)" }} title="Anterior">
-                    <ChevronUp size={14} />
-                  </button>
-                  <button disabled={historicoIdx === historico.length - 1} onClick={() => setHistoricoIdx(i => i + 1)} className="h-5 w-5 flex items-center justify-center rounded hover:opacity-70 transition disabled:opacity-30" style={{ color: "var(--layout-icon-color, #888888)" }} title="Próximo">
-                    <ChevronDown size={14} />
-                  </button>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {historico.map((r, idx) => {
+              const dataFormatada = format(new Date(r.data_programa), "dd/MM/yyyy");
+              const isFeito = r.status === "feito";
+              const isAgd = r.status === "agendado";
+              return (
+                <div key={r.id} className="flex-shrink-0 rounded-lg p-2.5 flex flex-col gap-1.5 transition-all hover:brightness-95" style={{ minWidth: "220px", maxWidth: "280px", backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)" }}>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold truncate flex-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                      {r.programa_nome || "Sem programa"}
+                      {r.numero_roteiro && <span className="text-[10px] font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}> #{r.numero_roteiro}</span>}
+                    </p>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0" style={{
+                      backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
+                      color: isFeito ? "#16a34a" : isAgd ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
+                    }}>{isFeito ? "feito" : isAgd ? "agendado" : r.status}</span>
+                  </div>
+                  <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                    {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
+                  </p>
+                  <div className="flex items-center gap-1 mt-auto">
+                    {r.subtitulo?.startsWith("express_xml::") && (
+                      <button onClick={() => { const xmlUrl = r.subtitulo.replace("express_xml::", ""); navigator.clipboard.writeText(xmlUrl).then(() => toast.success("URL do XML copiada!")).catch(() => toast.error("Erro ao copiar")); }}
+                        className="h-6 px-1.5 flex items-center justify-center gap-1 rounded-md hover:opacity-70 transition text-[8px] font-bold"
+                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }} title="Copiar URL do XML">
+                        <Code2 size={10} /> XML
+                      </button>
+                    )}
+                    <button onClick={async () => {
+                      let parts: any = null;
+                      try { let raw = r.participantes; if (typeof raw === "string") raw = JSON.parse(raw); if (typeof raw === "string") raw = JSON.parse(raw); parts = raw; } catch { parts = []; }
+                      const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
+                      const pList: any[] = parsed.participantes || [];
+                      const blocosList: any[] = parsed.blocos || [];
+                      const dataStr = format(new Date(r.data_programa), "dd/MM/yyyy");
+                      const prog = programas.find(p => p.nome === r.programa_nome);
+                      const horarioInicio = prog?.horario_inicio?.slice(0, 5) || r.horario || "";
+                      const allLinks: string[] = [];
+                      blocosList.forEach((b: any) => (b.noticias || []).forEach((n: any) => { if (n.link) allLinks.push(n.link); }));
+                      const linkMap = new Map<string, string>();
+                      if (allLinks.length > 0) {
+                        toast.info("Encurtando links...");
+                        try { const { data: shortData } = await supabase.functions.invoke("format-whatsapp", { body: { urls: allLinks } }); if (shortData?.shortened) allLinks.forEach((url, i) => linkMap.set(url, shortData.shortened[i])); } catch { allLinks.forEach(url => linkMap.set(url, url)); }
+                      }
+                      let msg = `*${r.programa_nome || "Programa"}*\n📅 ${dataStr}${horarioInicio ? ` às ${horarioInicio}` : ""}\n\n`;
+                      if (pList.length > 0) { msg += `👥 *Participantes:*\n`; pList.forEach((p: any) => { msg += `• ${p.nome}${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (${p.instagram.startsWith("@") ? p.instagram : "@" + p.instagram})` : ""}\n`; }); msg += `\n`; }
+                      const escaladaItems = blocosList.flatMap((b: any) => (b.noticias || []).filter((n: any) => n.escalada).map((n: any) => n.titulo)).filter(Boolean);
+                      if (escaladaItems.length > 0) { msg += `📢 *Escalada:*\n`; escaladaItems.forEach((t: string, i: number) => { msg += `${i + 1}. ${t}\n`; }); msg += `\n`; }
+                      blocosList.forEach((b: any, bi: number) => { const noticias = (b.noticias || []).filter((n: any) => n.titulo); if (noticias.length === 0) return; msg += `📺 *BLOCO ${bi + 1}:*\n`; noticias.forEach((n: any) => { msg += `• ${n.titulo}`; if (n.link) msg += `\n  🔗 ${linkMap.get(n.link) || n.link}`; msg += `\n`; }); msg += `\n`; });
+                      msg += `_Nos vemos no programa ;)_`;
+                      setWhatsAppHistoricoData({ titulo: r.titulo || "Roteiro", programaNome: r.programa_nome || "", estudio: r.estudio || "", data: dataStr, horario: r.horario || "", participantes: pList, conteudoTexto: "", _expressFormatted: msg });
+                      setShowWhatsAppDialog(true);
+                    }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(37,211,102,0.08)" }} title="Enviar por WhatsApp">
+                      <MessageSquare size={10} style={{ color: "#25d366" }} />
+                    </button>
+                    <button onClick={() => {
+                      let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = [];
+                      try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
+                      const prog = programas.find(p => p.nome === r.programa_nome);
+                      let existingXmlPath: string | undefined;
+                      if (r.subtitulo?.startsWith("express_xml::")) {
+                        try {
+                          const xmlUrl = r.subtitulo.replace("express_xml::", "");
+                          const urlObj = new URL(xmlUrl);
+                          const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
+                          if (pathMatch) existingXmlPath = pathMatch[1];
+                        } catch {}
+                      }
+                      setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath });
+                    }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
+                      <Pencil size={10} style={{ color: "var(--layout-icon-color, #888888)" }} />
+                    </button>
+                    <button onClick={() => excluirRoteiro(r.id)} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
+                      <Trash2 size={10} style={{ color: "#dc2626" }} />
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         </div>
       </div>
     );
-  }, [historico, historicoIdx, programas]);
+  }, [historico, programas]);
 
   if (loading) return <ModulePageSkeleton />;
 
@@ -219,7 +205,7 @@ export default function RoteiroPrograma() {
         <ProgramaExpressInline
           programas={programas}
           estudios={estudios}
-          onFinish={async () => { setExpressEditData(null); await fetchHistorico(); setHistoricoIdx(0); }}
+          onFinish={async () => { setExpressEditData(null); await fetchHistorico(); }}
           editData={expressEditData}
           afterHeader={historicoSlot}
         />
