@@ -47,7 +47,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
         const originalDate = roteiroData.data;
         let text = roteiroData._expressFormatted;
         if (originalDate && originalDate !== today) {
-          text = text.replaceAll(originalDate, today);
+          text = text.split(originalDate).join(today);
         }
         setFormattedText(text);
         setLoading(false);
