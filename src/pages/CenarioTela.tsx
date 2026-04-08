@@ -1150,10 +1150,9 @@ export default function CenarioTela() {
 
                   {/* ── HEADER: Clock (top-left) ── */}
                   {(() => {
-                    const p = elPos("clock");
-                    const style: React.CSSProperties = p
-                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 10, transform: `scale(${p.scale})`, transformOrigin: "top left", animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }
-                      : { position: "absolute", top: `calc(3${vu} + 120px)`, left: `3${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" };
+                    const custom = elStyle("clock", "top-left", { animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" });
+                    const style: React.CSSProperties = custom
+                      ?? { position: "absolute", top: `calc(3${vu} + 120px)`, left: `3${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" };
                     return (
                       <div style={style}>
                         <div className="font-black" style={{ fontSize: `5${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
@@ -1168,10 +1167,9 @@ export default function CenarioTela() {
 
                   {/* ── SPONSOR (top-right) ── */}
                   {sponsorLogos.length > 0 && (() => {
-                    const p = elPos("sponsor");
-                    const style: React.CSSProperties = p
-                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 10, transform: `scale(${p.scale})`, transformOrigin: "top left", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" }
-                      : { position: "absolute", top: `calc(3${vu} + 30px)`, right: `3${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
+                    const custom = elStyle("sponsor", "top-left", { animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" });
+                    const style: React.CSSProperties = custom
+                      ?? { position: "absolute", top: `calc(3${vu} + 30px)`, right: `3${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
                     return (
                       <div style={style}>
                         <div className="relative flex items-center justify-end" style={{ height: `21${vu}` }}>
