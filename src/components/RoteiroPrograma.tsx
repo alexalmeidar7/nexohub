@@ -88,7 +88,8 @@ export default function RoteiroPrograma() {
           return "";
         };
         const rawTitulo = getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
-        const titulo = rawTitulo.includes("|") ? rawTitulo.split("|")[0].trim() : rawTitulo;
+        let titulo = rawTitulo.includes("|") ? rawTitulo.split("|")[0].trim() : rawTitulo;
+        if (titulo.includes(" - ")) titulo = titulo.split(" - ")[0].trim();
         const imagemUrl = getMetaContent("og:image") || getMetaContent("twitter:image");
         if (titulo || imagemUrl) return { titulo, imagemUrl };
       }
