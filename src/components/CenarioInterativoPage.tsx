@@ -1833,9 +1833,9 @@ export default function CenarioInterativoPage() {
                             <div className="flex items-start" style={{ gap: 4 }}>
                               <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.3)", marginTop: 1, flexShrink: 0 }} />
                               <div>
-                                <div className="font-semibold" style={{ fontSize: 5, opacity: 0.6 }}>a seguir</div>
+                                <div className="font-semibold" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)" }}>a seguir</div>
                                 <div className="font-bold" style={{ fontSize: 8, lineHeight: 1.2 }}>{nextProgram.nome}</div>
-                                <div className="font-medium" style={{ fontSize: 5, opacity: 0.6, fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                                <div className="font-medium" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                               </div>
                             </div>
                           )}
