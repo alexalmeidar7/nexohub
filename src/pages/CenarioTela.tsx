@@ -169,7 +169,7 @@ export default function CenarioTela() {
     return new URLSearchParams(window.location.search).get("weatherSubTab") || "today";
   });
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; tipo_programa?: string | null } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; tipo_programa?: string | null } | null>(null);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
