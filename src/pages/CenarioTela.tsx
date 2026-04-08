@@ -610,6 +610,7 @@ export default function CenarioTela() {
         try {
           const result = await fetchViaEdgeFunction(effectiveUserId);
           if (result?.cenario_config) applyConfig(result.cenario_config);
+          if (result?.accentColor) setAccentColor(result.accentColor);
           if (result?.currentProgram) {
             setCurrentProgram(result.currentProgram);
             setSponsorLogos(result.sponsorLogos || []);
