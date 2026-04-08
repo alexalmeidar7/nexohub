@@ -1816,7 +1816,7 @@ export default function CenarioInterativoPage() {
                             {currentProgram.apresentador && (
                               <div className="font-black" style={{ fontSize: 9, lineHeight: 1.2, textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>{currentProgram.apresentador}</div>
                             )}
-                            <div className="font-medium" style={{ fontSize: 6, opacity: 0.7, fontVariantNumeric: "tabular-nums" }}>
+                            <div className="font-medium" style={{ fontSize: 6, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>
                               {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                             </div>
                           </div>
