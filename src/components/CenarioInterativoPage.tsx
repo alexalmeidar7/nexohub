@@ -1749,19 +1749,18 @@ export default function CenarioInterativoPage() {
                         <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.5) 0%, transparent 70%)", pointerEvents: "none" }} />
 
                         {/* Clock top-left */}
-                        <div style={{ position: "absolute", top: 8, left: 8, zIndex: 10 }}>
+                        <div style={{ position: "absolute", top: 28, left: 8, zIndex: 10 }}>
                           <div className="font-black" style={{ fontSize: 18, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
                             {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                           </div>
-                          <div className="font-medium" style={{ fontSize: 7, opacity: 0.7, marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
+                          <div className="font-medium" style={{ fontSize: 7, color: "var(--layout-accent-color, #888)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
                             {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                           </div>
                         </div>
 
                         {/* Sponsor top-right */}
                         {sponsorLogos.length > 0 && (
-                          <div style={{ position: "absolute", top: 8, right: 8, zIndex: 10, textAlign: "right" }}>
-                            <div className="italic" style={{ fontSize: 5, opacity: 0.7, marginBottom: 3 }}>esse programa é oferecido por</div>
+                          <div style={{ position: "absolute", top: 6, right: 8, zIndex: 10 }}>
                             <div className="relative flex justify-end" style={{ height: 22 }}>
                               {sponsorLogos.map((l, i) => l.logo_url && (
                                 <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: 50, maxHeight: 20, opacity: i === sponsorIdx ? 1 : 0, transition: "opacity 0.8s ease", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.3))" }} />
