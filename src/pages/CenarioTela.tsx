@@ -1146,29 +1146,35 @@ export default function CenarioTela() {
                   })()}
 
                   {/* ── SPONSOR (top-right) ── */}
-                  {sponsorLogos.length > 0 && (
-                    <div style={{ position: "absolute", top: `calc(3${vu} + 30px)`, right: `3${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
-                      <div className="relative flex items-center justify-end" style={{ height: `21${vu}` }}>
-                        {sponsorLogos.map((l, i) => l.logo_url && (
-                          <img
-                            key={l.id}
-                            src={l.logo_url}
-                            alt={l.nome}
-                            className="object-contain"
-                            style={{
-                              position: "absolute",
-                              maxWidth: `50${vu}`, maxHeight: `20${vu}`,
-                              right: 0,
-                              opacity: i === sponsorIdx ? 1 : 0,
-                              transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
-                              transition: "opacity 0.8s ease, transform 0.8s ease",
-                              filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
-                            }}
-                          />
-                        ))}
+                  {sponsorLogos.length > 0 && (() => {
+                    const p = elPos("sponsor");
+                    const style: React.CSSProperties = p
+                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 10, transform: `scale(${p.scale})`, transformOrigin: "top left", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" }
+                      : { position: "absolute", top: `calc(3${vu} + 30px)`, right: `3${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
+                    return (
+                      <div style={style}>
+                        <div className="relative flex items-center justify-end" style={{ height: `21${vu}` }}>
+                          {sponsorLogos.map((l, i) => l.logo_url && (
+                            <img
+                              key={l.id}
+                              src={l.logo_url}
+                              alt={l.nome}
+                              className="object-contain"
+                              style={{
+                                position: "absolute",
+                                maxWidth: `50${vu}`, maxHeight: `20${vu}`,
+                                right: 0,
+                                opacity: i === sponsorIdx ? 1 : 0,
+                                transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
+                                transition: "opacity 0.8s ease, transform 0.8s ease",
+                                filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
+                              }}
+                            />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* ── SYNC indicator (below clock) ── */}
                   <div style={{ position: "absolute", top: `13${vu}`, left: `3${vu}`, zIndex: 20 }}>
