@@ -228,6 +228,8 @@ Deno.serve(async (req) => {
       }
     }
 
+    const accentColor = dashItems?.layout_colors?.accentColor || null;
+
     const responsePayload = {
       ok: true,
       cenario_config: (settings as any)?.cenario_config || {},
@@ -236,6 +238,7 @@ Deno.serve(async (req) => {
       sponsorLogos,
       musicData,
       musicStartTime,
+      accentColor,
     };
 
     // Store in cache
