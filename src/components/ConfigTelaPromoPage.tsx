@@ -284,7 +284,7 @@ export default function ConfigTelaPromoPage() {
             </button>
           </div>
           <div
-            className="rounded-2xl border overflow-hidden aspect-video flex flex-col items-center justify-center gap-5 p-8"
+            className="rounded-2xl border overflow-hidden aspect-video flex flex-col items-center justify-center gap-5 p-8 transition-all duration-500 ease-in-out"
             style={{
               ...buildTelaPromoBgStyle(config),
               borderColor: previewDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
