@@ -244,6 +244,41 @@ export default function RoteiroPrograma() {
           }}
         />
       </Suspense>
+
+      {/* TXT Edit Popup */}
+      {txtEditRoteiroId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={() => { setTxtEditRoteiroId(null); setTxtEditText(""); }}>
+          <div className="w-full max-w-lg mx-4 rounded-2xl p-5 space-y-3 shadow-2xl" style={{ backgroundColor: "var(--layout-page-bg, #fff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
+                <FileText size={16} /> Editar Roteiro TXT
+              </p>
+              <button onClick={() => { setTxtEditRoteiroId(null); setTxtEditText(""); }} className="p-1 rounded-full hover:opacity-70 transition" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+              Cole ou edite o conteúdo do roteiro abaixo
+            </p>
+            <textarea
+              value={txtEditText}
+              onChange={e => setTxtEditText(e.target.value)}
+              placeholder="Cole o texto do roteiro aqui..."
+              className="w-full px-3 py-2 rounded-xl text-xs outline-none resize-none"
+              rows={14}
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+            />
+            <button
+              onClick={handleSaveTxtRoteiro}
+              disabled={txtSaving || !txtEditText.trim()}
+              className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:brightness-110 flex items-center justify-center gap-2 disabled:opacity-40"
+              style={{ backgroundColor: "var(--layout-accent-color, #dc2626)", color: "#fff" }}
+            >
+              <Check size={14} /> {txtSaving ? "Salvando..." : "Salvar Roteiro"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
