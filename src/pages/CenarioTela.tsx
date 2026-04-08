@@ -1312,8 +1312,22 @@ export default function CenarioTela() {
 
 
                   {sponsorLogos.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: `0.5${vu}`, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
-                      {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: `4${vu}`, height: `4${vu}`, background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
+                    <div className="relative flex items-center justify-center" style={{ marginTop: `0.5${vu}`, height: `5${vu}`, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}>
+                      {sponsorLogos.map((l, i) => l.logo_url && (
+                        <img
+                          key={l.id}
+                          src={l.logo_url}
+                          alt={l.nome}
+                          className="object-contain rounded drop-shadow-md absolute"
+                          style={{
+                            width: `4.5${vu}`, height: `4.5${vu}`,
+                            background: "rgba(255,255,255,0.15)", padding: 2,
+                            opacity: i === sponsorIdx ? 1 : 0,
+                            transform: i === sponsorIdx ? "scale(1)" : "scale(0.85)",
+                            transition: "opacity 0.8s ease, transform 0.8s ease",
+                          }}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
