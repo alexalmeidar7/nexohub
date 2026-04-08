@@ -1075,308 +1075,171 @@ export default function CenarioTela() {
                 if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
               }
 
-              const isMusical = false; // unused in new layout but kept for reference
-              const showMusicHero = false;
-
-              // ── Program info block (reused in both layouts) ──
-              const programInfoBlock = currentProgram && (
-                <div
-                  key={`info-${currentProgram.id}`}
-                  className="text-center"
-                  style={{ animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s both" }}
-                >
-                  {!currentProgram.selo && (
-                    <div className="font-bold drop-shadow-md" style={{ fontSize: `${isLandscape ? 2.5 : 3.5}${vu}`, marginBottom: `0.5${vu}`, color: "#fff" }}>{currentProgram.nome}</div>
-                  )}
-                  <div className="opacity-70 font-medium" style={{ fontSize: `${isLandscape ? 1.2 : 1.6}${vu}`, color: "#fff" }}>
-                    {currentProgram.horario_inicio.slice(0,5)} — {currentProgram.horario_fim.slice(0,5)}
-                  </div>
-                  <div className="mx-auto" style={{ width: `${isLandscape ? 15 : 25}${vu}`, height: `0.4${vu}`, marginTop: `0.8${vu}`, borderRadius: `1${vu}`, background: "rgba(255,255,255,0.2)", overflow: "hidden" }}>
-                    <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 8px rgba(225,245,50,0.5)" }} />
-                  </div>
-                  {currentProgram.apresentador && (
-                    <div className="flex items-center justify-center opacity-80" style={{ gap: `0.5${vu}`, marginTop: `0.8${vu}`, animation: "cenario-program-slide-in 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
-                      <Mic style={{ width: `1.2${vu}`, height: `1.2${vu}`, color: "#e1f532" }} />
-                      <span style={{ fontSize: `1.2${vu}`, color: "#fff", fontWeight: 500 }}>{currentProgram.apresentador}</span>
-                    </div>
-                  )}
-                  {/* Sponsor logos below program info */}
-                  {sponsorLogos.length > 0 && (
-                    <div className="relative flex items-center justify-center" style={{ marginTop: `1${vu}`, height: `5${vu}` }}>
-                      {sponsorLogos.map((l, i) => l.logo_url && (
-                        <img
-                          key={l.id}
-                          src={l.logo_url}
-                          alt={l.nome}
-                          className="object-contain rounded drop-shadow-md absolute"
-                          style={{
-                            width: `4.5${vu}`, height: `4.5${vu}`,
-                            background: "rgba(255,255,255,0.15)", padding: 2,
-                            opacity: i === sponsorIdx ? 1 : 0,
-                            transform: i === sponsorIdx ? "scale(1)" : "scale(0.85)",
-                            transition: "opacity 0.8s ease, transform 0.8s ease",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-
-              // Layout is the same for all rotations (portrait code below handles everything)
-              // ── PORTRAIT (original vertical layout) ──
               return (
-                <div className="absolute inset-0 flex flex-col" style={{ padding: `2.5${vu} 2${vu} 2${vu} 2${vu}`, color: "#fff" }}>
+                <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: config.home.bgGradient ? buildHomeGradient(config.home) : "#000", color: "#fff", overflow: "hidden" }}>
+                  {/* Background image if set */}
+                  {!config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
 
-                  {/* TOP ROW: Clock + Date (left) / Next program (right) */}
-                  <div className="flex justify-between items-start flex-shrink-0" style={{ zIndex: 2, padding: `0 0.5${vu}`, marginTop: isLandscape ? "100px" : undefined, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                    <div>
-                      <div className="font-black" style={{ fontSize: `${isLandscape ? 3.5 : 4.5}${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-                        {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                      </div>
-                      <div className="font-bold" style={{ fontSize: `1.5${vu}`, color: "#e1f532", marginTop: `0.4${vu}`, letterSpacing: "0.02em" }}>
-                        {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
-                      </div>
-                      <div className="flex items-center" style={{ gap: `0.4${vu}`, marginTop: `0.5${vu}`, opacity: 0.6 }}>
-                        <div className="rounded-full" style={{ width: `0.6${vu}`, height: `0.6${vu}`, background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 6px #4ade80" : "0 0 6px #ef4444" }} />
-                        <span className="text-white font-semibold uppercase tracking-wider" style={{ fontSize: `0.85${vu}`, letterSpacing: "0.1em" }}>
-                          {realtimeConnected ? "SYNC" : "OFF"}
-                        </span>
+                  {/* Subtle radial glow behind vinyl */}
+                  <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", height: "0", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.6) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+                  {/* ── HEADER: Clock (top-left) ── */}
+                  <div style={{ position: "absolute", top: `3${vu}`, left: `3${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                    <div className="font-black" style={{ fontSize: `5${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
+                      {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                    </div>
+                    <div className="font-medium" style={{ fontSize: `1.6${vu}`, opacity: 0.7, marginTop: `0.4${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                      {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                    </div>
+                  </div>
+
+                  {/* ── SPONSOR (top-right) ── */}
+                  {sponsorLogos.length > 0 && (
+                    <div style={{ position: "absolute", top: `3${vu}`, right: `3${vu}`, zIndex: 10, textAlign: "right", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
+                      <div className="italic" style={{ fontSize: `1.2${vu}`, opacity: 0.7, marginBottom: `0.6${vu}` }}>esse programa é oferecido por</div>
+                      <div className="relative flex items-center justify-end" style={{ height: `6${vu}` }}>
+                        {sponsorLogos.map((l, i) => l.logo_url && (
+                          <img
+                            key={l.id}
+                            src={l.logo_url}
+                            alt={l.nome}
+                            className="object-contain"
+                            style={{
+                              position: "absolute",
+                              maxWidth: `14${vu}`, maxHeight: `5.5${vu}`,
+                              right: 0,
+                              opacity: i === sponsorIdx ? 1 : 0,
+                              transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
+                              transition: "opacity 0.8s ease, transform 0.8s ease",
+                              filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
+                            }}
+                          />
+                        ))}
                       </div>
                     </div>
+                  )}
+
+                  {/* ── SYNC indicator (below clock) ── */}
+                  <div style={{ position: "absolute", top: `10${vu}`, left: `3${vu}`, zIndex: 10 }}>
+                    <div className="flex items-center" style={{ gap: `0.4${vu}`, opacity: 0.5 }}>
+                      <div className="rounded-full" style={{ width: `0.6${vu}`, height: `0.6${vu}`, background: realtimeConnected ? "#4ade80" : "#ef4444", boxShadow: realtimeConnected ? "0 0 6px #4ade80" : "0 0 6px #ef4444" }} />
+                      <span className="font-semibold uppercase tracking-wider" style={{ fontSize: `0.8${vu}`, letterSpacing: "0.1em" }}>
+                        {realtimeConnected ? "SYNC" : "OFF"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* ── CENTER: Vinyl + Music Info ── */}
+                  <div style={{ position: "absolute", top: "18%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }}>
+                    {musicData ? (
+                      <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                        {/* Vinyl disc */}
+                        <div className="relative" style={{ width: `${isLandscape ? 28 : 35}${vu}`, height: `${isLandscape ? 28 : 35}${vu}` }}>
+                          <div style={{
+                            width: "100%", height: "100%",
+                            borderRadius: "50%",
+                            background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(50,50,50,0.3) 48.5%, transparent 49.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 30deg, rgba(255,255,255,0.02) 32deg, transparent 34deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 150deg, rgba(255,255,255,0.02) 152deg, transparent 154deg, transparent 210deg, rgba(255,255,255,0.03) 212deg, transparent 214deg, transparent 270deg, rgba(255,255,255,0.02) 272deg, transparent 274deg, transparent 330deg, rgba(255,255,255,0.03) 332deg, transparent 334deg), #111`,
+                            boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.5)",
+                            animation: "vinyl-spin 3s linear infinite",
+                          }}>
+                            {/* Center label with cover art */}
+                            <div style={{
+                              position: "absolute", top: "50%", left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              width: "40%", height: "40%",
+                              borderRadius: "50%", overflow: "hidden",
+                              border: "2px solid rgba(255,255,255,0.1)",
+                              boxShadow: "0 0 20px rgba(0,0,0,0.5)",
+                            }}>
+                              {musicData.capa ? (
+                                <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              ) : (
+                                <div className="flex items-center justify-center" style={{ width: "100%", height: "100%", background: "rgba(255,255,255,0.08)" }}>
+                                  <Music style={{ width: `4${vu}`, height: `4${vu}`, opacity: 0.3, color: "#fff" }} />
+                                </div>
+                              )}
+                            </div>
+                            {/* Center hole */}
+                            <div style={{
+                              position: "absolute", top: "50%", left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              width: "6%", height: "6%",
+                              borderRadius: "50%", background: "#000",
+                              border: "1px solid rgba(255,255,255,0.1)", zIndex: 2,
+                            }} />
+                          </div>
+                        </div>
+                        {/* Music title + artist below vinyl */}
+                        <div style={{ marginTop: `2${vu}`, textAlign: "center", maxWidth: `${isLandscape ? 40 : 40}${vu}` }}>
+                          <div className="font-black truncate" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
+                          <div className="font-medium truncate" style={{ fontSize: `1.6${vu}`, opacity: 0.6, marginTop: `0.3${vu}` }}>{musicData.artista}</div>
+                        </div>
+                      </div>
+                    ) : currentProgram?.selo ? (
+                      /* No music: show program logo in center */
+                      <div style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                        <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${isLandscape ? 35 : 35}${vu}`, maxHeight: `${isLandscape ? 30 : 35}${vu}` }} />
+                      </div>
+                    ) : currentProgram ? (
+                      <div className="font-black text-center" style={{ fontSize: `4${vu}`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>{currentProgram.nome}</div>
+                    ) : (
+                      <div className="opacity-40 text-center" style={{ fontSize: `1.8${vu}` }}>Nenhum programa no ar</div>
+                    )}
+                  </div>
+
+                  {/* ── BOTTOM LEFT: Presenter photo + name ── */}
+                  {currentProgram?.apresentadorFoto && (
+                    <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
+                      <img
+                        src={currentProgram.apresentadorFoto}
+                        alt={currentProgram.apresentador || ""}
+                        style={{
+                          height: `45${vu}`,
+                          objectFit: "contain",
+                          objectPosition: "bottom left",
+                          filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))",
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Presenter name + time overlay on bottom-left */}
+                  {currentProgram && (
+                    <div style={{ position: "absolute", bottom: `3${vu}`, left: `3${vu}`, zIndex: 12, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.4s both" }}>
+                      {currentProgram.apresentador && (
+                        <div className="font-black" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
+                      )}
+                      <div className="font-medium" style={{ fontSize: `1.4${vu}`, opacity: 0.7, fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
+                        {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── BOTTOM RIGHT: Program logo + "a seguir" ── */}
+                  <div style={{ position: "absolute", bottom: `3${vu}`, right: `3${vu}`, zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>
+                    {/* Program logo/name */}
+                    {currentProgram?.selo ? (
+                      <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `22${vu}`, maxHeight: `18${vu}`, marginBottom: `1.5${vu}` }} />
+                    ) : currentProgram ? (
+                      <div className="font-black text-right" style={{ fontSize: `3${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", marginBottom: `1.5${vu}`, maxWidth: `22${vu}` }}>{currentProgram.nome}</div>
+                    ) : null}
+
+                    {/* "a seguir" section */}
                     {nextProgram && (
-                      <div className="text-right" style={{ animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both", lineHeight: 1.2, marginRight: isLandscape ? "40px" : "60px" }}>
-                        <div className="font-semibold uppercase tracking-widest" style={{ fontSize: `1.3${vu}`, color: "#e1f532", letterSpacing: "0.15em" }}>a seguir</div>
-                        <div className="font-bold" style={{ fontSize: `2.2${vu}`, marginTop: `0.2${vu}` }}>{nextProgram.nome}</div>
-                        <div className="opacity-40 font-medium" style={{ fontSize: `1.4${vu}`, fontVariantNumeric: "tabular-nums", marginTop: `0.1${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}</div>
+                      <div className="flex items-start" style={{ gap: `1${vu}` }}>
+                        {/* Vertical separator line */}
+                        <div style={{ width: "2px", height: `5${vu}`, background: "rgba(255,255,255,0.3)", marginTop: `0.3${vu}`, flexShrink: 0 }} />
+                        <div>
+                          <div className="font-semibold" style={{ fontSize: `1.2${vu}`, opacity: 0.6, marginBottom: `0.2${vu}` }}>a seguir</div>
+                          <div className="font-bold" style={{ fontSize: `2${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
+                          <div className="font-medium" style={{ fontSize: `1.3${vu}`, opacity: 0.6, fontVariantNumeric: "tabular-nums", marginTop: `0.2${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  {/* CENTER: Music card */}
-                  <div className="flex-1 flex flex-col items-center justify-center" style={{ overflow: "hidden" }}>
-                    {(() => {
-                      const isJornalistico = currentProgram?.tipo_programa?.toLowerCase().includes("jornal");
-                      if (isJornalistico && currentProgram) {
-                        // Jornalístico: show program logo instead of music cover
-                        return (
-                          <div
-                            key={`jornal-${currentProgram.id}`}
-                            className="flex flex-col items-center"
-                            style={{
-                              width: "85%",
-                              maxWidth: `${isLandscape ? 59 : 42}${vu}`,
-                              padding: `1.5${vu} 2${vu} 2${vu}`,
-                              borderRadius: `2${vu}`,
-                              background: "rgba(0,0,0,0.5)",
-                              WebkitBackdropFilter: "blur(16px)", backdropFilter: "blur(16px)",
-                              border: "2px solid rgba(225,245,50,0.15)",
-                              animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
-                            }}
-                          >
-                            {currentProgram.selo ? (
-                              <div className="relative flex items-center justify-center" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, overflow: "hidden", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)", position: "relative" }}>
-                                <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain" style={{ position: "absolute", top: "10%", left: "10%", width: "80%", height: "80%" }} />
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-center" style={{ width: "100%", paddingBottom: "100%", borderRadius: `1.2${vu}`, marginBottom: `1.2${vu}`, background: "rgba(255,255,255,0.08)", position: "relative" }}>
-                                <div className="font-black text-center text-white" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: `4${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
-                              </div>
-                            )}
-                            {/* Sponsor logos below program logo */}
-                            {sponsorLogos.length > 0 && (
-                              <div className="relative flex items-center justify-center" style={{ height: `5${vu}`, width: "100%", marginBottom: `1${vu}` }}>
-                                {sponsorLogos.map((l, i) => l.logo_url && (
-                                  <img
-                                    key={l.id}
-                                    src={l.logo_url}
-                                    alt={l.nome}
-                                    className="object-contain rounded drop-shadow-md absolute"
-                                    style={{
-                                      width: `4.5${vu}`, height: `4.5${vu}`,
-                                      background: "rgba(255,255,255,0.15)", padding: 2,
-                                      opacity: i === sponsorIdx ? 1 : 0,
-                                      transform: i === sponsorIdx ? "scale(1)" : "scale(0.85)",
-                                      transition: "opacity 0.8s ease, transform 0.8s ease",
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                            )}
-                            {musicData && (
-                              <>
-                                <div className="flex items-center self-start" style={{ gap: `1${vu}`, maxWidth: "100%" }}>
-                                  <Play style={{ width: `2.2${vu}`, height: `2.2${vu}`, color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 6px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
-                                  <div style={{ overflow: "hidden", minWidth: 0 }}>
-                                    <div className="font-black uppercase truncate text-white" style={{ fontSize: `2${vu}`, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
-                                    <div className="font-bold uppercase truncate" style={{ fontSize: `1.5${vu}`, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
-                                  </div>
-                                </div>
-                                {(() => {
-                                  const dur = musicData.duracao || 240;
-                                  const pct = Math.min(100, (musicElapsed / dur) * 100);
-                                  const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-                                  return (
-                                    <>
-                                      <div className="flex justify-between w-full opacity-60" style={{ fontSize: `0.9${vu}`, marginTop: `0.8${vu}`, fontVariantNumeric: "tabular-nums", color: "#fff" }}>
-                                        <span>{fmtTime(musicElapsed)}</span>
-                                        <span>{fmtTime(dur)}</span>
-                                      </div>
-                                      <div style={{ width: "100%", height: `0.4${vu}`, marginTop: `0.3${vu}`, borderRadius: `1${vu}`, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
-                                        <div style={{ width: `${pct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 6px rgba(225,245,50,0.4)" }} />
-                                      </div>
-                                    </>
-                                  );
-                                })()}
-                              </>
-                            )}
-                          </div>
-                        );
-                      }
-
-                      // Default: music card with cover
-                      if (musicData) {
-                        return (
-                          <div
-                            key={musicKey}
-                            className="flex flex-col items-center"
-                            style={{
-                              width: "85%",
-                              maxWidth: `${isLandscape ? 59 : 42}${vu}`,
-                              padding: `1.8${vu} 2.2${vu} 2.2${vu}`,
-                              borderRadius: `2.4${vu}`,
-                              background: "rgba(10,10,10,0.35)",
-                              WebkitBackdropFilter: "blur(24px)", backdropFilter: "blur(24px)",
-                              border: "1px solid rgba(255,255,255,0.08)",
-                              boxShadow: "0 24px 64px -12px rgba(0,0,0,0.5), 0 8px 24px -8px rgba(0,0,0,0.3)",
-                              animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
-                            }}
-                          >
-                            {/* Vinyl Record */}
-                            <div className="relative" style={{ width: "100%", paddingBottom: "100%", marginBottom: `1.4${vu}` }}>
-                              <div style={{
-                                position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-                                borderRadius: "50%",
-                                background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(50,50,50,0.3) 48.5%, transparent 49.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 30deg, rgba(255,255,255,0.02) 32deg, transparent 34deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 150deg, rgba(255,255,255,0.02) 152deg, transparent 154deg, transparent 210deg, rgba(255,255,255,0.03) 212deg, transparent 214deg, transparent 270deg, rgba(255,255,255,0.02) 272deg, transparent 274deg, transparent 330deg, rgba(255,255,255,0.03) 332deg, transparent 334deg), #111`,
-                                boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.5)",
-                                animation: "vinyl-spin 3s linear infinite",
-                              }}>
-                                {/* Center label with cover art */}
-                                <div style={{
-                                  position: "absolute",
-                                  top: "50%", left: "50%",
-                                  transform: "translate(-50%, -50%)",
-                                  width: "40%", height: "40%",
-                                  borderRadius: "50%",
-                                  overflow: "hidden",
-                                  border: "2px solid rgba(255,255,255,0.1)",
-                                  boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-                                }}>
-                                  {musicData.capa ? (
-                                    <img src={musicData.capa} alt="" className="object-cover" style={{ width: "100%", height: "100%" }} />
-                                  ) : (
-                                    <div className="flex items-center justify-center w-full h-full" style={{ background: "rgba(255,255,255,0.08)" }}>
-                                      <Music style={{ width: `4${vu}`, height: `4${vu}`, opacity: 0.3, color: "#fff" }} />
-                                    </div>
-                                  )}
-                                </div>
-                                {/* Center hole */}
-                                <div style={{
-                                  position: "absolute",
-                                  top: "50%", left: "50%",
-                                  transform: "translate(-50%, -50%)",
-                                  width: "6%", height: "6%",
-                                  borderRadius: "50%",
-                                  background: "#000",
-                                  border: "1px solid rgba(255,255,255,0.1)",
-                                  zIndex: 2,
-                                }} />
-                              </div>
-                            </div>
-                            <div className="flex items-center self-start" style={{ gap: `1${vu}`, maxWidth: "100%" }}>
-                              <Play style={{ width: `2.2${vu}`, height: `2.2${vu}`, color: "#e1f532", flexShrink: 0, fill: "#e1f532", filter: "drop-shadow(0 0 6px rgba(225,245,50,0.7))", animation: "cenario-active-blink 1.5s ease-in-out infinite" }} />
-                              <div style={{ overflow: "hidden", minWidth: 0 }}>
-                                <div className="font-black uppercase truncate" style={{ fontSize: `2${vu}`, letterSpacing: "0.03em", lineHeight: 1.2 }}>{musicData.titulo}</div>
-                                <div className="font-bold uppercase truncate" style={{ fontSize: `1.5${vu}`, color: "#e1f532", letterSpacing: "0.05em", lineHeight: 1.3 }}>{musicData.artista}</div>
-                              </div>
-                            </div>
-                            {(() => {
-                              const dur = musicData.duracao || 240;
-                              const pct = Math.min(100, (musicElapsed / dur) * 100);
-                              const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-                              return (
-                                <>
-                                  <div className="flex justify-between w-full opacity-60" style={{ fontSize: `0.9${vu}`, marginTop: `0.8${vu}`, fontVariantNumeric: "tabular-nums" }}>
-                                    <span>{fmtTime(musicElapsed)}</span>
-                                    <span>{fmtTime(dur)}</span>
-                                  </div>
-                                  <div style={{ width: "100%", height: `0.4${vu}`, marginTop: `0.3${vu}`, borderRadius: `1${vu}`, background: "rgba(255,255,255,0.15)", overflow: "hidden" }}>
-                                    <div style={{ width: `${pct}%`, height: "100%", borderRadius: `1${vu}`, background: "#e1f532", transition: "width 1s linear", boxShadow: "0 0 6px rgba(225,245,50,0.4)" }} />
-                                  </div>
-                                </>
-                              );
-                            })()}
-                          </div>
-                        );
-                      }
-
-                      if (!currentProgram) {
-                        return <div className="opacity-40 text-center" style={{ fontSize: `1.8${vu}` }}>Nenhum programa no ar</div>;
-                      }
-                      return null;
-                    })()}
-                  </div>
-
-                  {/* BOTTOM: Program logo + presenter + schedule */}
-                  {currentProgram && (
-                    <div
-                      key={`program-${currentProgram.id}`}
-                      className="flex flex-col items-center flex-shrink-0"
-                      style={{ marginTop: `2${vu}`, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
-                    >
-                      {currentProgram.selo ? (
-                        <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${isLandscape ? 70 : 80}${vu}`, maxHeight: `${isLandscape ? 40 : 50}${vu}` }} />
-                      ) : (
-                        <div className="font-black text-center" style={{ fontSize: `3.5${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{currentProgram.nome}</div>
-                      )}
-                      {currentProgram.apresentador && (
-                        <div className="flex items-center" style={{ gap: `0.8${vu}`, marginTop: `1.2${vu}` }}>
-                          <div className="rounded-full flex items-center justify-center cenario-mic-pulse" style={{ width: `3.5${vu}`, height: `3.5${vu}`, background: "rgba(0,0,0,0.12)", border: "2px solid rgba(0,0,0,0.2)" }}>
-                            <Mic style={{ width: `1.8${vu}`, height: `1.8${vu}`, color: "#000" }} />
-                          </div>
-                          <div className="font-black" style={{ fontSize: `3${vu}`, color: "#000", textShadow: "none" }}>{currentProgram.apresentador}</div>
-                        </div>
-                      )}
-                      <div className="font-medium" style={{ fontSize: `1.3${vu}`, marginTop: `0.4${vu}`, fontVariantNumeric: "tabular-nums", color: "#000", opacity: 0.6 }}>
-                        {currentProgram.horario_inicio.slice(0,5)} — {currentProgram.horario_fim.slice(0,5)}
-                      </div>
-                      {/* Sponsor logos below program logo */}
-                      {sponsorLogos.length > 0 && (
-                        <div className="relative flex items-center justify-center" style={{ marginTop: `1.2${vu}`, height: `5${vu}` }}>
-                          {sponsorLogos.map((l, i) => l.logo_url && (
-                            <img
-                              key={l.id}
-                              src={l.logo_url}
-                              alt={l.nome}
-                              className="object-contain rounded drop-shadow-md"
-                              style={{
-                                position: "absolute",
-                                width: `5${vu}`, height: `5${vu}`,
-                                background: "rgba(255,255,255,0.12)", padding: 2,
-                                borderRadius: `0.8${vu}`,
-                                opacity: i === sponsorIdx ? 1 : 0,
-                                transform: i === sponsorIdx ? "scale(1)" : "scale(0.85)",
-                                transition: "opacity 0.8s ease, transform 0.8s ease",
-                              }}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {/* Full-width program progress bar */}
-                  <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: `0.8${vu}`, background: "rgba(0,0,0,0.3)", zIndex: 50 }}>
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: `0.6${vu}`, background: "rgba(255,255,255,0.1)", zIndex: 15 }}>
                     <div style={{ width: `${progressPct}%`, height: "100%", background: "linear-gradient(90deg, #e1f532, #c8e600)", transition: "width 1s linear", boxShadow: "0 0 8px rgba(225,245,50,0.4)" }} />
                   </div>
                 </div>
