@@ -1216,7 +1216,7 @@ export default function CenarioTela() {
 
                   {/* Presenter name + time overlay on bottom-left */}
                   {currentProgram && (
-                    <div style={{ position: "absolute", bottom: `3${vu}`, left: `3${vu}`, zIndex: 12, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.4s both" }}>
+                    <div style={{ position: "absolute", bottom: "90px", left: `3${vu}`, zIndex: 12, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.4s both" }}>
                       {currentProgram.apresentador && (
                         <div className="font-black" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
                       )}
@@ -1227,7 +1227,7 @@ export default function CenarioTela() {
                   )}
 
                   {/* ── BOTTOM RIGHT: Program logo + "a seguir" ── */}
-                  <div style={{ position: "absolute", bottom: `50px`, right: `50px`, zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>
+                  <div style={{ position: "absolute", bottom: "90px", right: "50px", zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>
                     {/* Program logo/name */}
                     {currentProgram?.selo ? (
                       <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `30${vu}`, maxHeight: `25${vu}`, marginBottom: `1.5${vu}` }} />
