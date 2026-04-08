@@ -399,6 +399,13 @@ export default function CenarioTela() {
     return () => clearInterval(t);
   }, []);
 
+  /* Sponsor logo cycling */
+  useEffect(() => {
+    if (sponsorLogos.length <= 1) { setSponsorIdx(0); return; }
+    const t = setInterval(() => setSponsorIdx(prev => (prev + 1) % sponsorLogos.length), 5000);
+    return () => clearInterval(t);
+  }, [sponsorLogos.length]);
+
   /* Music elapsed time ticker */
   useEffect(() => {
     if (!musicData) return;
