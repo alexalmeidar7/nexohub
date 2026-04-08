@@ -91,13 +91,13 @@ const defaultConfig: CenarioConfig = {
 };
 
 const CURRENCY_OPTIONS = [
-  { value: "USD", label: "Dólar Comercial (USD)" },
-  { value: "EUR", label: "Euro (EUR)" },
-  { value: "GBP", label: "Libra Esterlina (GBP)" },
-  { value: "ARS", label: "Peso Argentino (ARS)" },
-  { value: "JPY", label: "Iene Japonês (JPY)" },
-  { value: "BTC", label: "Bitcoin (BTC)" },
-  { value: "ETH", label: "Ethereum (ETH)" },
+  { value: "USD", label: "Dólar Comercial (USD)", flag: "US" },
+  { value: "EUR", label: "Euro (EUR)", flag: "EU" },
+  { value: "GBP", label: "Libra Esterlina (GBP)", flag: "GB" },
+  { value: "ARS", label: "Peso Argentino (ARS)", flag: "AR" },
+  { value: "JPY", label: "Iene Japonês (JPY)", flag: "JP" },
+  { value: "BTC", label: "Bitcoin (BTC)", flag: "BT" },
+  { value: "ETH", label: "Ethereum (ETH)", flag: "ET" },
 ];
 
 const weatherIcons: Record<number, string> = {
@@ -1977,82 +1977,102 @@ export default function CenarioInterativoPage() {
                     </div>
                   )}
 
-                  {/* Currency overlay */}
+                  {/* Currency overlay — mirrors CenarioTela portrait layout */}
                   {activeTab === "currency" && (
                     <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                      {config.currency.bgImage && (
-                        <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.3)" }} />
-                      )}
-
-                      <div className="relative z-10 flex flex-col h-full p-3">
+                      {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.45)" }} />}
+                      {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d1117 0%, #161b22 50%, #0d1117 100%)" }} />}
+                      <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: 8 }}>
                         {config.currency.enabled ? (
                           <>
-                            <div className="flex justify-end mb-1 cenario-anim-icon">
-                              <DollarSign size={32} className="drop-shadow-lg" style={{ color: "var(--layout-accent-color, #444)" }} />
-                            </div>
-                            <div className="mb-2">
-                              <div className="text-2xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">cotação</div>
-                              <div className="text-base font-bold tracking-wide cenario-anim-subtitle" style={{ color: "var(--layout-accent-color, #444)" }}>
+                            <div className="text-center" style={{ marginBottom: 6 }}>
+                              <DollarSign className="drop-shadow-lg mx-auto" style={{ width: 14, height: 14, color: "var(--layout-accent-color, #444)", opacity: 0.7, marginBottom: 2 }} />
+                              <div className="font-extrabold leading-none drop-shadow-lg" style={{ fontSize: 13, letterSpacing: "-0.02em" }}>cotação</div>
+                              <div className="font-bold" style={{ fontSize: 7, color: "var(--layout-accent-color, #444)", marginTop: 1 }}>
                                 {currencySubTab === "moedas" ? "moedas" : "bolsas"}
                               </div>
                             </div>
 
-                            {/* Sub-tab content */}
                             {currencySubTab === "moedas" ? (
-                              <div className="flex-1 p-3 space-y-2 overflow-auto">
+                              <div className="w-full flex flex-col" style={{ gap: 3 }}>
                                 {currencyLoading && !liveCurrencies.length ? (
-                                  <div className="flex items-center gap-2 text-[10px] opacity-80"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
+                                  <div className="flex items-center justify-center gap-1 opacity-80" style={{ fontSize: 7 }}><Loader2 size={8} className="animate-spin" /> Carregando...</div>
                                 ) : config.currency.currencies.map((c, idx) => {
                                   const opt = CURRENCY_OPTIONS.find(o => o.value === c);
                                   const live = liveCurrencies.find(l => l.code === c);
-                                  const rowClass = `cenario-anim-row-${Math.min(idx + 1, 8)}`;
+                                  const flagMap: Record<string, string> = { US: "🇺🇸", EU: "🇪🇺", GB: "🇬🇧", AR: "🇦🇷", JP: "🇯🇵", BT: "₿", ET: "Ξ", BR: "🇧🇷", DE: "🇩🇪" };
+                                  const flagIcon = opt?.flag ? flagMap[opt.flag] || "" : "";
                                   return (
-                                    <div key={c} className={`flex items-center justify-between px-2.5 py-2 text-[11px] ${rowClass}`}>
-                                      <span className="font-semibold leading-tight pr-2" style={{ color: "#fff" }}>{opt?.label?.split("(")[0]?.trim() || c}</span>
-                                      {live ? (
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="font-extrabold text-[12px]" style={{ color: "#fff" }}>{live.value}</span>
-                                          <span className="font-bold text-[11px]" style={{ color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{live.change}</span>
-                                          {live.direction === "up" && <ChevronUp size={16} strokeWidth={3} className="cenario-arrow-up" />}
-                                          {live.direction === "down" && <ChevronDown size={16} strokeWidth={3} className="cenario-arrow-down" />}
-                                          {live.direction !== "up" && live.direction !== "down" && <Minus size={13} style={{ color: "rgba(255,255,255,0.5)" }} />}
+                                    <div key={c} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{
+                                      padding: "4px 5px",
+                                      background: "rgba(255,255,255,0.06)",
+                                      borderRadius: 5,
+                                      border: "1px solid rgba(255,255,255,0.08)",
+                                      backdropFilter: "blur(10px)",
+                                    }}>
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center" style={{ gap: 4, minWidth: 0 }}>
+                                          <span style={{ fontSize: 10, lineHeight: 1 }}>{flagIcon}</span>
+                                          <div className="flex flex-col" style={{ minWidth: 0 }}>
+                                            <span className="font-black truncate" style={{ fontSize: 8, lineHeight: 1.1 }}>{c}</span>
+                                            <span className="truncate" style={{ fontSize: 4.5, opacity: 0.4, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
+                                          </div>
                                         </div>
-                                      ) : (
-                                        <span className="opacity-70">---</span>
-                                      )}
+                                        {live ? (
+                                          <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
+                                            <span className="font-black tabular-nums" style={{ fontSize: 8, lineHeight: 1.1 }}>R$ {live.value}</span>
+                                            <div className="flex items-center" style={{ gap: 1, marginTop: 1 }}>
+                                              <span className="font-bold tabular-nums" style={{ fontSize: 5, color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
+                                              {live.direction === "up" && <ChevronUp style={{ width: 6, height: 6, color: "#4ade80" }} strokeWidth={3} />}
+                                              {live.direction === "down" && <ChevronDown style={{ width: 6, height: 6, color: "#f87171" }} strokeWidth={3} />}
+                                            </div>
+                                          </div>
+                                        ) : <span className="opacity-30" style={{ fontSize: 8 }}>---</span>}
+                                      </div>
                                     </div>
                                   );
                                 })}
                               </div>
                             ) : (
-                              <div className="flex-1 p-3 space-y-2 overflow-auto">
+                              <div className="w-full flex flex-col" style={{ gap: 3 }}>
                                 {stocksLoading && !liveStocks.length ? (
-                                  <div className="flex items-center gap-2 text-[10px] opacity-80"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
+                                  <div className="flex items-center justify-center gap-1 opacity-80" style={{ fontSize: 7 }}><Loader2 size={8} className="animate-spin" /> Carregando...</div>
                                 ) : liveStocks.map((s, idx) => {
-                                  const rowClass = `cenario-anim-row-${Math.min(idx + 1, 8)}`;
+                                  const flagMap: Record<string, string> = { US: "🇺🇸", EU: "🇪🇺", GB: "🇬🇧", AR: "🇦🇷", JP: "🇯🇵", BT: "₿", ET: "Ξ", BR: "🇧🇷", DE: "🇩🇪" };
+                                  const flagChar = flagMap[s.flag?.replace(/[^A-Z]/g, "").slice(0, 2)] || s.flag;
                                   return (
-                                    <div key={s.symbol} className={`flex items-center justify-between px-2.5 py-2 text-[11px] ${rowClass}`}>
-                                      <span className="font-semibold leading-tight pr-2" style={{ color: "#fff" }}>
-                                        <span className="mr-1">{s.flag}</span>{s.name}
-                                      </span>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="font-extrabold text-[12px]" style={{ color: "#fff" }}>{s.value}</span>
-                                        <span className="font-bold text-[11px]" style={{ color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{s.change}</span>
-                                        {s.direction === "up" && <ChevronUp size={16} strokeWidth={3} className="cenario-arrow-up" />}
-                                        {s.direction === "down" && <ChevronDown size={16} strokeWidth={3} className="cenario-arrow-down" />}
-                                        {s.direction !== "up" && s.direction !== "down" && <Minus size={13} style={{ color: "rgba(255,255,255,0.5)" }} />}
+                                    <div key={s.symbol} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{
+                                      padding: "4px 5px",
+                                      background: "rgba(255,255,255,0.06)",
+                                      borderRadius: 5,
+                                      border: "1px solid rgba(255,255,255,0.08)",
+                                      backdropFilter: "blur(10px)",
+                                    }}>
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center" style={{ gap: 3, flex: 1, minWidth: 0 }}>
+                                          <span style={{ fontSize: 10, lineHeight: 1 }}>{flagChar}</span>
+                                          <span className="font-black truncate" style={{ fontSize: 8 }}>{s.name}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
+                                          <span className="font-black tabular-nums" style={{ fontSize: 8, lineHeight: 1.1 }}>{s.value}</span>
+                                          <div className="flex items-center" style={{ gap: 1, marginTop: 1 }}>
+                                            <span className="font-bold tabular-nums" style={{ fontSize: 5, color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{s.change}</span>
+                                            {s.direction === "up" && <ChevronUp style={{ width: 6, height: 6, color: "#4ade80" }} strokeWidth={3} />}
+                                            {s.direction === "down" && <ChevronDown style={{ width: 6, height: 6, color: "#f87171" }} strokeWidth={3} />}
+                                          </div>
+                                        </div>
                                       </div>
                                     </div>
                                   );
                                 })}
                                 {!stocksLoading && !liveStocks.length && (
-                                  <div className="text-[10px] opacity-60 text-center">Dados indisponíveis</div>
+                                  <div className="opacity-60 text-center" style={{ fontSize: 7 }}>Dados indisponíveis</div>
                                 )}
                               </div>
                             )}
                           </>
                         ) : (
-                          <div className="flex-1 flex items-center justify-center text-[11px] opacity-70">Cotação desativada</div>
+                          <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: 7 }}>Cotação desativada</div>
                         )}
                       </div>
                     </div>
