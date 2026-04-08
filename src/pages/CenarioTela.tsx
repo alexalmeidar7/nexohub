@@ -61,7 +61,7 @@ async function fetchLiveCurrencies(codes: string[]): Promise<LiveCurrency[]> {
       const opt = CURRENCY_OPTIONS.find(o => o.value === c);
       return {
         code: c, name: opt?.label?.split("(")[0]?.trim() || item.name,
-        value: parseFloat(item.bid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+        value: parseFloat(item.bid).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 }),
         change: `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
         direction: pct > 0 ? "up" as const : pct < 0 ? "down" as const : "neutral" as const,
       };

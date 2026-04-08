@@ -73,6 +73,17 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interactive]);
 
+  /* React to zoom prop changes from parent (config page sync) */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || interactive) return; // interactive maps handle their own zoom via user gestures
+    try {
+      if (map.getZoom() !== zoom) {
+        map.setZoom(zoom, { animate: false });
+      }
+    } catch {}
+  }, [zoom, interactive]);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
