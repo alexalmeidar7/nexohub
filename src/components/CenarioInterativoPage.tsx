@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
+import DraggableElement, { ElementPosition, defaultPositions } from "@/components/cenario/DraggableElement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,7 @@ interface HomeConfig {
   bgGradientColorB?: string;
   bgGradientType?: "linear" | "radial";
   bgGradientAngle?: number;
+  elementPositions?: Record<string, ElementPosition>;
 }
 
 interface CenarioConfig {
@@ -283,6 +285,7 @@ export default function CenarioInterativoPage() {
   const [shapeStartPos, setShapeStartPos] = useState<{ px: number; py: number } | null>(null);
   const drawHistoryRef = useRef<ImageData[]>([]);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const homeContentRef = useRef<HTMLDivElement>(null);
   const previewIsDrawingRef = useRef(false);
   const PREV_DRAW_COLORS = ["#ff3b3b", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
   const PREV_DRAW_WIDTHS = [2, 4, 8, 14];
@@ -1030,6 +1033,20 @@ export default function CenarioInterativoPage() {
   const updateChat = (partial: Partial<ChatConfig>) =>
     setConfig(c => ({ ...c, chat: { ...c.chat, ...partial } }));
 
+  const getElPos = useCallback((id: string): ElementPosition => {
+    return config.home.elementPositions?.[id] ?? defaultPositions[id] ?? { x: 50, y: 50, scale: 1 };
+  }, [config.home.elementPositions]);
+
+  const handleElMove = useCallback((id: string, pos: ElementPosition) => {
+    setConfig(c => ({
+      ...c,
+      home: {
+        ...c.home,
+        elementPositions: { ...c.home.elementPositions, [id]: pos },
+      },
+    }));
+  }, []);
+
   const removeTrafficPoint = (id: string) =>
     updateTraffic({ points: config.traffic.points.filter(p => p.id !== id) });
 
@@ -1740,7 +1757,7 @@ export default function CenarioInterativoPage() {
                       if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
                     }
                     return (
-                      <div className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
+                      <div ref={homeContentRef} className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
                         {/* Background */}
                         {config.home.bgGradient && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
                         {!config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
@@ -1748,32 +1765,34 @@ export default function CenarioInterativoPage() {
                         {/* Subtle radial glow */}
                         <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.5) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-                        {/* Clock top-left */}
-                        <div style={{ position: "absolute", top: 28, left: 8, zIndex: 10 }}>
-                          <div className="font-black" style={{ fontSize: 18, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
-                            {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                        {/* Clock — draggable */}
+                        <DraggableElement id="clock" position={getElPos("clock")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
+                          <div>
+                            <div className="font-black" style={{ fontSize: 18, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
+                              {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                            </div>
+                            <div className="font-medium" style={{ fontSize: 7, color: "var(--layout-accent-color, #888)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
+                              {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                            </div>
                           </div>
-                          <div className="font-medium" style={{ fontSize: 7, color: "var(--layout-accent-color, #888)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
-                            {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                          </div>
-                        </div>
+                        </DraggableElement>
 
-                        {/* Sponsor top-right */}
+                        {/* Sponsor — draggable */}
                         {sponsorLogos.length > 0 && (
-                          <div style={{ position: "absolute", top: 6, right: 8, zIndex: 10 }}>
-                            <div className="relative flex justify-end" style={{ height: 22 }}>
+                          <DraggableElement id="sponsor" position={getElPos("sponsor")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
+                            <div className="relative flex justify-end" style={{ height: 22, minWidth: 50 }}>
                               {sponsorLogos.map((l, i) => l.logo_url && (
                                 <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: 50, maxHeight: 20, opacity: i === sponsorIdx ? 1 : 0, transition: "opacity 0.8s ease", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.3))" }} />
                               ))}
                             </div>
-                          </div>
+                          </DraggableElement>
                         )}
 
-                        {/* Center: Vinyl or program logo */}
-                        <div style={{ position: "absolute", top: "20%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }}>
+                        {/* Vinyl / program center — draggable */}
+                        <DraggableElement id="vinyl" position={getElPos("vinyl")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="center">
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                           {musicData ? (
                             <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                              {/* Mini vinyl */}
                               <div className="relative" style={{ width: 120, height: 120 }}>
                                 <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 180deg, rgba(255,255,255,0.03) 182deg, transparent 184deg, transparent 270deg, rgba(255,255,255,0.03) 272deg, transparent 274deg), #111`, boxShadow: "0 4px 16px rgba(0,0,0,0.5)", animation: "vinyl-spin 3s linear infinite" }}>
                                   <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "40%", height: "40%", borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -1788,7 +1807,6 @@ export default function CenarioInterativoPage() {
                                   <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "6%", height: "6%", borderRadius: "50%", background: "#000", border: "1px solid rgba(255,255,255,0.1)", zIndex: 2 }} />
                                 </div>
                               </div>
-                              {/* Music info */}
                               <div style={{ marginTop: 8, textAlign: "center", maxWidth: 140 }}>
                                 <div className="font-black truncate" style={{ fontSize: 10, lineHeight: 1.2 }}>{musicData.titulo}</div>
                                 <div className="font-medium truncate" style={{ fontSize: 7, opacity: 0.6, marginTop: 1 }}>{musicData.artista}</div>
@@ -1801,45 +1819,44 @@ export default function CenarioInterativoPage() {
                           ) : (
                             <div className="text-[9px] opacity-40">Nenhum programa no ar</div>
                           )}
-                        </div>
+                          </div>
+                        </DraggableElement>
 
-                        {/* Presenter photo bottom-left */}
+                        {/* Presenter photo — draggable */}
                         {currentProgram?.apresentadorFoto && (
-                          <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 8 }}>
-                            <img src={currentProgram.apresentadorFoto} alt="" style={{ height: 160, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(2px 0 8px rgba(0,0,0,0.4))" }} />
-                          </div>
-                        )}
-
-                        {/* Presenter name + time bottom-left */}
-                        {currentProgram && (
-                          <div style={{ position: "absolute", bottom: 10, left: 8, zIndex: 12 }}>
-                            {currentProgram.apresentador && (
-                              <div className="font-black" style={{ fontSize: 9, lineHeight: 1.2, textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>{currentProgram.apresentador}</div>
-                            )}
-                            <div className="font-medium" style={{ fontSize: 6, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>
-                              {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Program logo + "a seguir" bottom-right */}
-                        <div style={{ position: "absolute", bottom: 10, right: 8, zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                          {currentProgram?.selo ? (
-                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: 70, maxHeight: 55, marginBottom: 5 }} />
-                          ) : currentProgram ? (
-                            <div className="font-black text-right" style={{ fontSize: 10, lineHeight: 1.1, maxWidth: 70, marginBottom: 5 }}>{currentProgram.nome}</div>
-                          ) : null}
-                          {nextProgram && (
-                            <div className="flex items-start" style={{ gap: 4 }}>
-                              <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.3)", marginTop: 1, flexShrink: 0 }} />
-                              <div>
-                                <div className="font-semibold" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)" }}>a seguir</div>
-                                <div className="font-bold" style={{ fontSize: 8, lineHeight: 1.2 }}>{nextProgram.nome}</div>
-                                <div className="font-medium" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                          <DraggableElement id="presenter" position={getElPos("presenter")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
+                            <div>
+                              <img src={currentProgram.apresentadorFoto} alt="" style={{ height: 160, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(2px 0 8px rgba(0,0,0,0.4))" }} />
+                              {currentProgram.apresentador && (
+                                <div className="font-black" style={{ fontSize: 9, lineHeight: 1.2, textShadow: "0 1px 4px rgba(0,0,0,0.6)", marginTop: 2 }}>{currentProgram.apresentador}</div>
+                              )}
+                              <div className="font-medium" style={{ fontSize: 6, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>
+                                {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                               </div>
                             </div>
-                          )}
-                        </div>
+                          </DraggableElement>
+                        )}
+
+                        {/* Program logo + "a seguir" — draggable */}
+                        <DraggableElement id="program" position={getElPos("program")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-right">
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                            {currentProgram?.selo ? (
+                              <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: 70, maxHeight: 55, marginBottom: 5 }} />
+                            ) : currentProgram ? (
+                              <div className="font-black text-right" style={{ fontSize: 10, lineHeight: 1.1, maxWidth: 70, marginBottom: 5 }}>{currentProgram.nome}</div>
+                            ) : null}
+                            {nextProgram && (
+                              <div className="flex items-start" style={{ gap: 4 }}>
+                                <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.3)", marginTop: 1, flexShrink: 0 }} />
+                                <div>
+                                  <div className="font-semibold" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)" }}>a seguir</div>
+                                  <div className="font-bold" style={{ fontSize: 8, lineHeight: 1.2 }}>{nextProgram.nome}</div>
+                                  <div className="font-medium" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </DraggableElement>
 
                         {/* Progress bar */}
                         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.1)", zIndex: 15 }}>

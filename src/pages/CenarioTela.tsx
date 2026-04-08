@@ -12,7 +12,7 @@ interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3D
 interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage: string; lat: number | null; lon: number | null; zoom: number; }
 interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
-interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; }
+interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; elementPositions?: Record<string, { x: number; y: number; scale: number }>; }
 interface CenarioConfig { city: string; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
 
 function buildHomeGradient(h: HomeConfig): string {
@@ -1117,6 +1117,7 @@ export default function CenarioTela() {
                 const total = endMin - startMin;
                 if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
               }
+              const elPos = (id: string) => config.home.elementPositions?.[id] ?? null;
 
               return (
                 <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: config.home.bgGradient ? buildHomeGradient(config.home) : "#000", color: "#fff", overflow: "hidden" }}>
@@ -1127,39 +1128,53 @@ export default function CenarioTela() {
                   <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", height: "0", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.6) 0%, transparent 70%)", pointerEvents: "none" }} />
 
                   {/* ── HEADER: Clock (top-left) ── */}
-                  <div style={{ position: "absolute", top: `calc(3${vu} + 120px)`, left: `3${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                    <div className="font-black" style={{ fontSize: `5${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-                      {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                    </div>
-                    <div className="font-medium" style={{ fontSize: `1.6${vu}`, color: accentColor, marginTop: `0.4${vu}`, fontVariantNumeric: "tabular-nums" }}>
-                      {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                    </div>
-                  </div>
+                  {(() => {
+                    const p = elPos("clock");
+                    const style: React.CSSProperties = p
+                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 10, transform: `scale(${p.scale})`, transformOrigin: "top left", animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" }
+                      : { position: "absolute", top: `calc(3${vu} + 120px)`, left: `3${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" };
+                    return (
+                      <div style={style}>
+                        <div className="font-black" style={{ fontSize: `5${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
+                          {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                        </div>
+                        <div className="font-medium" style={{ fontSize: `1.6${vu}`, color: accentColor, marginTop: `0.4${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                          {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* ── SPONSOR (top-right) ── */}
-                  {sponsorLogos.length > 0 && (
-                    <div style={{ position: "absolute", top: `calc(3${vu} + 30px)`, right: `3${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
-                      <div className="relative flex items-center justify-end" style={{ height: `21${vu}` }}>
-                        {sponsorLogos.map((l, i) => l.logo_url && (
-                          <img
-                            key={l.id}
-                            src={l.logo_url}
-                            alt={l.nome}
-                            className="object-contain"
-                            style={{
-                              position: "absolute",
-                              maxWidth: `50${vu}`, maxHeight: `20${vu}`,
-                              right: 0,
-                              opacity: i === sponsorIdx ? 1 : 0,
-                              transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
-                              transition: "opacity 0.8s ease, transform 0.8s ease",
-                              filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
-                            }}
-                          />
-                        ))}
+                  {sponsorLogos.length > 0 && (() => {
+                    const p = elPos("sponsor");
+                    const style: React.CSSProperties = p
+                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 10, transform: `scale(${p.scale})`, transformOrigin: "top left", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" }
+                      : { position: "absolute", top: `calc(3${vu} + 30px)`, right: `3${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
+                    return (
+                      <div style={style}>
+                        <div className="relative flex items-center justify-end" style={{ height: `21${vu}` }}>
+                          {sponsorLogos.map((l, i) => l.logo_url && (
+                            <img
+                              key={l.id}
+                              src={l.logo_url}
+                              alt={l.nome}
+                              className="object-contain"
+                              style={{
+                                position: "absolute",
+                                maxWidth: `50${vu}`, maxHeight: `20${vu}`,
+                                right: 0,
+                                opacity: i === sponsorIdx ? 1 : 0,
+                                transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
+                                transition: "opacity 0.8s ease, transform 0.8s ease",
+                                filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
+                              }}
+                            />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* ── SYNC indicator (below clock) ── */}
                   <div style={{ position: "absolute", top: `13${vu}`, left: `3${vu}`, zIndex: 20 }}>
@@ -1172,7 +1187,12 @@ export default function CenarioTela() {
                   </div>
 
                   {/* ── CENTER: Vinyl + Music Info ── */}
-                  <div style={{ position: "absolute", top: "18%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }}>
+                  {(() => {
+                    const p = elPos("vinyl");
+                    const style: React.CSSProperties = p
+                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, transform: `translate(-50%, -50%) scale(${p.scale})`, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }
+                      : { position: "absolute", top: "18%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 };
+                    return <div style={style}>
                     {musicData ? (
                       <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                         {/* Vinyl disc */}
@@ -1227,58 +1247,63 @@ export default function CenarioTela() {
                     ) : (
                       <div className="opacity-40 text-center" style={{ fontSize: `1.8${vu}` }}>Nenhum programa no ar</div>
                     )}
-                  </div>
+                  </div>;
+                  })()}
 
                   {/* ── BOTTOM LEFT: Presenter photo + name ── */}
-                  {currentProgram?.apresentadorFoto && (
-                    <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
-                      <img
-                        src={currentProgram.apresentadorFoto}
-                        alt={currentProgram.apresentador || ""}
-                        style={{
-                          height: `81${vu}`,
-                          objectFit: "contain",
-                          objectPosition: "bottom left",
-                          filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))",
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Presenter name + time overlay on bottom-left */}
-                  {currentProgram && (
-                    <div style={{ position: "absolute", bottom: "90px", left: `3${vu}`, zIndex: 12, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.4s both" }}>
-                      {currentProgram.apresentador && (
-                        <div className="font-black" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
-                      )}
-                      <div className="font-medium" style={{ fontSize: `1.4${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
-                        {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ── BOTTOM RIGHT: Program logo + "a seguir" ── */}
-                  <div style={{ position: "absolute", bottom: "90px", right: "50px", zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>
-                    {/* Program logo/name */}
-                    {currentProgram?.selo ? (
-                      <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `30${vu}`, maxHeight: `25${vu}`, marginBottom: `1.5${vu}` }} />
-                    ) : currentProgram ? (
-                      <div className="font-black text-right" style={{ fontSize: `3${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", marginBottom: `1.5${vu}`, maxWidth: `22${vu}` }}>{currentProgram.nome}</div>
-                    ) : null}
-
-                    {/* "a seguir" section */}
-                    {nextProgram && (
-                      <div className="flex items-start" style={{ gap: `1${vu}` }}>
-                        {/* Vertical separator line */}
-                        <div style={{ width: "2px", height: `5${vu}`, background: "rgba(255,255,255,0.3)", marginTop: `0.3${vu}`, flexShrink: 0 }} />
-                        <div>
-                          <div className="font-semibold" style={{ fontSize: `1.2${vu}`, color: accentColor, marginBottom: `0.2${vu}` }}>a seguir</div>
-                          <div className="font-bold" style={{ fontSize: `2${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
-                          <div className="font-medium" style={{ fontSize: `1.3${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", marginTop: `0.2${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                  {currentProgram?.apresentadorFoto && (() => {
+                    const p = elPos("presenter");
+                    const style: React.CSSProperties = p
+                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 8, transform: `scale(${p.scale})`, transformOrigin: "bottom left", animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" }
+                      : { position: "absolute", bottom: 0, left: 0, zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
+                    return (
+                      <div style={style}>
+                        <img
+                          src={currentProgram.apresentadorFoto}
+                          alt={currentProgram.apresentador || ""}
+                          style={{
+                            height: `81${vu}`,
+                            objectFit: "contain",
+                            objectPosition: "bottom left",
+                            filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))",
+                          }}
+                        />
+                        {currentProgram.apresentador && (
+                          <div className="font-black" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)", marginTop: `0.5${vu}` }}>{currentProgram.apresentador}</div>
+                        )}
+                        <div className="font-medium" style={{ fontSize: `1.4${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
+                          {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                         </div>
                       </div>
-                    )}
-                  </div>
+                    );
+                  })()}
+
+                  {/* ── BOTTOM RIGHT: Program logo + "a seguir" ── */}
+                  {(() => {
+                    const p = elPos("program");
+                    const style: React.CSSProperties = p
+                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 12, transform: `scale(${p.scale})`, transformOrigin: "bottom right", display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" }
+                      : { position: "absolute", bottom: "90px", right: "50px", zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" };
+                    return (
+                      <div style={style}>
+                        {currentProgram?.selo ? (
+                          <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `30${vu}`, maxHeight: `25${vu}`, marginBottom: `1.5${vu}` }} />
+                        ) : currentProgram ? (
+                          <div className="font-black text-right" style={{ fontSize: `3${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", marginBottom: `1.5${vu}`, maxWidth: `22${vu}` }}>{currentProgram.nome}</div>
+                        ) : null}
+                        {nextProgram && (
+                          <div className="flex items-start" style={{ gap: `1${vu}` }}>
+                            <div style={{ width: "2px", height: `5${vu}`, background: "rgba(255,255,255,0.3)", marginTop: `0.3${vu}`, flexShrink: 0 }} />
+                            <div>
+                              <div className="font-semibold" style={{ fontSize: `1.2${vu}`, color: accentColor, marginBottom: `0.2${vu}` }}>a seguir</div>
+                              <div className="font-bold" style={{ fontSize: `2${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
+                              <div className="font-medium" style={{ fontSize: `1.3${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", marginTop: `0.2${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Program progress bar — neon glow style */}
                   <div style={{ position: "absolute", bottom: `2${vu}`, left: 0, right: 0, height: "2px", background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
