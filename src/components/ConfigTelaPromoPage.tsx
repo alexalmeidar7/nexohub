@@ -143,32 +143,36 @@ export default function ConfigTelaPromoPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="sticky top-0 z-20 rounded-2xl border border-border bg-card p-3 shadow-lg">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button
+      <div className="sticky top-0 z-20 flex flex-col gap-3 sm:flex-row p-3">
+          <button
             onClick={handleSave}
             disabled={saving}
-            variant="accent"
-            size="lg"
-            className="min-h-12 flex-1 justify-center rounded-xl text-sm font-bold uppercase tracking-[0.08em] shadow-lg"
+            className="min-h-11 flex-1 flex items-center justify-center gap-2 rounded-xl text-sm font-bold uppercase tracking-[0.08em] transition-all hover:brightness-110 disabled:opacity-60"
+            style={{
+              background: "var(--layout-accent-color, var(--primary))",
+              color: "#fff",
+              boxShadow: "0 2px 12px color-mix(in srgb, var(--layout-accent-color, var(--primary)) 35%, transparent)",
+            }}
           >
             <Save size={16} />
             {saving ? "Salvando..." : "Salvar configurações"}
-          </Button>
+          </button>
 
-          <Button
-            variant="outline"
-            size="lg"
-            className="min-h-12 flex-1 justify-center rounded-xl border-2 border-primary/40 bg-background text-foreground shadow-lg"
+          <button
+            className="min-h-11 flex-1 flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+            style={{
+              background: "rgba(255,255,255,0.08)",
+              color: "var(--foreground)",
+              border: "1px solid rgba(255,255,255,0.12)",
+            }}
             onClick={() => {
               const slug = user?.email?.split("@")[0] || "";
               window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
             }}
           >
             <ExternalLink size={16} /> Abrir Tela Promo
-          </Button>
+          </button>
         </div>
-      </div>
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="flex-1 space-y-6 max-w-lg">
