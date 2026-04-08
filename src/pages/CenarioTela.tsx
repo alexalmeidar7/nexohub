@@ -1330,36 +1330,38 @@ export default function CenarioTela() {
                     <div
                       key={`program-${currentProgram.id}`}
                       className="flex flex-col items-center flex-shrink-0"
-                      style={{ marginTop: "120px", animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
+                      style={{ marginTop: `2${vu}`, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}
                     >
                       {currentProgram.selo ? (
-                        <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `88${vu}`, maxHeight: `55${vu}` }} />
+                        <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${isLandscape ? 70 : 80}${vu}`, maxHeight: `${isLandscape ? 40 : 50}${vu}` }} />
                       ) : (
-                        <div className="font-black text-center" style={{ fontSize: `3${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
+                        <div className="font-black text-center" style={{ fontSize: `3.5${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{currentProgram.nome}</div>
                       )}
                       {currentProgram.apresentador && (
-                        <div className="flex flex-col items-center" style={{ marginTop: `1${vu}` }}>
-                          <div className="rounded-full flex items-center justify-center cenario-mic-pulse" style={{ width: `4${vu}`, height: `4${vu}`, background: "rgba(0,0,0,0.15)", border: "2px solid rgba(0,0,0,0.25)", marginBottom: `0.6${vu}` }}>
-                            <Mic style={{ width: `2${vu}`, height: `2${vu}`, color: "#000" }} />
+                        <div className="flex items-center" style={{ gap: `0.8${vu}`, marginTop: `1.2${vu}` }}>
+                          <div className="rounded-full flex items-center justify-center cenario-mic-pulse" style={{ width: `3.5${vu}`, height: `3.5${vu}`, background: "rgba(0,0,0,0.12)", border: "2px solid rgba(0,0,0,0.2)" }}>
+                            <Mic style={{ width: `1.8${vu}`, height: `1.8${vu}`, color: "#000" }} />
                           </div>
-                          <div className="font-black" style={{ fontSize: `3.2${vu}`, color: "#000", textShadow: "none" }}>{currentProgram.apresentador}</div>
+                          <div className="font-black" style={{ fontSize: `3${vu}`, color: "#000", textShadow: "none" }}>{currentProgram.apresentador}</div>
                         </div>
                       )}
-                      <div className="font-medium" style={{ fontSize: `1.3${vu}`, marginTop: `0.3${vu}`, fontVariantNumeric: "tabular-nums", color: "#000", opacity: 0.7 }}>
-                        {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
+                      <div className="font-medium" style={{ fontSize: `1.3${vu}`, marginTop: `0.4${vu}`, fontVariantNumeric: "tabular-nums", color: "#000", opacity: 0.6 }}>
+                        {currentProgram.horario_inicio.slice(0,5)} — {currentProgram.horario_fim.slice(0,5)}
                       </div>
                       {/* Sponsor logos below program logo */}
                       {sponsorLogos.length > 0 && (
-                        <div className="relative flex items-center justify-center" style={{ marginTop: `1${vu}`, height: `5${vu}` }}>
+                        <div className="relative flex items-center justify-center" style={{ marginTop: `1.2${vu}`, height: `5${vu}` }}>
                           {sponsorLogos.map((l, i) => l.logo_url && (
                             <img
                               key={l.id}
                               src={l.logo_url}
                               alt={l.nome}
-                              className="object-contain rounded drop-shadow-md absolute"
+                              className="object-contain rounded drop-shadow-md"
                               style={{
-                                width: `4.5${vu}`, height: `4.5${vu}`,
-                                background: "rgba(255,255,255,0.15)", padding: 2,
+                                position: "absolute",
+                                width: `5${vu}`, height: `5${vu}`,
+                                background: "rgba(255,255,255,0.12)", padding: 2,
+                                borderRadius: `0.8${vu}`,
                                 opacity: i === sponsorIdx ? 1 : 0,
                                 transform: i === sponsorIdx ? "scale(1)" : "scale(0.85)",
                                 transition: "opacity 0.8s ease, transform 0.8s ease",
@@ -1372,8 +1374,8 @@ export default function CenarioTela() {
                   )}
 
                   {/* Full-width program progress bar */}
-                  <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 10, background: "#000", zIndex: 50 }}>
-                    <div style={{ width: `${progressPct}%`, height: "100%", background: "#fff", transition: "width 1s linear" }} />
+                  <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: `0.8${vu}`, background: "rgba(0,0,0,0.3)", zIndex: 50 }}>
+                    <div style={{ width: `${progressPct}%`, height: "100%", background: "linear-gradient(90deg, #e1f532, #c8e600)", transition: "width 1s linear", boxShadow: "0 0 8px rgba(225,245,50,0.4)" }} />
                   </div>
                 </div>
               );
