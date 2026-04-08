@@ -117,7 +117,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     } catch (err: any) {
       console.error("Erro ao formatar:", err);
       toast.error("Erro ao formatar roteiro para WhatsApp");
-      setFormattedText(`*${roteiroData.titulo || "Roteiro"}*\n${roteiroData.programaNome} · ${roteiroData.estudio}\n${roteiroData.data} ${roteiroData.horario}\n\n${roteiroData.conteudoTexto.substring(0, 3000)}`);
+      setFormattedText(`*${roteiroData.titulo || "Roteiro"}*\n${roteiroData.programaNome} · ${roteiroData.estudio}\n${new Date().toLocaleDateString("pt-BR")} ${roteiroData.horario}\n\n${roteiroData.conteudoTexto.substring(0, 3000)}`);
     } finally {
       setLoading(false);
     }
