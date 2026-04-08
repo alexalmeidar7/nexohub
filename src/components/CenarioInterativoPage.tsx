@@ -1651,12 +1651,12 @@ export default function CenarioInterativoPage() {
                 {/* ── Dark sidebar ── */}
                 <div className="w-[52px] flex-shrink-0 flex items-center relative" style={{ zIndex: 10 }}>
                 <div className="flex flex-col items-center gap-1 px-1 py-2" style={{ borderRadius: "0 12px 12px 0", background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "rgba(26,26,26,0.7)" : "rgba(26,26,26,0.85)", backdropFilter: (activeTab === "weather" && weatherSubTab === "satellite") || (activeTab === "traffic" && config.traffic.enabled) ? "blur(4px)" : "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: "none" }}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2 cursor-pointer" onClick={() => handleTabChange("home")} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2 cursor-pointer" onClick={() => handleTabChange("home")} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                     <Home size={16} className="text-white" />
                   </div>
                   {/* Weather icon + sub-tabs grouped */}
                   <div className="rounded-2xl py-1 px-1 flex flex-col items-center" style={{ background: "rgba(255,255,255,0.08)", opacity: config.weather.enabled ? 1 : 0.35 }}>
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "weather" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", animation: activeTab === "weather" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "weather" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                       <CloudSun size={16} className="text-white" />
                     </div>
                     <div style={{ display: "grid", gridTemplateRows: activeTab === "weather" ? "1fr" : "0fr", transition: "grid-template-rows 0.35s cubic-bezier(0.4,0,0.2,1)" }}>
@@ -1675,11 +1675,11 @@ export default function CenarioInterativoPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-2 cursor-pointer" onClick={() => config.traffic.enabled && handleTabChange("traffic")} style={{ background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", animation: activeTab === "traffic" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-2 cursor-pointer" onClick={() => config.traffic.enabled && handleTabChange("traffic")} style={{ background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                     <Car size={16} className="text-white" />
                   </div>
                   <div className="rounded-2xl flex flex-col items-center" style={{ padding: "0.3vh", background: "rgba(255,255,255,0.08)", opacity: config.currency.enabled ? 1 : 0.35 }}>
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "currency" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", animation: activeTab === "currency" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "currency" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                       <DollarSign size={16} className="text-white" />
                     </div>
                     <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? "80px" : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
@@ -1689,7 +1689,7 @@ export default function CenarioInterativoPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.chat.enabled && handleTabChange("chat")} style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.chat.enabled && handleTabChange("chat")} style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                     <MessageCircle size={16} className="text-white" />
                   </div>
                   <div className="w-9 h-9 rounded-full flex items-center justify-center mt-1 cursor-pointer" onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} style={{ background: previewDrawActive ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawActive ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", transition: "all 0.2s ease" }}>
