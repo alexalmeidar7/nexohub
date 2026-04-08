@@ -807,9 +807,18 @@ export default function CenarioInterativoPage() {
           .eq("ativo", true)
           .eq("excluido", false);
         setSponsorLogos(logos || []);
+        // Find next program
+        const upcoming = progs?.filter(p => (p.dias_semana || []).includes(today) && p.horario_inicio > nowTime).sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
+        if (upcoming?.length) {
+          const np = upcoming[0];
+          setNextProgram({ nome: np.nome, selo: np.selo, horario_inicio: np.horario_inicio, horario_fim: np.horario_fim });
+        } else {
+          setNextProgram(null);
+        }
       } else {
         setCurrentProgram(null);
         setSponsorLogos([]);
+        setNextProgram(null);
       }
     };
     load();
