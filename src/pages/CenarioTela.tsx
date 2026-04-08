@@ -1250,14 +1250,14 @@ export default function CenarioTela() {
                   </div>
 
                   {/* Program progress bar — neon glow style */}
-                  <div style={{ position: "absolute", bottom: `12${vu}`, left: `3${vu}`, right: `3${vu}`, height: `0.5${vu}`, background: "rgba(255,255,255,0.08)", borderRadius: `0.25${vu}`, zIndex: 15, overflow: "hidden" }}>
+                  <div style={{ position: "absolute", bottom: `2${vu}`, left: 0, right: 0, height: `0.3${vu}`, background: "rgba(255,255,255,0.06)", zIndex: 15, overflow: "visible" }}>
                     <div style={{
                       width: `${progressPct}%`,
                       height: "100%",
                       background: accentColor,
-                      borderRadius: `0.25${vu}`,
+                      borderRadius: `0 0.15${vu} 0.15${vu} 0`,
                       transition: "width 1s linear",
-                      boxShadow: `0 0 6px ${accentRgba(0.6)}, 0 0 14px ${accentRgba(0.3)}, 0 0 24px ${accentRgba(0.15)}`,
+                      boxShadow: `0 0 4px ${accentRgba(0.7)}, 0 0 10px ${accentRgba(0.4)}, 0 0 20px ${accentRgba(0.2)}`,
                     }} />
                   </div>
                 </div>
