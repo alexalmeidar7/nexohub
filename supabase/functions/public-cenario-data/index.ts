@@ -53,7 +53,7 @@ function decodeXmlBuffer(buffer: ArrayBuffer, contentType: string): string {
 
 // Simple in-memory cache per uid (absorb request bursts)
 const uidCache = new Map<string, { data: any; ts: number }>();
-const CACHE_TTL_MS = 15000; // 15s cache (increased from 5s to reduce DB pressure)
+const CACHE_TTL_MS = 3000; // 3s cache to keep “música no ar” responsive on external screens
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
       musicData = {
         titulo: dashItems.music_current_title,
         artista: dashItems.music_current_artist || "",
-        capa: "",
+        capa: dashItems.music_current_cover || "",
       };
       musicStartTime = dashItems.music_start_time || null;
     }
