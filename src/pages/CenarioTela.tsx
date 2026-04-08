@@ -108,6 +108,7 @@ type PublicCenarioPayload = {
   sponsorLogos: any[];
   musicData?: { titulo: string; artista: string; capa: string } | null;
   musicStartTime?: number | null;
+  accentColor?: string | null;
 };
 
 const mockMessages = [
@@ -536,6 +537,7 @@ export default function CenarioTela() {
         // Unauthenticated (vMix browser, etc): use edge function
         const result = await fetchViaEdgeFunction(effectiveUserId);
         if (result?.cenario_config) applyConfig(result.cenario_config);
+        if (result?.accentColor) setAccentColor(result.accentColor);
         if (result?.currentProgram) {
           setCurrentProgram(result.currentProgram);
           setSponsorLogos(result.sponsorLogos || []);
@@ -608,6 +610,7 @@ export default function CenarioTela() {
         try {
           const result = await fetchViaEdgeFunction(effectiveUserId);
           if (result?.cenario_config) applyConfig(result.cenario_config);
+          if (result?.accentColor) setAccentColor(result.accentColor);
           if (result?.currentProgram) {
             setCurrentProgram(result.currentProgram);
             setSponsorLogos(result.sponsorLogos || []);
@@ -840,6 +843,7 @@ export default function CenarioTela() {
             }
           } else {
             const result = await fetchViaEdgeFunction(effectiveUserId);
+            if (result?.accentColor) setAccentColor(result.accentColor);
             if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
               await setMusicWithCoverFallback(result.musicData.titulo, result.musicData.artista, result.musicData.capa || "", undefined, result.musicStartTime);
             }
