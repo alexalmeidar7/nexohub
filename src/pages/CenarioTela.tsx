@@ -1207,10 +1207,9 @@ export default function CenarioTela() {
 
                   {/* ── CENTER: Vinyl + Music Info ── */}
                   {(() => {
-                    const p = elPos("vinyl");
-                    const style: React.CSSProperties = p
-                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, transform: `translate(-50%, -50%) scale(${p.scale})`, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }
-                      : { position: "absolute", top: "18%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 };
+                    const custom = elStyle("vinyl", "center", { display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 });
+                    const style: React.CSSProperties = custom
+                      ?? { position: "absolute", top: "18%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 };
                     return <div style={style}>
                     {musicData ? (
                       <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
@@ -1271,10 +1270,9 @@ export default function CenarioTela() {
 
                   {/* ── BOTTOM LEFT: Presenter photo + name ── */}
                   {currentProgram?.apresentadorFoto && (() => {
-                    const p = elPos("presenter");
-                    const style: React.CSSProperties = p
-                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 8, transform: `scale(${p.scale})`, transformOrigin: "bottom left", animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" }
-                      : { position: "absolute", bottom: 0, left: 0, zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
+                    const custom = elStyle("presenter", "bottom-left", { zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" });
+                    const style: React.CSSProperties = custom
+                      ?? { position: "absolute", bottom: 0, left: 0, zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
                     return (
                       <div style={style}>
                         <img
@@ -1299,10 +1297,9 @@ export default function CenarioTela() {
 
                   {/* ── BOTTOM RIGHT: Program logo + "a seguir" ── */}
                   {(() => {
-                    const p = elPos("program");
-                    const style: React.CSSProperties = p
-                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 12, transform: `scale(${p.scale})`, transformOrigin: "bottom right", display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" }
-                      : { position: "absolute", bottom: "90px", right: "50px", zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" };
+                    const custom = elStyle("program", "bottom-right", { zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" });
+                    const style: React.CSSProperties = custom
+                      ?? { position: "absolute", bottom: "90px", right: "50px", zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" };
                     return (
                       <div style={style}>
                         {currentProgram?.selo ? (
