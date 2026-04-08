@@ -200,6 +200,22 @@ export default function ConfigTelaPromoPage() {
       <div className="flex flex-col gap-4 lg:flex-row">
         {/* Left: config panels */}
         <div className="flex-1 space-y-4 max-w-xl">
+          {/* Presets section */}
+          <SectionCard icon={Palette} title="Presets de Cores">
+            <div className="grid grid-cols-2 gap-2">
+              {PRESETS.map(preset => (
+                <button
+                  key={preset.name}
+                  onClick={() => setConfig(c => ({ ...c, ...preset.config }))}
+                  className="text-left px-3 py-2 rounded-lg text-xs font-medium transition-all hover:scale-[1.02] hover:brightness-125"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "var(--layout-text)", border: "1px solid rgba(255,255,255,0.1)" }}
+                >
+                  {preset.name}
+                </button>
+              ))}
+            </div>
+          </SectionCard>
+
           {/* Background section */}
           <SectionCard icon={Monitor} title="Fundo da Tela">
             <div className="space-y-3">
