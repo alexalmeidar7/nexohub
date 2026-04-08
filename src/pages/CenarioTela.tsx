@@ -1117,6 +1117,7 @@ export default function CenarioTela() {
                 const total = endMin - startMin;
                 if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
               }
+              const elPos = (id: string) => config.home.elementPositions?.[id] ?? null;
 
               return (
                 <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: config.home.bgGradient ? buildHomeGradient(config.home) : "#000", color: "#fff", overflow: "hidden" }}>
