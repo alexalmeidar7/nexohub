@@ -1644,7 +1644,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       </div>
 
       {/* Spacer */}
-      {!(showVideo && isVideo) && <div className="flex-1 min-h-0" />}
+      {!(showVideo && isVideo) && <div className="flex-1 min-h-0" style={{ transition: "flex 0.4s ease" }} />}
 
       {/* Controls */}
       {channels.length === 0 ? (
