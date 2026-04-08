@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
       const [apsResult, logosResult] = await withTimeout(
         Promise.all([
           apIds.length
-            ? supabase.from("apresentadores").select("nome").in("id", apIds)
+            ? supabase.from("apresentadores").select("nome, foto").in("id", apIds)
             : Promise.resolve({ data: null }),
           supabase
             .from("logos_patrocinadores")
@@ -160,6 +160,7 @@ Deno.serve(async (req) => {
       );
 
       const apresentadorNome = apsResult.data?.map((a: any) => a.nome).join(", ") || "";
+      const apresentadorFoto = apsResult.data?.[0]?.foto || "";
 
       currentProgram = {
         nome: onAir.nome,
@@ -168,6 +169,7 @@ Deno.serve(async (req) => {
         horario_inicio: onAir.horario_inicio,
         horario_fim: onAir.horario_fim,
         apresentador: apresentadorNome,
+        apresentadorFoto,
         tipo_programa: onAir.tipo_programa || null,
       };
 
