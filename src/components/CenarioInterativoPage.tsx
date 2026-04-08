@@ -1611,7 +1611,7 @@ export default function CenarioInterativoPage() {
                   </div>
                 )}
                 {!((activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled)) && (
-                  <div className="absolute inset-0" style={{ background: activeTab === "home" && config.home.bgGradient ? buildHomeGradient(config.home) : "#e8e8e8", zIndex: 0 }}>
+                  <div className="absolute inset-0" style={{ background: activeTab === "home" ? (config.home.bgGradient ? buildHomeGradient(config.home) : (config.home.bgImage ? "#e8e8e8" : "#000")) : "#e8e8e8", zIndex: 0 }}>
                     {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && (
                       <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
                     )}
