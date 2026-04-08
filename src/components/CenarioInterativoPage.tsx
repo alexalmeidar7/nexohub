@@ -1774,9 +1774,9 @@ export default function CenarioInterativoPage() {
                             </div>
                             {/* SYNC indicator — mirrors external screen */}
                             <div className="flex items-center" style={{ gap: 2, opacity: 0.5, marginTop: 3 }}>
-                              <div className="rounded-full" style={{ width: 3, height: 3, background: realtimeConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: realtimeConnected ? "0 0 4px var(--layout-accent-color, #4ade80)" : "0 0 4px #ef4444" }} />
+                              <div className="rounded-full" style={{ width: 3, height: 3, background: externalConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: externalConnected ? "0 0 4px var(--layout-accent-color, #4ade80)" : "0 0 4px #ef4444" }} />
                               <span className="font-semibold uppercase tracking-wider" style={{ fontSize: 3.5, letterSpacing: "0.1em" }}>
-                                {realtimeConnected ? "SYNC" : "OFF"}
+                                {externalConnected ? "SYNC" : "OFF"}
                               </span>
                             </div>
                           </div>
