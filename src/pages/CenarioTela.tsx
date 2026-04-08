@@ -1149,7 +1149,7 @@ export default function CenarioTela() {
                     {musicData ? (
                       <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                         {/* Vinyl disc */}
-                        <div className="relative" style={{ width: `${isLandscape ? 28 : 35}${vu}`, height: `${isLandscape ? 28 : 35}${vu}` }}>
+                        <div className="relative" style={{ width: `${isLandscape ? 42 : 52.5}${vu}`, height: `${isLandscape ? 42 : 52.5}${vu}` }}>
                           <div style={{
                             width: "100%", height: "100%",
                             borderRadius: "50%",
