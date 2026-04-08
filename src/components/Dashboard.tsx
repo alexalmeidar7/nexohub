@@ -779,17 +779,40 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </Suspense>
             </div>
             {currentPage !== "dashboard" && showContentScrollIndicator && (
-              <div className="pointer-events-none absolute inset-y-4 right-3 z-20 flex items-stretch">
-                <div className="relative h-full w-4">
+              <div
+                className="absolute inset-y-4 right-1 z-20 flex items-stretch"
+                style={{ width: "14px", cursor: "pointer", pointerEvents: "auto" }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const track = e.currentTarget;
+                  const rect = track.getBoundingClientRect();
+                  const scrollEl = contentScrollRef.current;
+                  if (!scrollEl) return;
+                  const setScrollFromY = (clientY: number) => {
+                    const ratio = Math.min(Math.max((clientY - rect.top) / rect.height, 0), 1);
+                    scrollEl.scrollTop = ratio * (scrollEl.scrollHeight - scrollEl.clientHeight);
+                  };
+                  setScrollFromY(e.clientY);
+                  const onMove = (ev: MouseEvent) => { ev.preventDefault(); setScrollFromY(ev.clientY); };
+                  const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+                  window.addEventListener("mousemove", onMove);
+                  window.addEventListener("mouseup", onUp);
+                }}
+              >
+                <div className="relative h-full w-full flex items-stretch justify-center">
                   <div
-                    className="absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2"
-                    style={{ background: "color-mix(in srgb, var(--layout-page-text, hsl(var(--background))) 45%, transparent)" }}
+                    className="absolute top-0 bottom-0 w-[2px]"
+                    style={{ background: "color-mix(in srgb, var(--layout-page-text, hsl(var(--background))) 25%, transparent)", borderRadius: "1px" }}
                   />
                   <div
-                    className="absolute left-1/2 h-3 w-3 -translate-x-1/2 rounded-full transition-[top] duration-150"
+                    className="absolute h-4 w-4 rounded-full transition-[top] duration-100 hover:scale-125"
                     style={{
-                      top: `clamp(0px, calc(${contentScrollProgress * 100}% - 0.375rem), calc(100% - 0.75rem))`,
+                      top: `clamp(0px, calc(${contentScrollProgress * 100}% - 0.5rem), calc(100% - 1rem))`,
+                      left: "50%",
+                      transform: "translateX(-50%)",
                       background: "var(--layout-accent-color, hsl(var(--destructive)))",
+                      boxShadow: "0 1px 6px rgba(0,0,0,0.3)",
+                      cursor: "grab",
                     }}
                   />
                 </div>
