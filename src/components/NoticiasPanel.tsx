@@ -87,7 +87,8 @@ function parseRss(text: string): NewsItem[] {
   const results: NewsItem[] = [];
   items.forEach((item, i) => {
     if (i >= 10) return;
-    const title = decodeHtmlEntities(item.querySelector("title")?.textContent || "");
+    const rawTitle = decodeHtmlEntities(item.querySelector("title")?.textContent || "");
+    const title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
     const link = item.querySelector("link")?.textContent || "";
     let thumbnail = "";
     const mediaContent = item.querySelector("content[url]") || item.querySelector("thumbnail[url]");
@@ -137,7 +138,7 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
       return data.items
         .slice(0, 10)
         .map((item: any) => ({
-          title: decodeHtmlEntities(item.title || ""),
+          title: (() => { const raw = decodeHtmlEntities(item.title || ""); return raw.includes("|") ? raw.split("|")[0].trim() : raw; })(),
           link: item.link,
           thumbnail: item.thumbnail || item.enclosure?.link || "",
         }));
@@ -557,7 +558,10 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           const html = data.content;
           let title = item.title;
           const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-          if (titleMatch) title = decodeHtmlEntities(titleMatch[1].trim());
+          if (titleMatch) {
+            const decoded = decodeHtmlEntities(titleMatch[1].trim());
+            title = decoded.includes("|") ? decoded.split("|")[0].trim() : decoded;
+          }
 
           let thumbnail = item.thumbnail || "";
           if (!thumbnail) {
