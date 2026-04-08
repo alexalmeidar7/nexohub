@@ -793,7 +793,8 @@ export default function CenarioInterativoPage() {
         .from("programas")
         .select("id, nome, horario_inicio, horario_fim, dias_semana, selo, apresentador_id, apresentadores_ids, tipo_programa")
         .eq("user_id", user.id)
-        .eq("ativo", true);
+        .eq("ativo", true)
+        .ilike("estudio", "%fm%");
 
       const onAir = progs?.find(p => {
         const dias = p.dias_semana || [];
