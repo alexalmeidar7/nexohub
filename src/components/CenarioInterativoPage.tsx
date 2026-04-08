@@ -1766,11 +1766,18 @@ export default function CenarioInterativoPage() {
                         {/* Clock — draggable */}
                         <DraggableElement id="clock" position={getElPos("clock")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
                           <div>
-                            <div className="font-black" style={{ fontSize: 18, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
+                            <div className="font-black" style={{ fontSize: 18, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
                               {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                             </div>
-                            <div className="font-medium" style={{ fontSize: 7, color: "var(--layout-accent-color, #888)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
+                            <div className="font-medium" style={{ fontSize: 6, color: "var(--layout-accent-color, #888)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
                               {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                            </div>
+                            {/* SYNC indicator — mirrors external screen */}
+                            <div className="flex items-center" style={{ gap: 2, opacity: 0.5, marginTop: 3 }}>
+                              <div className="rounded-full" style={{ width: 3, height: 3, background: realtimeConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: realtimeConnected ? "0 0 4px var(--layout-accent-color, #4ade80)" : "0 0 4px #ef4444" }} />
+                              <span className="font-semibold uppercase tracking-wider" style={{ fontSize: 3.5, letterSpacing: "0.1em" }}>
+                                {realtimeConnected ? "SYNC" : "OFF"}
+                              </span>
                             </div>
                           </div>
                         </DraggableElement>
@@ -1780,7 +1787,7 @@ export default function CenarioInterativoPage() {
                           <DraggableElement id="sponsor" position={getElPos("sponsor")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
                             <div className="relative flex justify-end" style={{ height: 22, minWidth: 50 }}>
                               {sponsorLogos.map((l, i) => l.logo_url && (
-                                <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: 50, maxHeight: 20, opacity: i === sponsorIdx ? 1 : 0, transition: "opacity 0.8s ease", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.3))" }} />
+                                <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: 50, maxHeight: 20, opacity: i === sponsorIdx ? 1 : 0, transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)", transition: "opacity 0.8s ease, transform 0.8s ease", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.4))" }} />
                               ))}
                             </div>
                           </DraggableElement>
@@ -1792,8 +1799,8 @@ export default function CenarioInterativoPage() {
                           {musicData ? (
                             <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                               <div className="relative" style={{ width: 120, height: 120 }}>
-                                <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 180deg, rgba(255,255,255,0.03) 182deg, transparent 184deg, transparent 270deg, rgba(255,255,255,0.03) 272deg, transparent 274deg), #111`, boxShadow: "0 4px 16px rgba(0,0,0,0.5)", animation: "vinyl-spin 3s linear infinite" }}>
-                                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "40%", height: "40%", borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
+                                <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(50,50,50,0.3) 48.5%, transparent 49.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 30deg, rgba(255,255,255,0.02) 32deg, transparent 34deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 150deg, rgba(255,255,255,0.02) 152deg, transparent 154deg, transparent 210deg, rgba(255,255,255,0.03) 212deg, transparent 214deg, transparent 270deg, rgba(255,255,255,0.02) 272deg, transparent 274deg, transparent 330deg, rgba(255,255,255,0.03) 332deg, transparent 334deg), #111`, boxShadow: "0 8px 24px -4px rgba(0,0,0,0.6), inset 0 0 15px rgba(0,0,0,0.5)", animation: "vinyl-spin 3s linear infinite" }}>
+                                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "40%", height: "40%", borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 0 10px rgba(0,0,0,0.5)" }}>
                                     {musicData.capa ? (
                                       <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     ) : (
@@ -1806,14 +1813,14 @@ export default function CenarioInterativoPage() {
                                 </div>
                               </div>
                               <div style={{ marginTop: 8, textAlign: "center", maxWidth: 140 }}>
-                                <div className="font-black truncate" style={{ fontSize: 10, lineHeight: 1.2 }}>{musicData.titulo}</div>
+                                <div className="font-black truncate" style={{ fontSize: 10, lineHeight: 1.2, color: "var(--layout-accent-color, #fff)", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
                                 <div className="font-medium truncate" style={{ fontSize: 7, opacity: 0.6, marginTop: 1 }}>{musicData.artista}</div>
                               </div>
                             </div>
                           ) : currentProgram?.selo ? (
-                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: 120, maxHeight: 100 }} />
+                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: 120, maxHeight: 100 }} />
                           ) : currentProgram ? (
-                            <div className="font-black text-center" style={{ fontSize: 14, lineHeight: 1.1 }}>{currentProgram.nome}</div>
+                            <div className="font-black text-center" style={{ fontSize: 14, lineHeight: 1.1, textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
                           ) : (
                             <div className="text-[9px] opacity-40">Nenhum programa no ar</div>
                           )}
@@ -1823,7 +1830,7 @@ export default function CenarioInterativoPage() {
                         {/* Presenter PHOTO — draggable */}
                         {currentProgram?.apresentadorFoto && (
                           <DraggableElement id="presenterPhoto" position={getElPos("presenterPhoto")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
-                            <img src={currentProgram.apresentadorFoto} alt="" style={{ height: 160, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(2px 0 8px rgba(0,0,0,0.4))" }} />
+                            <img src={currentProgram.apresentadorFoto} alt="" style={{ height: 160, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(4px 0 12px rgba(0,0,0,0.5))" }} />
                           </DraggableElement>
                         )}
 
@@ -1831,8 +1838,8 @@ export default function CenarioInterativoPage() {
                         {currentProgram?.apresentador && (
                           <DraggableElement id="presenterInfo" position={getElPos("presenterInfo")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
                             <div>
-                              <div className="font-black" style={{ fontSize: 9, lineHeight: 1.2, textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>{currentProgram.apresentador}</div>
-                              <div className="font-medium" style={{ fontSize: 6, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>
+                              <div className="font-black" style={{ fontSize: 9, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
+                              <div className="font-medium" style={{ fontSize: 6, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                 {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                               </div>
                             </div>
@@ -1843,9 +1850,9 @@ export default function CenarioInterativoPage() {
                         <DraggableElement id="programLogo" position={getElPos("programLogo")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-right">
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
                             {currentProgram?.selo ? (
-                              <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-md" style={{ maxWidth: 70, maxHeight: 55 }} />
+                              <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: 70, maxHeight: 55 }} />
                             ) : currentProgram ? (
-                              <div className="font-black text-right" style={{ fontSize: 10, lineHeight: 1.1, maxWidth: 70 }}>{currentProgram.nome}</div>
+                              <div className="font-black text-right" style={{ fontSize: 10, lineHeight: 1.1, maxWidth: 70, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
                             ) : null}
                           </div>
                         </DraggableElement>
@@ -1857,16 +1864,16 @@ export default function CenarioInterativoPage() {
                               <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.3)", marginTop: 1, flexShrink: 0 }} />
                               <div>
                                 <div className="font-semibold" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)" }}>a seguir</div>
-                                <div className="font-bold" style={{ fontSize: 8, lineHeight: 1.2 }}>{nextProgram.nome}</div>
+                                <div className="font-bold" style={{ fontSize: 8, lineHeight: 1.2, textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
                                 <div className="font-medium" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                               </div>
                             </div>
                           </DraggableElement>
                         )}
 
-                        {/* Progress bar */}
-                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.1)", zIndex: 15 }}>
-                          <div style={{ width: `${progressPct}%`, height: "100%", background: "linear-gradient(90deg, var(--layout-accent-color, #444), var(--layout-accent-color, #444))", transition: "width 1s linear" }} />
+                        {/* Progress bar — neon glow matching external */}
+                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
+                          <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--layout-accent-color, #444)", transition: "width 1s linear", boxShadow: "0 0 2px var(--layout-accent-color, #444), 0 0 6px var(--layout-accent-color, #444), 0 -1px 3px var(--layout-accent-color, #444)" }} />
                         </div>
                       </div>
                     );
