@@ -1182,7 +1182,7 @@ export default function CenarioTela() {
                         </div>
                         {/* Music title + artist below vinyl */}
                         <div style={{ marginTop: `2${vu}`, textAlign: "center", maxWidth: `${isLandscape ? 40 : 40}${vu}` }}>
-                          <div className="font-black truncate" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
+                          <div className="font-black truncate" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, color: accentColor, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
                           <div className="font-medium truncate" style={{ fontSize: `1.6${vu}`, opacity: 0.6, marginTop: `0.3${vu}` }}>{musicData.artista}</div>
                         </div>
                       </div>
@@ -1243,7 +1243,7 @@ export default function CenarioTela() {
                         <div>
                           <div className="font-semibold" style={{ fontSize: `1.2${vu}`, color: accentColor, marginBottom: `0.2${vu}` }}>a seguir</div>
                           <div className="font-bold" style={{ fontSize: `2${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
-                          <div className="font-medium" style={{ fontSize: `1.3${vu}`, opacity: 0.6, fontVariantNumeric: "tabular-nums", marginTop: `0.2${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                          <div className="font-medium" style={{ fontSize: `1.3${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", marginTop: `0.2${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                         </div>
                       </div>
                     )}
