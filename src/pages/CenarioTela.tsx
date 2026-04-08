@@ -1251,55 +1251,59 @@ export default function CenarioTela() {
                   })()}
 
                   {/* ── BOTTOM LEFT: Presenter photo + name ── */}
-                  {currentProgram?.apresentadorFoto && (
-                    <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
-                      <img
-                        src={currentProgram.apresentadorFoto}
-                        alt={currentProgram.apresentador || ""}
-                        style={{
-                          height: `81${vu}`,
-                          objectFit: "contain",
-                          objectPosition: "bottom left",
-                          filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))",
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Presenter name + time overlay on bottom-left */}
-                  {currentProgram && (
-                    <div style={{ position: "absolute", bottom: "90px", left: `3${vu}`, zIndex: 12, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.4s both" }}>
-                      {currentProgram.apresentador && (
-                        <div className="font-black" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
-                      )}
-                      <div className="font-medium" style={{ fontSize: `1.4${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
-                        {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ── BOTTOM RIGHT: Program logo + "a seguir" ── */}
-                  <div style={{ position: "absolute", bottom: "90px", right: "50px", zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>
-                    {/* Program logo/name */}
-                    {currentProgram?.selo ? (
-                      <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `30${vu}`, maxHeight: `25${vu}`, marginBottom: `1.5${vu}` }} />
-                    ) : currentProgram ? (
-                      <div className="font-black text-right" style={{ fontSize: `3${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", marginBottom: `1.5${vu}`, maxWidth: `22${vu}` }}>{currentProgram.nome}</div>
-                    ) : null}
-
-                    {/* "a seguir" section */}
-                    {nextProgram && (
-                      <div className="flex items-start" style={{ gap: `1${vu}` }}>
-                        {/* Vertical separator line */}
-                        <div style={{ width: "2px", height: `5${vu}`, background: "rgba(255,255,255,0.3)", marginTop: `0.3${vu}`, flexShrink: 0 }} />
-                        <div>
-                          <div className="font-semibold" style={{ fontSize: `1.2${vu}`, color: accentColor, marginBottom: `0.2${vu}` }}>a seguir</div>
-                          <div className="font-bold" style={{ fontSize: `2${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
-                          <div className="font-medium" style={{ fontSize: `1.3${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", marginTop: `0.2${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                  {currentProgram?.apresentadorFoto && (() => {
+                    const p = elPos("presenter");
+                    const style: React.CSSProperties = p
+                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 8, transform: `scale(${p.scale})`, transformOrigin: "bottom left", animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" }
+                      : { position: "absolute", bottom: 0, left: 0, zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
+                    return (
+                      <div style={style}>
+                        <img
+                          src={currentProgram.apresentadorFoto}
+                          alt={currentProgram.apresentador || ""}
+                          style={{
+                            height: `81${vu}`,
+                            objectFit: "contain",
+                            objectPosition: "bottom left",
+                            filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))",
+                          }}
+                        />
+                        {currentProgram.apresentador && (
+                          <div className="font-black" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)", marginTop: `0.5${vu}` }}>{currentProgram.apresentador}</div>
+                        )}
+                        <div className="font-medium" style={{ fontSize: `1.4${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
+                          {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                         </div>
                       </div>
-                    )}
-                  </div>
+                    );
+                  })()}
+
+                  {/* ── BOTTOM RIGHT: Program logo + "a seguir" ── */}
+                  {(() => {
+                    const p = elPos("program");
+                    const style: React.CSSProperties = p
+                      ? { position: "absolute", left: `${p.x}%`, top: `${p.y}%`, zIndex: 12, transform: `scale(${p.scale})`, transformOrigin: "bottom right", display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" }
+                      : { position: "absolute", bottom: "90px", right: "50px", zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" };
+                    return (
+                      <div style={style}>
+                        {currentProgram?.selo ? (
+                          <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `30${vu}`, maxHeight: `25${vu}`, marginBottom: `1.5${vu}` }} />
+                        ) : currentProgram ? (
+                          <div className="font-black text-right" style={{ fontSize: `3${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", marginBottom: `1.5${vu}`, maxWidth: `22${vu}` }}>{currentProgram.nome}</div>
+                        ) : null}
+                        {nextProgram && (
+                          <div className="flex items-start" style={{ gap: `1${vu}` }}>
+                            <div style={{ width: "2px", height: `5${vu}`, background: "rgba(255,255,255,0.3)", marginTop: `0.3${vu}`, flexShrink: 0 }} />
+                            <div>
+                              <div className="font-semibold" style={{ fontSize: `1.2${vu}`, color: accentColor, marginBottom: `0.2${vu}` }}>a seguir</div>
+                              <div className="font-bold" style={{ fontSize: `2${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
+                              <div className="font-medium" style={{ fontSize: `1.3${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", marginTop: `0.2${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Program progress bar — neon glow style */}
                   <div style={{ position: "absolute", bottom: `2${vu}`, left: 0, right: 0, height: "2px", background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
