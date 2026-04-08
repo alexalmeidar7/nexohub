@@ -700,7 +700,7 @@ export default function CenarioInterativoPage() {
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; tipo_programa?: string | null } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; tipo_programa?: string | null } | null>(null);
   const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const prevMusicRef = useRef("");
@@ -789,12 +789,14 @@ export default function CenarioInterativoPage() {
 
       if (onAir) {
         let apresentadorNome = "";
+        let apresentadorFoto = "";
         const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
         if (apIds.length) {
-          const { data: aps } = await supabase.from("apresentadores").select("nome").in("id", apIds);
+          const { data: aps } = await supabase.from("apresentadores").select("nome, foto").in("id", apIds);
           apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
+          apresentadorFoto = aps?.[0]?.foto || "";
         }
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, tipo_programa: onAir.tipo_programa });
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, tipo_programa: onAir.tipo_programa });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
           .select("id, nome, logo_url")
