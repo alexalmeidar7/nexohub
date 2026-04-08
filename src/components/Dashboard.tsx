@@ -805,9 +805,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     style={{ background: "color-mix(in srgb, var(--layout-page-text, hsl(var(--background))) 25%, transparent)", borderRadius: "1px" }}
                   />
                   <div
-                    className="absolute h-4 w-4 rounded-full transition-[top] duration-100 hover:scale-125"
+                    className="absolute transition-[top] duration-100 hover:scale-110"
                     style={{
-                      top: `clamp(0px, calc(${contentScrollProgress * 100}% - 0.5rem), calc(100% - 1rem))`,
+                      width: "8px",
+                      height: "28px",
+                      borderRadius: "4px",
+                      top: `clamp(0px, calc(${contentScrollProgress * 100}% - 14px), calc(100% - 28px))`,
                       left: "50%",
                       transform: "translateX(-50%)",
                       background: "var(--layout-accent-color, hsl(var(--destructive)))",
