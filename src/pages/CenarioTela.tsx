@@ -1247,7 +1247,8 @@ export default function CenarioTela() {
                     ) : (
                       <div className="opacity-40 text-center" style={{ fontSize: `1.8${vu}` }}>Nenhum programa no ar</div>
                     )}
-                  </div>
+                  </div>;
+                  })()}
 
                   {/* ── BOTTOM LEFT: Presenter photo + name ── */}
                   {currentProgram?.apresentadorFoto && (
