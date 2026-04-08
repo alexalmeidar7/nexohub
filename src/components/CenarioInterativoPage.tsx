@@ -705,6 +705,8 @@ export default function CenarioInterativoPage() {
   const [musicKey, setMusicKey] = useState(0);
   const prevMusicRef = useRef("");
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
+  const [sponsorIdx, setSponsorIdx] = useState(0);
+  const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
