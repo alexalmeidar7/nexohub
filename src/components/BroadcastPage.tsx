@@ -120,8 +120,8 @@ export default function BroadcastPage() {
       const prog = progs?.find(() => true);
       if (prog) {
         setProgramaNome(prog.nome);
-        // Use capa or thumb as the program logo URL, fallback to selo
-        const logoUrl = prog.capa || prog.thumb || prog.selo || null;
+        // Use selo (logo) as the program logo URL
+        const logoUrl = prog.selo || null;
         if (logoUrl) setProgramaLogo(logoUrl);
 
         const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
