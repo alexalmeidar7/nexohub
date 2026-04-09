@@ -90,12 +90,12 @@ export default function BroadcastPage() {
 
       // Build social list from empresa_config
       const socials: SocialItem[] = [];
-      if (emp?.instagram) socials.push({ tipo: "instagram", valor: extractHandle(emp.instagram), icon: <Instagram size={11} />, iconPng: "instagram.png" });
-      if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} />, iconPng: "facebook.png" });
-      if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} />, iconPng: "youtube.png" });
-      if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} />, iconPng: "globe.png" });
+      if (emp?.instagram) socials.push({ tipo: "instagram", valor: extractHandle(emp.instagram), icon: <Instagram size={11} />, iconPng: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" });
+      if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} />, iconPng: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/facebook.svg" });
+      if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} />, iconPng: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/youtube.svg" });
+      if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} />, iconPng: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/googlechrome.svg" });
       if (emp?.telefone_participacao) {
-        socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} />, iconPng: "whatsapp.png" });
+        socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} />, iconPng: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/whatsapp.svg" });
         setWhatsappNumber(emp.telefone_participacao);
       }
       setEmpresaSocials(socials);
@@ -231,7 +231,7 @@ export default function BroadcastPage() {
       lines.push(`    </item>`);
     });
     lines.push("  </redes_sociais>");
-    const qrLink = data.showQrCode && whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}` : "";
+    const qrLink = whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}` : "";
     lines.push(`  <qrcode_link>${escXml(qrLink)}</qrcode_link>`);
     lines.push(`  <ticker>${escXml(composedTicker)}</ticker>`);
     lines.push("</broadcast>");
