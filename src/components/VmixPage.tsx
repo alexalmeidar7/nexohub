@@ -12,6 +12,7 @@ import {
 import { getIconForName } from "./CustomVmixButtonEditor";
 import logoMixControl from "@/assets/logo-mixcontrol.png";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import BroadcastPage from "./BroadcastPage";
 import PresetCommandEditor from "./PresetCommandEditor";
 import CustomVmixButtonEditor from "./CustomVmixButtonEditor";
 
