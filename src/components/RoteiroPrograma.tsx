@@ -227,7 +227,118 @@ export default function RoteiroPrograma() {
     }
   };
 
-  const historicoSlot = useMemo(() => {
+  const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  const regenerateAllXmls = async () => {
+    if (!user) return;
+    setRegenerating(true);
+    try {
+      const { data: allRoteiros } = await supabase
+        .from("roteiros")
+        .select("id, programa_nome, estudio, data_programa, subtitulo, participantes")
+        .eq("user_id", user.id)
+        .like("subtitulo", "express_xml::%");
+
+      if (!allRoteiros || allRoteiros.length === 0) {
+        toast.info("Nenhum roteiro com XML encontrado");
+        setRegenerating(false);
+        return;
+      }
+
+      let count = 0;
+      for (const r of allRoteiros) {
+        try {
+          let parts: any = null;
+          try {
+            let raw = r.participantes;
+            if (typeof raw === "string") raw = JSON.parse(raw);
+            if (typeof raw === "string") raw = JSON.parse(raw);
+            parts = raw;
+          } catch { parts = {}; }
+          const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
+          const pList: any[] = parsed.participantes || [];
+          const blocosList: any[] = parsed.blocos || [];
+          const escaladaItems: any[] = parsed.escaladaList || [];
+          const podcastData = parsed.podcastData;
+          const isPodcast = !!podcastData;
+
+          let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
+          xml += `  <programa>${escXml(r.programa_nome || "")}</programa>\n`;
+          xml += `  <estudio>${escXml(r.estudio || "")}</estudio>\n`;
+          xml += `  <data>${r.data_programa || new Date().toISOString().split("T")[0]}</data>\n`;
+
+          if (pList.length > 0) {
+            xml += `  <participantes>\n`;
+            pList.forEach((p: any) => {
+              xml += `    <item>\n`;
+              xml += `      <nome>${escXml(p.nome || "")}</nome>\n`;
+              xml += `      <cargo>${escXml(p.cargo || "")}</cargo>\n`;
+              xml += `      <instagram>${escXml(p.instagram || "")}</instagram>\n`;
+              xml += `    </item>\n`;
+            });
+            xml += `  </participantes>\n`;
+          }
+
+          if (isPodcast) {
+            xml += `  <roteiro>\n`;
+            xml += `    <tituloTarja>${escXml(podcastData.tituloTarja || "")}</tituloTarja>\n`;
+            xml += `    <introducao>${escXml(podcastData.introducao || "")}</introducao>\n`;
+            xml += `    <perguntas>\n`;
+            (podcastData.perguntas || []).filter((p: string) => p.trim()).forEach((p: string, i: number) => {
+              xml += `      <pergunta ordem="${i + 1}">${escXml(p)}</pergunta>\n`;
+            });
+            xml += `    </perguntas>\n`;
+            xml += `    <concluindo>${escXml(podcastData.concluindo || "")}</concluindo>\n`;
+            xml += `  </roteiro>\n`;
+          } else {
+            if (escaladaItems.length > 0) {
+              xml += `  <escalada>\n`;
+              escaladaItems.forEach((e: any, i: number) => {
+                xml += `    <item ordem="${i + 1}">\n`;
+                xml += `      <titulo>${escXml(typeof e === "string" ? e : e.titulo || "")}</titulo>\n`;
+                xml += `      <imagem>${escXml(typeof e === "string" ? "" : e.imagemUrl || "")}</imagem>\n`;
+                xml += `    </item>\n`;
+              });
+              xml += `  </escalada>\n`;
+            }
+            blocosList.forEach((b: any, bi: number) => {
+              xml += `  <bloco numero="${bi + 1}">\n`;
+              (b.noticias || []).forEach((n: any, ni: number) => {
+                if (!n.titulo) return;
+                xml += `    <noticia ordem="${ni + 1}">\n`;
+                xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
+                xml += `      <imagem>${escXml(n.imagemUrl || "")}</imagem>\n`;
+                xml += `      <escalada>${n.escalada || false}</escalada>\n`;
+                xml += `    </noticia>\n`;
+              });
+              xml += `  </bloco>\n`;
+            });
+          }
+          xml += `</programaExpress>`;
+
+          // Extract storage path from subtitulo
+          const xmlUrl = r.subtitulo!.replace("express_xml::", "");
+          const urlObj = new URL(xmlUrl);
+          const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
+          if (!pathMatch) continue;
+          const filePath = decodeURIComponent(pathMatch[1]);
+
+          const blob = new Blob([new TextEncoder().encode(xml)], { type: "application/xml" });
+          await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+          count++;
+        } catch (e) {
+          console.warn(`[RegenXML] Error on roteiro ${r.id}:`, e);
+        }
+      }
+      toast.success(`${count} XML(s) regenerado(s) com sucesso!`);
+    } catch (e) {
+      toast.error("Erro ao regenerar XMLs");
+      console.error(e);
+    }
+    setRegenerating(false);
+  };
+
+
     if (historico.length === 0) return null;
     return (
       <div className="px-6 pt-4 pb-2">
