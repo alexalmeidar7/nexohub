@@ -263,7 +263,7 @@ export default function BroadcastPage() {
     lines.push(`  <ticker>${escXml(composedTicker)}</ticker>`);
     lines.push("</broadcast>");
     return lines.join("\n");
-  }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo]);
+  }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo, sponsorLogos]);
 
   const handleSave = useCallback(async () => {
     if (!user) return;
@@ -467,6 +467,7 @@ export default function BroadcastPage() {
           whatsappNumber={whatsappNumber}
           empresaSocials={empresaSocials}
           composedTicker={composedTicker}
+          sponsorLogos={sponsorLogos}
         />
       </div>
     </div>
