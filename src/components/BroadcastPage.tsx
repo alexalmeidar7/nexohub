@@ -55,7 +55,7 @@ interface SocialItem {
 
 export default function BroadcastPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const [data, setData] = useState<BroadcastData>(defaultBroadcast);
   const [saving, setSaving] = useState(false);
   const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
