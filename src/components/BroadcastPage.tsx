@@ -108,7 +108,7 @@ export default function BroadcastPage() {
 
       const { data: progs } = await supabase
         .from("programas")
-        .select("id, nome, selo, apresentadores_ids, apresentador_id")
+        .select("id, nome, selo, capa, thumb, apresentadores_ids, apresentador_id")
         .eq("user_id", user.id)
         .eq("ativo", true)
         .lte("horario_inicio", nowTime)
@@ -117,7 +117,9 @@ export default function BroadcastPage() {
       const prog = progs?.find(() => true);
       if (prog) {
         setProgramaNome(prog.nome);
-        if (prog.selo) setProgramaLogo(prog.selo);
+        // Use capa or thumb as the program logo URL, fallback to selo
+        const logoUrl = prog.capa || prog.thumb || prog.selo || null;
+        if (logoUrl) setProgramaLogo(logoUrl);
 
         const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
         if (apIds.length > 0) {
@@ -219,6 +221,10 @@ export default function BroadcastPage() {
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<broadcast>");
     lines.push(`  <titulo>${escXml(data.assunto || "")}</titulo>`);
+    lines.push("  <programa>");
+    lines.push(`    <nome>${escXml(programaNome || "")}</nome>`);
+    lines.push(`    <logo_url>${escXml(programaLogo || "")}</logo_url>`);
+    lines.push("  </programa>");
     lines.push("  <locutor>");
     lines.push(`    <nome>${escXml(displayLocutor)}</nome>`);
     lines.push(`    <rede_social>${escXml(locutorInstagram || "")}</rede_social>`);
@@ -236,7 +242,7 @@ export default function BroadcastPage() {
     lines.push(`  <ticker>${escXml(composedTicker)}</ticker>`);
     lines.push("</broadcast>");
     return lines.join("\n");
-  }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker]);
+  }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo]);
 
   const handleSave = async () => {
     if (!user) return;
