@@ -125,7 +125,6 @@ serve(async (req) => {
     }
 
     // ── QR Code link ──
-    const whatsappNum = emp?.telefone_participacao?.replace(/\D/g, "") || "";
     const qrLink = whatsappNum ? `https://wa.me/${whatsappNum}` : "";
 
     // ── Ticker & Titulo from broadcast config ──
@@ -135,11 +134,9 @@ serve(async (req) => {
 
     // ── Sponsor logo rotation (every 5s, .png enforced) ──
     let logoPatrocinador = "";
-    let nomePatrocinador = "";
     if (sponsorLogos.length > 0) {
       const idx = Math.floor(totalSeconds / 5) % sponsorLogos.length;
       logoPatrocinador = sponsorLogos[idx].logo_url.replace(/\.webp$/i, ".png");
-      nomePatrocinador = sponsorLogos[idx].nome;
     }
 
     // ── Build flat XML for vMix Data Sources ──
@@ -151,14 +148,8 @@ serve(async (req) => {
     lines.push(`    <programa_logo>${esc(programaLogo)}</programa_logo>`);
     lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
     lines.push(`    <locutor_social>${esc(locutorInstagram)}</locutor_social>`);
-    lines.push(`    <rede_social_instagram_texto>${esc(instagramTexto)}</rede_social_instagram_texto>`);
-    lines.push(`    <rede_social_facebook_texto>${esc(facebookTexto)}</rede_social_facebook_texto>`);
-    lines.push(`    <rede_social_youtube_texto>${esc(youtubeTexto)}</rede_social_youtube_texto>`);
-    lines.push(`    <rede_social_site_texto>${esc(siteTexto)}</rede_social_site_texto>`);
-    lines.push(`    <rede_social_whatsapp_texto>${esc(whatsappTexto)}</rede_social_whatsapp_texto>`);
     lines.push(`    <rede_social_atual>${esc(redeSocialAtual)}</rede_social_atual>`);
     lines.push(`    <logo_patrocinador>${esc(logoPatrocinador)}</logo_patrocinador>`);
-    lines.push(`    <nome_patrocinador>${esc(nomePatrocinador)}</nome_patrocinador>`);
     lines.push(`    <titulo>${esc(assunto)}</titulo>`);
     lines.push(`    <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`    <ticker>${esc(ticker)}</ticker>`);
