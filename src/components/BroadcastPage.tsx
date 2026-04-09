@@ -357,27 +357,32 @@ export default function BroadcastPage() {
             )}
           </div>
 
-          {/* Bottom left: Locutor data */}
+          {/* Bottom left: Locutor data – stacked above subject bar */}
           <div
-            className="absolute"
+            className="absolute flex flex-col"
             style={{
-              bottom: "12%",
+              bottom: 0,
               left: "4%",
-              backgroundColor: "#fff",
-              padding: "12px 18px",
-              borderRadius: "4px 4px 0 0",
-              minWidth: 180,
             }}
           >
-            <div className="text-sm font-black uppercase leading-tight" style={{ color: "#111" }}>
-              {displayLocutor}
-            </div>
-            {locutorInstagram && (
-              <div className="flex items-center gap-1 mt-0.5 text-[9px] font-semibold" style={{ color: accentColor }}>
-                <Instagram size={10} /> {locutorInstagram}
+            {/* Locutor box */}
+            <div
+              style={{
+                backgroundColor: "#fff",
+                padding: "10px 18px",
+                borderRadius: "4px 4px 0 0",
+                minWidth: 180,
+              }}
+            >
+              <div className="text-sm font-black uppercase leading-tight" style={{ color: "#111" }}>
+                {displayLocutor}
               </div>
-            )}
-          </div>
+              {locutorInstagram && (
+                <div className="flex items-center gap-1 mt-0.5 text-[9px] font-semibold" style={{ color: accentColor }}>
+                  <Instagram size={10} /> {locutorInstagram}
+                </div>
+              )}
+            </div>
 
           {/* Bottom: Subject bar */}
           <div
