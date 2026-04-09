@@ -373,6 +373,9 @@ export default function RoteiroPrograma() {
                       backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
                       color: isFeito ? "#16a34a" : isAgd ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
                     }}>{isFeito ? "feito" : isAgd ? "agendado" : r.status}</span>
+                    {r.tickertitulos && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0" style={{ backgroundColor: "rgba(234,179,8,0.12)", color: "#ca8a04" }}>ticker on</span>
+                    )}
                   </div>
                   <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                     {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
