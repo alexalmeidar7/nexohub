@@ -68,6 +68,7 @@ export default function BroadcastPage() {
   const [accentColor, setAccentColor] = useState("#dc2626");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [empresaSocials, setEmpresaSocials] = useState<SocialItem[]>([]);
+  const [sponsorLogos, setSponsorLogos] = useState<{nome: string; logo_url: string}[]>([]);
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
 
@@ -120,7 +121,6 @@ export default function BroadcastPage() {
       const prog = progs?.find(() => true);
       if (prog) {
         setProgramaNome(prog.nome);
-        // Use selo (logo) as the program logo URL
         const logoUrl = prog.selo || null;
         if (logoUrl) setProgramaLogo(logoUrl);
 
@@ -134,6 +134,16 @@ export default function BroadcastPage() {
             if (ap.cargo) setLocutorCargo(ap.cargo);
           }
         }
+
+        // Fetch sponsor logos for this program
+        const { data: logos } = await supabase
+          .from("logos_patrocinadores")
+          .select("nome, logo_url")
+          .eq("user_id", user.id)
+          .eq("programa_id", prog.id)
+          .eq("ativo", true)
+          .eq("excluido", false);
+        if (logos && logos.length > 0) setSponsorLogos(logos);
       }
 
       // Accent color
