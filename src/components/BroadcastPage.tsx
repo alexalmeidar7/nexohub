@@ -4,6 +4,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone } from "lucide-react";
 
+/** Extract @username from a URL or handle string */
+function extractHandle(value: string): string {
+  const clean = value.trim().replace(/\/+$/, "");
+  try {
+    const url = new URL(clean.startsWith("http") ? clean : `https://${clean}`);
+    const segments = url.pathname.split("/").filter(Boolean);
+    if (segments.length > 0) {
+      const last = segments[segments.length - 1];
+      return `@${last.replace(/^@/, "")}`;
+    }
+  } catch { /* not a URL */ }
+  return `@${clean.replace(/^@/, "")}`;
+}
+
 interface BroadcastData {
   assunto: string;
   ticker: string;
