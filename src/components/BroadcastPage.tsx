@@ -631,7 +631,7 @@ function MockupPreview({
                 <img
                   src={currentSponsor.logo_url}
                   alt={currentSponsor.nome}
-                  className="h-8 max-w-[100px] object-contain"
+                  className="h-[52px] max-w-[160px] object-contain"
                 />
               </div>
             )}
