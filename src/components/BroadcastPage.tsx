@@ -100,19 +100,22 @@ export default function BroadcastPage() {
       }
       setEmpresaSocials(socials);
 
-      // Current program
+      // Current program – match by time AND day of week
       const now = new Date();
       const hh = String(now.getHours()).padStart(2, "0");
       const mm = String(now.getMinutes()).padStart(2, "0");
-      const nowTime = `${hh}:${mm}`;
+      const nowTime = `${hh}:${mm}:00`;
+      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+      const todayName = dayNames[now.getDay()];
 
       const { data: progs } = await supabase
         .from("programas")
-        .select("id, nome, selo, capa, thumb, apresentadores_ids, apresentador_id")
+        .select("id, nome, selo, capa, thumb, apresentadores_ids, apresentador_id, dias_semana")
         .eq("user_id", user.id)
         .eq("ativo", true)
         .lte("horario_inicio", nowTime)
-        .gte("horario_fim", nowTime);
+        .gte("horario_fim", nowTime)
+        .contains("dias_semana", [todayName]);
 
       const prog = progs?.find(() => true);
       if (prog) {
