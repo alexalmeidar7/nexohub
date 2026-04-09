@@ -50,6 +50,7 @@ interface SocialItem {
   tipo: string;
   valor: string;
   icon: React.ReactNode;
+  iconPng?: string;
 }
 
 export default function BroadcastPage() {
