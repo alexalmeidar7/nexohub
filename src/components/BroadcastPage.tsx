@@ -2,33 +2,25 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Eye, Upload, Trash2, Instagram, Globe, MessageCircle } from "lucide-react";
+import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone } from "lucide-react";
 
 interface BroadcastData {
   assunto: string;
   ticker: string;
-  redes_sociais: { tipo: string; valor: string }[];
   locutor_override: string;
 }
 
 const defaultBroadcast: BroadcastData = {
   assunto: "",
   ticker: "",
-  redes_sociais: [{ tipo: "instagram", valor: "" }],
   locutor_override: "",
 };
 
-const SOCIAL_ICONS: Record<string, React.ReactNode> = {
-  instagram: <Instagram size={14} />,
-  site: <Globe size={14} />,
-  whatsapp: <MessageCircle size={14} />,
-};
-
-const SOCIAL_OPTIONS = [
-  { value: "instagram", label: "Instagram" },
-  { value: "site", label: "Site" },
-  { value: "whatsapp", label: "WhatsApp" },
-];
+interface SocialItem {
+  tipo: string;
+  valor: string;
+  icon: React.ReactNode;
+}
 
 export default function BroadcastPage() {
   const { user } = useAuth();
@@ -43,22 +35,35 @@ export default function BroadcastPage() {
   const [locutorInstagram, setLocutorInstagram] = useState("");
   const [programaNome, setProgramaNome] = useState("");
   const [accentColor, setAccentColor] = useState("#dc2626");
+  const [empresaSocials, setEmpresaSocials] = useState<SocialItem[]>([]);
 
   // Load data
   useEffect(() => {
     if (!user) return;
     (async () => {
-      // Empresa logo
-      const { data: emp } = await supabase.from("empresa_config").select("logo, nome").eq("user_id", user.id).maybeSingle();
+      // Empresa config (logo + socials)
+      const { data: emp } = await supabase
+        .from("empresa_config")
+        .select("logo, nome, instagram, facebook, youtube, site, telefone_participacao")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
       if (emp?.logo) setEmpresaLogo(emp.logo);
+
+      // Build social list from empresa_config
+      const socials: SocialItem[] = [];
+      if (emp?.instagram) socials.push({ tipo: "instagram", valor: emp.instagram, icon: <Instagram size={11} /> });
+      if (emp?.facebook) socials.push({ tipo: "facebook", valor: emp.facebook, icon: <Facebook size={11} /> });
+      if (emp?.youtube) socials.push({ tipo: "youtube", valor: emp.youtube, icon: <Youtube size={11} /> });
+      if (emp?.site) socials.push({ tipo: "site", valor: emp.site, icon: <Globe size={11} /> });
+      if (emp?.telefone_participacao) socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <Phone size={11} /> });
+      setEmpresaSocials(socials);
 
       // Current program
       const now = new Date();
       const hh = String(now.getHours()).padStart(2, "0");
       const mm = String(now.getMinutes()).padStart(2, "0");
       const nowTime = `${hh}:${mm}`;
-      const dias = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
-      const hoje = dias[now.getDay()];
 
       const { data: progs } = await supabase
         .from("programas")
@@ -68,12 +73,11 @@ export default function BroadcastPage() {
         .lte("horario_inicio", nowTime)
         .gte("horario_fim", nowTime);
 
-      const prog = progs?.find(p => true); // first match
+      const prog = progs?.find(() => true);
       if (prog) {
         setProgramaNome(prog.nome);
         if (prog.selo) setProgramaLogo(prog.selo);
 
-        // Get presenter
         const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
         if (apIds.length > 0) {
           const { data: ap } = await supabase.from("apresentadores").select("nome, foto, instagram, cargo").in("id", apIds).limit(1).maybeSingle();
@@ -106,7 +110,6 @@ export default function BroadcastPage() {
     if (!user) return;
     setSaving(true);
     try {
-      // Get current cenario_config
       const { data: current } = await supabase.from("user_settings").select("cenario_config").eq("user_id", user.id).maybeSingle();
       const existing = (current?.cenario_config && typeof current.cenario_config === "object") ? current.cenario_config as Record<string, any> : {};
       
@@ -119,20 +122,6 @@ export default function BroadcastPage() {
       toast({ title: "Erro ao salvar", variant: "destructive" });
     }
     setSaving(false);
-  };
-
-  const updateSocial = (index: number, field: "tipo" | "valor", value: string) => {
-    const updated = [...data.redes_sociais];
-    updated[index] = { ...updated[index], [field]: value };
-    setData({ ...data, redes_sociais: updated });
-  };
-
-  const addSocial = () => {
-    setData({ ...data, redes_sociais: [...data.redes_sociais, { tipo: "instagram", valor: "" }] });
-  };
-
-  const removeSocial = (index: number) => {
-    setData({ ...data, redes_sociais: data.redes_sociais.filter((_, i) => i !== index) });
   };
 
   const displayLocutor = data.locutor_override || locutorNome || "Locutor";
@@ -169,35 +158,21 @@ export default function BroadcastPage() {
           />
         </div>
 
-        {/* Redes Sociais */}
+        {/* Redes Sociais (read-only from empresa_config) */}
         <div className="space-y-2">
-          <label className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#888" }}>Redes Sociais</label>
-          {data.redes_sociais.map((rs, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <select
-                value={rs.tipo}
-                onChange={e => updateSocial(i, "tipo", e.target.value)}
-                className="px-2 py-1.5 rounded-lg text-xs"
-                style={{ backgroundColor: "#1e1e24", color: "#ccc", border: "1px solid #ffffff10" }}
-              >
-                {SOCIAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-              <input
-                type="text"
-                value={rs.valor}
-                onChange={e => updateSocial(i, "valor", e.target.value)}
-                placeholder="@usuario"
-                className="flex-1 px-2 py-1.5 rounded-lg text-xs outline-none"
-                style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
-              />
-              <button onClick={() => removeSocial(i)} className="text-red-400 hover:text-red-300 p-1">
-                <Trash2 size={12} />
-              </button>
+          <label className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#888" }}>Redes Sociais (da empresa)</label>
+          {empresaSocials.length === 0 ? (
+            <p className="text-[10px]" style={{ color: "#555" }}>Nenhuma rede social cadastrada em Configurações.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {empresaSocials.map((s, i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1e1e24", border: "1px solid #ffffff08" }}>
+                  <span style={{ color: accentColor }}>{s.icon}</span>
+                  <span className="text-xs" style={{ color: "#ccc" }}>{s.valor}</span>
+                </div>
+              ))}
             </div>
-          ))}
-          <button onClick={addSocial} className="text-[11px] px-3 py-1 rounded-lg" style={{ backgroundColor: "#ffffff08", color: "#888" }}>
-            + Adicionar rede
-          </button>
+          )}
         </div>
 
         {/* Ticker */}
@@ -293,7 +268,6 @@ export default function BroadcastPage() {
               right: "4%",
               backgroundColor: "rgba(245,245,245,0.95)",
               padding: "10px 16px",
-              borderRadius: "0",
             }}
           >
             <div className="flex items-center gap-2 mb-1">
@@ -302,12 +276,12 @@ export default function BroadcastPage() {
                 {data.assunto || "BASE PARA ASSUNTO"}
               </span>
             </div>
-            <div className="flex items-center gap-3 text-[10px]" style={{ color: "#555" }}>
-              {/* Social badges */}
-              {data.redes_sociais.filter(r => r.valor).map((rs, i) => (
+            <div className="flex items-center gap-3 flex-wrap text-[10px]" style={{ color: "#555" }}>
+              {/* Social badges from empresa_config */}
+              {empresaSocials.map((s, i) => (
                 <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold" style={{ backgroundColor: accentColor + "22", color: accentColor }}>
-                  {SOCIAL_ICONS[rs.tipo] || <Globe size={10} />}
-                  {rs.valor}
+                  {s.icon}
+                  {s.valor}
                 </span>
               ))}
               {data.ticker && (
