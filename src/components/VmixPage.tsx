@@ -142,7 +142,7 @@ export default function VmixPage() {
   const [recording, setRecording] = useState(false);
   const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"controls" | "scenes">("controls");
+  const [activeTab, setActiveTab] = useState<"controls" | "scenes" | "broadcast">("controls");
   // Keyboard shortcuts per input (persisted in localStorage)
   const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
     try {
@@ -1487,6 +1487,7 @@ export default function VmixPage() {
   const tabs = [
     { key: "controls" as const, label: "Inputs", icon: <Layers size={13} /> },
     { key: "scenes" as const, label: "Cenas", icon: <Wand2 size={13} /> },
+    { key: "broadcast" as const, label: "Broadcast", icon: <Radio size={13} /> },
   ];
 
   return (
