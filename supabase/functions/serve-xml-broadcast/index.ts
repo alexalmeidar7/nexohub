@@ -77,9 +77,12 @@ serve(async (req) => {
     let locutorNome = "";
     let locutorInstagram = "";
 
+    let programaId = "";
+
     if (prog) {
       programaNome = prog.nome || "";
       programaLogo = prog.selo || "";
+      programaId = prog.id || "";
 
       const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
       if (apIds.length > 0) {
@@ -89,6 +92,19 @@ serve(async (req) => {
           locutorInstagram = ap.instagram || "";
         }
       }
+    }
+
+    // ── Sponsor logos ──
+    let sponsorLogos: { nome: string; logo_url: string }[] = [];
+    if (programaId) {
+      const { data: logos } = await supabase
+        .from("logos_patrocinadores")
+        .select("nome, logo_url")
+        .eq("user_id", userId)
+        .eq("programa_id", programaId)
+        .eq("ativo", true)
+        .eq("excluido", false);
+      if (logos) sponsorLogos = logos;
     }
 
     // ── Social links ──
@@ -128,6 +144,14 @@ serve(async (req) => {
       lines.push("    </item>");
     });
     lines.push("  </redes_sociais>");
+    lines.push("  <logos_patrocinadores>");
+    sponsorLogos.forEach(l => {
+      lines.push("    <logo>");
+      lines.push(`      <nome>${esc(l.nome)}</nome>`);
+      lines.push(`      <url>${esc(l.logo_url)}</url>`);
+      lines.push("    </logo>");
+    });
+    lines.push("  </logos_patrocinadores>");
     lines.push(`  <titulo>${esc(assunto)}</titulo>`);
     lines.push(`  <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`  <ticker>${esc(ticker)}</ticker>`);

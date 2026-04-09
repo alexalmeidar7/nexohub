@@ -68,6 +68,7 @@ export default function BroadcastPage() {
   const [accentColor, setAccentColor] = useState("#dc2626");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [empresaSocials, setEmpresaSocials] = useState<SocialItem[]>([]);
+  const [sponsorLogos, setSponsorLogos] = useState<{nome: string; logo_url: string}[]>([]);
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
 
@@ -120,7 +121,6 @@ export default function BroadcastPage() {
       const prog = progs?.find(() => true);
       if (prog) {
         setProgramaNome(prog.nome);
-        // Use selo (logo) as the program logo URL
         const logoUrl = prog.selo || null;
         if (logoUrl) setProgramaLogo(logoUrl);
 
@@ -134,6 +134,16 @@ export default function BroadcastPage() {
             if (ap.cargo) setLocutorCargo(ap.cargo);
           }
         }
+
+        // Fetch sponsor logos for this program
+        const { data: logos } = await supabase
+          .from("logos_patrocinadores")
+          .select("nome, logo_url")
+          .eq("user_id", user.id)
+          .eq("programa_id", prog.id)
+          .eq("ativo", true)
+          .eq("excluido", false);
+        if (logos && logos.length > 0) setSponsorLogos(logos);
       }
 
       // Accent color
@@ -240,12 +250,20 @@ export default function BroadcastPage() {
       lines.push(`    </item>`);
     });
     lines.push("  </redes_sociais>");
+    lines.push("  <logos_patrocinadores>");
+    sponsorLogos.forEach(l => {
+      lines.push("    <logo>");
+      lines.push(`      <nome>${escXml(l.nome)}</nome>`);
+      lines.push(`      <url>${escXml(l.logo_url)}</url>`);
+      lines.push("    </logo>");
+    });
+    lines.push("  </logos_patrocinadores>");
     const qrLink = whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}` : "";
     lines.push(`  <qrcode_link>${escXml(qrLink)}</qrcode_link>`);
     lines.push(`  <ticker>${escXml(composedTicker)}</ticker>`);
     lines.push("</broadcast>");
     return lines.join("\n");
-  }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo]);
+  }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo, sponsorLogos]);
 
   const handleSave = useCallback(async () => {
     if (!user) return;
@@ -449,6 +467,7 @@ export default function BroadcastPage() {
           whatsappNumber={whatsappNumber}
           empresaSocials={empresaSocials}
           composedTicker={composedTicker}
+          sponsorLogos={sponsorLogos}
         />
       </div>
     </div>
@@ -459,16 +478,21 @@ export default function BroadcastPage() {
 function MockupPreview({
   empresaLogo, programaNome, programaLogo, displayLocutor, locutorInstagram,
   locutorFoto, accentColor, assunto, showQrCode, whatsappNumber,
-  empresaSocials, composedTicker,
+  empresaSocials, composedTicker, sponsorLogos,
 }: {
   empresaLogo: string; programaNome: string; programaLogo: string;
   displayLocutor: string; locutorInstagram: string; locutorFoto: string;
   accentColor: string; assunto: string; showQrCode: boolean;
   whatsappNumber: string; empresaSocials: SocialItem[]; composedTicker: string;
+  sponsorLogos: {nome: string; logo_url: string}[];
 }) {
   // Social cycling animation
   const [socialIdx, setSocialIdx] = useState(0);
   const [socialVisible, setSocialVisible] = useState(true);
+
+  // Sponsor logo cycling animation
+  const [sponsorIdx, setSponsorIdx] = useState(0);
+  const [sponsorVisible, setSponsorVisible] = useState(true);
 
   useEffect(() => {
     if (empresaSocials.length <= 1) return;
@@ -482,7 +506,20 @@ function MockupPreview({
     return () => clearInterval(interval);
   }, [empresaSocials.length]);
 
+  useEffect(() => {
+    if (sponsorLogos.length <= 1) return;
+    const interval = setInterval(() => {
+      setSponsorVisible(false);
+      setTimeout(() => {
+        setSponsorIdx(prev => (prev + 1) % sponsorLogos.length);
+        setSponsorVisible(true);
+      }, 400);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [sponsorLogos.length]);
+
   const currentSocial = empresaSocials[socialIdx] || null;
+  const currentSponsor = sponsorLogos[sponsorIdx] || null;
 
   return (
     <div
@@ -580,8 +617,25 @@ function MockupPreview({
             </div>
           </div>
 
-          {/* Social item cycling */}
-          <div className="flex-1 flex items-end justify-end pb-2 pr-1" style={{ minHeight: 40 }}>
+          {/* Sponsor logo + Social item cycling */}
+          <div className="flex-1 flex flex-col items-end justify-end pb-2 pr-1 gap-2" style={{ minHeight: 40 }}>
+            {/* Sponsor logo */}
+            {currentSponsor && (
+              <div
+                className="transition-all duration-400"
+                style={{
+                  opacity: sponsorVisible ? 1 : 0,
+                  transform: sponsorVisible ? "scale(1)" : "scale(0.9)",
+                }}
+              >
+                <img
+                  src={currentSponsor.logo_url}
+                  alt={currentSponsor.nome}
+                  className="h-8 max-w-[100px] object-contain"
+                />
+              </div>
+            )}
+            {/* Social item */}
             {currentSocial && (
               <div
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300"
