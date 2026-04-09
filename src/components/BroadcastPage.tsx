@@ -250,6 +250,14 @@ export default function BroadcastPage() {
       lines.push(`    </item>`);
     });
     lines.push("  </redes_sociais>");
+    lines.push("  <logos_patrocinadores>");
+    sponsorLogos.forEach(l => {
+      lines.push("    <logo>");
+      lines.push(`      <nome>${escXml(l.nome)}</nome>`);
+      lines.push(`      <url>${escXml(l.logo_url)}</url>`);
+      lines.push("    </logo>");
+    });
+    lines.push("  </logos_patrocinadores>");
     const qrLink = whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}` : "";
     lines.push(`  <qrcode_link>${escXml(qrLink)}</qrcode_link>`);
     lines.push(`  <ticker>${escXml(composedTicker)}</ticker>`);
