@@ -316,7 +316,7 @@ export default function BroadcastPage() {
                 }
               }}
               onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
-              onBlur={() => setTimeout(() => setShowLocutorDropdown(false), 200)}
+              onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
               placeholder={locutorNome || "Buscar locutor..."}
               className="w-full pl-7 pr-3 py-2 rounded-lg text-sm outline-none"
               style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
@@ -429,17 +429,6 @@ export default function BroadcastPage() {
             onBlur={onFieldBlur}
           />
         </div>
-
-        {/* Save */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{ backgroundColor: "#dc2626", color: "#fff" }}
-        >
-          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-          Salvar Broadcast
-        </button>
 
         {/* XML Link – permanent URL via Edge Function */}
         <XmlLinkRow label="Broadcast XML" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`} />
