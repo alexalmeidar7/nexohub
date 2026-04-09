@@ -108,25 +108,20 @@ serve(async (req) => {
     }
 
     // ── Social links ──
-    const instagramTexto = emp?.instagram ? extractHandle(emp.instagram) : "";
-    const facebookTexto = emp?.facebook ? extractHandle(emp.facebook) : "";
-    const youtubeTexto = emp?.youtube ? extractHandle(emp.youtube) : "";
-    const siteTexto = emp?.site ? extractHandle(emp.site) : "";
-    const whatsappTexto = emp?.telefone_participacao || "";
-
-    // ── Rotate social text every 5 seconds ──
-    const socialItems: string[] = [];
-    if (instagramTexto) socialItems.push(instagramTexto);
-    if (facebookTexto) socialItems.push(facebookTexto);
-    if (youtubeTexto) socialItems.push(youtubeTexto);
-    if (siteTexto) socialItems.push(siteTexto);
-    if (whatsappTexto) socialItems.push(whatsappTexto);
+    // ── Build social links array (full URLs) ──
+    const socialLinks: string[] = [];
+    if (emp?.instagram) socialLinks.push(emp.instagram.startsWith("http") ? emp.instagram : `https://instagram.com/${emp.instagram.replace(/^@/, "")}`);
+    if (emp?.facebook) socialLinks.push(emp.facebook.startsWith("http") ? emp.facebook : `https://facebook.com/${emp.facebook}`);
+    if (emp?.youtube) socialLinks.push(emp.youtube.startsWith("http") ? emp.youtube : `https://youtube.com/${emp.youtube}`);
+    if (emp?.site) socialLinks.push(emp.site.startsWith("http") ? emp.site : `https://${emp.site}`);
+    const whatsappNum = emp?.telefone_participacao?.replace(/\D/g, "") || "";
+    if (whatsappNum) socialLinks.push(`https://wa.me/${whatsappNum}`);
 
     const totalSeconds = parseInt(hh) * 3600 + parseInt(mm) * 60 + parseInt(ss);
     let redeSocialAtual = "";
-    if (socialItems.length > 0) {
-      const idx = Math.floor(totalSeconds / 5) % socialItems.length;
-      redeSocialAtual = socialItems[idx];
+    if (socialLinks.length > 0) {
+      const idx = Math.floor(totalSeconds / 5) % socialLinks.length;
+      redeSocialAtual = socialLinks[idx];
     }
 
     // ── QR Code link ──
