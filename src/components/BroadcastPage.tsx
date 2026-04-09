@@ -318,6 +318,24 @@ export default function BroadcastPage() {
               ))}
             </div>
           )}
+
+          {/* QR Code check */}
+          {whatsappNumber && (
+            <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer mt-2" style={{ backgroundColor: "#1e1e24", border: `1px solid ${data.showQrCode ? accentColor + "60" : "#ffffff08"}` }}>
+              <input
+                type="checkbox"
+                checked={data.showQrCode}
+                onChange={e => setData({ ...data, showQrCode: e.target.checked })}
+                className="accent-current"
+                style={{ accentColor }}
+              />
+              <MessageCircle size={13} style={{ color: data.showQrCode ? accentColor : "#666" }} />
+              <div>
+                <span className="text-xs font-semibold" style={{ color: data.showQrCode ? "#e0e0e0" : "#888" }}>QR Code WhatsApp</span>
+                <p className="text-[9px]" style={{ color: "#555" }}>Exibir QR Code para enviar mensagem via WhatsApp</p>
+              </div>
+            </label>
+          )}
         </div>
 
         {/* Ticker Sources */}
