@@ -506,7 +506,7 @@ function MockupPreview({
         {/* Logo empresa */}
         <div className="flex items-center gap-3">
           {empresaLogo ? (
-            <img src={empresaLogo} alt="Logo" className="h-10 w-10 rounded-full object-cover" style={{ border: `2px solid ${accentColor}`, boxShadow: `0 0 12px ${accentColor}40` }} />
+            <img src={empresaLogo} alt="Logo" className="h-10 w-10 rounded-full object-cover" />
           ) : (
             <div className="h-10 w-10 rounded-full flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: accentColor, color: "#000" }}>LOGO</div>
           )}
@@ -519,7 +519,7 @@ function MockupPreview({
             <span className="text-[10px] font-bold block" style={{ color: "#fff" }}>{programaNome || "PROGRAMA"}</span>
           </div>
           {programaLogo ? (
-            <img src={programaLogo} alt="Programa" className="h-10 w-10 rounded-lg object-cover" style={{ border: `2px solid ${accentColor}`, boxShadow: `0 0 12px ${accentColor}40` }} />
+            <img src={programaLogo} alt="Programa" className="h-10 w-10 rounded-lg object-cover" />
           ) : (
             <div className="h-10 w-10 rounded-lg flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: accentColor + "30", color: accentColor, border: `1px solid ${accentColor}50` }}>PROG</div>
           )}
