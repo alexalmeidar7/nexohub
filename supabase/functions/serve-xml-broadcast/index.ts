@@ -108,29 +108,23 @@ serve(async (req) => {
     }
 
     // ── Social links ──
-    const instagramTexto = emp?.instagram ? extractHandle(emp.instagram) : "";
-    const facebookTexto = emp?.facebook ? extractHandle(emp.facebook) : "";
-    const youtubeTexto = emp?.youtube ? extractHandle(emp.youtube) : "";
-    const siteTexto = emp?.site ? extractHandle(emp.site) : "";
-    const whatsappTexto = emp?.telefone_participacao || "";
-
-    // ── Rotate social text every 5 seconds ──
-    const socialItems: string[] = [];
-    if (instagramTexto) socialItems.push(instagramTexto);
-    if (facebookTexto) socialItems.push(facebookTexto);
-    if (youtubeTexto) socialItems.push(youtubeTexto);
-    if (siteTexto) socialItems.push(siteTexto);
-    if (whatsappTexto) socialItems.push(whatsappTexto);
+    // ── Build social links array (full URLs) ──
+    const socialLinks: string[] = [];
+    if (emp?.instagram) socialLinks.push(emp.instagram.startsWith("http") ? emp.instagram : `https://instagram.com/${emp.instagram.replace(/^@/, "")}`);
+    if (emp?.facebook) socialLinks.push(emp.facebook.startsWith("http") ? emp.facebook : `https://facebook.com/${emp.facebook}`);
+    if (emp?.youtube) socialLinks.push(emp.youtube.startsWith("http") ? emp.youtube : `https://youtube.com/${emp.youtube}`);
+    if (emp?.site) socialLinks.push(emp.site.startsWith("http") ? emp.site : `https://${emp.site}`);
+    const whatsappNum = emp?.telefone_participacao?.replace(/\D/g, "") || "";
+    if (whatsappNum) socialLinks.push(`https://wa.me/${whatsappNum}`);
 
     const totalSeconds = parseInt(hh) * 3600 + parseInt(mm) * 60 + parseInt(ss);
     let redeSocialAtual = "";
-    if (socialItems.length > 0) {
-      const idx = Math.floor(totalSeconds / 5) % socialItems.length;
-      redeSocialAtual = socialItems[idx];
+    if (socialLinks.length > 0) {
+      const idx = Math.floor(totalSeconds / 5) % socialLinks.length;
+      redeSocialAtual = socialLinks[idx];
     }
 
     // ── QR Code link ──
-    const whatsappNum = emp?.telefone_participacao?.replace(/\D/g, "") || "";
     const qrLink = whatsappNum ? `https://wa.me/${whatsappNum}` : "";
 
     // ── Ticker & Titulo from broadcast config ──
@@ -140,11 +134,9 @@ serve(async (req) => {
 
     // ── Sponsor logo rotation (every 5s, .png enforced) ──
     let logoPatrocinador = "";
-    let nomePatrocinador = "";
     if (sponsorLogos.length > 0) {
       const idx = Math.floor(totalSeconds / 5) % sponsorLogos.length;
       logoPatrocinador = sponsorLogos[idx].logo_url.replace(/\.webp$/i, ".png");
-      nomePatrocinador = sponsorLogos[idx].nome;
     }
 
     // ── Build flat XML for vMix Data Sources ──
@@ -156,14 +148,8 @@ serve(async (req) => {
     lines.push(`    <programa_logo>${esc(programaLogo)}</programa_logo>`);
     lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
     lines.push(`    <locutor_social>${esc(locutorInstagram)}</locutor_social>`);
-    lines.push(`    <rede_social_instagram_texto>${esc(instagramTexto)}</rede_social_instagram_texto>`);
-    lines.push(`    <rede_social_facebook_texto>${esc(facebookTexto)}</rede_social_facebook_texto>`);
-    lines.push(`    <rede_social_youtube_texto>${esc(youtubeTexto)}</rede_social_youtube_texto>`);
-    lines.push(`    <rede_social_site_texto>${esc(siteTexto)}</rede_social_site_texto>`);
-    lines.push(`    <rede_social_whatsapp_texto>${esc(whatsappTexto)}</rede_social_whatsapp_texto>`);
     lines.push(`    <rede_social_atual>${esc(redeSocialAtual)}</rede_social_atual>`);
     lines.push(`    <logo_patrocinador>${esc(logoPatrocinador)}</logo_patrocinador>`);
-    lines.push(`    <nome_patrocinador>${esc(nomePatrocinador)}</nome_patrocinador>`);
     lines.push(`    <titulo>${esc(assunto)}</titulo>`);
     lines.push(`    <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`    <ticker>${esc(ticker)}</ticker>`);
