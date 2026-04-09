@@ -209,6 +209,33 @@ export default function BroadcastPage() {
     return parts.join("  •  ");
   }, [data.tickerNews, data.tickerWeather, data.ticker, newsTitles, weatherText]);
 
+  // Generate XML content
+  const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  const broadcastXml = useMemo(() => {
+    const lines: string[] = [];
+    lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+    lines.push("<broadcast>");
+    lines.push(`  <titulo>${escXml(data.assunto || "")}</titulo>`);
+    lines.push("  <locutor>");
+    lines.push(`    <nome>${escXml(displayLocutor)}</nome>`);
+    lines.push(`    <rede_social>${escXml(locutorInstagram || "")}</rede_social>`);
+    lines.push("  </locutor>");
+    lines.push("  <redes_sociais>");
+    empresaSocials.forEach(s => {
+      lines.push(`    <item>`);
+      lines.push(`      <icone>${escXml(s.iconPng || s.tipo + ".png")}</icone>`);
+      lines.push(`      <texto>${escXml(s.valor)}</texto>`);
+      lines.push(`    </item>`);
+    });
+    lines.push("  </redes_sociais>");
+    const qrLink = data.showQrCode && whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}` : "";
+    lines.push(`  <qrcode_link>${escXml(qrLink)}</qrcode_link>`);
+    lines.push(`  <ticker>${escXml(composedTicker)}</ticker>`);
+    lines.push("</broadcast>");
+    return lines.join("\n");
+  }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker]);
+
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
