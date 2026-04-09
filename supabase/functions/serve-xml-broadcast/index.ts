@@ -84,7 +84,7 @@ serve(async (req) => {
       programaLogo = prog.selo || "";
       programaId = prog.id || "";
 
-      const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
+      const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0) ? prog.apresentadores_ids : (prog.apresentador_id ? [prog.apresentador_id] : []);
       if (apIds.length > 0) {
         const { data: ap } = await supabase.from("apresentadores").select("nome, instagram").in("id", apIds).limit(1).maybeSingle();
         if (ap) {
