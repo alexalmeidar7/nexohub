@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search } from "lucide-react";
+import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2 } from "lucide-react";
+import XmlLinkRow from "@/components/XmlLinkRow";
 
 /** Extract @username from a URL or handle string */
 function extractHandle(value: string): string {
@@ -49,6 +50,7 @@ interface SocialItem {
   tipo: string;
   valor: string;
   icon: React.ReactNode;
+  iconPng?: string;
 }
 
 export default function BroadcastPage() {
@@ -88,12 +90,12 @@ export default function BroadcastPage() {
 
       // Build social list from empresa_config
       const socials: SocialItem[] = [];
-      if (emp?.instagram) socials.push({ tipo: "instagram", valor: extractHandle(emp.instagram), icon: <Instagram size={11} /> });
-      if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} /> });
-      if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} /> });
-      if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} /> });
+      if (emp?.instagram) socials.push({ tipo: "instagram", valor: extractHandle(emp.instagram), icon: <Instagram size={11} />, iconPng: "instagram.png" });
+      if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} />, iconPng: "facebook.png" });
+      if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} />, iconPng: "youtube.png" });
+      if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} />, iconPng: "globe.png" });
       if (emp?.telefone_participacao) {
-        socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} /> });
+        socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} />, iconPng: "whatsapp.png" });
         setWhatsappNumber(emp.telefone_participacao);
       }
       setEmpresaSocials(socials);
@@ -207,6 +209,35 @@ export default function BroadcastPage() {
     return parts.join("  •  ");
   }, [data.tickerNews, data.tickerWeather, data.ticker, newsTitles, weatherText]);
 
+  const displayLocutor = data.locutor_override || locutorNome || "Locutor";
+
+  // Generate XML content
+  const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  const broadcastXml = useMemo(() => {
+    const lines: string[] = [];
+    lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+    lines.push("<broadcast>");
+    lines.push(`  <titulo>${escXml(data.assunto || "")}</titulo>`);
+    lines.push("  <locutor>");
+    lines.push(`    <nome>${escXml(displayLocutor)}</nome>`);
+    lines.push(`    <rede_social>${escXml(locutorInstagram || "")}</rede_social>`);
+    lines.push("  </locutor>");
+    lines.push("  <redes_sociais>");
+    empresaSocials.forEach(s => {
+      lines.push(`    <item>`);
+      lines.push(`      <icone>${escXml(s.iconPng || s.tipo + ".png")}</icone>`);
+      lines.push(`      <texto>${escXml(s.valor)}</texto>`);
+      lines.push(`    </item>`);
+    });
+    lines.push("  </redes_sociais>");
+    const qrLink = data.showQrCode && whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}` : "";
+    lines.push(`  <qrcode_link>${escXml(qrLink)}</qrcode_link>`);
+    lines.push(`  <ticker>${escXml(composedTicker)}</ticker>`);
+    lines.push("</broadcast>");
+    return lines.join("\n");
+  }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker]);
+
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
@@ -224,8 +255,6 @@ export default function BroadcastPage() {
     }
     setSaving(false);
   };
-
-  const displayLocutor = data.locutor_override || locutorNome || "Locutor";
 
   return (
     <div className="flex gap-6 h-full min-h-0">
@@ -395,6 +424,9 @@ export default function BroadcastPage() {
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           Salvar Broadcast
         </button>
+
+        {/* XML Link */}
+        <XmlLinkRow label="Broadcast XML" xmlContent={broadcastXml} />
       </div>
 
       {/* ── Right: Mockup Preview ── */}
