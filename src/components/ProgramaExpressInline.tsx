@@ -41,6 +41,7 @@ interface Programa {
   id: string;
   nome: string;
   estudio: string;
+  tipo_programa?: string | null;
 }
 
 export interface ExpressEditData {
