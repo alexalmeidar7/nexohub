@@ -103,7 +103,9 @@ serve(async (req) => {
     const whatsappNum = emp?.telefone_participacao?.replace(/\D/g, "") || "";
     const qrLink = whatsappNum ? `https://wa.me/${whatsappNum}` : "";
 
-    // ── Ticker ──
+    // ── Ticker & Titulo from broadcast config ──
+    const broadcastConfig = (settingsRes.data?.cenario_config as any)?.broadcast || {};
+    const assunto = broadcastConfig.assunto || "";
     const ticker = roteiroRes.data?.tickertitulos || "";
 
     // ── Build XML ──
