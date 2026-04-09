@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +33,7 @@ interface BroadcastData {
   locutor_override: string;
   tickerNews: boolean;
   tickerWeather: boolean;
+  showQrCode: boolean;
 }
 
 const defaultBroadcast: BroadcastData = {
@@ -40,6 +42,7 @@ const defaultBroadcast: BroadcastData = {
   locutor_override: "",
   tickerNews: false,
   tickerWeather: false,
+  showQrCode: false,
 };
 
 interface SocialItem {
@@ -61,6 +64,7 @@ export default function BroadcastPage() {
   const [locutorInstagram, setLocutorInstagram] = useState("");
   const [programaNome, setProgramaNome] = useState("");
   const [accentColor, setAccentColor] = useState("#dc2626");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [empresaSocials, setEmpresaSocials] = useState<SocialItem[]>([]);
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
@@ -88,7 +92,10 @@ export default function BroadcastPage() {
       if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} /> });
       if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} /> });
       if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} /> });
-      if (emp?.telefone_participacao) socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} /> });
+      if (emp?.telefone_participacao) {
+        socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} /> });
+        setWhatsappNumber(emp.telefone_participacao);
+      }
       setEmpresaSocials(socials);
 
       // Current program
@@ -311,6 +318,24 @@ export default function BroadcastPage() {
               ))}
             </div>
           )}
+
+          {/* QR Code check */}
+          {whatsappNumber && (
+            <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer mt-2" style={{ backgroundColor: "#1e1e24", border: `1px solid ${data.showQrCode ? accentColor + "60" : "#ffffff08"}` }}>
+              <input
+                type="checkbox"
+                checked={data.showQrCode}
+                onChange={e => setData({ ...data, showQrCode: e.target.checked })}
+                className="accent-current"
+                style={{ accentColor }}
+              />
+              <MessageCircle size={13} style={{ color: data.showQrCode ? accentColor : "#666" }} />
+              <div>
+                <span className="text-xs font-semibold" style={{ color: data.showQrCode ? "#e0e0e0" : "#888" }}>QR Code WhatsApp</span>
+                <p className="text-[9px]" style={{ color: "#555" }}>Exibir QR Code para enviar mensagem via WhatsApp</p>
+              </div>
+            </label>
+          )}
         </div>
 
         {/* Ticker Sources */}
@@ -415,6 +440,19 @@ export default function BroadcastPage() {
               left: "4%",
             }}
           >
+            {/* QR Code above locutor */}
+            {data.showQrCode && whatsappNumber && (
+              <div className="flex justify-center mb-1" style={{ padding: "6px 18px" }}>
+                <div className="bg-white rounded-lg p-1.5">
+                  <QRCodeSVG
+                    value={`https://wa.me/${whatsappNumber.replace(/\D/g, "")}`}
+                    size={64}
+                    bgColor="#ffffff"
+                    fgColor="#111111"
+                  />
+                </div>
+              </div>
+            )}
             {/* Locutor box */}
             <div
               style={{
