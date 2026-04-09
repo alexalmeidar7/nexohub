@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone } from "lucide-react";
+import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun } from "lucide-react";
 
 /** Extract @username from a URL or handle string */
 function extractHandle(value: string): string {
@@ -18,16 +18,28 @@ function extractHandle(value: string): string {
   return `@${clean.replace(/^@/, "")}`;
 }
 
+const WMO_LABELS: Record<number, string> = {
+  0: "Céu limpo", 1: "Poucas nuvens", 2: "Parcialmente nublado", 3: "Nublado",
+  45: "Nevoeiro", 48: "Nevoeiro com geada", 51: "Garoa leve", 53: "Garoa moderada",
+  55: "Garoa intensa", 61: "Chuva leve", 63: "Chuva moderada", 65: "Chuva forte",
+  71: "Neve leve", 73: "Neve moderada", 75: "Neve forte", 80: "Pancadas leves",
+  81: "Pancadas moderadas", 82: "Pancadas fortes", 95: "Trovoadas", 96: "Trovoadas com granizo",
+};
+
 interface BroadcastData {
   assunto: string;
   ticker: string;
   locutor_override: string;
+  tickerNews: boolean;
+  tickerWeather: boolean;
 }
 
 const defaultBroadcast: BroadcastData = {
   assunto: "",
   ticker: "",
   locutor_override: "",
+  tickerNews: false,
+  tickerWeather: false,
 };
 
 interface SocialItem {
@@ -50,6 +62,10 @@ export default function BroadcastPage() {
   const [programaNome, setProgramaNome] = useState("");
   const [accentColor, setAccentColor] = useState("#dc2626");
   const [empresaSocials, setEmpresaSocials] = useState<SocialItem[]>([]);
+
+  // Ticker auto-content
+  const [newsTitles, setNewsTitles] = useState<string[]>([]);
+  const [weatherText, setWeatherText] = useState("");
 
   // Load data
   useEffect(() => {
@@ -105,10 +121,45 @@ export default function BroadcastPage() {
       }
 
       // Accent color
-      const { data: settings } = await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle();
+      const { data: settings } = await supabase.from("user_settings").select("dashboard_items, weather_city, weather_lat, weather_lon").eq("user_id", user.id).maybeSingle();
       if (settings?.dashboard_items && typeof settings.dashboard_items === "object") {
         const lc = (settings.dashboard_items as any).layout_colors;
         if (lc?.accentColor) setAccentColor(lc.accentColor);
+      }
+
+      // Fetch news titles (selected_news)
+      const { data: newsRows } = await supabase
+        .from("selected_news")
+        .select("title")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (newsRows) setNewsTitles(newsRows.map(n => n.title));
+
+      // Fetch weather
+      if (settings?.weather_lat && settings?.weather_lon) {
+        try {
+          const { data: wxResp } = await supabase.functions.invoke("fetch-weather", {
+            body: { action: "forecast", lat: settings.weather_lat, lon: settings.weather_lon, forecast_days: 2 },
+          });
+          if (wxResp?.ok && wxResp.data) {
+            const d = wxResp.data;
+            const currentTemp = d.current?.temperature_2m;
+            const currentCode = d.current?.weather_code;
+            const currentLabel = WMO_LABELS[currentCode] || "—";
+            const tomorrow = d.daily;
+            let tomorrowPart = "";
+            if (tomorrow?.temperature_2m_min?.[1] !== undefined) {
+              const tMin = Math.round(tomorrow.temperature_2m_min[1]);
+              const tMax = Math.round(tomorrow.temperature_2m_max[1]);
+              const tCode = tomorrow.weather_code?.[1];
+              const tLabel = WMO_LABELS[tCode] || "—";
+              tomorrowPart = ` | Amanhã: ${tMin}°–${tMax}° ${tLabel}`;
+            }
+            const cityName = settings.weather_city || "";
+            setWeatherText(`${cityName ? cityName + ": " : ""}Agora ${Math.round(currentTemp)}° ${currentLabel}${tomorrowPart}`);
+          }
+        } catch { /* silent */ }
       }
 
       // Load saved broadcast data
@@ -119,6 +170,21 @@ export default function BroadcastPage() {
       }
     })();
   }, [user]);
+
+  // Compose ticker from sources
+  const composedTicker = useMemo(() => {
+    const parts: string[] = [];
+    if (data.tickerNews && newsTitles.length > 0) {
+      parts.push(newsTitles.join("  •  "));
+    }
+    if (data.tickerWeather && weatherText) {
+      parts.push(weatherText);
+    }
+    if (data.ticker) {
+      parts.push(data.ticker);
+    }
+    return parts.join("  •  ");
+  }, [data.tickerNews, data.tickerWeather, data.ticker, newsTitles, weatherText]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -189,15 +255,49 @@ export default function BroadcastPage() {
           )}
         </div>
 
-        {/* Ticker */}
-        <div className="space-y-1">
-          <label className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#888" }}>Texto Ticker</label>
+        {/* Ticker Sources */}
+        <div className="space-y-2">
+          <label className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#888" }}>Conteúdo do Ticker</label>
+
+          {/* News check */}
+          <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer" style={{ backgroundColor: "#1e1e24", border: `1px solid ${data.tickerNews ? accentColor + "60" : "#ffffff08"}` }}>
+            <input
+              type="checkbox"
+              checked={data.tickerNews}
+              onChange={e => setData({ ...data, tickerNews: e.target.checked })}
+              className="accent-current"
+              style={{ accentColor }}
+            />
+            <Newspaper size={13} style={{ color: data.tickerNews ? accentColor : "#666" }} />
+            <div>
+              <span className="text-xs font-semibold" style={{ color: data.tickerNews ? "#e0e0e0" : "#888" }}>Notícias</span>
+              <p className="text-[9px]" style={{ color: "#555" }}>Títulos das últimas notícias selecionadas</p>
+            </div>
+          </label>
+
+          {/* Weather check */}
+          <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer" style={{ backgroundColor: "#1e1e24", border: `1px solid ${data.tickerWeather ? accentColor + "60" : "#ffffff08"}` }}>
+            <input
+              type="checkbox"
+              checked={data.tickerWeather}
+              onChange={e => setData({ ...data, tickerWeather: e.target.checked })}
+              className="accent-current"
+              style={{ accentColor }}
+            />
+            <CloudSun size={13} style={{ color: data.tickerWeather ? accentColor : "#666" }} />
+            <div>
+              <span className="text-xs font-semibold" style={{ color: data.tickerWeather ? "#e0e0e0" : "#888" }}>Previsão do Tempo</span>
+              <p className="text-[9px]" style={{ color: "#555" }}>Tempo atual e previsão para amanhã</p>
+            </div>
+          </label>
+
+          {/* Manual ticker text */}
           <textarea
             value={data.ticker}
             onChange={e => setData({ ...data, ticker: e.target.value })}
-            placeholder="Texto que rola na parte inferior..."
-            rows={3}
-            className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none"
+            placeholder="Texto adicional do ticker (opcional)..."
+            rows={2}
+            className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-none"
             style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
           />
         </div>
@@ -298,11 +398,11 @@ export default function BroadcastPage() {
                   {s.valor}
                 </span>
               ))}
-              {data.ticker && (
+              {composedTicker && (
                 <>
                   <span style={{ color: "#bbb" }}>→</span>
-                  <span className="text-[10px] truncate" style={{ color: "#777", maxWidth: 300 }}>
-                    {data.ticker}
+                  <span className="text-[10px] truncate" style={{ color: "#777", maxWidth: 400 }}>
+                    {composedTicker}
                   </span>
                 </>
               )}
