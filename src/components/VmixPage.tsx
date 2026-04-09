@@ -2433,6 +2433,9 @@ export default function VmixPage() {
           );
         })()}
 
+        {/* ══ BROADCAST TAB ══ */}
+        {activeTab === "broadcast" && <BroadcastPage />}
+
         {/* NDI tab removed */}
       </div>
       {/* Preset Command Editor */}
