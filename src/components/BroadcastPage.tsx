@@ -542,10 +542,10 @@ function MockupPreview({
       )}
 
       {/* ── Bottom section ── */}
-      <div className="absolute" style={{ bottom: 0, left: 0, right: 0 }}>
+      <div className="absolute" style={{ bottom: "4%", left: "4%", right: "4%" }}>
 
-        {/* Locutor + Assunto bar */}
-        <div className="flex items-end" style={{ paddingLeft: "4%", paddingRight: "4%" }}>
+        {/* Locutor + Assunto + Social row */}
+        <div className="flex items-end">
           <div className="flex-shrink-0" style={{ maxWidth: "45%" }}>
             {/* Locutor box */}
             <div
@@ -602,9 +602,9 @@ function MockupPreview({
           </div>
         </div>
 
-        {/* Ticker bar */}
+        {/* Ticker bar – same width as locutor+subject area, rounded corners */}
         {composedTicker && (
-          <div className="overflow-hidden" style={{ backgroundColor: accentColor, height: 26 }}>
+          <div className="overflow-hidden" style={{ backgroundColor: accentColor, height: 24, borderRadius: "0 0 6px 6px" }}>
             <div
               className="flex items-center h-full whitespace-nowrap"
               style={{
