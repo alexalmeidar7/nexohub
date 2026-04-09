@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check } from "lucide-react";
+import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
@@ -30,6 +30,7 @@ export default function RoteiroPrograma() {
   const [loading, setLoading] = useState(true);
   const [estudios, setEstudios] = useState<string[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
+  const [regenerating, setRegenerating] = useState(false);
   
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
   const [whatsAppHistoricoData, setWhatsAppHistoricoData] = useState<any>(null);
@@ -226,6 +227,117 @@ export default function RoteiroPrograma() {
     }
   };
 
+  const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  const regenerateAllXmls = async () => {
+    if (!user) return;
+    setRegenerating(true);
+    try {
+      const { data: allRoteiros } = await supabase
+        .from("roteiros")
+        .select("id, programa_nome, estudio, data_programa, subtitulo, participantes")
+        .eq("user_id", user.id)
+        .like("subtitulo", "express_xml::%");
+
+      if (!allRoteiros || allRoteiros.length === 0) {
+        toast.info("Nenhum roteiro com XML encontrado");
+        setRegenerating(false);
+        return;
+      }
+
+      let count = 0;
+      for (const r of allRoteiros) {
+        try {
+          let parts: any = null;
+          try {
+            let raw = r.participantes;
+            if (typeof raw === "string") raw = JSON.parse(raw);
+            if (typeof raw === "string") raw = JSON.parse(raw);
+            parts = raw;
+          } catch { parts = {}; }
+          const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
+          const pList: any[] = parsed.participantes || [];
+          const blocosList: any[] = parsed.blocos || [];
+          const escaladaItems: any[] = parsed.escaladaList || [];
+          const podcastData = parsed.podcastData;
+          const isPodcast = !!podcastData;
+
+          let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
+          xml += `  <programa>${escXml(r.programa_nome || "")}</programa>\n`;
+          xml += `  <estudio>${escXml(r.estudio || "")}</estudio>\n`;
+          xml += `  <data>${r.data_programa || new Date().toISOString().split("T")[0]}</data>\n`;
+
+          if (pList.length > 0) {
+            xml += `  <participantes>\n`;
+            pList.forEach((p: any) => {
+              xml += `    <item>\n`;
+              xml += `      <nome>${escXml(p.nome || "")}</nome>\n`;
+              xml += `      <cargo>${escXml(p.cargo || "")}</cargo>\n`;
+              xml += `      <instagram>${escXml(p.instagram || "")}</instagram>\n`;
+              xml += `    </item>\n`;
+            });
+            xml += `  </participantes>\n`;
+          }
+
+          if (isPodcast) {
+            xml += `  <roteiro>\n`;
+            xml += `    <tituloTarja>${escXml(podcastData.tituloTarja || "")}</tituloTarja>\n`;
+            xml += `    <introducao>${escXml(podcastData.introducao || "")}</introducao>\n`;
+            xml += `    <perguntas>\n`;
+            (podcastData.perguntas || []).filter((p: string) => p.trim()).forEach((p: string, i: number) => {
+              xml += `      <pergunta ordem="${i + 1}">${escXml(p)}</pergunta>\n`;
+            });
+            xml += `    </perguntas>\n`;
+            xml += `    <concluindo>${escXml(podcastData.concluindo || "")}</concluindo>\n`;
+            xml += `  </roteiro>\n`;
+          } else {
+            if (escaladaItems.length > 0) {
+              xml += `  <escalada>\n`;
+              escaladaItems.forEach((e: any, i: number) => {
+                xml += `    <item ordem="${i + 1}">\n`;
+                xml += `      <titulo>${escXml(typeof e === "string" ? e : e.titulo || "")}</titulo>\n`;
+                xml += `      <imagem>${escXml(typeof e === "string" ? "" : e.imagemUrl || "")}</imagem>\n`;
+                xml += `    </item>\n`;
+              });
+              xml += `  </escalada>\n`;
+            }
+            blocosList.forEach((b: any, bi: number) => {
+              xml += `  <bloco numero="${bi + 1}">\n`;
+              (b.noticias || []).forEach((n: any, ni: number) => {
+                if (!n.titulo) return;
+                xml += `    <noticia ordem="${ni + 1}">\n`;
+                xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
+                xml += `      <imagem>${escXml(n.imagemUrl || "")}</imagem>\n`;
+                xml += `      <escalada>${n.escalada || false}</escalada>\n`;
+                xml += `    </noticia>\n`;
+              });
+              xml += `  </bloco>\n`;
+            });
+          }
+          xml += `</programaExpress>`;
+
+          // Extract storage path from subtitulo
+          const xmlUrl = r.subtitulo!.replace("express_xml::", "");
+          const urlObj = new URL(xmlUrl);
+          const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
+          if (!pathMatch) continue;
+          const filePath = decodeURIComponent(pathMatch[1]);
+
+          const blob = new Blob([new TextEncoder().encode(xml)], { type: "application/xml" });
+          await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+          count++;
+        } catch (e) {
+          console.warn(`[RegenXML] Error on roteiro ${r.id}:`, e);
+        }
+      }
+      toast.success(`${count} XML(s) regenerado(s) com sucesso!`);
+    } catch (e) {
+      toast.error("Erro ao regenerar XMLs");
+      console.error(e);
+    }
+    setRegenerating(false);
+  };
+
   const historicoSlot = useMemo(() => {
     if (historico.length === 0) return null;
     return (
@@ -234,7 +346,16 @@ export default function RoteiroPrograma() {
           <div className="flex items-center gap-2 mb-2">
             <History size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
             <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Últimos roteiros</p>
-            <span className="text-[10px] ml-auto" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{historico.length}</span>
+            <button
+              onClick={regenerateAllXmls}
+              disabled={regenerating}
+              className="text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 hover:opacity-80 transition disabled:opacity-40 ml-auto"
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}
+              title="Regenerar todos os XMLs com a estrutura atualizada"
+            >
+              <RefreshCw size={10} className={regenerating ? "animate-spin" : ""} />
+              {regenerating ? "Regenerando..." : "Regenerar XMLs"}
+            </button>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {historico.map((r, idx) => {
