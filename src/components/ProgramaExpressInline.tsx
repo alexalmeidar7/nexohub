@@ -648,6 +648,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                   {filteredProgramas.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {programaId && (() => {
+                const tp = programas.find(p => p.id === programaId)?.tipo_programa;
+                return tp ? <p className="text-[10px] mt-1 font-semibold" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>{tp}</p> : null;
+              })()}
             </div>
           </div>
         </div>
