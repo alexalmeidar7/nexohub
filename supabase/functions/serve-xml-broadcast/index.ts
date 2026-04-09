@@ -107,21 +107,36 @@ serve(async (req) => {
       if (logos) sponsorLogos = logos;
     }
 
-    // ── Social links ──
-    // ── Build social links array (full URLs) ──
-    const socialLinks: string[] = [];
-    if (emp?.instagram) socialLinks.push(emp.instagram.startsWith("http") ? emp.instagram : `https://instagram.com/${emp.instagram.replace(/^@/, "")}`);
-    if (emp?.facebook) socialLinks.push(emp.facebook.startsWith("http") ? emp.facebook : `https://facebook.com/${emp.facebook}`);
-    if (emp?.youtube) socialLinks.push(emp.youtube.startsWith("http") ? emp.youtube : `https://youtube.com/${emp.youtube}`);
-    if (emp?.site) socialLinks.push(emp.site.startsWith("http") ? emp.site : `https://${emp.site}`);
+    // ── Social links (handle + icon) ──
+    const socialItems: { handle: string; icon: string }[] = [];
+    if (emp?.instagram) {
+      const raw = emp.instagram.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/.*/, "");
+      socialItems.push({ handle: `@${raw}`, icon: "https://cdn-icons-png.flaticon.com/512/174/174855.png" });
+    }
+    if (emp?.facebook) {
+      const raw = emp.facebook.replace(/^https?:\/\/(www\.)?facebook\.com\//, "").replace(/\/.*/, "");
+      socialItems.push({ handle: `@${raw}`, icon: "https://cdn-icons-png.flaticon.com/512/124/124010.png" });
+    }
+    if (emp?.youtube) {
+      const raw = emp.youtube.replace(/^https?:\/\/(www\.)?youtube\.com\//, "").replace(/\/.*/, "");
+      socialItems.push({ handle: `@${raw}`, icon: "https://cdn-icons-png.flaticon.com/512/1384/1384060.png" });
+    }
+    if (emp?.site) {
+      const raw = emp.site.replace(/^https?:\/\/(www\.)?/, "").replace(/\/.*/, "");
+      socialItems.push({ handle: raw, icon: "https://cdn-icons-png.flaticon.com/512/1006/1006771.png" });
+    }
     const whatsappNum = emp?.telefone_participacao?.replace(/\D/g, "") || "";
-    if (whatsappNum) socialLinks.push(`https://wa.me/${whatsappNum}`);
+    if (whatsappNum) {
+      socialItems.push({ handle: whatsappNum, icon: "https://cdn-icons-png.flaticon.com/512/124/124034.png" });
+    }
 
     const totalSeconds = parseInt(hh) * 3600 + parseInt(mm) * 60 + parseInt(ss);
     let redeSocialAtual = "";
-    if (socialLinks.length > 0) {
-      const idx = Math.floor(totalSeconds / 5) % socialLinks.length;
-      redeSocialAtual = socialLinks[idx];
+    let redeSocialIcone = "";
+    if (socialItems.length > 0) {
+      const idx = Math.floor(totalSeconds / 5) % socialItems.length;
+      redeSocialAtual = socialItems[idx].handle;
+      redeSocialIcone = socialItems[idx].icon;
     }
 
     // ── QR Code link ──
@@ -149,6 +164,7 @@ serve(async (req) => {
     lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
     lines.push(`    <locutor_social>${esc(locutorInstagram)}</locutor_social>`);
     lines.push(`    <rede_social_atual>${esc(redeSocialAtual)}</rede_social_atual>`);
+    lines.push(`    <rede_social_icone>${esc(redeSocialIcone)}</rede_social_icone>`);
     lines.push(`    <logo_patrocinador>${esc(logoPatrocinador)}</logo_patrocinador>`);
     lines.push(`    <titulo>${esc(assunto)}</titulo>`);
     lines.push(`    <qrcode_link>${esc(qrLink)}</qrcode_link>`);
