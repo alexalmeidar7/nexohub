@@ -30,6 +30,7 @@ export default function RoteiroPrograma() {
   const [loading, setLoading] = useState(true);
   const [estudios, setEstudios] = useState<string[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
+  const [regenerating, setRegenerating] = useState(false);
   
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
   const [whatsAppHistoricoData, setWhatsAppHistoricoData] = useState<any>(null);
