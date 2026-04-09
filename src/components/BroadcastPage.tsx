@@ -4,6 +4,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone } from "lucide-react";
 
+/** Extract @username from a URL or handle string */
+function extractHandle(value: string): string {
+  const clean = value.trim().replace(/\/+$/, "");
+  try {
+    const url = new URL(clean.startsWith("http") ? clean : `https://${clean}`);
+    const segments = url.pathname.split("/").filter(Boolean);
+    if (segments.length > 0) {
+      const last = segments[segments.length - 1];
+      return `@${last.replace(/^@/, "")}`;
+    }
+  } catch { /* not a URL */ }
+  return `@${clean.replace(/^@/, "")}`;
+}
+
 interface BroadcastData {
   assunto: string;
   ticker: string;
@@ -52,10 +66,10 @@ export default function BroadcastPage() {
 
       // Build social list from empresa_config
       const socials: SocialItem[] = [];
-      if (emp?.instagram) socials.push({ tipo: "instagram", valor: emp.instagram, icon: <Instagram size={11} /> });
-      if (emp?.facebook) socials.push({ tipo: "facebook", valor: emp.facebook, icon: <Facebook size={11} /> });
-      if (emp?.youtube) socials.push({ tipo: "youtube", valor: emp.youtube, icon: <Youtube size={11} /> });
-      if (emp?.site) socials.push({ tipo: "site", valor: emp.site, icon: <Globe size={11} /> });
+      if (emp?.instagram) socials.push({ tipo: "instagram", valor: extractHandle(emp.instagram), icon: <Instagram size={11} /> });
+      if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} /> });
+      if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} /> });
+      if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} /> });
       if (emp?.telefone_participacao) socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <Phone size={11} /> });
       setEmpresaSocials(socials);
 
