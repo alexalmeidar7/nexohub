@@ -47,6 +47,7 @@ serve(async (req) => {
     const brParts = brFormatter.formatToParts(now);
     const hh = brParts.find(p => p.type === "hour")!.value;
     const mm = brParts.find(p => p.type === "minute")!.value;
+    const ss = brParts.find(p => p.type === "second")!.value;
     const nowTime = `${hh}:${mm}:00`;
     const dayFormatter = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long" });
     const dayLong = dayFormatter.format(now);
@@ -76,7 +77,6 @@ serve(async (req) => {
     let programaLogo = "";
     let locutorNome = "";
     let locutorInstagram = "";
-
     let programaId = "";
 
     if (prog) {
@@ -108,12 +108,26 @@ serve(async (req) => {
     }
 
     // ── Social links ──
-    const socials: { tipo: string; icone: string; texto: string }[] = [];
-    if (emp?.instagram) socials.push({ tipo: "instagram", icone: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.png", texto: extractHandle(emp.instagram) });
-    if (emp?.facebook) socials.push({ tipo: "facebook", icone: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.png", texto: extractHandle(emp.facebook) });
-    if (emp?.youtube) socials.push({ tipo: "youtube", icone: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.png", texto: extractHandle(emp.youtube) });
-    if (emp?.site) socials.push({ tipo: "site", icone: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.png", texto: extractHandle(emp.site) });
-    if (emp?.telefone_participacao) socials.push({ tipo: "whatsapp", icone: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/whatsapp.png", texto: emp.telefone_participacao });
+    const instagramTexto = emp?.instagram ? extractHandle(emp.instagram) : "";
+    const facebookTexto = emp?.facebook ? extractHandle(emp.facebook) : "";
+    const youtubeTexto = emp?.youtube ? extractHandle(emp.youtube) : "";
+    const siteTexto = emp?.site ? extractHandle(emp.site) : "";
+    const whatsappTexto = emp?.telefone_participacao || "";
+
+    // ── Rotate social text every 5 seconds ──
+    const socialItems: string[] = [];
+    if (instagramTexto) socialItems.push(instagramTexto);
+    if (facebookTexto) socialItems.push(facebookTexto);
+    if (youtubeTexto) socialItems.push(youtubeTexto);
+    if (siteTexto) socialItems.push(siteTexto);
+    if (whatsappTexto) socialItems.push(whatsappTexto);
+
+    const totalSeconds = parseInt(hh) * 3600 + parseInt(mm) * 60 + parseInt(ss);
+    let redeSocialAtual = "";
+    if (socialItems.length > 0) {
+      const idx = Math.floor(totalSeconds / 5) % socialItems.length;
+      redeSocialAtual = socialItems[idx];
+    }
 
     // ── QR Code link ──
     const whatsappNum = emp?.telefone_participacao?.replace(/\D/g, "") || "";
@@ -124,41 +138,37 @@ serve(async (req) => {
     const assunto = broadcastConfig.assunto || "";
     const ticker = roteiroRes.data?.tickertitulos || "";
 
-    // ── Build XML ──
+    // ── Sponsor logo rotation (every 5s, .png enforced) ──
+    let logoPatrocinador = "";
+    let nomePatrocinador = "";
+    if (sponsorLogos.length > 0) {
+      const idx = Math.floor(totalSeconds / 5) % sponsorLogos.length;
+      logoPatrocinador = sponsorLogos[idx].logo_url.replace(/\.webp$/i, ".png");
+      nomePatrocinador = sponsorLogos[idx].nome;
+    }
+
+    // ── Build flat XML for vMix Data Sources ──
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
-    lines.push("<broadcast>");
-    lines.push("  <programa>");
-    lines.push(`    <nome>${esc(programaNome)}</nome>`);
-    lines.push(`    <logo_url>${esc(programaLogo)}</logo_url>`);
-    lines.push("  </programa>");
-    lines.push("  <locutor>");
-    lines.push(`    <nome>${esc(locutorNome)}</nome>`);
-    lines.push(`    <rede_social>${esc(locutorInstagram)}</rede_social>`);
-    lines.push("  </locutor>");
-    lines.push("  <redes_sociais>");
-    socials.forEach(s => {
-      lines.push("    <item>");
-      lines.push(`      <icone>${esc(s.icone)}</icone>`);
-      lines.push(`      <texto>${esc(s.texto)}</texto>`);
-      lines.push("    </item>");
-    });
-    lines.push("  </redes_sociais>");
-    // Rotate sponsor logo every 5 seconds
-    let currentSponsorUrl = "";
-    let currentSponsorName = "";
-    if (sponsorLogos.length > 0) {
-      const ss = brParts.find(p => p.type === "second")!.value;
-      const totalSeconds = parseInt(hh) * 3600 + parseInt(mm) * 60 + parseInt(ss);
-      const idx = Math.floor(totalSeconds / 5) % sponsorLogos.length;
-      currentSponsorUrl = sponsorLogos[idx].logo_url.replace(/\.webp$/i, ".png");
-      currentSponsorName = sponsorLogos[idx].nome;
-    }
-    lines.push(`  <logo_patrocinador>${esc(currentSponsorUrl)}</logo_patrocinador>`);
-    lines.push(`  <titulo>${esc(assunto)}</titulo>`);
-    lines.push(`  <qrcode_link>${esc(qrLink)}</qrcode_link>`);
-    lines.push(`  <ticker>${esc(ticker)}</ticker>`);
-    lines.push("</broadcast>");
+    lines.push("<items>");
+    lines.push("  <dados>");
+    lines.push(`    <programa_nome>${esc(programaNome)}</programa_nome>`);
+    lines.push(`    <programa_logo>${esc(programaLogo)}</programa_logo>`);
+    lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
+    lines.push(`    <locutor_social>${esc(locutorInstagram)}</locutor_social>`);
+    lines.push(`    <rede_social_instagram_texto>${esc(instagramTexto)}</rede_social_instagram_texto>`);
+    lines.push(`    <rede_social_facebook_texto>${esc(facebookTexto)}</rede_social_facebook_texto>`);
+    lines.push(`    <rede_social_youtube_texto>${esc(youtubeTexto)}</rede_social_youtube_texto>`);
+    lines.push(`    <rede_social_site_texto>${esc(siteTexto)}</rede_social_site_texto>`);
+    lines.push(`    <rede_social_whatsapp_texto>${esc(whatsappTexto)}</rede_social_whatsapp_texto>`);
+    lines.push(`    <rede_social_atual>${esc(redeSocialAtual)}</rede_social_atual>`);
+    lines.push(`    <logo_patrocinador>${esc(logoPatrocinador)}</logo_patrocinador>`);
+    lines.push(`    <nome_patrocinador>${esc(nomePatrocinador)}</nome_patrocinador>`);
+    lines.push(`    <titulo>${esc(assunto)}</titulo>`);
+    lines.push(`    <qrcode_link>${esc(qrLink)}</qrcode_link>`);
+    lines.push(`    <ticker>${esc(ticker)}</ticker>`);
+    lines.push("  </dados>");
+    lines.push("</items>");
 
     const xml = lines.join("\n");
 
@@ -166,7 +176,7 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=15",
+        "Cache-Control": "public, max-age=5",
       },
     });
   } catch (err) {
