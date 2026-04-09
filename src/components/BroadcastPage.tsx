@@ -92,7 +92,10 @@ export default function BroadcastPage() {
       if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} /> });
       if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} /> });
       if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} /> });
-      if (emp?.telefone_participacao) socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} /> });
+      if (emp?.telefone_participacao) {
+        socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} /> });
+        setWhatsappNumber(emp.telefone_participacao);
+      }
       setEmpresaSocials(socials);
 
       // Current program
