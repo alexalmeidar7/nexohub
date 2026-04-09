@@ -77,9 +77,12 @@ serve(async (req) => {
     let locutorNome = "";
     let locutorInstagram = "";
 
+    let programaId = "";
+
     if (prog) {
       programaNome = prog.nome || "";
       programaLogo = prog.selo || "";
+      programaId = prog.id || "";
 
       const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
       if (apIds.length > 0) {
@@ -89,6 +92,19 @@ serve(async (req) => {
           locutorInstagram = ap.instagram || "";
         }
       }
+    }
+
+    // ── Sponsor logos ──
+    let sponsorLogos: { nome: string; logo_url: string }[] = [];
+    if (programaId) {
+      const { data: logos } = await supabase
+        .from("logos_patrocinadores")
+        .select("nome, logo_url")
+        .eq("user_id", userId)
+        .eq("programa_id", programaId)
+        .eq("ativo", true)
+        .eq("excluido", false);
+      if (logos) sponsorLogos = logos;
     }
 
     // ── Social links ──
