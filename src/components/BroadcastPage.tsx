@@ -240,16 +240,60 @@ export default function BroadcastPage() {
         </div>
 
         {/* Locutor override */}
-        <div className="space-y-1">
+        <div className="space-y-1 relative">
           <label className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#888" }}>Nome do Locutor (override)</label>
-          <input
-            type="text"
-            value={data.locutor_override}
-            onChange={e => setData({ ...data, locutor_override: e.target.value })}
-            placeholder={locutorNome || "Nome do locutor"}
-            className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-            style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
-          />
+          <div className="relative">
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "#666" }} />
+            <input
+              type="text"
+              value={data.locutor_override}
+              onChange={async e => {
+                const val = e.target.value;
+                setData({ ...data, locutor_override: val });
+                if (val.trim().length >= 2 && user) {
+                  const { data: results } = await supabase
+                    .from("apresentadores")
+                    .select("nome, instagram, foto")
+                    .eq("user_id", user.id)
+                    .ilike("nome", `%${val.trim()}%`)
+                    .limit(5);
+                  setLocutorSearchResults(results || []);
+                  setShowLocutorDropdown(true);
+                } else {
+                  setLocutorSearchResults([]);
+                  setShowLocutorDropdown(false);
+                }
+              }}
+              onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
+              onBlur={() => setTimeout(() => setShowLocutorDropdown(false), 200)}
+              placeholder={locutorNome || "Buscar locutor..."}
+              className="w-full pl-7 pr-3 py-2 rounded-lg text-sm outline-none"
+              style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
+            />
+          </div>
+          {showLocutorDropdown && locutorSearchResults.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: "#1e1e24", border: "1px solid #ffffff20" }}>
+              {locutorSearchResults.map((r, i) => (
+                <button
+                  key={i}
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    setData({ ...data, locutor_override: r.nome });
+                    if (r.instagram) setLocutorInstagram(r.instagram.startsWith("@") ? r.instagram : `@${r.instagram}`);
+                    if (r.foto) setLocutorFoto(r.foto);
+                    setShowLocutorDropdown(false);
+                    setLocutorSearchResults([]);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs hover:brightness-125 transition-all flex items-center gap-2"
+                  style={{ color: "#e0e0e0", borderBottom: i < locutorSearchResults.length - 1 ? "1px solid #ffffff10" : "none" }}
+                >
+                  {r.foto && <img src={r.foto} alt="" className="w-6 h-6 rounded-full object-cover" />}
+                  <span className="font-semibold flex-1 truncate">{r.nome}</span>
+                  {r.instagram && <span className="text-[10px]" style={{ color: accentColor }}>@{r.instagram.replace("@", "")}</span>}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Redes Sociais (read-only from empresa_config) */}
