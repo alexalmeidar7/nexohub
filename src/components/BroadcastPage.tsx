@@ -221,6 +221,10 @@ export default function BroadcastPage() {
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<broadcast>");
     lines.push(`  <titulo>${escXml(data.assunto || "")}</titulo>`);
+    lines.push("  <programa>");
+    lines.push(`    <nome>${escXml(programaNome || "")}</nome>`);
+    lines.push(`    <logo_url>${escXml(programaLogo || "")}</logo_url>`);
+    lines.push("  </programa>");
     lines.push("  <locutor>");
     lines.push(`    <nome>${escXml(displayLocutor)}</nome>`);
     lines.push(`    <rede_social>${escXml(locutorInstagram || "")}</rede_social>`);
@@ -238,7 +242,7 @@ export default function BroadcastPage() {
     lines.push(`  <ticker>${escXml(composedTicker)}</ticker>`);
     lines.push("</broadcast>");
     return lines.join("\n");
-  }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker]);
+  }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo]);
 
   const handleSave = async () => {
     if (!user) return;
