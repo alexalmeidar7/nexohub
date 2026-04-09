@@ -384,39 +384,37 @@ export default function BroadcastPage() {
               )}
             </div>
 
-          {/* Bottom: Subject bar */}
-          <div
-            className="absolute"
-            style={{
-              bottom: 0,
-              left: "4%",
-              right: "4%",
-              backgroundColor: "rgba(245,245,245,0.95)",
-              padding: "10px 16px",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-1 h-5 rounded-sm" style={{ backgroundColor: accentColor }} />
-              <span className="text-sm font-black uppercase" style={{ color: "#111" }}>
-                {data.assunto || "BASE PARA ASSUNTO"}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap text-[10px]" style={{ color: "#555" }}>
-              {/* Social badges from empresa_config */}
-              {empresaSocials.map((s, i) => (
-                <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold" style={{ backgroundColor: accentColor + "22", color: accentColor }}>
-                  {s.icon}
-                  {s.valor}
+            {/* Subject bar */}
+            <div
+              style={{
+                backgroundColor: "rgba(245,245,245,0.95)",
+                padding: "10px 16px",
+                width: "calc(100% / 0.92 * 0.92)",
+                minWidth: 300,
+              }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-1 h-5 rounded-sm" style={{ backgroundColor: accentColor }} />
+                <span className="text-sm font-black uppercase" style={{ color: "#111" }}>
+                  {data.assunto || "BASE PARA ASSUNTO"}
                 </span>
-              ))}
-              {composedTicker && (
-                <>
-                  <span style={{ color: "#bbb" }}>→</span>
-                  <span className="text-[10px] truncate" style={{ color: "#777", maxWidth: 400 }}>
-                    {composedTicker}
+              </div>
+              <div className="flex items-center gap-3 flex-wrap text-[10px]" style={{ color: "#555" }}>
+                {empresaSocials.map((s, i) => (
+                  <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold" style={{ backgroundColor: accentColor + "22", color: accentColor }}>
+                    {s.icon}
+                    {s.valor}
                   </span>
-                </>
-              )}
+                ))}
+                {composedTicker && (
+                  <>
+                    <span style={{ color: "#bbb" }}>→</span>
+                    <span className="text-[10px] truncate" style={{ color: "#777", maxWidth: 400 }}>
+                      {composedTicker}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
