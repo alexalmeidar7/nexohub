@@ -144,14 +144,17 @@ serve(async (req) => {
       lines.push("    </item>");
     });
     lines.push("  </redes_sociais>");
-    lines.push("  <logos_patrocinadores>");
-    sponsorLogos.forEach(l => {
-      lines.push("    <logo>");
-      lines.push(`      <nome>${esc(l.nome)}</nome>`);
-      lines.push(`      <url>${esc(l.logo_url)}</url>`);
-      lines.push("    </logo>");
-    });
-    lines.push("  </logos_patrocinadores>");
+    // Rotate sponsor logo every 5 seconds
+    let currentSponsorUrl = "";
+    let currentSponsorName = "";
+    if (sponsorLogos.length > 0) {
+      const ss = brParts.find(p => p.type === "second")!.value;
+      const totalSeconds = parseInt(hh) * 3600 + parseInt(mm) * 60 + parseInt(ss);
+      const idx = Math.floor(totalSeconds / 5) % sponsorLogos.length;
+      currentSponsorUrl = sponsorLogos[idx].logo_url;
+      currentSponsorName = sponsorLogos[idx].nome;
+    }
+    lines.push(`  <logo_patrocinador>${esc(currentSponsorUrl)}</logo_patrocinador>`);
     lines.push(`  <titulo>${esc(assunto)}</titulo>`);
     lines.push(`  <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`  <ticker>${esc(ticker)}</ticker>`);
