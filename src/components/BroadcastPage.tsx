@@ -209,6 +209,8 @@ export default function BroadcastPage() {
     return parts.join("  •  ");
   }, [data.tickerNews, data.tickerWeather, data.ticker, newsTitles, weatherText]);
 
+  const displayLocutor = data.locutor_override || locutorNome || "Locutor";
+
   // Generate XML content
   const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -253,8 +255,6 @@ export default function BroadcastPage() {
     }
     setSaving(false);
   };
-
-  const displayLocutor = data.locutor_override || locutorNome || "Locutor";
 
   return (
     <div className="flex gap-6 h-full min-h-0">
