@@ -144,6 +144,14 @@ serve(async (req) => {
       lines.push("    </item>");
     });
     lines.push("  </redes_sociais>");
+    lines.push("  <logos_patrocinadores>");
+    sponsorLogos.forEach(l => {
+      lines.push("    <logo>");
+      lines.push(`      <nome>${esc(l.nome)}</nome>`);
+      lines.push(`      <url>${esc(l.logo_url)}</url>`);
+      lines.push("    </logo>");
+    });
+    lines.push("  </logos_patrocinadores>");
     lines.push(`  <titulo>${esc(assunto)}</titulo>`);
     lines.push(`  <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`  <ticker>${esc(ticker)}</ticker>`);
