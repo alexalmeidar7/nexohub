@@ -65,7 +65,7 @@ serve(async (req) => {
         .select("tickertitulos")
         .eq("user_id", userId).eq("tipo_programa", "Jornalístico")
         .order("created_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("user_settings").select("dashboard_items, weather_city").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_settings").select("dashboard_items, weather_city, cenario_config").eq("user_id", userId).maybeSingle(),
     ]);
 
     const emp = empRes.data;
@@ -103,7 +103,9 @@ serve(async (req) => {
     const whatsappNum = emp?.telefone_participacao?.replace(/\D/g, "") || "";
     const qrLink = whatsappNum ? `https://wa.me/${whatsappNum}` : "";
 
-    // ── Ticker ──
+    // ── Ticker & Titulo from broadcast config ──
+    const broadcastConfig = (settingsRes.data?.cenario_config as any)?.broadcast || {};
+    const assunto = broadcastConfig.assunto || "";
     const ticker = roteiroRes.data?.tickertitulos || "";
 
     // ── Build XML ──
@@ -126,6 +128,7 @@ serve(async (req) => {
       lines.push("    </item>");
     });
     lines.push("  </redes_sociais>");
+    lines.push(`  <titulo>${esc(assunto)}</titulo>`);
     lines.push(`  <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`  <ticker>${esc(ticker)}</ticker>`);
     lines.push("</broadcast>");
