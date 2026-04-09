@@ -617,8 +617,25 @@ function MockupPreview({
             </div>
           </div>
 
-          {/* Social item cycling */}
-          <div className="flex-1 flex items-end justify-end pb-2 pr-1" style={{ minHeight: 40 }}>
+          {/* Sponsor logo + Social item cycling */}
+          <div className="flex-1 flex flex-col items-end justify-end pb-2 pr-1 gap-2" style={{ minHeight: 40 }}>
+            {/* Sponsor logo */}
+            {currentSponsor && (
+              <div
+                className="transition-all duration-400"
+                style={{
+                  opacity: sponsorVisible ? 1 : 0,
+                  transform: sponsorVisible ? "scale(1)" : "scale(0.9)",
+                }}
+              >
+                <img
+                  src={currentSponsor.logo_url}
+                  alt={currentSponsor.nome}
+                  className="h-8 max-w-[100px] object-contain"
+                />
+              </div>
+            )}
+            {/* Social item */}
             {currentSocial && (
               <div
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300"
