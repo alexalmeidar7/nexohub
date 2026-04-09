@@ -128,6 +128,7 @@ serve(async (req) => {
       lines.push("    </item>");
     });
     lines.push("  </redes_sociais>");
+    lines.push(`  <titulo>${esc(assunto)}</titulo>`);
     lines.push(`  <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`  <ticker>${esc(ticker)}</ticker>`);
     lines.push("</broadcast>");
