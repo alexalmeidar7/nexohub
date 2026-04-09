@@ -62,6 +62,8 @@ export default function BroadcastPage() {
   const [programaNome, setProgramaNome] = useState("");
   const [accentColor, setAccentColor] = useState("#dc2626");
   const [empresaSocials, setEmpresaSocials] = useState<SocialItem[]>([]);
+  const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
+  const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
 
   // Ticker auto-content
   const [newsTitles, setNewsTitles] = useState<string[]>([]);
