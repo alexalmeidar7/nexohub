@@ -127,14 +127,22 @@ export default function BroadcastPage() {
         if (lc?.accentColor) setAccentColor(lc.accentColor);
       }
 
-      // Fetch news titles (selected_news)
-      const { data: newsRows } = await supabase
-        .from("selected_news")
-        .select("title")
+      // Fetch news titles from latest journalistic roteiro
+      const { data: latestRoteiro } = await supabase
+        .from("roteiros")
+        .select("conteudo_html")
         .eq("user_id", user.id)
+        .eq("tipo_programa", "Jornalístico")
         .order("created_at", { ascending: false })
-        .limit(10);
-      if (newsRows) setNewsTitles(newsRows.map(n => n.title));
+        .limit(1)
+        .maybeSingle();
+      if (latestRoteiro?.conteudo_html) {
+        const matches = latestRoteiro.conteudo_html.match(/<strong>Notícia\s*\d+:<\/strong>\s*([^<]+)/g);
+        if (matches) {
+          const titles = matches.map((m: string) => m.replace(/<strong>Notícia\s*\d+:<\/strong>\s*/, "").trim()).filter(Boolean);
+          setNewsTitles(titles);
+        }
+      }
 
       // Fetch weather
       if (settings?.weather_lat && settings?.weather_lon) {
