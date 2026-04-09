@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2 } from "lucide-react";
+import { toast } from "sonner";
+import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw } from "lucide-react";
 import XmlLinkRow from "@/components/XmlLinkRow";
 
 /** Extract @username from a URL or handle string */
@@ -55,7 +55,7 @@ interface SocialItem {
 
 export default function BroadcastPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const [data, setData] = useState<BroadcastData>(defaultBroadcast);
   const [saving, setSaving] = useState(false);
   const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
@@ -247,9 +247,10 @@ export default function BroadcastPage() {
     return lines.join("\n");
   }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!user) return;
     setSaving(true);
+    const toastId = toast("Atualizando XML...", { icon: <RefreshCw size={14} className="animate-spin" /> });
     try {
       const { data: current } = await supabase.from("user_settings").select("cenario_config").eq("user_id", user.id).maybeSingle();
       const existing = (current?.cenario_config && typeof current.cenario_config === "object") ? current.cenario_config as Record<string, any> : {};
@@ -258,12 +259,16 @@ export default function BroadcastPage() {
         cenario_config: { ...existing, broadcast: data } as any,
       }).eq("user_id", user.id);
 
-      toast({ title: "Broadcast salvo com sucesso!" });
+      toast.success("XML atualizado!", { id: toastId });
     } catch {
-      toast({ title: "Erro ao salvar", variant: "destructive" });
+      toast.error("Erro ao salvar", { id: toastId });
     }
     setSaving(false);
-  };
+  }, [user, data]);
+
+  const onFieldBlur = useCallback(() => {
+    handleSave();
+  }, [handleSave]);
 
   return (
     <div className="flex gap-6 h-full min-h-0">
@@ -281,6 +286,7 @@ export default function BroadcastPage() {
             placeholder="Base para assunto"
             className="w-full px-3 py-2 rounded-lg text-sm outline-none"
             style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
+            onBlur={onFieldBlur}
           />
         </div>
 
@@ -310,7 +316,7 @@ export default function BroadcastPage() {
                 }
               }}
               onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
-              onBlur={() => setTimeout(() => setShowLocutorDropdown(false), 200)}
+              onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
               placeholder={locutorNome || "Buscar locutor..."}
               className="w-full pl-7 pr-3 py-2 rounded-lg text-sm outline-none"
               style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
@@ -363,7 +369,7 @@ export default function BroadcastPage() {
               <input
                 type="checkbox"
                 checked={data.showQrCode}
-                onChange={e => setData({ ...data, showQrCode: e.target.checked })}
+                onChange={e => { setData({ ...data, showQrCode: e.target.checked }); setTimeout(onFieldBlur, 100); }}
                 className="accent-current"
                 style={{ accentColor }}
               />
@@ -385,7 +391,7 @@ export default function BroadcastPage() {
             <input
               type="checkbox"
               checked={data.tickerNews}
-              onChange={e => setData({ ...data, tickerNews: e.target.checked })}
+              onChange={e => { setData({ ...data, tickerNews: e.target.checked }); setTimeout(onFieldBlur, 100); }}
               className="accent-current"
               style={{ accentColor }}
             />
@@ -401,7 +407,7 @@ export default function BroadcastPage() {
             <input
               type="checkbox"
               checked={data.tickerWeather}
-              onChange={e => setData({ ...data, tickerWeather: e.target.checked })}
+              onChange={e => { setData({ ...data, tickerWeather: e.target.checked }); setTimeout(onFieldBlur, 100); }}
               className="accent-current"
               style={{ accentColor }}
             />
@@ -420,19 +426,9 @@ export default function BroadcastPage() {
             rows={2}
             className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-none"
             style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
+            onBlur={onFieldBlur}
           />
         </div>
-
-        {/* Save */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{ backgroundColor: "#dc2626", color: "#fff" }}
-        >
-          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-          Salvar Broadcast
-        </button>
 
         {/* XML Link – permanent URL via Edge Function */}
         <XmlLinkRow label="Broadcast XML" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`} />
