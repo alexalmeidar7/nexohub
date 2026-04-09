@@ -108,7 +108,7 @@ export default function BroadcastPage() {
 
       const { data: progs } = await supabase
         .from("programas")
-        .select("id, nome, selo, apresentadores_ids, apresentador_id")
+        .select("id, nome, selo, capa, thumb, apresentadores_ids, apresentador_id")
         .eq("user_id", user.id)
         .eq("ativo", true)
         .lte("horario_inicio", nowTime)
@@ -117,7 +117,9 @@ export default function BroadcastPage() {
       const prog = progs?.find(() => true);
       if (prog) {
         setProgramaNome(prog.nome);
-        if (prog.selo) setProgramaLogo(prog.selo);
+        // Use capa or thumb as the program logo URL, fallback to selo
+        const logoUrl = prog.capa || prog.thumb || prog.selo || null;
+        if (logoUrl) setProgramaLogo(logoUrl);
 
         const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
         if (apIds.length > 0) {
