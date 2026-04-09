@@ -151,7 +151,7 @@ serve(async (req) => {
       const ss = brParts.find(p => p.type === "second")!.value;
       const totalSeconds = parseInt(hh) * 3600 + parseInt(mm) * 60 + parseInt(ss);
       const idx = Math.floor(totalSeconds / 5) % sponsorLogos.length;
-      currentSponsorUrl = sponsorLogos[idx].logo_url;
+      currentSponsorUrl = sponsorLogos[idx].logo_url.replace(/\.webp$/i, ".png");
       currentSponsorName = sponsorLogos[idx].nome;
     }
     lines.push(`  <logo_patrocinador>${esc(currentSponsorUrl)}</logo_patrocinador>`);
