@@ -64,6 +64,7 @@ export default function BroadcastPage() {
   const [locutorInstagram, setLocutorInstagram] = useState("");
   const [programaNome, setProgramaNome] = useState("");
   const [accentColor, setAccentColor] = useState("#dc2626");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [empresaSocials, setEmpresaSocials] = useState<SocialItem[]>([]);
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
