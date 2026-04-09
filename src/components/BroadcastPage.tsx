@@ -33,6 +33,7 @@ interface BroadcastData {
   locutor_override: string;
   tickerNews: boolean;
   tickerWeather: boolean;
+  showQrCode: boolean;
 }
 
 const defaultBroadcast: BroadcastData = {
@@ -41,6 +42,7 @@ const defaultBroadcast: BroadcastData = {
   locutor_override: "",
   tickerNews: false,
   tickerWeather: false,
+  showQrCode: false,
 };
 
 interface SocialItem {
