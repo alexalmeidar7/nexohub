@@ -440,75 +440,129 @@ export default function BroadcastPage() {
 
       {/* ── Right: Mockup Preview ── */}
       <div className="flex-1 flex items-center justify-center">
-        <div
-          className="relative w-full rounded-xl overflow-hidden"
-          style={{
-            aspectRatio: "16/9",
-            maxWidth: 900,
-            backgroundColor: "#000",
-            border: "1px solid #ffffff10",
-          }}
-        >
-          {/* Top left: Logo empresa */}
-          <div className="absolute" style={{ top: "5%", left: "4%" }}>
-            {empresaLogo ? (
-              <img src={empresaLogo} alt="Logo" className="h-12 w-12 rounded-full object-cover" style={{ border: `2px solid ${accentColor}` }} />
-            ) : (
-              <div className="h-12 w-12 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ backgroundColor: accentColor, color: "#000" }}>
-                LOGO
-              </div>
-            )}
-            <span className="text-[9px] font-bold mt-1 block" style={{ color: "#fff" }}>LOGO DA EMPRESA</span>
-          </div>
+        <MockupPreview
+          empresaLogo={empresaLogo}
+          programaNome={programaNome}
+          programaLogo={programaLogo}
+          displayLocutor={displayLocutor}
+          locutorInstagram={locutorInstagram}
+          locutorFoto={locutorFoto}
+          accentColor={accentColor}
+          assunto={data.assunto}
+          showQrCode={data.showQrCode}
+          whatsappNumber={whatsappNumber}
+          empresaSocials={empresaSocials}
+          composedTicker={composedTicker}
+        />
+      </div>
+    </div>
+  );
+}
 
-          {/* Top right: Logo programa no ar */}
-          <div className="absolute flex items-center gap-2" style={{ top: "5%", right: "4%" }}>
-            <span className="text-[9px] font-bold" style={{ color: "#fff" }}>{programaNome || "PROGRAMA NO AR"}</span>
-            {programaLogo ? (
-              <img src={programaLogo} alt="Programa" className="h-12 w-12 rounded-full object-cover" style={{ border: `2px solid ${accentColor}` }} />
-            ) : (
-              <div className="h-12 w-12 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ backgroundColor: accentColor, color: "#000" }}>
-                PROG
-              </div>
-            )}
-          </div>
+/* ─── Mockup Preview component with animations ─── */
+function MockupPreview({
+  empresaLogo, programaNome, programaLogo, displayLocutor, locutorInstagram,
+  locutorFoto, accentColor, assunto, showQrCode, whatsappNumber,
+  empresaSocials, composedTicker,
+}: {
+  empresaLogo: string; programaNome: string; programaLogo: string;
+  displayLocutor: string; locutorInstagram: string; locutorFoto: string;
+  accentColor: string; assunto: string; showQrCode: boolean;
+  whatsappNumber: string; empresaSocials: SocialItem[]; composedTicker: string;
+}) {
+  // Social cycling animation
+  const [socialIdx, setSocialIdx] = useState(0);
+  const [socialVisible, setSocialVisible] = useState(true);
 
-          {/* Bottom left: Locutor data – stacked above subject bar */}
-          <div
-            className="absolute flex flex-col"
-            style={{
-              bottom: 0,
-              left: "4%",
-            }}
-          >
-            {/* QR Code above locutor */}
-            {data.showQrCode && whatsappNumber && (
-              <div className="flex justify-center mb-1" style={{ padding: "6px 18px" }}>
-                <div className="bg-white rounded-lg p-1.5">
-                  <QRCodeSVG
-                    value={`https://wa.me/${whatsappNumber.replace(/\D/g, "")}`}
-                    size={64}
-                    bgColor="#ffffff"
-                    fgColor="#111111"
-                  />
-                </div>
-              </div>
-            )}
+  useEffect(() => {
+    if (empresaSocials.length <= 1) return;
+    const interval = setInterval(() => {
+      setSocialVisible(false);
+      setTimeout(() => {
+        setSocialIdx(prev => (prev + 1) % empresaSocials.length);
+        setSocialVisible(true);
+      }, 400);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [empresaSocials.length]);
+
+  const currentSocial = empresaSocials[socialIdx] || null;
+
+  return (
+    <div
+      className="relative w-full rounded-xl overflow-hidden"
+      style={{
+        aspectRatio: "16/9",
+        maxWidth: 900,
+        backgroundColor: "#0a0a0a",
+        border: "1px solid #ffffff12",
+        boxShadow: "0 20px 60px -15px rgba(0,0,0,0.8)",
+      }}
+    >
+      {/* Safe area guides (invisible but layout-based on 1920x1080 proportions) */}
+
+      {/* ── Top bar ── */}
+      <div className="absolute flex items-center justify-between" style={{ top: "5%", left: "4%", right: "4%" }}>
+        {/* Logo empresa */}
+        <div className="flex items-center gap-3">
+          {empresaLogo ? (
+            <img src={empresaLogo} alt="Logo" className="h-10 w-10 rounded-full object-cover" style={{ border: `2px solid ${accentColor}`, boxShadow: `0 0 12px ${accentColor}40` }} />
+          ) : (
+            <div className="h-10 w-10 rounded-full flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: accentColor, color: "#000" }}>LOGO</div>
+          )}
+        </div>
+
+        {/* Logo programa no ar */}
+        <div className="flex items-center gap-2.5">
+          <div className="text-right">
+            <span className="text-[8px] font-medium uppercase tracking-wider block" style={{ color: "#ffffff60" }}>NO AR</span>
+            <span className="text-[10px] font-bold block" style={{ color: "#fff" }}>{programaNome || "PROGRAMA"}</span>
+          </div>
+          {programaLogo ? (
+            <img src={programaLogo} alt="Programa" className="h-10 w-10 rounded-lg object-cover" style={{ border: `2px solid ${accentColor}`, boxShadow: `0 0 12px ${accentColor}40` }} />
+          ) : (
+            <div className="h-10 w-10 rounded-lg flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: accentColor + "30", color: accentColor, border: `1px solid ${accentColor}50` }}>PROG</div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Center: QR Code (if enabled) ── */}
+      {showQrCode && whatsappNumber && (
+        <div className="absolute flex flex-col items-center gap-1" style={{ bottom: "28%", left: "4%" }}>
+          <div className="bg-white rounded-lg p-2 shadow-lg" style={{ boxShadow: `0 4px 20px ${accentColor}30` }}>
+            <QRCodeSVG
+              value={`https://wa.me/${whatsappNumber.replace(/\D/g, "")}`}
+              size={56}
+              bgColor="#ffffff"
+              fgColor="#111111"
+            />
+          </div>
+          <span className="text-[7px] font-semibold uppercase tracking-wider" style={{ color: "#ffffff50" }}>WhatsApp</span>
+        </div>
+      )}
+
+      {/* ── Bottom section ── */}
+      <div className="absolute" style={{ bottom: 0, left: 0, right: 0 }}>
+
+        {/* Locutor + Assunto bar */}
+        <div className="flex items-end" style={{ paddingLeft: "4%", paddingRight: "4%" }}>
+          <div className="flex-shrink-0" style={{ maxWidth: "45%" }}>
             {/* Locutor box */}
             <div
+              className="backdrop-blur-sm"
               style={{
-                backgroundColor: "#fff",
-                padding: "10px 18px",
-                borderRadius: "4px 4px 0 0",
+                backgroundColor: "rgba(255,255,255,0.97)",
+                padding: "8px 20px 6px",
+                borderRadius: "6px 6px 0 0",
                 minWidth: 180,
               }}
             >
-              <div className="text-sm font-black uppercase leading-tight" style={{ color: "#111" }}>
+              <div className="text-sm font-black uppercase leading-tight tracking-wide" style={{ color: "#111" }}>
                 {displayLocutor}
               </div>
               {locutorInstagram && (
                 <div className="flex items-center gap-1 mt-0.5 text-[9px] font-semibold" style={{ color: accentColor }}>
-                  <Instagram size={10} /> {locutorInstagram}
+                  <Instagram size={9} /> {locutorInstagram}
                 </div>
               )}
             </div>
@@ -516,37 +570,60 @@ export default function BroadcastPage() {
             {/* Subject bar */}
             <div
               style={{
-                backgroundColor: "rgba(245,245,245,0.95)",
-                padding: "10px 16px",
-                width: "calc(100% / 0.92 * 0.92)",
-                minWidth: 300,
+                backgroundColor: "rgba(240,240,240,0.95)",
+                padding: "8px 16px",
               }}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-1 h-5 rounded-sm" style={{ backgroundColor: accentColor }} />
-                <span className="text-sm font-black uppercase" style={{ color: "#111" }}>
-                  {data.assunto || "BASE PARA ASSUNTO"}
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 rounded-sm flex-shrink-0" style={{ backgroundColor: accentColor }} />
+                <span className="text-xs font-black uppercase truncate" style={{ color: "#111" }}>
+                  {assunto || "BASE PARA ASSUNTO"}
                 </span>
-              </div>
-              <div className="flex items-center gap-3 flex-wrap text-[10px]" style={{ color: "#555" }}>
-                {empresaSocials.map((s, i) => (
-                  <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold" style={{ backgroundColor: accentColor + "22", color: accentColor }}>
-                    {s.icon}
-                    {s.valor}
-                  </span>
-                ))}
-                {composedTicker && (
-                  <>
-                    <span style={{ color: "#bbb" }}>→</span>
-                    <span className="text-[10px] truncate" style={{ color: "#777", maxWidth: 400 }}>
-                      {composedTicker}
-                    </span>
-                  </>
-                )}
               </div>
             </div>
           </div>
+
+          {/* Social item cycling */}
+          <div className="flex-1 flex items-end justify-end pb-2 pr-1" style={{ minHeight: 40 }}>
+            {currentSocial && (
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300"
+                style={{
+                  backgroundColor: accentColor + "18",
+                  border: `1px solid ${accentColor}30`,
+                  opacity: socialVisible ? 1 : 0,
+                  transform: socialVisible ? "translateY(0)" : "translateY(6px)",
+                }}
+              >
+                <span style={{ color: accentColor }}>{currentSocial.icon}</span>
+                <span className="text-[10px] font-semibold" style={{ color: "#fff" }}>{currentSocial.valor}</span>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Ticker bar */}
+        {composedTicker && (
+          <div className="overflow-hidden" style={{ backgroundColor: accentColor, height: 26 }}>
+            <div
+              className="flex items-center h-full whitespace-nowrap"
+              style={{
+                animation: "tickerSlide 20s linear infinite",
+                paddingLeft: "100%",
+              }}
+            >
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#000" }}>
+                {composedTicker}
+              </span>
+            </div>
+            <style>{`
+              @keyframes tickerSlide {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-100%); }
+              }
+            `}</style>
+          </div>
+        )}
       </div>
     </div>
   );
