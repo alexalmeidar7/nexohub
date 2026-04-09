@@ -434,8 +434,8 @@ export default function BroadcastPage() {
           Salvar Broadcast
         </button>
 
-        {/* XML Link */}
-        <XmlLinkRow label="Broadcast XML" xmlContent={broadcastXml} />
+        {/* XML Link – permanent URL via Edge Function */}
+        <XmlLinkRow label="Broadcast XML" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`} />
       </div>
 
       {/* ── Right: Mockup Preview ── */}
