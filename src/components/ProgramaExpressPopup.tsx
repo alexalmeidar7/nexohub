@@ -491,12 +491,12 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
     if (participantes.length > 0) {
       xml += `  <participantes>\n`;
-      participantes.forEach((p, pi) => {
-        xml += `    <participante${pi + 1}>\n`;
+      participantes.forEach((p) => {
+        xml += `    <item>\n`;
         xml += `      <nome>${escXml(p.nome)}</nome>\n`;
         xml += `      <cargo>${escXml(p.cargo)}</cargo>\n`;
         xml += `      <instagram>${escXml(p.instagram)}</instagram>\n`;
-        xml += `    </participante${pi + 1}>\n`;
+        xml += `    </item>\n`;
       });
       xml += `  </participantes>\n`;
     }

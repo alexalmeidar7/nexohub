@@ -475,7 +475,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const generateXml = (): string => {
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
     xml += `  <programa>${programaNome}</programa>\n  <estudio>${estudio}</estudio>\n  <data>${new Date().toISOString().split("T")[0]}</data>\n`;
-    if (participantes.length > 0) { xml += `  <participantes>\n`; participantes.forEach((p, pi) => { xml += `    <participante${pi + 1}>\n      <nome>${escXml(p.nome)}</nome>\n      <cargo>${escXml(p.cargo)}</cargo>\n      <instagram>${escXml(p.instagram)}</instagram>\n    </participante${pi + 1}>\n`; }); xml += `  </participantes>\n`; }
+    if (participantes.length > 0) { xml += `  <participantes>\n`; participantes.forEach((p) => { xml += `    <item>\n      <nome>${escXml(p.nome)}</nome>\n      <cargo>${escXml(p.cargo)}</cargo>\n      <instagram>${escXml(p.instagram)}</instagram>\n    </item>\n`; }); xml += `  </participantes>\n`; }
     if (isPodcast) {
       xml += `  <roteiro>\n`;
       xml += `    <tituloTarja>${escXml(podcastData.tituloTarja)}</tituloTarja>\n`;
