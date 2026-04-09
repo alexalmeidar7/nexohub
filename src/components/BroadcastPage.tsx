@@ -478,16 +478,21 @@ export default function BroadcastPage() {
 function MockupPreview({
   empresaLogo, programaNome, programaLogo, displayLocutor, locutorInstagram,
   locutorFoto, accentColor, assunto, showQrCode, whatsappNumber,
-  empresaSocials, composedTicker,
+  empresaSocials, composedTicker, sponsorLogos,
 }: {
   empresaLogo: string; programaNome: string; programaLogo: string;
   displayLocutor: string; locutorInstagram: string; locutorFoto: string;
   accentColor: string; assunto: string; showQrCode: boolean;
   whatsappNumber: string; empresaSocials: SocialItem[]; composedTicker: string;
+  sponsorLogos: {nome: string; logo_url: string}[];
 }) {
   // Social cycling animation
   const [socialIdx, setSocialIdx] = useState(0);
   const [socialVisible, setSocialVisible] = useState(true);
+
+  // Sponsor logo cycling animation
+  const [sponsorIdx, setSponsorIdx] = useState(0);
+  const [sponsorVisible, setSponsorVisible] = useState(true);
 
   useEffect(() => {
     if (empresaSocials.length <= 1) return;
@@ -501,7 +506,20 @@ function MockupPreview({
     return () => clearInterval(interval);
   }, [empresaSocials.length]);
 
+  useEffect(() => {
+    if (sponsorLogos.length <= 1) return;
+    const interval = setInterval(() => {
+      setSponsorVisible(false);
+      setTimeout(() => {
+        setSponsorIdx(prev => (prev + 1) % sponsorLogos.length);
+        setSponsorVisible(true);
+      }, 400);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [sponsorLogos.length]);
+
   const currentSocial = empresaSocials[socialIdx] || null;
+  const currentSponsor = sponsorLogos[sponsorIdx] || null;
 
   return (
     <div
