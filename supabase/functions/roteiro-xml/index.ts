@@ -77,12 +77,11 @@ Deno.serve(async (req) => {
     xml += `  <logo_url>${escapeXml(logoUrl)}</logo_url>\n`;
     xml += `  <participantes>\n`;
     for (const p of participantes) {
-      xml += `    <participante>\n`;
+      xml += `    <item>\n`;
       xml += `      <nome>${escapeXml(p.nome || "")}</nome>\n`;
-      if (p.categoria) xml += `      <categoria>${escapeXml(p.categoria)}</categoria>\n`;
       if (p.cargo) xml += `      <cargo>${escapeXml(p.cargo)}</cargo>\n`;
       if (p.instagram) xml += `      <instagram>${escapeXml(p.instagram)}</instagram>\n`;
-      xml += `    </participante>\n`;
+      xml += `    </item>\n`;
     }
     xml += `  </participantes>\n`;
     xml += `</roteiro>`;
