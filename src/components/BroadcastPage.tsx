@@ -39,6 +39,8 @@ export default function BroadcastPage() {
   const [programaLogo, setProgramaLogo] = useState<string | null>(null);
   const [locutorFoto, setLocutorFoto] = useState<string | null>(null);
   const [locutorNome, setLocutorNome] = useState("");
+  const [locutorCargo, setLocutorCargo] = useState("");
+  const [locutorInstagram, setLocutorInstagram] = useState("");
   const [programaNome, setProgramaNome] = useState("");
   const [accentColor, setAccentColor] = useState("#dc2626");
 
@@ -74,10 +76,12 @@ export default function BroadcastPage() {
         // Get presenter
         const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
         if (apIds.length > 0) {
-          const { data: ap } = await supabase.from("apresentadores").select("nome, foto").in("id", apIds).limit(1).maybeSingle();
+          const { data: ap } = await supabase.from("apresentadores").select("nome, foto, instagram, cargo").in("id", apIds).limit(1).maybeSingle();
           if (ap) {
             setLocutorNome(ap.nome);
             if (ap.foto) setLocutorFoto(ap.foto);
+            if (ap.instagram) setLocutorInstagram(ap.instagram);
+            if (ap.cargo) setLocutorCargo(ap.cargo);
           }
         }
       }
@@ -244,9 +248,9 @@ export default function BroadcastPage() {
             <span className="text-[9px] font-bold mt-1 block" style={{ color: "#fff" }}>LOGO DA EMPRESA</span>
           </div>
 
-          {/* Top right: Logo programa */}
+          {/* Top right: Logo programa no ar */}
           <div className="absolute flex items-center gap-2" style={{ top: "5%", right: "4%" }}>
-            <span className="text-[9px] font-bold" style={{ color: "#fff" }}>LOGO DO PROGRAMA</span>
+            <span className="text-[9px] font-bold" style={{ color: "#fff" }}>{programaNome || "PROGRAMA NO AR"}</span>
             {programaLogo ? (
               <img src={programaLogo} alt="Programa" className="h-12 w-12 rounded-full object-cover" style={{ border: `2px solid ${accentColor}` }} />
             ) : (
@@ -269,9 +273,15 @@ export default function BroadcastPage() {
             }}
           >
             <div className="text-sm font-black uppercase leading-tight" style={{ color: "#111" }}>
-              {displayLocutor.split(" ").map((w, i) => <div key={i}>{w}</div>)}
+              {displayLocutor}
             </div>
-            <div className="text-[9px] font-semibold uppercase mt-0.5" style={{ color: "#555" }}>NO AR</div>
+            {locutorCargo && <div className="text-[9px] font-semibold mt-0.5" style={{ color: "#555" }}>{locutorCargo}</div>}
+            {locutorInstagram && (
+              <div className="flex items-center gap-1 mt-0.5 text-[9px] font-semibold" style={{ color: accentColor }}>
+                <Instagram size={10} /> {locutorInstagram}
+              </div>
+            )}
+            <div className="text-[8px] font-bold uppercase mt-1" style={{ color: "#999" }}>NO AR</div>
           </div>
 
           {/* Bottom: Subject bar */}
