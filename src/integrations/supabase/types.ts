@@ -866,6 +866,7 @@ export type Database = {
           share_token: string | null
           status: string
           subtitulo: string
+          tickertitulos: string | null
           tipo_programa: string
           titulo: string
           updated_at: string
@@ -887,6 +888,7 @@ export type Database = {
           share_token?: string | null
           status?: string
           subtitulo?: string
+          tickertitulos?: string | null
           tipo_programa?: string
           titulo?: string
           updated_at?: string
@@ -908,6 +910,7 @@ export type Database = {
           share_token?: string | null
           status?: string
           subtitulo?: string
+          tickertitulos?: string | null
           tipo_programa?: string
           titulo?: string
           updated_at?: string

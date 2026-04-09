@@ -1,0 +1,1 @@
+ALTER TABLE public.roteiros ADD COLUMN tickertitulos text DEFAULT '';
