@@ -231,7 +231,7 @@ export default function BroadcastPage() {
       lines.push(`    </item>`);
     });
     lines.push("  </redes_sociais>");
-    const qrLink = data.showQrCode && whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}` : "";
+    const qrLink = whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}` : "";
     lines.push(`  <qrcode_link>${escXml(qrLink)}</qrcode_link>`);
     lines.push(`  <ticker>${escXml(composedTicker)}</ticker>`);
     lines.push("</broadcast>");
