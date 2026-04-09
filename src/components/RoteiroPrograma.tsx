@@ -346,7 +346,16 @@ export default function RoteiroPrograma() {
           <div className="flex items-center gap-2 mb-2">
             <History size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
             <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Últimos roteiros</p>
-            <span className="text-[10px] ml-auto" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{historico.length}</span>
+            <button
+              onClick={regenerateAllXmls}
+              disabled={regenerating}
+              className="text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 hover:opacity-80 transition disabled:opacity-40 ml-auto"
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}
+              title="Regenerar todos os XMLs com a estrutura atualizada"
+            >
+              <RefreshCw size={10} className={regenerating ? "animate-spin" : ""} />
+              {regenerating ? "Regenerando..." : "Regenerar XMLs"}
+            </button>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {historico.map((r, idx) => {
