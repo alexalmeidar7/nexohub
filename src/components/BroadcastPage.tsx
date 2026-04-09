@@ -424,6 +424,9 @@ export default function BroadcastPage() {
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           Salvar Broadcast
         </button>
+
+        {/* XML Link */}
+        <XmlLinkRow label="Broadcast XML" xmlContent={broadcastXml} />
       </div>
 
       {/* ── Right: Mockup Preview ── */}
