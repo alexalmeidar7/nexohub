@@ -605,7 +605,7 @@ function MockupPreview({
 
         {/* Ticker bar – separate from title, with gap */}
         {composedTicker && (
-          <div className="overflow-hidden" style={{ backgroundColor: accentColor + "18", border: `1px solid ${accentColor}30`, height: 28, borderRadius: 8 }}>
+          <div className="overflow-hidden mt-3" style={{ backgroundColor: accentColor + "18", border: `1px solid ${accentColor}30`, height: 28, borderRadius: 8 }}>
             <div
               className="flex items-center h-full whitespace-nowrap"
               style={{
