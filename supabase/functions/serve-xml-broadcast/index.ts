@@ -41,13 +41,17 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // ── Current time & day ──
+    // ── Current time & day (BRT) ──
     const now = new Date();
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
+    const brFormatter = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+    const brParts = brFormatter.formatToParts(now);
+    const hh = brParts.find(p => p.type === "hour")!.value;
+    const mm = brParts.find(p => p.type === "minute")!.value;
     const nowTime = `${hh}:${mm}:00`;
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-    const todayName = dayNames[now.getDay()];
+    const dayFormatter = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long" });
+    const dayLong = dayFormatter.format(now);
+    const dayMap: Record<string, string> = { "domingo": "Domingo", "segunda-feira": "Segunda", "terça-feira": "Terça", "quarta-feira": "Quarta", "quinta-feira": "Quinta", "sexta-feira": "Sexta", "sábado": "Sábado" };
+    const todayName = dayMap[dayLong.toLowerCase()] || "Segunda";
 
     // ── Parallel fetches ──
     const [empRes, progsRes, roteiroRes, settingsRes] = await Promise.all([
