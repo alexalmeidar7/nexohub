@@ -247,9 +247,10 @@ export default function BroadcastPage() {
     return lines.join("\n");
   }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!user) return;
     setSaving(true);
+    const toastId = toast("Atualizando XML...", { icon: <RefreshCw size={14} className="animate-spin" /> });
     try {
       const { data: current } = await supabase.from("user_settings").select("cenario_config").eq("user_id", user.id).maybeSingle();
       const existing = (current?.cenario_config && typeof current.cenario_config === "object") ? current.cenario_config as Record<string, any> : {};
@@ -258,12 +259,16 @@ export default function BroadcastPage() {
         cenario_config: { ...existing, broadcast: data } as any,
       }).eq("user_id", user.id);
 
-      toast({ title: "Broadcast salvo com sucesso!" });
+      toast.success("XML atualizado!", { id: toastId });
     } catch {
-      toast({ title: "Erro ao salvar", variant: "destructive" });
+      toast.error("Erro ao salvar", { id: toastId });
     }
     setSaving(false);
-  };
+  }, [user, data]);
+
+  const onFieldBlur = useCallback(() => {
+    handleSave();
+  }, [handleSave]);
 
   return (
     <div className="flex gap-6 h-full min-h-0">
