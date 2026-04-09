@@ -65,7 +65,7 @@ serve(async (req) => {
         .select("tickertitulos")
         .eq("user_id", userId).eq("tipo_programa", "Jornalístico")
         .order("created_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("user_settings").select("dashboard_items, weather_city").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_settings").select("dashboard_items, weather_city, cenario_config").eq("user_id", userId).maybeSingle(),
     ]);
 
     const emp = empRes.data;
