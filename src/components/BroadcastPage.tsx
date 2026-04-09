@@ -372,13 +372,11 @@ export default function BroadcastPage() {
             <div className="text-sm font-black uppercase leading-tight" style={{ color: "#111" }}>
               {displayLocutor}
             </div>
-            {locutorCargo && <div className="text-[9px] font-semibold mt-0.5" style={{ color: "#555" }}>{locutorCargo}</div>}
             {locutorInstagram && (
               <div className="flex items-center gap-1 mt-0.5 text-[9px] font-semibold" style={{ color: accentColor }}>
                 <Instagram size={10} /> {locutorInstagram}
               </div>
             )}
-            <div className="text-[8px] font-bold uppercase mt-1" style={{ color: "#999" }}>NO AR</div>
           </div>
 
           {/* Bottom: Subject bar */}
