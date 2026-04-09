@@ -107,7 +107,7 @@ export default function BroadcastPage() {
       const existing = (current?.cenario_config && typeof current.cenario_config === "object") ? current.cenario_config as Record<string, any> : {};
       
       await supabase.from("user_settings").update({
-        cenario_config: { ...existing, broadcast: data },
+        cenario_config: { ...existing, broadcast: data } as any,
       }).eq("user_id", user.id);
 
       toast({ title: "Broadcast salvo com sucesso!" });
