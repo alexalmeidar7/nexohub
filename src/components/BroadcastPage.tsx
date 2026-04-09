@@ -286,6 +286,7 @@ export default function BroadcastPage() {
             placeholder="Base para assunto"
             className="w-full px-3 py-2 rounded-lg text-sm outline-none"
             style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
+            onBlur={onFieldBlur}
           />
         </div>
 
@@ -368,7 +369,7 @@ export default function BroadcastPage() {
               <input
                 type="checkbox"
                 checked={data.showQrCode}
-                onChange={e => setData({ ...data, showQrCode: e.target.checked })}
+                onChange={e => { setData({ ...data, showQrCode: e.target.checked }); setTimeout(onFieldBlur, 100); }}
                 className="accent-current"
                 style={{ accentColor }}
               />
@@ -390,7 +391,7 @@ export default function BroadcastPage() {
             <input
               type="checkbox"
               checked={data.tickerNews}
-              onChange={e => setData({ ...data, tickerNews: e.target.checked })}
+              onChange={e => { setData({ ...data, tickerNews: e.target.checked }); setTimeout(onFieldBlur, 100); }}
               className="accent-current"
               style={{ accentColor }}
             />
@@ -406,7 +407,7 @@ export default function BroadcastPage() {
             <input
               type="checkbox"
               checked={data.tickerWeather}
-              onChange={e => setData({ ...data, tickerWeather: e.target.checked })}
+              onChange={e => { setData({ ...data, tickerWeather: e.target.checked }); setTimeout(onFieldBlur, 100); }}
               className="accent-current"
               style={{ accentColor }}
             />
@@ -425,6 +426,7 @@ export default function BroadcastPage() {
             rows={2}
             className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-none"
             style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
+            onBlur={onFieldBlur}
           />
         </div>
 
