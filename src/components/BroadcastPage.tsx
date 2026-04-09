@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2 } from "lucide-react";
+import { toast } from "sonner";
+import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw } from "lucide-react";
 import XmlLinkRow from "@/components/XmlLinkRow";
 
 /** Extract @username from a URL or handle string */
