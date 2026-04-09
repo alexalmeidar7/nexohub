@@ -613,7 +613,7 @@ function MockupPreview({
                 paddingLeft: "100%",
               }}
             >
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: accentColor }}>
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#fff" }}>
                 {composedTicker}
               </span>
             </div>
