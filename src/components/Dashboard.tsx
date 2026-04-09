@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
@@ -46,12 +46,13 @@ const ConfigTelaPromoPage = lazy(() => import("./ConfigTelaPromoPage"));
 const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 const FansPage = lazy(() => import("./FansPage"));
+const BroadcastPage = lazy(() => import("./BroadcastPage"));
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -100,6 +101,7 @@ const sidebarMenu: MenuItem[] = [
   {
     icon: Monitor, label: "vmix", children: [
       { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
+      { icon: Radio, label: "broadcast", page: "broadcast" },
       { icon: Image, label: "logos", page: "logos" },
       { icon: MonitorPlay, label: "cenário interativo", page: "cenario" },
     ]
@@ -146,6 +148,7 @@ const pageTitle: Record<Page, string> = {
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
   cenario: "vMix — Cenário Interativo",
+  broadcast: "vMix — Broadcast",
   fans: "Player — Fãs",
   configtelapromo: "Comercial — Config Tela Promo",
   
@@ -358,7 +361,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return modulesSource.has("comercial");
     }
 
-    if (page === "cenario" || page === "vmix") {
+    if (page === "cenario" || page === "vmix" || page === "broadcast") {
       return modulesSource.has("vmix");
     }
 
@@ -774,6 +777,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "propostas" && <PropostasPage />}
               {currentPage === "tp" && <TeleprompterPage />}
               {currentPage === "cenario" && <CenarioInterativoPage />}
+              {currentPage === "broadcast" && <BroadcastPage />}
               {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
               
             </Suspense>
