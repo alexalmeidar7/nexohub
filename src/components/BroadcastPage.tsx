@@ -440,6 +440,19 @@ export default function BroadcastPage() {
               left: "4%",
             }}
           >
+            {/* QR Code above locutor */}
+            {data.showQrCode && whatsappNumber && (
+              <div className="flex justify-center mb-1" style={{ padding: "6px 18px" }}>
+                <div className="bg-white rounded-lg p-1.5">
+                  <QRCodeSVG
+                    value={`https://wa.me/${whatsappNumber.replace(/\D/g, "")}`}
+                    size={64}
+                    bgColor="#ffffff"
+                    fgColor="#111111"
+                  />
+                </div>
+              </div>
+            )}
             {/* Locutor box */}
             <div
               style={{
