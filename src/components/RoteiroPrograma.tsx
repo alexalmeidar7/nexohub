@@ -338,7 +338,7 @@ export default function RoteiroPrograma() {
     setRegenerating(false);
   };
 
-
+  const historicoSlot = useMemo(() => {
     if (historico.length === 0) return null;
     return (
       <div className="px-6 pt-4 pb-2">
