@@ -446,6 +446,7 @@ export default function IntercomWidget() {
     setNameInput("");
     setSelectedKeys(new Set());
     setTargetMode("all");
+    setConnectedListenerKeys(new Set());
   };
 
   const handleBack = () => {
