@@ -124,8 +124,9 @@ serve(async (req) => {
       const raw = emp.site.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "");
       socialItems.push({ handle: raw, icon: SOCIAL_ICONS.site });
     }
-    const whatsappNum = emp?.telefone_participacao?.replace(/\D/g, "") || "";
-    if (whatsappNum) socialItems.push({ handle: whatsappNum, icon: SOCIAL_ICONS.whatsapp });
+    const whatsappRaw = emp?.telefone_participacao || "";
+    const whatsappDigits = whatsappRaw.replace(/\D/g, "");
+    if (whatsappDigits) socialItems.push({ handle: whatsappRaw.trim(), icon: SOCIAL_ICONS.whatsapp });
 
     // Use epoch-based rotation so each 5-second window maps to a different index
     const rotationSlot = Math.floor(Date.now() / 5000);
@@ -138,7 +139,7 @@ serve(async (req) => {
     }
 
     // ── QR Code link ──
-    const qrLink = whatsappNum ? `https://wa.me/${whatsappNum}` : "";
+    const qrLink = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
 
     // ── Ticker & Titulo from broadcast config ──
     const broadcastConfig = (settingsRes.data?.cenario_config as any)?.broadcast || {};
