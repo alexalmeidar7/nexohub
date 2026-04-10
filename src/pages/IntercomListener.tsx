@@ -51,12 +51,10 @@ export default function IntercomListener() {
       const errorName = e?.name ?? "";
       console.warn("[Intercom Listener] Playback pending user action:", errorName || e);
 
-      if (errorName === "NotAllowedError" || errorName === "AbortError") {
+      if (!mutedRef.current) {
         setAudioUnlockRequired(true);
-        return false;
       }
 
-      setError("Erro ao reproduzir áudio no ouvinte.");
       return false;
     }
   }, []);
@@ -109,11 +107,28 @@ export default function IntercomListener() {
 
         pc.ontrack = (ev) => {
           console.log("[Intercom Listener] Got audio track, streams:", ev.streams.length);
-          setReceiving(true);
+          const stream = ev.streams[0] || new MediaStream([ev.track]);
+          const markReceiving = () => {
+            setReceiving(true);
+            void tryPlayAudio();
+          };
+
+          ev.track.onunmute = markReceiving;
+          ev.track.onmute = () => setReceiving(false);
+          ev.track.onended = () => setReceiving(false);
 
           if (audioRef.current) {
-            audioRef.current.srcObject = ev.streams[0] || new MediaStream([ev.track]);
-            void tryPlayAudio();
+            audioRef.current.srcObject = stream;
+            audioRef.current.onloadedmetadata = () => {
+              void tryPlayAudio();
+            };
+            audioRef.current.oncanplay = () => {
+              void tryPlayAudio();
+            };
+          }
+
+          if (!ev.track.muted) {
+            markReceiving();
           }
         };
 
@@ -130,6 +145,10 @@ export default function IntercomListener() {
 
         pc.oniceconnectionstatechange = () => {
           console.log("[Intercom Listener] ICE state:", pc.iceConnectionState);
+
+          if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
+            void tryPlayAudio();
+          }
         };
 
         pc.addTransceiver("audio", { direction: "recvonly" });
