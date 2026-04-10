@@ -1603,13 +1603,23 @@ export default function CenarioInterativoPage() {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 ml-auto">
+              <div className="flex items-center gap-1.5 ml-auto flex-wrap">
                 <button
                   onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
                   className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
                   style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
                 >
                   <ExternalLink size={11} /> Abrir Tela
+                </button>
+                <button
+                  onClick={() => {
+                    updateHome({ elementPositions: undefined });
+                    toast.success("Layout padrão restaurado");
+                  }}
+                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 80%, white 20%)", color: "var(--layout-header-text, #fff)" }}
+                >
+                  <Undo2 size={11} /> Layout Default
                 </button>
                 <button
                   onClick={() => {
