@@ -10,6 +10,32 @@ const corsHeaders = {
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+const timeToSeconds = (value: string | null | undefined): number => {
+  if (!value) return -1;
+
+  const [hours = "0", minutes = "0", seconds = "0"] = value.split(":");
+  const total = Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds);
+
+  return Number.isFinite(total) ? total : -1;
+};
+
+const isCurrentProgram = (
+  nowSeconds: number,
+  startTime: string | null | undefined,
+  endTime: string | null | undefined,
+): boolean => {
+  const startSeconds = timeToSeconds(startTime);
+  const endSeconds = timeToSeconds(endTime);
+
+  if (startSeconds < 0 || endSeconds < 0) return false;
+
+  if (endSeconds <= startSeconds) {
+    return nowSeconds >= startSeconds || nowSeconds < endSeconds;
+  }
+
+  return nowSeconds >= startSeconds && nowSeconds < endSeconds;
+};
+
 const SOCIAL_ICONS: Record<string, string> = {
   instagram: "https://img.icons8.com/ios-filled/100/000000/instagram-new.png",
   facebook: "https://img.icons8.com/ios-filled/100/000000/facebook-new.png",
@@ -56,7 +82,7 @@ serve(async (req) => {
     const hh = brParts.find(p => p.type === "hour")!.value;
     const mm = brParts.find(p => p.type === "minute")!.value;
     const ss = brParts.find(p => p.type === "second")!.value;
-    const nowTime = `${hh}:${mm}:00`;
+    const nowSeconds = Number(hh) * 3600 + Number(mm) * 60 + Number(ss);
     const dayFormatter = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long" });
     const dayLong = dayFormatter.format(now);
     const dayMap: Record<string, string> = { "domingo": "Domingo", "segunda-feira": "Segunda", "terça-feira": "Terça", "quarta-feira": "Quarta", "quinta-feira": "Quinta", "sexta-feira": "Sexta", "sábado": "Sábado" };
@@ -66,9 +92,8 @@ serve(async (req) => {
     const [empRes, progsRes, roteiroRes, settingsRes] = await Promise.all([
       supabase.from("empresa_config").select("instagram, facebook, youtube, site, telefone_participacao").eq("user_id", userId).maybeSingle(),
       supabase.from("programas")
-        .select("id, nome, selo, apresentadores_ids, apresentador_id, dias_semana")
+        .select("id, nome, selo, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim")
         .eq("user_id", userId).eq("ativo", true)
-        .lte("horario_inicio", nowTime).gte("horario_fim", nowTime)
         .contains("dias_semana", [todayName]),
       supabase.from("roteiros")
         .select("tickertitulos")
@@ -78,14 +103,15 @@ serve(async (req) => {
     ]);
 
     const emp = empRes.data;
-    const prog = progsRes.data?.[0] || null;
+    const prog = [...(progsRes.data || [])]
+      .sort((a, b) => timeToSeconds(b.horario_inicio) - timeToSeconds(a.horario_inicio))
+      .find((item) => isCurrentProgram(nowSeconds, item.horario_inicio, item.horario_fim)) || null;
 
     // ── Program & presenter ──
     let programaNome = "";
     let programaLogo = "";
     let locutorNome = "";
     let locutorInstagram = "";
-    let locutorFoto = "";
     let programaId = "";
 
     if (prog) {
@@ -95,11 +121,14 @@ serve(async (req) => {
 
       const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0) ? prog.apresentadores_ids : (prog.apresentador_id ? [prog.apresentador_id] : []);
       if (apIds.length > 0) {
-      const { data: ap } = await supabase.from("apresentadores").select("nome, instagram, foto").in("id", apIds).limit(1).maybeSingle();
+        const { data: presenters } = await supabase
+          .from("apresentadores")
+          .select("id, nome, instagram")
+          .in("id", apIds);
+        const ap = (presenters || []).sort((a, b) => apIds.indexOf(a.id) - apIds.indexOf(b.id))[0];
         if (ap) {
           locutorNome = ap.nome || "";
           locutorInstagram = ap.instagram || "";
-          locutorFoto = ap.foto || "";
         }
       }
     }
@@ -164,7 +193,6 @@ serve(async (req) => {
     lines.push(`    <programa_logo>${esc(programaLogo)}</programa_logo>`);
     lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
     lines.push(`    <locutor_social>${esc(locutorInstagram)}</locutor_social>`);
-    lines.push(`    <locutor_foto>${esc(locutorFoto)}</locutor_foto>`);
     lines.push(`    <rede_social_atual>${esc(redeSocialAtual)}</rede_social_atual>`);
     lines.push(`    <rede_social_icone>${esc(redeSocialIcone)}</rede_social_icone>`);
     lines.push(`    <logo_patrocinador>${esc(logoPatrocinador)}</logo_patrocinador>`);

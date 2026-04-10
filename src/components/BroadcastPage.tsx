@@ -590,16 +590,6 @@ function MockupPreview({
                 minWidth: 180,
               }}
             >
-              <div className="flex items-center gap-3">
-                {locutorFoto && (
-                  <img
-                    src={locutorFoto}
-                    alt={displayLocutor}
-                    className="h-10 w-10 rounded-full object-cover flex-shrink-0"
-                    style={{ border: `2px solid ${accentColor}` }}
-                  />
-                )}
-                <div>
               <div className="text-sm font-black uppercase leading-tight tracking-wide" style={{ color: "#111" }}>
                 {displayLocutor}
               </div>
@@ -608,8 +598,6 @@ function MockupPreview({
                   <Instagram size={9} /> {locutorInstagram}
                 </div>
               )}
-                </div>
-              </div>
             </div>
 
             {/* Subject bar – separated from ticker */}
