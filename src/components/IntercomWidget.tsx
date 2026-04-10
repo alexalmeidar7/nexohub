@@ -15,6 +15,7 @@ export default function IntercomWidget() {
   const [copied, setCopied] = useState(false);
   const [hotkey, setHotkey] = useState<string>(() => localStorage.getItem(HOTKEY_STORAGE_KEY) || "");
   const [settingHotkey, setSettingHotkey] = useState(false);
+  const [connectionState, setConnectionState] = useState("");
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -23,6 +24,7 @@ export default function IntercomWidget() {
   const remoteDescSetRef = useRef(false);
   const talkingRef = useRef(false);
   const hotkeyRef = useRef(hotkey);
+  const channelReadyRef = useRef(false);
 
   const userId = user?.id;
 
@@ -34,7 +36,7 @@ export default function IntercomWidget() {
     if (!userId) return;
     const presenceKey = `speaker-${Date.now()}`;
     const ch = supabase.channel(`${CHANNEL_NAME}-${userId}`, {
-      config: { broadcast: { self: false }, presence: { key: presenceKey } },
+      config: { broadcast: { self: false, ack: true }, presence: { key: presenceKey } },
     });
 
     ch.on("presence", { event: "sync" }, () => {
@@ -43,14 +45,17 @@ export default function IntercomWidget() {
         entries.some((e: any) => e.role === "listener")
       );
       setListenerOnline(hasListener);
+      console.log("[Intercom Speaker] Presence sync — listener online:", hasListener);
     });
 
     ch.on("broadcast", { event: "answer" }, async ({ payload }) => {
+      console.log("[Intercom Speaker] Received answer");
       try {
         const pc = pcRef.current;
         if (pc && payload.sdp) {
           await pc.setRemoteDescription(new RTCSessionDescription({ type: payload.sdp.type, sdp: payload.sdp.sdp }));
           remoteDescSetRef.current = true;
+          console.log("[Intercom Speaker] Remote description set, flushing", pendingCandidatesRef.current.length, "candidates");
           for (const c of pendingCandidatesRef.current) {
             await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.warn);
           }
@@ -68,6 +73,7 @@ export default function IntercomWidget() {
           await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate));
         } else {
           pendingCandidatesRef.current.push(payload.candidate);
+          console.log("[Intercom Speaker] Queued ICE candidate from listener");
         }
       } catch (e) {
         console.error("[Intercom Speaker] Error adding ICE candidate:", e);
@@ -75,13 +81,16 @@ export default function IntercomWidget() {
     });
 
     ch.subscribe(async (status) => {
+      console.log("[Intercom Speaker] Channel status:", status);
       if (status === "SUBSCRIBED") {
+        channelReadyRef.current = true;
         await ch.track({ role: "speaker", online: true });
       }
     });
 
     channelRef.current = ch;
     return () => {
+      channelReadyRef.current = false;
       ch.untrack();
       supabase.removeChannel(ch);
       channelRef.current = null;
@@ -90,16 +99,24 @@ export default function IntercomWidget() {
 
   const startTalking = useCallback(async () => {
     if (talkingRef.current) return;
+    if (!channelReadyRef.current) {
+      console.warn("[Intercom Speaker] Channel not ready");
+      setError("Canal não pronto");
+      return;
+    }
     setError(null);
+    setConnectionState("capturing");
     remoteDescSetRef.current = false;
     pendingCandidatesRef.current = [];
 
     try {
+      console.log("[Intercom Speaker] Requesting mic...");
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         video: false,
       });
       streamRef.current = stream;
+      console.log("[Intercom Speaker] Mic captured, tracks:", stream.getAudioTracks().length);
 
       const pc = new RTCPeerConnection({
         iceServers: [
@@ -111,36 +128,80 @@ export default function IntercomWidget() {
 
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
+      // Collect ICE candidates to send along with the offer
+      const iceCandidates: RTCIceCandidateInit[] = [];
+      
       pc.onicecandidate = (ev) => {
-        if (ev.candidate && channelRef.current) {
-          channelRef.current.send({
+        if (ev.candidate) {
+          const c = ev.candidate.toJSON();
+          iceCandidates.push(c);
+          // Also send individually for real-time delivery
+          channelRef.current?.send({
             type: "broadcast",
             event: "ice-candidate-speaker",
-            payload: { candidate: ev.candidate.toJSON() },
+            payload: { candidate: c },
           });
         }
       };
 
+      pc.onconnectionstatechange = () => {
+        const s = pc.connectionState;
+        console.log("[Intercom Speaker] Connection state:", s);
+        setConnectionState(s);
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        console.log("[Intercom Speaker] ICE connection state:", pc.iceConnectionState);
+      };
+
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+      console.log("[Intercom Speaker] Offer created, sending...");
 
-      channelRef.current?.send({
+      // Send offer with ack to verify delivery
+      const sendResult = await channelRef.current?.send({
         type: "broadcast",
         event: "offer",
         payload: { sdp: { type: offer.type, sdp: offer.sdp } },
       });
+      console.log("[Intercom Speaker] Offer send result:", sendResult);
 
       setTalking(true);
+      setConnectionState("connecting");
+
+      // Resend offer after short delay in case listener missed it
+      setTimeout(async () => {
+        if (pcRef.current && !remoteDescSetRef.current && channelRef.current) {
+          console.log("[Intercom Speaker] Resending offer (retry)...");
+          await channelRef.current.send({
+            type: "broadcast",
+            event: "offer",
+            payload: { sdp: { type: offer.type, sdp: offer.sdp } },
+          });
+          // Also resend collected ICE candidates
+          for (const c of iceCandidates) {
+            await channelRef.current.send({
+              type: "broadcast",
+              event: "ice-candidate-speaker",
+              payload: { candidate: c },
+            });
+          }
+        }
+      }, 1500);
+
     } catch (e: any) {
       console.error("[Intercom Speaker] Mic error:", e);
+      setConnectionState("");
       if (e.name === "NotAllowedError") setError("Permissão de microfone negada");
       else if (e.name === "NotFoundError") setError("Nenhum microfone encontrado");
+      else if (e.name === "NotReadableError") setError("Microfone em uso por outro app");
       else setError("Erro ao acessar microfone");
     }
   }, []);
 
   const stopTalking = useCallback(() => {
     if (!talkingRef.current) return;
+    console.log("[Intercom Speaker] Stopping...");
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     pcRef.current?.close();
@@ -148,6 +209,7 @@ export default function IntercomWidget() {
     remoteDescSetRef.current = false;
     pendingCandidatesRef.current = [];
     setTalking(false);
+    setConnectionState("");
     channelRef.current?.send({ type: "broadcast", event: "hangup", payload: {} });
   }, []);
 
@@ -156,6 +218,7 @@ export default function IntercomWidget() {
     if (!hotkey) return;
     const onDown = (e: KeyboardEvent) => {
       if (settingHotkey) return;
+      if (e.repeat) return; // Ignore key repeat
       if (e.code === hotkey && !talkingRef.current) {
         e.preventDefault();
         startTalking();
@@ -211,9 +274,8 @@ export default function IntercomWidget() {
     }
   }, [userId]);
 
-  const formatKeyName = (code: string) => {
-    return code.replace("Key", "").replace("Digit", "").replace("Numpad", "Num ");
-  };
+  const formatKeyName = (code: string) =>
+    code.replace("Key", "").replace("Digit", "").replace("Numpad", "Num ");
 
   const glassStyle = {
     backgroundColor: "rgba(0, 0, 0, 0.7)",
@@ -238,9 +300,7 @@ export default function IntercomWidget() {
 
   return (
     <div className="fixed bottom-20 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 300 }}>
-      {/* Main bar */}
       <div className="flex items-center gap-2 px-3 py-2.5">
-        {/* Talk button */}
         <button
           onMouseDown={startTalking}
           onMouseUp={stopTalking}
@@ -258,7 +318,6 @@ export default function IntercomWidget() {
           {talking ? <MicOff size={15} className="text-white" /> : <Mic size={15} className="text-white" />}
         </button>
 
-        {/* Info */}
         <div className="flex-1 min-w-0 overflow-hidden">
           <div className="flex items-center gap-1.5">
             <p className="text-white text-xs font-bold truncate">Intercomunicador</p>
@@ -269,62 +328,47 @@ export default function IntercomWidget() {
             )}
           </div>
           <div className="flex items-center gap-1 mt-0.5">
-            <div
-              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: talking ? "#ef4444" : listenerOnline ? "#22c55e" : "#555" }}
-            />
+            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: talking ? "#ef4444" : listenerOnline ? "#22c55e" : "#555" }} />
             <span className="text-white/40 text-[10px] truncate">
-              {talking ? "Transmitindo..." : listenerOnline ? "Receptor online" : "Receptor offline"}
+              {talking
+                ? connectionState === "connected" ? "Conectado" : "Transmitindo..."
+                : listenerOnline ? "Receptor online" : "Receptor offline"}
             </span>
           </div>
         </div>
 
-        {/* Audio bars */}
         {talking && (
           <div className="flex items-end gap-[2px] mr-0.5 h-4">
             {[0.6, 1, 0.7, 0.9, 0.5].map((h, i) => (
-              <div
-                key={i}
-                className="w-[3px] rounded-full"
+              <div key={i} className="w-[3px] rounded-full"
                 style={{
                   backgroundColor: "#ef4444",
                   height: `${h * 100}%`,
                   animation: `intercomBar 0.${3 + i * 2}s ease-in-out infinite alternate`,
-                }}
-              />
+                }} />
             ))}
           </div>
         )}
 
-        {/* Hotkey button */}
-        <button
-          onClick={() => setSettingHotkey(true)}
+        <button onClick={() => setSettingHotkey(true)}
           className="text-white/40 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
-          title={settingHotkey ? "Pressione uma tecla..." : hotkey ? `Atalho: ${formatKeyName(hotkey)}` : "Definir atalho"}
-        >
+          title={settingHotkey ? "Pressione uma tecla..." : hotkey ? `Atalho: ${formatKeyName(hotkey)}` : "Definir atalho"}>
           <Keyboard size={14} className={settingHotkey ? "text-yellow-400 animate-pulse" : ""} />
         </button>
 
-        {/* Share */}
-        <button
-          onClick={shareLink}
+        <button onClick={shareLink}
           className="text-white/40 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
-          title={copied ? "Link copiado!" : "Compartilhar link"}
-        >
+          title={copied ? "Link copiado!" : "Compartilhar link"}>
           {copied ? <Check size={14} className="text-green-400" /> : <Share2 size={14} />}
         </button>
 
-        {/* Close */}
-        <button
-          onClick={() => { stopTalking(); setOpen(false); }}
-          className="text-white/40 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
-          title="Fechar"
-        >
+        <button onClick={() => { stopTalking(); setOpen(false); }}
+          className="text-white/40 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all" title="Fechar">
           <X size={14} />
         </button>
       </div>
 
-      {/* Hotkey capture overlay */}
       {settingHotkey && (
         <div className="px-3 py-2" style={{ backgroundColor: "rgba(255,200,0,0.08)", borderTop: "1px solid rgba(255,200,0,0.15)" }}>
           <p className="text-[10px] text-yellow-300/80 text-center">Pressione uma tecla para definir o atalho...</p>
