@@ -976,28 +976,55 @@ export default function CenarioTela() {
 
   const isLandscape = screenRotation === 90 || screenRotation === 270;
   const isClockwiseLandscape = screenRotation === 90;
-  // Always use vh for consistent sizing — vw is ~1.8x larger on 16:9 screens and causes text overflow
-  const vu = "vh";
+
+  /* ── Fixed 1080×1920 virtual canvas scaled to fit viewport ── */
+  const CANVAS_W = 1080;
+  const CANVAS_H = 1920;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [viewScale, setViewScale] = useState(1);
+
+  useEffect(() => {
+    const el = containerRef.current?.parentElement;
+    if (!el) return;
+    const calc = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      if (isLandscape) {
+        setViewScale(Math.min(vw / CANVAS_H, vh / CANVAS_W));
+      } else {
+        setViewScale(Math.min(vw / CANVAS_W, vh / CANVAS_H));
+      }
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, [isLandscape]);
+
+  // Convert old vh-based sizes to px on the 1080×1920 canvas (1vh ≈ 19.2px on 1920h)
+  const vhToPx = (v: number) => v * CANVAS_H / 100;
+  const vu = "px";
 
   /* Sidebar button size helper */
-  const btnSize = `3.8${vu}`;
-  const iconSize = `1.7${vu}`;
-  const subBtnSize = `2.8${vu}`;
-  const subFontSize = `1.2${vu}`;
-  const sidebarPad = `0.6${vu}`;
+  const btnSize = `${vhToPx(3.8)}${vu}`;
+  const iconSize = `${vhToPx(1.7)}${vu}`;
+  const subBtnSize = `${vhToPx(2.8)}${vu}`;
+  const subFontSize = `${vhToPx(1.2)}${vu}`;
+  const sidebarPad = `${vhToPx(0.6)}${vu}`;
 
   return (
     <div className="fixed" style={{ top: 0, left: 0, right: 0, bottom: 0, background: "#000", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
       <div
+        ref={containerRef}
         className="relative"
         style={{
-          ...(isLandscape
-            ? { width: "100vh", height: "100vw", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
-            : { width: "calc(100vh * 9 / 16)", height: "100vh", maxHeight: "100vh", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
-          ),
+          width: isLandscape ? CANVAS_H : CANVAS_W,
+          height: isLandscape ? CANVAS_W : CANVAS_H,
+          transform: `scale(${viewScale}) rotate(${screenRotation}deg)`,
+          transformOrigin: "center center",
+          transition: "transform 0.5s ease",
         }}
       >
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `1.8${vu}` }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${vhToPx(1.8)}px` }}>
 
           {/* Fullscreen background layers behind sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
