@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import TrafficMap from "@/components/TrafficMap";
 import SatelliteMap from "@/components/SatelliteMap";
+import CenarioQuotesPanel from "@/components/cenario/CenarioQuotesPanel";
 
 /* ─── types ─── */
 interface WeatherConfig {
@@ -151,7 +152,7 @@ async function fetchLiveCurrencies(codes: string[]): Promise<LiveCurrency[]> {
       return {
         code: c,
         name: opt?.label?.split("(")[0]?.trim() || item.name,
-        value: parseFloat(item.bid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+        value: parseFloat(item.bid).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 }),
         change: `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
         direction: pct > 0 ? "up" as const : pct < 0 ? "down" as const : "neutral" as const,
       };
@@ -2012,80 +2013,19 @@ export default function CenarioInterativoPage() {
                           {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #080c14 0%, #0f1923 30%, #141e2e 60%, #0d1520 100%)" }} />}
                           <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 60%)" }} />
                           <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${pvh(4)}px`, paddingLeft: `calc(${pvh(4)}px + 50px)` }}>
-                            {config.currency.enabled ? (<>
-                              <div className="text-center" style={{ marginBottom: `${pvh(3)}px` }}>
-                                <DollarSign className="drop-shadow-lg mx-auto" style={{ width: `${pvh(4.5)}px`, height: `${pvh(4.5)}px`, color: "var(--layout-accent-color, #444)", opacity: 0.6, marginBottom: `${pvh(0.8)}px` }} />
-                                <div className="font-extrabold leading-none" style={{ fontSize: `${pvh(4.5)}px`, letterSpacing: "-0.03em", textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>cotação</div>
-                                <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${pvh(1.8)}px`, color: "var(--layout-accent-color, #444)", marginTop: `${pvh(0.5)}px`, letterSpacing: "0.2em" }}>
-                                  {currencySubTab === "moedas" ? "moedas" : "bolsas"}
-                                </div>
-                              </div>
-                              {currencySubTab === "moedas" ? (
-                                <div className="w-full flex flex-col" style={{ gap: `${pvh(1.2)}px` }}>
-                                  {currencyLoading && !liveCurrencies.length ? (
-                                    <div className="flex items-center justify-center gap-1 opacity-80" style={{ fontSize: `${pvh(1.8)}px` }}><Loader2 size={pvh(2)} className="animate-spin" /> Carregando...</div>
-                                  ) : config.currency.currencies.map((c, idx) => {
-                                    const opt = CURRENCY_OPTIONS.find(o => o.value === c);
-                                    const live = liveCurrencies.find(l => l.code === c);
-                                    const flagMap: Record<string, string> = { US: "🇺🇸", EU: "🇪🇺", GB: "🇬🇧", AR: "🇦🇷", JP: "🇯🇵", BT: "₿", ET: "Ξ", BR: "🇧🇷", DE: "🇩🇪" };
-                                    const flagIcon = opt?.flag ? flagMap[opt.flag] || "" : "";
-                                    return (
-                                      <div key={c} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ padding: `${pvh(1.5)}px ${pvh(1.8)}px`, background: "rgba(255,255,255,0.06)", borderRadius: `${pvh(1.8)}px`, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}>
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center" style={{ gap: `${pvh(1.5)}px`, minWidth: 0 }}>
-                                            <span style={{ fontSize: `${pvh(3)}px`, lineHeight: 1 }}>{flagIcon}</span>
-                                            <div className="flex flex-col" style={{ minWidth: 0 }}>
-                                              <span className="font-black truncate" style={{ fontSize: `${pvh(2.2)}px`, lineHeight: 1.1 }}>{c}</span>
-                                              <span className="truncate" style={{ fontSize: `${pvh(1.1)}px`, opacity: 0.4, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
-                                            </div>
-                                          </div>
-                                          {live ? (
-                                            <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
-                                              <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2.5)}px`, lineHeight: 1.1 }}>R$ {live.value}</span>
-                                              <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, marginTop: `${pvh(0.3)}px` }}>
-                                                <span className="font-bold tabular-nums" style={{ fontSize: `${pvh(1.3)}px`, color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
-                                                {live.direction === "up" && <ChevronUp style={{ width: `${pvh(1.6)}px`, height: `${pvh(1.6)}px`, color: "#4ade80" }} strokeWidth={3} />}
-                                                {live.direction === "down" && <ChevronDown style={{ width: `${pvh(1.6)}px`, height: `${pvh(1.6)}px`, color: "#f87171" }} strokeWidth={3} />}
-                                              </div>
-                                            </div>
-                                          ) : <span className="opacity-30" style={{ fontSize: `${pvh(2.5)}px` }}>---</span>}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <div className="w-full flex flex-col" style={{ gap: `${pvh(1.2)}px` }}>
-                                  {stocksLoading && !liveStocks.length ? (
-                                    <div className="flex items-center justify-center gap-1 opacity-80" style={{ fontSize: `${pvh(1.8)}px` }}><Loader2 size={pvh(2)} className="animate-spin" /> Carregando...</div>
-                                  ) : liveStocks.map((s, idx) => {
-                                    const flagMap: Record<string, string> = { US: "🇺🇸", EU: "🇪🇺", GB: "🇬🇧", AR: "🇦🇷", JP: "🇯🇵", BT: "₿", ET: "Ξ", BR: "🇧🇷", DE: "🇩🇪" };
-                                    const flagChar = flagMap[s.flag?.replace(/[^A-Z]/g, "").slice(0, 2)] || s.flag;
-                                    return (
-                                      <div key={s.symbol} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ padding: `${pvh(1.5)}px ${pvh(1.8)}px`, background: "rgba(255,255,255,0.06)", borderRadius: `${pvh(1.2)}px`, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}>
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center" style={{ gap: `${pvh(1)}px`, flex: 1, minWidth: 0 }}>
-                                            <span style={{ fontSize: `${pvh(3)}px`, lineHeight: 1 }}>{flagChar}</span>
-                                            <span className="font-black truncate" style={{ fontSize: `${pvh(2.2)}px` }}>{s.name}</span>
-                                          </div>
-                                          <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
-                                            <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2.5)}px`, lineHeight: 1.1 }}>{s.value}</span>
-                                            <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, marginTop: `${pvh(0.3)}px` }}>
-                                              <span className="font-bold tabular-nums" style={{ fontSize: `${pvh(1.3)}px`, color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{s.change}</span>
-                                              {s.direction === "up" && <ChevronUp style={{ width: `${pvh(1.6)}px`, height: `${pvh(1.6)}px`, color: "#4ade80" }} strokeWidth={3} />}
-                                              {s.direction === "down" && <ChevronDown style={{ width: `${pvh(1.6)}px`, height: `${pvh(1.6)}px`, color: "#f87171" }} strokeWidth={3} />}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                  {!stocksLoading && !liveStocks.length && (
-                                    <div className="opacity-60 text-center" style={{ fontSize: `${pvh(2.2)}px` }}>Dados indisponíveis</div>
-                                  )}
-                                </div>
-                              )}
-                            </>) : (
+                            {config.currency.enabled ? (
+                              <CenarioQuotesPanel
+                                accentColor="var(--layout-accent-color, #444)"
+                                currencyOptions={CURRENCY_OPTIONS}
+                                currencySubTab={currencySubTab}
+                                currencyCodes={config.currency.currencies}
+                                liveCurrencies={liveCurrencies}
+                                liveStocks={liveStocks}
+                                loadingCurrencies={currencyLoading}
+                                loadingStocks={stocksLoading}
+                                size={pvh}
+                              />
+                            ) : (
                               <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: `${pvh(1.9)}px` }}>Cotação desativada</div>
                             )}
                           </div>
