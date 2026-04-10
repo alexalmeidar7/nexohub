@@ -287,6 +287,11 @@ export default function CenarioInterativoPage() {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const homeContentRef = useRef<HTMLDivElement>(null);
   const previewIsDrawingRef = useRef(false);
+  const previewWrapRef = useRef<HTMLDivElement>(null);
+  const [previewScale, setPreviewScale] = useState(0.278);
+  const PREV_W = 1080;
+  const PREV_H = 1920;
+  const pvh = useCallback((v: number) => v * PREV_H / 100, []);
   const PREV_DRAW_COLORS = ["#ff3b3b", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
   const PREV_DRAW_WIDTHS = [2, 4, 8, 14];
   const SHAPE_OPTIONS = [
