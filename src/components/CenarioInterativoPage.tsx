@@ -1623,14 +1623,15 @@ export default function CenarioInterativoPage() {
             <div
               className="relative rounded-2xl overflow-hidden mx-auto"
               style={{
-                width: 300,
-                height: Math.round(300 * 1920 / 1080),
+                width: "100%",
+                maxWidth: 300,
                 boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
                 border: "2px solid rgba(255,255,255,0.08)",
               }}
             >
-              {/* Virtual 1080x1920 canvas scaled to fit 300px width */}
-              <div style={{ width: 1080, height: 1920, transform: `scale(${300 / 1080})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0, display: "flex", fontSize: 18 }}>
+              {/* 9:16 aspect ratio spacer (CEF 86 compat - no aspect-ratio) */}
+              <div style={{ paddingBottom: "177.78%" }} />
+              <div className="absolute inset-0 flex" style={{ fontSize: 10 }}>
                 {/* Fullscreen background layers behind sidebar */}
                 {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
                   <div className="absolute inset-0" style={{ zIndex: 5 }}>
