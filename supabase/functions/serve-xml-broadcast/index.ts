@@ -85,6 +85,7 @@ serve(async (req) => {
     let programaLogo = "";
     let locutorNome = "";
     let locutorInstagram = "";
+    let locutorFoto = "";
     let programaId = "";
 
     if (prog) {
@@ -94,10 +95,11 @@ serve(async (req) => {
 
       const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0) ? prog.apresentadores_ids : (prog.apresentador_id ? [prog.apresentador_id] : []);
       if (apIds.length > 0) {
-        const { data: ap } = await supabase.from("apresentadores").select("nome, instagram").in("id", apIds).limit(1).maybeSingle();
+      const { data: ap } = await supabase.from("apresentadores").select("nome, instagram, foto").in("id", apIds).limit(1).maybeSingle();
         if (ap) {
           locutorNome = ap.nome || "";
           locutorInstagram = ap.instagram || "";
+          locutorFoto = ap.foto || "";
         }
       }
     }
@@ -162,6 +164,7 @@ serve(async (req) => {
     lines.push(`    <programa_logo>${esc(programaLogo)}</programa_logo>`);
     lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
     lines.push(`    <locutor_social>${esc(locutorInstagram)}</locutor_social>`);
+    lines.push(`    <locutor_foto>${esc(locutorFoto)}</locutor_foto>`);
     lines.push(`    <rede_social_atual>${esc(redeSocialAtual)}</rede_social_atual>`);
     lines.push(`    <rede_social_icone>${esc(redeSocialIcone)}</rede_social_icone>`);
     lines.push(`    <logo_patrocinador>${esc(logoPatrocinador)}</logo_patrocinador>`);
