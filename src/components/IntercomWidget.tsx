@@ -265,6 +265,30 @@ export default function IntercomWidget() {
       streamRef.current = stream;
       console.log("[Intercom Speaker] Mic captured, tracks:", stream.getAudioTracks().length);
 
+      // Set up audio level monitoring
+      try {
+        const audioCtx = new AudioContext();
+        const source = audioCtx.createMediaStreamSource(stream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.5;
+        source.connect(analyser);
+        analyserRef.current = analyser;
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const updateLevel = () => {
+          if (!analyserRef.current) return;
+          analyserRef.current.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+          const avg = sum / dataArray.length / 255;
+          setMicLevel(avg);
+          levelRafRef.current = requestAnimationFrame(updateLevel);
+        };
+        levelRafRef.current = requestAnimationFrame(updateLevel);
+      } catch (e) {
+        console.warn("[Intercom] Audio analyser not available:", e);
+      }
+
       const pc = new RTCPeerConnection({
         iceServers: [
           { urls: "stun:stun.l.google.com:19302" },
