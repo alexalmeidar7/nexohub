@@ -1389,37 +1389,6 @@ export default function CenarioTela() {
                 <div className={`relative z-10 flex flex-col h-full items-center justify-center`} style={{ padding: `${vhToPx(3)}${vu}`, paddingLeft: `calc(${vhToPx(3)}${vu} + 50px)` }}>
                   {liveWeather ? (<>
                     {weatherSubTab === "today" && (<>
-                      {isLandscape ? (
-                        /* ── LANDSCAPE: horizontal layout ── */
-                        <div className="flex-1 flex items-center justify-center" style={{ gap: `${vhToPx(4)}${vu}` }}>
-                          {/* Left: City + big temp */}
-                          <div className="flex flex-col items-center">
-                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.5)}${vu}` }}>agora</div>
-                            <div className="font-black leading-none drop-shadow-lg text-center" style={{ fontSize: `${vhToPx(4)}${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
-                            <div style={{ width: `${vhToPx(14)}${vu}`, height: `${vhToPx(14)}${vu}`, marginTop: `${vhToPx(2)}${vu}`, filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.25))" }}>
-                              <WeatherIcon code={liveWeather.current.code} size={160} forceDay />
-                            </div>
-                            <div className="font-black drop-shadow-lg" style={{ fontSize: `${vhToPx(10)}${vu}`, lineHeight: 1, marginTop: `${vhToPx(1)}${vu}`, textShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>{liveWeather.current.temp}°</div>
-                            <div className="font-semibold opacity-90" style={{ fontSize: `${vhToPx(2)}${vu}`, marginTop: `${vhToPx(0.3)}${vu}` }}>{getWLabel(liveWeather.current.code)}</div>
-                          </div>
-                          {/* Right: details card */}
-                          <div className="rounded-3xl flex flex-col justify-center" style={{ padding: `${vhToPx(3)}${vu} ${vhToPx(3.5)}${vu}`, background: "rgba(255,255,255,0.1)", WebkitBackdropFilter: "blur(24px)", backdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 12px 40px rgba(0,0,0,0.15)" }}>
-                            <div className="flex items-center" style={{ gap: `${vhToPx(1.2)}${vu}`, marginBottom: `${vhToPx(2.5)}${vu}` }}>
-                              <Thermometer style={{ width: `${vhToPx(3)}${vu}`, height: `${vhToPx(3)}${vu}`, opacity: 0.8 }} />
-                              <span className="font-bold" style={{ fontSize: `${vhToPx(3)}${vu}` }}>Mín {liveWeather.daily[0]?.min ?? "--"}° / Máx {liveWeather.daily[0]?.max ?? "--"}°</span>
-                            </div>
-                            <div className="flex items-center" style={{ gap: `${vhToPx(1.2)}${vu}`, marginBottom: `${vhToPx(2)}${vu}` }}>
-                              <Droplets style={{ width: `${vhToPx(3)}${vu}`, height: `${vhToPx(3)}${vu}`, opacity: 0.8 }} />
-                              <span className="font-semibold" style={{ fontSize: `${vhToPx(2.8)}${vu}` }}>Umidade {liveWeather.current.humidity}%</span>
-                            </div>
-                            <div className="flex items-center" style={{ gap: `${vhToPx(1.2)}${vu}` }}>
-                              <span style={{ fontSize: `${vhToPx(3)}${vu}` }}>🌧</span>
-                              <span className="font-semibold" style={{ fontSize: `${vhToPx(2.8)}${vu}` }}>Precipitação {liveWeather.daily[0]?.precip ?? 0}%</span>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        /* ── PORTRAIT: original vertical layout ── */
                         <div style={{ width: "85%", maxWidth: `${vhToPx(42)}${vu}` }}>
                       <div className="flex items-start justify-between" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
                         <div>
@@ -1452,36 +1421,8 @@ export default function CenarioTela() {
                         </div>
                       </div>
                         </div>
-                      )}
                     </>)}
                     {weatherSubTab === "forecast" && (<>
-                      {isLandscape ? (
-                        /* ── LANDSCAPE FORECAST ── */
-                        <div className="flex flex-col h-full">
-                          <div className="text-center" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
-                            <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `${vhToPx(4.5)}${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
-                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.3)}${vu}` }}>próximos dias</div>
-                          </div>
-                          <div className="flex-1 flex flex-col justify-center" style={{ gap: `${vhToPx(1.2)}${vu}` }}>
-                            {liveWeather.daily.slice(1, 6).map((d, i) => (
-                              <div key={i} className={`flex items-center rounded-2xl cenario-anim-row-${i + 1}`} style={{ padding: `${vhToPx(1.5)}${vu} ${vhToPx(2)}${vu}`, background: "rgba(0,0,0,0.35)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                                <span className="font-bold capitalize" style={{ fontSize: `${vhToPx(2.5)}${vu}`, width: "22%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
-                                <div className="flex items-center justify-center" style={{ width: "14%" }}>
-                                  <div style={{ width: `${vhToPx(5.5)}${vu}`, height: `${vhToPx(5.5)}${vu}` }}><WeatherIcon code={d.code} size={64} forceDay /></div>
-                                </div>
-                                <div className="flex items-center" style={{ width: "38%", gap: `${vhToPx(1.2)}${vu}`, opacity: 0.7 }}>
-                                  <span className="flex items-center" style={{ fontSize: `${vhToPx(1.8)}${vu}`, gap: `${vhToPx(0.4)}${vu}` }}>💧{d.precip}%</span>
-                                  <span className="flex items-center" style={{ fontSize: `${vhToPx(1.8)}${vu}`, gap: `${vhToPx(0.4)}${vu}` }}>{d.rainMm}mm</span>
-                                  <span className="flex items-center" style={{ fontSize: `${vhToPx(1.8)}${vu}`, gap: `${vhToPx(0.4)}${vu}` }}>🌡{d.humidity}%</span>
-                                  <span className="flex items-center" style={{ fontSize: `${vhToPx(1.8)}${vu}`, gap: `${vhToPx(0.4)}${vu}` }}>🌬{d.windMax}km/h</span>
-                                </div>
-                                <span className="font-black tabular-nums text-right" style={{ fontSize: `${vhToPx(3)}${vu}`, width: "26%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{d.min}° / {d.max}°</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        /* ── PORTRAIT FORECAST ── */
                         <div className="flex flex-col items-center justify-end" style={{ width: "92%", maxWidth: `${vhToPx(52)}${vu}`, height: "100%", paddingBottom: `${vhToPx(6)}${vu}` }}>
                           {/* Spacer pushes content to bottom */}
                           <div style={{ flex: 1, minHeight: `${vhToPx(12)}${vu}` }} />
@@ -1520,7 +1461,6 @@ export default function CenarioTela() {
                             ))}
                           </div>
                         </div>
-                      )}
                     </>)}
                     {weatherSubTab === "satellite" && null}
                   </>) : (
