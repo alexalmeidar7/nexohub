@@ -30,6 +30,7 @@ const PlayerCatalog = lazy(() => import("./pages/player/PlayerCatalog"));
 const VmixControl = lazy(() => import("./pages/VmixControl"));
 const CenarioTela = lazy(() => import("./pages/CenarioTela"));
 const TelaInterativa = lazy(() => import("./pages/TelaInterativa"));
+const IntercomListener = lazy(() => import("./pages/IntercomListener"));
 
 class ChunkErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
