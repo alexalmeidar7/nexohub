@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const CHANNEL_NAME = "intercom-signal";
 const HOTKEY_STORAGE_KEY = "intercom-hotkey";
+const EXTERNAL_LISTENER_NAME = "Página ouvinte";
 
 type Role = "none" | "speaker" | "listener";
 
@@ -73,8 +74,11 @@ export default function IntercomWidget() {
 
       Object.entries(state).forEach(([key, entries]: [string, any]) => {
         entries.forEach((e: any) => {
-          if (e.role === "listener" && e.name) {
-            listeners.push({ presenceKey: key, name: e.name });
+          if (e.role === "listener") {
+            const resolvedName = typeof e.name === "string" && e.name.trim()
+              ? e.name.trim()
+              : EXTERNAL_LISTENER_NAME;
+            listeners.push({ presenceKey: key, name: resolvedName });
           }
           if (e.role === "speaker") hasSpeaker = true;
         });
