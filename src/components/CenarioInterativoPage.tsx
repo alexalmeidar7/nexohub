@@ -287,6 +287,11 @@ export default function CenarioInterativoPage() {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const homeContentRef = useRef<HTMLDivElement>(null);
   const previewIsDrawingRef = useRef(false);
+  const previewWrapRef = useRef<HTMLDivElement>(null);
+  const [previewScale, setPreviewScale] = useState(0.278);
+  const PREV_W = 1080;
+  const PREV_H = 1920;
+  const pvh = useCallback((v: number) => v * PREV_H / 100, []);
   const PREV_DRAW_COLORS = ["#ff3b3b", "#ff3b3b", "#3b82f6", "#4ade80", "#f59e0b", "#ffffff"];
   const PREV_DRAW_WIDTHS = [2, 4, 8, 14];
   const SHAPE_OPTIONS = [
@@ -551,6 +556,17 @@ export default function CenarioInterativoPage() {
     ro.observe(parent);
     return () => ro.disconnect();
   }, []);
+
+  /* Measure preview container to compute scale for virtual 1080×1920 canvas */
+  useEffect(() => {
+    const el = previewWrapRef.current;
+    if (!el) return;
+    const measure = () => { setPreviewScale(el.clientWidth / PREV_W); };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [PREV_W]);
 
   const configRef = useRef(config);
   const activeTabRef = useRef(activeTab);
@@ -1621,6 +1637,7 @@ export default function CenarioInterativoPage() {
             )}
 
             <div
+              ref={previewWrapRef}
               className="relative rounded-2xl overflow-hidden mx-auto"
               style={{
                 width: "100%",
@@ -1629,500 +1646,452 @@ export default function CenarioInterativoPage() {
                 border: "2px solid rgba(255,255,255,0.08)",
               }}
             >
-              {/* 9:16 aspect ratio spacer (CEF 86 compat - no aspect-ratio) */}
+              {/* 9:16 aspect ratio spacer */}
               <div style={{ paddingBottom: "177.78%" }} />
-              <div className="absolute inset-0 flex" style={{ fontSize: 10 }}>
-                {/* Fullscreen background layers behind sidebar */}
-                {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
-                  <div className="absolute inset-0" style={{ zIndex: 5 }}>
-                    <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={(z) => { setSatelliteZoom(z); cenarioBcRef.current?.postMessage({ type: "zoom-change", zoom: z }); rtDrawChannelRef.current?.send({ type: "broadcast", event: "zoom-change", payload: { zoom: z } }); }} />
-                  </div>
-                )}
-                {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
-                  <div className="absolute inset-0" style={{ zIndex: 5 }}>
-                    <TrafficMap
-                      lat={config.traffic.lat ?? trafficCoords.lat}
-                      lon={config.traffic.lon ?? trafficCoords.lon}
-                      zoom={config.traffic.zoom}
-                      interactive
-                      onMove={(lat, lon, zoom) => updateTraffic({ lat, lon, zoom })}
-                    />
-                  </div>
-                )}
-                {!((activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled)) && (
-                  <div className="absolute inset-0" style={{ background: activeTab === "home" ? (config.home.bgGradient ? buildHomeGradient(config.home) : (config.home.bgImage ? "#e8e8e8" : "#000")) : "#e8e8e8", zIndex: 0 }}>
-                    {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && (
-                      <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 overflow-hidden">
+                {/* Virtual 1080×1920 canvas, scaled to fit — mirrors CenarioTela exactly */}
+                <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left" }}>
+                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${pvh(1.8)}px` }}>
+
+                    {/* Fullscreen background layers */}
+                    {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
+                      <div className="absolute inset-0" style={{ zIndex: 5 }}>
+                        <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={(z) => { setSatelliteZoom(z); cenarioBcRef.current?.postMessage({ type: "zoom-change", zoom: z }); rtDrawChannelRef.current?.send({ type: "broadcast", event: "zoom-change", payload: { zoom: z } }); }} />
+                      </div>
                     )}
-                    {activeTab === "weather" && config.weather.bgImage && (
-                      <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
+                      <div className="absolute inset-0" style={{ zIndex: 5 }}>
+                        <TrafficMap lat={config.traffic.lat ?? trafficCoords.lat} lon={config.traffic.lon ?? trafficCoords.lon} zoom={config.traffic.zoom} interactive onMove={(lat, lon, zoom) => updateTraffic({ lat, lon, zoom })} />
+                      </div>
                     )}
-                    {activeTab === "traffic" && config.traffic.bgImage && (
-                      <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    {!((activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled)) && (
+                      <div className="absolute inset-0" style={{ background: activeTab === "home" ? (config.home.bgGradient ? buildHomeGradient(config.home) : (config.home.bgImage ? "#e8e8e8" : "#000")) : "#e8e8e8", zIndex: 0 }}>
+                        {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                        {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                        {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                        {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                        {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                      </div>
                     )}
-                    {activeTab === "currency" && config.currency.bgImage && (
-                      <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                    )}
-                    {activeTab === "chat" && config.chat.bgImage && (
-                      <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                    )}
-                  </div>
-                )}
-                {/* ── Dark sidebar ── */}
-                <div className="w-[38px] flex-shrink-0 flex items-center relative" style={{ zIndex: 10 }}>
-                <div className="flex flex-col items-center gap-0.5 px-0.5 py-1.5" style={{ borderRadius: "0 10px 10px 0", background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "rgba(26,26,26,0.7)" : "rgba(26,26,26,0.85)", backdropFilter: (activeTab === "weather" && weatherSubTab === "satellite") || (activeTab === "traffic" && config.traffic.enabled) ? "blur(4px)" : "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: "none" }}>
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center mb-1.5 cursor-pointer" onClick={() => handleTabChange("home")} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
-                    <Home size={13} className="text-white" />
-                  </div>
-                  {/* Weather icon + sub-tabs grouped */}
-                  <div className="rounded-xl py-0.5 px-0.5 flex flex-col items-center" style={{ background: "rgba(255,255,255,0.08)", opacity: config.weather.enabled ? 1 : 0.35 }}>
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "weather" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
-                      <CloudSun size={13} className="text-white" />
-                    </div>
-                    <div style={{ display: "grid", gridTemplateRows: activeTab === "weather" ? "1fr" : "0fr", transition: "grid-template-rows 0.35s cubic-bezier(0.4,0,0.2,1)" }}>
-                      <div style={{ overflow: "hidden" }}>
-                        <div className="flex flex-col items-center gap-0.5 pt-0.5">
-                          {config.weather.enabled && config.weather.showCurrent && (
-                            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} style={{ background: weatherSubTab === "today" && activeTab === "weather" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "today" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>1</div>
-                          )}
-                          {config.weather.enabled && config.weather.showForecast3Days && (
-                            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("forecast"); }} style={{ background: weatherSubTab === "forecast" && activeTab === "weather" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "forecast" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>2</div>
-                          )}
-                          {config.weather.enabled && config.weather.showSatellite && (
-                            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} style={{ background: weatherSubTab === "satellite" && activeTab === "weather" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "satellite" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>3</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center mt-1.5 cursor-pointer" onClick={() => config.traffic.enabled && handleTabChange("traffic")} style={{ background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
-                    <Car size={13} className="text-white" />
-                  </div>
-                  <div className="rounded-xl flex flex-col items-center" style={{ padding: "2px", background: "rgba(255,255,255,0.08)", opacity: config.currency.enabled ? 1 : 0.35 }}>
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "currency" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
-                      <DollarSign size={13} className="text-white" />
-                    </div>
-                    <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? "60px" : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
-                      <div className="flex flex-col items-center gap-0.5" style={{ paddingTop: "3px" }}>
-                        <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); }} className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold cursor-pointer text-[8px]" style={{ background: activeTab === "currency" && currencySubTab === "moedas" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: activeTab === "currency" && currencySubTab === "moedas" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>1</button>
-                        <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("bolsas"); }} className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold cursor-pointer text-[8px]" style={{ background: activeTab === "currency" && currencySubTab === "bolsas" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: activeTab === "currency" && currencySubTab === "bolsas" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>2</button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.chat.enabled && handleTabChange("chat")} style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
-                    <MessageCircle size={13} className="text-white" />
-                  </div>
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center mt-0.5 cursor-pointer" onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} style={{ background: previewDrawActive ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawActive ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent", transition: "all 0.2s ease" }}>
-                    <Pen size={12} className="text-white" />
-                  </div>
-                  {previewDrawActive && (
-                    <>
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} style={{ background: showPreviewDrawOptions ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
-                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: previewDrawColor }} />
-                      </div>
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center cursor-pointer" onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} style={{ background: previewDrawMode === "eraser" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "eraser" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
-                        <Eraser size={10} className="text-white" />
-                      </div>
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center cursor-pointer" onClick={undoLastDraw} style={{ background: "rgba(255,255,255,0.12)", transition: "all 0.2s ease" }}>
-                        <Undo2 size={10} className="text-white" />
-                      </div>
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center cursor-pointer" onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} style={{ background: previewDrawMode === "shape" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "shape" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.2s ease" }}>
-                        <Shapes size={10} className="text-white" />
-                      </div>
-                    </>
-                  )}
-                </div>
-                </div>
 
-                {/* ── Content area with bg image ── */}
-                <div className="flex-1 relative" style={{ zIndex: 1 }}>
-                  {/* Animated page wrapper */}
-                  <div
-                    key={activeTab + (activeTab === "weather" ? `-${weatherSubTab}` : "") + (activeTab === "currency" ? `-${currencySubTab}` : "")}
-                    className="absolute inset-0"
-                    style={{ animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both" }}
-                  >
-
-                  {/* Home overlay */}
-                  {activeTab === "home" && (() => {
-                    let progressPct = 0;
-                    if (currentProgram) {
-                      const [sh, sm] = currentProgram.horario_inicio.split(":").map(Number);
-                      const [eh, em] = currentProgram.horario_fim.split(":").map(Number);
-                      const startMin = sh * 60 + sm;
-                      const endMin = eh * 60 + em;
-                      const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
-                      const total = endMin - startMin;
-                      if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
-                    }
-                    return (
-                      <div ref={homeContentRef} className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
-                        {/* Background */}
-                        {config.home.bgGradient && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
-                        {!config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-
-                        {/* Subtle radial glow */}
-                        <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.5) 0%, transparent 70%)", pointerEvents: "none" }} />
-
-                        {/* Clock — draggable */}
-                        <DraggableElement id="clock" position={getElPos("clock")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
-                          <div>
-                            <div className="font-black" style={{ fontSize: 18, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-                              {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                            </div>
-                            <div className="font-medium" style={{ fontSize: 6, color: "var(--layout-accent-color, #888)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
-                              {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                            </div>
-                            {/* SYNC indicator — mirrors external screen */}
-                            <div className="flex items-center" style={{ gap: 2, opacity: 0.5, marginTop: 3 }}>
-                              <div className="rounded-full" style={{ width: 3, height: 3, background: externalConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: externalConnected ? "0 0 4px var(--layout-accent-color, #4ade80)" : "0 0 4px #ef4444" }} />
-                              <span className="font-semibold uppercase tracking-wider" style={{ fontSize: 3.5, letterSpacing: "0.1em" }}>
-                                {externalConnected ? "SYNC" : "OFF"}
-                              </span>
-                            </div>
-                          </div>
-                        </DraggableElement>
-
-                        {/* Sponsor — draggable */}
-                        {sponsorLogos.length > 0 && (
-                          <DraggableElement id="sponsor" position={getElPos("sponsor")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
-                            <div className="relative flex justify-end" style={{ height: 22, minWidth: 50 }}>
-                              {sponsorLogos.map((l, i) => l.logo_url && (
-                                <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: 50, maxHeight: 20, opacity: i === sponsorIdx ? 1 : 0, transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)", transition: "opacity 0.8s ease, transform 0.8s ease", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.4))" }} />
-                              ))}
-                            </div>
-                          </DraggableElement>
-                        )}
-
-                        {/* Vinyl / program center — draggable */}
-                        <DraggableElement id="vinyl" position={getElPos("vinyl")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="center">
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                          {musicData ? (
-                            <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                              <div className="relative" style={{ width: 120, height: 120 }}>
-                                <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(50,50,50,0.3) 48.5%, transparent 49.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 30deg, rgba(255,255,255,0.02) 32deg, transparent 34deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 150deg, rgba(255,255,255,0.02) 152deg, transparent 154deg, transparent 210deg, rgba(255,255,255,0.03) 212deg, transparent 214deg, transparent 270deg, rgba(255,255,255,0.02) 272deg, transparent 274deg, transparent 330deg, rgba(255,255,255,0.03) 332deg, transparent 334deg), #111`, boxShadow: "0 8px 24px -4px rgba(0,0,0,0.6), inset 0 0 15px rgba(0,0,0,0.5)", animation: "vinyl-spin 3s linear infinite" }}>
-                                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "40%", height: "40%", borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 0 10px rgba(0,0,0,0.5)" }}>
-                                    {musicData.capa ? (
-                                      <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                    ) : (
-                                      <div className="flex items-center justify-center w-full h-full" style={{ background: "rgba(255,255,255,0.08)" }}>
-                                        <Music size={16} style={{ opacity: 0.3, color: "#fff" }} />
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "6%", height: "6%", borderRadius: "50%", background: "#000", border: "1px solid rgba(255,255,255,0.1)", zIndex: 2 }} />
+                    {/* Sidebar — matches CenarioTela exactly */}
+                    {(() => {
+                      const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
+                      const bS = `${pvh(3.8)}px`;
+                      const iS = `${pvh(1.7)}px`;
+                      const sBS = `${pvh(2.8)}px`;
+                      const sFS = `${pvh(1.2)}px`;
+                      const sPad = `${pvh(0.6)}px`;
+                      return (
+                        <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
+                          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sPad, padding: `${sPad} ${sPad}`, borderRadius: `0 ${pvh(2)}px ${pvh(2)}px 0`, background: isMapTab ? "rgba(18,18,18,0.65)" : "rgba(18,18,18,0.8)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)", borderLeft: "none", marginLeft: "-1px", boxShadow: "4px 0 20px rgba(0,0,0,0.3)" }}>
+                            <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "home" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(255,255,255,0.1)", border: activeTab === "home" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                              <Home style={{ width: iS, height: iS }} className="text-white" />
+                            </button>
+                            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, background: "rgba(255,255,255,0.06)", opacity: config.weather.enabled ? 1 : 0.35 }}>
+                              <button onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "weather" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(255,255,255,0.1)", border: activeTab === "weather" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                                <CloudSun style={{ width: iS, height: iS }} className="text-white" />
+                              </button>
+                              <div style={{ overflow: "hidden", maxHeight: activeTab === "weather" ? `${pvh(20)}px` : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "weather" ? 1 : 0 }}>
+                                <div className="flex flex-col items-center" style={{ gap: `${pvh(0.4)}px`, paddingTop: `${pvh(0.4)}px` }}>
+                                  {config.weather.enabled && config.weather.showCurrent && (
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: activeTab === "weather" && weatherSubTab === "today" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.1)", border: activeTab === "weather" && weatherSubTab === "today" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent" }}>1</button>
+                                  )}
+                                  {config.weather.enabled && config.weather.showForecast3Days && (
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("forecast"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: activeTab === "weather" && weatherSubTab === "forecast" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.1)", border: activeTab === "weather" && weatherSubTab === "forecast" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent" }}>2</button>
+                                  )}
+                                  {config.weather.enabled && config.weather.showSatellite && (
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: activeTab === "weather" && weatherSubTab === "satellite" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.1)", border: activeTab === "weather" && weatherSubTab === "satellite" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent" }}>3</button>
+                                  )}
                                 </div>
                               </div>
-                              <div style={{ marginTop: 8, textAlign: "center", maxWidth: 140 }}>
-                                <div className="font-black truncate" style={{ fontSize: 10, lineHeight: 1.2, color: "var(--layout-accent-color, #fff)", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
-                                <div className="font-medium truncate" style={{ fontSize: 7, opacity: 0.6, marginTop: 1 }}>{musicData.artista}</div>
-                              </div>
                             </div>
-                          ) : currentProgram?.selo ? (
-                            <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: 120, maxHeight: 100 }} />
-                          ) : currentProgram ? (
-                            <div className="font-black text-center" style={{ fontSize: 14, lineHeight: 1.1, textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
-                          ) : (
-                            <div className="text-[9px] opacity-40">Nenhum programa no ar</div>
-                          )}
-                          </div>
-                        </DraggableElement>
-
-                        {/* Presenter PHOTO — draggable */}
-                        {currentProgram?.apresentadorFoto && (
-                          <DraggableElement id="presenterPhoto" position={getElPos("presenterPhoto")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
-                            <img src={currentProgram.apresentadorFoto} alt="" style={{ height: 160, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(4px 0 12px rgba(0,0,0,0.5))" }} />
-                          </DraggableElement>
-                        )}
-
-                        {/* Presenter NAME + TIME — draggable */}
-                        {currentProgram?.apresentador && (
-                          <DraggableElement id="presenterInfo" position={getElPos("presenterInfo")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
-                            <div>
-                              <div className="font-black" style={{ fontSize: 9, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
-                              <div className="font-medium" style={{ fontSize: 6, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
-                                {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
-                              </div>
-                            </div>
-                          </DraggableElement>
-                        )}
-
-                        {/* Program LOGO — draggable */}
-                        <DraggableElement id="programLogo" position={getElPos("programLogo")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-right">
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                            {currentProgram?.selo ? (
-                              <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: 70, maxHeight: 55 }} />
-                            ) : currentProgram ? (
-                              <div className="font-black text-right" style={{ fontSize: 10, lineHeight: 1.1, maxWidth: 70, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
-                            ) : null}
-                          </div>
-                        </DraggableElement>
-
-                        {/* "A seguir" — draggable */}
-                        {nextProgram && (
-                          <DraggableElement id="programNext" position={getElPos("programNext")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-right">
-                            <div className="flex items-start" style={{ gap: 4 }}>
-                              <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.3)", marginTop: 1, flexShrink: 0 }} />
-                              <div>
-                                <div className="font-semibold" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)" }}>a seguir</div>
-                                <div className="font-bold" style={{ fontSize: 8, lineHeight: 1.2, textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
-                                <div className="font-medium" style={{ fontSize: 5, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums" }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
-                              </div>
-                            </div>
-                          </DraggableElement>
-                        )}
-
-                        {/* Progress bar — neon glow matching external */}
-                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
-                          <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--layout-accent-color, #444)", transition: "width 1s linear", boxShadow: "0 0 2px var(--layout-accent-color, #444), 0 0 6px var(--layout-accent-color, #444), 0 -1px 3px var(--layout-accent-color, #444)" }} />
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Weather overlay — mirrors CenarioTela portrait layout */}
-                  {activeTab === "weather" && weatherSubTab !== "satellite" && (
-                    <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                      {!config.weather.bgImage && (
-                        <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d47a1 0%, #1565c0 25%, #1e88e5 50%, #42a5f5 75%, #90caf9 100%)" }} />
-                      )}
-                      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
-                      <div className="absolute bottom-0 left-0 right-0 h-1/3" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.3), transparent)" }} />
-
-                      <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: "6px", paddingLeft: "10px" }}>
-                        {liveWeather ? (
-                          <>
-                            {weatherSubTab === "today" && (
-                              <div style={{ width: "85%", maxWidth: 200 }}>
-                                <div className="flex items-start justify-between" style={{ marginBottom: 4 }}>
-                                  <div>
-                                    <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: 14, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
-                                    <div className="font-bold uppercase tracking-widest" style={{ fontSize: 7, color: "var(--layout-accent-color, #444)", marginTop: 2 }}>agora</div>
-                                  </div>
-                                  <div style={{ width: 22, height: 22 }}>
-                                    <WeatherIcon code={liveWeather.current.code} size={22} />
-                                  </div>
-                                </div>
-                                <div className="rounded-lg flex flex-col" style={{ padding: 6, gap: 4, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}>
-                                  <div className="flex items-center" style={{ gap: 6 }}>
-                                    <div className="drop-shadow-xl" style={{ width: 36, height: 36, filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.2))" }}>
-                                      <WeatherIcon code={liveWeather.current.code} size={36} forceDay />
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <div className="font-black drop-shadow-lg" style={{ fontSize: 20, lineHeight: 1 }}>{liveWeather.current.temp}°</div>
-                                      <div className="font-medium opacity-90" style={{ fontSize: 6 }}>{getWLabel(liveWeather.current.code)}</div>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center justify-between rounded" style={{ padding: "3px 4px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                                    <div className="flex items-center" style={{ gap: 2 }}>
-                                      <Thermometer size={7} style={{ opacity: 0.8 }} />
-                                      <span className="font-bold" style={{ fontSize: 7 }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
-                                    </div>
-                                    <div className="flex items-center" style={{ gap: 4, fontSize: 6 }}>
-                                      <span className="flex items-center" style={{ gap: 1 }}><Droplets size={6} style={{ opacity: 0.8 }} /> {liveWeather.current.humidity}%</span>
-                                      <span className="flex items-center" style={{ gap: 1 }}>🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
-                                    </div>
-                                  </div>
+                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: activeTab === "traffic" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(255,255,255,0.1)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                              <Car style={{ width: iS, height: iS }} className="text-white" />
+                            </button>
+                            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, background: "rgba(255,255,255,0.06)", opacity: config.currency.enabled ? 1 : 0.35 }}>
+                              <button onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "currency" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(255,255,255,0.1)", border: activeTab === "currency" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                                <DollarSign style={{ width: iS, height: iS }} className="text-white" />
+                              </button>
+                              <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? `${pvh(10)}px` : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
+                                <div className="flex flex-col items-center" style={{ gap: `${pvh(0.4)}px`, paddingTop: `${pvh(0.4)}px` }}>
+                                  <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: activeTab === "currency" && currencySubTab === "moedas" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.1)", border: activeTab === "currency" && currencySubTab === "moedas" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent" }}>1</button>
+                                  <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("bolsas"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: activeTab === "currency" && currencySubTab === "bolsas" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.1)", border: activeTab === "currency" && currencySubTab === "bolsas" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent" }}>2</button>
                                 </div>
                               </div>
+                            </div>
+                            <button onClick={() => config.chat.enabled && handleTabChange("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "chat" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(255,255,255,0.1)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                              <MessageCircle style={{ width: iS, height: iS }} className="text-white" />
+                            </button>
+                            <button onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: previewDrawActive ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.1)", border: previewDrawActive ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                              <Pen style={{ width: iS, height: iS }} className="text-white" />
+                            </button>
+                            {previewDrawActive && (
+                              <>
+                                <button onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: showPreviewDrawOptions ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.1)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>
+                                  <div style={{ width: `${pvh(1.2)}px`, height: `${pvh(1.2)}px`, borderRadius: "50%", background: previewDrawColor }} />
+                                </button>
+                                <button onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: previewDrawMode === "eraser" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.1)", border: previewDrawMode === "eraser" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>
+                                  <Eraser size={pvh(1)} className="text-white" />
+                                </button>
+                                <button onClick={undoLastDraw} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: "rgba(255,255,255,0.12)" }}>
+                                  <Undo2 size={pvh(1)} className="text-white" />
+                                </button>
+                                <button onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: previewDrawMode === "shape" ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.12)", border: previewDrawMode === "shape" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>
+                                  <Shapes size={pvh(1)} className="text-white" />
+                                </button>
+                              </>
                             )}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
-                            {weatherSubTab === "forecast" && (
-                              <div className="flex flex-col items-center justify-end" style={{ width: "92%", maxWidth: 220, height: "100%", paddingBottom: 12 }}>
-                                <div style={{ flex: 1, minHeight: 20 }} />
-                                <div className="text-center" style={{ marginBottom: 8 }}>
-                                  <div className="font-extrabold leading-none drop-shadow-lg" style={{ fontSize: 16, letterSpacing: "-0.03em", textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}>{weatherCity || config.city || "Cidade"}</div>
-                                  <div className="font-bold uppercase tracking-widest" style={{ fontSize: 7, color: "var(--layout-accent-color, #444)", marginTop: 2, letterSpacing: "0.15em" }}>próximos dias</div>
+                    {/* Content area */}
+                    <div className="flex-1 relative" style={{ zIndex: 1 }}>
+                      <div
+                        key={activeTab + (activeTab === "weather" ? `-${weatherSubTab}` : "") + (activeTab === "currency" ? `-${currencySubTab}` : "")}
+                        className="absolute inset-0"
+                        style={{ animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both" }}
+                      >
+
+                      {/* ═══ HOME ═══ */}
+                      {activeTab === "home" && (() => {
+                        let progressPct = 0;
+                        if (currentProgram) {
+                          const [sh, sm] = currentProgram.horario_inicio.split(":").map(Number);
+                          const [eh, em] = currentProgram.horario_fim.split(":").map(Number);
+                          const startMin = sh * 60 + sm;
+                          const endMin = eh * 60 + em;
+                          const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
+                          const total = endMin - startMin;
+                          if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
+                        }
+                        return (
+                          <div ref={homeContentRef} className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
+                            {config.home.bgGradient && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
+                            {!config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                            <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.5) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+                            {/* Clock — draggable */}
+                            <DraggableElement id="clock" position={getElPos("clock")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
+                              <div>
+                                <div className="font-black" style={{ fontSize: `${pvh(5)}px`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
+                                  {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                                 </div>
-                                <div className="w-full flex" style={{ gap: 3, justifyContent: "center" }}>
-                                  {liveWeather.daily.slice(1, 5).map((d, i) => (
-                                    <div key={i} className="flex flex-col items-center" style={{ padding: "6px 3px 5px", background: "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.35) 100%)", borderRadius: 6, backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 4px 16px rgba(0,0,0,0.25)", flex: 1, minWidth: 0 }}>
-                                      <span className="font-black capitalize text-center" style={{ fontSize: 7, lineHeight: 1.1, marginBottom: 4, textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
-                                      <div style={{ width: 20, height: 20, marginBottom: 3 }}><WeatherIcon code={d.code} size={20} forceDay /></div>
-                                      <div className="flex items-center justify-center" style={{ gap: 1, opacity: 0.7, fontSize: 5, marginBottom: 1, color: "#7dd3fc" }}>
-                                        <span>💧{d.precip}%</span>
-                                      </div>
-                                      <div className="flex items-center justify-center" style={{ gap: 1, opacity: 0.5, fontSize: 4.5, marginBottom: 1 }}>
-                                        <span>{d.rainMm}mm</span>
-                                        <span style={{ opacity: 0.4 }}>·</span>
-                                        <span>{d.humidity}%</span>
-                                      </div>
-                                      <div className="flex items-center justify-center" style={{ gap: 1, opacity: 0.45, fontSize: 4, marginBottom: 3 }}>
-                                        <span>🌬 {d.windMax}km/h</span>
-                                      </div>
-                                      <div style={{ width: "60%", height: 1, background: "rgba(255,255,255,0.1)", marginBottom: 3 }} />
-                                      <div className="font-black tabular-nums text-center" style={{ fontSize: 9, lineHeight: 1.1, textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>{d.min}° / {d.max}°</div>
-                                    </div>
+                                <div className="font-medium" style={{ fontSize: `${pvh(1.6)}px`, color: "var(--layout-accent-color, #888)", marginTop: `${pvh(0.4)}px`, fontVariantNumeric: "tabular-nums" }}>
+                                  {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                                </div>
+                                <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, opacity: 0.5, marginTop: `${pvh(0.3)}px` }}>
+                                  <div className="rounded-full" style={{ width: `${pvh(0.6)}px`, height: `${pvh(0.6)}px`, background: externalConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: externalConnected ? "0 0 6px var(--layout-accent-color, #4ade80)" : "0 0 6px #ef4444" }} />
+                                  <span className="font-semibold uppercase tracking-wider" style={{ fontSize: `${pvh(0.8)}px`, letterSpacing: "0.1em" }}>
+                                    {externalConnected ? "SYNC" : "OFF"}
+                                  </span>
+                                </div>
+                              </div>
+                            </DraggableElement>
+
+                            {/* Sponsor — draggable */}
+                            {sponsorLogos.length > 0 && (
+                              <DraggableElement id="sponsor" position={getElPos("sponsor")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
+                                <div className="relative flex justify-end" style={{ height: `${pvh(21)}px`, minWidth: `${pvh(10)}px` }}>
+                                  {sponsorLogos.map((l, i) => l.logo_url && (
+                                    <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: `${pvh(50)}px`, maxHeight: `${pvh(20)}px`, opacity: i === sponsorIdx ? 1 : 0, transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)", transition: "opacity 0.8s ease, transform 0.8s ease", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" }} />
                                   ))}
                                 </div>
-                              </div>
+                              </DraggableElement>
                             )}
 
-                            {weatherSubTab === "satellite" && null}
-                          </>
-                        ) : (
-                          <div className="flex-1 flex items-center justify-center text-[10px] opacity-50">
-                            <CloudSun size={20} className="mr-1" /> {weatherCity ? "Carregando..." : "Configure uma cidade"}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Traffic overlay */}
-                  {activeTab === "traffic" && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-3">
-                      {config.traffic.enabled && trafficCoords ? (
-                        <div className="text-center text-white drop-shadow-lg">
-                          <div className="text-sm font-bold">{config.traffic.city || config.city || "—"}</div>
-                          <div className="text-[8px] opacity-70 mt-1">Trânsito em tempo real</div>
-                        </div>
-                      ) : config.traffic.enabled ? (
-                        <div className="text-[10px] opacity-50" style={{ color: "#333" }}>Buscando localização...</div>
-                      ) : (
-                        <div className="text-[10px] opacity-50" style={{ color: "#333" }}>Trânsito desativado</div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Currency overlay — mirrors CenarioTela portrait layout */}
-                  {activeTab === "currency" && (
-                    <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                      {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.45)" }} />}
-                      {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d1117 0%, #161b22 50%, #0d1117 100%)" }} />}
-                      <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: 8 }}>
-                        {config.currency.enabled ? (
-                          <>
-                            <div className="text-center" style={{ marginBottom: 6 }}>
-                              <DollarSign className="drop-shadow-lg mx-auto" style={{ width: 14, height: 14, color: "var(--layout-accent-color, #444)", opacity: 0.7, marginBottom: 2 }} />
-                              <div className="font-extrabold leading-none drop-shadow-lg" style={{ fontSize: 13, letterSpacing: "-0.02em" }}>cotação</div>
-                              <div className="font-bold" style={{ fontSize: 7, color: "var(--layout-accent-color, #444)", marginTop: 1 }}>
-                                {currencySubTab === "moedas" ? "moedas" : "bolsas"}
-                              </div>
-                            </div>
-
-                            {currencySubTab === "moedas" ? (
-                              <div className="w-full flex flex-col" style={{ gap: 3 }}>
-                                {currencyLoading && !liveCurrencies.length ? (
-                                  <div className="flex items-center justify-center gap-1 opacity-80" style={{ fontSize: 7 }}><Loader2 size={8} className="animate-spin" /> Carregando...</div>
-                                ) : config.currency.currencies.map((c, idx) => {
-                                  const opt = CURRENCY_OPTIONS.find(o => o.value === c);
-                                  const live = liveCurrencies.find(l => l.code === c);
-                                  const flagMap: Record<string, string> = { US: "🇺🇸", EU: "🇪🇺", GB: "🇬🇧", AR: "🇦🇷", JP: "🇯🇵", BT: "₿", ET: "Ξ", BR: "🇧🇷", DE: "🇩🇪" };
-                                  const flagIcon = opt?.flag ? flagMap[opt.flag] || "" : "";
-                                  return (
-                                    <div key={c} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{
-                                      padding: "4px 5px",
-                                      background: "rgba(255,255,255,0.06)",
-                                      borderRadius: 5,
-                                      border: "1px solid rgba(255,255,255,0.08)",
-                                      backdropFilter: "blur(10px)",
-                                    }}>
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center" style={{ gap: 4, minWidth: 0 }}>
-                                          <span style={{ fontSize: 10, lineHeight: 1 }}>{flagIcon}</span>
-                                          <div className="flex flex-col" style={{ minWidth: 0 }}>
-                                            <span className="font-black truncate" style={{ fontSize: 8, lineHeight: 1.1 }}>{c}</span>
-                                            <span className="truncate" style={{ fontSize: 4.5, opacity: 0.4, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
+                            {/* Vinyl / program center — draggable */}
+                            <DraggableElement id="vinyl" position={getElPos("vinyl")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="center">
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                              {musicData ? (
+                                <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                                  <div className="relative" style={{ width: `${pvh(73.5)}px`, height: `${pvh(73.5)}px` }}>
+                                    <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(50,50,50,0.3) 48.5%, transparent 49.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 30deg, rgba(255,255,255,0.02) 32deg, transparent 34deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 150deg, rgba(255,255,255,0.02) 152deg, transparent 154deg, transparent 210deg, rgba(255,255,255,0.03) 212deg, transparent 214deg, transparent 270deg, rgba(255,255,255,0.02) 272deg, transparent 274deg, transparent 330deg, rgba(255,255,255,0.03) 332deg, transparent 334deg), #111`, boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.5)", animation: "vinyl-spin 3s linear infinite" }}>
+                                      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "40%", height: "40%", borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.1)", boxShadow: "0 0 20px rgba(0,0,0,0.5)" }}>
+                                        {musicData.capa ? (
+                                          <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                        ) : (
+                                          <div className="flex items-center justify-center w-full h-full" style={{ background: "rgba(255,255,255,0.08)" }}>
+                                            <Music style={{ width: `${pvh(4)}px`, height: `${pvh(4)}px`, opacity: 0.3, color: "#fff" }} />
                                           </div>
-                                        </div>
-                                        {live ? (
-                                          <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
-                                            <span className="font-black tabular-nums" style={{ fontSize: 8, lineHeight: 1.1 }}>R$ {live.value}</span>
-                                            <div className="flex items-center" style={{ gap: 1, marginTop: 1 }}>
-                                              <span className="font-bold tabular-nums" style={{ fontSize: 5, color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
-                                              {live.direction === "up" && <ChevronUp style={{ width: 6, height: 6, color: "#4ade80" }} strokeWidth={3} />}
-                                              {live.direction === "down" && <ChevronDown style={{ width: 6, height: 6, color: "#f87171" }} strokeWidth={3} />}
+                                        )}
+                                      </div>
+                                      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "6%", height: "6%", borderRadius: "50%", background: "#000", border: "1px solid rgba(255,255,255,0.1)", zIndex: 2 }} />
+                                    </div>
+                                  </div>
+                                  <div style={{ marginTop: `${pvh(2)}px`, textAlign: "center", maxWidth: `${pvh(40)}px` }}>
+                                    <div className="font-black truncate" style={{ fontSize: `${pvh(2.4)}px`, lineHeight: 1.2, color: "var(--layout-accent-color, #fff)", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
+                                    <div className="font-medium truncate" style={{ fontSize: `${pvh(1.6)}px`, opacity: 0.6, marginTop: `${pvh(0.3)}px` }}>{musicData.artista}</div>
+                                  </div>
+                                </div>
+                              ) : currentProgram?.selo ? (
+                                <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${pvh(35)}px`, maxHeight: `${pvh(35)}px` }} />
+                              ) : currentProgram ? (
+                                <div className="font-black text-center" style={{ fontSize: `${pvh(4)}px`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
+                              ) : (
+                                <div className="opacity-40 text-center" style={{ fontSize: `${pvh(1.8)}px` }}>Nenhum programa no ar</div>
+                              )}
+                              </div>
+                            </DraggableElement>
+
+                            {/* Presenter PHOTO — draggable */}
+                            {currentProgram?.apresentadorFoto && (
+                              <DraggableElement id="presenterPhoto" position={getElPos("presenterPhoto")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
+                                <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(81)}px`, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))" }} />
+                              </DraggableElement>
+                            )}
+
+                            {/* Presenter NAME + TIME — draggable */}
+                            {currentProgram?.apresentador && (
+                              <DraggableElement id="presenterInfo" position={getElPos("presenterInfo")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
+                                <div>
+                                  <div className="font-black" style={{ fontSize: `${pvh(2.4)}px`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
+                                  <div className="font-medium" style={{ fontSize: `${pvh(1.4)}px`, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
+                                    {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
+                                  </div>
+                                </div>
+                              </DraggableElement>
+                            )}
+
+                            {/* Program LOGO — draggable */}
+                            <DraggableElement id="programLogo" position={getElPos("programLogo")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-right">
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                                {currentProgram?.selo ? (
+                                  <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${pvh(30)}px`, maxHeight: `${pvh(25)}px` }} />
+                                ) : currentProgram ? (
+                                  <div className="font-black text-right" style={{ fontSize: `${pvh(3)}px`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", maxWidth: `${pvh(22)}px` }}>{currentProgram.nome}</div>
+                                ) : null}
+                              </div>
+                            </DraggableElement>
+
+                            {/* "A seguir" — draggable */}
+                            {nextProgram && (
+                              <DraggableElement id="programNext" position={getElPos("programNext")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-right">
+                                <div className="flex items-start" style={{ gap: `${pvh(1)}px` }}>
+                                  <div style={{ width: "2px", height: `${pvh(5)}px`, background: "rgba(255,255,255,0.3)", marginTop: `${pvh(0.3)}px`, flexShrink: 0 }} />
+                                  <div>
+                                    <div className="font-semibold" style={{ fontSize: `${pvh(1.2)}px`, color: "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.2)}px` }}>a seguir</div>
+                                    <div className="font-bold" style={{ fontSize: `${pvh(2)}px`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
+                                    <div className="font-medium" style={{ fontSize: `${pvh(1.3)}px`, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                                  </div>
+                                </div>
+                              </DraggableElement>
+                            )}
+
+                            {/* Progress bar — neon glow */}
+                            <div style={{ position: "absolute", bottom: `${pvh(2)}px`, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
+                              <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--layout-accent-color, #444)", transition: "width 1s linear", boxShadow: "0 0 3px var(--layout-accent-color, #444), 0 0 8px var(--layout-accent-color, #444), 0 -1px 4px var(--layout-accent-color, #444)" }} />
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* ═══ WEATHER ═══ */}
+                      {activeTab === "weather" && weatherSubTab !== "satellite" && (
+                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
+                          {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d47a1 0%, #1565c0 25%, #1e88e5 50%, #42a5f5 75%, #90caf9 100%)" }} />}
+                          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
+                          <div className="absolute bottom-0 left-0 right-0 h-1/3" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.3), transparent)" }} />
+                          <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${pvh(3)}px`, paddingLeft: `calc(${pvh(3)}px + 50px)` }}>
+                            {liveWeather ? (<>
+                              {weatherSubTab === "today" && (
+                                <div style={{ width: "85%", maxWidth: `${pvh(45)}px` }}>
+                                  <div className="flex items-start justify-between" style={{ marginBottom: `${pvh(2)}px` }}>
+                                    <div>
+                                      <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `${pvh(4)}px`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
+                                      <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${pvh(2)}px`, color: "var(--layout-accent-color, #444)", marginTop: `${pvh(0.5)}px` }}>agora</div>
+                                    </div>
+                                    <div style={{ width: `${pvh(6)}px`, height: `${pvh(6)}px` }}>
+                                      <WeatherIcon code={liveWeather.current.code} size={pvh(6)} />
+                                    </div>
+                                  </div>
+                                  <div className="rounded-3xl flex flex-col" style={{ padding: `${pvh(3)}px`, gap: `${pvh(2)}px`, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+                                    <div className="flex items-center" style={{ gap: `${pvh(3)}px` }}>
+                                      <div style={{ width: `${pvh(12)}px`, height: `${pvh(12)}px`, filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.2))" }}>
+                                        <WeatherIcon code={liveWeather.current.code} size={pvh(12)} forceDay />
+                                      </div>
+                                      <div className="flex flex-col">
+                                        <div className="font-black drop-shadow-lg" style={{ fontSize: `${pvh(8)}px`, lineHeight: 1 }}>{liveWeather.current.temp}°</div>
+                                        <div className="font-medium opacity-90" style={{ fontSize: `${pvh(2)}px` }}>{getWLabel(liveWeather.current.code)}</div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-xl" style={{ padding: `${pvh(1.5)}px ${pvh(2)}px`, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                                      <div className="flex items-center" style={{ gap: `${pvh(0.8)}px` }}>
+                                        <Thermometer size={pvh(1.8)} style={{ opacity: 0.8 }} />
+                                        <span className="font-bold" style={{ fontSize: `${pvh(2)}px` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
+                                      </div>
+                                      <div className="flex items-center" style={{ gap: `${pvh(1.5)}px`, fontSize: `${pvh(1.6)}px` }}>
+                                        <span className="flex items-center" style={{ gap: `${pvh(0.4)}px` }}><Droplets size={pvh(1.6)} style={{ opacity: 0.8 }} /> {liveWeather.current.humidity}%</span>
+                                        <span className="flex items-center" style={{ gap: `${pvh(0.4)}px` }}>🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {weatherSubTab === "forecast" && (
+                                <div className="flex flex-col items-center justify-end" style={{ width: "92%", maxWidth: `${pvh(52)}px`, height: "100%", paddingBottom: `${pvh(6)}px` }}>
+                                  <div style={{ flex: 1, minHeight: `${pvh(12)}px` }} />
+                                  <div className="text-center" style={{ marginBottom: `${pvh(3)}px` }}>
+                                    <div className="font-extrabold leading-none drop-shadow-lg" style={{ fontSize: `${pvh(5.5)}px`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.5)" }}>{weatherCity || config.city || "Cidade"}</div>
+                                    <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${pvh(2)}px`, color: "var(--layout-accent-color, #444)", marginTop: `${pvh(0.6)}px`, letterSpacing: "0.15em" }}>próximos dias</div>
+                                  </div>
+                                  <div className="w-full flex" style={{ gap: `${pvh(1.2)}px`, justifyContent: "center" }}>
+                                    {liveWeather.daily.slice(1, 5).map((d, i) => (
+                                      <div key={i} className={`flex flex-col items-center cenario-anim-row-${i + 1}`} style={{ padding: `${pvh(2.5)}px ${pvh(1.5)}px ${pvh(2)}px`, background: "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.35) 100%)", borderRadius: `${pvh(2)}px`, backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 8px 32px rgba(0,0,0,0.25)", flex: 1, minWidth: 0, maxWidth: `${pvh(22)}px` }}>
+                                        <span className="font-black capitalize text-center" style={{ fontSize: `${pvh(2.4)}px`, lineHeight: 1.1, marginBottom: `${pvh(1.5)}px`, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                                        <div style={{ width: `${pvh(7)}px`, height: `${pvh(7)}px`, marginBottom: `${pvh(1.2)}px` }}><WeatherIcon code={d.code} size={pvh(7)} forceDay /></div>
+                                        <div className="flex items-center justify-center" style={{ gap: `${pvh(0.5)}px`, opacity: 0.7, fontSize: `${pvh(1.4)}px`, marginBottom: `${pvh(0.4)}px`, color: "#7dd3fc" }}><span>💧{d.precip}%</span></div>
+                                        <div className="flex items-center justify-center" style={{ gap: `${pvh(0.5)}px`, opacity: 0.5, fontSize: `${pvh(1.2)}px`, marginBottom: `${pvh(0.4)}px` }}><span>{d.rainMm}mm</span><span style={{ opacity: 0.4 }}>·</span><span>{d.humidity}%</span></div>
+                                        <div className="flex items-center justify-center" style={{ gap: `${pvh(0.4)}px`, opacity: 0.45, fontSize: `${pvh(1.1)}px`, marginBottom: `${pvh(1.5)}px` }}><span>🌬 {d.windMax}km/h</span></div>
+                                        <div style={{ width: "60%", height: 1, background: "rgba(255,255,255,0.1)", marginBottom: `${pvh(1.2)}px` }} />
+                                        <div className="font-black tabular-nums text-center" style={{ fontSize: `${pvh(3.2)}px`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>{d.min}° / {d.max}°</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </>) : (
+                              <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${pvh(1.8)}px` }}>
+                                <CloudSun size={pvh(3)} className="mr-1" /> {weatherCity ? "Carregando..." : "Configure uma cidade"}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ═══ TRAFFIC ═══ */}
+                      {activeTab === "traffic" && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ padding: `${pvh(3)}px`, pointerEvents: "none" }}>
+                          {config.traffic.enabled && trafficCoords ? (
+                            <div className="flex items-center rounded-full" style={{ padding: `${pvh(0.8)}px ${pvh(2)}px`, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)", marginBottom: `${pvh(3)}px` }}>
+                              <Car style={{ width: `${pvh(2)}px`, height: `${pvh(2)}px`, color: "var(--layout-accent-color, #444)", marginRight: `${pvh(0.8)}px` }} />
+                              <span className="font-bold" style={{ fontSize: `${pvh(2)}px`, color: "#fff" }}>{config.traffic.city || config.city || "Trânsito"}</span>
+                            </div>
+                          ) : (
+                            <div className="opacity-50" style={{ color: "#333", fontSize: `${pvh(1.8)}px` }}>Trânsito desativado</div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ═══ CURRENCY ═══ */}
+                      {activeTab === "currency" && (
+                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
+                          {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.45)" }} />}
+                          {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d1117 0%, #161b22 50%, #0d1117 100%)" }} />}
+                          <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${pvh(3)}px` }}>
+                            {config.currency.enabled ? (<>
+                              <div className="text-center" style={{ marginBottom: `${pvh(2)}px` }}>
+                                <DollarSign className="drop-shadow-lg mx-auto" style={{ width: `${pvh(4)}px`, height: `${pvh(4)}px`, color: "var(--layout-accent-color, #444)", opacity: 0.7, marginBottom: `${pvh(0.5)}px` }} />
+                                <div className="font-extrabold leading-none drop-shadow-lg" style={{ fontSize: `${pvh(4)}px`, letterSpacing: "-0.02em" }}>cotação</div>
+                                <div className="font-bold" style={{ fontSize: `${pvh(2)}px`, color: "var(--layout-accent-color, #444)", marginTop: `${pvh(0.3)}px` }}>
+                                  {currencySubTab === "moedas" ? "moedas" : "bolsas"}
+                                </div>
+                              </div>
+                              {currencySubTab === "moedas" ? (
+                                <div className="w-full flex flex-col" style={{ gap: `${pvh(1.2)}px` }}>
+                                  {currencyLoading && !liveCurrencies.length ? (
+                                    <div className="flex items-center justify-center gap-1 opacity-80" style={{ fontSize: `${pvh(1.8)}px` }}><Loader2 size={pvh(2)} className="animate-spin" /> Carregando...</div>
+                                  ) : config.currency.currencies.map((c, idx) => {
+                                    const opt = CURRENCY_OPTIONS.find(o => o.value === c);
+                                    const live = liveCurrencies.find(l => l.code === c);
+                                    const flagMap: Record<string, string> = { US: "🇺🇸", EU: "🇪🇺", GB: "🇬🇧", AR: "🇦🇷", JP: "🇯🇵", BT: "₿", ET: "Ξ", BR: "🇧🇷", DE: "🇩🇪" };
+                                    const flagIcon = opt?.flag ? flagMap[opt.flag] || "" : "";
+                                    return (
+                                      <div key={c} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ padding: `${pvh(1.5)}px ${pvh(1.8)}px`, background: "rgba(255,255,255,0.06)", borderRadius: `${pvh(1.8)}px`, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}>
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center" style={{ gap: `${pvh(1.5)}px`, minWidth: 0 }}>
+                                            <span style={{ fontSize: `${pvh(3)}px`, lineHeight: 1 }}>{flagIcon}</span>
+                                            <div className="flex flex-col" style={{ minWidth: 0 }}>
+                                              <span className="font-black truncate" style={{ fontSize: `${pvh(2.2)}px`, lineHeight: 1.1 }}>{c}</span>
+                                              <span className="truncate" style={{ fontSize: `${pvh(1.1)}px`, opacity: 0.4, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
                                             </div>
                                           </div>
-                                        ) : <span className="opacity-30" style={{ fontSize: 8 }}>---</span>}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              <div className="w-full flex flex-col" style={{ gap: 3 }}>
-                                {stocksLoading && !liveStocks.length ? (
-                                  <div className="flex items-center justify-center gap-1 opacity-80" style={{ fontSize: 7 }}><Loader2 size={8} className="animate-spin" /> Carregando...</div>
-                                ) : liveStocks.map((s, idx) => {
-                                  const flagMap: Record<string, string> = { US: "🇺🇸", EU: "🇪🇺", GB: "🇬🇧", AR: "🇦🇷", JP: "🇯🇵", BT: "₿", ET: "Ξ", BR: "🇧🇷", DE: "🇩🇪" };
-                                  const flagChar = flagMap[s.flag?.replace(/[^A-Z]/g, "").slice(0, 2)] || s.flag;
-                                  return (
-                                    <div key={s.symbol} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{
-                                      padding: "4px 5px",
-                                      background: "rgba(255,255,255,0.06)",
-                                      borderRadius: 5,
-                                      border: "1px solid rgba(255,255,255,0.08)",
-                                      backdropFilter: "blur(10px)",
-                                    }}>
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center" style={{ gap: 3, flex: 1, minWidth: 0 }}>
-                                          <span style={{ fontSize: 10, lineHeight: 1 }}>{flagChar}</span>
-                                          <span className="font-black truncate" style={{ fontSize: 8 }}>{s.name}</span>
+                                          {live ? (
+                                            <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
+                                              <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2.5)}px`, lineHeight: 1.1 }}>R$ {live.value}</span>
+                                              <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, marginTop: `${pvh(0.3)}px` }}>
+                                                <span className="font-bold tabular-nums" style={{ fontSize: `${pvh(1.3)}px`, color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
+                                                {live.direction === "up" && <ChevronUp style={{ width: `${pvh(1.6)}px`, height: `${pvh(1.6)}px`, color: "#4ade80" }} strokeWidth={3} />}
+                                                {live.direction === "down" && <ChevronDown style={{ width: `${pvh(1.6)}px`, height: `${pvh(1.6)}px`, color: "#f87171" }} strokeWidth={3} />}
+                                              </div>
+                                            </div>
+                                          ) : <span className="opacity-30" style={{ fontSize: `${pvh(2.5)}px` }}>---</span>}
                                         </div>
-                                        <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
-                                          <span className="font-black tabular-nums" style={{ fontSize: 8, lineHeight: 1.1 }}>{s.value}</span>
-                                          <div className="flex items-center" style={{ gap: 1, marginTop: 1 }}>
-                                            <span className="font-bold tabular-nums" style={{ fontSize: 5, color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{s.change}</span>
-                                            {s.direction === "up" && <ChevronUp style={{ width: 6, height: 6, color: "#4ade80" }} strokeWidth={3} />}
-                                            {s.direction === "down" && <ChevronDown style={{ width: 6, height: 6, color: "#f87171" }} strokeWidth={3} />}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="w-full flex flex-col" style={{ gap: `${pvh(1.2)}px` }}>
+                                  {stocksLoading && !liveStocks.length ? (
+                                    <div className="flex items-center justify-center gap-1 opacity-80" style={{ fontSize: `${pvh(1.8)}px` }}><Loader2 size={pvh(2)} className="animate-spin" /> Carregando...</div>
+                                  ) : liveStocks.map((s, idx) => {
+                                    const flagMap: Record<string, string> = { US: "🇺🇸", EU: "🇪🇺", GB: "🇬🇧", AR: "🇦🇷", JP: "🇯🇵", BT: "₿", ET: "Ξ", BR: "🇧🇷", DE: "🇩🇪" };
+                                    const flagChar = flagMap[s.flag?.replace(/[^A-Z]/g, "").slice(0, 2)] || s.flag;
+                                    return (
+                                      <div key={s.symbol} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ padding: `${pvh(1.5)}px ${pvh(1.8)}px`, background: "rgba(255,255,255,0.06)", borderRadius: `${pvh(1.2)}px`, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}>
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center" style={{ gap: `${pvh(1)}px`, flex: 1, minWidth: 0 }}>
+                                            <span style={{ fontSize: `${pvh(3)}px`, lineHeight: 1 }}>{flagChar}</span>
+                                            <span className="font-black truncate" style={{ fontSize: `${pvh(2.2)}px` }}>{s.name}</span>
+                                          </div>
+                                          <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
+                                            <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2.5)}px`, lineHeight: 1.1 }}>{s.value}</span>
+                                            <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, marginTop: `${pvh(0.3)}px` }}>
+                                              <span className="font-bold tabular-nums" style={{ fontSize: `${pvh(1.3)}px`, color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{s.change}</span>
+                                              {s.direction === "up" && <ChevronUp style={{ width: `${pvh(1.6)}px`, height: `${pvh(1.6)}px`, color: "#4ade80" }} strokeWidth={3} />}
+                                              {s.direction === "down" && <ChevronDown style={{ width: `${pvh(1.6)}px`, height: `${pvh(1.6)}px`, color: "#f87171" }} strokeWidth={3} />}
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  );
-                                })}
-                                {!stocksLoading && !liveStocks.length && (
-                                  <div className="opacity-60 text-center" style={{ fontSize: 7 }}>Dados indisponíveis</div>
-                                )}
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: 7 }}>Cotação desativada</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Chat overlay */}
-                  {activeTab === "chat" && (
-                    <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                      {/* Dark bg when no custom bg */}
-                      {!config.chat.bgImage && (
-                        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)" }} />
-                      )}
-                      {/* Bottom accent glow */}
-                      <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.25), transparent)" }} />
-
-                      <div className="relative z-10 flex flex-col h-full p-3">
-                        {config.chat.enabled ? (
-                          <>
-                            <div className="flex justify-end mb-1 cenario-anim-icon">
-                              <MessageCircle size={32} className="drop-shadow-lg" style={{ color: "var(--layout-accent-color, #444)" }} />
-                            </div>
-                            <div className="mb-3">
-                              <div className="text-xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">mensagens</div>
-                              <div className="text-sm font-bold cenario-anim-subtitle" style={{ color: "var(--layout-accent-color, #444)" }}>chat</div>
-                            </div>
-                            <div className="flex-1 rounded-xl p-3 space-y-2 cenario-anim-card" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
-                              <div className="text-[10px] font-bold opacity-70 mb-1">mensagens aqui</div>
-                              {mockMessages.map((m, i) => (
-                                <div key={i} className={`rounded-lg px-2 py-1.5 text-[8px] cenario-anim-row-${Math.min(i + 1, 8)}`} style={{ background: "rgba(255,255,255,0.08)" }}>
-                                  <span className="font-bold">{m.user}: </span>
-                                  <span className="opacity-80">{m.text}</span>
+                                    );
+                                  })}
+                                  {!stocksLoading && !liveStocks.length && (
+                                    <div className="opacity-60 text-center" style={{ fontSize: `${pvh(2.2)}px` }}>Dados indisponíveis</div>
+                                  )}
                                 </div>
-                              ))}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="flex-1 flex items-center justify-center text-[10px] opacity-50">Chat desativado</div>
-                        )}
-                      </div>
+                              )}
+                            </>) : (
+                              <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: `${pvh(1.9)}px` }}>Cotação desativada</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ═══ CHAT ═══ */}
+                      {activeTab === "chat" && (
+                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
+                          {!config.chat.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)" }} />}
+                          <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.25), transparent)" }} />
+                          <div className="relative z-10 flex flex-col h-full" style={{ padding: `${pvh(3)}px` }}>
+                            {config.chat.enabled ? (<>
+                              <div className="flex justify-end mb-1"><MessageCircle size={pvh(3)} className="drop-shadow-lg" style={{ color: "var(--layout-accent-color, #444)" }} /></div>
+                              <div style={{ marginBottom: `${pvh(2)}px` }}>
+                                <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: `${pvh(4)}px` }}>mensagens</div>
+                                <div className="font-bold" style={{ fontSize: `${pvh(2.5)}px`, color: "var(--layout-accent-color, #444)" }}>chat</div>
+                              </div>
+                              <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)", padding: `${pvh(2)}px` }}>
+                                <div className="font-bold opacity-70" style={{ fontSize: `${pvh(1.6)}px`, marginBottom: `${pvh(1)}px` }}>mensagens aqui</div>
+                                {mockMessages.map((m, i) => (
+                                  <div key={i} className={`rounded-lg cenario-anim-row-${Math.min(i + 1, 8)}`} style={{ padding: `${pvh(1)}px ${pvh(1.5)}px`, marginBottom: `${pvh(0.8)}px`, background: "rgba(255,255,255,0.08)", fontSize: `${pvh(1.6)}px` }}>
+                                    <span className="font-bold">{m.user}: </span>
+                                    <span className="opacity-80">{m.text}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </>) : (
+                              <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${pvh(1.8)}px` }}>Chat desativado</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      </div>{/* end animated page wrapper */}
                     </div>
-                  )}
-                  </div>{/* end animated page wrapper */}
+                  </div>
                 </div>
               </div>
 
