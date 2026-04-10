@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Volume2, VolumeX, Radio, Wifi, WifiOff } from "lucide-react";
+import { Volume2, Volume1, VolumeX, Radio, Wifi, WifiOff } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
 const CHANNEL_NAME = "intercom-signal";
@@ -16,6 +17,7 @@ export default function IntercomListener() {
   const [speakerOnline, setSpeakerOnline] = useState(false);
   const [receiving, setReceiving] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(100);
   const [error, setError] = useState<string | null>(null);
   const [peerState, setPeerState] = useState("");
   const [audioUnlockRequired, setAudioUnlockRequired] = useState(false);
@@ -25,14 +27,21 @@ export default function IntercomListener() {
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const remoteDescSetRef = useRef(false);
   const mutedRef = useRef(false);
+  const volumeRef = useRef(100);
 
   useEffect(() => {
     mutedRef.current = muted;
-
     if (audioRef.current) {
       audioRef.current.muted = muted;
     }
   }, [muted]);
+
+  useEffect(() => {
+    volumeRef.current = volume;
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100;
+    }
+  }, [volume]);
 
   const tryPlayAudio = useCallback(async () => {
     const audio = audioRef.current;
@@ -40,7 +49,7 @@ export default function IntercomListener() {
     if (!audio || !audio.srcObject) return false;
 
     audio.muted = mutedRef.current;
-    audio.volume = 1;
+    audio.volume = volumeRef.current / 100;
 
     try {
       await audio.play();
@@ -348,19 +357,39 @@ export default function IntercomListener() {
           {receiving ? "Recebendo áudio" : "Aguardando transmissão"}
         </p>
 
-        <button
-          onClick={toggleMute}
-          className="flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-medium transition-all hover:scale-105 active:scale-95"
-          style={{
-            backgroundColor: muted ? "rgba(239,68,68,0.1)" : "rgba(38,143,250,0.1)",
-            color: muted ? "#ef4444" : "#268ffa",
-            border: `1px solid ${muted ? "rgba(239,68,68,0.2)" : "rgba(38,143,250,0.2)"}`,
-            backdropFilter: "blur(12px)",
-          }}
-        >
-          {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-          {muted ? "Som desativado" : "Som ativado"}
-        </button>
+        <div className="flex items-center gap-3 w-56">
+          <button
+            onClick={toggleMute}
+            className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+            style={{
+              backgroundColor: muted ? "rgba(239,68,68,0.1)" : "rgba(38,143,250,0.1)",
+              color: muted ? "#ef4444" : "#268ffa",
+              border: `1px solid ${muted ? "rgba(239,68,68,0.2)" : "rgba(38,143,250,0.2)"}`,
+            }}
+          >
+            {muted ? <VolumeX size={18} /> : volume < 50 ? <Volume1 size={18} /> : <Volume2 size={18} />}
+          </button>
+          <Slider
+            value={[muted ? 0 : volume]}
+            min={0}
+            max={100}
+            step={1}
+            onValueChange={([v]) => {
+              if (v === 0) {
+                setMuted(true);
+              } else {
+                if (muted) setMuted(false);
+                setVolume(v);
+              }
+              if (audioRef.current) {
+                audioRef.current.volume = v / 100;
+                audioRef.current.muted = v === 0;
+              }
+            }}
+            className="flex-1 [&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:border-[rgba(38,143,250,0.5)] [&_[role=slider]]:bg-[#268ffa] [&_.relative]:h-1.5 [&_[data-orientation=horizontal]>.absolute]:bg-[#268ffa]"
+          />
+          <span className="text-[11px] text-white/40 w-7 text-right tabular-nums">{muted ? 0 : volume}</span>
+        </div>
 
         {peerState && peerState !== "connected" && peerState !== "new" && (
           <p className="text-[11px] text-white/20">Estado: {peerState}</p>
