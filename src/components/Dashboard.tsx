@@ -850,6 +850,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </footer>
       </div>
 
+      <Suspense fallback={null}><IntercomWidget /></Suspense>
       <BotsStatusBox />
     </div>
   );
