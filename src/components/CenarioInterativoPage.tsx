@@ -557,17 +557,6 @@ export default function CenarioInterativoPage() {
     return () => ro.disconnect();
   }, []);
 
-  /* Measure preview container to compute scale for virtual 1080×1920 canvas */
-  useEffect(() => {
-    const el = previewWrapRef.current;
-    if (!el) return;
-    const measure = () => { setPreviewScale(el.clientWidth / PREV_W); };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [PREV_W]);
-
   const configRef = useRef(config);
   const activeTabRef = useRef(activeTab);
   const weatherSubTabRef = useRef(weatherSubTab);
@@ -587,6 +576,23 @@ export default function CenarioInterativoPage() {
   const lastPongRef = useRef(0);
   const presenceConnectedRef = useRef(false);
   const presenceShownRef = useRef(false);
+  const previewIsLandscape = externalRotation === 90 || externalRotation === 270;
+
+  /* Measure preview container to compute scale exactly like CenarioTela */
+  useEffect(() => {
+    const el = previewWrapRef.current;
+    if (!el) return;
+    const measure = () => {
+      const scale = previewIsLandscape
+        ? Math.min(el.clientWidth / PREV_H, el.clientHeight / PREV_W)
+        : Math.min(el.clientWidth / PREV_W, el.clientHeight / PREV_H);
+      setPreviewScale(scale || 1);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [previewIsLandscape]);
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
