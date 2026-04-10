@@ -462,6 +462,7 @@ export default function IntercomWidget() {
     setListenerName("");
     setSelectedKeys(new Set());
     setTargetMode("all");
+    setConnectedListenerKeys(new Set());
   };
 
   const confirmListenerName = () => {
