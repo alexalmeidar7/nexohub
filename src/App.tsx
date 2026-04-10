@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import { Loader2 } from "lucide-react";
 
 // Lazy-loaded heavy pages
 const PlayerHub = lazy(() => import("./pages/player/PlayerHub"));
