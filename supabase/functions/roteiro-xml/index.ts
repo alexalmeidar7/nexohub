@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function escapeXml(str: string): string {
+function esc(str: string): string {
   return str
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -48,16 +48,26 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch program logo (capa/selo) by matching programa_nome + user_id
-    const { data: programa } = await supabase
-      .from("programas")
-      .select("capa, selo, nome")
-      .eq("user_id", roteiro.user_id)
-      .eq("nome", roteiro.programa_nome)
-      .maybeSingle();
+    // Fetch program logo + empresa config in parallel
+    const [programaRes, empresaRes] = await Promise.all([
+      supabase
+        .from("programas")
+        .select("capa, selo, nome")
+        .eq("user_id", roteiro.user_id)
+        .eq("nome", roteiro.programa_nome)
+        .maybeSingle(),
+      supabase
+        .from("empresa_config")
+        .select("telefone_participacao")
+        .eq("user_id", roteiro.user_id)
+        .maybeSingle(),
+    ]);
 
-    // Parse participantes (may contain podcastData with apoioImagens/apoioVideos)
-    let participantes: { nome: string; categoria?: string; cargo?: string; instagram?: string }[] = [];
+    const programa = programaRes.data;
+    const empresa = empresaRes.data;
+
+    // Parse participantes
+    let participantes: { nome: string; categoria?: string; cargo?: string; instagram?: string; whatsapp?: string }[] = [];
     let apoioImagens: string[] = [];
     let apoioVideos: string[] = [];
     try {
@@ -68,7 +78,6 @@ Deno.serve(async (req) => {
       if (Array.isArray(raw)) {
         participantes = raw;
       } else {
-        // Express format: { blocos, participantes, escaladaList, podcastData }
         participantes = raw.participantes || [];
         if (raw.podcastData) {
           apoioImagens = (raw.podcastData.apoioImagens || []).filter((u: string) => u && u.trim());
@@ -80,47 +89,67 @@ Deno.serve(async (req) => {
     }
 
     const logoUrl = programa?.selo || programa?.capa || "";
+    const whatsappNum = empresa?.telefone_participacao || "";
+    const qrcodeLink = whatsappNum
+      ? `https://wa.me/${whatsappNum.replace(/\D/g, "")}`
+      : "";
 
-    // Build XML
+    // Build flat/tabular XML for vMix Data Sources
+    // Each participant becomes a <dados> row with all fields as flat columns
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    xml += `<roteiro>\n`;
-    xml += `  <titulo>${escapeXml(roteiro.titulo || "")}</titulo>\n`;
-    xml += `  <subtitulo>${escapeXml(roteiro.subtitulo || "")}</subtitulo>\n`;
-    xml += `  <programa>${escapeXml(roteiro.programa_nome || "")}</programa>\n`;
-    xml += `  <logo_url>${escapeXml(logoUrl)}</logo_url>\n`;
-    xml += `  <participantes>\n`;
-    for (const p of participantes) {
-      xml += `    <item>\n`;
-      xml += `      <nome>${escapeXml(p.nome || "")}</nome>\n`;
-      if (p.cargo) xml += `      <cargo>${escapeXml(p.cargo)}</cargo>\n`;
-      if (p.instagram) xml += `      <instagram>${escapeXml(p.instagram)}</instagram>\n`;
-      xml += `    </item>\n`;
-    }
-    xml += `  </participantes>\n`;
+    xml += `<items>\n`;
 
-    // Apoio images
-    if (apoioImagens.length > 0) {
-      xml += `  <apoioImagens>\n`;
-      for (const img of apoioImagens) {
-        xml += `    <imagem>${escapeXml(img)}</imagem>\n`;
+    if (participantes.length === 0) {
+      // Single row with general data
+      xml += `  <dados>\n`;
+      xml += `    <titulo>${esc(roteiro.titulo || "")}</titulo>\n`;
+      xml += `    <subtitulo>${esc(roteiro.subtitulo || "")}</subtitulo>\n`;
+      xml += `    <programa>${esc(roteiro.programa_nome || "")}</programa>\n`;
+      xml += `    <logo_url>${esc(logoUrl)}</logo_url>\n`;
+      xml += `    <participante_nome></participante_nome>\n`;
+      xml += `    <participante_cargo></participante_cargo>\n`;
+      xml += `    <rede_social_instagram_texto></rede_social_instagram_texto>\n`;
+      xml += `    <rede_social_whatsapp_texto>${esc(whatsappNum)}</rede_social_whatsapp_texto>\n`;
+      xml += `    <qrcode_link>${esc(qrcodeLink)}</qrcode_link>\n`;
+      for (let i = 0; i < 5; i++) {
+        xml += `    <imagem_apoio_${i + 1}>${esc(apoioImagens[i] || "")}</imagem_apoio_${i + 1}>\n`;
       }
-      xml += `  </apoioImagens>\n`;
-    }
-
-    // Apoio videos
-    if (apoioVideos.length > 0) {
-      xml += `  <apoioVideos>\n`;
-      for (const vid of apoioVideos) {
-        xml += `    <video>${escapeXml(vid)}</video>\n`;
+      for (let i = 0; i < 5; i++) {
+        xml += `    <video_apoio_${i + 1}>${esc(apoioVideos[i] || "")}</video_apoio_${i + 1}>\n`;
       }
-      xml += `  </apoioVideos>\n`;
+      xml += `  </dados>\n`;
+    } else {
+      for (let idx = 0; idx < participantes.length; idx++) {
+        const p = participantes[idx];
+        xml += `  <dados>\n`;
+        xml += `    <titulo>${esc(roteiro.titulo || "")}</titulo>\n`;
+        xml += `    <subtitulo>${esc(roteiro.subtitulo || "")}</subtitulo>\n`;
+        xml += `    <programa>${esc(roteiro.programa_nome || "")}</programa>\n`;
+        xml += `    <logo_url>${esc(logoUrl)}</logo_url>\n`;
+        xml += `    <participante_nome>${esc(p.nome || "")}</participante_nome>\n`;
+        xml += `    <participante_cargo>${esc(p.cargo || p.categoria || "")}</participante_cargo>\n`;
+        xml += `    <rede_social_instagram_texto>${esc(p.instagram || "")}</rede_social_instagram_texto>\n`;
+        xml += `    <rede_social_whatsapp_texto>${esc(p.whatsapp || whatsappNum)}</rede_social_whatsapp_texto>\n`;
+        xml += `    <qrcode_link>${esc(qrcodeLink)}</qrcode_link>\n`;
+        for (let i = 0; i < 5; i++) {
+          xml += `    <imagem_apoio_${i + 1}>${esc(apoioImagens[i] || "")}</imagem_apoio_${i + 1}>\n`;
+        }
+        for (let i = 0; i < 5; i++) {
+          xml += `    <video_apoio_${i + 1}>${esc(apoioVideos[i] || "")}</video_apoio_${i + 1}>\n`;
+        }
+        xml += `  </dados>\n`;
+      }
     }
 
-    xml += `</roteiro>`;
+    xml += `</items>`;
 
     return new Response(xml, {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/xml; charset=utf-8",
+        "Cache-Control": "public, max-age=5",
+      },
     });
   } catch (err) {
     return new Response(`<error>${String(err)}</error>`, {
