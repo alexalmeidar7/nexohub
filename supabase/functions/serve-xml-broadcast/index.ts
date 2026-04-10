@@ -10,6 +10,14 @@ const corsHeaders = {
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+const SOCIAL_ICONS: Record<string, string> = {
+  instagram: "https://img.icons8.com/ios-filled/100/000000/instagram-new.png",
+  facebook: "https://img.icons8.com/ios-filled/100/000000/facebook-new.png",
+  youtube: "https://img.icons8.com/ios-filled/100/000000/youtube-play.png",
+  site: "https://img.icons8.com/ios-filled/100/000000/domain.png",
+  whatsapp: "https://img.icons8.com/ios-filled/100/000000/whatsapp.png",
+};
+
 function extractHandle(raw: string): string {
   if (!raw) return "";
   try {
@@ -109,32 +117,22 @@ serve(async (req) => {
 
     // ── Social links (handle + icon) ──
     const socialItems: { handle: string; icon: string }[] = [];
-    if (emp?.instagram) {
-      const raw = emp.instagram.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/.*/, "");
-      socialItems.push({ handle: `@${raw}`, icon: "https://cdn-icons-png.flaticon.com/512/174/174855.png" });
-    }
-    if (emp?.facebook) {
-      const raw = emp.facebook.replace(/^https?:\/\/(www\.)?facebook\.com\//, "").replace(/\/.*/, "");
-      socialItems.push({ handle: `@${raw}`, icon: "https://cdn-icons-png.flaticon.com/512/124/124010.png" });
-    }
-    if (emp?.youtube) {
-      const raw = emp.youtube.replace(/^https?:\/\/(www\.)?youtube\.com\//, "").replace(/\/.*/, "");
-      socialItems.push({ handle: `@${raw}`, icon: "https://cdn-icons-png.flaticon.com/512/1384/1384060.png" });
-    }
+    if (emp?.instagram) socialItems.push({ handle: extractHandle(emp.instagram), icon: SOCIAL_ICONS.instagram });
+    if (emp?.facebook) socialItems.push({ handle: extractHandle(emp.facebook), icon: SOCIAL_ICONS.facebook });
+    if (emp?.youtube) socialItems.push({ handle: extractHandle(emp.youtube), icon: SOCIAL_ICONS.youtube });
     if (emp?.site) {
-      const raw = emp.site.replace(/^https?:\/\/(www\.)?/, "").replace(/\/.*/, "");
-      socialItems.push({ handle: raw, icon: "https://cdn-icons-png.flaticon.com/512/1006/1006771.png" });
+      const raw = emp.site.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "");
+      socialItems.push({ handle: raw, icon: SOCIAL_ICONS.site });
     }
     const whatsappNum = emp?.telefone_participacao?.replace(/\D/g, "") || "";
-    if (whatsappNum) {
-      socialItems.push({ handle: whatsappNum, icon: "https://cdn-icons-png.flaticon.com/512/124/124034.png" });
-    }
+    if (whatsappNum) socialItems.push({ handle: whatsappNum, icon: SOCIAL_ICONS.whatsapp });
 
-    const totalSeconds = parseInt(hh) * 3600 + parseInt(mm) * 60 + parseInt(ss);
+    // Use epoch-based rotation so each 5-second window maps to a different index
+    const rotationSlot = Math.floor(Date.now() / 5000);
     let redeSocialAtual = "";
     let redeSocialIcone = "";
     if (socialItems.length > 0) {
-      const idx = Math.floor(totalSeconds / 5) % socialItems.length;
+      const idx = rotationSlot % socialItems.length;
       redeSocialAtual = socialItems[idx].handle;
       redeSocialIcone = socialItems[idx].icon;
     }
@@ -150,7 +148,7 @@ serve(async (req) => {
     // ── Sponsor logo rotation (every 5s, .png enforced) ──
     let logoPatrocinador = "";
     if (sponsorLogos.length > 0) {
-      const idx = Math.floor(totalSeconds / 5) % sponsorLogos.length;
+      const idx = rotationSlot % sponsorLogos.length;
       logoPatrocinador = sponsorLogos[idx].logo_url.replace(/\.webp$/i, ".png");
     }
 
@@ -178,7 +176,8 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=5",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
       },
     });
   } catch (err) {
