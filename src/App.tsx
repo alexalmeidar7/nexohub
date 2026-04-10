@@ -100,6 +100,7 @@ const App = () => (
             <Route path="/tp-externo" element={<TpExterno />} />
             <Route path="/vmix-control" element={<VmixControl />} />
             <Route path="/cenario-tela" element={<CenarioTela />} />
+            <Route path="/intercom" element={<IntercomListener />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

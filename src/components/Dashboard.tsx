@@ -47,6 +47,7 @@ const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 const FansPage = lazy(() => import("./FansPage"));
 const BroadcastPage = lazy(() => import("./BroadcastPage"));
+const IntercomWidget = lazy(() => import("./IntercomWidget"));
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
