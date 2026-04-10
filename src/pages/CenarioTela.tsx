@@ -975,7 +975,6 @@ export default function CenarioTela() {
   const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
 
   const isLandscape = screenRotation === 90 || screenRotation === 270;
-  const isClockwiseLandscape = screenRotation === 90;
 
   /* ── Fixed 1080×1920 virtual canvas scaled to fit viewport ── */
   const CANVAS_W = 1080;
