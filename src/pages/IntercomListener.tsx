@@ -20,6 +20,8 @@ export default function IntercomListener() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  const remoteDescSetRef = useRef(false);
 
   useEffect(() => {
     if (!uid) {
@@ -27,21 +29,32 @@ export default function IntercomListener() {
       return;
     }
 
-    const ch = supabase.channel(`${CHANNEL_NAME}-${uid}`, { config: { presence: { key: "listener" } } });
+    const presenceKey = `listener-${Date.now()}`;
+    const ch = supabase.channel(`${CHANNEL_NAME}-${uid}`, {
+      config: { broadcast: { self: false }, presence: { key: presenceKey } },
+    });
 
     ch.on("presence", { event: "sync" }, () => {
       const state = ch.presenceState();
-      const speakers = Object.keys(state).filter((k) => k.startsWith("speaker"));
-      setSpeakerOnline(speakers.length > 0);
+      const hasSpeaker = Object.values(state).some((entries: any) =>
+        entries.some((e: any) => e.role === "speaker")
+      );
+      setSpeakerOnline(hasSpeaker);
     });
 
     ch.on("broadcast", { event: "offer" }, async ({ payload }) => {
       try {
+        console.log("[Intercom Listener] Received offer");
         // Cleanup previous connection
         pcRef.current?.close();
+        remoteDescSetRef.current = false;
+        pendingCandidatesRef.current = [];
 
         const pc = new RTCPeerConnection({
-          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+          ],
         });
         pcRef.current = pc;
 
@@ -56,47 +69,68 @@ export default function IntercomListener() {
         };
 
         pc.ontrack = (ev) => {
+          console.log("[Intercom Listener] Received audio track");
           setReceiving(true);
           if (audioRef.current) {
             audioRef.current.srcObject = ev.streams[0];
-            audioRef.current.play().catch(console.error);
+            audioRef.current.play().catch((e) => {
+              console.warn("[Intercom Listener] Autoplay blocked:", e);
+            });
           }
         };
 
         pc.onconnectionstatechange = () => {
-          if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+          console.log("[Intercom Listener] Connection state:", pc.connectionState);
+          if (pc.connectionState === "disconnected" || pc.connectionState === "failed" || pc.connectionState === "closed") {
             setReceiving(false);
           }
         };
 
-        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        // Set remote description with plain SDP object
+        await pc.setRemoteDescription(new RTCSessionDescription({ type: payload.sdp.type, sdp: payload.sdp.sdp }));
+        remoteDescSetRef.current = true;
+
+        // Flush any ICE candidates that arrived before the offer was processed
+        for (const c of pendingCandidatesRef.current) {
+          await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.warn);
+        }
+        pendingCandidatesRef.current = [];
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
+        console.log("[Intercom Listener] Sending answer");
         ch.send({
           type: "broadcast",
           event: "answer",
-          payload: { sdp: pc.localDescription },
+          payload: { sdp: { type: answer.type, sdp: answer.sdp } },
         });
       } catch (e) {
-        console.error("Error handling offer:", e);
+        console.error("[Intercom Listener] Error handling offer:", e);
         setError("Erro ao conectar áudio");
       }
     });
 
     ch.on("broadcast", { event: "ice-candidate-speaker" }, async ({ payload }) => {
       try {
-        if (pcRef.current && payload.candidate) {
+        if (!payload.candidate) return;
+        if (pcRef.current && remoteDescSetRef.current) {
           await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate));
+        } else {
+          // Queue candidates that arrive before remote description is set
+          pendingCandidatesRef.current.push(payload.candidate);
         }
       } catch (e) {
-        console.error("Error adding ICE:", e);
+        console.error("[Intercom Listener] Error adding ICE:", e);
       }
     });
 
     ch.on("broadcast", { event: "hangup" }, () => {
+      console.log("[Intercom Listener] Speaker hung up");
       pcRef.current?.close();
       pcRef.current = null;
+      remoteDescSetRef.current = false;
+      pendingCandidatesRef.current = [];
       setReceiving(false);
       if (audioRef.current) {
         audioRef.current.srcObject = null;
@@ -105,8 +139,9 @@ export default function IntercomListener() {
 
     ch.subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
+        console.log("[Intercom Listener] Channel subscribed");
         setConnected(true);
-        await ch.track({ online: true, role: "listener" });
+        await ch.track({ role: "listener", online: true });
       }
     });
 
@@ -145,7 +180,6 @@ export default function IntercomListener() {
         <p className="text-sm opacity-60">Página do Receptor</p>
       </div>
 
-      {/* Connection status */}
       <div className="flex flex-col items-center gap-2">
         <div className="flex items-center gap-2 text-sm">
           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: connected ? "#22c55e" : "#ef4444" }} />
@@ -157,7 +191,6 @@ export default function IntercomListener() {
         </div>
       </div>
 
-      {/* Receiving indicator */}
       <div
         className="w-32 h-32 rounded-full flex items-center justify-center transition-all"
         style={{
@@ -189,7 +222,6 @@ export default function IntercomListener() {
         {receiving ? "Recebendo áudio..." : "Aguardando transmissão"}
       </p>
 
-      {/* Mute toggle */}
       <button
         onClick={toggleMute}
         className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105"
