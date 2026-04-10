@@ -842,7 +842,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                     <ImagePlus size={12} style={{ color: "#06b6d4" }} /> Imagens
                   </label>
                   <p className="text-[10px] mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>
-                    Cole links de imagens de apoio para o programa
+                    Cole links ou faça upload de imagens de apoio
                   </p>
                   <div className="space-y-2">
                     {podcastData.apoioImagens.map((url, idx) => (
@@ -861,6 +861,29 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                           className="flex-1 px-3 py-2 rounded-lg text-[11px] outline-none min-w-0"
                           style={inputStyle}
                         />
+                        <label className="p-1.5 rounded-full hover:opacity-70 shrink-0 cursor-pointer" style={{ color: "#06b6d4" }} title="Upload imagem">
+                          <Upload size={12} />
+                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file || !user) return;
+                            try {
+                              toast.loading("Enviando imagem...", { id: "upload-img" });
+                              const ext = file.name.split(".").pop() || "jpg";
+                              const path = `apoio/${user.id}/${Date.now()}_${idx}.${ext}`;
+                              const { error } = await supabase.storage.from("empresa-assets").upload(path, file, { upsert: true, contentType: file.type });
+                              if (error) throw error;
+                              const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+                              const updated = [...podcastData.apoioImagens];
+                              updated[idx] = urlData.publicUrl;
+                              setPodcastData(prev => ({ ...prev, apoioImagens: updated }));
+                              toast.success("Imagem enviada!", { id: "upload-img" });
+                            } catch (err) {
+                              console.error(err);
+                              toast.error("Erro ao enviar imagem", { id: "upload-img" });
+                            }
+                            e.target.value = "";
+                          }} />
+                        </label>
                         {podcastData.apoioImagens.length > 1 && (
                           <button onClick={() => setPodcastData(prev => ({ ...prev, apoioImagens: prev.apoioImagens.filter((_, i) => i !== idx) }))} className="p-1 rounded-full hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>
                         )}
@@ -884,7 +907,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                     <Video size={12} style={{ color: "#06b6d4" }} /> Vídeos
                   </label>
                   <p className="text-[10px] mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>
-                    Cole links de vídeos de apoio (YouTube, Vimeo, etc.)
+                    Cole links ou faça upload de vídeos de apoio
                   </p>
                   <div className="space-y-2">
                     {podcastData.apoioVideos.map((url, idx) => (
@@ -901,6 +924,29 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                           className="flex-1 px-3 py-2 rounded-lg text-[11px] outline-none min-w-0"
                           style={inputStyle}
                         />
+                        <label className="p-1.5 rounded-full hover:opacity-70 shrink-0 cursor-pointer" style={{ color: "#06b6d4" }} title="Upload vídeo">
+                          <Upload size={12} />
+                          <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file || !user) return;
+                            try {
+                              toast.loading("Enviando vídeo...", { id: "upload-vid" });
+                              const ext = file.name.split(".").pop() || "mp4";
+                              const path = `apoio/${user.id}/${Date.now()}_${idx}.${ext}`;
+                              const { error } = await supabase.storage.from("empresa-assets").upload(path, file, { upsert: true, contentType: file.type });
+                              if (error) throw error;
+                              const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+                              const updated = [...podcastData.apoioVideos];
+                              updated[idx] = urlData.publicUrl;
+                              setPodcastData(prev => ({ ...prev, apoioVideos: updated }));
+                              toast.success("Vídeo enviado!", { id: "upload-vid" });
+                            } catch (err) {
+                              console.error(err);
+                              toast.error("Erro ao enviar vídeo", { id: "upload-vid" });
+                            }
+                            e.target.value = "";
+                          }} />
+                        </label>
                         {podcastData.apoioVideos.length > 1 && (
                           <button onClick={() => setPodcastData(prev => ({ ...prev, apoioVideos: prev.apoioVideos.filter((_, i) => i !== idx) }))} className="p-1 rounded-full hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>
                         )}
