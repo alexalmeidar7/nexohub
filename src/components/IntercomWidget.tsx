@@ -42,7 +42,8 @@ export default function IntercomWidget() {
   const hotkeyRef = useRef(hotkey);
   const channelReadyRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const levelRafRef = useRef<number>(0);
   const userId = user?.id;
 
   useEffect(() => { hotkeyRef.current = hotkey; }, [hotkey]);
