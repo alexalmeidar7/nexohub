@@ -121,7 +121,7 @@ export default function IntercomWidget() {
       console.log("[Intercom] Presence sync — listeners:", listeners.length, "speaker:", hasSpeaker);
     });
 
-    // ── Speaker: listen for answer + listener ICE ──
+    // ── Speaker: listen for answer + listener ICE + status ──
     if (role === "speaker") {
       ch.on("broadcast", { event: "answer" }, async ({ payload }) => {
         try {
@@ -151,6 +151,20 @@ export default function IntercomWidget() {
         } catch (e) {
           console.error("[Intercom Speaker] Error adding ICE:", e);
         }
+      });
+
+      // Listener reports its connection status
+      ch.on("broadcast", { event: "listener-status" }, ({ payload }) => {
+        if (!payload.presenceKey) return;
+        setConnectedListenerKeys(prev => {
+          const next = new Set(prev);
+          if (payload.status === "connected") {
+            next.add(payload.presenceKey);
+          } else {
+            next.delete(payload.presenceKey);
+          }
+          return next;
+        });
       });
     }
 
