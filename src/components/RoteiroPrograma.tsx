@@ -416,8 +416,8 @@ export default function RoteiroPrograma() {
                       <MessageSquare size={10} style={{ color: "#25d366" }} />
                     </button>
                     <button onClick={() => {
-                      let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = [];
-                      try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
+                      let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = []; let editPodcastData: any = undefined;
+                      try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; editPodcastData = parsed.podcastData || undefined; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
                       const prog = programas.find(p => p.nome === r.programa_nome);
                       let existingXmlPath: string | undefined;
                       if (r.subtitulo?.startsWith("express_xml::")) {
@@ -428,7 +428,7 @@ export default function RoteiroPrograma() {
                           if (pathMatch) existingXmlPath = pathMatch[1];
                         } catch {}
                       }
-                      setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath });
+                      setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath, podcastData: editPodcastData });
                     }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
                       <Pencil size={10} style={{ color: "var(--layout-icon-color, #888888)" }} />
                     </button>
