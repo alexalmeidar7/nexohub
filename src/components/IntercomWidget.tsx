@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Mic, MicOff, Radio, X, Keyboard, Headphones, Users, ArrowLeft } from "lucide-react";
+import { Mic, MicOff, Radio, X, Keyboard, Headphones, Users, ArrowLeft, Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -23,7 +23,6 @@ export default function IntercomWidget() {
   // Speaker state
   const [talking, setTalking] = useState(false);
   const [onlineListeners, setOnlineListeners] = useState<ListenerInfo[]>([]);
-  const [selectedListener, setSelectedListener] = useState<string | null>(null);
   const [connectionState, setConnectionState] = useState("");
   const [hotkey, setHotkey] = useState<string>(() => localStorage.getItem(HOTKEY_STORAGE_KEY) || "");
   const [settingHotkey, setSettingHotkey] = useState(false);
@@ -51,6 +50,10 @@ export default function IntercomWidget() {
   // ─── Signaling channel (shared by both roles) ───
   useEffect(() => {
     if (!userId || role === "none") return;
+    // Don't join channel as listener until name is provided
+    if (role === "listener" && !listenerName) return;
+
+    console.log("[Intercom] Joining channel as", role, "uid:", userId.slice(0, 8));
 
     const presenceKey = role === "speaker"
       ? `speaker-${Date.now()}`
@@ -75,22 +78,21 @@ export default function IntercomWidget() {
         });
       });
 
-      if (role === "speaker") {
-        setOnlineListeners(listeners);
-      }
-      if (role === "listener") {
-        setSpeakerOnline(hasSpeaker);
-      }
+      if (role === "speaker") setOnlineListeners(listeners);
+      if (role === "listener") setSpeakerOnline(hasSpeaker);
+      console.log("[Intercom] Presence sync — listeners:", listeners.length, "speaker:", hasSpeaker);
     });
 
     // ── Speaker: listen for answer + listener ICE ──
     if (role === "speaker") {
       ch.on("broadcast", { event: "answer" }, async ({ payload }) => {
         try {
+          console.log("[Intercom Speaker] Received answer");
           const pc = pcRef.current;
           if (pc && payload.sdp) {
             await pc.setRemoteDescription(new RTCSessionDescription({ type: payload.sdp.type, sdp: payload.sdp.sdp }));
             remoteDescSetRef.current = true;
+            console.log("[Intercom Speaker] Remote description set, flushing", pendingCandidatesRef.current.length, "candidates");
             for (const c of pendingCandidatesRef.current) {
               await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.warn);
             }
@@ -119,6 +121,7 @@ export default function IntercomWidget() {
     if (role === "listener") {
       const handleOffer = async (payload: any) => {
         try {
+          console.log("[Intercom Listener] Received offer, setting up peer connection");
           pcRef.current?.close();
           remoteDescSetRef.current = false;
           pendingCandidatesRef.current = [];
@@ -133,36 +136,57 @@ export default function IntercomWidget() {
 
           pc.onicecandidate = (ev) => {
             if (ev.candidate) {
+              console.log("[Intercom Listener] Sending ICE candidate");
               ch.send({ type: "broadcast", event: "ice-candidate-listener", payload: { candidate: ev.candidate.toJSON() } });
             }
           };
 
           pc.ontrack = (ev) => {
+            console.log("[Intercom Listener] Got audio track!");
             setReceiving(true);
+            const stream = ev.streams[0] || new MediaStream([ev.track]);
             if (audioRef.current) {
-              audioRef.current.srcObject = ev.streams[0] || new MediaStream([ev.track]);
-              audioRef.current.play().catch(console.warn);
+              audioRef.current.srcObject = stream;
+              audioRef.current.play().catch((e) => {
+                console.warn("[Intercom Listener] Autoplay blocked:", e.message);
+              });
             }
           };
 
           pc.onconnectionstatechange = () => {
             const s = pc.connectionState;
+            console.log("[Intercom Listener] Connection state:", s);
             if (s === "disconnected" || s === "failed" || s === "closed") {
               setReceiving(false);
             }
           };
 
+          pc.oniceconnectionstatechange = () => {
+            console.log("[Intercom Listener] ICE state:", pc.iceConnectionState);
+          };
+
+          // Add a transceiver to accept audio
+          pc.addTransceiver("audio", { direction: "recvonly" });
+
           await pc.setRemoteDescription(new RTCSessionDescription({ type: payload.sdp.type, sdp: payload.sdp.sdp }));
           remoteDescSetRef.current = true;
+          console.log("[Intercom Listener] Remote description set");
 
           for (const c of pendingCandidatesRef.current) {
             await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.warn);
           }
+          console.log("[Intercom Listener] Flushed", pendingCandidatesRef.current.length, "queued candidates");
           pendingCandidatesRef.current = [];
 
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          await ch.send({ type: "broadcast", event: "answer", payload: { sdp: { type: answer.type, sdp: answer.sdp } } });
+          console.log("[Intercom Listener] Created and sending answer");
+
+          const sendResult = await ch.send({
+            type: "broadcast", event: "answer",
+            payload: { sdp: { type: answer.type, sdp: answer.sdp } },
+          });
+          console.log("[Intercom Listener] Answer send result:", sendResult);
         } catch (e) {
           console.error("[Intercom Listener] Error handling offer:", e);
         }
@@ -182,6 +206,7 @@ export default function IntercomWidget() {
       });
 
       ch.on("broadcast", { event: "hangup" }, () => {
+        console.log("[Intercom Listener] Speaker hung up");
         pcRef.current?.close();
         pcRef.current = null;
         remoteDescSetRef.current = false;
@@ -192,6 +217,7 @@ export default function IntercomWidget() {
     }
 
     ch.subscribe(async (status) => {
+      console.log("[Intercom] Channel status:", status);
       if (status === "SUBSCRIBED") {
         channelReadyRef.current = true;
         if (role === "speaker") {
@@ -199,11 +225,13 @@ export default function IntercomWidget() {
         } else {
           await ch.track({ role: "listener", online: true, name: listenerName });
         }
+        console.log("[Intercom] Tracked as", role);
       }
     });
 
     channelRef.current = ch;
     return () => {
+      console.log("[Intercom] Cleaning up channel");
       channelReadyRef.current = false;
       pcRef.current?.close();
       pcRef.current = null;
@@ -227,11 +255,13 @@ export default function IntercomWidget() {
     pendingCandidatesRef.current = [];
 
     try {
+      console.log("[Intercom Speaker] Capturing microphone...");
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         video: false,
       });
       streamRef.current = stream;
+      console.log("[Intercom Speaker] Mic captured, tracks:", stream.getAudioTracks().length);
 
       const pc = new RTCPeerConnection({
         iceServers: [
@@ -243,22 +273,28 @@ export default function IntercomWidget() {
 
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
-      const iceCandidates: RTCIceCandidateInit[] = [];
+      const collectedCandidates: RTCIceCandidateInit[] = [];
       pc.onicecandidate = (ev) => {
         if (ev.candidate) {
           const c = ev.candidate.toJSON();
-          iceCandidates.push(c);
+          collectedCandidates.push(c);
           channelRef.current?.send({ type: "broadcast", event: "ice-candidate-speaker", payload: { candidate: c } });
         }
       };
 
       pc.onconnectionstatechange = () => {
         const s = pc.connectionState;
+        console.log("[Intercom Speaker] Connection state:", s);
         setConnectionState(s);
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        console.log("[Intercom Speaker] ICE state:", pc.iceConnectionState);
       };
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+      console.log("[Intercom Speaker] Offer created, sending...");
 
       await channelRef.current?.send({
         type: "broadcast", event: "offer",
@@ -268,28 +304,46 @@ export default function IntercomWidget() {
       setTalking(true);
       setConnectionState("connecting");
 
+      // Re-send offer after a short delay in case listener wasn't ready
       setTimeout(async () => {
         if (pcRef.current && !remoteDescSetRef.current && channelRef.current) {
+          console.log("[Intercom Speaker] Re-sending offer (no answer yet)");
           await channelRef.current.send({
             type: "broadcast", event: "offer",
             payload: { sdp: { type: offer.type, sdp: offer.sdp } },
           });
-          for (const c of iceCandidates) {
+          for (const c of collectedCandidates) {
             await channelRef.current.send({ type: "broadcast", event: "ice-candidate-speaker", payload: { candidate: c } });
           }
         }
       }, 1500);
+
+      // Another retry at 3s
+      setTimeout(async () => {
+        if (pcRef.current && !remoteDescSetRef.current && channelRef.current) {
+          console.log("[Intercom Speaker] Re-sending offer (2nd retry)");
+          await channelRef.current.send({
+            type: "broadcast", event: "offer",
+            payload: { sdp: { type: offer.type, sdp: offer.sdp } },
+          });
+          for (const c of collectedCandidates) {
+            await channelRef.current.send({ type: "broadcast", event: "ice-candidate-speaker", payload: { candidate: c } });
+          }
+        }
+      }, 3000);
 
     } catch (e: any) {
       setConnectionState("");
       if (e.name === "NotAllowedError") setError("Permissão de microfone negada");
       else if (e.name === "NotFoundError") setError("Nenhum microfone encontrado");
       else setError("Erro ao acessar microfone");
+      console.error("[Intercom Speaker] Error:", e);
     }
   }, []);
 
   const stopTalking = useCallback(() => {
     if (!talkingRef.current) return;
+    console.log("[Intercom Speaker] Stopping...");
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     pcRef.current?.close();
@@ -344,7 +398,6 @@ export default function IntercomWidget() {
     setReceiving(false);
     setListenerName("");
     setNameInput("");
-    setSelectedListener(null);
   };
 
   const handleBack = () => {
@@ -358,7 +411,6 @@ export default function IntercomWidget() {
     setConnectionState("");
     setReceiving(false);
     setListenerName("");
-    setSelectedListener(null);
   };
 
   const confirmListenerName = () => {
@@ -366,6 +418,13 @@ export default function IntercomWidget() {
     if (!trimmed) return;
     setListenerName(trimmed);
     setRole("listener");
+  };
+
+  // Autoplay unlock for listener
+  const handleUnlockAudio = () => {
+    if (audioRef.current && audioRef.current.srcObject) {
+      audioRef.current.play().catch(console.warn);
+    }
   };
 
   const glassStyle = {
@@ -412,7 +471,7 @@ export default function IntercomWidget() {
               <p className="text-white/40 text-[10px]">Falar com os ouvintes</p>
             </div>
           </button>
-          <button onClick={() => setRole("listener" as any)}
+          <button onClick={() => { setRole("listener"); }}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
             style={{ backgroundColor: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.18)" }}>
             <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,197,94,0.15)" }}>
@@ -466,40 +525,89 @@ export default function IntercomWidget() {
   // ─── Listener mode (active) ───
   if (role === "listener" && listenerName) {
     return (
-      <div className="fixed bottom-20 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}>
+      <div className="fixed bottom-20 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}
+        onClick={handleUnlockAudio}>
         <audio ref={audioRef} autoPlay playsInline />
         <div className="flex items-center gap-2 px-3 py-2.5">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{
-              backgroundColor: receiving ? "rgba(38,143,250,0.2)" : "rgba(34,197,94,0.15)",
-              border: `1px solid ${receiving ? "rgba(38,143,250,0.3)" : "rgba(34,197,94,0.2)"}`,
-            }}>
-            <Headphones size={15} className={receiving ? "text-[#268ffa]" : "text-green-400"} />
+          {/* Animated icon container */}
+          <div className="relative flex-shrink-0">
+            {/* Pulse rings when receiving */}
+            {receiving && (
+              <>
+                <div className="absolute inset-0 rounded-full animate-ping"
+                  style={{ border: "2px solid rgba(38,143,250,0.3)", animationDuration: "1.5s" }} />
+                <div className="absolute -inset-1 rounded-full animate-ping"
+                  style={{ border: "1px solid rgba(38,143,250,0.15)", animationDuration: "2.5s" }} />
+              </>
+            )}
+            <div className="w-9 h-9 rounded-full flex items-center justify-center relative z-10 transition-all duration-300"
+              style={{
+                backgroundColor: receiving ? "rgba(38,143,250,0.25)" : "rgba(34,197,94,0.15)",
+                border: `1.5px solid ${receiving ? "rgba(38,143,250,0.5)" : "rgba(34,197,94,0.2)"}`,
+                boxShadow: receiving ? "0 0 20px rgba(38,143,250,0.3), inset 0 0 8px rgba(38,143,250,0.15)" : "none",
+              }}>
+              {receiving ? (
+                <Volume2 size={15} className="text-[#268ffa]" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
+              ) : (
+                <Headphones size={15} className="text-green-400" />
+              )}
+            </div>
           </div>
+
           <div className="flex-1 min-w-0">
             <p className="text-white text-xs font-bold truncate">{listenerName}</p>
             <div className="flex items-center gap-1 mt-0.5">
-              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors"
                 style={{ backgroundColor: receiving ? "#268ffa" : speakerOnline ? "#22c55e" : "#555" }} />
               <span className="text-white/40 text-[10px] truncate">
                 {receiving ? "Recebendo áudio" : speakerOnline ? "Speaker online" : "Speaker offline"}
               </span>
             </div>
           </div>
+
+          {/* Spectrum bars when receiving */}
           {receiving && (
-            <div className="flex items-end gap-[2px] mr-0.5 h-4">
-              {[0.6, 1, 0.7, 0.9, 0.5].map((h, i) => (
+            <div className="flex items-end gap-[2px] mr-0.5 h-5">
+              {[0.5, 0.8, 1, 0.7, 0.9, 0.6, 0.85].map((h, i) => (
                 <div key={i} className="w-[3px] rounded-full"
-                  style={{ backgroundColor: "#268ffa", height: `${h * 100}%`, animation: `intercomBar 0.${3 + i * 2}s ease-in-out infinite alternate` }} />
+                  style={{
+                    backgroundColor: "#268ffa",
+                    height: `${h * 100}%`,
+                    animation: `intercomBar 0.${3 + i * 2}s ease-in-out infinite alternate`,
+                    opacity: 0.8,
+                  }} />
               ))}
             </div>
           )}
+
           <button onClick={handleClose}
             className="text-white/40 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all" title="Sair">
             <X size={14} />
           </button>
         </div>
-        <style>{`@keyframes intercomBar { 0% { transform: scaleY(0.4); } 100% { transform: scaleY(1); } }`}</style>
+
+        {/* Receiving glow bar at bottom */}
+        {receiving && (
+          <div className="h-[2px] w-full" style={{
+            background: "linear-gradient(90deg, transparent 0%, #268ffa 30%, #268ffa 70%, transparent 100%)",
+            animation: "intercomGlowPulse 2s ease-in-out infinite",
+          }} />
+        )}
+
+        <style>{`
+          @keyframes intercomBar {
+            0% { transform: scaleY(0.3); }
+            100% { transform: scaleY(1); }
+          }
+          @keyframes intercomIconPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.8; }
+          }
+          @keyframes intercomGlowPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+          }
+        `}</style>
       </div>
     );
   }
@@ -599,7 +707,12 @@ export default function IntercomWidget() {
         </div>
       )}
 
-      <style>{`@keyframes intercomBar { 0% { transform: scaleY(0.4); } 100% { transform: scaleY(1); } }`}</style>
+      <style>{`
+        @keyframes intercomBar {
+          0% { transform: scaleY(0.4); }
+          100% { transform: scaleY(1); }
+        }
+      `}</style>
     </div>
   );
 }
