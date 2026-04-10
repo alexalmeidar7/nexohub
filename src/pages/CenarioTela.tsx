@@ -976,28 +976,55 @@ export default function CenarioTela() {
 
   const isLandscape = screenRotation === 90 || screenRotation === 270;
   const isClockwiseLandscape = screenRotation === 90;
-  // Always use vh for consistent sizing — vw is ~1.8x larger on 16:9 screens and causes text overflow
-  const vu = "vh";
+
+  /* ── Fixed 1080×1920 virtual canvas scaled to fit viewport ── */
+  const CANVAS_W = 1080;
+  const CANVAS_H = 1920;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [viewScale, setViewScale] = useState(1);
+
+  useEffect(() => {
+    const el = containerRef.current?.parentElement;
+    if (!el) return;
+    const calc = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      if (isLandscape) {
+        setViewScale(Math.min(vw / CANVAS_H, vh / CANVAS_W));
+      } else {
+        setViewScale(Math.min(vw / CANVAS_W, vh / CANVAS_H));
+      }
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, [isLandscape]);
+
+  // Convert old vh-based sizes to px on the 1080×1920 canvas (1vh ≈ 19.2px on 1920h)
+  const vhToPx = (v: number) => v * CANVAS_H / 100;
+  const vu = "px";
 
   /* Sidebar button size helper */
-  const btnSize = `3.8${vu}`;
-  const iconSize = `1.7${vu}`;
-  const subBtnSize = `2.8${vu}`;
-  const subFontSize = `1.2${vu}`;
-  const sidebarPad = `0.6${vu}`;
+  const btnSize = `${vhToPx(3.8)}${vu}`;
+  const iconSize = `${vhToPx(1.7)}${vu}`;
+  const subBtnSize = `${vhToPx(2.8)}${vu}`;
+  const subFontSize = `${vhToPx(1.2)}${vu}`;
+  const sidebarPad = `${vhToPx(0.6)}${vu}`;
 
   return (
     <div className="fixed" style={{ top: 0, left: 0, right: 0, bottom: 0, background: "#000", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
       <div
+        ref={containerRef}
         className="relative"
         style={{
-          ...(isLandscape
-            ? { width: "100vh", height: "100vw", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
-            : { width: "calc(100vh * 9 / 16)", height: "100vh", maxHeight: "100vh", transform: `rotate(${screenRotation}deg)`, transition: "transform 0.5s ease" }
-          ),
+          width: isLandscape ? CANVAS_H : CANVAS_W,
+          height: isLandscape ? CANVAS_W : CANVAS_H,
+          transform: `scale(${viewScale}) rotate(${screenRotation}deg)`,
+          transformOrigin: "center center",
+          transition: "transform 0.5s ease",
         }}
       >
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `1.8${vu}` }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${vhToPx(1.8)}px` }}>
 
           {/* Fullscreen background layers behind sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
@@ -1028,16 +1055,16 @@ export default function CenarioTela() {
 
           {/* Sidebar — always on top */}
           <div className="flex-shrink-0 flex items-center relative" style={{ width: isLandscape ? "5%" : "8%", zIndex: 10, pointerEvents: "none" }}>
-          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} ${sidebarPad}`, borderRadius: `0 2${vu} 2${vu} 0`, background: isMapTab ? "rgba(18,18,18,0.65)" : "rgba(18,18,18,0.8)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)", borderLeft: "none", marginLeft: "-1px", boxShadow: "4px 0 20px rgba(0,0,0,0.3)" }}>
+          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} ${sidebarPad}`, borderRadius: `0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu} 0`, background: isMapTab ? "rgba(18,18,18,0.65)" : "rgba(18,18,18,0.8)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)", borderLeft: "none", marginLeft: "-1px", boxShadow: "4px 0 20px rgba(0,0,0,0.3)" }}>
             <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "home" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "home" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Home style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
-            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `0.4${vu}`, background: "rgba(255,255,255,0.06)", opacity: config.weather.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
+            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `${vhToPx(0.4)}${vu}`, background: "rgba(255,255,255,0.06)", opacity: config.weather.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
               <button onClick={() => { if (activeTab === "weather") { setActiveTab("home"); } else { setActiveTab("weather"); setWeatherSubTab("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "weather" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "weather" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
                 <CloudSun style={{ width: iconSize, height: iconSize }} className="text-white" />
               </button>
-              <div style={{ overflow: "hidden", maxHeight: activeTab === "weather" ? `20${vu}` : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "weather" ? 1 : 0 }}>
-                <div className="flex flex-col items-center" style={{ gap: `0.4${vu}`, paddingTop: `0.4${vu}` }}>
+              <div style={{ overflow: "hidden", maxHeight: activeTab === "weather" ? `${vhToPx(20)}${vu}` : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "weather" ? 1 : 0 }}>
+                <div className="flex flex-col items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, paddingTop: `${vhToPx(0.4)}${vu}` }}>
                   {config.weather.enabled && config.weather.showCurrent && (
                     <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("today"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "weather" && weatherSubTab === "today" ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: activeTab === "weather" && weatherSubTab === "today" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>1</button>
                   )}
@@ -1050,15 +1077,15 @@ export default function CenarioTela() {
                 </div>
               </div>
             </div>
-            <button onClick={() => setActiveTab("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `0.3${vu}`, background: activeTab === "traffic" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
+            <button onClick={() => setActiveTab("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: activeTab === "traffic" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Car style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
-            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `0.4${vu}`, background: "rgba(255,255,255,0.06)", opacity: config.currency.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
+            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `${vhToPx(0.4)}${vu}`, background: "rgba(255,255,255,0.06)", opacity: config.currency.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
               <button onClick={() => { if (activeTab === "currency") { setActiveTab("home"); } else { setActiveTab("currency"); setCurrencySubTab("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "currency" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "currency" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
                 <DollarSign style={{ width: iconSize, height: iconSize }} className="text-white" />
               </button>
-              <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? `10${vu}` : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
-                <div className="flex flex-col items-center" style={{ gap: `0.4${vu}`, paddingTop: `0.4${vu}` }}>
+              <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? `${vhToPx(10)}${vu}` : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
+                <div className="flex flex-col items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, paddingTop: `${vhToPx(0.4)}${vu}` }}>
                   {config.currency.enabled && (
                     <button onClick={() => { setActiveTab("currency"); setCurrencySubTab("moedas"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "currency" && currencySubTab === "moedas" ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: activeTab === "currency" && currencySubTab === "moedas" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>1</button>
                   )}
@@ -1071,12 +1098,12 @@ export default function CenarioTela() {
             <button onClick={() => setActiveTab("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "chat" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <MessageCircle style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
-            <button onClick={() => { setDrawingActive(p => { const next = !p; if (!next) setShowDrawOptions(false); return next; }); }} onContextMenu={(e) => { e.preventDefault(); if (drawingActive) setShowDrawOptions(p => !p); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `0.3${vu}`, background: drawingActive ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: drawingActive ? `2px solid ${accentColor}` : "2px solid transparent", transition: "all 0.25s ease" }}>
+            <button onClick={() => { setDrawingActive(p => { const next = !p; if (!next) setShowDrawOptions(false); return next; }); }} onContextMenu={(e) => { e.preventDefault(); if (drawingActive) setShowDrawOptions(p => !p); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: drawingActive ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: drawingActive ? `2px solid ${accentColor}` : "2px solid transparent", transition: "all 0.25s ease" }}>
               <Pen style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
             {drawingActive && (
               <button onClick={() => setShowDrawOptions(p => !p)} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, background: showDrawOptions ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: showDrawOptions ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>
-                <div style={{ width: `1.2${vu}`, height: `1.2${vu}`, borderRadius: "50%", background: drawColor }} />
+                <div style={{ width: `${vhToPx(1.2)}${vu}`, height: `${vhToPx(1.2)}${vu}`, borderRadius: "50%", background: drawColor }} />
               </button>
             )}
           </div>
@@ -1152,13 +1179,13 @@ export default function CenarioTela() {
                   {(() => {
                     const custom = elStyle("clock", "top-left", { animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" });
                     const style: React.CSSProperties = custom
-                      ?? { position: "absolute", top: `calc(3${vu} + 120px)`, left: `3${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" };
+                      ?? { position: "absolute", top: `calc(${vhToPx(3)}${vu} + 120px)`, left: `${vhToPx(3)}${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" };
                     return (
                       <div style={style}>
-                        <div className="font-black" style={{ fontSize: `5${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
+                        <div className="font-black" style={{ fontSize: `${vhToPx(5)}${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
                           {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                         </div>
-                        <div className="font-medium" style={{ fontSize: `1.6${vu}`, color: accentColor, marginTop: `0.4${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                        <div className="font-medium" style={{ fontSize: `${vhToPx(1.6)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.4)}${vu}`, fontVariantNumeric: "tabular-nums" }}>
                           {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                         </div>
                       </div>
@@ -1169,10 +1196,10 @@ export default function CenarioTela() {
                   {sponsorLogos.length > 0 && (() => {
                     const custom = elStyle("sponsor", "top-left", { animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" });
                     const style: React.CSSProperties = custom
-                      ?? { position: "absolute", top: `calc(3${vu} + 30px)`, right: `3${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
+                      ?? { position: "absolute", top: `calc(${vhToPx(3)}${vu} + 30px)`, right: `${vhToPx(3)}${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
                     return (
                       <div style={style}>
-                        <div className="relative flex items-center justify-end" style={{ height: `21${vu}` }}>
+                        <div className="relative flex items-center justify-end" style={{ height: `${vhToPx(21)}${vu}` }}>
                           {sponsorLogos.map((l, i) => l.logo_url && (
                             <img
                               key={l.id}
@@ -1181,7 +1208,7 @@ export default function CenarioTela() {
                               className="object-contain"
                               style={{
                                 position: "absolute",
-                                maxWidth: `50${vu}`, maxHeight: `20${vu}`,
+                                maxWidth: `${vhToPx(50)}${vu}`, maxHeight: `${vhToPx(20)}${vu}`,
                                 right: 0,
                                 opacity: i === sponsorIdx ? 1 : 0,
                                 transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
@@ -1196,10 +1223,10 @@ export default function CenarioTela() {
                   })()}
 
                   {/* ── SYNC indicator (below clock) ── */}
-                  <div style={{ position: "absolute", top: `13${vu}`, left: `3${vu}`, zIndex: 20 }}>
-                    <div className="flex items-center" style={{ gap: `0.4${vu}`, opacity: 0.5 }}>
-                      <div className="rounded-full" style={{ width: `0.6${vu}`, height: `0.6${vu}`, background: realtimeConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: realtimeConnected ? `0 0 6px var(--layout-accent-color, #4ade80)` : "0 0 6px #ef4444" }} />
-                      <span className="font-semibold uppercase tracking-wider" style={{ fontSize: `0.8${vu}`, letterSpacing: "0.1em" }}>
+                  <div style={{ position: "absolute", top: `${vhToPx(13)}${vu}`, left: `${vhToPx(3)}${vu}`, zIndex: 20 }}>
+                    <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, opacity: 0.5 }}>
+                      <div className="rounded-full" style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, background: realtimeConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: realtimeConnected ? `0 0 6px var(--layout-accent-color, #4ade80)` : "0 0 6px #ef4444" }} />
+                      <span className="font-semibold uppercase tracking-wider" style={{ fontSize: `${vhToPx(0.8)}${vu}`, letterSpacing: "0.1em" }}>
                         {realtimeConnected ? "SYNC" : "OFF"}
                       </span>
                     </div>
@@ -1214,7 +1241,7 @@ export default function CenarioTela() {
                     {musicData ? (
                       <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                         {/* Vinyl disc */}
-                        <div className="relative" style={{ width: `${isLandscape ? 58.8 : 73.5}${vu}`, height: `${isLandscape ? 58.8 : 73.5}${vu}` }}>
+                        <div className="relative" style={{ width: `${vhToPx(isLandscape ? 58.8 : 73.5)}${vu}`, height: `${vhToPx(isLandscape ? 58.8 : 73.5)}${vu}` }}>
                           <div style={{
                             width: "100%", height: "100%",
                             borderRadius: "50%",
@@ -1235,7 +1262,7 @@ export default function CenarioTela() {
                                 <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                               ) : (
                                 <div className="flex items-center justify-center" style={{ width: "100%", height: "100%", background: "rgba(255,255,255,0.08)" }}>
-                                  <Music style={{ width: `4${vu}`, height: `4${vu}`, opacity: 0.3, color: "#fff" }} />
+                                  <Music style={{ width: `${vhToPx(4)}${vu}`, height: `${vhToPx(4)}${vu}`, opacity: 0.3, color: "#fff" }} />
                                 </div>
                               )}
                             </div>
@@ -1250,20 +1277,20 @@ export default function CenarioTela() {
                           </div>
                         </div>
                         {/* Music title + artist below vinyl */}
-                        <div style={{ marginTop: `2${vu}`, textAlign: "center", maxWidth: `${isLandscape ? 40 : 40}${vu}` }}>
-                          <div className="font-black truncate" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, color: accentColor, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
-                          <div className="font-medium truncate" style={{ fontSize: `1.6${vu}`, opacity: 0.6, marginTop: `0.3${vu}` }}>{musicData.artista}</div>
+                        <div style={{ marginTop: `${vhToPx(2)}${vu}`, textAlign: "center", maxWidth: `${vhToPx(isLandscape ? 40 : 40)}${vu}` }}>
+                          <div className="font-black truncate" style={{ fontSize: `${vhToPx(2.4)}${vu}`, lineHeight: 1.2, color: accentColor, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
+                          <div className="font-medium truncate" style={{ fontSize: `${vhToPx(1.6)}${vu}`, opacity: 0.6, marginTop: `${vhToPx(0.3)}${vu}` }}>{musicData.artista}</div>
                         </div>
                       </div>
                     ) : currentProgram?.selo ? (
                       /* No music: show program logo in center */
                       <div style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                        <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${isLandscape ? 35 : 35}${vu}`, maxHeight: `${isLandscape ? 30 : 35}${vu}` }} />
+                        <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${vhToPx(isLandscape ? 35 : 35)}${vu}`, maxHeight: `${vhToPx(isLandscape ? 30 : 35)}${vu}` }} />
                       </div>
                     ) : currentProgram ? (
-                      <div className="font-black text-center" style={{ fontSize: `4${vu}`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>{currentProgram.nome}</div>
+                      <div className="font-black text-center" style={{ fontSize: `${vhToPx(4)}${vu}`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>{currentProgram.nome}</div>
                     ) : (
-                      <div className="opacity-40 text-center" style={{ fontSize: `1.8${vu}` }}>Nenhum programa no ar</div>
+                      <div className="opacity-40 text-center" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>Nenhum programa no ar</div>
                     )}
                   </div>;
                   })()}
@@ -1279,7 +1306,7 @@ export default function CenarioTela() {
                           src={currentProgram.apresentadorFoto}
                           alt={currentProgram.apresentador || ""}
                           style={{
-                            height: `81${vu}`,
+                            height: `${vhToPx(81)}${vu}`,
                             objectFit: "contain",
                             objectPosition: "bottom left",
                             filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))",
@@ -1293,11 +1320,11 @@ export default function CenarioTela() {
                   {currentProgram?.apresentador && (() => {
                     const custom = elStyle("presenterInfo", "bottom-left", { zIndex: 9, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.3s both" });
                     const style: React.CSSProperties = custom
-                      ?? { position: "absolute", bottom: `8${vu}`, left: `18${vu}`, zIndex: 9, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.3s both" };
+                      ?? { position: "absolute", bottom: `${vhToPx(8)}${vu}`, left: `${vhToPx(18)}${vu}`, zIndex: 9, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.3s both" };
                     return (
                       <div style={style}>
-                        <div className="font-black" style={{ fontSize: `2.4${vu}`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
-                        <div className="font-medium" style={{ fontSize: `1.4${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
+                        <div className="font-black" style={{ fontSize: `${vhToPx(2.4)}${vu}`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
+                        <div className="font-medium" style={{ fontSize: `${vhToPx(1.4)}${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
                           {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
                         </div>
                       </div>
@@ -1312,9 +1339,9 @@ export default function CenarioTela() {
                     return (
                       <div style={style}>
                         {currentProgram?.selo ? (
-                          <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `30${vu}`, maxHeight: `25${vu}` }} />
+                          <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${vhToPx(30)}${vu}`, maxHeight: `${vhToPx(25)}${vu}` }} />
                         ) : currentProgram ? (
-                          <div className="font-black text-right" style={{ fontSize: `3${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", maxWidth: `22${vu}` }}>{currentProgram.nome}</div>
+                          <div className="font-black text-right" style={{ fontSize: `${vhToPx(3)}${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", maxWidth: `${vhToPx(22)}${vu}` }}>{currentProgram.nome}</div>
                         ) : null}
                       </div>
                     );
@@ -1327,12 +1354,12 @@ export default function CenarioTela() {
                       ?? { position: "absolute", bottom: "40px", right: "50px", zIndex: 12, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.4s both" };
                     return (
                       <div style={style}>
-                        <div className="flex items-start" style={{ gap: `1${vu}` }}>
-                          <div style={{ width: "2px", height: `5${vu}`, background: "rgba(255,255,255,0.3)", marginTop: `0.3${vu}`, flexShrink: 0 }} />
+                        <div className="flex items-start" style={{ gap: `${vhToPx(1)}${vu}` }}>
+                          <div style={{ width: "2px", height: `${vhToPx(5)}${vu}`, background: "rgba(255,255,255,0.3)", marginTop: `${vhToPx(0.3)}${vu}`, flexShrink: 0 }} />
                           <div>
-                            <div className="font-semibold" style={{ fontSize: `1.2${vu}`, color: accentColor, marginBottom: `0.2${vu}` }}>a seguir</div>
-                            <div className="font-bold" style={{ fontSize: `2${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
-                            <div className="font-medium" style={{ fontSize: `1.3${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", marginTop: `0.2${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                            <div className="font-semibold" style={{ fontSize: `${vhToPx(1.2)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.2)}${vu}` }}>a seguir</div>
+                            <div className="font-bold" style={{ fontSize: `${vhToPx(2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
+                            <div className="font-medium" style={{ fontSize: `${vhToPx(1.3)}${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                           </div>
                         </div>
                       </div>
@@ -1340,7 +1367,7 @@ export default function CenarioTela() {
                   })()}
 
                   {/* Program progress bar — neon glow style */}
-                  <div style={{ position: "absolute", bottom: `2${vu}`, left: 0, right: 0, height: "2px", background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
+                  <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: 0, right: 0, height: "2px", background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
                     <div style={{
                       width: `${progressPct}%`,
                       height: "100%",
@@ -1359,68 +1386,68 @@ export default function CenarioTela() {
                 {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d47a1 0%, #1565c0 25%, #1e88e5 50%, #42a5f5 75%, #90caf9 100%)" }} />}
                 <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-0 left-0 right-0 h-1/3" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.3), transparent)" }} />
-                <div className={`relative z-10 flex flex-col h-full items-center justify-center`} style={{ padding: `${isLandscape ? 2 : 3}${vu}`, paddingLeft: `calc(${isLandscape ? 2 : 3}${vu} + 50px)` }}>
+                <div className={`relative z-10 flex flex-col h-full items-center justify-center`} style={{ padding: `${vhToPx(isLandscape ? 2 : 3)}${vu}`, paddingLeft: `calc(${vhToPx(isLandscape ? 2 : 3)}${vu} + 50px)` }}>
                   {liveWeather ? (<>
                     {weatherSubTab === "today" && (<>
                       {isLandscape ? (
                         /* ── LANDSCAPE: horizontal layout ── */
-                        <div className="flex-1 flex items-center justify-center" style={{ gap: `4${vu}` }}>
+                        <div className="flex-1 flex items-center justify-center" style={{ gap: `${vhToPx(4)}${vu}` }}>
                           {/* Left: City + big temp */}
                           <div className="flex flex-col items-center">
-                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: accentColor, marginBottom: `0.5${vu}` }}>agora</div>
-                            <div className="font-black leading-none drop-shadow-lg text-center" style={{ fontSize: `4${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
-                            <div style={{ width: `14${vu}`, height: `14${vu}`, marginTop: `2${vu}`, filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.25))" }}>
+                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.5)}${vu}` }}>agora</div>
+                            <div className="font-black leading-none drop-shadow-lg text-center" style={{ fontSize: `${vhToPx(4)}${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
+                            <div style={{ width: `${vhToPx(14)}${vu}`, height: `${vhToPx(14)}${vu}`, marginTop: `${vhToPx(2)}${vu}`, filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.25))" }}>
                               <WeatherIcon code={liveWeather.current.code} size={160} forceDay />
                             </div>
-                            <div className="font-black drop-shadow-lg" style={{ fontSize: `10${vu}`, lineHeight: 1, marginTop: `1${vu}`, textShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>{liveWeather.current.temp}°</div>
-                            <div className="font-semibold opacity-90" style={{ fontSize: `2${vu}`, marginTop: `0.3${vu}` }}>{getWLabel(liveWeather.current.code)}</div>
+                            <div className="font-black drop-shadow-lg" style={{ fontSize: `${vhToPx(10)}${vu}`, lineHeight: 1, marginTop: `${vhToPx(1)}${vu}`, textShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>{liveWeather.current.temp}°</div>
+                            <div className="font-semibold opacity-90" style={{ fontSize: `${vhToPx(2)}${vu}`, marginTop: `${vhToPx(0.3)}${vu}` }}>{getWLabel(liveWeather.current.code)}</div>
                           </div>
                           {/* Right: details card */}
-                          <div className="rounded-3xl flex flex-col justify-center" style={{ padding: `3${vu} 3.5${vu}`, background: "rgba(255,255,255,0.1)", WebkitBackdropFilter: "blur(24px)", backdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 12px 40px rgba(0,0,0,0.15)" }}>
-                            <div className="flex items-center" style={{ gap: `1.2${vu}`, marginBottom: `2.5${vu}` }}>
-                              <Thermometer style={{ width: `3${vu}`, height: `3${vu}`, opacity: 0.8 }} />
-                              <span className="font-bold" style={{ fontSize: `3${vu}` }}>Mín {liveWeather.daily[0]?.min ?? "--"}° / Máx {liveWeather.daily[0]?.max ?? "--"}°</span>
+                          <div className="rounded-3xl flex flex-col justify-center" style={{ padding: `${vhToPx(3)}${vu} ${vhToPx(3.5)}${vu}`, background: "rgba(255,255,255,0.1)", WebkitBackdropFilter: "blur(24px)", backdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 12px 40px rgba(0,0,0,0.15)" }}>
+                            <div className="flex items-center" style={{ gap: `${vhToPx(1.2)}${vu}`, marginBottom: `${vhToPx(2.5)}${vu}` }}>
+                              <Thermometer style={{ width: `${vhToPx(3)}${vu}`, height: `${vhToPx(3)}${vu}`, opacity: 0.8 }} />
+                              <span className="font-bold" style={{ fontSize: `${vhToPx(3)}${vu}` }}>Mín {liveWeather.daily[0]?.min ?? "--"}° / Máx {liveWeather.daily[0]?.max ?? "--"}°</span>
                             </div>
-                            <div className="flex items-center" style={{ gap: `1.2${vu}`, marginBottom: `2${vu}` }}>
-                              <Droplets style={{ width: `3${vu}`, height: `3${vu}`, opacity: 0.8 }} />
-                              <span className="font-semibold" style={{ fontSize: `2.8${vu}` }}>Umidade {liveWeather.current.humidity}%</span>
+                            <div className="flex items-center" style={{ gap: `${vhToPx(1.2)}${vu}`, marginBottom: `${vhToPx(2)}${vu}` }}>
+                              <Droplets style={{ width: `${vhToPx(3)}${vu}`, height: `${vhToPx(3)}${vu}`, opacity: 0.8 }} />
+                              <span className="font-semibold" style={{ fontSize: `${vhToPx(2.8)}${vu}` }}>Umidade {liveWeather.current.humidity}%</span>
                             </div>
-                            <div className="flex items-center" style={{ gap: `1.2${vu}` }}>
-                              <span style={{ fontSize: `3${vu}` }}>🌧</span>
-                              <span className="font-semibold" style={{ fontSize: `2.8${vu}` }}>Precipitação {liveWeather.daily[0]?.precip ?? 0}%</span>
+                            <div className="flex items-center" style={{ gap: `${vhToPx(1.2)}${vu}` }}>
+                              <span style={{ fontSize: `${vhToPx(3)}${vu}` }}>🌧</span>
+                              <span className="font-semibold" style={{ fontSize: `${vhToPx(2.8)}${vu}` }}>Precipitação {liveWeather.daily[0]?.precip ?? 0}%</span>
                             </div>
                           </div>
                         </div>
                       ) : (
                         /* ── PORTRAIT: original vertical layout ── */
-                        <div style={{ width: "85%", maxWidth: `42${vu}` }}>
-                      <div className="flex items-start justify-between" style={{ marginBottom: `1.5${vu}` }}>
+                        <div style={{ width: "85%", maxWidth: `${vhToPx(42)}${vu}` }}>
+                      <div className="flex items-start justify-between" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
                         <div>
-                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `4${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
-                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: accentColor, marginTop: `0.5${vu}` }}>agora</div>
+                          <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `${vhToPx(4)}${vu}`, letterSpacing: "-0.02em" }}>{weatherCity || config.city || "Cidade"}</div>
+                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.5)}${vu}` }}>agora</div>
                         </div>
-                        <div style={{ width: `6${vu}`, height: `6${vu}` }}>
+                        <div style={{ width: `${vhToPx(6)}${vu}`, height: `${vhToPx(6)}${vu}` }}>
                           <WeatherIcon code={liveWeather.current.code} size={80} />
                         </div>
                       </div>
-                      <div className="rounded-2xl flex flex-col" style={{ padding: `2${vu}`, gap: `1.5${vu}`, background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
-                        <div className="flex items-center" style={{ gap: `2${vu}` }}>
-                          <div className="drop-shadow-xl" style={{ width: `12${vu}`, height: `12${vu}`, filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.2))" }}>
+                      <div className="rounded-2xl flex flex-col" style={{ padding: `${vhToPx(2)}${vu}`, gap: `${vhToPx(1.5)}${vu}`, background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+                        <div className="flex items-center" style={{ gap: `${vhToPx(2)}${vu}` }}>
+                          <div className="drop-shadow-xl" style={{ width: `${vhToPx(12)}${vu}`, height: `${vhToPx(12)}${vu}`, filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.2))" }}>
                             <WeatherIcon code={liveWeather.current.code} size={160} forceDay />
                           </div>
                           <div className="flex flex-col">
-                            <div className="font-black drop-shadow-lg" style={{ fontSize: `6${vu}`, lineHeight: 1 }}>{liveWeather.current.temp}°</div>
-                            <div className="font-medium opacity-90" style={{ fontSize: `1.8${vu}` }}>{getWLabel(liveWeather.current.code)}</div>
+                            <div className="font-black drop-shadow-lg" style={{ fontSize: `${vhToPx(6)}${vu}`, lineHeight: 1 }}>{liveWeather.current.temp}°</div>
+                            <div className="font-medium opacity-90" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>{getWLabel(liveWeather.current.code)}</div>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between rounded-xl" style={{ padding: `1.5${vu} 2${vu}`, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                          <div className="flex items-center" style={{ gap: `0.8${vu}` }}>
-                            <Thermometer style={{ width: `2${vu}`, height: `2${vu}`, opacity: 0.8 }} />
-                            <span className="font-bold" style={{ fontSize: `2${vu}` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
+                        <div className="flex items-center justify-between rounded-xl" style={{ padding: `${vhToPx(1.5)}${vu} ${vhToPx(2)}${vu}`, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                          <div className="flex items-center" style={{ gap: `${vhToPx(0.8)}${vu}` }}>
+                            <Thermometer style={{ width: `${vhToPx(2)}${vu}`, height: `${vhToPx(2)}${vu}`, opacity: 0.8 }} />
+                            <span className="font-bold" style={{ fontSize: `${vhToPx(2)}${vu}` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
                           </div>
-                          <div className="flex items-center" style={{ gap: `1.5${vu}`, fontSize: `1.6${vu}` }}>
-                            <span className="flex items-center" style={{ gap: `0.4${vu}` }}><Droplets style={{ width: `1.6${vu}`, height: `1.6${vu}`, opacity: 0.8 }} /> {liveWeather.current.humidity}%</span>
-                            <span className="flex items-center" style={{ gap: `0.4${vu}` }}>🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
+                          <div className="flex items-center" style={{ gap: `${vhToPx(1.5)}${vu}`, fontSize: `${vhToPx(1.6)}${vu}` }}>
+                            <span className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}` }}><Droplets style={{ width: `${vhToPx(1.6)}${vu}`, height: `${vhToPx(1.6)}${vu}`, opacity: 0.8 }} /> {liveWeather.current.humidity}%</span>
+                            <span className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}` }}>🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
                           </div>
                         </div>
                       </div>
@@ -1431,64 +1458,64 @@ export default function CenarioTela() {
                       {isLandscape ? (
                         /* ── LANDSCAPE FORECAST ── */
                         <div className="flex flex-col h-full">
-                          <div className="text-center" style={{ marginBottom: `1.5${vu}` }}>
-                            <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `4.5${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
-                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `1.8${vu}`, color: accentColor, marginTop: `0.3${vu}` }}>próximos dias</div>
+                          <div className="text-center" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
+                            <div className="font-black leading-none drop-shadow-lg" style={{ fontSize: `${vhToPx(4.5)}${vu}`, letterSpacing: "-0.02em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>{weatherCity || config.city || "Cidade"}</div>
+                            <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.3)}${vu}` }}>próximos dias</div>
                           </div>
-                          <div className="flex-1 flex flex-col justify-center" style={{ gap: `1.2${vu}` }}>
+                          <div className="flex-1 flex flex-col justify-center" style={{ gap: `${vhToPx(1.2)}${vu}` }}>
                             {liveWeather.daily.slice(1, 6).map((d, i) => (
-                              <div key={i} className={`flex items-center rounded-2xl cenario-anim-row-${i + 1}`} style={{ padding: `1.5${vu} 2${vu}`, background: "rgba(0,0,0,0.35)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                                <span className="font-bold capitalize" style={{ fontSize: `2.5${vu}`, width: "22%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                              <div key={i} className={`flex items-center rounded-2xl cenario-anim-row-${i + 1}`} style={{ padding: `${vhToPx(1.5)}${vu} ${vhToPx(2)}${vu}`, background: "rgba(0,0,0,0.35)", WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                                <span className="font-bold capitalize" style={{ fontSize: `${vhToPx(2.5)}${vu}`, width: "22%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
                                 <div className="flex items-center justify-center" style={{ width: "14%" }}>
-                                  <div style={{ width: `5.5${vu}`, height: `5.5${vu}` }}><WeatherIcon code={d.code} size={64} forceDay /></div>
+                                  <div style={{ width: `${vhToPx(5.5)}${vu}`, height: `${vhToPx(5.5)}${vu}` }}><WeatherIcon code={d.code} size={64} forceDay /></div>
                                 </div>
-                                <div className="flex items-center" style={{ width: "38%", gap: `1.2${vu}`, opacity: 0.7 }}>
-                                  <span className="flex items-center" style={{ fontSize: `1.8${vu}`, gap: `0.4${vu}` }}>💧{d.precip}%</span>
-                                  <span className="flex items-center" style={{ fontSize: `1.8${vu}`, gap: `0.4${vu}` }}>{d.rainMm}mm</span>
-                                  <span className="flex items-center" style={{ fontSize: `1.8${vu}`, gap: `0.4${vu}` }}>🌡{d.humidity}%</span>
-                                  <span className="flex items-center" style={{ fontSize: `1.8${vu}`, gap: `0.4${vu}` }}>🌬{d.windMax}km/h</span>
+                                <div className="flex items-center" style={{ width: "38%", gap: `${vhToPx(1.2)}${vu}`, opacity: 0.7 }}>
+                                  <span className="flex items-center" style={{ fontSize: `${vhToPx(1.8)}${vu}`, gap: `${vhToPx(0.4)}${vu}` }}>💧{d.precip}%</span>
+                                  <span className="flex items-center" style={{ fontSize: `${vhToPx(1.8)}${vu}`, gap: `${vhToPx(0.4)}${vu}` }}>{d.rainMm}mm</span>
+                                  <span className="flex items-center" style={{ fontSize: `${vhToPx(1.8)}${vu}`, gap: `${vhToPx(0.4)}${vu}` }}>🌡{d.humidity}%</span>
+                                  <span className="flex items-center" style={{ fontSize: `${vhToPx(1.8)}${vu}`, gap: `${vhToPx(0.4)}${vu}` }}>🌬{d.windMax}km/h</span>
                                 </div>
-                                <span className="font-black tabular-nums text-right" style={{ fontSize: `3${vu}`, width: "26%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{d.min}° / {d.max}°</span>
+                                <span className="font-black tabular-nums text-right" style={{ fontSize: `${vhToPx(3)}${vu}`, width: "26%", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{d.min}° / {d.max}°</span>
                               </div>
                             ))}
                           </div>
                         </div>
                       ) : (
                         /* ── PORTRAIT FORECAST ── */
-                        <div className="flex flex-col items-center justify-end" style={{ width: "92%", maxWidth: `52${vu}`, height: "100%", paddingBottom: `6${vu}` }}>
+                        <div className="flex flex-col items-center justify-end" style={{ width: "92%", maxWidth: `${vhToPx(52)}${vu}`, height: "100%", paddingBottom: `${vhToPx(6)}${vu}` }}>
                           {/* Spacer pushes content to bottom */}
-                          <div style={{ flex: 1, minHeight: `12${vu}` }} />
+                          <div style={{ flex: 1, minHeight: `${vhToPx(12)}${vu}` }} />
                           {/* Header */}
-                          <div className="text-center cenario-anim-title" style={{ marginBottom: `3${vu}` }}>
-                            <div className="font-extrabold leading-none drop-shadow-lg" style={{ fontSize: `5.5${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.5)" }}>{weatherCity || config.city || "Cidade"}</div>
-                            <div className="font-bold uppercase tracking-widest cenario-anim-subtitle" style={{ fontSize: `2${vu}`, color: accentColor, marginTop: `0.6${vu}`, letterSpacing: "0.15em" }}>próximos dias</div>
+                          <div className="text-center cenario-anim-title" style={{ marginBottom: `${vhToPx(3)}${vu}` }}>
+                            <div className="font-extrabold leading-none drop-shadow-lg" style={{ fontSize: `${vhToPx(5.5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.5)" }}>{weatherCity || config.city || "Cidade"}</div>
+                            <div className="font-bold uppercase tracking-widest cenario-anim-subtitle" style={{ fontSize: `${vhToPx(2)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.6)}${vu}`, letterSpacing: "0.15em" }}>próximos dias</div>
                           </div>
                           {/* Forecast cards */}
-                          <div className="w-full flex" style={{ gap: `1.2${vu}`, justifyContent: "center" }}>
+                          <div className="w-full flex" style={{ gap: `${vhToPx(1.2)}${vu}`, justifyContent: "center" }}>
                             {liveWeather.daily.slice(1, 5).map((d, i) => (
-                              <div key={i} className={`flex flex-col items-center cenario-anim-row-${i + 1}`} style={{ padding: `2.5${vu} 1.5${vu} 2${vu}`, background: "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.35) 100%)", borderRadius: `2${vu}`, WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 8px 32px rgba(0,0,0,0.25)", flex: 1, minWidth: 0, maxWidth: `22${vu}` }}>
+                              <div key={i} className={`flex flex-col items-center cenario-anim-row-${i + 1}`} style={{ padding: `${vhToPx(2.5)}${vu} ${vhToPx(1.5)}${vu} ${vhToPx(2)}${vu}`, background: "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.35) 100%)", borderRadius: `${vhToPx(2)}${vu}`, WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 8px 32px rgba(0,0,0,0.25)", flex: 1, minWidth: 0, maxWidth: `${vhToPx(22)}${vu}` }}>
                                 {/* Day name */}
-                                <span className="font-black capitalize text-center" style={{ fontSize: `2.4${vu}`, lineHeight: 1.1, marginBottom: `1.5${vu}`, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                                <span className="font-black capitalize text-center" style={{ fontSize: `${vhToPx(2.4)}${vu}`, lineHeight: 1.1, marginBottom: `${vhToPx(1.5)}${vu}`, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
                                 {/* Icon */}
-                                <div style={{ width: `7${vu}`, height: `7${vu}`, marginBottom: `1.2${vu}` }}><WeatherIcon code={d.code} size={96} forceDay /></div>
+                                <div style={{ width: `${vhToPx(7)}${vu}`, height: `${vhToPx(7)}${vu}`, marginBottom: `${vhToPx(1.2)}${vu}` }}><WeatherIcon code={d.code} size={96} forceDay /></div>
                                 {/* Precip */}
-                                <div className="flex items-center justify-center" style={{ gap: `0.5${vu}`, opacity: 0.7, fontSize: `1.4${vu}`, marginBottom: `0.4${vu}`, color: "#7dd3fc" }}>
+                                <div className="flex items-center justify-center" style={{ gap: `${vhToPx(0.5)}${vu}`, opacity: 0.7, fontSize: `${vhToPx(1.4)}${vu}`, marginBottom: `${vhToPx(0.4)}${vu}`, color: "#7dd3fc" }}>
                                   <span>💧{d.precip}%</span>
                                 </div>
                                 {/* Rain + Humidity */}
-                                <div className="flex items-center justify-center" style={{ gap: `0.5${vu}`, opacity: 0.5, fontSize: `1.2${vu}`, marginBottom: `0.4${vu}` }}>
+                                <div className="flex items-center justify-center" style={{ gap: `${vhToPx(0.5)}${vu}`, opacity: 0.5, fontSize: `${vhToPx(1.2)}${vu}`, marginBottom: `${vhToPx(0.4)}${vu}` }}>
                                   <span>{d.rainMm}mm</span>
                                   <span style={{ opacity: 0.4 }}>·</span>
                                   <span>{d.humidity}%</span>
                                 </div>
                                 {/* Wind */}
-                                <div className="flex items-center justify-center" style={{ gap: `0.4${vu}`, opacity: 0.45, fontSize: `1.1${vu}`, marginBottom: `1.5${vu}` }}>
+                                <div className="flex items-center justify-center" style={{ gap: `${vhToPx(0.4)}${vu}`, opacity: 0.45, fontSize: `${vhToPx(1.1)}${vu}`, marginBottom: `${vhToPx(1.5)}${vu}` }}>
                                   <span>🌬 {d.windMax}km/h</span>
                                 </div>
                                 {/* Separator */}
-                                <div style={{ width: "60%", height: 1, background: "rgba(255,255,255,0.1)", marginBottom: `1.2${vu}` }} />
+                                <div style={{ width: "60%", height: 1, background: "rgba(255,255,255,0.1)", marginBottom: `${vhToPx(1.2)}${vu}` }} />
                                 {/* Temps */}
-                                <div className="font-black tabular-nums text-center" style={{ fontSize: `3.2${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>{d.min}° / {d.max}°</div>
+                                <div className="font-black tabular-nums text-center" style={{ fontSize: `${vhToPx(3.2)}${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>{d.min}° / {d.max}°</div>
                               </div>
                             ))}
                           </div>
@@ -1497,7 +1524,7 @@ export default function CenarioTela() {
                     </>)}
                     {weatherSubTab === "satellite" && null}
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `1.8${vu}` }}>
+                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>
                       <CloudSun size={24} className="mr-1" /> {weatherCity ? "Carregando..." : "Configure uma cidade"}
                     </div>
                   )}
@@ -1507,14 +1534,14 @@ export default function CenarioTela() {
 
             {/* ═══ TRAFFIC ═══ */}
             {activeTab === "traffic" && (
-              <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ padding: `3${vu}`, pointerEvents: "none" }}>
+              <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ padding: `${vhToPx(3)}${vu}`, pointerEvents: "none" }}>
                 {config.traffic.enabled && trafficCoords ? (
-                  <div className="flex items-center rounded-full" style={{ padding: `0.8${vu} 2${vu}`, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)", marginBottom: `3${vu}` }}>
-                    <Car style={{ width: `2${vu}`, height: `2${vu}`, color: accentColor, marginRight: `0.8${vu}` }} />
-                    <span className="font-bold" style={{ fontSize: `2${vu}`, color: "#fff" }}>{config.traffic.city || config.city || "Trânsito"}</span>
+                  <div className="flex items-center rounded-full" style={{ padding: `${vhToPx(0.8)}${vu} ${vhToPx(2)}${vu}`, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)", marginBottom: `${vhToPx(3)}${vu}` }}>
+                    <Car style={{ width: `${vhToPx(2)}${vu}`, height: `${vhToPx(2)}${vu}`, color: accentColor, marginRight: `${vhToPx(0.8)}${vu}` }} />
+                    <span className="font-bold" style={{ fontSize: `${vhToPx(2)}${vu}`, color: "#fff" }}>{config.traffic.city || config.city || "Trânsito"}</span>
                   </div>
                 ) : (
-                  <div className="opacity-50" style={{ color: "#333", fontSize: `1.8${vu}` }}>Trânsito desativado</div>
+                  <div className="opacity-50" style={{ color: "#333", fontSize: `${vhToPx(1.8)}${vu}` }}>Trânsito desativado</div>
                 )}
               </div>
             )}
@@ -1524,79 +1551,79 @@ export default function CenarioTela() {
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.45)" }} />}
                 {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d1117 0%, #161b22 50%, #0d1117 100%)" }} />}
-                <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${isLandscape ? 2 : 3}${vu}` }}>
+                <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(isLandscape ? 2 : 3)}${vu}` }}>
                     {config.currency.enabled ? (<>
                     {/* Header centered */}
-                    <div className="text-center" style={{ marginBottom: `${isLandscape ? 1.5 : 2}${vu}` }}>
-                      <DollarSign className="drop-shadow-lg cenario-anim-icon mx-auto" style={{ width: `${isLandscape ? 4 : 4}${vu}`, height: `${isLandscape ? 4 : 4}${vu}`, color: accentColor, opacity: 0.7, marginBottom: `0.5${vu}` }} />
-                      <div className="font-extrabold leading-none drop-shadow-lg cenario-anim-title" style={{ fontSize: `${isLandscape ? 3.5 : 4}${vu}`, letterSpacing: "-0.02em" }}>cotação</div>
-                      <div className="font-bold cenario-anim-subtitle" style={{ fontSize: `${isLandscape ? 1.8 : 2}${vu}`, color: accentColor, marginTop: `0.3${vu}` }}>
+                    <div className="text-center" style={{ marginBottom: `${vhToPx(isLandscape ? 1.5 : 2)}${vu}` }}>
+                      <DollarSign className="drop-shadow-lg cenario-anim-icon mx-auto" style={{ width: `${vhToPx(isLandscape ? 4 : 4)}${vu}`, height: `${vhToPx(isLandscape ? 4 : 4)}${vu}`, color: accentColor, opacity: 0.7, marginBottom: `${vhToPx(0.5)}${vu}` }} />
+                      <div className="font-extrabold leading-none drop-shadow-lg cenario-anim-title" style={{ fontSize: `${vhToPx(isLandscape ? 3.5 : 4)}${vu}`, letterSpacing: "-0.02em" }}>cotação</div>
+                      <div className="font-bold cenario-anim-subtitle" style={{ fontSize: `${vhToPx(isLandscape ? 1.8 : 2)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.3)}${vu}` }}>
                         {currencySubTab === "moedas" ? "moedas" : "bolsas"}
                       </div>
                     </div>
 
                     {currencySubTab === "moedas" ? (
-                      <div className="w-full flex flex-col" style={{ gap: `${isLandscape ? 1.2 : 1.2}${vu}` }}>
+                      <div className="w-full flex flex-col" style={{ gap: `${vhToPx(isLandscape ? 1.2 : 1.2)}${vu}` }}>
                         {config.currency.currencies.map((c, idx) => {
                           const opt = CURRENCY_OPTIONS.find(o => o.value === c);
                           const live = liveCurrencies.find(l => l.code === c);
                           const flagIcon = opt?.flag ? COUNTRY_FLAG_MAP[opt.flag] : "";
                           return (
                             <div key={c} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{
-                              padding: `${isLandscape ? 1.5 : 1.5}${vu} ${isLandscape ? 2 : 1.8}${vu}`,
+                              padding: `${vhToPx(isLandscape ? 1.5 : 1.5)}${vu} ${vhToPx(isLandscape ? 2 : 1.8)}${vu}`,
                               background: "rgba(255,255,255,0.06)",
-                              borderRadius: `${isLandscape ? 1.2 : 1.8}${vu}`,
+                              borderRadius: `${vhToPx(isLandscape ? 1.2 : 1.8)}${vu}`,
                               border: "1px solid rgba(255,255,255,0.08)",
                               backdropFilter: "blur(10px)",
                               WebkitBackdropFilter: "blur(10px)",
                             }}>
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center" style={{ gap: `${isLandscape ? 1 : 1.5}${vu}`, minWidth: 0 }}>
-                                  <span style={{ fontSize: `${isLandscape ? 3 : 3}${vu}`, lineHeight: 1 }}>{flagIcon}</span>
+                                <div className="flex items-center" style={{ gap: `${vhToPx(isLandscape ? 1 : 1.5)}${vu}`, minWidth: 0 }}>
+                                  <span style={{ fontSize: `${vhToPx(isLandscape ? 3 : 3)}${vu}`, lineHeight: 1 }}>{flagIcon}</span>
                                   <div className="flex flex-col" style={{ minWidth: 0 }}>
-                                    <span className="font-black truncate" style={{ fontSize: `${isLandscape ? 2.2 : 2.2}${vu}`, lineHeight: 1.1 }}>{c}</span>
-                                    <span className="truncate" style={{ fontSize: `${isLandscape ? 1.1 : 1.1}${vu}`, opacity: 0.4, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
+                                    <span className="font-black truncate" style={{ fontSize: `${vhToPx(isLandscape ? 2.2 : 2.2)}${vu}`, lineHeight: 1.1 }}>{c}</span>
+                                    <span className="truncate" style={{ fontSize: `${vhToPx(isLandscape ? 1.1 : 1.1)}${vu}`, opacity: 0.4, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
                                   </div>
                                 </div>
                                 {live ? (
                                   <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
-                                    <span className="font-black tabular-nums" style={{ fontSize: `${isLandscape ? 2.5 : 2.5}${vu}`, lineHeight: 1.1 }}>R$ {live.value}</span>
-                                    <div className="flex items-center" style={{ gap: `0.4${vu}`, marginTop: `0.3${vu}` }}>
-                                      <span className="font-bold tabular-nums" style={{ fontSize: `${isLandscape ? 1.3 : 1.3}${vu}`, color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
-                                      {live.direction === "up" && <ChevronUp style={{ width: `${isLandscape ? 1.6 : 1.6}${vu}`, height: `${isLandscape ? 1.6 : 1.6}${vu}`, color: "#4ade80" }} strokeWidth={3} className="cenario-arrow-up" />}
-                                      {live.direction === "down" && <ChevronDown style={{ width: `${isLandscape ? 1.6 : 1.6}${vu}`, height: `${isLandscape ? 1.6 : 1.6}${vu}`, color: "#f87171" }} strokeWidth={3} className="cenario-arrow-down" />}
+                                    <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(isLandscape ? 2.5 : 2.5)}${vu}`, lineHeight: 1.1 }}>R$ {live.value}</span>
+                                    <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, marginTop: `${vhToPx(0.3)}${vu}` }}>
+                                      <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(isLandscape ? 1.3 : 1.3)}${vu}`, color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
+                                      {live.direction === "up" && <ChevronUp style={{ width: `${vhToPx(isLandscape ? 1.6 : 1.6)}${vu}`, height: `${vhToPx(isLandscape ? 1.6 : 1.6)}${vu}`, color: "#4ade80" }} strokeWidth={3} className="cenario-arrow-up" />}
+                                      {live.direction === "down" && <ChevronDown style={{ width: `${vhToPx(isLandscape ? 1.6 : 1.6)}${vu}`, height: `${vhToPx(isLandscape ? 1.6 : 1.6)}${vu}`, color: "#f87171" }} strokeWidth={3} className="cenario-arrow-down" />}
                                     </div>
                                   </div>
-                                ) : <span className="opacity-30" style={{ fontSize: `${isLandscape ? 2 : 2.5}${vu}` }}>---</span>}
+                                ) : <span className="opacity-30" style={{ fontSize: `${vhToPx(isLandscape ? 2 : 2.5)}${vu}` }}>---</span>}
                               </div>
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <div className="w-full flex flex-col" style={{ gap: `${isLandscape ? 1.2 : 1.2}${vu}` }}>
+                      <div className="w-full flex flex-col" style={{ gap: `${vhToPx(isLandscape ? 1.2 : 1.2)}${vu}` }}>
                         {liveStocks.map((s, idx) => {
                           const flagChar = COUNTRY_FLAG_MAP[s.flag?.replace(/[^A-Z]/g, "").slice(0,2)] || s.flag;
                           return (
                             <div key={s.symbol} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{
-                              padding: `${isLandscape ? 1.5 : 1.5}${vu} ${isLandscape ? 2 : 1.8}${vu}`,
+                              padding: `${vhToPx(isLandscape ? 1.5 : 1.5)}${vu} ${vhToPx(isLandscape ? 2 : 1.8)}${vu}`,
                               background: "rgba(255,255,255,0.06)",
-                              borderRadius: `${isLandscape ? 1.2 : 1.2}${vu}`,
+                              borderRadius: `${vhToPx(isLandscape ? 1.2 : 1.2)}${vu}`,
                               border: "1px solid rgba(255,255,255,0.08)",
                               backdropFilter: "blur(10px)",
                               WebkitBackdropFilter: "blur(10px)",
                             }}>
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center" style={{ gap: `${isLandscape ? 1 : 1}${vu}`, flex: 1, minWidth: 0 }}>
-                                  <span style={{ fontSize: `${isLandscape ? 3 : 3}${vu}`, lineHeight: 1 }}>{flagChar}</span>
-                                  <span className="font-black truncate" style={{ fontSize: `${isLandscape ? 2.2 : 2.2}${vu}` }}>{s.name}</span>
+                                <div className="flex items-center" style={{ gap: `${vhToPx(isLandscape ? 1 : 1)}${vu}`, flex: 1, minWidth: 0 }}>
+                                  <span style={{ fontSize: `${vhToPx(isLandscape ? 3 : 3)}${vu}`, lineHeight: 1 }}>{flagChar}</span>
+                                  <span className="font-black truncate" style={{ fontSize: `${vhToPx(isLandscape ? 2.2 : 2.2)}${vu}` }}>{s.name}</span>
                                 </div>
                                 <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
-                                  <span className="font-black tabular-nums" style={{ fontSize: `${isLandscape ? 2.5 : 2.5}${vu}`, lineHeight: 1.1 }}>{s.value}</span>
-                                  <div className="flex items-center" style={{ gap: `0.4${vu}`, marginTop: `0.3${vu}` }}>
-                                    <span className="font-bold tabular-nums" style={{ fontSize: `${isLandscape ? 1.3 : 1.3}${vu}`, color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{s.change}</span>
-                                    {s.direction === "up" && <ChevronUp style={{ width: `${isLandscape ? 1.6 : 1.6}${vu}`, height: `${isLandscape ? 1.6 : 1.6}${vu}`, color: "#4ade80" }} strokeWidth={3} className="cenario-arrow-up" />}
-                                    {s.direction === "down" && <ChevronDown style={{ width: `${isLandscape ? 1.6 : 1.6}${vu}`, height: `${isLandscape ? 1.6 : 1.6}${vu}`, color: "#f87171" }} strokeWidth={3} className="cenario-arrow-down" />}
+                                  <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(isLandscape ? 2.5 : 2.5)}${vu}`, lineHeight: 1.1 }}>{s.value}</span>
+                                  <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, marginTop: `${vhToPx(0.3)}${vu}` }}>
+                                    <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(isLandscape ? 1.3 : 1.3)}${vu}`, color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{s.change}</span>
+                                    {s.direction === "up" && <ChevronUp style={{ width: `${vhToPx(isLandscape ? 1.6 : 1.6)}${vu}`, height: `${vhToPx(isLandscape ? 1.6 : 1.6)}${vu}`, color: "#4ade80" }} strokeWidth={3} className="cenario-arrow-up" />}
+                                    {s.direction === "down" && <ChevronDown style={{ width: `${vhToPx(isLandscape ? 1.6 : 1.6)}${vu}`, height: `${vhToPx(isLandscape ? 1.6 : 1.6)}${vu}`, color: "#f87171" }} strokeWidth={3} className="cenario-arrow-down" />}
                                   </div>
                                 </div>
                               </div>
@@ -1604,12 +1631,12 @@ export default function CenarioTela() {
                           );
                         })}
                         {!liveStocks.length && (
-                          <div className="opacity-60 text-center" style={{ fontSize: `2.2${vu}` }}>Dados indisponíveis</div>
+                          <div className="opacity-60 text-center" style={{ fontSize: `${vhToPx(2.2)}${vu}` }}>Dados indisponíveis</div>
                         )}
                       </div>
                     )}
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: `1.9${vu}` }}>Cotação desativada</div>
+                    <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: `${vhToPx(1.9)}${vu}` }}>Cotação desativada</div>
                   )}
                 </div>
               </div>
@@ -1619,12 +1646,12 @@ export default function CenarioTela() {
             {activeTab === "chat" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {!config.chat.bgImage && !config.home.bgGradient && !config.home.bgImage && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.4)" }} />}
-                <div className="relative z-10 flex flex-col h-full" style={{ padding: `3${vu}` }}>
+                <div className="relative z-10 flex flex-col h-full" style={{ padding: `${vhToPx(3)}${vu}` }}>
                   {config.chat.enabled ? (<>
                     <div className="flex justify-end mb-1"><MessageCircle size={isLandscape ? 32 : 48} className="drop-shadow-lg" style={{ color: accentColor }} /></div>
-                    <div style={{ marginBottom: `2${vu}` }}>
-                      <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: `${isLandscape ? 3 : 4}${vu}` }}>mensagens</div>
-                      <div className="font-bold" style={{ fontSize: `${isLandscape ? 1.8 : 2.5}${vu}`, color: accentColor }}>chat</div>
+                    <div style={{ marginBottom: `${vhToPx(2)}${vu}` }}>
+                      <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: `${vhToPx(isLandscape ? 3 : 4)}${vu}` }}>mensagens</div>
+                      <div className="font-bold" style={{ fontSize: `${vhToPx(isLandscape ? 1.8 : 2.5)}${vu}`, color: accentColor }}>chat</div>
                     </div>
                     <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(12px)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                       {(() => {
@@ -1644,14 +1671,14 @@ export default function CenarioTela() {
                           );
                         }
                         return (
-                          <div className="flex-1 flex items-center justify-center opacity-50 h-full" style={{ fontSize: `1.8${vu}` }}>
+                          <div className="flex-1 flex items-center justify-center opacity-50 h-full" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>
                             Insira a URL da live para carregar o chat
                           </div>
                         );
                       })()}
                     </div>
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `1.8${vu}` }}>Chat desativado</div>
+                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>Chat desativado</div>
                   )}
                 </div>
               </div>
