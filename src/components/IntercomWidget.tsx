@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Mic, MicOff, Radio, X, Keyboard, Headphones, Users, ArrowLeft, Volume2 } from "lucide-react";
+import { Mic, MicOff, Radio, X, Keyboard, Headphones, Users, ArrowLeft, Volume2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -7,6 +7,7 @@ const CHANNEL_NAME = "intercom-signal";
 const HOTKEY_STORAGE_KEY = "intercom-hotkey";
 
 type Role = "none" | "speaker" | "listener";
+type TargetMode = "all" | "selected";
 
 interface ListenerInfo {
   presenceKey: string;
@@ -23,6 +24,8 @@ export default function IntercomWidget() {
   // Speaker state
   const [talking, setTalking] = useState(false);
   const [onlineListeners, setOnlineListeners] = useState<ListenerInfo[]>([]);
+  const [targetMode, setTargetMode] = useState<TargetMode>("all");
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [connectionState, setConnectionState] = useState("");
   const [hotkey, setHotkey] = useState<string>(() => localStorage.getItem(HOTKEY_STORAGE_KEY) || "");
   const [settingHotkey, setSettingHotkey] = useState(false);
@@ -41,16 +44,46 @@ export default function IntercomWidget() {
   const hotkeyRef = useRef(hotkey);
   const channelReadyRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const listenerPresenceKeyRef = useRef<string>("");
+  const targetModeRef = useRef<TargetMode>("all");
+  const selectedKeysRef = useRef<Set<string>>(new Set());
 
   const userId = user?.id;
 
   useEffect(() => { hotkeyRef.current = hotkey; }, [hotkey]);
   useEffect(() => { talkingRef.current = talking; }, [talking]);
+  useEffect(() => { targetModeRef.current = targetMode; }, [targetMode]);
+  useEffect(() => { selectedKeysRef.current = selectedKeys; }, [selectedKeys]);
+
+  const toggleListenerSelection = (key: string) => {
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  // Check if a broadcast target includes this listener
+  const isTargetedAtMe = (payload: any): boolean => {
+    // If no target info, it's for everyone (backward compat)
+    if (!payload.target) return true;
+    if (payload.target === "all") return true;
+    if (Array.isArray(payload.targetKeys)) {
+      return payload.targetKeys.includes(listenerPresenceKeyRef.current);
+    }
+    return true;
+  };
+
+  // Build target payload for speaker broadcasts
+  const buildTargetPayload = () => {
+    if (targetModeRef.current === "all") return { target: "all" };
+    return { target: "selected", targetKeys: Array.from(selectedKeysRef.current) };
+  };
 
   // ─── Signaling channel (shared by both roles) ───
   useEffect(() => {
     if (!userId || role === "none") return;
-    // Don't join channel as listener until name is provided
     if (role === "listener" && !listenerName) return;
 
     console.log("[Intercom] Joining channel as", role, "uid:", userId.slice(0, 8));
@@ -58,6 +91,10 @@ export default function IntercomWidget() {
     const presenceKey = role === "speaker"
       ? `speaker-${Date.now()}`
       : `listener-${Date.now()}`;
+
+    if (role === "listener") {
+      listenerPresenceKeyRef.current = presenceKey;
+    }
 
     const ch = supabase.channel(`${CHANNEL_NAME}-${userId}`, {
       config: { broadcast: { self: false, ack: true }, presence: { key: presenceKey } },
@@ -92,7 +129,6 @@ export default function IntercomWidget() {
           if (pc && payload.sdp) {
             await pc.setRemoteDescription(new RTCSessionDescription({ type: payload.sdp.type, sdp: payload.sdp.sdp }));
             remoteDescSetRef.current = true;
-            console.log("[Intercom Speaker] Remote description set, flushing", pendingCandidatesRef.current.length, "candidates");
             for (const c of pendingCandidatesRef.current) {
               await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.warn);
             }
@@ -120,6 +156,12 @@ export default function IntercomWidget() {
     // ── Listener: listen for offer + speaker ICE + hangup ──
     if (role === "listener") {
       const handleOffer = async (payload: any) => {
+        // Check if this offer is targeted at me
+        if (!isTargetedAtMe(payload)) {
+          console.log("[Intercom Listener] Offer not targeted at me, ignoring");
+          return;
+        }
+
         try {
           console.log("[Intercom Listener] Received offer, setting up peer connection");
           pcRef.current?.close();
@@ -136,7 +178,6 @@ export default function IntercomWidget() {
 
           pc.onicecandidate = (ev) => {
             if (ev.candidate) {
-              console.log("[Intercom Listener] Sending ICE candidate");
               ch.send({ type: "broadcast", event: "ice-candidate-listener", payload: { candidate: ev.candidate.toJSON() } });
             }
           };
@@ -161,32 +202,23 @@ export default function IntercomWidget() {
             }
           };
 
-          pc.oniceconnectionstatechange = () => {
-            console.log("[Intercom Listener] ICE state:", pc.iceConnectionState);
-          };
-
-          // Add a transceiver to accept audio
           pc.addTransceiver("audio", { direction: "recvonly" });
 
           await pc.setRemoteDescription(new RTCSessionDescription({ type: payload.sdp.type, sdp: payload.sdp.sdp }));
           remoteDescSetRef.current = true;
-          console.log("[Intercom Listener] Remote description set");
 
           for (const c of pendingCandidatesRef.current) {
             await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.warn);
           }
-          console.log("[Intercom Listener] Flushed", pendingCandidatesRef.current.length, "queued candidates");
           pendingCandidatesRef.current = [];
 
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          console.log("[Intercom Listener] Created and sending answer");
 
-          const sendResult = await ch.send({
+          await ch.send({
             type: "broadcast", event: "answer",
             payload: { sdp: { type: answer.type, sdp: answer.sdp } },
           });
-          console.log("[Intercom Listener] Answer send result:", sendResult);
         } catch (e) {
           console.error("[Intercom Listener] Error handling offer:", e);
         }
@@ -195,6 +227,7 @@ export default function IntercomWidget() {
       ch.on("broadcast", { event: "offer" }, ({ payload }) => handleOffer(payload));
 
       ch.on("broadcast", { event: "ice-candidate-speaker" }, async ({ payload }) => {
+        if (!isTargetedAtMe(payload)) return;
         try {
           if (!payload.candidate) return;
           if (pcRef.current && remoteDescSetRef.current) {
@@ -205,7 +238,8 @@ export default function IntercomWidget() {
         } catch (e) { console.error("[Intercom Listener] Error adding ICE:", e); }
       });
 
-      ch.on("broadcast", { event: "hangup" }, () => {
+      ch.on("broadcast", { event: "hangup" }, ({ payload }) => {
+        if (!isTargetedAtMe(payload)) return;
         console.log("[Intercom Listener] Speaker hung up");
         pcRef.current?.close();
         pcRef.current = null;
@@ -225,13 +259,11 @@ export default function IntercomWidget() {
         } else {
           await ch.track({ role: "listener", online: true, name: listenerName });
         }
-        console.log("[Intercom] Tracked as", role);
       }
     });
 
     channelRef.current = ch;
     return () => {
-      console.log("[Intercom] Cleaning up channel");
       channelReadyRef.current = false;
       pcRef.current?.close();
       pcRef.current = null;
@@ -255,13 +287,11 @@ export default function IntercomWidget() {
     pendingCandidatesRef.current = [];
 
     try {
-      console.log("[Intercom Speaker] Capturing microphone...");
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         video: false,
       });
       streamRef.current = stream;
-      console.log("[Intercom Speaker] Mic captured, tracks:", stream.getAudioTracks().length);
 
       const pc = new RTCPeerConnection({
         iceServers: [
@@ -273,61 +303,52 @@ export default function IntercomWidget() {
 
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
+      const targetInfo = buildTargetPayload();
+
       const collectedCandidates: RTCIceCandidateInit[] = [];
       pc.onicecandidate = (ev) => {
         if (ev.candidate) {
           const c = ev.candidate.toJSON();
           collectedCandidates.push(c);
-          channelRef.current?.send({ type: "broadcast", event: "ice-candidate-speaker", payload: { candidate: c } });
+          channelRef.current?.send({
+            type: "broadcast", event: "ice-candidate-speaker",
+            payload: { candidate: c, ...targetInfo },
+          });
         }
       };
 
       pc.onconnectionstatechange = () => {
-        const s = pc.connectionState;
-        console.log("[Intercom Speaker] Connection state:", s);
-        setConnectionState(s);
-      };
-
-      pc.oniceconnectionstatechange = () => {
-        console.log("[Intercom Speaker] ICE state:", pc.iceConnectionState);
+        setConnectionState(pc.connectionState);
       };
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      console.log("[Intercom Speaker] Offer created, sending...");
+
+      const offerPayload = { sdp: { type: offer.type, sdp: offer.sdp }, ...targetInfo };
 
       await channelRef.current?.send({
         type: "broadcast", event: "offer",
-        payload: { sdp: { type: offer.type, sdp: offer.sdp } },
+        payload: offerPayload,
       });
 
       setTalking(true);
       setConnectionState("connecting");
 
-      // Re-send offer after a short delay in case listener wasn't ready
+      // Retries
       setTimeout(async () => {
         if (pcRef.current && !remoteDescSetRef.current && channelRef.current) {
-          console.log("[Intercom Speaker] Re-sending offer (no answer yet)");
-          await channelRef.current.send({
-            type: "broadcast", event: "offer",
-            payload: { sdp: { type: offer.type, sdp: offer.sdp } },
-          });
+          await channelRef.current.send({ type: "broadcast", event: "offer", payload: offerPayload });
           for (const c of collectedCandidates) {
-            await channelRef.current.send({ type: "broadcast", event: "ice-candidate-speaker", payload: { candidate: c } });
+            await channelRef.current.send({ type: "broadcast", event: "ice-candidate-speaker", payload: { candidate: c, ...targetInfo } });
           }
         }
       }, 1500);
 
-      // Another retry at 3s
       setTimeout(async () => {
         if (pcRef.current && !remoteDescSetRef.current && channelRef.current) {
-          console.log("[Intercom Speaker] Re-sending offer (2nd retry)");
-          await channelRef.current.send({
-            type: "broadcast", event: "offer",
-            payload: { sdp: { type: offer.type, sdp: offer.sdp } },
-          });
+          await channelRef.current.send({ type: "broadcast", event: "offer", payload: offerPayload });
           for (const c of collectedCandidates) {
-            await channelRef.current.send({ type: "broadcast", event: "ice-candidate-speaker", payload: { candidate: c } });
+            await channelRef.current.send({ type: "broadcast", event: "ice-candidate-speaker", payload: { candidate: c, ...targetInfo } });
           }
         }
       }, 3000);
@@ -337,13 +358,11 @@ export default function IntercomWidget() {
       if (e.name === "NotAllowedError") setError("Permissão de microfone negada");
       else if (e.name === "NotFoundError") setError("Nenhum microfone encontrado");
       else setError("Erro ao acessar microfone");
-      console.error("[Intercom Speaker] Error:", e);
     }
   }, []);
 
   const stopTalking = useCallback(() => {
     if (!talkingRef.current) return;
-    console.log("[Intercom Speaker] Stopping...");
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     pcRef.current?.close();
@@ -352,7 +371,10 @@ export default function IntercomWidget() {
     pendingCandidatesRef.current = [];
     setTalking(false);
     setConnectionState("");
-    channelRef.current?.send({ type: "broadcast", event: "hangup", payload: {} });
+    channelRef.current?.send({
+      type: "broadcast", event: "hangup",
+      payload: buildTargetPayload(),
+    });
   }, []);
 
   // ─── Keyboard hotkey (speaker only) ───
@@ -398,6 +420,8 @@ export default function IntercomWidget() {
     setReceiving(false);
     setListenerName("");
     setNameInput("");
+    setSelectedKeys(new Set());
+    setTargetMode("all");
   };
 
   const handleBack = () => {
@@ -411,6 +435,8 @@ export default function IntercomWidget() {
     setConnectionState("");
     setReceiving(false);
     setListenerName("");
+    setSelectedKeys(new Set());
+    setTargetMode("all");
   };
 
   const confirmListenerName = () => {
@@ -420,12 +446,14 @@ export default function IntercomWidget() {
     setRole("listener");
   };
 
-  // Autoplay unlock for listener
   const handleUnlockAudio = () => {
     if (audioRef.current && audioRef.current.srcObject) {
       audioRef.current.play().catch(console.warn);
     }
   };
+
+  // Can speaker talk? Need at least one listener: all mode or selected listeners
+  const canTalk = onlineListeners.length > 0 && (targetMode === "all" || selectedKeys.size > 0);
 
   const glassStyle = {
     backgroundColor: "rgba(0,0,0,0.75)",
@@ -471,7 +499,7 @@ export default function IntercomWidget() {
               <p className="text-white/40 text-[10px]">Falar com os ouvintes</p>
             </div>
           </button>
-          <button onClick={() => { setRole("listener"); }}
+          <button onClick={() => setRole("listener")}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
             style={{ backgroundColor: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.18)" }}>
             <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,197,94,0.15)" }}>
@@ -487,7 +515,7 @@ export default function IntercomWidget() {
     );
   }
 
-  // ─── Listener: name input (before joining channel) ───
+  // ─── Listener: name input ───
   if (role === "listener" && !listenerName) {
     return (
       <div className="fixed bottom-20 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}>
@@ -529,9 +557,7 @@ export default function IntercomWidget() {
         onClick={handleUnlockAudio}>
         <audio ref={audioRef} autoPlay playsInline />
         <div className="flex items-center gap-2 px-3 py-2.5">
-          {/* Animated icon container */}
           <div className="relative flex-shrink-0">
-            {/* Pulse rings when receiving */}
             {receiving && (
               <>
                 <div className="absolute inset-0 rounded-full animate-ping"
@@ -565,7 +591,6 @@ export default function IntercomWidget() {
             </div>
           </div>
 
-          {/* Spectrum bars when receiving */}
           {receiving && (
             <div className="flex items-end gap-[2px] mr-0.5 h-5">
               {[0.5, 0.8, 1, 0.7, 0.9, 0.6, 0.85].map((h, i) => (
@@ -586,7 +611,6 @@ export default function IntercomWidget() {
           </button>
         </div>
 
-        {/* Receiving glow bar at bottom */}
         {receiving && (
           <div className="h-[2px] w-full" style={{
             background: "linear-gradient(90deg, transparent 0%, #268ffa 30%, #268ffa 70%, transparent 100%)",
@@ -595,18 +619,9 @@ export default function IntercomWidget() {
         )}
 
         <style>{`
-          @keyframes intercomBar {
-            0% { transform: scaleY(0.3); }
-            100% { transform: scaleY(1); }
-          }
-          @keyframes intercomIconPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.15); opacity: 0.8; }
-          }
-          @keyframes intercomGlowPulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-          }
+          @keyframes intercomBar { 0% { transform: scaleY(0.3); } 100% { transform: scaleY(1); } }
+          @keyframes intercomIconPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.8; } }
+          @keyframes intercomGlowPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
         `}</style>
       </div>
     );
@@ -623,7 +638,7 @@ export default function IntercomWidget() {
           onMouseLeave={() => { if (talking) stopTalking(); }}
           onTouchStart={startTalking}
           onTouchEnd={stopTalking}
-          disabled={onlineListeners.length === 0}
+          disabled={!canTalk}
           className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110 active:scale-95 disabled:opacity-30"
           style={{
             backgroundColor: talking ? "#ef4444" : "#268ffa",
@@ -679,19 +694,66 @@ export default function IntercomWidget() {
         </button>
       </div>
 
-      {/* Online listeners list */}
+      {/* Online listeners list with selection */}
       {onlineListeners.length > 0 && !talking && (
         <div className="px-3 pb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <p className="text-[9px] text-white/30 uppercase tracking-wider py-1.5 flex items-center gap-1">
-            <Users size={10} /> Ouvintes online
-          </p>
-          <div className="flex flex-wrap gap-1">
-            {onlineListeners.map((l) => (
-              <span key={l.presenceKey} className="text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/15">
-                {l.name}
-              </span>
-            ))}
+          <div className="flex items-center justify-between py-1.5">
+            <p className="text-[9px] text-white/30 uppercase tracking-wider flex items-center gap-1">
+              <Users size={10} /> Ouvintes online
+            </p>
           </div>
+
+          {/* Target mode toggle */}
+          <div className="flex gap-1 mb-2">
+            <button
+              onClick={() => { setTargetMode("all"); setSelectedKeys(new Set()); }}
+              className="flex-1 text-[10px] py-1.5 rounded-lg font-medium transition-all"
+              style={{
+                backgroundColor: targetMode === "all" ? "rgba(38,143,250,0.2)" : "rgba(255,255,255,0.04)",
+                color: targetMode === "all" ? "#268ffa" : "rgba(255,255,255,0.4)",
+                border: `1px solid ${targetMode === "all" ? "rgba(38,143,250,0.3)" : "rgba(255,255,255,0.06)"}`,
+              }}>
+              Todos ({onlineListeners.length})
+            </button>
+            <button
+              onClick={() => setTargetMode("selected")}
+              className="flex-1 text-[10px] py-1.5 rounded-lg font-medium transition-all"
+              style={{
+                backgroundColor: targetMode === "selected" ? "rgba(38,143,250,0.2)" : "rgba(255,255,255,0.04)",
+                color: targetMode === "selected" ? "#268ffa" : "rgba(255,255,255,0.4)",
+                border: `1px solid ${targetMode === "selected" ? "rgba(38,143,250,0.3)" : "rgba(255,255,255,0.06)"}`,
+              }}>
+              Selecionar
+            </button>
+          </div>
+
+          {/* Listener chips */}
+          <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+            {onlineListeners.map((l) => {
+              const isSelected = targetMode === "all" || selectedKeys.has(l.presenceKey);
+              return (
+                <button
+                  key={l.presenceKey}
+                  onClick={() => {
+                    if (targetMode === "selected") toggleListenerSelection(l.presenceKey);
+                  }}
+                  className="text-[10px] px-2 py-1 rounded-full flex items-center gap-1 transition-all"
+                  style={{
+                    backgroundColor: isSelected ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.04)",
+                    color: isSelected ? "#22c55e" : "rgba(255,255,255,0.3)",
+                    border: `1px solid ${isSelected ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)"}`,
+                    cursor: targetMode === "selected" ? "pointer" : "default",
+                  }}>
+                  {targetMode === "selected" && isSelected && <Check size={10} />}
+                  {l.name}
+                </button>
+              );
+            })}
+          </div>
+
+          {targetMode === "selected" && selectedKeys.size === 0 && (
+            <p className="text-[9px] text-white/20 mt-1 text-center">Selecione ao menos um ouvinte</p>
+          )}
         </div>
       )}
 
@@ -708,10 +770,7 @@ export default function IntercomWidget() {
       )}
 
       <style>{`
-        @keyframes intercomBar {
-          0% { transform: scaleY(0.4); }
-          100% { transform: scaleY(1); }
-        }
+        @keyframes intercomBar { 0% { transform: scaleY(0.4); } 100% { transform: scaleY(1); } }
       `}</style>
     </div>
   );
