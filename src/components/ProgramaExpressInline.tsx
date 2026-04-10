@@ -52,6 +52,7 @@ export interface ExpressEditData {
   participantes?: Participante[];
   escaladaList?: {titulo: string; imagemUrl: string}[];
   existingXmlPath?: string;
+  podcastData?: PodcastData;
 }
 
 interface Props {
@@ -196,6 +197,16 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       setEscaladaList(editData.escaladaList || []);
       setEditingId(editData.roteiroId);
       setEditingXmlPath(editData.existingXmlPath || null);
+      if (editData.podcastData) {
+        setPodcastData({
+          tituloTarja: editData.podcastData.tituloTarja || "",
+          introducao: editData.podcastData.introducao || "",
+          perguntas: editData.podcastData.perguntas?.length ? editData.podcastData.perguntas : [""],
+          concluindo: editData.podcastData.concluindo || "",
+          apoioImagens: editData.podcastData.apoioImagens?.length ? editData.podcastData.apoioImagens : [""],
+          apoioVideos: editData.podcastData.apoioVideos?.length ? editData.podcastData.apoioVideos : [""],
+        });
+      }
       setInitialized(true);
     }
   }, [editData, initialized]);
