@@ -683,11 +683,20 @@ export default function IntercomWidget() {
         </div>
 
         {talking && (
-          <div className="flex items-end gap-[2px] mr-0.5 h-4">
-            {[0.6, 1, 0.7, 0.9, 0.5].map((h, i) => (
-              <div key={i} className="w-[3px] rounded-full"
-                style={{ backgroundColor: "#ef4444", height: `${h * 100}%`, animation: `intercomBar 0.${3 + i * 2}s ease-in-out infinite alternate` }} />
-            ))}
+          <div className="flex items-center gap-[2px] mr-0.5" style={{ height: 20, width: 40 }}>
+            {Array.from({ length: 8 }).map((_, i) => {
+              const threshold = (i + 1) / 8;
+              const active = micLevel >= threshold;
+              const barColor = threshold > 0.85 ? "#ef4444" : threshold > 0.6 ? "#f59e0b" : "#22c55e";
+              return (
+                <div key={i} className="flex-1 rounded-sm transition-all duration-75"
+                  style={{
+                    height: "100%",
+                    backgroundColor: active ? barColor : "rgba(255,255,255,0.08)",
+                    opacity: active ? 0.9 : 0.3,
+                  }} />
+              );
+            })}
           </div>
         )}
 
