@@ -1018,8 +1018,7 @@ export default function CenarioTela() {
         className="relative"
         style={{
           width: isLandscape ? CANVAS_H : CANVAS_W,
-          height: isLandscape ? CANVAS_W : CANVAS_H,
-          transform: `scale(${viewScale}) rotate(${screenRotation}deg)`,
+          height: isLandscape ? CANVAS_W : CANVAS_H,          transform: `scale(${viewScale}) rotate(${screenRotation}deg)`,
           transformOrigin: "center center",
           transition: "transform 0.5s ease",
         }}
