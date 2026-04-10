@@ -34,6 +34,7 @@ export default function IntercomListener() {
 
   useEffect(() => {
     mutedRef.current = muted;
+    localStorage.setItem("intercom-listener-muted", String(muted));
     if (audioRef.current) {
       audioRef.current.muted = muted;
     }
@@ -41,6 +42,7 @@ export default function IntercomListener() {
 
   useEffect(() => {
     volumeRef.current = volume;
+    localStorage.setItem("intercom-listener-volume", String(volume));
     if (audioRef.current) {
       audioRef.current.volume = volume / 100;
     }
