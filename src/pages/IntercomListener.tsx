@@ -16,8 +16,11 @@ export default function IntercomListener() {
   const [connected, setConnected] = useState(false);
   const [speakerOnline, setSpeakerOnline] = useState(false);
   const [receiving, setReceiving] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const [volume, setVolume] = useState(100);
+  const [muted, setMuted] = useState(() => localStorage.getItem("intercom-listener-muted") === "true");
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem("intercom-listener-volume");
+    return saved ? Number(saved) : 100;
+  });
   const [error, setError] = useState<string | null>(null);
   const [peerState, setPeerState] = useState("");
   const [audioUnlockRequired, setAudioUnlockRequired] = useState(false);
