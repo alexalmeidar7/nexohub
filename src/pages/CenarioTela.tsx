@@ -1480,9 +1480,9 @@ export default function CenarioTela() {
             {activeTab === "traffic" && (
               <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ padding: `${vhToPx(3)}${vu}`, pointerEvents: "none" }}>
                 {config.traffic.enabled && trafficCoords ? (
-                  <div className="flex items-center rounded-full" style={{ padding: `${vhToPx(0.8)}${vu} ${vhToPx(2)}${vu}`, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)", marginBottom: `${vhToPx(3)}${vu}` }}>
-                    <Car style={{ width: `${vhToPx(2)}${vu}`, height: `${vhToPx(2)}${vu}`, color: accentColor, marginRight: `${vhToPx(0.8)}${vu}` }} />
-                    <span className="font-bold" style={{ fontSize: `${vhToPx(2)}${vu}`, color: "#fff" }}>{config.traffic.city || config.city || "Trânsito"}</span>
+                  <div className="flex items-center rounded-2xl" style={{ padding: `${vhToPx(1.2)}${vu} ${vhToPx(3)}${vu}`, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.12)", marginBottom: `${vhToPx(4)}${vu}`, boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
+                    <Car style={{ width: `${vhToPx(2.5)}${vu}`, height: `${vhToPx(2.5)}${vu}`, color: accentColor, marginRight: `${vhToPx(1)}${vu}` }} />
+                    <span className="font-black" style={{ fontSize: `${vhToPx(2.4)}${vu}`, color: "#fff", letterSpacing: "-0.01em" }}>{config.traffic.city || config.city || "Trânsito"}</span>
                   </div>
                 ) : (
                   <div className="opacity-50" style={{ color: "#333", fontSize: `${vhToPx(1.8)}${vu}` }}>Trânsito desativado</div>
