@@ -30,6 +30,7 @@ const PlayerCatalog = lazy(() => import("./pages/player/PlayerCatalog"));
 const VmixControl = lazy(() => import("./pages/VmixControl"));
 const CenarioTela = lazy(() => import("./pages/CenarioTela"));
 const TelaInterativa = lazy(() => import("./pages/TelaInterativa"));
+const IntercomListener = lazy(() => import("./pages/IntercomListener"));
 
 class ChunkErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="/tp-externo" element={<TpExterno />} />
             <Route path="/vmix-control" element={<VmixControl />} />
             <Route path="/cenario-tela" element={<CenarioTela />} />
+            <Route path="/intercom" element={<IntercomListener />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
