@@ -394,6 +394,7 @@ export default function IntercomWidget() {
     pendingCandidatesRef.current = [];
     setTalking(false);
     setConnectionState("");
+    setConnectedListenerKeys(new Set());
     channelRef.current?.send({
       type: "broadcast", event: "hangup",
       payload: buildTargetPayload(),
