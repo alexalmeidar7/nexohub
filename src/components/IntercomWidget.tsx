@@ -26,6 +26,7 @@ export default function IntercomWidget() {
   const [onlineListeners, setOnlineListeners] = useState<ListenerInfo[]>([]);
   const [targetMode, setTargetMode] = useState<TargetMode>("all");
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [connectedListenerKeys, setConnectedListenerKeys] = useState<Set<string>>(new Set());
   const [connectionState, setConnectionState] = useState("");
   const [hotkey, setHotkey] = useState<string>(() => localStorage.getItem(HOTKEY_STORAGE_KEY) || "");
   const [settingHotkey, setSettingHotkey] = useState(false);
