@@ -56,12 +56,25 @@ Deno.serve(async (req) => {
       .eq("nome", roteiro.programa_nome)
       .maybeSingle();
 
-    // Parse participantes
+    // Parse participantes (may contain podcastData with apoioImagens/apoioVideos)
     let participantes: { nome: string; categoria?: string; cargo?: string; instagram?: string }[] = [];
+    let apoioImagens: string[] = [];
+    let apoioVideos: string[] = [];
     try {
-      participantes = typeof roteiro.participantes === "string"
+      const raw = typeof roteiro.participantes === "string"
         ? JSON.parse(roteiro.participantes)
-        : roteiro.participantes || [];
+        : roteiro.participantes || {};
+
+      if (Array.isArray(raw)) {
+        participantes = raw;
+      } else {
+        // Express format: { blocos, participantes, escaladaList, podcastData }
+        participantes = raw.participantes || [];
+        if (raw.podcastData) {
+          apoioImagens = (raw.podcastData.apoioImagens || []).filter((u: string) => u && u.trim());
+          apoioVideos = (raw.podcastData.apoioVideos || []).filter((u: string) => u && u.trim());
+        }
+      }
     } catch {
       participantes = [];
     }
@@ -84,6 +97,25 @@ Deno.serve(async (req) => {
       xml += `    </item>\n`;
     }
     xml += `  </participantes>\n`;
+
+    // Apoio images
+    if (apoioImagens.length > 0) {
+      xml += `  <apoioImagens>\n`;
+      for (const img of apoioImagens) {
+        xml += `    <imagem>${escapeXml(img)}</imagem>\n`;
+      }
+      xml += `  </apoioImagens>\n`;
+    }
+
+    // Apoio videos
+    if (apoioVideos.length > 0) {
+      xml += `  <apoioVideos>\n`;
+      for (const vid of apoioVideos) {
+        xml += `    <video>${escapeXml(vid)}</video>\n`;
+      }
+      xml += `  </apoioVideos>\n`;
+    }
+
     xml += `</roteiro>`;
 
     return new Response(xml, {
