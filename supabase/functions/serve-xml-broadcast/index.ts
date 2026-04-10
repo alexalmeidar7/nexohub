@@ -159,8 +159,9 @@ serve(async (req) => {
     const whatsappDigits = whatsappRaw.replace(/\D/g, "");
     if (whatsappDigits) socialItems.push({ handle: whatsappRaw.trim(), icon: SOCIAL_ICONS.whatsapp });
 
-    // Use epoch-based rotation so each 5-second window maps to a different index
-    const rotationSlot = Math.floor(Date.now() / 5000);
+    // Use request-time based rotation so XML + cache stay aligned on 5-second windows
+    const rotationSlot = Math.floor(now.getTime() / 5000);
+    const nextRefreshAt = new Date((rotationSlot + 1) * 5000).toUTCString();
     let redeSocialAtual = "";
     let redeSocialIcone = "";
     if (socialItems.length > 0) {
@@ -208,8 +209,10 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-        "Pragma": "no-cache",
+        "Cache-Control": "public, max-age=5, s-maxage=5, must-revalidate",
+        "CDN-Cache-Control": "public, max-age=5",
+        "Surrogate-Control": "public, max-age=5",
+        "Expires": nextRefreshAt,
       },
     });
   } catch (err) {
