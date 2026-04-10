@@ -1995,9 +1995,9 @@ export default function CenarioInterativoPage() {
                       {activeTab === "traffic" && (
                         <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ padding: `${pvh(3)}px`, pointerEvents: "none" }}>
                           {config.traffic.enabled && trafficCoords ? (
-                            <div className="flex items-center rounded-full" style={{ padding: `${pvh(0.8)}px ${pvh(2)}px`, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)", marginBottom: `${pvh(3)}px` }}>
-                              <Car style={{ width: `${pvh(2)}px`, height: `${pvh(2)}px`, color: "var(--layout-accent-color, #444)", marginRight: `${pvh(0.8)}px` }} />
-                              <span className="font-bold" style={{ fontSize: `${pvh(2)}px`, color: "#fff" }}>{config.traffic.city || config.city || "Trânsito"}</span>
+                            <div className="flex items-center rounded-2xl" style={{ padding: `${pvh(1.2)}px ${pvh(3)}px`, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.12)", marginBottom: `${pvh(4)}px`, boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
+                              <Car style={{ width: `${pvh(2.5)}px`, height: `${pvh(2.5)}px`, color: "var(--layout-accent-color, #444)", marginRight: `${pvh(1)}px` }} />
+                              <span className="font-black" style={{ fontSize: `${pvh(2.4)}px`, color: "#fff", letterSpacing: "-0.01em" }}>{config.traffic.city || config.city || "Trânsito"}</span>
                             </div>
                           ) : (
                             <div className="opacity-50" style={{ color: "#333", fontSize: `${pvh(1.8)}px` }}>Trânsito desativado</div>
@@ -2008,14 +2008,15 @@ export default function CenarioInterativoPage() {
                       {/* ═══ CURRENCY ═══ */}
                       {activeTab === "currency" && (
                         <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                          {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.45)" }} />}
-                          {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d1117 0%, #161b22 50%, #0d1117 100%)" }} />}
-                          <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${pvh(3)}px` }}>
+                          {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.5)" }} />}
+                          {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #080c14 0%, #0f1923 30%, #141e2e 60%, #0d1520 100%)" }} />}
+                          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 60%)" }} />
+                          <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${pvh(4)}px`, paddingLeft: `calc(${pvh(4)}px + 50px)` }}>
                             {config.currency.enabled ? (<>
-                              <div className="text-center" style={{ marginBottom: `${pvh(2)}px` }}>
-                                <DollarSign className="drop-shadow-lg mx-auto" style={{ width: `${pvh(4)}px`, height: `${pvh(4)}px`, color: "var(--layout-accent-color, #444)", opacity: 0.7, marginBottom: `${pvh(0.5)}px` }} />
-                                <div className="font-extrabold leading-none drop-shadow-lg" style={{ fontSize: `${pvh(4)}px`, letterSpacing: "-0.02em" }}>cotação</div>
-                                <div className="font-bold" style={{ fontSize: `${pvh(2)}px`, color: "var(--layout-accent-color, #444)", marginTop: `${pvh(0.3)}px` }}>
+                              <div className="text-center" style={{ marginBottom: `${pvh(3)}px` }}>
+                                <DollarSign className="drop-shadow-lg mx-auto" style={{ width: `${pvh(4.5)}px`, height: `${pvh(4.5)}px`, color: "var(--layout-accent-color, #444)", opacity: 0.6, marginBottom: `${pvh(0.8)}px` }} />
+                                <div className="font-extrabold leading-none" style={{ fontSize: `${pvh(4.5)}px`, letterSpacing: "-0.03em", textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>cotação</div>
+                                <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${pvh(1.8)}px`, color: "var(--layout-accent-color, #444)", marginTop: `${pvh(0.5)}px`, letterSpacing: "0.2em" }}>
                                   {currencySubTab === "moedas" ? "moedas" : "bolsas"}
                                 </div>
                               </div>
