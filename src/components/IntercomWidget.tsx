@@ -27,6 +27,7 @@ export default function IntercomWidget() {
   const [hotkey, setHotkey] = useState<string>(() => localStorage.getItem(HOTKEY_STORAGE_KEY) || "");
   const [settingHotkey, setSettingHotkey] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [micLevel, setMicLevel] = useState(0); // 0-1 audio level
 
   // Listener state
   const [receiving, setReceiving] = useState(false);
