@@ -1054,7 +1054,7 @@ export default function CenarioTela() {
           )}
 
           {/* Sidebar — always on top */}
-          <div className="flex-shrink-0 flex items-center relative" style={{ width: isLandscape ? "5%" : "8%", zIndex: 10, pointerEvents: "none" }}>
+          <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
           <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} ${sidebarPad}`, borderRadius: `0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu} 0`, background: isMapTab ? "rgba(18,18,18,0.65)" : "rgba(18,18,18,0.8)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)", borderLeft: "none", marginLeft: "-1px", boxShadow: "4px 0 20px rgba(0,0,0,0.3)" }}>
             <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "home" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "home" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Home style={{ width: iconSize, height: iconSize }} className="text-white" />
@@ -1241,7 +1241,7 @@ export default function CenarioTela() {
                     {musicData ? (
                       <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                         {/* Vinyl disc */}
-                        <div className="relative" style={{ width: `${vhToPx(isLandscape ? 58.8 : 73.5)}${vu}`, height: `${vhToPx(isLandscape ? 58.8 : 73.5)}${vu}` }}>
+                         <div className="relative" style={{ width: `${vhToPx(73.5)}${vu}`, height: `${vhToPx(73.5)}${vu}` }}>
                           <div style={{
                             width: "100%", height: "100%",
                             borderRadius: "50%",
@@ -1277,7 +1277,7 @@ export default function CenarioTela() {
                           </div>
                         </div>
                         {/* Music title + artist below vinyl */}
-                        <div style={{ marginTop: `${vhToPx(2)}${vu}`, textAlign: "center", maxWidth: `${vhToPx(isLandscape ? 40 : 40)}${vu}` }}>
+                         <div style={{ marginTop: `${vhToPx(2)}${vu}`, textAlign: "center", maxWidth: `${vhToPx(40)}${vu}` }}>
                           <div className="font-black truncate" style={{ fontSize: `${vhToPx(2.4)}${vu}`, lineHeight: 1.2, color: accentColor, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
                           <div className="font-medium truncate" style={{ fontSize: `${vhToPx(1.6)}${vu}`, opacity: 0.6, marginTop: `${vhToPx(0.3)}${vu}` }}>{musicData.artista}</div>
                         </div>
@@ -1285,7 +1285,7 @@ export default function CenarioTela() {
                     ) : currentProgram?.selo ? (
                       /* No music: show program logo in center */
                       <div style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                        <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${vhToPx(isLandscape ? 35 : 35)}${vu}`, maxHeight: `${vhToPx(isLandscape ? 30 : 35)}${vu}` }} />
+                         <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${vhToPx(35)}${vu}`, maxHeight: `${vhToPx(35)}${vu}` }} />
                       </div>
                     ) : currentProgram ? (
                       <div className="font-black text-center" style={{ fontSize: `${vhToPx(4)}${vu}`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>{currentProgram.nome}</div>
