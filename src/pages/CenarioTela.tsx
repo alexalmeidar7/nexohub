@@ -1493,49 +1493,50 @@ export default function CenarioTela() {
             {/* ═══ CURRENCY ═══ */}
             {activeTab === "currency" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.45)" }} />}
-                {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0d1117 0%, #161b22 50%, #0d1117 100%)" }} />}
-                <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(3)}${vu}` }}>
+                {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.5)" }} />}
+                {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #080c14 0%, #0f1923 30%, #141e2e 60%, #0d1520 100%)" }} />}
+                <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 60%)" }} />
+                <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(4)}${vu}`, paddingLeft: `calc(${vhToPx(4)}${vu} + 50px)` }}>
                     {config.currency.enabled ? (<>
-                    {/* Header centered */}
-                    <div className="text-center" style={{ marginBottom: `${vhToPx(2)}${vu}` }}>
-                      <DollarSign className="drop-shadow-lg cenario-anim-icon mx-auto" style={{ width: `${vhToPx(4)}${vu}`, height: `${vhToPx(4)}${vu}`, color: accentColor, opacity: 0.7, marginBottom: `${vhToPx(0.5)}${vu}` }} />
-                      <div className="font-extrabold leading-none drop-shadow-lg cenario-anim-title" style={{ fontSize: `${vhToPx(4)}${vu}`, letterSpacing: "-0.02em" }}>cotação</div>
-                      <div className="font-bold cenario-anim-subtitle" style={{ fontSize: `${vhToPx(2)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.3)}${vu}` }}>
+                    {/* Header */}
+                    <div className="text-center" style={{ marginBottom: `${vhToPx(3)}${vu}` }}>
+                      <DollarSign className="drop-shadow-lg mx-auto" style={{ width: `${vhToPx(4.5)}${vu}`, height: `${vhToPx(4.5)}${vu}`, color: accentColor, opacity: 0.6, marginBottom: `${vhToPx(0.8)}${vu}` }} />
+                      <div className="font-extrabold leading-none" style={{ fontSize: `${vhToPx(4.5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>cotação</div>
+                      <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.5)}${vu}`, letterSpacing: "0.2em" }}>
                         {currencySubTab === "moedas" ? "moedas" : "bolsas"}
                       </div>
                     </div>
 
                     {currencySubTab === "moedas" ? (
-                      <div className="w-full flex flex-col" style={{ gap: `${vhToPx(1.2)}${vu}` }}>
+                      <div className="w-full flex flex-col" style={{ gap: `${vhToPx(1.5)}${vu}`, maxWidth: `${vhToPx(50)}${vu}` }}>
                         {config.currency.currencies.map((c, idx) => {
                           const opt = CURRENCY_OPTIONS.find(o => o.value === c);
                           const live = liveCurrencies.find(l => l.code === c);
                           const flagIcon = opt?.flag ? COUNTRY_FLAG_MAP[opt.flag] : "";
                           return (
                             <div key={c} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{
-                              padding: `${vhToPx(1.5)}${vu} ${vhToPx(1.8)}${vu}`,
-                              background: "rgba(255,255,255,0.06)",
-                              borderRadius: `${vhToPx(1.8)}${vu}`,
+                              padding: `${vhToPx(2)}${vu} ${vhToPx(2.5)}${vu}`,
+                              background: "rgba(255,255,255,0.05)",
+                              borderRadius: `${vhToPx(2)}${vu}`,
                               border: "1px solid rgba(255,255,255,0.08)",
-                              backdropFilter: "blur(10px)",
-                              WebkitBackdropFilter: "blur(10px)",
+                              backdropFilter: "blur(12px)",
+                              WebkitBackdropFilter: "blur(12px)",
                             }}>
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center" style={{ gap: `${vhToPx(1.5)}${vu}`, minWidth: 0 }}>
-                                  <span style={{ fontSize: `${vhToPx(3)}${vu}`, lineHeight: 1 }}>{flagIcon}</span>
+                                  <span style={{ fontSize: `${vhToPx(3.5)}${vu}`, lineHeight: 1 }}>{flagIcon}</span>
                                   <div className="flex flex-col" style={{ minWidth: 0 }}>
-                                    <span className="font-black truncate" style={{ fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.1 }}>{c}</span>
-                                    <span className="truncate" style={{ fontSize: `${vhToPx(1.1)}${vu}`, opacity: 0.4, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
+                                    <span className="font-black truncate" style={{ fontSize: `${vhToPx(2.4)}${vu}`, lineHeight: 1.1 }}>{c}</span>
+                                    <span className="truncate" style={{ fontSize: `${vhToPx(1.2)}${vu}`, opacity: 0.35, lineHeight: 1.2 }}>{opt?.label?.split("(")[0]?.trim()}</span>
                                   </div>
                                 </div>
                                 {live ? (
                                   <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
-                                    <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(2.5)}${vu}`, lineHeight: 1.1 }}>R$ {live.value}</span>
-                                    <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, marginTop: `${vhToPx(0.3)}${vu}` }}>
-                                      <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(1.3)}${vu}`, color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
-                                      {live.direction === "up" && <ChevronUp style={{ width: `${vhToPx(1.6)}${vu}`, height: `${vhToPx(1.6)}${vu}`, color: "#4ade80" }} strokeWidth={3} className="cenario-arrow-up" />}
-                                      {live.direction === "down" && <ChevronDown style={{ width: `${vhToPx(1.6)}${vu}`, height: `${vhToPx(1.6)}${vu}`, color: "#f87171" }} strokeWidth={3} className="cenario-arrow-down" />}
+                                    <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(2.8)}${vu}`, lineHeight: 1.1 }}>R$ {live.value}</span>
+                                    <div className="flex items-center" style={{ gap: `${vhToPx(0.5)}${vu}`, marginTop: `${vhToPx(0.4)}${vu}` }}>
+                                      <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(1.4)}${vu}`, color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{live.change}</span>
+                                      {live.direction === "up" && <ChevronUp style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: "#4ade80" }} strokeWidth={3} />}
+                                      {live.direction === "down" && <ChevronDown style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: "#f87171" }} strokeWidth={3} />}
                                     </div>
                                   </div>
                                 ) : <span className="opacity-30" style={{ fontSize: `${vhToPx(2.5)}${vu}` }}>---</span>}
@@ -1545,29 +1546,29 @@ export default function CenarioTela() {
                         })}
                       </div>
                     ) : (
-                      <div className="w-full flex flex-col" style={{ gap: `${vhToPx(1.2)}${vu}` }}>
+                      <div className="w-full flex flex-col" style={{ gap: `${vhToPx(1.5)}${vu}`, maxWidth: `${vhToPx(50)}${vu}` }}>
                         {liveStocks.map((s, idx) => {
                           const flagChar = COUNTRY_FLAG_MAP[s.flag?.replace(/[^A-Z]/g, "").slice(0,2)] || s.flag;
                           return (
                             <div key={s.symbol} className={`w-full cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{
-                              padding: `${vhToPx(1.5)}${vu} ${vhToPx(1.8)}${vu}`,
-                              background: "rgba(255,255,255,0.06)",
-                              borderRadius: `${vhToPx(1.2)}${vu}`,
+                              padding: `${vhToPx(2)}${vu} ${vhToPx(2.5)}${vu}`,
+                              background: "rgba(255,255,255,0.05)",
+                              borderRadius: `${vhToPx(2)}${vu}`,
                               border: "1px solid rgba(255,255,255,0.08)",
-                              backdropFilter: "blur(10px)",
-                              WebkitBackdropFilter: "blur(10px)",
+                              backdropFilter: "blur(12px)",
+                              WebkitBackdropFilter: "blur(12px)",
                             }}>
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center" style={{ gap: `${vhToPx(1)}${vu}`, flex: 1, minWidth: 0 }}>
-                                  <span style={{ fontSize: `${vhToPx(3)}${vu}`, lineHeight: 1 }}>{flagChar}</span>
-                                  <span className="font-black truncate" style={{ fontSize: `${vhToPx(2.2)}${vu}` }}>{s.name}</span>
+                                <div className="flex items-center" style={{ gap: `${vhToPx(1.5)}${vu}`, flex: 1, minWidth: 0 }}>
+                                  <span style={{ fontSize: `${vhToPx(3.5)}${vu}`, lineHeight: 1 }}>{flagChar}</span>
+                                  <span className="font-black truncate" style={{ fontSize: `${vhToPx(2.4)}${vu}` }}>{s.name}</span>
                                 </div>
                                 <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
-                                  <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(2.5)}${vu}`, lineHeight: 1.1 }}>{s.value}</span>
-                                  <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, marginTop: `${vhToPx(0.3)}${vu}` }}>
-                                    <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(1.3)}${vu}`, color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{s.change}</span>
-                                    {s.direction === "up" && <ChevronUp style={{ width: `${vhToPx(1.6)}${vu}`, height: `${vhToPx(1.6)}${vu}`, color: "#4ade80" }} strokeWidth={3} className="cenario-arrow-up" />}
-                                    {s.direction === "down" && <ChevronDown style={{ width: `${vhToPx(1.6)}${vu}`, height: `${vhToPx(1.6)}${vu}`, color: "#f87171" }} strokeWidth={3} className="cenario-arrow-down" />}
+                                  <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(2.8)}${vu}`, lineHeight: 1.1 }}>{s.value}</span>
+                                  <div className="flex items-center" style={{ gap: `${vhToPx(0.5)}${vu}`, marginTop: `${vhToPx(0.4)}${vu}` }}>
+                                    <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(1.4)}${vu}`, color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.5)" }}>{s.change}</span>
+                                    {s.direction === "up" && <ChevronUp style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: "#4ade80" }} strokeWidth={3} />}
+                                    {s.direction === "down" && <ChevronDown style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: "#f87171" }} strokeWidth={3} />}
                                   </div>
                                 </div>
                               </div>
