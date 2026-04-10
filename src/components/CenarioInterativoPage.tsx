@@ -557,6 +557,17 @@ export default function CenarioInterativoPage() {
     return () => ro.disconnect();
   }, []);
 
+  /* Measure preview container to compute scale for virtual 1080×1920 canvas */
+  useEffect(() => {
+    const el = previewWrapRef.current;
+    if (!el) return;
+    const measure = () => { setPreviewScale(el.clientWidth / PREV_W); };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [PREV_W]);
+
   const configRef = useRef(config);
   const activeTabRef = useRef(activeTab);
   const weatherSubTabRef = useRef(weatherSubTab);
