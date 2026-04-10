@@ -212,6 +212,14 @@ export default function IntercomWidget() {
           pc.onconnectionstatechange = () => {
             const s = pc.connectionState;
             console.log("[Intercom Listener] Connection state:", s);
+            // Notify speaker about our connection status
+            ch.send({
+              type: "broadcast", event: "listener-status",
+              payload: {
+                presenceKey: listenerPresenceKeyRef.current,
+                status: s === "connected" ? "connected" : s === "disconnected" || s === "failed" || s === "closed" ? "disconnected" : "connecting",
+              },
+            });
             if (s === "disconnected" || s === "failed" || s === "closed") {
               setReceiving(false);
             }
