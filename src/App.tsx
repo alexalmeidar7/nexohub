@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Component, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import { Loader2 } from "lucide-react";
 
 // Lazy-loaded heavy pages
 const PlayerHub = lazy(() => import("./pages/player/PlayerHub"));
@@ -30,6 +31,24 @@ const VmixControl = lazy(() => import("./pages/VmixControl"));
 const CenarioTela = lazy(() => import("./pages/CenarioTela"));
 const TelaInterativa = lazy(() => import("./pages/TelaInterativa"));
 
+class ChunkErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-screen w-screen flex flex-col items-center justify-center gap-4" style={{ backgroundColor: "#0f1058", color: "#fff" }}>
+          <p className="text-lg font-semibold">Erro ao carregar a página</p>
+          <button onClick={() => window.location.reload()} className="px-6 py-2 rounded-lg text-sm font-medium" style={{ backgroundColor: "#268ffa" }}>
+            Recarregar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -48,7 +67,8 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
-          <Suspense fallback={<div className="h-screen w-screen bg-black" />}>
+          <ChunkErrorBoundary>
+          <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center" style={{ backgroundColor: "#0f1058" }}><Loader2 className="animate-spin" size={32} style={{ color: "#268ffa" }} /></div>}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -92,6 +112,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
+          </ChunkErrorBoundary>
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
