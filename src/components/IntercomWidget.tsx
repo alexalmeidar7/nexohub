@@ -26,6 +26,7 @@ export default function IntercomWidget() {
   const [onlineListeners, setOnlineListeners] = useState<ListenerInfo[]>([]);
   const [targetMode, setTargetMode] = useState<TargetMode>("all");
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [connectedListenerKeys, setConnectedListenerKeys] = useState<Set<string>>(new Set());
   const [connectionState, setConnectionState] = useState("");
   const [hotkey, setHotkey] = useState<string>(() => localStorage.getItem(HOTKEY_STORAGE_KEY) || "");
   const [settingHotkey, setSettingHotkey] = useState(false);
@@ -120,7 +121,7 @@ export default function IntercomWidget() {
       console.log("[Intercom] Presence sync — listeners:", listeners.length, "speaker:", hasSpeaker);
     });
 
-    // ── Speaker: listen for answer + listener ICE ──
+    // ── Speaker: listen for answer + listener ICE + status ──
     if (role === "speaker") {
       ch.on("broadcast", { event: "answer" }, async ({ payload }) => {
         try {
@@ -150,6 +151,20 @@ export default function IntercomWidget() {
         } catch (e) {
           console.error("[Intercom Speaker] Error adding ICE:", e);
         }
+      });
+
+      // Listener reports its connection status
+      ch.on("broadcast", { event: "listener-status" }, ({ payload }) => {
+        if (!payload.presenceKey) return;
+        setConnectedListenerKeys(prev => {
+          const next = new Set(prev);
+          if (payload.status === "connected") {
+            next.add(payload.presenceKey);
+          } else {
+            next.delete(payload.presenceKey);
+          }
+          return next;
+        });
       });
     }
 
@@ -197,6 +212,14 @@ export default function IntercomWidget() {
           pc.onconnectionstatechange = () => {
             const s = pc.connectionState;
             console.log("[Intercom Listener] Connection state:", s);
+            // Notify speaker about our connection status
+            ch.send({
+              type: "broadcast", event: "listener-status",
+              payload: {
+                presenceKey: listenerPresenceKeyRef.current,
+                status: s === "connected" ? "connected" : s === "disconnected" || s === "failed" || s === "closed" ? "disconnected" : "connecting",
+              },
+            });
             if (s === "disconnected" || s === "failed" || s === "closed") {
               setReceiving(false);
             }
@@ -371,6 +394,7 @@ export default function IntercomWidget() {
     pendingCandidatesRef.current = [];
     setTalking(false);
     setConnectionState("");
+    setConnectedListenerKeys(new Set());
     channelRef.current?.send({
       type: "broadcast", event: "hangup",
       payload: buildTargetPayload(),
@@ -422,6 +446,7 @@ export default function IntercomWidget() {
     setNameInput("");
     setSelectedKeys(new Set());
     setTargetMode("all");
+    setConnectedListenerKeys(new Set());
   };
 
   const handleBack = () => {
@@ -437,6 +462,7 @@ export default function IntercomWidget() {
     setListenerName("");
     setSelectedKeys(new Set());
     setTargetMode("all");
+    setConnectedListenerKeys(new Set());
   };
 
   const confirmListenerName = () => {
@@ -695,63 +721,88 @@ export default function IntercomWidget() {
       </div>
 
       {/* Online listeners list with selection */}
-      {onlineListeners.length > 0 && !talking && (
+      {onlineListeners.length > 0 && (
         <div className="px-3 pb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           <div className="flex items-center justify-between py-1.5">
             <p className="text-[9px] text-white/30 uppercase tracking-wider flex items-center gap-1">
-              <Users size={10} /> Ouvintes online
+              <Users size={10} /> Ouvintes {talking ? "— transmitindo" : "online"}
             </p>
+            {talking && connectedListenerKeys.size > 0 && (
+              <span className="text-[9px] text-green-400/70">
+                {connectedListenerKeys.size} conectado(s)
+              </span>
+            )}
           </div>
 
-          {/* Target mode toggle */}
-          <div className="flex gap-1 mb-2">
-            <button
-              onClick={() => { setTargetMode("all"); setSelectedKeys(new Set()); }}
-              className="flex-1 text-[10px] py-1.5 rounded-lg font-medium transition-all"
-              style={{
-                backgroundColor: targetMode === "all" ? "rgba(38,143,250,0.2)" : "rgba(255,255,255,0.04)",
-                color: targetMode === "all" ? "#268ffa" : "rgba(255,255,255,0.4)",
-                border: `1px solid ${targetMode === "all" ? "rgba(38,143,250,0.3)" : "rgba(255,255,255,0.06)"}`,
-              }}>
-              Todos ({onlineListeners.length})
-            </button>
-            <button
-              onClick={() => setTargetMode("selected")}
-              className="flex-1 text-[10px] py-1.5 rounded-lg font-medium transition-all"
-              style={{
-                backgroundColor: targetMode === "selected" ? "rgba(38,143,250,0.2)" : "rgba(255,255,255,0.04)",
-                color: targetMode === "selected" ? "#268ffa" : "rgba(255,255,255,0.4)",
-                border: `1px solid ${targetMode === "selected" ? "rgba(38,143,250,0.3)" : "rgba(255,255,255,0.06)"}`,
-              }}>
-              Selecionar
-            </button>
-          </div>
+          {/* Target mode toggle (only when not talking) */}
+          {!talking && (
+            <div className="flex gap-1 mb-2">
+              <button
+                onClick={() => { setTargetMode("all"); setSelectedKeys(new Set()); }}
+                className="flex-1 text-[10px] py-1.5 rounded-lg font-medium transition-all"
+                style={{
+                  backgroundColor: targetMode === "all" ? "rgba(38,143,250,0.2)" : "rgba(255,255,255,0.04)",
+                  color: targetMode === "all" ? "#268ffa" : "rgba(255,255,255,0.4)",
+                  border: `1px solid ${targetMode === "all" ? "rgba(38,143,250,0.3)" : "rgba(255,255,255,0.06)"}`,
+                }}>
+                Todos ({onlineListeners.length})
+              </button>
+              <button
+                onClick={() => setTargetMode("selected")}
+                className="flex-1 text-[10px] py-1.5 rounded-lg font-medium transition-all"
+                style={{
+                  backgroundColor: targetMode === "selected" ? "rgba(38,143,250,0.2)" : "rgba(255,255,255,0.04)",
+                  color: targetMode === "selected" ? "#268ffa" : "rgba(255,255,255,0.4)",
+                  border: `1px solid ${targetMode === "selected" ? "rgba(38,143,250,0.3)" : "rgba(255,255,255,0.06)"}`,
+                }}>
+                Selecionar
+              </button>
+            </div>
+          )}
 
           {/* Listener chips */}
           <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
             {onlineListeners.map((l) => {
               const isSelected = targetMode === "all" || selectedKeys.has(l.presenceKey);
+              const isConnected = connectedListenerKeys.has(l.presenceKey);
               return (
                 <button
                   key={l.presenceKey}
                   onClick={() => {
-                    if (targetMode === "selected") toggleListenerSelection(l.presenceKey);
+                    if (!talking && targetMode === "selected") toggleListenerSelection(l.presenceKey);
                   }}
-                  className="text-[10px] px-2 py-1 rounded-full flex items-center gap-1 transition-all"
+                  className="text-[10px] px-2 py-1 rounded-full flex items-center gap-1.5 transition-all"
                   style={{
-                    backgroundColor: isSelected ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.04)",
-                    color: isSelected ? "#22c55e" : "rgba(255,255,255,0.3)",
-                    border: `1px solid ${isSelected ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)"}`,
-                    cursor: targetMode === "selected" ? "pointer" : "default",
+                    backgroundColor: talking && isConnected
+                      ? "rgba(38,143,250,0.15)"
+                      : isSelected ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.04)",
+                    color: talking && isConnected
+                      ? "#268ffa"
+                      : isSelected ? "#22c55e" : "rgba(255,255,255,0.3)",
+                    border: `1px solid ${talking && isConnected
+                      ? "rgba(38,143,250,0.3)"
+                      : isSelected ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)"}`,
+                    cursor: !talking && targetMode === "selected" ? "pointer" : "default",
                   }}>
-                  {targetMode === "selected" && isSelected && <Check size={10} />}
+                  {/* Connection status dot */}
+                  {talking && (
+                    <span className="relative flex-shrink-0">
+                      <span className="w-[6px] h-[6px] rounded-full inline-block"
+                        style={{ backgroundColor: isConnected ? "#22c55e" : "#555" }} />
+                      {isConnected && (
+                        <span className="absolute inset-0 w-[6px] h-[6px] rounded-full animate-ping"
+                          style={{ backgroundColor: "#22c55e", opacity: 0.5 }} />
+                      )}
+                    </span>
+                  )}
+                  {!talking && targetMode === "selected" && isSelected && <Check size={10} />}
                   {l.name}
                 </button>
               );
             })}
           </div>
 
-          {targetMode === "selected" && selectedKeys.size === 0 && (
+          {!talking && targetMode === "selected" && selectedKeys.size === 0 && (
             <p className="text-[9px] text-white/20 mt-1 text-center">Selecione ao menos um ouvinte</p>
           )}
         </div>
