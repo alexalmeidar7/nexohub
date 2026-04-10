@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Mic, MicOff, Radio, X, Share2, Check } from "lucide-react";
+import { Mic, MicOff, Radio, X, Share2, Check, Keyboard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 const CHANNEL_NAME = "intercom-signal";
+const HOTKEY_STORAGE_KEY = "intercom-hotkey";
 
 export default function IntercomWidget() {
   const { user } = useAuth();
@@ -12,15 +13,23 @@ export default function IntercomWidget() {
   const [listenerOnline, setListenerOnline] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [hotkey, setHotkey] = useState<string>(() => localStorage.getItem(HOTKEY_STORAGE_KEY) || "");
+  const [settingHotkey, setSettingHotkey] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const remoteDescSetRef = useRef(false);
+  const talkingRef = useRef(false);
+  const hotkeyRef = useRef(hotkey);
 
   const userId = user?.id;
 
+  useEffect(() => { hotkeyRef.current = hotkey; }, [hotkey]);
+  useEffect(() => { talkingRef.current = talking; }, [talking]);
+
+  // Signaling channel
   useEffect(() => {
     if (!userId) return;
     const presenceKey = `speaker-${Date.now()}`;
@@ -42,7 +51,6 @@ export default function IntercomWidget() {
         if (pc && payload.sdp) {
           await pc.setRemoteDescription(new RTCSessionDescription({ type: payload.sdp.type, sdp: payload.sdp.sdp }));
           remoteDescSetRef.current = true;
-          // Flush queued ICE candidates
           for (const c of pendingCandidatesRef.current) {
             await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.warn);
           }
@@ -81,12 +89,16 @@ export default function IntercomWidget() {
   }, [userId]);
 
   const startTalking = useCallback(async () => {
+    if (talkingRef.current) return;
     setError(null);
     remoteDescSetRef.current = false;
     pendingCandidatesRef.current = [];
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        video: false,
+      });
       streamRef.current = stream;
 
       const pc = new RTCPeerConnection({
@@ -109,14 +121,9 @@ export default function IntercomWidget() {
         }
       };
 
-      pc.onconnectionstatechange = () => {
-        console.log("[Intercom Speaker] Connection state:", pc.connectionState);
-      };
-
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // Send SDP as plain object to ensure proper serialization
       channelRef.current?.send({
         type: "broadcast",
         event: "offer",
@@ -126,17 +133,14 @@ export default function IntercomWidget() {
       setTalking(true);
     } catch (e: any) {
       console.error("[Intercom Speaker] Mic error:", e);
-      if (e.name === "NotAllowedError") {
-        setError("Permissão de microfone negada");
-      } else if (e.name === "NotFoundError") {
-        setError("Nenhum microfone encontrado");
-      } else {
-        setError("Erro ao acessar microfone");
-      }
+      if (e.name === "NotAllowedError") setError("Permissão de microfone negada");
+      else if (e.name === "NotFoundError") setError("Nenhum microfone encontrado");
+      else setError("Erro ao acessar microfone");
     }
   }, []);
 
   const stopTalking = useCallback(() => {
+    if (!talkingRef.current) return;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     pcRef.current?.close();
@@ -144,13 +148,46 @@ export default function IntercomWidget() {
     remoteDescSetRef.current = false;
     pendingCandidatesRef.current = [];
     setTalking(false);
-
-    channelRef.current?.send({
-      type: "broadcast",
-      event: "hangup",
-      payload: {},
-    });
+    channelRef.current?.send({ type: "broadcast", event: "hangup", payload: {} });
   }, []);
+
+  // Keyboard hotkey
+  useEffect(() => {
+    if (!hotkey) return;
+    const onDown = (e: KeyboardEvent) => {
+      if (settingHotkey) return;
+      if (e.code === hotkey && !talkingRef.current) {
+        e.preventDefault();
+        startTalking();
+      }
+    };
+    const onUp = (e: KeyboardEvent) => {
+      if (e.code === hotkey && talkingRef.current) {
+        e.preventDefault();
+        stopTalking();
+      }
+    };
+    window.addEventListener("keydown", onDown);
+    window.addEventListener("keyup", onUp);
+    return () => {
+      window.removeEventListener("keydown", onDown);
+      window.removeEventListener("keyup", onUp);
+    };
+  }, [hotkey, settingHotkey, startTalking, stopTalking]);
+
+  // Hotkey capture mode
+  useEffect(() => {
+    if (!settingHotkey) return;
+    const handler = (e: KeyboardEvent) => {
+      e.preventDefault();
+      const code = e.code;
+      setHotkey(code);
+      localStorage.setItem(HOTKEY_STORAGE_KEY, code);
+      setSettingHotkey(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [settingHotkey]);
 
   const shareLink = useCallback(async () => {
     if (!userId) return;
@@ -160,29 +197,23 @@ export default function IntercomWidget() {
         await navigator.clipboard.writeText(url);
       } else {
         const ta = document.createElement("textarea");
-        ta.value = url;
-        ta.style.position = "fixed";
-        ta.style.left = "-9999px";
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
+        ta.value = url; ta.style.position = "fixed"; ta.style.left = "-9999px";
+        document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
       }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       const ta = document.createElement("textarea");
-      ta.value = url;
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
+      ta.value = url; ta.style.position = "fixed"; ta.style.left = "-9999px";
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   }, [userId]);
+
+  const formatKeyName = (code: string) => {
+    return code.replace("Key", "").replace("Digit", "").replace("Numpad", "Num ");
+  };
 
   const glassStyle = {
     backgroundColor: "rgba(0, 0, 0, 0.7)",
@@ -206,11 +237,10 @@ export default function IntercomWidget() {
   }
 
   return (
-    <div
-      className="fixed bottom-20 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in"
-      style={{ ...glassStyle, width: 280 }}
-    >
-      <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+    <div className="fixed bottom-20 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 300 }}>
+      {/* Main bar */}
+      <div className="flex items-center gap-2 px-3 py-2.5">
+        {/* Talk button */}
         <button
           onMouseDown={startTalking}
           onMouseUp={stopTalking}
@@ -218,19 +248,30 @@ export default function IntercomWidget() {
           onTouchStart={startTalking}
           onTouchEnd={stopTalking}
           disabled={!listenerOnline}
-          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110 active:scale-95 disabled:opacity-30"
-          style={{ backgroundColor: talking ? "#ef4444" : "#268ffa" }}
+          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110 active:scale-95 disabled:opacity-30"
+          style={{
+            backgroundColor: talking ? "#ef4444" : "#268ffa",
+            boxShadow: talking ? "0 0 16px rgba(239,68,68,0.4)" : "0 0 8px rgba(38,143,250,0.3)",
+          }}
           title={talking ? "Transmitindo..." : "Pressione para falar"}
         >
-          {talking ? <MicOff size={14} className="text-white" /> : <Mic size={14} className="text-white" />}
+          {talking ? <MicOff size={15} className="text-white" /> : <Mic size={15} className="text-white" />}
         </button>
 
+        {/* Info */}
         <div className="flex-1 min-w-0 overflow-hidden">
-          <p className="text-white text-xs font-bold truncate">Intercomunicador</p>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            <p className="text-white text-xs font-bold truncate">Intercomunicador</p>
+            {hotkey && !talking && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/40 font-mono flex-shrink-0">
+                {formatKeyName(hotkey)}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 mt-0.5">
             <div
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: listenerOnline ? "#22c55e" : talking ? "#ef4444" : "#666" }}
+              style={{ backgroundColor: talking ? "#ef4444" : listenerOnline ? "#22c55e" : "#555" }}
             />
             <span className="text-white/40 text-[10px] truncate">
               {talking ? "Transmitindo..." : listenerOnline ? "Receptor online" : "Receptor offline"}
@@ -238,44 +279,70 @@ export default function IntercomWidget() {
           </div>
         </div>
 
+        {/* Audio bars */}
         {talking && (
-          <div className="flex items-center gap-[2px] mr-1">
-            {[...Array(4)].map((_, i) => (
+          <div className="flex items-end gap-[2px] mr-0.5 h-4">
+            {[0.6, 1, 0.7, 0.9, 0.5].map((h, i) => (
               <div
                 key={i}
                 className="w-[3px] rounded-full"
                 style={{
-                  backgroundColor: "#268ffa",
-                  height: `${6 + Math.random() * 10}px`,
-                  animation: `pulse 0.${4 + i}s ease-in-out infinite alternate`,
+                  backgroundColor: "#ef4444",
+                  height: `${h * 100}%`,
+                  animation: `intercomBar 0.${3 + i * 2}s ease-in-out infinite alternate`,
                 }}
               />
             ))}
           </div>
         )}
 
+        {/* Hotkey button */}
+        <button
+          onClick={() => setSettingHotkey(true)}
+          className="text-white/40 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
+          title={settingHotkey ? "Pressione uma tecla..." : hotkey ? `Atalho: ${formatKeyName(hotkey)}` : "Definir atalho"}
+        >
+          <Keyboard size={14} className={settingHotkey ? "text-yellow-400 animate-pulse" : ""} />
+        </button>
+
+        {/* Share */}
         <button
           onClick={shareLink}
-          className="text-white/50 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
-          title={copied ? "Link copiado!" : "Compartilhar link do receptor"}
+          className="text-white/40 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
+          title={copied ? "Link copiado!" : "Compartilhar link"}
         >
           {copied ? <Check size={14} className="text-green-400" /> : <Share2 size={14} />}
         </button>
 
+        {/* Close */}
         <button
           onClick={() => { stopTalking(); setOpen(false); }}
-          className="text-white/50 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
+          className="text-white/40 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
           title="Fechar"
         >
           <X size={14} />
         </button>
       </div>
 
+      {/* Hotkey capture overlay */}
+      {settingHotkey && (
+        <div className="px-3 py-2" style={{ backgroundColor: "rgba(255,200,0,0.08)", borderTop: "1px solid rgba(255,200,0,0.15)" }}>
+          <p className="text-[10px] text-yellow-300/80 text-center">Pressione uma tecla para definir o atalho...</p>
+        </div>
+      )}
+
       {error && (
-        <div className="px-3 py-1.5" style={{ backgroundColor: "rgba(239,68,68,0.15)" }}>
+        <div className="px-3 py-1.5" style={{ backgroundColor: "rgba(239,68,68,0.12)", borderTop: "1px solid rgba(239,68,68,0.1)" }}>
           <p className="text-[10px] text-red-400">{error}</p>
         </div>
       )}
+
+      <style>{`
+        @keyframes intercomBar {
+          0% { transform: scaleY(0.4); }
+          100% { transform: scaleY(1); }
+        }
+      `}</style>
     </div>
   );
 }

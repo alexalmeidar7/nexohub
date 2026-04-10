@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Volume2, VolumeX, Radio } from "lucide-react";
+import { Volume2, VolumeX, Radio, Wifi, WifiOff } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
 const CHANNEL_NAME = "intercom-signal";
@@ -19,15 +19,11 @@ export default function IntercomListener() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const remoteDescSetRef = useRef(false);
 
   useEffect(() => {
-    if (!uid) {
-      setError("Parâmetro 'uid' não encontrado na URL.");
-      return;
-    }
+    if (!uid) { setError("Parâmetro 'uid' não encontrado na URL."); return; }
 
     const presenceKey = `listener-${Date.now()}`;
     const ch = supabase.channel(`${CHANNEL_NAME}-${uid}`, {
@@ -44,8 +40,6 @@ export default function IntercomListener() {
 
     ch.on("broadcast", { event: "offer" }, async ({ payload }) => {
       try {
-        console.log("[Intercom Listener] Received offer");
-        // Cleanup previous connection
         pcRef.current?.close();
         remoteDescSetRef.current = false;
         pendingCandidatesRef.current = [];
@@ -60,37 +54,27 @@ export default function IntercomListener() {
 
         pc.onicecandidate = (ev) => {
           if (ev.candidate) {
-            ch.send({
-              type: "broadcast",
-              event: "ice-candidate-listener",
-              payload: { candidate: ev.candidate.toJSON() },
-            });
+            ch.send({ type: "broadcast", event: "ice-candidate-listener", payload: { candidate: ev.candidate.toJSON() } });
           }
         };
 
         pc.ontrack = (ev) => {
-          console.log("[Intercom Listener] Received audio track");
           setReceiving(true);
           if (audioRef.current) {
             audioRef.current.srcObject = ev.streams[0];
-            audioRef.current.play().catch((e) => {
-              console.warn("[Intercom Listener] Autoplay blocked:", e);
-            });
+            audioRef.current.play().catch(console.warn);
           }
         };
 
         pc.onconnectionstatechange = () => {
-          console.log("[Intercom Listener] Connection state:", pc.connectionState);
           if (pc.connectionState === "disconnected" || pc.connectionState === "failed" || pc.connectionState === "closed") {
             setReceiving(false);
           }
         };
 
-        // Set remote description with plain SDP object
         await pc.setRemoteDescription(new RTCSessionDescription({ type: payload.sdp.type, sdp: payload.sdp.sdp }));
         remoteDescSetRef.current = true;
 
-        // Flush any ICE candidates that arrived before the offer was processed
         for (const c of pendingCandidatesRef.current) {
           await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.warn);
         }
@@ -98,13 +82,7 @@ export default function IntercomListener() {
 
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-
-        console.log("[Intercom Listener] Sending answer");
-        ch.send({
-          type: "broadcast",
-          event: "answer",
-          payload: { sdp: { type: answer.type, sdp: answer.sdp } },
-        });
+        ch.send({ type: "broadcast", event: "answer", payload: { sdp: { type: answer.type, sdp: answer.sdp } } });
       } catch (e) {
         console.error("[Intercom Listener] Error handling offer:", e);
         setError("Erro ao conectar áudio");
@@ -117,35 +95,26 @@ export default function IntercomListener() {
         if (pcRef.current && remoteDescSetRef.current) {
           await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate));
         } else {
-          // Queue candidates that arrive before remote description is set
           pendingCandidatesRef.current.push(payload.candidate);
         }
-      } catch (e) {
-        console.error("[Intercom Listener] Error adding ICE:", e);
-      }
+      } catch (e) { console.error("[Intercom Listener] Error adding ICE:", e); }
     });
 
     ch.on("broadcast", { event: "hangup" }, () => {
-      console.log("[Intercom Listener] Speaker hung up");
       pcRef.current?.close();
       pcRef.current = null;
       remoteDescSetRef.current = false;
       pendingCandidatesRef.current = [];
       setReceiving(false);
-      if (audioRef.current) {
-        audioRef.current.srcObject = null;
-      }
+      if (audioRef.current) audioRef.current.srcObject = null;
     });
 
     ch.subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
-        console.log("[Intercom Listener] Channel subscribed");
         setConnected(true);
         await ch.track({ role: "listener", online: true });
       }
     });
-
-    channelRef.current = ch;
 
     return () => {
       pcRef.current?.close();
@@ -164,78 +133,121 @@ export default function IntercomListener() {
 
   if (!uid) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center" style={{ backgroundColor: "#0f1058", color: "#fff" }}>
+      <div className="h-screen w-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0a0e2a 0%, #0f1058 50%, #1a1040 100%)", color: "#fff" }}>
         <p className="text-lg">Parâmetro <code className="bg-white/10 px-2 py-1 rounded">?uid=...</code> obrigatório na URL.</p>
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col items-center justify-center gap-6" style={{ backgroundColor: "#0f1058", color: "#fff" }}>
+    <div className="h-screen w-screen flex flex-col items-center justify-center gap-0 relative overflow-hidden select-none"
+      style={{ background: "linear-gradient(160deg, #060a20 0%, #0c1040 40%, #10154a 70%, #0a0e2a 100%)", color: "#fff" }}>
       <audio ref={audioRef} autoPlay playsInline />
 
-      <div className="flex flex-col items-center gap-2">
-        <Radio size={48} style={{ color: "#268ffa" }} />
-        <h1 className="text-2xl font-bold">Intercomunicador</h1>
-        <p className="text-sm opacity-60">Página do Receptor</p>
+      {/* Ambient glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-20"
+          style={{ background: receiving ? "radial-gradient(circle, #268ffa 0%, transparent 70%)" : "radial-gradient(circle, #268ffa 0%, transparent 70%)", opacity: receiving ? 0.3 : 0.08, transition: "opacity 1s ease" }} />
       </div>
 
-      <div className="flex flex-col items-center gap-2">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: connected ? "#22c55e" : "#ef4444" }} />
-          {connected ? "Conectado ao canal" : "Conectando..."}
+      {/* Top status bar */}
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 py-4 z-10">
+        <div className="flex items-center gap-2">
+          {connected ? <Wifi size={14} className="text-green-400/60" /> : <WifiOff size={14} className="text-red-400/60" />}
+          <span className="text-[11px] text-white/30">{connected ? "Conectado" : "Conectando..."}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: speakerOnline ? "#22c55e" : "#666" }} />
-          {speakerOnline ? "Speaker online" : "Speaker offline"}
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: speakerOnline ? "#22c55e" : "#444" }} />
+          <span className="text-[11px] text-white/30">{speakerOnline ? "Speaker online" : "Speaker offline"}</span>
         </div>
       </div>
 
-      <div
-        className="w-32 h-32 rounded-full flex items-center justify-center transition-all"
-        style={{
-          backgroundColor: receiving ? "#268ffa22" : "#ffffff08",
-          border: `3px solid ${receiving ? "#268ffa" : "#ffffff22"}`,
-          boxShadow: receiving ? "0 0 40px #268ffa44" : "none",
-        }}
-      >
-        {receiving ? (
-          <div className="flex items-center gap-1">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="w-2 rounded-full animate-pulse"
-                style={{
-                  backgroundColor: "#268ffa",
-                  height: `${12 + Math.random() * 28}px`,
-                  animationDelay: `${i * 0.12}s`,
-                }}
-              />
-            ))}
+      {/* Center content */}
+      <div className="flex flex-col items-center gap-8 z-10">
+        {/* Logo & title */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "rgba(38,143,250,0.1)", border: "1px solid rgba(38,143,250,0.2)" }}>
+            <Radio size={28} style={{ color: "#268ffa" }} />
           </div>
-        ) : (
-          <Volume2 size={40} style={{ color: "#ffffff33" }} />
-        )}
+          <div className="text-center">
+            <h1 className="text-xl font-bold tracking-tight">Intercomunicador</h1>
+            <p className="text-xs text-white/30 mt-1">Receptor de Áudio</p>
+          </div>
+        </div>
+
+        {/* Audio visualizer circle */}
+        <div className="relative">
+          {/* Pulse rings when receiving */}
+          {receiving && (
+            <>
+              <div className="absolute inset-0 rounded-full animate-ping" style={{ border: "2px solid rgba(38,143,250,0.15)", animationDuration: "2s" }} />
+              <div className="absolute -inset-4 rounded-full animate-ping" style={{ border: "1px solid rgba(38,143,250,0.08)", animationDuration: "3s" }} />
+            </>
+          )}
+
+          <div
+            className="w-36 h-36 rounded-full flex items-center justify-center transition-all duration-500"
+            style={{
+              background: receiving
+                ? "radial-gradient(circle at 40% 40%, rgba(38,143,250,0.25) 0%, rgba(38,143,250,0.05) 70%)"
+                : "radial-gradient(circle at 40% 40%, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 70%)",
+              border: `2px solid ${receiving ? "rgba(38,143,250,0.4)" : "rgba(255,255,255,0.08)"}`,
+              boxShadow: receiving ? "0 0 60px rgba(38,143,250,0.15), inset 0 0 30px rgba(38,143,250,0.1)" : "none",
+            }}
+          >
+            {receiving ? (
+              <div className="flex items-end gap-[3px] h-12">
+                {[0.5, 0.8, 1, 0.7, 0.9, 0.6, 0.85].map((h, i) => (
+                  <div
+                    key={i}
+                    className="w-[4px] rounded-full"
+                    style={{
+                      backgroundColor: "#268ffa",
+                      height: `${h * 100}%`,
+                      animation: `listenerBar 0.${3 + i * 2}s ease-in-out infinite alternate`,
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Volume2 size={36} style={{ color: "rgba(255,255,255,0.12)" }} />
+            )}
+          </div>
+        </div>
+
+        {/* Status text */}
+        <p className="text-sm font-medium" style={{ color: receiving ? "#268ffa" : "rgba(255,255,255,0.25)" }}>
+          {receiving ? "Recebendo áudio" : "Aguardando transmissão"}
+        </p>
+
+        {/* Mute button */}
+        <button
+          onClick={toggleMute}
+          className="flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-medium transition-all hover:scale-105 active:scale-95"
+          style={{
+            backgroundColor: muted ? "rgba(239,68,68,0.1)" : "rgba(38,143,250,0.1)",
+            color: muted ? "#ef4444" : "#268ffa",
+            border: `1px solid ${muted ? "rgba(239,68,68,0.2)" : "rgba(38,143,250,0.2)"}`,
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          {muted ? "Som desativado" : "Som ativado"}
+        </button>
       </div>
 
-      <p className="text-sm" style={{ color: receiving ? "#268ffa" : "#ffffff66" }}>
-        {receiving ? "Recebendo áudio..." : "Aguardando transmissão"}
-      </p>
+      {error && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
+          <p className="text-sm text-red-400 bg-red-400/10 px-4 py-2 rounded-full border border-red-400/20">{error}</p>
+        </div>
+      )}
 
-      <button
-        onClick={toggleMute}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105"
-        style={{
-          backgroundColor: muted ? "#ef444422" : "#268ffa22",
-          color: muted ? "#ef4444" : "#268ffa",
-          border: `1px solid ${muted ? "#ef444444" : "#268ffa44"}`,
-        }}
-      >
-        {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-        {muted ? "Som desativado" : "Som ativado"}
-      </button>
-
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      <style>{`
+        @keyframes listenerBar {
+          0% { transform: scaleY(0.3); }
+          100% { transform: scaleY(1); }
+        }
+      `}</style>
     </div>
   );
 }
