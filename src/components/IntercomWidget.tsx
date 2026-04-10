@@ -116,15 +116,39 @@ export default function IntercomWidget() {
     });
   }, []);
 
-  const shareLink = useCallback(() => {
+  const shareLink = useCallback(async () => {
     if (!userId) return;
     const url = `${window.location.origin}/intercom?uid=${userId}`;
-    navigator.clipboard.writeText(url).then(() => {
+    try {
+      // Try modern clipboard API
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback: create a temporary textarea
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      window.prompt("Copie o link:", url);
-    });
+    } catch {
+      // Last resort fallback
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   }, [userId]);
 
   const glassStyle = {
