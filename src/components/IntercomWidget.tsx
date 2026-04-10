@@ -370,6 +370,9 @@ export default function IntercomWidget() {
   const stopTalking = useCallback(() => {
     if (!talkingRef.current) return;
     console.log("[Intercom Speaker] Stopping...");
+    cancelAnimationFrame(levelRafRef.current);
+    analyserRef.current = null;
+    setMicLevel(0);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     pcRef.current?.close();
