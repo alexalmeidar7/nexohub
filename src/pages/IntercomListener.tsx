@@ -16,8 +16,11 @@ export default function IntercomListener() {
   const [connected, setConnected] = useState(false);
   const [speakerOnline, setSpeakerOnline] = useState(false);
   const [receiving, setReceiving] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const [volume, setVolume] = useState(100);
+  const [muted, setMuted] = useState(() => localStorage.getItem("intercom-listener-muted") === "true");
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem("intercom-listener-volume");
+    return saved ? Number(saved) : 100;
+  });
   const [error, setError] = useState<string | null>(null);
   const [peerState, setPeerState] = useState("");
   const [audioUnlockRequired, setAudioUnlockRequired] = useState(false);
@@ -31,6 +34,7 @@ export default function IntercomListener() {
 
   useEffect(() => {
     mutedRef.current = muted;
+    localStorage.setItem("intercom-listener-muted", String(muted));
     if (audioRef.current) {
       audioRef.current.muted = muted;
     }
@@ -38,6 +42,7 @@ export default function IntercomListener() {
 
   useEffect(() => {
     volumeRef.current = volume;
+    localStorage.setItem("intercom-listener-volume", String(volume));
     if (audioRef.current) {
       audioRef.current.volume = volume / 100;
     }
