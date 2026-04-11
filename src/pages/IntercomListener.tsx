@@ -170,10 +170,26 @@ export default function IntercomListener() {
 
           if (audioRef.current) {
             audioRef.current.srcObject = stream;
+            const shouldMute = mutedRef.current || volumeRef.current === 0;
+            audioRef.current.defaultMuted = shouldMute;
+            audioRef.current.muted = shouldMute;
+            audioRef.current.volume = volumeRef.current / 100;
             audioRef.current.onloadedmetadata = () => {
+              const nextShouldMute = mutedRef.current || volumeRef.current === 0;
+              if (audioRef.current) {
+                audioRef.current.defaultMuted = nextShouldMute;
+                audioRef.current.muted = nextShouldMute;
+                audioRef.current.volume = volumeRef.current / 100;
+              }
               void tryPlayAudio();
             };
             audioRef.current.oncanplay = () => {
+              const nextShouldMute = mutedRef.current || volumeRef.current === 0;
+              if (audioRef.current) {
+                audioRef.current.defaultMuted = nextShouldMute;
+                audioRef.current.muted = nextShouldMute;
+                audioRef.current.volume = volumeRef.current / 100;
+              }
               void tryPlayAudio();
             };
           }
