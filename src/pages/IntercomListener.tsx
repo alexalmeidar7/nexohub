@@ -24,6 +24,7 @@ export default function IntercomListener() {
   const [error, setError] = useState<string | null>(null);
   const [peerState, setPeerState] = useState("");
   const [audioUnlockRequired, setAudioUnlockRequired] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -31,6 +32,9 @@ export default function IntercomListener() {
   const remoteDescSetRef = useRef(false);
   const mutedRef = useRef(false);
   const volumeRef = useRef(100);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const rafRef = useRef<number>(0);
 
   useEffect(() => {
     mutedRef.current = muted;
