@@ -245,11 +245,14 @@ export default function IntercomListener() {
 
     ch.on("broadcast", { event: "hangup" }, () => {
       console.log("[Intercom Listener] Speaker hung up");
+      cancelAnimationFrame(rafRef.current);
       pcRef.current?.close();
       pcRef.current = null;
+      analyserRef.current = null;
       remoteDescSetRef.current = false;
       pendingCandidatesRef.current = [];
       setReceiving(false);
+      setAudioLevel(0);
       setPeerState("");
       setAudioUnlockRequired(false);
 
