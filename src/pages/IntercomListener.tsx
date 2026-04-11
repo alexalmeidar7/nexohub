@@ -24,6 +24,7 @@ export default function IntercomListener() {
   const [error, setError] = useState<string | null>(null);
   const [peerState, setPeerState] = useState("");
   const [audioUnlockRequired, setAudioUnlockRequired] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -31,6 +32,9 @@ export default function IntercomListener() {
   const remoteDescSetRef = useRef(false);
   const mutedRef = useRef(false);
   const volumeRef = useRef(100);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const rafRef = useRef<number>(0);
 
   useEffect(() => {
     mutedRef.current = muted;
@@ -127,6 +131,33 @@ export default function IntercomListener() {
             void tryPlayAudio();
           };
 
+          // Setup AnalyserNode for VU meter
+          try {
+            if (!audioCtxRef.current) {
+              audioCtxRef.current = new AudioContext();
+            }
+            const ctx = audioCtxRef.current;
+            const source = ctx.createMediaStreamSource(stream);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.6;
+            source.connect(analyser);
+            analyserRef.current = analyser;
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const tick = () => {
+              analyser.getByteFrequencyData(dataArray);
+              let sum = 0;
+              for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+              const avg = sum / dataArray.length / 255;
+              setAudioLevel(avg);
+              rafRef.current = requestAnimationFrame(tick);
+            };
+            rafRef.current = requestAnimationFrame(tick);
+          } catch (e) {
+            console.warn("[Intercom Listener] AnalyserNode setup failed:", e);
+          }
+
           ev.track.onunmute = markReceiving;
           ev.track.onmute = () => setReceiving(false);
           ev.track.onended = () => setReceiving(false);
@@ -214,11 +245,14 @@ export default function IntercomListener() {
 
     ch.on("broadcast", { event: "hangup" }, () => {
       console.log("[Intercom Listener] Speaker hung up");
+      cancelAnimationFrame(rafRef.current);
       pcRef.current?.close();
       pcRef.current = null;
+      analyserRef.current = null;
       remoteDescSetRef.current = false;
       pendingCandidatesRef.current = [];
       setReceiving(false);
+      setAudioLevel(0);
       setPeerState("");
       setAudioUnlockRequired(false);
 
@@ -237,8 +271,10 @@ export default function IntercomListener() {
     });
 
     return () => {
+      cancelAnimationFrame(rafRef.current);
       pcRef.current?.close();
       pcRef.current = null;
+      analyserRef.current = null;
       ch.untrack();
       supabase.removeChannel(ch);
       setAudioUnlockRequired(false);
@@ -344,13 +380,21 @@ export default function IntercomListener() {
           >
             {receiving ? (
               <div className="flex items-end gap-[3px] h-12">
-                {[0.5, 0.8, 1, 0.7, 0.9, 0.6, 0.85].map((height, index) => (
-                  <div
-                    key={index}
-                    className="w-[4px] rounded-full"
-                    style={{ backgroundColor: "#268ffa", height: `${height * 100}%`, animation: `listenerBar 0.${3 + index * 2}s ease-in-out infinite alternate` }}
-                  />
-                ))}
+                {[0.6, 0.75, 0.9, 1, 0.85, 0.7, 0.55].map((sensitivity, index) => {
+                  const barLevel = Math.min(1, audioLevel * sensitivity * 2.5);
+                  const minHeight = 0.08;
+                  const h = Math.max(minHeight, barLevel);
+                  return (
+                    <div
+                      key={index}
+                      className="w-[4px] rounded-full transition-all duration-75"
+                      style={{
+                        backgroundColor: h > 0.7 ? "#22c55e" : h > 0.4 ? "#268ffa" : "rgba(38,143,250,0.5)",
+                        height: `${h * 100}%`,
+                      }}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <Volume2 size={36} style={{ color: "rgba(255,255,255,0.12)" }} />
@@ -407,12 +451,6 @@ export default function IntercomListener() {
         </div>
       )}
 
-      <style>{`
-        @keyframes listenerBar {
-          0% { transform: scaleY(0.3); }
-          100% { transform: scaleY(1); }
-        }
-      `}</style>
     </div>
   );
 }
