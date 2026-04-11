@@ -454,6 +454,3 @@ export default function IntercomListener() {
     </div>
   );
 }
-    </div>
-  );
-}
