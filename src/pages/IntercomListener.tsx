@@ -451,12 +451,9 @@ export default function IntercomListener() {
         </div>
       )}
 
-      <style>{`
-        @keyframes listenerBar {
-          0% { transform: scaleY(0.3); }
-          100% { transform: scaleY(1); }
-        }
-      `}</style>
+    </div>
+  );
+}
     </div>
   );
 }
