@@ -268,8 +268,10 @@ export default function IntercomListener() {
     });
 
     return () => {
+      cancelAnimationFrame(rafRef.current);
       pcRef.current?.close();
       pcRef.current = null;
+      analyserRef.current = null;
       ch.untrack();
       supabase.removeChannel(ch);
       setAudioUnlockRequired(false);
