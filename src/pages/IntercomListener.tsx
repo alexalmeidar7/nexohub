@@ -131,6 +131,33 @@ export default function IntercomListener() {
             void tryPlayAudio();
           };
 
+          // Setup AnalyserNode for VU meter
+          try {
+            if (!audioCtxRef.current) {
+              audioCtxRef.current = new AudioContext();
+            }
+            const ctx = audioCtxRef.current;
+            const source = ctx.createMediaStreamSource(stream);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.6;
+            source.connect(analyser);
+            analyserRef.current = analyser;
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const tick = () => {
+              analyser.getByteFrequencyData(dataArray);
+              let sum = 0;
+              for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+              const avg = sum / dataArray.length / 255;
+              setAudioLevel(avg);
+              rafRef.current = requestAnimationFrame(tick);
+            };
+            rafRef.current = requestAnimationFrame(tick);
+          } catch (e) {
+            console.warn("[Intercom Listener] AnalyserNode setup failed:", e);
+          }
+
           ev.track.onunmute = markReceiving;
           ev.track.onmute = () => setReceiving(false);
           ev.track.onended = () => setReceiving(false);
