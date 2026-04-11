@@ -377,13 +377,21 @@ export default function IntercomListener() {
           >
             {receiving ? (
               <div className="flex items-end gap-[3px] h-12">
-                {[0.5, 0.8, 1, 0.7, 0.9, 0.6, 0.85].map((height, index) => (
-                  <div
-                    key={index}
-                    className="w-[4px] rounded-full"
-                    style={{ backgroundColor: "#268ffa", height: `${height * 100}%`, animation: `listenerBar 0.${3 + index * 2}s ease-in-out infinite alternate` }}
-                  />
-                ))}
+                {[0.6, 0.75, 0.9, 1, 0.85, 0.7, 0.55].map((sensitivity, index) => {
+                  const barLevel = Math.min(1, audioLevel * sensitivity * 2.5);
+                  const minHeight = 0.08;
+                  const h = Math.max(minHeight, barLevel);
+                  return (
+                    <div
+                      key={index}
+                      className="w-[4px] rounded-full transition-all duration-75"
+                      style={{
+                        backgroundColor: h > 0.7 ? "#22c55e" : h > 0.4 ? "#268ffa" : "rgba(38,143,250,0.5)",
+                        height: `${h * 100}%`,
+                      }}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <Volume2 size={36} style={{ color: "rgba(255,255,255,0.12)" }} />
