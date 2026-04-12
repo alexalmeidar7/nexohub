@@ -1348,15 +1348,15 @@ export default function CenarioTela() {
 
                    {/* ── TOP-LEFT: Big neon clock + date + SYNC ── */}
                    <div style={{ position: "absolute", top: `${vhToPx(3)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
-                     <div style={{ fontWeight: 900, fontSize: `${vhToPx(5.5)}${vu}`, fontVariantNumeric: "tabular-nums", lineHeight: 1, color: "#fff", textShadow: `0 0 20px ${accentRgba(0.6)}, 0 0 40px ${accentRgba(0.3)}`, letterSpacing: "-0.02em" }}>
+                     <div style={{ fontWeight: 900, fontSize: `${vhToPx(3.4)}${vu}`, fontVariantNumeric: "tabular-nums", lineHeight: 1, color: "#fff", textShadow: `0 0 20px ${accentRgba(0.6)}, 0 0 40px ${accentRgba(0.3)}`, letterSpacing: "-0.02em" }}>
                        {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                      </div>
-                     <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.3)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.3)}${vu}` }}>
+                     <div style={{ fontWeight: 600, fontSize: `${vhToPx(0.9)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.16)}${vu}` }}>
                        {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                      </div>
-                     <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}`, marginTop: `${vhToPx(0.4)}${vu}`, opacity: 0.7 }}>
-                       <div style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, borderRadius: "50%", background: realtimeConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: realtimeConnected ? `0 0 6px var(--layout-accent-color, #4ade80)` : "0 0 6px #ef4444" }} />
-                       <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: `${vhToPx(0.9)}${vu}` }}>
+                     <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.26)}${vu}`, marginTop: `${vhToPx(0.22)}${vu}`, opacity: 0.7 }}>
+                       <div style={{ width: `${vhToPx(0.36)}${vu}`, height: `${vhToPx(0.36)}${vu}`, borderRadius: "50%", background: realtimeConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: realtimeConnected ? `0 0 6px var(--layout-accent-color, #4ade80)` : "0 0 6px #ef4444" }} />
+                       <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: `${vhToPx(0.6)}${vu}` }}>
                          {realtimeConnected ? "SYNC" : "OFF"}
                        </span>
                      </div>
