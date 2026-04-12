@@ -1844,33 +1844,66 @@ export default function CenarioInterativoPage() {
                                </div>
                              </div>
 
-                             {/* ── TOP-RIGHT: Mic icon + Presenter name ── */}
-                             {currentProgram?.apresentador && (
-                               <div style={{ position: "absolute", top: `${pvh(4)}px`, right: `${pvh(4)}px`, zIndex: 12 }}>
-                                 <div className="flex items-center" style={{ gap: `${pvh(1)}px` }}>
-                                   <div className="flex items-center justify-center rounded-full" style={{ width: `${pvh(3.5)}px`, height: `${pvh(3.5)}px`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)" }}>
-                                     <Mic size={pvh(1.8)} style={{ color: "#fff" }} />
-                                   </div>
-                                   <span className="font-bold" style={{ fontSize: `${pvh(2.4)}px`, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{currentProgram.apresentador}</span>
+                             {/* ── TOP-RIGHT: "A seguir" ── */}
+                             {nextProgram && (
+                               <div style={{ position: "absolute", top: `${pvh(3)}px`, right: `${pvh(4)}px`, zIndex: 20, textAlign: "right" }}>
+                                 <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.3)}px` }}>a seguir</div>
+                                 <div className="font-bold" style={{ fontSize: `${pvh(2.2)}px`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
+                                 <div className="font-medium" style={{ fontSize: `${pvh(1.2)}px`, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                               </div>
+                             )}
+
+                             {/* ── CENTER-BOTTOM: Accent card with presenter, logo, photo, music ── */}
+                             <div style={{
+                               position: "absolute",
+                               bottom: `${pvh(5)}px`,
+                               left: "50%",
+                               transform: "translateX(-50%)",
+                               width: `${pvh(38)}px`,
+                               zIndex: 15,
+                               borderRadius: `${pvh(2)}px`,
+                               background: `linear-gradient(145deg, var(--layout-accent-color, rgba(200,50,50,0.7)), rgba(0,0,0,0.4))`,
+                               backdropFilter: "blur(20px)",
+                               WebkitBackdropFilter: "blur(20px)",
+                               padding: `${pvh(2)}px`,
+                               boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                               border: "1px solid rgba(255,255,255,0.1)",
+                             }}>
+                               {/* Card header: presenter name + program logo */}
+                               <div className="flex items-center justify-between" style={{ marginBottom: `${pvh(1.5)}px` }}>
+                                 <div className="flex items-center" style={{ gap: `${pvh(0.6)}px` }}>
+                                   <Mic size={pvh(1.4)} style={{ opacity: 0.8 }} />
+                                   <span className="font-bold" style={{ fontSize: `${pvh(1.6)}px`, color: "#fff" }}>{currentProgram?.apresentador || ""}</span>
                                  </div>
+                                 {currentProgram?.selo && (
+                                   <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5)}px`, maxWidth: `${pvh(10)}px`, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
+                                 )}
                                </div>
-                             )}
 
-                             {/* ── CENTER-LEFT: Program logo ── */}
-                             {currentProgram?.selo && (
-                               <div style={{ position: "absolute", top: "50%", left: `${pvh(4)}px`, transform: "translateY(-50%)", zIndex: 12 }}>
-                                 <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${pvh(22)}px`, maxHeight: `${pvh(18)}px` }} />
-                               </div>
-                             )}
+                               {/* Card center: presenter photo */}
+                               {currentProgram?.apresentadorFoto && (
+                                 <div className="flex justify-center" style={{ marginBottom: `${pvh(1.5)}px` }}>
+                                   <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(22)}px`, objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))" }} />
+                                 </div>
+                               )}
 
-                             {/* ── CENTER: Presenter PHOTO (large) ── */}
-                             {currentProgram?.apresentadorFoto && (
-                               <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", zIndex: 5, display: "flex", justifyContent: "center" }}>
-                                 <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(82)}px`, objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.5))" }} />
-                               </div>
-                             )}
+                               {/* Card bottom: music info */}
+                               {musicData && (
+                                 <div key={musicKey} style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                                   <div className="flex items-center" style={{ gap: `${pvh(0.5)}px`, marginBottom: `${pvh(0.4)}px` }}>
+                                     <Music size={pvh(1.2)} style={{ opacity: 0.7 }} />
+                                     <span className="font-semibold uppercase" style={{ letterSpacing: "0.12em", fontSize: `${pvh(0.9)}px`, opacity: 0.7 }}>Tocando Agora</span>
+                                   </div>
+                                   <div className="font-extrabold" style={{ fontSize: `${pvh(2)}px`, lineHeight: 1.2, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
+                                   <div className="font-medium" style={{ fontSize: `${pvh(1.4)}px`, opacity: 0.7, marginTop: `${pvh(0.2)}px`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
+                                 </div>
+                               )}
+                               {!musicData && currentProgram && (
+                                 <div className="font-extrabold" style={{ fontSize: `${pvh(2)}px`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
+                               )}
+                             </div>
 
-                             {/* ── Sponsor logos (top-right, below presenter name) ── */}
+                             {/* ── Sponsor logos (top-right, below "a seguir") ── */}
                              {sponsorLogos.length > 0 && (
                                <div style={{ position: "absolute", top: `${pvh(10)}px`, right: `${pvh(3)}px`, zIndex: 10 }}>
                                  <div className="relative flex justify-end" style={{ height: `${pvh(12)}px`, minWidth: `${pvh(8)}px` }}>
@@ -1881,37 +1914,9 @@ export default function CenarioInterativoPage() {
                                </div>
                              )}
 
-                             {/* "A seguir" — bottom left above music */}
-                             {nextProgram && (
-                               <div style={{ position: "absolute", bottom: `${pvh(13)}px`, left: `${pvh(4)}px`, zIndex: 12 }}>
-                                 <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.3)}px` }}>a seguir</div>
-                                 <div className="font-bold" style={{ fontSize: `${pvh(1.8)}px`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
-                                 <div className="font-medium" style={{ fontSize: `${pvh(1.2)}px`, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
-                               </div>
-                             )}
-
-                             {/* ── BOTTOM: "TOCANDO AGORA" + Music info ── */}
-                             {musicData && (
-                               <div key={musicKey} style={{ position: "absolute", bottom: `${pvh(5)}px`, left: `${pvh(4)}px`, right: `${pvh(4)}px`, zIndex: 10, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                                 <div className="flex items-center" style={{ gap: `${pvh(0.6)}px`, marginBottom: `${pvh(0.6)}px` }}>
-                                   <Music size={pvh(1.4)} style={{ opacity: 0.6 }} />
-                                   <span className="font-semibold uppercase tracking-widest" style={{ fontSize: `${pvh(1.1)}px`, opacity: 0.6, letterSpacing: "0.15em" }}>Tocando Agora</span>
-                                 </div>
-                                 <div className="font-black" style={{ fontSize: `${pvh(2.6)}px`, lineHeight: 1.2, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
-                                 <div className="font-medium" style={{ fontSize: `${pvh(1.6)}px`, opacity: 0.6, marginTop: `${pvh(0.3)}px`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
-                               </div>
-                             )}
-
-                             {/* No music: show program name at bottom */}
-                             {!musicData && currentProgram && !currentProgram.selo && (
-                               <div style={{ position: "absolute", bottom: `${pvh(6)}px`, left: `${pvh(4)}px`, zIndex: 10 }}>
-                                 <div className="font-black" style={{ fontSize: `${pvh(3)}px`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
-                               </div>
-                             )}
-
-                            {/* Progress bar — neon glow */}
-                            <div style={{ position: "absolute", bottom: `${pvh(2)}px`, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
-                              <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--layout-accent-color, #444)", transition: "width 1s linear", boxShadow: "0 0 3px var(--layout-accent-color, #444), 0 0 8px var(--layout-accent-color, #444), 0 -1px 4px var(--layout-accent-color, #444)" }} />
+                             {/* Progress bar — neon glow */}
+                             <div style={{ position: "absolute", bottom: `${pvh(2)}px`, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
+                               <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--layout-accent-color, #444)", transition: "width 1s linear", boxShadow: "0 0 3px var(--layout-accent-color, #444), 0 0 8px var(--layout-accent-color, #444), 0 -1px 4px var(--layout-accent-color, #444)" }} />
                             </div>
                           </div>
                         );
