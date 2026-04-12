@@ -487,17 +487,23 @@ export default function PlayerPage() {
 
   // Fetch artist background image from Deezer
   const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas";
+  const [prevArtistBgUrl, setPrevArtistBgUrl] = useState<string | null>(null);
+  const [artistBgReady, setArtistBgReady] = useState(false);
   useEffect(() => {
-    if (isBreakTrack) { setArtistBgUrl(null); return; }
+    if (artistBgUrl) setPrevArtistBgUrl(artistBgUrl);
+  }, [artistBgUrl]);
+  useEffect(() => {
+    if (isBreakTrack) { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
-    if (!artist || artist === "Desconhecido" || !isAudio) { setArtistBgUrl(null); return; }
+    if (!artist || artist === "Desconhecido" || !isAudio) { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
     if (artistBgCacheRef.current[cacheKey]) {
+      setArtistBgReady(false);
       setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
       return;
     }
-    // Clear previous background immediately so gradient shows while loading
-    setArtistBgUrl(null);
+    // Don't clear previous background — keep it visible while loading
+    setArtistBgReady(false);
     let cancelled = false;
     (async () => {
       try {
@@ -2604,14 +2610,22 @@ export default function PlayerPage() {
             : `radial-gradient(ellipse ${posMap[gPos] || "at bottom center"}, ${c1} 0%, ${c2} ${gMid}%)`;
           return (
             <>
-              {/* Artist background image from Deezer — full, no blur */}
+              {/* Artist background image from Deezer — crossfade */}
+              {prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+                <img
+                   src={prevArtistBgUrl}
+                   alt=""
+                   className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                   style={{ opacity: artistBgReady ? 0 : 0.55, zIndex: 0, transition: "opacity 1.2s ease-in-out" }}
+                />
+              )}
               {artistBgUrl && (
                 <img
-                  key={artistBgUrl}
                    src={artistBgUrl}
                    alt=""
-                   className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
-                   style={{ opacity: 0.55, zIndex: 0 }}
+                   className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                   style={{ opacity: artistBgReady ? 0.55 : 0, zIndex: 0, transition: "opacity 1.2s ease-in-out" }}
+                   onLoad={() => setArtistBgReady(true)}
                    onError={() => setArtistBgUrl(null)}
                 />
               )}
