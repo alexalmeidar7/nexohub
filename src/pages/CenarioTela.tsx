@@ -13,7 +13,7 @@ interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3D
 interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage: string; lat: number | null; lon: number | null; zoom: number; }
 interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
-interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; elementPositions?: Record<string, { x: number; y: number; scale: number }>; }
+interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; exceptionWords?: string; elementPositions?: Record<string, { x: number; y: number; scale: number }>; }
 interface CenarioConfig { city: string; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
 
 function buildHomeGradient(h: HomeConfig): string {
@@ -245,7 +245,12 @@ export default function CenarioTela() {
   };
 
   /* ─── Fetch artist background from Deezer (like Player audio) ─── */
-  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas" || musicData?.titulo?.toLowerCase() === "hora certa" || musicData?.artista?.toLowerCase() === "hora certa";
+  const exceptionWordsList = (config.home.exceptionWords || "break,vinhetas,hora certa").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
+  const isBreakTrack = (() => {
+    const titulo = (musicData?.titulo || "").toLowerCase();
+    const artista = (musicData?.artista || "").toLowerCase();
+    return exceptionWordsList.some(w => titulo === w || artista === w);
+  })();
   useEffect(() => {
     if (isBreakTrack) { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
