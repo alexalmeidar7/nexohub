@@ -1351,7 +1351,36 @@ export default function CenarioTela() {
                     );
                   })()}
 
-                  {/* ── Presenter PHOTO (full height, like audio player card) ── */}
+                  {/* ── SPONSOR (top-right) ── */}
+                  {sponsorLogos.length > 0 && (() => {
+                    const custom = elStyle("sponsor", "top-left", { animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" });
+                    const style: React.CSSProperties = custom
+                      ?? { position: "absolute", top: `${vhToPx(4)}${vu}`, right: `${vhToPx(3)}${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
+                    return (
+                      <div style={style}>
+                        <div className="relative flex items-center justify-end" style={{ height: `${vhToPx(21)}${vu}` }}>
+                          {sponsorLogos.map((l, i) => l.logo_url && (
+                            <img
+                              key={l.id}
+                              src={l.logo_url}
+                              alt={l.nome}
+                              className="object-contain"
+                              style={{
+                                position: "absolute",
+                                maxWidth: `${vhToPx(50)}${vu}`, maxHeight: `${vhToPx(20)}${vu}`,
+                                right: 0,
+                                opacity: i === sponsorIdx ? 1 : 0,
+                                transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
+                                transition: "opacity 0.8s ease, transform 0.8s ease",
+                                filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {currentProgram?.apresentadorFoto && (() => {
                     const custom = elStyle("presenterPhoto", "bottom-left", { zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" });
                     const style: React.CSSProperties = custom
