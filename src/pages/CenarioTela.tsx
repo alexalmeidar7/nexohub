@@ -1619,7 +1619,7 @@ export default function CenarioTela() {
               <Eraser style={{ width: "2vh", height: "2vh", color: "white" }} />
             </button>
           )}
-  const musicXmlUrlRef = useRef<string | null>(null);
+  
 
           {/* "Telas Conectadas" notification */}
           {showConnectedMsg && (
