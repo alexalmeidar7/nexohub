@@ -1689,9 +1689,10 @@ export default function CenarioInterativoPage() {
 
             <div
               ref={previewWrapRef}
-              className="relative rounded-2xl overflow-hidden mx-auto flex-1"
+              className="relative rounded-2xl overflow-hidden mx-auto"
               style={{
                 width: "100%",
+                maxWidth: "calc((100vh - 160px) * 9 / 16)",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
                 border: "2px solid rgba(255,255,255,0.08)",
               }}
