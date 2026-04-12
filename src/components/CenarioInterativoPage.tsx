@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import DraggableElement, { ElementPosition, defaultPositions } from "@/components/cenario/DraggableElement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -62,6 +62,7 @@ interface HomeConfig {
   bgGradientColorB?: string;
   bgGradientType?: "linear" | "radial";
   bgGradientAngle?: number;
+  exceptionWords?: string;
   elementPositions?: Record<string, ElementPosition>;
 }
 
@@ -1268,7 +1269,23 @@ export default function CenarioInterativoPage() {
                       {/* Mini preview */}
                       <div className="w-full h-10 rounded-md border" style={{ background: buildHomeGradient(config.home) }} />
                     </div>
-                  )}
+                   )}
+
+                  {/* ── Palavras de exceção ── */}
+                  <div className="space-y-1.5 pt-2 border-t border-white/10">
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <EyeOff size={12} /> Palavras de exceção
+                    </Label>
+                    <p className="text-[10px]" style={{ color: mutedText }}>
+                      Separadas por vírgula. Quando encontrada no artista ou música, o fundo usará o degradê e a capa não será exibida.
+                    </p>
+                    <Input
+                      value={config.home.exceptionWords || ""}
+                      onChange={e => updateHome({ exceptionWords: e.target.value })}
+                      placeholder="break, vinheta, hora certa"
+                      className="h-7 text-xs"
+                    />
+                  </div>
                 </div>
               </TabsContent>
 
