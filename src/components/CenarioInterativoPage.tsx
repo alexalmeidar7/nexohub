@@ -1828,7 +1828,7 @@ export default function CenarioInterativoPage() {
                             )}
                             {config.home.bgGradient && !artistBgUrl && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
                             {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                            <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.5) 0%, transparent 70%)", pointerEvents: "none" }} />
+                            
 
                             {/* Clock — draggable */}
                             <DraggableElement id="clock" position={getElPos("clock")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
