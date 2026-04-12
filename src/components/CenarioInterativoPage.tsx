@@ -1143,7 +1143,7 @@ export default function CenarioInterativoPage() {
                   />
                 </div>
                 {saving && <span className="text-[10px] animate-pulse" style={{ color: mutedText }}>Salvando...</span>}
-                {!saving && loaded && <span className="text-[10px]" style={{ color: mutedText }}>✓ Salvo</span>}
+                {!saving && savedFlash && <span className="text-[10px]" style={{ color: mutedText }}>✓ Salvo</span>}
               </div>
             </div>
 
