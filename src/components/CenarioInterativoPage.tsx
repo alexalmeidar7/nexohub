@@ -265,6 +265,27 @@ function BgImageUpload({ value, onChange, mutedText, userId, category }: { value
   );
 }
 
+/* ── Exception words input with local state (debounced save) ── */
+function ExceptionWordsInput({ value, onSave }: { value: string; onSave: (v: string) => void }) {
+  const [local, setLocal] = useState(value);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => { setLocal(prev => prev === value ? prev : value); }, [value]);
+  const handleChange = (v: string) => {
+    setLocal(v);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onSave(v), 800);
+  };
+  return (
+    <Input
+      value={local}
+      onChange={e => handleChange(e.target.value)}
+      onBlur={() => { clearTimeout(timerRef.current); onSave(local); }}
+      placeholder="break, vinheta, hora certa"
+      className="h-7 text-xs"
+    />
+  );
+}
+
 /* ─── COMPONENT ─── */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export default function CenarioInterativoPage() {
@@ -1279,12 +1300,7 @@ export default function CenarioInterativoPage() {
                     <p className="text-[10px]" style={{ color: mutedText }}>
                       Separadas por vírgula. Quando encontrada no artista ou música, o fundo usará o degradê e a capa não será exibida.
                     </p>
-                    <Input
-                      value={config.home.exceptionWords || ""}
-                      onChange={e => updateHome({ exceptionWords: e.target.value })}
-                      placeholder="break, vinheta, hora certa"
-                      className="h-7 text-xs"
-                    />
+                    <ExceptionWordsInput value={config.home.exceptionWords || ""} onSave={v => updateHome({ exceptionWords: v })} />
                   </div>
                 </div>
               </TabsContent>
