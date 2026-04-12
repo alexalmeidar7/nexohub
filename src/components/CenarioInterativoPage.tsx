@@ -1895,7 +1895,7 @@ export default function CenarioInterativoPage() {
                              {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA ── */}
                              <div style={{
                                position: "absolute",
-                               bottom: `${pvh(10.94)}px`,
+                               bottom: `${pvh(30)}px`,
                                left: "50%",
                                transform: "translateX(-50%)",
                                display: "flex",
