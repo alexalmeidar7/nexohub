@@ -736,6 +736,11 @@ export default function CenarioInterativoPage() {
   /* ─── Artist background image (Deezer) ─── */
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
   const artistBgCacheRef = useRef<Record<string, string>>({});
+  const [prevArtistBgUrl, setPrevArtistBgUrl] = useState<string | null>(null);
+  const [artistBgReady, setArtistBgReady] = useState(false);
+  useEffect(() => {
+    if (artistBgUrl) setPrevArtistBgUrl(artistBgUrl);
+  }, [artistBgUrl]);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
@@ -751,15 +756,16 @@ export default function CenarioInterativoPage() {
   /* ─── Fetch artist background from Deezer ─── */
   const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas";
   useEffect(() => {
-    if (isBreakTrack) { setArtistBgUrl(null); return; }
+    if (isBreakTrack) { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
-    if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); return; }
+    if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
     if (artistBgCacheRef.current[cacheKey]) {
+      setArtistBgReady(false);
       setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
       return;
     }
-    setArtistBgUrl(null);
+    setArtistBgReady(false);
     let cancelled = false;
     (async () => {
       try {
