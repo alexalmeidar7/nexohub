@@ -84,11 +84,18 @@ serve(async (req) => {
 
         // Fetch weather
         const wxRes = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=2`
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,sunrise,sunset&timezone=auto&forecast_days=2`
         );
         const d = await wxRes.json();
 
-        const wbIcon = weatherCodeToWbIcon(d.current.weather_code);
+        // Determine if it's currently nighttime
+        const nowLocal = new Date().toLocaleString("sv-SE", { timeZone: d.timezone || "UTC" });
+        const nowTime = nowLocal.split(" ")[1]?.substring(0, 5) || "12:00";
+        const sunrise = d.daily.sunrise?.[0]?.split("T")[1]?.substring(0, 5) || "06:00";
+        const sunset = d.daily.sunset?.[0]?.split("T")[1]?.substring(0, 5) || "18:00";
+        const isNight = nowTime < sunrise || nowTime > sunset;
+
+        const wbIcon = weatherCodeToWbIcon(d.current.weather_code, isNight);
         const iconUrl = `https://www.weatherbit.io/static/img/icons/${wbIcon}.png`;
         const condLabel = getLabel(d.current.weather_code);
 
