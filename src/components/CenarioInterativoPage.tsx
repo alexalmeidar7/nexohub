@@ -1859,28 +1859,19 @@ export default function CenarioInterativoPage() {
                               </DraggableElement>
                             )}
 
-                            {/* Vinyl / program center — draggable */}
+                            {/* Music info center — draggable */}
                             <DraggableElement id="vinyl" position={getElPos("vinyl")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="center">
                               <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                               {musicData ? (
                                 <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                                  <div className="relative" style={{ width: `${pvh(73.5)}px`, height: `${pvh(73.5)}px` }}>
-                                    <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(50,50,50,0.3) 48.5%, transparent 49.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 30deg, rgba(255,255,255,0.02) 32deg, transparent 34deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 150deg, rgba(255,255,255,0.02) 152deg, transparent 154deg, transparent 210deg, rgba(255,255,255,0.03) 212deg, transparent 214deg, transparent 270deg, rgba(255,255,255,0.02) 272deg, transparent 274deg, transparent 330deg, rgba(255,255,255,0.03) 332deg, transparent 334deg), #111`, boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.5)", animation: "vinyl-spin 3s linear infinite" }}>
-                                      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "40%", height: "40%", borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.1)", boxShadow: "0 0 20px rgba(0,0,0,0.5)" }}>
-                                        {musicData.capa ? (
-                                          <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                        ) : (
-                                          <div className="flex items-center justify-center w-full h-full" style={{ background: "rgba(255,255,255,0.08)" }}>
-                                            <Music style={{ width: `${pvh(4)}px`, height: `${pvh(4)}px`, opacity: 0.3, color: "#fff" }} />
-                                          </div>
-                                        )}
-                                      </div>
-                                      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "6%", height: "6%", borderRadius: "50%", background: "#000", border: "1px solid rgba(255,255,255,0.1)", zIndex: 2 }} />
+                                  {musicData.capa && (
+                                    <div style={{ width: `${pvh(28)}px`, height: `${pvh(28)}px`, borderRadius: `${pvh(2)}px`, overflow: "hidden", boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6)", marginBottom: `${pvh(2.5)}px` }}>
+                                      <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     </div>
-                                  </div>
-                                  <div style={{ marginTop: `${pvh(2)}px`, textAlign: "center", maxWidth: `${pvh(40)}px` }}>
-                                    <div className="font-black truncate" style={{ fontSize: `${pvh(2.4)}px`, lineHeight: 1.2, color: "var(--layout-accent-color, #fff)", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
-                                    <div className="font-medium truncate" style={{ fontSize: `${pvh(1.6)}px`, opacity: 0.6, marginTop: `${pvh(0.3)}px` }}>{musicData.artista}</div>
+                                  )}
+                                  <div style={{ textAlign: "center", maxWidth: `${pvh(40)}px` }}>
+                                    <div className="font-black truncate" style={{ fontSize: `${pvh(2.8)}px`, lineHeight: 1.2, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
+                                    <div className="font-medium truncate" style={{ fontSize: `${pvh(1.8)}px`, opacity: 0.6, marginTop: `${pvh(0.5)}px` }}>{musicData.artista}</div>
                                   </div>
                                 </div>
                               ) : currentProgram?.selo ? (
