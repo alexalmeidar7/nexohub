@@ -1182,7 +1182,19 @@ export default function CenarioTela() {
 
           {!isMapTab && (
             <div className="absolute inset-0" style={{ background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : activeTab === "home" || activeTab === "chat" ? "#e8e8e8" : "#e8e8e8", zIndex: 0 }}>
-              {(activeTab === "home" || activeTab === "chat") && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {/* Home/Chat: artist bg from Deezer → user bg image → gradient fallback */}
+              {(activeTab === "home" || activeTab === "chat") && artistBgUrl && (
+                <img
+                  src={artistBgUrl}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+                  style={{ opacity: 0.35, filter: "saturate(1.2)" }}
+                />
+              )}
+              {(activeTab === "home" || activeTab === "chat") && artistBgUrl && (
+                <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
+              )}
+              {(activeTab === "home" || activeTab === "chat") && !artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
