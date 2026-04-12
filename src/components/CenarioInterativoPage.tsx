@@ -1819,8 +1819,15 @@ export default function CenarioInterativoPage() {
                         }
                         return (
                           <div ref={homeContentRef} className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
-                            {config.home.bgGradient && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
-                            {!config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                            {/* Artist bg image */}
+                            {artistBgUrl && (
+                              <>
+                                <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.35, filter: "saturate(1.2)" }} />
+                                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
+                              </>
+                            )}
+                            {config.home.bgGradient && !artistBgUrl && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
+                            {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                             <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.5) 0%, transparent 70%)", pointerEvents: "none" }} />
 
                             {/* Clock — draggable */}
