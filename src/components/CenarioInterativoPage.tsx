@@ -733,6 +733,9 @@ export default function CenarioInterativoPage() {
   const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const prevMusicRef = useRef("");
+  /* ─── Artist background image (Deezer) ─── */
+  const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
+  const artistBgCacheRef = useRef<Record<string, string>>({});
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
@@ -744,6 +747,31 @@ export default function CenarioInterativoPage() {
   const [currencyLoading, setCurrencyLoading] = useState(false);
   const [liveStocks, setLiveStocks] = useState<LiveStock[]>([]);
   const [stocksLoading, setStocksLoading] = useState(false);
+
+  /* ─── Fetch artist background from Deezer ─── */
+  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break";
+  useEffect(() => {
+    if (isBreakTrack) { setArtistBgUrl(null); return; }
+    const artist = musicData?.artista;
+    if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); return; }
+    const cacheKey = artist.toLowerCase();
+    if (artistBgCacheRef.current[cacheKey]) {
+      setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
+      return;
+    }
+    setArtistBgUrl(null);
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-artist-image", { body: { artist } });
+        if (cancelled) return;
+        if (error || !data?.ok || !data?.url) { setArtistBgUrl(null); return; }
+        artistBgCacheRef.current[cacheKey] = data.url;
+        setArtistBgUrl(data.url);
+      } catch { if (!cancelled) setArtistBgUrl(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [musicData?.artista, isBreakTrack]);
 
   /* ─── Clock tick ─── */
   useEffect(() => {
@@ -1791,9 +1819,16 @@ export default function CenarioInterativoPage() {
                         }
                         return (
                           <div ref={homeContentRef} className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
-                            {config.home.bgGradient && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
-                            {!config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                            <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.5) 0%, transparent 70%)", pointerEvents: "none" }} />
+                            {/* Artist bg image */}
+                            {artistBgUrl && (
+                              <>
+                                <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.35, filter: "saturate(1.2)" }} />
+                                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
+                              </>
+                            )}
+                            {config.home.bgGradient && !artistBgUrl && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
+                            {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                            
 
                             {/* Clock — draggable */}
                             <DraggableElement id="clock" position={getElPos("clock")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
@@ -1824,28 +1859,19 @@ export default function CenarioInterativoPage() {
                               </DraggableElement>
                             )}
 
-                            {/* Vinyl / program center — draggable */}
+                            {/* Music info center — draggable */}
                             <DraggableElement id="vinyl" position={getElPos("vinyl")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="center">
                               <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                               {musicData ? (
                                 <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                                  <div className="relative" style={{ width: `${pvh(73.5)}px`, height: `${pvh(73.5)}px` }}>
-                                    <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(50,50,50,0.3) 48.5%, transparent 49.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 30deg, rgba(255,255,255,0.02) 32deg, transparent 34deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 150deg, rgba(255,255,255,0.02) 152deg, transparent 154deg, transparent 210deg, rgba(255,255,255,0.03) 212deg, transparent 214deg, transparent 270deg, rgba(255,255,255,0.02) 272deg, transparent 274deg, transparent 330deg, rgba(255,255,255,0.03) 332deg, transparent 334deg), #111`, boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.5)", animation: "vinyl-spin 3s linear infinite" }}>
-                                      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "40%", height: "40%", borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.1)", boxShadow: "0 0 20px rgba(0,0,0,0.5)" }}>
-                                        {musicData.capa ? (
-                                          <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                        ) : (
-                                          <div className="flex items-center justify-center w-full h-full" style={{ background: "rgba(255,255,255,0.08)" }}>
-                                            <Music style={{ width: `${pvh(4)}px`, height: `${pvh(4)}px`, opacity: 0.3, color: "#fff" }} />
-                                          </div>
-                                        )}
-                                      </div>
-                                      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "6%", height: "6%", borderRadius: "50%", background: "#000", border: "1px solid rgba(255,255,255,0.1)", zIndex: 2 }} />
+                                  {musicData.capa && (
+                                    <div style={{ width: `${pvh(28)}px`, height: `${pvh(28)}px`, borderRadius: `${pvh(2)}px`, overflow: "hidden", boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6)", marginBottom: `${pvh(2.5)}px` }}>
+                                      <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     </div>
-                                  </div>
-                                  <div style={{ marginTop: `${pvh(2)}px`, textAlign: "center", maxWidth: `${pvh(40)}px` }}>
-                                    <div className="font-black truncate" style={{ fontSize: `${pvh(2.4)}px`, lineHeight: 1.2, color: "var(--layout-accent-color, #fff)", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
-                                    <div className="font-medium truncate" style={{ fontSize: `${pvh(1.6)}px`, opacity: 0.6, marginTop: `${pvh(0.3)}px` }}>{musicData.artista}</div>
+                                  )}
+                                  <div style={{ textAlign: "center", maxWidth: `${pvh(40)}px` }}>
+                                    <div className="font-black truncate" style={{ fontSize: `${pvh(2.8)}px`, lineHeight: 1.2, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
+                                    <div className="font-medium truncate" style={{ fontSize: `${pvh(1.8)}px`, opacity: 0.6, marginTop: `${pvh(0.5)}px` }}>{musicData.artista}</div>
                                   </div>
                                 </div>
                               ) : currentProgram?.selo ? (

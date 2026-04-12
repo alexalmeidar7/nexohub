@@ -1318,11 +1318,15 @@ export default function CenarioTela() {
 
               return (
                 <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: config.home.bgGradient ? buildHomeGradient(config.home) : "#000", color: "#fff", overflow: "hidden" }}>
-                  {/* Background image if set */}
-                  {!config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
-
-                  {/* Subtle radial glow behind vinyl */}
-                  <div style={{ position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: "70%", height: "0", paddingBottom: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,40,40,0.6) 0%, transparent 70%)", pointerEvents: "none" }} />
+                  {/* Artist background image from Deezer */}
+                  {artistBgUrl && (
+                    <>
+                      <img src={artistBgUrl} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.35, filter: "saturate(1.2)" }} />
+                      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
+                    </>
+                  )}
+                  {/* Fallback: user background image (no artist image) */}
+                  {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
 
                   {/* ── HEADER: Clock (top-left) ── */}
                   {(() => {
@@ -1381,58 +1385,33 @@ export default function CenarioTela() {
                     </div>
                   </div>
 
-                  {/* ── CENTER: Vinyl + Music Info ── */}
+                  {/* ── CENTER: Music Info (no vinyl) ── */}
                   {(() => {
                     const custom = elStyle("vinyl", "center", { display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 });
                     const style: React.CSSProperties = custom
-                      ?? { position: "absolute", top: "18%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 };
+                      ?? { position: "absolute", top: "30%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 };
                     return <div style={style}>
                     {musicData ? (
                       <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                        {/* Vinyl disc */}
-                         <div className="relative" style={{ width: `${vhToPx(73.5)}${vu}`, height: `${vhToPx(73.5)}${vu}` }}>
+                        {/* Album cover */}
+                        {musicData.capa && (
                           <div style={{
-                            width: "100%", height: "100%",
-                            borderRadius: "50%",
-                            background: `radial-gradient(circle at 50% 50%, #111 0%, #111 18%, #222 18.5%, #1a1a1a 19%, #111 20%, transparent 20.5%), radial-gradient(circle at 50% 50%, transparent 44%, rgba(40,40,40,0.6) 44.5%, rgba(30,30,30,0.4) 46%, transparent 46.5%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(50,50,50,0.3) 48.5%, transparent 49.5%), conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg, transparent 2deg, transparent 30deg, rgba(255,255,255,0.02) 32deg, transparent 34deg, transparent 90deg, rgba(255,255,255,0.03) 92deg, transparent 94deg, transparent 150deg, rgba(255,255,255,0.02) 152deg, transparent 154deg, transparent 210deg, rgba(255,255,255,0.03) 212deg, transparent 214deg, transparent 270deg, rgba(255,255,255,0.02) 272deg, transparent 274deg, transparent 330deg, rgba(255,255,255,0.03) 332deg, transparent 334deg), #111`,
-                            boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.5)",
-                            animation: "vinyl-spin 3s linear infinite",
+                            width: `${vhToPx(28)}${vu}`, height: `${vhToPx(28)}${vu}`,
+                            borderRadius: `${vhToPx(2)}${vu}`,
+                            overflow: "hidden",
+                            boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6)",
+                            marginBottom: `${vhToPx(2.5)}${vu}`,
                           }}>
-                            {/* Center label with cover art */}
-                            <div style={{
-                              position: "absolute", top: "50%", left: "50%",
-                              transform: "translate(-50%, -50%)",
-                              width: "40%", height: "40%",
-                              borderRadius: "50%", overflow: "hidden",
-                              border: "2px solid rgba(255,255,255,0.1)",
-                              boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-                            }}>
-                              {musicData.capa ? (
-                                <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                              ) : (
-                                <div className="flex items-center justify-center" style={{ width: "100%", height: "100%", background: "rgba(255,255,255,0.08)" }}>
-                                  <Music style={{ width: `${vhToPx(4)}${vu}`, height: `${vhToPx(4)}${vu}`, opacity: 0.3, color: "#fff" }} />
-                                </div>
-                              )}
-                            </div>
-                            {/* Center hole */}
-                            <div style={{
-                              position: "absolute", top: "50%", left: "50%",
-                              transform: "translate(-50%, -50%)",
-                              width: "6%", height: "6%",
-                              borderRadius: "50%", background: "#000",
-                              border: "1px solid rgba(255,255,255,0.1)", zIndex: 2,
-                            }} />
+                            <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           </div>
-                        </div>
-                        {/* Music title + artist below vinyl */}
-                         <div style={{ marginTop: `${vhToPx(2)}${vu}`, textAlign: "center", maxWidth: `${vhToPx(40)}${vu}` }}>
-                          <div className="font-black truncate" style={{ fontSize: `${vhToPx(2.4)}${vu}`, lineHeight: 1.2, color: accentColor, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
-                          <div className="font-medium truncate" style={{ fontSize: `${vhToPx(1.6)}${vu}`, opacity: 0.6, marginTop: `${vhToPx(0.3)}${vu}` }}>{musicData.artista}</div>
+                        )}
+                        {/* Music title + artist */}
+                        <div style={{ textAlign: "center", maxWidth: `${vhToPx(40)}${vu}` }}>
+                          <div className="font-black truncate" style={{ fontSize: `${vhToPx(2.8)}${vu}`, lineHeight: 1.2, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
+                          <div className="font-medium truncate" style={{ fontSize: `${vhToPx(1.8)}${vu}`, opacity: 0.6, marginTop: `${vhToPx(0.5)}${vu}` }}>{musicData.artista}</div>
                         </div>
                       </div>
                     ) : currentProgram?.selo ? (
-                      /* No music: show program logo in center */
                       <div style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                          <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${vhToPx(35)}${vu}`, maxHeight: `${vhToPx(35)}${vu}` }} />
                       </div>
