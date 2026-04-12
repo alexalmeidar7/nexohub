@@ -16,18 +16,19 @@ const weatherLabelsMap: Record<number, string> = {
   95: "Tempestade", 96: "Tempestade com granizo", 99: "Tempestade severa",
 };
 
-function weatherCodeToWbIcon(code: number): string {
+function weatherCodeToWbIcon(code: number, isNight = false): string {
+  const suffix = isNight ? "n" : "d";
   const map: Record<number, string> = {
-    0: "c01d", 1: "c02d", 2: "c02d", 3: "c04d",
-    45: "a05d", 48: "a05d", 51: "d01d", 53: "d02d", 55: "d03d",
-    61: "r01d", 63: "r02d", 65: "r03d", 71: "s01d", 73: "s02d", 75: "s03d",
-    80: "r04d", 81: "r05d", 82: "r06d", 95: "t01d", 96: "t04d", 99: "t05d",
+    0: `c01${suffix}`, 1: `c02${suffix}`, 2: `c02${suffix}`, 3: `c04${suffix}`,
+    45: `a05${suffix}`, 48: `a05${suffix}`, 51: `d01${suffix}`, 53: `d02${suffix}`, 55: `d03${suffix}`,
+    61: `r01${suffix}`, 63: `r02${suffix}`, 65: `r03${suffix}`, 71: `s01${suffix}`, 73: `s02${suffix}`, 75: `s03${suffix}`,
+    80: `r04${suffix}`, 81: `r05${suffix}`, 82: `r06${suffix}`, 95: `t01${suffix}`, 96: `t04${suffix}`, 99: `t05${suffix}`,
   };
   const codes = Object.keys(map).map(Number);
   const closest = codes.reduce((prev, curr) =>
     Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev
   );
-  return map[closest] || "c01d";
+  return map[closest] || `c01${suffix}`;
 }
 
 function getLabel(code: number): string {
@@ -83,11 +84,18 @@ serve(async (req) => {
 
         // Fetch weather
         const wxRes = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=2`
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,sunrise,sunset&timezone=auto&forecast_days=2`
         );
         const d = await wxRes.json();
 
-        const wbIcon = weatherCodeToWbIcon(d.current.weather_code);
+        // Determine if it's currently nighttime
+        const nowLocal = new Date().toLocaleString("sv-SE", { timeZone: d.timezone || "UTC" });
+        const nowTime = nowLocal.split(" ")[1]?.substring(0, 5) || "12:00";
+        const sunrise = d.daily.sunrise?.[0]?.split("T")[1]?.substring(0, 5) || "06:00";
+        const sunset = d.daily.sunset?.[0]?.split("T")[1]?.substring(0, 5) || "18:00";
+        const isNight = nowTime < sunrise || nowTime > sunset;
+
+        const wbIcon = weatherCodeToWbIcon(d.current.weather_code, isNight);
         const iconUrl = `https://www.weatherbit.io/static/img/icons/${wbIcon}.png`;
         const condLabel = getLabel(d.current.weather_code);
 
