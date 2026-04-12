@@ -1830,38 +1830,35 @@ export default function CenarioInterativoPage() {
                             {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                             
 
-                            {/* Clock — draggable */}
-                            <DraggableElement id="clock" position={getElPos("clock")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
-                              <div>
-                                <div className="font-black" style={{ fontSize: `${pvh(5)}px`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-                                  {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                                </div>
-                                <div className="font-medium" style={{ fontSize: `${pvh(1.6)}px`, color: "var(--layout-accent-color, #888)", marginTop: `${pvh(0.4)}px`, fontVariantNumeric: "tabular-nums" }}>
-                                  {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                                </div>
-                                <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, opacity: 0.5, marginTop: `${pvh(0.3)}px` }}>
-                                  <div className="rounded-full" style={{ width: `${pvh(0.6)}px`, height: `${pvh(0.6)}px`, background: externalConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: externalConnected ? "0 0 6px var(--layout-accent-color, #4ade80)" : "0 0 6px #ef4444" }} />
-                                  <span className="font-semibold uppercase tracking-wider" style={{ fontSize: `${pvh(0.8)}px`, letterSpacing: "0.1em" }}>
-                                    {externalConnected ? "SYNC" : "OFF"}
-                                  </span>
-                                </div>
+                            {/* Clock */}
+                            <div style={{ position: "absolute", top: `calc(${pvh(3)}px + 120px)`, left: `${pvh(3)}px`, zIndex: 10 }}>
+                              <div className="font-black" style={{ fontSize: `${pvh(5)}px`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
+                                {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                               </div>
-                            </DraggableElement>
+                              <div className="font-medium" style={{ fontSize: `${pvh(1.6)}px`, color: "var(--layout-accent-color, #888)", marginTop: `${pvh(0.4)}px`, fontVariantNumeric: "tabular-nums" }}>
+                                {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                              </div>
+                              <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, opacity: 0.5, marginTop: `${pvh(0.3)}px` }}>
+                                <div className="rounded-full" style={{ width: `${pvh(0.6)}px`, height: `${pvh(0.6)}px`, background: externalConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: externalConnected ? "0 0 6px var(--layout-accent-color, #4ade80)" : "0 0 6px #ef4444" }} />
+                                <span className="font-semibold uppercase tracking-wider" style={{ fontSize: `${pvh(0.8)}px`, letterSpacing: "0.1em" }}>
+                                  {externalConnected ? "SYNC" : "OFF"}
+                                </span>
+                              </div>
+                            </div>
 
-                            {/* Sponsor — draggable */}
+                            {/* Sponsor */}
                             {sponsorLogos.length > 0 && (
-                              <DraggableElement id="sponsor" position={getElPos("sponsor")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="top-left">
+                              <div style={{ position: "absolute", top: `calc(${pvh(3)}px + 30px)`, right: `${pvh(3)}px`, zIndex: 10 }}>
                                 <div className="relative flex justify-end" style={{ height: `${pvh(21)}px`, minWidth: `${pvh(10)}px` }}>
                                   {sponsorLogos.map((l, i) => l.logo_url && (
                                     <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: `${pvh(50)}px`, maxHeight: `${pvh(20)}px`, opacity: i === sponsorIdx ? 1 : 0, transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)", transition: "opacity 0.8s ease, transform 0.8s ease", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" }} />
                                   ))}
                                 </div>
-                              </DraggableElement>
+                              </div>
                             )}
 
-                            {/* Music info center — draggable */}
-                            <DraggableElement id="vinyl" position={getElPos("vinyl")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="center">
-                              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                            {/* Music info center */}
+                            <div style={{ position: "absolute", top: "30%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }}>
                               {musicData ? (
                                 <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
                                   {musicData.capa && (
@@ -1881,42 +1878,37 @@ export default function CenarioInterativoPage() {
                               ) : (
                                 <div className="opacity-40 text-center" style={{ fontSize: `${pvh(1.8)}px` }}>Nenhum programa no ar</div>
                               )}
-                              </div>
-                            </DraggableElement>
+                            </div>
 
-                            {/* Presenter PHOTO — draggable */}
+                            {/* Presenter PHOTO */}
                             {currentProgram?.apresentadorFoto && (
-                              <DraggableElement id="presenterPhoto" position={getElPos("presenterPhoto")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
+                              <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 8 }}>
                                 <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(81)}px`, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))" }} />
-                              </DraggableElement>
-                            )}
-
-                            {/* Presenter NAME + TIME — draggable */}
-                            {currentProgram?.apresentador && (
-                              <DraggableElement id="presenterInfo" position={getElPos("presenterInfo")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-left">
-                                <div>
-                                  <div className="font-black" style={{ fontSize: `${pvh(2.4)}px`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
-                                  <div className="font-medium" style={{ fontSize: `${pvh(1.4)}px`, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
-                                    {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
-                                  </div>
-                                </div>
-                              </DraggableElement>
-                            )}
-
-                            {/* Program LOGO — draggable */}
-                            <DraggableElement id="programLogo" position={getElPos("programLogo")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-right">
-                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                                {currentProgram?.selo ? (
-                                  <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${pvh(30)}px`, maxHeight: `${pvh(25)}px` }} />
-                                ) : currentProgram ? (
-                                  <div className="font-black text-right" style={{ fontSize: `${pvh(3)}px`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", maxWidth: `${pvh(22)}px` }}>{currentProgram.nome}</div>
-                                ) : null}
                               </div>
-                            </DraggableElement>
+                            )}
 
-                            {/* "A seguir" — draggable */}
+                            {/* Presenter NAME + TIME */}
+                            {currentProgram?.apresentador && (
+                              <div style={{ position: "absolute", bottom: `${pvh(8)}px`, left: `${pvh(18)}px`, zIndex: 9 }}>
+                                <div className="font-black" style={{ fontSize: `${pvh(2.4)}px`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
+                                <div className="font-medium" style={{ fontSize: `${pvh(1.4)}px`, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
+                                  {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Program LOGO */}
+                            <div style={{ position: "absolute", bottom: "120px", right: "50px", zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                              {currentProgram?.selo ? (
+                                <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${pvh(30)}px`, maxHeight: `${pvh(25)}px` }} />
+                              ) : currentProgram ? (
+                                <div className="font-black text-right" style={{ fontSize: `${pvh(3)}px`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", maxWidth: `${pvh(22)}px` }}>{currentProgram.nome}</div>
+                              ) : null}
+                            </div>
+
+                            {/* "A seguir" */}
                             {nextProgram && (
-                              <DraggableElement id="programNext" position={getElPos("programNext")} onMove={handleElMove} containerRef={homeContentRef as React.RefObject<HTMLDivElement>} anchor="bottom-right">
+                              <div style={{ position: "absolute", bottom: "40px", right: "50px", zIndex: 12 }}>
                                 <div className="flex items-start" style={{ gap: `${pvh(1)}px` }}>
                                   <div style={{ width: "2px", height: `${pvh(5)}px`, background: "rgba(255,255,255,0.3)", marginTop: `${pvh(0.3)}px`, flexShrink: 0 }} />
                                   <div>
@@ -1925,7 +1917,7 @@ export default function CenarioInterativoPage() {
                                     <div className="font-medium" style={{ fontSize: `${pvh(1.3)}px`, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                                   </div>
                                 </div>
-                              </DraggableElement>
+                              </div>
                             )}
 
                             {/* Progress bar — neon glow */}
