@@ -218,6 +218,7 @@ export default function CenarioTela() {
   const [musicElapsed, setMusicElapsed] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
 
+  const musicXmlUrlRef = useRef<string | null>(null);
   const publicFetchInFlightRef = useRef<Promise<PublicCenarioPayload | null> | null>(null);
   const publicFetchLastResultRef = useRef<PublicCenarioPayload | null>(null);
   const publicFetchLastAtRef = useRef(0);
