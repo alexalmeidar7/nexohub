@@ -1328,171 +1328,109 @@ export default function CenarioTela() {
                   {/* Fallback: user background image (no artist image) */}
                   {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
 
-                  {/* ── HEADER: Clock (top-left) ── */}
-                  {(() => {
-                    const custom = elStyle("clock", "top-left", { animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" });
-                    const style: React.CSSProperties = custom
-                      ?? { position: "absolute", top: `calc(${vhToPx(3)}${vu} + 120px)`, left: `${vhToPx(3)}${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" };
-                    return (
-                      <div style={style}>
-                        <div className="font-black" style={{ fontSize: `${vhToPx(5)}${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-                          {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                  {/* ── TOP-LEFT: Mic icon + Presenter name ── */}
+                  {currentProgram?.apresentador && (
+                    <div style={{ position: "absolute", top: `${vhToPx(4)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(1)}${vu}` }}>
+                        <div style={{ width: `${vhToPx(3.5)}${vu}`, height: `${vhToPx(3.5)}${vu}`, borderRadius: "50%", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Mic size={Number(vhToPx(1.8))} style={{ color: "#fff" }} />
                         </div>
-                        <div className="font-medium" style={{ fontSize: `${vhToPx(1.6)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.4)}${vu}`, fontVariantNumeric: "tabular-nums" }}>
-                          {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                        </div>
+                        <span style={{ fontWeight: 800, fontSize: `${vhToPx(2.4)}${vu}`, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{currentProgram.apresentador}</span>
                       </div>
-                    );
-                  })()}
+                    </div>
+                  )}
 
-                  {/* ── SPONSOR (top-right) ── */}
-                  {sponsorLogos.length > 0 && (() => {
-                    const custom = elStyle("sponsor", "top-left", { animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" });
-                    const style: React.CSSProperties = custom
-                      ?? { position: "absolute", top: `calc(${vhToPx(3)}${vu} + 30px)`, right: `${vhToPx(3)}${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
-                    return (
-                      <div style={style}>
-                        <div className="relative flex items-center justify-end" style={{ height: `${vhToPx(21)}${vu}` }}>
-                          {sponsorLogos.map((l, i) => l.logo_url && (
-                            <img
-                              key={l.id}
-                              src={l.logo_url}
-                              alt={l.nome}
-                              className="object-contain"
-                              style={{
-                                position: "absolute",
-                                maxWidth: `${vhToPx(50)}${vu}`, maxHeight: `${vhToPx(20)}${vu}`,
-                                right: 0,
-                                opacity: i === sponsorIdx ? 1 : 0,
-                                transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
-                                transition: "opacity 0.8s ease, transform 0.8s ease",
-                                filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
-                              }}
-                            />
-                          ))}
-                        </div>
+                  {/* ── TOP-RIGHT: Program logo ── */}
+                  {currentProgram?.selo && (
+                    <div style={{ position: "absolute", top: `${vhToPx(3)}${vu}`, right: `${vhToPx(3)}${vu}`, zIndex: 12 }}>
+                      <img src={currentProgram.selo} alt={currentProgram.nome} style={{ maxWidth: `${vhToPx(18)}${vu}`, maxHeight: `${vhToPx(14)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" }} />
+                    </div>
+                  )}
+
+                  {/* ── CENTER: Presenter PHOTO (large) ── */}
+                  {currentProgram?.apresentadorFoto && (
+                    <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", zIndex: 5, display: "flex", justifyContent: "center" }}>
+                      <img
+                        src={currentProgram.apresentadorFoto}
+                        alt={currentProgram.apresentador || ""}
+                        style={{
+                          height: `${vhToPx(82)}${vu}`,
+                          objectFit: "contain",
+                          objectPosition: "bottom center",
+                          filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.5))",
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* ── Sponsor logos (top-right, below program logo) ── */}
+                  {sponsorLogos.length > 0 && (
+                    <div style={{ position: "absolute", top: `${vhToPx(18)}${vu}`, right: `${vhToPx(3)}${vu}`, zIndex: 10 }}>
+                      <div style={{ position: "relative", display: "flex", justifyContent: "flex-end", height: `${vhToPx(12)}${vu}` }}>
+                        {sponsorLogos.map((l: any, i: number) => l.logo_url && (
+                          <img
+                            key={l.id}
+                            src={l.logo_url}
+                            alt={l.nome}
+                            style={{
+                              position: "absolute",
+                              maxWidth: `${vhToPx(20)}${vu}`, maxHeight: `${vhToPx(11)}${vu}`,
+                              right: 0, objectFit: "contain",
+                              opacity: i === sponsorIdx ? 1 : 0,
+                              transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
+                              transition: "opacity 0.8s ease, transform 0.8s ease",
+                              filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
+                            }}
+                          />
+                        ))}
                       </div>
-                    );
-                  })()}
+                    </div>
+                  )}
 
-                  {/* ── SYNC indicator (below clock) ── */}
-                  <div style={{ position: "absolute", top: `${vhToPx(13)}${vu}`, left: `${vhToPx(3)}${vu}`, zIndex: 20 }}>
-                    <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, opacity: 0.5 }}>
-                      <div className="rounded-full" style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, background: realtimeConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: realtimeConnected ? `0 0 6px var(--layout-accent-color, #4ade80)` : "0 0 6px #ef4444" }} />
-                      <span className="font-semibold uppercase tracking-wider" style={{ fontSize: `${vhToPx(0.8)}${vu}`, letterSpacing: "0.1em" }}>
+                  {/* SYNC indicator */}
+                  <div style={{ position: "absolute", top: `${vhToPx(10)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}`, opacity: 0.5 }}>
+                      <div style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, borderRadius: "50%", background: realtimeConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: realtimeConnected ? `0 0 6px var(--layout-accent-color, #4ade80)` : "0 0 6px #ef4444" }} />
+                      <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: `${vhToPx(0.8)}${vu}` }}>
                         {realtimeConnected ? "SYNC" : "OFF"}
                       </span>
                     </div>
                   </div>
 
-                  {/* ── CENTER: Music Info (no vinyl) ── */}
-                  {(() => {
-                    const custom = elStyle("vinyl", "center", { display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 });
-                    const style: React.CSSProperties = custom
-                      ?? { position: "absolute", top: "30%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 };
-                    return <div style={style}>
-                    {musicData ? (
-                      <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                        {/* Album cover */}
-                        {musicData.capa && (
-                          <div style={{
-                            width: `${vhToPx(28)}${vu}`, height: `${vhToPx(28)}${vu}`,
-                            borderRadius: `${vhToPx(2)}${vu}`,
-                            overflow: "hidden",
-                            boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6)",
-                            marginBottom: `${vhToPx(2.5)}${vu}`,
-                          }}>
-                            <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          </div>
-                        )}
-                        {/* Music title + artist */}
-                        <div style={{ textAlign: "center", maxWidth: `${vhToPx(40)}${vu}` }}>
-                          <div className="font-black truncate" style={{ fontSize: `${vhToPx(2.8)}${vu}`, lineHeight: 1.2, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
-                          <div className="font-medium truncate" style={{ fontSize: `${vhToPx(1.8)}${vu}`, opacity: 0.6, marginTop: `${vhToPx(0.5)}${vu}` }}>{musicData.artista}</div>
-                        </div>
+                  {/* ── BOTTOM: "TOCANDO AGORA" + Music info ── */}
+                  {musicData && (
+                    <div key={musicKey} style={{ position: "absolute", bottom: `${vhToPx(5)}${vu}`, left: `${vhToPx(4)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 10, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.6)}${vu}`, marginBottom: `${vhToPx(0.6)}${vu}` }}>
+                        <Music size={Number(vhToPx(1.4))} style={{ opacity: 0.6 }} />
+                        <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", fontSize: `${vhToPx(1.1)}${vu}`, opacity: 0.6 }}>Tocando Agora</span>
                       </div>
-                    ) : currentProgram?.selo ? (
-                      <div style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                         <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${vhToPx(35)}${vu}`, maxHeight: `${vhToPx(35)}${vu}` }} />
-                      </div>
-                    ) : currentProgram ? (
-                      <div className="font-black text-center" style={{ fontSize: `${vhToPx(4)}${vu}`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>{currentProgram.nome}</div>
-                    ) : (
-                      <div className="opacity-40 text-center" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>Nenhum programa no ar</div>
-                    )}
-                  </div>;
-                  })()}
+                      <div style={{ fontWeight: 900, fontSize: `${vhToPx(2.6)}${vu}`, lineHeight: 1.2, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
+                      <div style={{ fontWeight: 500, fontSize: `${vhToPx(1.6)}${vu}`, opacity: 0.6, marginTop: `${vhToPx(0.3)}${vu}`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
+                    </div>
+                  )}
 
-                  {/* ── Presenter PHOTO ── */}
-                  {currentProgram?.apresentadorFoto && (() => {
-                    const custom = elStyle("presenterPhoto", "bottom-left", { zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" });
-                    const style: React.CSSProperties = custom
-                      ?? { position: "absolute", bottom: 0, left: 0, zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
-                    return (
-                      <div style={style}>
-                        <img
-                          src={currentProgram.apresentadorFoto}
-                          alt={currentProgram.apresentador || ""}
-                          style={{
-                            height: `${vhToPx(81)}${vu}`,
-                            objectFit: "contain",
-                            objectPosition: "bottom left",
-                            filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))",
-                          }}
-                        />
-                      </div>
-                    );
-                  })()}
+                  {/* No music: show program name at bottom */}
+                  {!musicData && currentProgram && !currentProgram.selo && (
+                    <div style={{ position: "absolute", bottom: `${vhToPx(6)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 10 }}>
+                      <div style={{ fontWeight: 900, fontSize: `${vhToPx(3)}${vu}`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
+                    </div>
+                  )}
 
-                  {/* ── Presenter NAME + TIME ── */}
-                  {currentProgram?.apresentador && (() => {
-                    const custom = elStyle("presenterInfo", "bottom-left", { zIndex: 9, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.3s both" });
-                    const style: React.CSSProperties = custom
-                      ?? { position: "absolute", bottom: `${vhToPx(8)}${vu}`, left: `${vhToPx(18)}${vu}`, zIndex: 9, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.3s both" };
-                    return (
-                      <div style={style}>
-                        <div className="font-black" style={{ fontSize: `${vhToPx(2.4)}${vu}`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
-                        <div className="font-medium" style={{ fontSize: `${vhToPx(1.4)}${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
-                          {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  {/* "A seguir" — bottom right */}
+                  {nextProgram && (
+                    <div style={{ position: "absolute", bottom: `${vhToPx(5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 12, textAlign: "right" }}>
+                      <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.3)}${vu}` }}>a seguir</div>
+                      <div style={{ fontWeight: 700, fontSize: `${vhToPx(1.8)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
+                      <div style={{ fontWeight: 500, fontSize: `${vhToPx(1.2)}${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                    </div>
+                  )}
 
-                  {/* ── Program LOGO ── */}
-                  {(() => {
-                    const custom = elStyle("programLogo", "bottom-right", { zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" });
-                    const style: React.CSSProperties = custom
-                      ?? { position: "absolute", bottom: "120px", right: "50px", zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both" };
-                    return (
-                      <div style={style}>
-                        {currentProgram?.selo ? (
-                          <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${vhToPx(30)}${vu}`, maxHeight: `${vhToPx(25)}${vu}` }} />
-                        ) : currentProgram ? (
-                          <div className="font-black text-right" style={{ fontSize: `${vhToPx(3)}${vu}`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", maxWidth: `${vhToPx(22)}${vu}` }}>{currentProgram.nome}</div>
-                        ) : null}
-                      </div>
-                    );
-                  })()}
-
-                  {/* ── "A seguir" ── */}
-                  {nextProgram && (() => {
-                    const custom = elStyle("programNext", "bottom-right", { zIndex: 12, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.4s both" });
-                    const style: React.CSSProperties = custom
-                      ?? { position: "absolute", bottom: "40px", right: "50px", zIndex: 12, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.4s both" };
-                    return (
-                      <div style={style}>
-                        <div className="flex items-start" style={{ gap: `${vhToPx(1)}${vu}` }}>
-                          <div style={{ width: "2px", height: `${vhToPx(5)}${vu}`, background: "rgba(255,255,255,0.3)", marginTop: `${vhToPx(0.3)}${vu}`, flexShrink: 0 }} />
-                          <div>
-                            <div className="font-semibold" style={{ fontSize: `${vhToPx(1.2)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.2)}${vu}` }}>a seguir</div>
-                            <div className="font-bold" style={{ fontSize: `${vhToPx(2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
-                            <div className="font-medium" style={{ fontSize: `${vhToPx(1.3)}${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  {/* Clock — bottom left above music */}
+                  <div style={{ position: "absolute", bottom: `${vhToPx(14)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 10, opacity: 0.4 }}>
+                    <div style={{ fontWeight: 700, fontSize: `${vhToPx(1.4)}${vu}`, fontVariantNumeric: "tabular-nums" }}>
+                      {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  </div>
 
                   {/* Program progress bar — neon glow style */}
                   <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: 0, right: 0, height: "2px", background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
