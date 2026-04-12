@@ -110,6 +110,7 @@ type PublicCenarioPayload = {
   musicData?: { titulo: string; artista: string; capa: string } | null;
   musicStartTime?: number | null;
   accentColor?: string | null;
+  musicXmlUrl?: string | null;
 };
 
 const mockMessages = [
