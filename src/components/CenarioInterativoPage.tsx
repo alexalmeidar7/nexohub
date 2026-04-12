@@ -736,6 +736,11 @@ export default function CenarioInterativoPage() {
   /* ─── Artist background image (Deezer) ─── */
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
   const artistBgCacheRef = useRef<Record<string, string>>({});
+  const [prevArtistBgUrl, setPrevArtistBgUrl] = useState<string | null>(null);
+  const [artistBgReady, setArtistBgReady] = useState(false);
+  useEffect(() => {
+    if (artistBgUrl) setPrevArtistBgUrl(artistBgUrl);
+  }, [artistBgUrl]);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
@@ -751,15 +756,16 @@ export default function CenarioInterativoPage() {
   /* ─── Fetch artist background from Deezer ─── */
   const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas";
   useEffect(() => {
-    if (isBreakTrack) { setArtistBgUrl(null); return; }
+    if (isBreakTrack) { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
-    if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); return; }
+    if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
     if (artistBgCacheRef.current[cacheKey]) {
+      setArtistBgReady(false);
       setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
       return;
     }
-    setArtistBgUrl(null);
+    setArtistBgReady(false);
     let cancelled = false;
     (async () => {
       try {
@@ -1820,10 +1826,13 @@ export default function CenarioInterativoPage() {
                         }
                         return (
                           <div ref={homeContentRef} className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
-                            {/* Artist bg image */}
+                            {/* Artist bg image — crossfade */}
+                            {prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+                              <img src={prevArtistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistBgReady ? 0 : 0.35, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
+                            )}
                             {artistBgUrl && (
                               <>
-                                <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.35, filter: "saturate(1.2)" }} />
+                                <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
                                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
                               </>
                             )}
