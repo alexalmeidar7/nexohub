@@ -1,6 +1,5 @@
-import { useEffect, useRef } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Minus, Plus } from "lucide-react";
 
 interface TrafficMapProps {
   lat: number;
@@ -12,99 +11,136 @@ interface TrafficMapProps {
   style?: React.CSSProperties;
 }
 
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+const roundCoord = (value: number) => Math.round(value * 10000) / 10000;
+
 export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove, className, style }: TrafficMapProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const skipNextView = useRef(false);
+  const [view, setView] = useState(() => ({
+    lat: roundCoord(clamp(lat, -85, 85)),
+    lon: roundCoord(clamp(lon, -180, 180)),
+    zoom: clamp(Math.round(zoom), 3, 15),
+  }));
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    setView((prev) => {
+      const next = {
+        lat: roundCoord(clamp(lat, -85, 85)),
+        lon: roundCoord(clamp(lon, -180, 180)),
+        zoom: clamp(Math.round(zoom), 3, 15),
+      };
 
-    // Prevent double-init
-    if ((el as any)._leaflet_id) {
-      try { (el as any)._leaflet_id = undefined; } catch {}
-    }
-
-    let map: L.Map;
-    try {
-      map = L.map(el, {
-        center: [lat, lon],
-        zoom,
-        zoomControl: interactive,
-        dragging: interactive,
-        scrollWheelZoom: interactive,
-        doubleClickZoom: interactive,
-        touchZoom: interactive,
-        boxZoom: interactive,
-        keyboard: interactive,
-        attributionControl: false,
-      });
-    } catch {
-      return;
-    }
-
-    // Google Maps base + traffic layer combined
-    L.tileLayer(
-      "https://mt{s}.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}&hl=pt-BR",
-      {
-        maxZoom: 20,
-        subdomains: ["0", "1", "2", "3"],
-        attribution: "© Google",
+      if (prev.lat === next.lat && prev.lon === next.lon && prev.zoom === next.zoom) {
+        return prev;
       }
-    ).addTo(map);
 
-    mapRef.current = map;
-
-    if (interactive && onMove) {
-      map.on("moveend", () => {
-        skipNextView.current = true;
-        const c = map.getCenter();
-        onMove(parseFloat(c.lat.toFixed(4)), parseFloat(c.lng.toFixed(4)), map.getZoom());
-      });
-    }
-
-    setTimeout(() => { try { map.invalidateSize(); } catch {} }, 200);
-
-    return () => {
-      try { map.remove(); } catch {}
-      mapRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interactive]);
-
-  /* React to zoom prop changes from parent (config page sync) */
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || interactive) return; // interactive maps handle their own zoom via user gestures
-    try {
-      if (map.getZoom() !== zoom) {
-        map.setZoom(zoom, { animate: false });
-      }
-    } catch {}
-  }, [zoom, interactive]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    if (skipNextView.current) {
-      skipNextView.current = false;
-      return;
-    }
-
-    try {
-      const currentCenter = map.getCenter();
-      const currentZoom = map.getZoom();
-      if (
-        Math.abs(currentCenter.lat - lat) > 0.0001 ||
-        Math.abs(currentCenter.lng - lon) > 0.0001 ||
-        currentZoom !== zoom
-      ) {
-        map.setView([lat, lon], zoom, { animate: true, duration: 0.5 });
-      }
-    } catch {}
+      return next;
+    });
   }, [lat, lon, zoom]);
 
-  return <div ref={containerRef} className={className} style={{ width: "100%", height: "100%", ...style }} />;
+  const panStep = useMemo(() => {
+    return Math.max(0.0035, 1.35 / Math.pow(2, Math.max(view.zoom - 3, 0) / 1.9));
+  }, [view.zoom]);
+
+  const iframeZoom = useMemo(() => clamp(Math.round(view.zoom + 4), 5, 17), [view.zoom]);
+
+  const iframeSrc = useMemo(() => {
+    const params = new URLSearchParams({
+      zoom: String(iframeZoom),
+      lat: String(view.lat),
+      lon: String(view.lon),
+      ct: "livemap",
+    });
+
+    return `https://embed.waze.com/iframe?${params.toString()}`;
+  }, [iframeZoom, view.lat, view.lon]);
+
+  const updateView = (next: { lat: number; lon: number; zoom: number }) => {
+    const normalized = {
+      lat: roundCoord(clamp(next.lat, -85, 85)),
+      lon: roundCoord(clamp(next.lon, -180, 180)),
+      zoom: clamp(Math.round(next.zoom), 3, 15),
+    };
+
+    setView(normalized);
+    onMove?.(normalized.lat, normalized.lon, normalized.zoom);
+  };
+
+  const handlePan = (latDelta: number, lonDelta: number) => {
+    updateView({
+      lat: view.lat + latDelta * panStep,
+      lon: view.lon + lonDelta * panStep,
+      zoom: view.zoom,
+    });
+  };
+
+  const handleZoom = (delta: number) => {
+    updateView({
+      lat: view.lat,
+      lon: view.lon,
+      zoom: view.zoom + delta,
+    });
+  };
+
+  return (
+    <div className={className} style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...style }}>
+      <iframe
+        key={`${view.lat}-${view.lon}-${iframeZoom}`}
+        src={iframeSrc}
+        title="Mapa de trânsito"
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        style={{
+          width: "100%",
+          height: "100%",
+          border: "none",
+          borderRadius: "inherit",
+          pointerEvents: interactive ? "auto" : "none",
+        }}
+      />
+
+      {interactive && (
+        <>
+          <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
+            <div className="grid grid-cols-3 gap-2 rounded-2xl border border-border bg-background/85 p-2 text-foreground shadow-2xl backdrop-blur-sm">
+              <div />
+              <button type="button" onClick={() => handlePan(1, 0)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/80 transition-colors hover:bg-muted" aria-label="Mover mapa para cima">
+                <ChevronUp size={18} />
+              </button>
+              <div />
+
+              <button type="button" onClick={() => handlePan(0, -1)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/80 transition-colors hover:bg-muted" aria-label="Mover mapa para a esquerda">
+                <ChevronLeft size={18} />
+              </button>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/60 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Move
+              </div>
+              <button type="button" onClick={() => handlePan(0, 1)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/80 transition-colors hover:bg-muted" aria-label="Mover mapa para a direita">
+                <ChevronRight size={18} />
+              </button>
+
+              <div />
+              <button type="button" onClick={() => handlePan(-1, 0)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/80 transition-colors hover:bg-muted" aria-label="Mover mapa para baixo">
+                <ChevronDown size={18} />
+              </button>
+              <div />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 rounded-2xl border border-border bg-background/85 p-2 text-foreground shadow-2xl backdrop-blur-sm">
+              <button type="button" onClick={() => handleZoom(-1)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/80 transition-colors hover:bg-muted" aria-label="Diminuir zoom">
+                <Minus size={18} />
+              </button>
+              <div className="min-w-14 text-center text-xs font-semibold text-muted-foreground">Zoom {view.zoom}</div>
+              <button type="button" onClick={() => handleZoom(1)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/80 transition-colors hover:bg-muted" aria-label="Aumentar zoom">
+                <Plus size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div className="absolute bottom-4 left-4 z-10 rounded-full border border-border bg-background/85 px-3 py-1.5 text-[10px] font-medium tracking-[0.15em] text-muted-foreground shadow-lg backdrop-blur-sm">
+            {view.lat.toFixed(4)}, {view.lon.toFixed(4)}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
