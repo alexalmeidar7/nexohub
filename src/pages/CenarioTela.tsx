@@ -111,7 +111,11 @@ function decodeHtmlEntitiesLocal(value: string): string {
 
 async function fetchMusicFromXmlDirect(xmlUrl: string): Promise<{ titulo: string; artista: string; capa: string } | null> {
   try {
-    const resp = await fetch(xmlUrl, { signal: AbortSignal.timeout(4000), cache: "no-store" });
+    // CEF 86 (vMix browser) does not support AbortSignal.timeout — use AbortController fallback
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const resp = await fetch(xmlUrl, { signal: controller.signal, cache: "no-store" });
+    clearTimeout(timer);
     if (!resp.ok) return null;
     const text = await resp.text();
     const titulo = decodeHtmlEntitiesLocal(extractXmlTag(text, "nome_musica", "titulo", "title")).trim();
