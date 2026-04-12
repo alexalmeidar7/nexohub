@@ -1859,7 +1859,7 @@ export default function CenarioInterativoPage() {
                                bottom: `${pvh(5)}px`,
                                left: "50%",
                                transform: "translateX(-50%)",
-                               width: `${pvh(38)}px`,
+                               width: `${pvh(27)}px`,
                                zIndex: 15,
                                borderRadius: `${pvh(2)}px`,
                                background: `linear-gradient(145deg, var(--layout-accent-color, rgba(200,50,50,0.7)), rgba(0,0,0,0.4))`,
