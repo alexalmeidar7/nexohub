@@ -239,6 +239,33 @@ export default function CenarioTela() {
     return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${alpha})`;
   };
 
+  /* ─── Fetch artist background from Deezer (like Player audio) ─── */
+  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break";
+  useEffect(() => {
+    if (isBreakTrack) { setArtistBgUrl(null); return; }
+    const artist = musicData?.artista;
+    if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); return; }
+    const cacheKey = artist.toLowerCase();
+    if (artistBgCacheRef.current[cacheKey]) {
+      setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
+      return;
+    }
+    setArtistBgUrl(null);
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
+          body: { artist },
+        });
+        if (cancelled) return;
+        if (error || !data?.ok || !data?.url) { setArtistBgUrl(null); return; }
+        artistBgCacheRef.current[cacheKey] = data.url;
+        setArtistBgUrl(data.url);
+      } catch { if (!cancelled) setArtistBgUrl(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [musicData?.artista, isBreakTrack]);
+
   /* ─── Screen Rotation ─── */
   const [screenRotation, setScreenRotation] = useState(0);
 
