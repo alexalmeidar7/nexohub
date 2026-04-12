@@ -1826,10 +1826,13 @@ export default function CenarioInterativoPage() {
                         }
                         return (
                           <div ref={homeContentRef} className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
-                            {/* Artist bg image */}
+                            {/* Artist bg image — crossfade */}
+                            {prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+                              <img src={prevArtistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistBgReady ? 0 : 0.35, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
+                            )}
                             {artistBgUrl && (
                               <>
-                                <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.35, filter: "saturate(1.2)" }} />
+                                <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
                                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
                               </>
                             )}
