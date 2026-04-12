@@ -1279,12 +1279,7 @@ export default function CenarioInterativoPage() {
                     <p className="text-[10px]" style={{ color: mutedText }}>
                       Separadas por vírgula. Quando encontrada no artista ou música, o fundo usará o degradê e a capa não será exibida.
                     </p>
-                    <Input
-                      value={config.home.exceptionWords || ""}
-                      onChange={e => updateHome({ exceptionWords: e.target.value })}
-                      placeholder="break, vinheta, hora certa"
-                      className="h-7 text-xs"
-                    />
+                    <ExceptionWordsInput value={config.home.exceptionWords || ""} onSave={v => updateHome({ exceptionWords: v })} />
                   </div>
                 </div>
               </TabsContent>
