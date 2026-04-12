@@ -68,6 +68,18 @@ Deno.serve(async (req) => {
 
     const imageUrl = artistData.picture_xl;
 
+    // Reject Deezer default placeholder images (generic dark silhouette).
+    // Real artist images include the artist's numeric ID in the URL path,
+    // e.g. ".../artist/12345/..." — placeholders use a generic hash instead.
+    const deezerArtistId = String(artistData.id || "");
+    const isPlaceholder = deezerArtistId && !imageUrl.includes(`/${deezerArtistId}/`);
+    if (isPlaceholder) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "No real artist image" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Store in cache
     cache.set(cacheKey, { url: imageUrl, ts: Date.now() });
 
