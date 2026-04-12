@@ -726,6 +726,8 @@ export default function CenarioInterativoPage() {
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; tipo_programa?: string | null } | null>(null);
   const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
@@ -1036,11 +1038,15 @@ export default function CenarioInterativoPage() {
         .upsert(payload, { onConflict: "user_id" });
       if (error) {
         console.error("Erro ao salvar cenário:", error);
+      } else {
+        setSavedFlash(true);
+        if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
+        savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
       }
       setSaving(false);
     };
     pendingSaveRef.current = doSave;
-    saveTimeout.current = setTimeout(doSave, 150);
+    saveTimeout.current = setTimeout(doSave, 800);
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
       // Flush pending save on unmount so data is never lost
@@ -1137,7 +1143,7 @@ export default function CenarioInterativoPage() {
                   />
                 </div>
                 {saving && <span className="text-[10px] animate-pulse" style={{ color: mutedText }}>Salvando...</span>}
-                {!saving && loaded && <span className="text-[10px]" style={{ color: mutedText }}>✓ Salvo</span>}
+                {!saving && savedFlash && <span className="text-[10px]" style={{ color: mutedText }}>✓ Salvo</span>}
               </div>
             </div>
 
