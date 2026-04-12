@@ -230,6 +230,11 @@ export default function CenarioTela() {
   /* ─── Artist background image (Deezer) — same logic as Player audio ─── */
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
   const artistBgCacheRef = useRef<Record<string, string>>({});
+  const [prevArtistBgUrl, setPrevArtistBgUrl] = useState<string | null>(null);
+  const [artistBgReady, setArtistBgReady] = useState(false);
+  useEffect(() => {
+    if (artistBgUrl) setPrevArtistBgUrl(artistBgUrl);
+  }, [artistBgUrl]);
 
   /* ─── User accent color (from layout settings) ─── */
   const [accentColor, setAccentColor] = useState("#444444");
@@ -242,15 +247,16 @@ export default function CenarioTela() {
   /* ─── Fetch artist background from Deezer (like Player audio) ─── */
   const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas";
   useEffect(() => {
-    if (isBreakTrack) { setArtistBgUrl(null); return; }
+    if (isBreakTrack) { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
-    if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); return; }
+    if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
     if (artistBgCacheRef.current[cacheKey]) {
+      setArtistBgReady(false);
       setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
       return;
     }
-    setArtistBgUrl(null);
+    setArtistBgReady(false);
     let cancelled = false;
     (async () => {
       try {
