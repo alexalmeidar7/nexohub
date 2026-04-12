@@ -265,24 +265,42 @@ function BgImageUpload({ value, onChange, mutedText, userId, category }: { value
   );
 }
 
-/* ── Exception words input with local state (debounced save) ── */
+/* ── Exception words input with manual save ── */
 function ExceptionWordsInput({ value, onSave }: { value: string; onSave: (v: string) => void }) {
   const [local, setLocal] = useState(value);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
-  useEffect(() => { setLocal(prev => prev === value ? prev : value); }, [value]);
-  const handleChange = (v: string) => {
-    setLocal(v);
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => onSave(v), 800);
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    setLocal(value);
+    setDirty(false);
+  }, [value]);
+
+  const handleSave = () => {
+    onSave(local);
+    setDirty(false);
   };
+
   return (
-    <Input
-      value={local}
-      onChange={e => handleChange(e.target.value)}
-      onBlur={() => { clearTimeout(timerRef.current); onSave(local); }}
-      placeholder="break, vinheta, hora certa"
-      className="h-7 text-xs"
-    />
+    <div className="space-y-2">
+      <Input
+        value={local}
+        onChange={e => {
+          setLocal(e.target.value);
+          setDirty(true);
+        }}
+        placeholder="break, vinheta, hora certa"
+        className="h-7 text-xs"
+      />
+      <Button
+        type="button"
+        size="sm"
+        onClick={handleSave}
+        disabled={!dirty}
+        className="h-7 px-3 text-xs"
+      >
+        Salvar
+      </Button>
+    </div>
   );
 }
 
