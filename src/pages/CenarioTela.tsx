@@ -1356,7 +1356,7 @@ export default function CenarioTela() {
                    {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
                    <div style={{
                      position: "absolute",
-                     bottom: `${vhToPx(5)}${vu}`,
+                     bottom: `${vhToPx(7.6)}${vu}`,
                      left: "50%",
                      transform: "translateX(-50%)",
                      width: `${vhToPx(16)}${vu}`,

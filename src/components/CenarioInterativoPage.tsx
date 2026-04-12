@@ -1857,7 +1857,7 @@ export default function CenarioInterativoPage() {
                              {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
                              <div style={{
                                position: "absolute",
-                               bottom: `${pvh(5)}px`,
+                               bottom: `${pvh(7.6)}px`,
                                left: "50%",
                                transform: "translateX(-50%)",
                                width: `${pvh(16)}px`,
