@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { lovable } from "@/integrations/lovable/index";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface AccessScreenProps {
   logoUrl?: string | null;
@@ -13,12 +14,34 @@ export default function AccessScreen({ logoUrl, onLoginSuccess, onGuest }: Acces
 
   const handleGoogleAuth = async () => {
     setLoading(true);
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    setLoading(false);
-    if (!error) {
+    try {
+      // Use the Lovable app origin as redirect to avoid custom domain OAuth issues
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+        extraParams: {
+          prompt: "select_account",
+        },
+      });
+
+      if (result.error) {
+        console.error("OAuth error:", result.error);
+        toast.error("Não foi possível conectar ao Google. Tente novamente.");
+        setLoading(false);
+        return;
+      }
+
+      if (result.redirected) {
+        // Browser will redirect — don't touch state
+        return;
+      }
+
+      // Tokens received, session set
+      setLoading(false);
       onLoginSuccess();
+    } catch (err) {
+      console.error("OAuth exception:", err);
+      toast.error("Erro ao conectar. Verifique sua conexão e tente novamente.");
+      setLoading(false);
     }
   };
 
@@ -71,7 +94,10 @@ export default function AccessScreen({ logoUrl, onLoginSuccess, onGuest }: Acces
 
       {loading && (
         <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center">
-          <Loader2 className="h-10 w-10 animate-spin text-player-accent" />
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-10 w-10 animate-spin text-player-accent" />
+            <p className="text-white text-sm">Conectando ao Google...</p>
+          </div>
         </div>
       )}
     </div>

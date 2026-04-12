@@ -79,6 +79,7 @@ export default function PlayerHub() {
 
   useEffect(() => {
     if (!splashDone || loading || !dataReady) return;
+    // If user is already logged in (returning user), go straight to welcome
     const target: Step = user ? "welcome" : "access";
     transitionTo(target);
   }, [splashDone, loading, dataReady, user, transitionTo]);
