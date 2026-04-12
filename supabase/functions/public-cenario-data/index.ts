@@ -239,6 +239,7 @@ Deno.serve(async (req) => {
       musicData,
       musicStartTime,
       accentColor,
+      musicXmlUrl: (settings as any)?.music_xml_url || null,
     };
 
     // Store in cache
