@@ -91,6 +91,37 @@ async function fetchLiveStocks(): Promise<LiveStock[]> {
   } catch { return []; }
 }
 
+/* ─── Simple XML music parser (browser-side fallback for local network XMLs) ─── */
+function extractXmlTag(xml: string, ...tags: string[]): string {
+  for (const tag of tags) {
+    const regex = new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, "i");
+    const match = xml.match(regex);
+    if (match?.[1]?.trim()) return match[1].trim();
+  }
+  return "";
+}
+
+function decodeHtmlEntitiesLocal(value: string): string {
+  return value
+    .replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"').replace(/&#39;/gi, "'")
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10) || 0))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16) || 0));
+}
+
+async function fetchMusicFromXmlDirect(xmlUrl: string): Promise<{ titulo: string; artista: string; capa: string } | null> {
+  try {
+    const resp = await fetch(xmlUrl, { signal: AbortSignal.timeout(4000), cache: "no-store" });
+    if (!resp.ok) return null;
+    const text = await resp.text();
+    const titulo = decodeHtmlEntitiesLocal(extractXmlTag(text, "nome_musica", "titulo", "title")).trim();
+    const artista = decodeHtmlEntitiesLocal(extractXmlTag(text, "interprete", "nome_interprete", "artista", "artist")).trim();
+    const capa = extractXmlTag(text, "capa", "cover", "album_art", "artwork", "imagem").trim();
+    if (titulo && titulo !== "Sem título") return { titulo, artista, capa };
+    return null;
+  } catch { return null; }
+}
+
 const weatherIcons: Record<number, string> = { 0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"🌨️",80:"🌧️",81:"🌧️",82:"🌧️",95:"⛈️",96:"⛈️",99:"⛈️" };
 const weatherLabels: Record<number, string> = { 0:"Céu limpo",1:"Parcialmente limpo",2:"Parcialmente nublado",3:"Nublado",45:"Neblina",48:"Neblina",51:"Garoa leve",53:"Garoa",55:"Garoa forte",61:"Chuva leve",63:"Chuva moderada",65:"Chuva forte",71:"Neve leve",73:"Neve",75:"Neve forte",80:"Pancadas leves",81:"Pancadas",82:"Pancadas fortes",95:"Tempestade",96:"Tempestade com granizo",99:"Tempestade severa" };
 function getWIcon(code: number) { return weatherIcons[code] ?? weatherIcons[Object.keys(weatherIcons).map(Number).reduce((a, b) => Math.abs(b - code) < Math.abs(a - code) ? b : a)] ?? "🌡️"; }
@@ -110,6 +141,7 @@ type PublicCenarioPayload = {
   musicData?: { titulo: string; artista: string; capa: string } | null;
   musicStartTime?: number | null;
   accentColor?: string | null;
+  musicXmlUrl?: string | null;
 };
 
 const mockMessages = [
@@ -186,6 +218,7 @@ export default function CenarioTela() {
   const [musicElapsed, setMusicElapsed] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
 
+  const musicXmlUrlRef = useRef<string | null>(null);
   const publicFetchInFlightRef = useRef<Promise<PublicCenarioPayload | null> | null>(null);
   const publicFetchLastResultRef = useRef<PublicCenarioPayload | null>(null);
   const publicFetchLastAtRef = useRef(0);
@@ -550,6 +583,9 @@ export default function CenarioTela() {
           setNextProgram(null);
         }
 
+        // Store XML URL for direct browser-side fallback
+        if (result?.musicXmlUrl) musicXmlUrlRef.current = result.musicXmlUrl;
+
         if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
           void setMusicWithCoverFallbackRef.current?.(
             result.musicData.titulo,
@@ -558,6 +594,12 @@ export default function CenarioTela() {
             undefined,
             result.musicStartTime || null
           );
+        } else if (result?.musicXmlUrl) {
+          // Edge function couldn't fetch XML (e.g. local network) — try directly from browser
+          const directMusic = await fetchMusicFromXmlDirect(result.musicXmlUrl);
+          if (directMusic) {
+            void setMusicWithCoverFallbackRef.current?.(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+          }
         }
       }
     };
@@ -618,6 +660,7 @@ export default function CenarioTela() {
             setSponsorLogos(result.sponsorLogos || []);
             setNextProgram(result.nextProgram || null);
           }
+          if (result?.musicXmlUrl) musicXmlUrlRef.current = result.musicXmlUrl;
           if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
             void setMusicWithCoverFallbackRef.current?.(
               result.musicData.titulo,
@@ -626,6 +669,15 @@ export default function CenarioTela() {
               undefined,
               result.musicStartTime || null
             );
+          } else {
+            // Fallback: fetch XML directly from browser (works for local network XMLs)
+            const xmlUrl = result?.musicXmlUrl || musicXmlUrlRef.current;
+            if (xmlUrl) {
+              const directMusic = await fetchMusicFromXmlDirect(xmlUrl);
+              if (directMusic) {
+                void setMusicWithCoverFallbackRef.current?.(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+              }
+            }
           }
         } finally {
           pollingPublic = false;
@@ -873,17 +925,34 @@ export default function CenarioTela() {
           } else {
             const result = await fetchViaEdgeFunction(effectiveUserId);
             if (result?.accentColor) setAccentColor(result.accentColor);
+            if (result?.musicXmlUrl) musicXmlUrlRef.current = result.musicXmlUrl;
             if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
               await setMusicWithCoverFallback(result.musicData.titulo, result.musicData.artista, result.musicData.capa || "", undefined, result.musicStartTime);
+            } else if (result?.musicXmlUrl) {
+              const directMusic = await fetchMusicFromXmlDirect(result.musicXmlUrl);
+              if (directMusic) {
+                await setMusicWithCoverFallback(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+              }
             }
           }
         } catch { /* silent */ }
       })();
     }
 
-    // ─── 4. Unauthenticated polling is centralized in config effect to avoid duplicate backend calls ───
+    // ─── 4. Unauthenticated: poll XML directly from browser every 3s ───
     let fallbackInterval: ReturnType<typeof setInterval> | null = null;
-
+    if (!isAuthenticated && effectiveUserId) {
+      fallbackInterval = setInterval(async () => {
+        const xmlUrl = musicXmlUrlRef.current;
+        if (!xmlUrl) return;
+        try {
+          const directMusic = await fetchMusicFromXmlDirect(xmlUrl);
+          if (directMusic) {
+            setMusicWithCoverFallback(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+          }
+        } catch { /* silent */ }
+      }, 3000);
+    }
     // ─── 5. Same-tab polling for localStorage changes (useGlobalMusicSync writes here) ───
     let localPollInterval: ReturnType<typeof setInterval> | null = null;
     if (isAuthenticated) {
@@ -1587,7 +1656,7 @@ export default function CenarioTela() {
               <Eraser style={{ width: "2vh", height: "2vh", color: "white" }} />
             </button>
           )}
-
+  
 
           {/* "Telas Conectadas" notification */}
           {showConnectedMsg && (
