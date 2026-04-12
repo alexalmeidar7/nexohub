@@ -939,9 +939,20 @@ export default function CenarioTela() {
       })();
     }
 
-    // ─── 4. Unauthenticated polling is centralized in config effect to avoid duplicate backend calls ───
+    // ─── 4. Unauthenticated: poll XML directly from browser every 3s ───
     let fallbackInterval: ReturnType<typeof setInterval> | null = null;
-
+    if (!isAuthenticated && effectiveUserId) {
+      fallbackInterval = setInterval(async () => {
+        const xmlUrl = musicXmlUrlRef.current;
+        if (!xmlUrl) return;
+        try {
+          const directMusic = await fetchMusicFromXmlDirect(xmlUrl);
+          if (directMusic) {
+            setMusicWithCoverFallback(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+          }
+        } catch { /* silent */ }
+      }, 3000);
+    }
     // ─── 5. Same-tab polling for localStorage changes (useGlobalMusicSync writes here) ───
     let localPollInterval: ReturnType<typeof setInterval> | null = null;
     if (isAuthenticated) {
