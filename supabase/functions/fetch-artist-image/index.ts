@@ -68,32 +68,14 @@ Deno.serve(async (req) => {
 
     const imageUrl = artistData.picture_xl;
 
-    // Reject Deezer default placeholder images (generic silhouette avatar)
-    // These URLs typically match: /images/artist//... (no real artist ID in path)
-    // or contain known placeholder segments
-    if (
-      /\/artist\/\//.test(imageUrl) ||
-      /\/artist\/[^/]*\/[0-9]+x[0-9]+-0+\./.test(imageUrl) === false &&
-      imageUrl.includes("/artist/") &&
-      !artistData.picture_big?.includes(artistData.id?.toString())
-    ) {
-      // Extra check: compare picture sizes — placeholders often share the same base
-      const smallPic = artistData.picture_small || "";
-      const xlPic = imageUrl;
-      // Deezer placeholders have a recognizable hash; real artist pics differ per size
-      if (smallPic && xlPic) {
-        const smallBase = smallPic.replace(/\/\d+x\d+-\d+\./, "/CHECK.");
-        const xlBase = xlPic.replace(/\/\d+x\d+-\d+\./, "/CHECK.");
-        // If after normalizing size they're the same path, it's likely a real image — skip this check
-      }
-    }
-
-    // Final guard: reject if the image lacks the artist's numeric ID in the URL path
-    // Real Deezer artist images include the artist ID; placeholders don't
-    const deezerArtistId = artistData.id;
-    if (deezerArtistId && !imageUrl.includes(`/${deezerArtistId}/`)) {
+    // Reject Deezer default placeholder images (generic dark silhouette).
+    // Real artist images include the artist's numeric ID in the URL path,
+    // e.g. ".../artist/12345/..." — placeholders use a generic hash instead.
+    const deezerArtistId = String(artistData.id || "");
+    const isPlaceholder = deezerArtistId && !imageUrl.includes(`/${deezerArtistId}/`);
+    if (isPlaceholder) {
       return new Response(
-        JSON.stringify({ ok: false, error: "Placeholder image detected" }),
+        JSON.stringify({ ok: false, error: "No real artist image" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
