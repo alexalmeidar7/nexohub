@@ -91,6 +91,37 @@ async function fetchLiveStocks(): Promise<LiveStock[]> {
   } catch { return []; }
 }
 
+/* ─── Simple XML music parser (browser-side fallback for local network XMLs) ─── */
+function extractXmlTag(xml: string, ...tags: string[]): string {
+  for (const tag of tags) {
+    const regex = new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, "i");
+    const match = xml.match(regex);
+    if (match?.[1]?.trim()) return match[1].trim();
+  }
+  return "";
+}
+
+function decodeHtmlEntitiesLocal(value: string): string {
+  return value
+    .replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"').replace(/&#39;/gi, "'")
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10) || 0))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16) || 0));
+}
+
+async function fetchMusicFromXmlDirect(xmlUrl: string): Promise<{ titulo: string; artista: string; capa: string } | null> {
+  try {
+    const resp = await fetch(xmlUrl, { signal: AbortSignal.timeout(4000), cache: "no-store" });
+    if (!resp.ok) return null;
+    const text = await resp.text();
+    const titulo = decodeHtmlEntitiesLocal(extractXmlTag(text, "nome_musica", "titulo", "title")).trim();
+    const artista = decodeHtmlEntitiesLocal(extractXmlTag(text, "interprete", "nome_interprete", "artista", "artist")).trim();
+    const capa = extractXmlTag(text, "capa", "cover", "album_art", "artwork", "imagem").trim();
+    if (titulo && titulo !== "Sem título") return { titulo, artista, capa };
+    return null;
+  } catch { return null; }
+}
+
 const weatherIcons: Record<number, string> = { 0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"🌨️",80:"🌧️",81:"🌧️",82:"🌧️",95:"⛈️",96:"⛈️",99:"⛈️" };
 const weatherLabels: Record<number, string> = { 0:"Céu limpo",1:"Parcialmente limpo",2:"Parcialmente nublado",3:"Nublado",45:"Neblina",48:"Neblina",51:"Garoa leve",53:"Garoa",55:"Garoa forte",61:"Chuva leve",63:"Chuva moderada",65:"Chuva forte",71:"Neve leve",73:"Neve",75:"Neve forte",80:"Pancadas leves",81:"Pancadas",82:"Pancadas fortes",95:"Tempestade",96:"Tempestade com granizo",99:"Tempestade severa" };
 function getWIcon(code: number) { return weatherIcons[code] ?? weatherIcons[Object.keys(weatherIcons).map(Number).reduce((a, b) => Math.abs(b - code) < Math.abs(a - code) ? b : a)] ?? "🌡️"; }
