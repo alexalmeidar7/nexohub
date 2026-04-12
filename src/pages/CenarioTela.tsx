@@ -1188,13 +1188,22 @@ export default function CenarioTela() {
 
           {!isMapTab && (
             <div className="absolute inset-0" style={{ background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : activeTab === "home" || activeTab === "chat" ? "#e8e8e8" : "#e8e8e8", zIndex: 0 }}>
-              {/* Home/Chat: artist bg from Deezer → user bg image → gradient fallback */}
+              {/* Home/Chat: artist bg from Deezer → crossfade */}
+              {(activeTab === "home" || activeTab === "chat") && prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+                <img
+                  src={prevArtistBgUrl}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ opacity: artistBgReady ? 0 : 0.35, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                />
+              )}
               {(activeTab === "home" || activeTab === "chat") && artistBgUrl && (
                 <img
                   src={artistBgUrl}
                   alt=""
-                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-                  style={{ opacity: 0.35, filter: "saturate(1.2)" }}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ opacity: artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                  onLoad={() => setArtistBgReady(true)}
                 />
               )}
               {(activeTab === "home" || activeTab === "chat") && artistBgUrl && (
@@ -1324,10 +1333,13 @@ export default function CenarioTela() {
 
               return (
                 <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: config.home.bgGradient ? buildHomeGradient(config.home) : "#000", color: "#fff", overflow: "hidden" }}>
-                  {/* Artist background image from Deezer */}
+                  {/* Artist background image from Deezer — crossfade */}
+                  {prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+                    <img src={prevArtistBgUrl} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", opacity: artistBgReady ? 0 : 0.35, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
+                  )}
                   {artistBgUrl && (
                     <>
-                      <img src={artistBgUrl} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.35, filter: "saturate(1.2)" }} />
+                      <img src={artistBgUrl} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", opacity: artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
                       <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
                     </>
                   )}
