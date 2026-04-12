@@ -925,8 +925,14 @@ export default function CenarioTela() {
           } else {
             const result = await fetchViaEdgeFunction(effectiveUserId);
             if (result?.accentColor) setAccentColor(result.accentColor);
+            if (result?.musicXmlUrl) musicXmlUrlRef.current = result.musicXmlUrl;
             if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
               await setMusicWithCoverFallback(result.musicData.titulo, result.musicData.artista, result.musicData.capa || "", undefined, result.musicStartTime);
+            } else if (result?.musicXmlUrl) {
+              const directMusic = await fetchMusicFromXmlDirect(result.musicXmlUrl);
+              if (directMusic) {
+                await setMusicWithCoverFallback(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+              }
             }
           }
         } catch { /* silent */ }
