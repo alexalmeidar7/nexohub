@@ -685,20 +685,34 @@ export default function CenarioTela() {
           }
           if (result?.musicXmlUrl) musicXmlUrlRef.current = result.musicXmlUrl;
           if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
-            void setMusicWithCoverFallbackRef.current?.(
-              result.musicData.titulo,
-              result.musicData.artista || "",
-              result.musicData.capa || "",
-              undefined,
-              result.musicStartTime || null
-            );
+            const fn = setMusicWithCoverFallbackRef.current;
+            if (fn) {
+              void fn(result.musicData.titulo, result.musicData.artista || "", result.musicData.capa || "", undefined, result.musicStartTime || null);
+            } else {
+              const t = result.musicData.titulo, a = result.musicData.artista || "", c = result.musicData.capa || "";
+              prevMusicRef.current = `${t}|${a}`;
+              musicStartRef.current = result.musicStartTime || Date.now();
+              setMusicData({ titulo: t, artista: a, capa: c });
+              setMusicKey(k => k + 1);
+              if (!c) fetchItunesCover(t, a).then(fc => { if (fc && prevMusicRef.current === `${t}|${a}`) setMusicData(prev => prev ? { ...prev, capa: fc } : prev); });
+            }
           } else {
             // Fallback: fetch XML directly from browser (works for local network XMLs)
             const xmlUrl = result?.musicXmlUrl || musicXmlUrlRef.current;
             if (xmlUrl) {
               const directMusic = await fetchMusicFromXmlDirect(xmlUrl);
               if (directMusic) {
-                void setMusicWithCoverFallbackRef.current?.(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+                const fn = setMusicWithCoverFallbackRef.current;
+                if (fn) {
+                  void fn(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+                } else {
+                  const t = directMusic.titulo, a = directMusic.artista, c = directMusic.capa;
+                  prevMusicRef.current = `${t}|${a}`;
+                  musicStartRef.current = Date.now();
+                  setMusicData({ titulo: t, artista: a, capa: c });
+                  setMusicKey(k => k + 1);
+                  if (!c) fetchItunesCover(t, a).then(fc => { if (fc && prevMusicRef.current === `${t}|${a}`) setMusicData(prev => prev ? { ...prev, capa: fc } : prev); });
+                }
               }
             }
           }
