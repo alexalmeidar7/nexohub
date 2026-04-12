@@ -1403,16 +1403,44 @@ export default function CenarioTela() {
                      </div>
                    )}
 
-                  {/* Program progress bar — neon glow style */}
-                  <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: 0, right: 0, height: "2px", background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
-                    <div style={{
-                      width: `${progressPct}%`,
-                      height: "100%",
-                      background: accentColor,
-                      transition: "width 1s linear",
-                      boxShadow: `0 0 3px ${accentRgba(0.8)}, 0 0 8px ${accentRgba(0.5)}, 0 0 16px ${accentRgba(0.3)}, 0 -1px 4px ${accentRgba(0.6)}`,
-                    }} />
-                  </div>
+                   {/* "A seguir" — bottom left above music */}
+                   {nextProgram && (
+                     <div style={{ position: "absolute", bottom: `${vhToPx(13)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 12 }}>
+                       <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.3)}${vu}` }}>a seguir</div>
+                       <div style={{ fontWeight: 700, fontSize: `${vhToPx(1.8)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
+                       <div style={{ fontWeight: 500, fontSize: `${vhToPx(1.2)}${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                     </div>
+                   )}
+
+                   {/* ── BOTTOM: "TOCANDO AGORA" + Music info ── */}
+                   {musicData && (
+                     <div key={musicKey} style={{ position: "absolute", bottom: `${vhToPx(5)}${vu}`, left: `${vhToPx(4)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 10, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                       <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.6)}${vu}`, marginBottom: `${vhToPx(0.6)}${vu}` }}>
+                         <Music size={Number(vhToPx(1.4))} style={{ opacity: 0.6 }} />
+                         <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", fontSize: `${vhToPx(1.1)}${vu}`, opacity: 0.6 }}>Tocando Agora</span>
+                       </div>
+                       <div style={{ fontWeight: 900, fontSize: `${vhToPx(2.6)}${vu}`, lineHeight: 1.2, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
+                       <div style={{ fontWeight: 500, fontSize: `${vhToPx(1.6)}${vu}`, opacity: 0.6, marginTop: `${vhToPx(0.3)}${vu}`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
+                     </div>
+                   )}
+
+                   {/* No music: show program name at bottom */}
+                   {!musicData && currentProgram && !currentProgram.selo && (
+                     <div style={{ position: "absolute", bottom: `${vhToPx(6)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 10 }}>
+                       <div style={{ fontWeight: 900, fontSize: `${vhToPx(3)}${vu}`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
+                     </div>
+                   )}
+
+                   {/* Program progress bar — neon glow style */}
+                   <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: 0, right: 0, height: "2px", background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
+                     <div style={{
+                       width: `${progressPct}%`,
+                       height: "100%",
+                       background: accentColor,
+                       transition: "width 1s linear",
+                       boxShadow: `0 0 3px ${accentRgba(0.8)}, 0 0 8px ${accentRgba(0.5)}, 0 0 16px ${accentRgba(0.3)}, 0 -1px 4px ${accentRgba(0.6)}`,
+                     }} />
+                   </div>
                 </div>
               );
             })()}
