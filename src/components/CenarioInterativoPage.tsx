@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { GradientPicker } from "@/components/ui/GradientPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -1273,40 +1274,17 @@ export default function CenarioInterativoPage() {
                   </div>
                   {config.home.bgGradient && (
                     <div className="space-y-3 pt-1">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Cor A</Label>
-                          <div className="flex items-center gap-2">
-                            <input type="color" value={config.home.bgGradientColorA || "#1a1a2e"} onChange={e => updateHome({ bgGradientColorA: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 p-0" />
-                            <Input value={config.home.bgGradientColorA || "#1a1a2e"} onChange={e => updateHome({ bgGradientColorA: e.target.value })} className="h-7 text-xs flex-1" />
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Cor B</Label>
-                          <div className="flex items-center gap-2">
-                            <input type="color" value={config.home.bgGradientColorB || "#16213e"} onChange={e => updateHome({ bgGradientColorB: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 p-0" />
-                            <Input value={config.home.bgGradientColorB || "#16213e"} onChange={e => updateHome({ bgGradientColorB: e.target.value })} className="h-7 text-xs flex-1" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Tipo</Label>
-                          <Select value={config.home.bgGradientType || "linear"} onValueChange={(v: "linear" | "radial") => updateHome({ bgGradientType: v })}>
-                            <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="linear">Linear</SelectItem>
-                              <SelectItem value="radial">Circular (Radial)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-[10px] mb-1 block" style={{ color: mutedText }}>Ângulo ({config.home.bgGradientAngle ?? 135}°)</Label>
-                          <Slider value={[config.home.bgGradientAngle ?? 135]} onValueChange={([v]) => updateHome({ bgGradientAngle: v })} min={0} max={360} step={1} disabled={(config.home.bgGradientType || "linear") === "radial"} />
-                        </div>
-                      </div>
-                      {/* Mini preview */}
-                      <div className="w-full h-10 rounded-md border" style={{ background: buildHomeGradient(config.home) }} />
+                      <GradientPicker
+                        colorA={config.home.bgGradientColorA || "#1a1a2e"}
+                        colorB={config.home.bgGradientColorB || "#16213e"}
+                        angle={config.home.bgGradientAngle ?? 135}
+                        gradientType={config.home.bgGradientType || "linear"}
+                        onChangeColorA={v => updateHome({ bgGradientColorA: v })}
+                        onChangeColorB={v => updateHome({ bgGradientColorB: v })}
+                        onChangeAngle={v => updateHome({ bgGradientAngle: v })}
+                        onChangeType={v => updateHome({ bgGradientType: v })}
+                        showType
+                      />
                     </div>
                    )}
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { GradientPicker } from "@/components/ui/GradientPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
@@ -246,16 +247,14 @@ export default function ConfigTelaPromoPage() {
               )}
 
               {config.bg_type === "degrade" && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <ColorField label="Cor A" value={config.gradient_color_a} onChange={v => update({ gradient_color_a: v })} />
-                    <ColorField label="Cor B" value={config.gradient_color_b} onChange={v => update({ gradient_color_b: v })} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>Ângulo ({config.gradient_angle}°)</Label>
-                    <Slider value={[config.gradient_angle]} onValueChange={v => update({ gradient_angle: v[0] })} min={0} max={360} step={1} />
-                  </div>
-                </div>
+                <GradientPicker
+                  colorA={config.gradient_color_a}
+                  colorB={config.gradient_color_b}
+                  angle={config.gradient_angle}
+                  onChangeColorA={v => update({ gradient_color_a: v })}
+                  onChangeColorB={v => update({ gradient_color_b: v })}
+                  onChangeAngle={v => update({ gradient_angle: v })}
+                />
               )}
             </div>
           </SectionCard>
