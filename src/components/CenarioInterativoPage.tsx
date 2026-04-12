@@ -1830,96 +1830,77 @@ export default function CenarioInterativoPage() {
                             {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                             
 
-                            {/* Clock + SYNC */}
-                            <div style={{ position: "absolute", top: `${pvh(4)}px`, left: `${pvh(3)}px`, zIndex: 10 }}>
-                              <div className="font-black" style={{ fontSize: `${pvh(5)}px`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-                                {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                            {/* ── TOP-LEFT: Mic icon + Presenter name ── */}
+                            {currentProgram?.apresentador && (
+                              <div style={{ position: "absolute", top: `${pvh(4)}px`, left: `${pvh(4)}px`, zIndex: 12 }}>
+                                <div className="flex items-center" style={{ gap: `${pvh(1)}px` }}>
+                                  <div className="flex items-center justify-center rounded-full" style={{ width: `${pvh(3.5)}px`, height: `${pvh(3.5)}px`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)" }}>
+                                    <Mic size={pvh(1.8)} style={{ color: "#fff" }} />
+                                  </div>
+                                  <span className="font-bold" style={{ fontSize: `${pvh(2.4)}px`, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{currentProgram.apresentador}</span>
+                                </div>
                               </div>
-                              <div className="font-medium" style={{ fontSize: `${pvh(1.6)}px`, color: "var(--layout-accent-color, #888)", marginTop: `${pvh(0.4)}px`, fontVariantNumeric: "tabular-nums" }}>
-                                {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                              </div>
-                              <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, opacity: 0.5, marginTop: `${pvh(0.3)}px` }}>
-                                <div className="rounded-full" style={{ width: `${pvh(0.6)}px`, height: `${pvh(0.6)}px`, background: externalConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: externalConnected ? "0 0 6px var(--layout-accent-color, #4ade80)" : "0 0 6px #ef4444" }} />
-                                <span className="font-semibold uppercase tracking-wider" style={{ fontSize: `${pvh(0.8)}px`, letterSpacing: "0.1em" }}>
-                                  {externalConnected ? "SYNC" : "OFF"}
-                                </span>
-                              </div>
-                            </div>
+                            )}
 
-                            {/* Sponsor */}
+                            {/* ── TOP-RIGHT: Program logo ── */}
+                            {currentProgram?.selo && (
+                              <div style={{ position: "absolute", top: `${pvh(3)}px`, right: `${pvh(3)}px`, zIndex: 12 }}>
+                                <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${pvh(18)}px`, maxHeight: `${pvh(14)}px` }} />
+                              </div>
+                            )}
+
+                            {/* ── CENTER: Presenter PHOTO (large) ── */}
+                            {currentProgram?.apresentadorFoto && (
+                              <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", zIndex: 5, display: "flex", justifyContent: "center" }}>
+                                <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(82)}px`, objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.5))" }} />
+                              </div>
+                            )}
+
+                            {/* ── Sponsor logos (top-right, below program logo) ── */}
                             {sponsorLogos.length > 0 && (
-                              <div style={{ position: "absolute", top: `${pvh(4)}px`, right: `${pvh(3)}px`, zIndex: 10 }}>
-                                <div className="relative flex justify-end" style={{ height: `${pvh(21)}px`, minWidth: `${pvh(10)}px` }}>
+                              <div style={{ position: "absolute", top: `${pvh(18)}px`, right: `${pvh(3)}px`, zIndex: 10 }}>
+                                <div className="relative flex justify-end" style={{ height: `${pvh(12)}px`, minWidth: `${pvh(8)}px` }}>
                                   {sponsorLogos.map((l, i) => l.logo_url && (
-                                    <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: `${pvh(50)}px`, maxHeight: `${pvh(20)}px`, opacity: i === sponsorIdx ? 1 : 0, transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)", transition: "opacity 0.8s ease, transform 0.8s ease", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" }} />
+                                    <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: `${pvh(20)}px`, maxHeight: `${pvh(11)}px`, opacity: i === sponsorIdx ? 1 : 0, transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)", transition: "opacity 0.8s ease, transform 0.8s ease", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" }} />
                                   ))}
                                 </div>
                               </div>
                             )}
 
-                            {/* Presenter PHOTO (full height, like audio player card) */}
-                            {currentProgram?.apresentadorFoto && (
-                              <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 8 }}>
-                                <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(81)}px`, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))" }} />
-                              </div>
-                            )}
-
-                            {/* Presenter NAME (top-left, like audio player) */}
-                            {currentProgram?.apresentador && (
-                              <div style={{ position: "absolute", top: `${pvh(4)}px`, left: `${pvh(28)}px`, zIndex: 9 }}>
-                                <div className="flex items-center" style={{ gap: `${pvh(0.8)}px` }}>
-                                  <Mic style={{ width: `${pvh(1.6)}px`, height: `${pvh(1.6)}px`, opacity: 0.8 }} />
-                                  <div className="font-bold" style={{ fontSize: `${pvh(2)}px`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{currentProgram.apresentador}</div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Music info (bottom-left, "TOCANDO AGORA" card style) */}
+                            {/* ── BOTTOM: "TOCANDO AGORA" + Music info ── */}
                             {musicData && (
-                              <div style={{ position: "absolute", bottom: `${pvh(6)}px`, left: `${pvh(3)}px`, zIndex: 9, maxWidth: `${pvh(45)}px`, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                                <div className="font-semibold uppercase tracking-widest" style={{ fontSize: `${pvh(1)}px`, opacity: 0.5, marginBottom: `${pvh(0.5)}px`, letterSpacing: "0.15em" }}>
-                                  ♫ tocando agora
+                              <div key={musicKey} style={{ position: "absolute", bottom: `${pvh(5)}px`, left: `${pvh(4)}px`, right: `${pvh(4)}px`, zIndex: 10, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                                <div className="flex items-center" style={{ gap: `${pvh(0.6)}px`, marginBottom: `${pvh(0.6)}px` }}>
+                                  <Music size={pvh(1.4)} style={{ opacity: 0.6 }} />
+                                  <span className="font-semibold uppercase tracking-widest" style={{ fontSize: `${pvh(1.1)}px`, opacity: 0.6, letterSpacing: "0.15em" }}>Tocando Agora</span>
                                 </div>
-                                <div className="font-black" style={{ fontSize: `${pvh(2.6)}px`, lineHeight: 1.2, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
-                                <div className="font-medium" style={{ fontSize: `${pvh(1.6)}px`, opacity: 0.6, marginTop: `${pvh(0.3)}px` }}>{musicData.artista}</div>
+                                <div className="font-black" style={{ fontSize: `${pvh(2.6)}px`, lineHeight: 1.2, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
+                                <div className="font-medium" style={{ fontSize: `${pvh(1.6)}px`, opacity: 0.6, marginTop: `${pvh(0.3)}px`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
                               </div>
                             )}
 
-                            {/* No music: show program logo/name in center */}
-                            {!musicData && (
-                              <div style={{ position: "absolute", top: "30%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }}>
-                                {currentProgram?.selo ? (
-                                  <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${pvh(35)}px`, maxHeight: `${pvh(35)}px` }} />
-                                ) : currentProgram ? (
-                                  <div className="font-black text-center" style={{ fontSize: `${pvh(4)}px`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
-                                ) : (
-                                  <div className="opacity-40 text-center" style={{ fontSize: `${pvh(1.8)}px` }}>Nenhum programa no ar</div>
-                                )}
+                            {/* No music: show program name at bottom */}
+                            {!musicData && currentProgram && !currentProgram.selo && (
+                              <div style={{ position: "absolute", bottom: `${pvh(6)}px`, left: `${pvh(4)}px`, zIndex: 10 }}>
+                                <div className="font-black" style={{ fontSize: `${pvh(3)}px`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
                               </div>
                             )}
 
-                            {/* Program LOGO */}
-                            <div style={{ position: "absolute", bottom: "120px", right: "50px", zIndex: 12, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                              {currentProgram?.selo ? (
-                                <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${pvh(30)}px`, maxHeight: `${pvh(25)}px` }} />
-                              ) : currentProgram ? (
-                                <div className="font-black text-right" style={{ fontSize: `${pvh(3)}px`, lineHeight: 1.1, textShadow: "0 2px 8px rgba(0,0,0,0.5)", maxWidth: `${pvh(22)}px` }}>{currentProgram.nome}</div>
-                              ) : null}
-                            </div>
-
-                            {/* "A seguir" */}
+                            {/* "A seguir" — bottom right */}
                             {nextProgram && (
-                              <div style={{ position: "absolute", bottom: "40px", right: "50px", zIndex: 12 }}>
-                                <div className="flex items-start" style={{ gap: `${pvh(1)}px` }}>
-                                  <div style={{ width: "2px", height: `${pvh(5)}px`, background: "rgba(255,255,255,0.3)", marginTop: `${pvh(0.3)}px`, flexShrink: 0 }} />
-                                  <div>
-                                    <div className="font-semibold" style={{ fontSize: `${pvh(1.2)}px`, color: "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.2)}px` }}>a seguir</div>
-                                    <div className="font-bold" style={{ fontSize: `${pvh(2)}px`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
-                                    <div className="font-medium" style={{ fontSize: `${pvh(1.3)}px`, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
-                                  </div>
-                                </div>
+                              <div style={{ position: "absolute", bottom: `${pvh(5)}px`, right: `${pvh(4)}px`, zIndex: 12, textAlign: "right" }}>
+                                <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.3)}px` }}>a seguir</div>
+                                <div className="font-bold" style={{ fontSize: `${pvh(1.8)}px`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
+                                <div className="font-medium" style={{ fontSize: `${pvh(1.2)}px`, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                               </div>
                             )}
+
+                            {/* Clock — bottom left above music */}
+                            <div style={{ position: "absolute", bottom: `${pvh(14)}px`, left: `${pvh(4)}px`, zIndex: 10, opacity: 0.4 }}>
+                              <div className="font-bold" style={{ fontSize: `${pvh(1.4)}px`, fontVariantNumeric: "tabular-nums" }}>
+                                {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                              </div>
+                            </div>
 
                             {/* Progress bar — neon glow */}
                             <div style={{ position: "absolute", bottom: `${pvh(2)}px`, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
