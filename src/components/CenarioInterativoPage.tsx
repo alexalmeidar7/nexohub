@@ -1580,7 +1580,7 @@ export default function CenarioInterativoPage() {
           </div>
 
           {/* ── RIGHT: 9:16 Preview ── */}
-          <div className="lg:w-[320px] flex-shrink-0">
+          <div className="lg:flex-1 flex flex-col min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <div className="flex items-center gap-2">
                 <Eye size={16} style={{ color: mutedText }} />
@@ -1655,10 +1655,9 @@ export default function CenarioInterativoPage() {
 
             <div
               ref={previewWrapRef}
-              className="relative rounded-2xl overflow-hidden mx-auto"
+              className="relative rounded-2xl overflow-hidden mx-auto flex-1"
               style={{
                 width: "100%",
-                maxWidth: 300,
                 boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
                 border: "2px solid rgba(255,255,255,0.08)",
               }}
