@@ -1580,7 +1580,7 @@ export default function CenarioInterativoPage() {
           </div>
 
           {/* ── RIGHT: 9:16 Preview ── */}
-          <div className="lg:w-[320px] flex-shrink-0">
+          <div className="lg:flex-1 flex flex-col min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <div className="flex items-center gap-2">
                 <Eye size={16} style={{ color: mutedText }} />
