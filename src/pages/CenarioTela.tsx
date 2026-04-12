@@ -227,6 +227,10 @@ export default function CenarioTela() {
   const publicFetchLastResultRef = useRef<PublicCenarioPayload | null>(null);
   const publicFetchLastAtRef = useRef(0);
 
+  /* ─── Artist background image (Deezer) — same logic as Player audio ─── */
+  const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
+  const artistBgCacheRef = useRef<Record<string, string>>({});
+
   /* ─── User accent color (from layout settings) ─── */
   const [accentColor, setAccentColor] = useState("#444444");
   const accentRgba = (alpha: number) => {
