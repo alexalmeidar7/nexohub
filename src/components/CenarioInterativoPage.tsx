@@ -1038,11 +1038,15 @@ export default function CenarioInterativoPage() {
         .upsert(payload, { onConflict: "user_id" });
       if (error) {
         console.error("Erro ao salvar cenário:", error);
+      } else {
+        setSavedFlash(true);
+        if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
+        savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
       }
       setSaving(false);
     };
     pendingSaveRef.current = doSave;
-    saveTimeout.current = setTimeout(doSave, 150);
+    saveTimeout.current = setTimeout(doSave, 800);
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
       // Flush pending save on unmount so data is never lost
