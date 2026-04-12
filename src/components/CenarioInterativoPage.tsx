@@ -1857,43 +1857,44 @@ export default function CenarioInterativoPage() {
                               </div>
                             )}
 
-                            {/* Music info center */}
-                            <div style={{ position: "absolute", top: "30%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }}>
-                              {musicData ? (
-                                <div key={musicKey} style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                                  {musicData.capa && (
-                                    <div style={{ width: `${pvh(28)}px`, height: `${pvh(28)}px`, borderRadius: `${pvh(2)}px`, overflow: "hidden", boxShadow: "0 16px 48px -8px rgba(0,0,0,0.6)", marginBottom: `${pvh(2.5)}px` }}>
-                                      <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                    </div>
-                                  )}
-                                  <div style={{ textAlign: "center", maxWidth: `${pvh(40)}px` }}>
-                                    <div className="font-black truncate" style={{ fontSize: `${pvh(2.8)}px`, lineHeight: 1.2, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
-                                    <div className="font-medium truncate" style={{ fontSize: `${pvh(1.8)}px`, opacity: 0.6, marginTop: `${pvh(0.5)}px` }}>{musicData.artista}</div>
-                                  </div>
-                                </div>
-                              ) : currentProgram?.selo ? (
-                                <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${pvh(35)}px`, maxHeight: `${pvh(35)}px` }} />
-                              ) : currentProgram ? (
-                                <div className="font-black text-center" style={{ fontSize: `${pvh(4)}px`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
-                              ) : (
-                                <div className="opacity-40 text-center" style={{ fontSize: `${pvh(1.8)}px` }}>Nenhum programa no ar</div>
-                              )}
-                            </div>
-
-                            {/* Presenter PHOTO */}
+                            {/* Presenter PHOTO (full height, like audio player card) */}
                             {currentProgram?.apresentadorFoto && (
                               <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 8 }}>
                                 <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(81)}px`, objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(4px 0 20px rgba(0,0,0,0.5))" }} />
                               </div>
                             )}
 
-                            {/* Presenter NAME + TIME */}
+                            {/* Presenter NAME (top-left, like audio player) */}
                             {currentProgram?.apresentador && (
-                              <div style={{ position: "absolute", bottom: `${pvh(8)}px`, left: `${pvh(18)}px`, zIndex: 9 }}>
-                                <div className="font-black" style={{ fontSize: `${pvh(2.4)}px`, lineHeight: 1.2, textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>{currentProgram.apresentador}</div>
-                                <div className="font-medium" style={{ fontSize: `${pvh(1.4)}px`, color: "var(--layout-accent-color, #888)", fontVariantNumeric: "tabular-nums", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
-                                  {currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}
+                              <div style={{ position: "absolute", top: `calc(${pvh(3)}px + 120px)`, left: `${pvh(28)}px`, zIndex: 9 }}>
+                                <div className="flex items-center" style={{ gap: `${pvh(0.8)}px` }}>
+                                  <Mic style={{ width: `${pvh(1.6)}px`, height: `${pvh(1.6)}px`, opacity: 0.8 }} />
+                                  <div className="font-bold" style={{ fontSize: `${pvh(2)}px`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{currentProgram.apresentador}</div>
                                 </div>
+                              </div>
+                            )}
+
+                            {/* Music info (bottom-left, "TOCANDO AGORA" card style) */}
+                            {musicData && (
+                              <div style={{ position: "absolute", bottom: `${pvh(6)}px`, left: `${pvh(3)}px`, zIndex: 9, maxWidth: `${pvh(45)}px`, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                                <div className="font-semibold uppercase tracking-widest" style={{ fontSize: `${pvh(1)}px`, opacity: 0.5, marginBottom: `${pvh(0.5)}px`, letterSpacing: "0.15em" }}>
+                                  ♫ tocando agora
+                                </div>
+                                <div className="font-black" style={{ fontSize: `${pvh(2.6)}px`, lineHeight: 1.2, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
+                                <div className="font-medium" style={{ fontSize: `${pvh(1.6)}px`, opacity: 0.6, marginTop: `${pvh(0.3)}px` }}>{musicData.artista}</div>
+                              </div>
+                            )}
+
+                            {/* No music: show program logo/name in center */}
+                            {!musicData && (
+                              <div style={{ position: "absolute", top: "30%", left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 5 }}>
+                                {currentProgram?.selo ? (
+                                  <img src={currentProgram.selo} alt={currentProgram.nome} className="object-contain drop-shadow-lg" style={{ maxWidth: `${pvh(35)}px`, maxHeight: `${pvh(35)}px` }} />
+                                ) : currentProgram ? (
+                                  <div className="font-black text-center" style={{ fontSize: `${pvh(4)}px`, lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{currentProgram.nome}</div>
+                                ) : (
+                                  <div className="opacity-40 text-center" style={{ fontSize: `${pvh(1.8)}px` }}>Nenhum programa no ar</div>
+                                )}
                               </div>
                             )}
 
