@@ -1883,7 +1883,7 @@ export default function CenarioInterativoPage() {
                                {/* Card center: presenter photo */}
                                {currentProgram?.apresentadorFoto && (
                                  <div className="flex justify-center" style={{ marginBottom: `${pvh(1.5)}px` }}>
-                                   <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(22)}px`, objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))" }} />
+                                   <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(30)}px`, objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))" }} />
                                  </div>
                                )}
 
