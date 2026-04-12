@@ -10,39 +10,117 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
-// Lazy-loaded heavy pages
-const PlayerHub = lazy(() => import("./pages/player/PlayerHub"));
-const PlayerPage = lazy(() => import("./pages/Player"));
-const PlayerApp = lazy(() => import("./pages/PlayerApp"));
-const PromocoesKiosk = lazy(() => import("./pages/Promocoes"));
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
-const AdminModules = lazy(() => import("./pages/admin/AdminModules"));
-const AdminPlans = lazy(() => import("./pages/admin/AdminPlans"));
-const AdminMessages = lazy(() => import("./pages/admin/AdminMessages"));
-const MasterViewHome = lazy(() => import("./pages/masterview/MasterViewHome"));
-const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
-const JornalExport = lazy(() => import("./pages/JornalExport"));
-const RoteiroExport = lazy(() => import("./pages/RoteiroExport"));
-const RoteiroApresentadorEdit = lazy(() => import("./pages/RoteiroApresentadorEdit"));
-const TpExterno = lazy(() => import("./pages/TpExterno"));
-const PlayerCatalog = lazy(() => import("./pages/player/PlayerCatalog"));
-const VmixControl = lazy(() => import("./pages/VmixControl"));
-const CenarioTela = lazy(() => import("./pages/CenarioTela"));
-const TelaInterativa = lazy(() => import("./pages/TelaInterativa"));
-const IntercomListener = lazy(() => import("./pages/IntercomListener"));
+// Retry wrapper for lazy imports — retries up to 3 times on chunk load failure
+function lazyRetry(factory: () => Promise<{ default: React.ComponentType<any> }>, retries = 3) {
+  return lazy(() =>
+    factory().catch((err) => {
+      if (retries > 0) {
+        return new Promise<{ default: React.ComponentType<any> }>((resolve) =>
+          setTimeout(() => resolve(lazyRetry(factory, retries - 1) as any), 800)
+        );
+      }
+      throw err;
+    })
+  );
+}
 
-class ChunkErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
-  state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
+// Lazy-loaded heavy pages with automatic retry
+const PlayerHub = lazyRetry(() => import("./pages/player/PlayerHub"));
+const PlayerPage = lazyRetry(() => import("./pages/Player"));
+const PlayerApp = lazyRetry(() => import("./pages/PlayerApp"));
+const PromocoesKiosk = lazyRetry(() => import("./pages/Promocoes"));
+const AdminDashboard = lazyRetry(() => import("./pages/admin/AdminDashboard"));
+const AdminUsers = lazyRetry(() => import("./pages/admin/AdminUsers"));
+const AdminModules = lazyRetry(() => import("./pages/admin/AdminModules"));
+const AdminPlans = lazyRetry(() => import("./pages/admin/AdminPlans"));
+const AdminMessages = lazyRetry(() => import("./pages/admin/AdminMessages"));
+const MasterViewHome = lazyRetry(() => import("./pages/masterview/MasterViewHome"));
+const AdminLogin = lazyRetry(() => import("./pages/admin/AdminLogin"));
+const JornalExport = lazyRetry(() => import("./pages/JornalExport"));
+const RoteiroExport = lazyRetry(() => import("./pages/RoteiroExport"));
+const RoteiroApresentadorEdit = lazyRetry(() => import("./pages/RoteiroApresentadorEdit"));
+const TpExterno = lazyRetry(() => import("./pages/TpExterno"));
+const PlayerCatalog = lazyRetry(() => import("./pages/player/PlayerCatalog"));
+const VmixControl = lazyRetry(() => import("./pages/VmixControl"));
+const CenarioTela = lazyRetry(() => import("./pages/CenarioTela"));
+const TelaInterativa = lazyRetry(() => import("./pages/TelaInterativa"));
+const IntercomListener = lazyRetry(() => import("./pages/IntercomListener"));
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  retryCount: number;
+}
+
+class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false, retryCount: 0 };
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    const isChunkError =
+      error.message?.includes("Failed to fetch dynamically imported module") ||
+      error.message?.includes("Loading chunk") ||
+      error.message?.includes("Loading CSS chunk") ||
+      error.message?.includes("dynamically imported module");
+
+    // Auto-retry chunk errors up to 2 times
+    if (isChunkError && this.state.retryCount < 2) {
+      this.retryTimer = setTimeout(() => {
+        this.setState((prev) => ({ hasError: false, retryCount: prev.retryCount + 1 }));
+      }, 1500);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false, retryCount: 0 });
+  };
+
+  handleReload = () => {
+    window.location.reload();
+  };
+
   render() {
     if (this.state.hasError) {
       return (
-        <div className="h-screen w-screen flex flex-col items-center justify-center gap-4" style={{ backgroundColor: "#0f1058", color: "#fff" }}>
-          <p className="text-lg font-semibold">Erro ao carregar a página</p>
-          <button onClick={() => window.location.reload()} className="px-6 py-2 rounded-lg text-sm font-medium" style={{ backgroundColor: "#268ffa" }}>
-            Recarregar
-          </button>
+        <div
+          className="h-screen w-screen flex flex-col items-center justify-center gap-4"
+          style={{ backgroundColor: "#0f1058", color: "#fff" }}
+        >
+          {this.state.retryCount < 2 ? (
+            <>
+              <Loader2 className="animate-spin" size={32} style={{ color: "#268ffa" }} />
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
+                Reconectando...
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-semibold">Erro ao carregar a página</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={this.handleRetry}
+                  className="px-6 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: "#268ffa" }}
+                >
+                  Tentar novamente
+                </button>
+                <button
+                  onClick={this.handleReload}
+                  className="px-6 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+                >
+                  Recarregar página
+                </button>
+              </div>
+            </>
+          )}
         </div>
       );
     }
