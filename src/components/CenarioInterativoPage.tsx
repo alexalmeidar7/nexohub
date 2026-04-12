@@ -1876,14 +1876,14 @@ export default function CenarioInterativoPage() {
                                    <span className="font-bold" style={{ fontSize: `${pvh(1.6)}px`, color: "#fff" }}>{currentProgram?.apresentador || ""}</span>
                                  </div>
                                  {currentProgram?.selo && (
-                                   <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5)}px`, maxWidth: `${pvh(10)}px`, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
+                                   <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(7)}px`, maxWidth: `${pvh(14)}px`, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
                                  )}
                                </div>
 
                                {/* Card center: presenter photo */}
                                {currentProgram?.apresentadorFoto && (
                                  <div className="flex justify-center" style={{ marginBottom: `${pvh(1.5)}px` }}>
-                                   <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(22)}px`, objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))" }} />
+                                   <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(30)}px`, objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))" }} />
                                  </div>
                                )}
 

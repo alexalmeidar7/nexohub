@@ -1378,7 +1378,7 @@ export default function CenarioTela() {
                          </div>
                        </div>
                        {currentProgram?.selo && (
-                         <img src={currentProgram.selo} alt="" style={{ maxHeight: `${vhToPx(5)}${vu}`, maxWidth: `${vhToPx(10)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
+                          <img src={currentProgram.selo} alt="" style={{ maxHeight: `${vhToPx(7)}${vu}`, maxWidth: `${vhToPx(14)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
                        )}
                      </div>
 
@@ -1389,7 +1389,7 @@ export default function CenarioTela() {
                            src={currentProgram.apresentadorFoto}
                            alt=""
                            style={{
-                             height: `${vhToPx(22)}${vu}`,
+                             height: `${vhToPx(30)}${vu}`,
                              objectFit: "contain",
                              filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
                            }}
