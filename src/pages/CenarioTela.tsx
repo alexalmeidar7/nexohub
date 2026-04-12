@@ -1359,7 +1359,7 @@ export default function CenarioTela() {
                      bottom: `${vhToPx(5)}${vu}`,
                      left: "50%",
                      transform: "translateX(-50%)",
-                     width: `${vhToPx(27)}${vu}`,
+                     width: `${vhToPx(16)}${vu}`,
                      zIndex: 15,
                      borderRadius: `${vhToPx(2)}${vu}`,
                      background: `linear-gradient(145deg, ${accentRgba(0.7)}, ${accentRgba(0.4)})`,
