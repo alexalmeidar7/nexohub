@@ -583,6 +583,9 @@ export default function CenarioTela() {
           setNextProgram(null);
         }
 
+        // Store XML URL for direct browser-side fallback
+        if (result?.musicXmlUrl) musicXmlUrlRef.current = result.musicXmlUrl;
+
         if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
           void setMusicWithCoverFallbackRef.current?.(
             result.musicData.titulo,
@@ -591,6 +594,12 @@ export default function CenarioTela() {
             undefined,
             result.musicStartTime || null
           );
+        } else if (result?.musicXmlUrl) {
+          // Edge function couldn't fetch XML (e.g. local network) — try directly from browser
+          const directMusic = await fetchMusicFromXmlDirect(result.musicXmlUrl);
+          if (directMusic) {
+            void setMusicWithCoverFallbackRef.current?.(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+          }
         }
       }
     };
