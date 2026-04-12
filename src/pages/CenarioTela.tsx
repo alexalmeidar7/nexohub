@@ -660,6 +660,7 @@ export default function CenarioTela() {
             setSponsorLogos(result.sponsorLogos || []);
             setNextProgram(result.nextProgram || null);
           }
+          if (result?.musicXmlUrl) musicXmlUrlRef.current = result.musicXmlUrl;
           if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
             void setMusicWithCoverFallbackRef.current?.(
               result.musicData.titulo,
@@ -668,6 +669,15 @@ export default function CenarioTela() {
               undefined,
               result.musicStartTime || null
             );
+          } else {
+            // Fallback: fetch XML directly from browser (works for local network XMLs)
+            const xmlUrl = result?.musicXmlUrl || musicXmlUrlRef.current;
+            if (xmlUrl) {
+              const directMusic = await fetchMusicFromXmlDirect(xmlUrl);
+              if (directMusic) {
+                void setMusicWithCoverFallbackRef.current?.(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+              }
+            }
           }
         } finally {
           pollingPublic = false;
