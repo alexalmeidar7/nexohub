@@ -1328,11 +1328,11 @@ export default function CenarioTela() {
                   {/* Fallback: user background image (no artist image) */}
                   {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
 
-                  {/* ── HEADER: Clock (top-left) ── */}
+                  {/* ── HEADER: Clock + SYNC (top-left) ── */}
                   {(() => {
                     const custom = elStyle("clock", "top-left", { animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" });
                     const style: React.CSSProperties = custom
-                      ?? { position: "absolute", top: `calc(${vhToPx(3)}${vu} + 120px)`, left: `${vhToPx(3)}${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" };
+                      ?? { position: "absolute", top: `${vhToPx(4)}${vu}`, left: `${vhToPx(3)}${vu}`, zIndex: 10, animation: "cenario-clock-enter 0.6s cubic-bezier(0.16,1,0.3,1) both" };
                     return (
                       <div style={style}>
                         <div className="font-black" style={{ fontSize: `${vhToPx(5)}${vu}`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
@@ -1340,6 +1340,12 @@ export default function CenarioTela() {
                         </div>
                         <div className="font-medium" style={{ fontSize: `${vhToPx(1.6)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.4)}${vu}`, fontVariantNumeric: "tabular-nums" }}>
                           {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                        </div>
+                        <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, opacity: 0.5, marginTop: `${vhToPx(0.3)}${vu}` }}>
+                          <div className="rounded-full" style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, background: realtimeConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: realtimeConnected ? `0 0 6px var(--layout-accent-color, #4ade80)` : "0 0 6px #ef4444" }} />
+                          <span className="font-semibold uppercase tracking-wider" style={{ fontSize: `${vhToPx(0.8)}${vu}`, letterSpacing: "0.1em" }}>
+                            {realtimeConnected ? "SYNC" : "OFF"}
+                          </span>
                         </div>
                       </div>
                     );
@@ -1349,7 +1355,7 @@ export default function CenarioTela() {
                   {sponsorLogos.length > 0 && (() => {
                     const custom = elStyle("sponsor", "top-left", { animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" });
                     const style: React.CSSProperties = custom
-                      ?? { position: "absolute", top: `calc(${vhToPx(3)}${vu} + 30px)`, right: `${vhToPx(3)}${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
+                      ?? { position: "absolute", top: `${vhToPx(4)}${vu}`, right: `${vhToPx(3)}${vu}`, zIndex: 10, animation: "cenario-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s both" };
                     return (
                       <div style={style}>
                         <div className="relative flex items-center justify-end" style={{ height: `${vhToPx(21)}${vu}` }}>
@@ -1375,17 +1381,6 @@ export default function CenarioTela() {
                     );
                   })()}
 
-                  {/* ── SYNC indicator (below clock) ── */}
-                  <div style={{ position: "absolute", top: `${vhToPx(13)}${vu}`, left: `${vhToPx(3)}${vu}`, zIndex: 20 }}>
-                    <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, opacity: 0.5 }}>
-                      <div className="rounded-full" style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, background: realtimeConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: realtimeConnected ? `0 0 6px var(--layout-accent-color, #4ade80)` : "0 0 6px #ef4444" }} />
-                      <span className="font-semibold uppercase tracking-wider" style={{ fontSize: `${vhToPx(0.8)}${vu}`, letterSpacing: "0.1em" }}>
-                        {realtimeConnected ? "SYNC" : "OFF"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* ── Presenter PHOTO (full height, like audio player card) ── */}
                   {currentProgram?.apresentadorFoto && (() => {
                     const custom = elStyle("presenterPhoto", "bottom-left", { zIndex: 8, animation: "cenario-program-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both" });
                     const style: React.CSSProperties = custom
@@ -1408,7 +1403,7 @@ export default function CenarioTela() {
 
                   {/* ── Presenter NAME (top-left, like audio player) ── */}
                   {currentProgram?.apresentador && (
-                    <div style={{ position: "absolute", top: `calc(${vhToPx(3)}${vu} + 120px)`, left: `${vhToPx(28)}${vu}`, zIndex: 9 }}>
+                    <div style={{ position: "absolute", top: `${vhToPx(4)}${vu}`, left: `${vhToPx(28)}${vu}`, zIndex: 9 }}>
                       <div className="flex items-center" style={{ gap: `${vhToPx(0.8)}${vu}` }}>
                         <Mic style={{ width: `${vhToPx(1.6)}${vu}`, height: `${vhToPx(1.6)}${vu}`, opacity: 0.8 }} />
                         <div className="font-bold" style={{ fontSize: `${vhToPx(2)}${vu}`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{currentProgram.apresentador}</div>

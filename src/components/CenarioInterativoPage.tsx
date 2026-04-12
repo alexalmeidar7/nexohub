@@ -1830,8 +1830,8 @@ export default function CenarioInterativoPage() {
                             {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                             
 
-                            {/* Clock */}
-                            <div style={{ position: "absolute", top: `calc(${pvh(3)}px + 120px)`, left: `${pvh(3)}px`, zIndex: 10 }}>
+                            {/* Clock + SYNC */}
+                            <div style={{ position: "absolute", top: `${pvh(4)}px`, left: `${pvh(3)}px`, zIndex: 10 }}>
                               <div className="font-black" style={{ fontSize: `${pvh(5)}px`, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em", lineHeight: 1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
                                 {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                               </div>
@@ -1848,7 +1848,7 @@ export default function CenarioInterativoPage() {
 
                             {/* Sponsor */}
                             {sponsorLogos.length > 0 && (
-                              <div style={{ position: "absolute", top: `calc(${pvh(3)}px + 30px)`, right: `${pvh(3)}px`, zIndex: 10 }}>
+                              <div style={{ position: "absolute", top: `${pvh(4)}px`, right: `${pvh(3)}px`, zIndex: 10 }}>
                                 <div className="relative flex justify-end" style={{ height: `${pvh(21)}px`, minWidth: `${pvh(10)}px` }}>
                                   {sponsorLogos.map((l, i) => l.logo_url && (
                                     <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: `${pvh(50)}px`, maxHeight: `${pvh(20)}px`, opacity: i === sponsorIdx ? 1 : 0, transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)", transition: "opacity 0.8s ease, transform 0.8s ease", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" }} />
@@ -1866,7 +1866,7 @@ export default function CenarioInterativoPage() {
 
                             {/* Presenter NAME (top-left, like audio player) */}
                             {currentProgram?.apresentador && (
-                              <div style={{ position: "absolute", top: `calc(${pvh(3)}px + 120px)`, left: `${pvh(28)}px`, zIndex: 9 }}>
+                              <div style={{ position: "absolute", top: `${pvh(4)}px`, left: `${pvh(28)}px`, zIndex: 9 }}>
                                 <div className="flex items-center" style={{ gap: `${pvh(0.8)}px` }}>
                                   <Mic style={{ width: `${pvh(1.6)}px`, height: `${pvh(1.6)}px`, opacity: 0.8 }} />
                                   <div className="font-bold" style={{ fontSize: `${pvh(2)}px`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{currentProgram.apresentador}</div>
