@@ -486,7 +486,7 @@ export default function PlayerPage() {
   const isVideo = canal?.type === "video" || canal?.type === "video_live";
 
   // Fetch artist background image from Deezer
-  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break";
+  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas";
   useEffect(() => {
     if (isBreakTrack) { setArtistBgUrl(null); return; }
     const artist = musicData?.artista;

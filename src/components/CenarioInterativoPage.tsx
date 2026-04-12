@@ -749,7 +749,7 @@ export default function CenarioInterativoPage() {
   const [stocksLoading, setStocksLoading] = useState(false);
 
   /* ─── Fetch artist background from Deezer ─── */
-  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break";
+  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas";
   useEffect(() => {
     if (isBreakTrack) { setArtistBgUrl(null); return; }
     const artist = musicData?.artista;

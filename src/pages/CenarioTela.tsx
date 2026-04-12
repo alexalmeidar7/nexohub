@@ -240,7 +240,7 @@ export default function CenarioTela() {
   };
 
   /* ─── Fetch artist background from Deezer (like Player audio) ─── */
-  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break";
+  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas";
   useEffect(() => {
     if (isBreakTrack) { setArtistBgUrl(null); return; }
     const artist = musicData?.artista;
