@@ -793,6 +793,14 @@ table:not([data-no-row-hover]) tbody tr:hover {
   0% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
   100% { opacity: 0; transform: translateY(-20px) scale(0.9); filter: blur(8px); }
 }
+@keyframes cenario-capa-slide-in {
+  0% { opacity: 0; transform: translateX(-100%); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes cenario-capa-slide-out {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(-100%); }
+}
 
 /* ─── vMix Chromium 103 compatibility: webkit backdrop-filter utilities ─── */
 .vmix-blur-4 { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }

@@ -1378,10 +1378,10 @@ export default function CenarioTela() {
                      left: "50%",
                      transform: "translateX(-50%)",
                      display: "flex",
-                     gap: `${vhToPx(1.2)}${vu}`,
+                     alignItems: "stretch",
                      zIndex: 15,
                    }}>
-                     {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
+                     {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
                      <div style={{
                        width: `${vhToPx(16)}${vu}`,
                        height: `${vhToPx(16)}${vu}`,
@@ -1395,6 +1395,9 @@ export default function CenarioTela() {
                        display: "flex",
                        flexDirection: "column",
                        gap: `${vhToPx(0.6)}${vu}`,
+                       zIndex: 2,
+                       position: "relative",
+                       flexShrink: 0,
                      }}>
                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: `${vhToPx(0.6)}${vu}`, minWidth: 0 }}>
                          <div style={{ minWidth: 0, flex: 1 }}>
@@ -1439,26 +1442,30 @@ export default function CenarioTela() {
                        </div>
                      </div>
 
-                     {/* ── BOX CAPA: quadrado 1:1 ── */}
-                     {musicData?.capa && (
-                       <div style={{
-                         width: `${vhToPx(16)}${vu}`,
-                         height: `${vhToPx(16)}${vu}`,
-                         borderRadius: `${vhToPx(2)}${vu}`,
-                         overflow: "hidden",
-                         boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 ${accentRgba(0.3)}`,
-                         border: `1px solid ${accentRgba(0.3)}`,
-                         flexShrink: 0,
-                       }}>
+                     {/* ── BOX CAPA: slides out from behind locutor ── */}
+                     {musicData?.capa && !isBreakTrack && (
+                       <div
+                         key={musicData.capa}
+                         style={{
+                           width: `${vhToPx(16)}${vu}`,
+                           height: `${vhToPx(16)}${vu}`,
+                           borderRadius: `${vhToPx(2)}${vu}`,
+                           overflow: "hidden",
+                           boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 ${accentRgba(0.3)}`,
+                           border: `1px solid ${accentRgba(0.3)}`,
+                           flexShrink: 0,
+                           zIndex: 1,
+                           marginLeft: `-${vhToPx(1)}${vu}`,
+                           animation: "cenario-capa-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both",
+                         }}
+                       >
                          <img
-                           key={musicData.capa}
                            src={musicData.capa}
                            alt=""
                            style={{
                              width: "100%",
                              height: "100%",
                              objectFit: "cover",
-                             animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
                            }}
                          />
                        </div>

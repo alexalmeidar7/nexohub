@@ -1870,7 +1870,7 @@ export default function CenarioInterativoPage() {
                                left: "50%",
                                transform: "translateX(-50%)",
                                display: "flex",
-                               gap: `${pvh(1.2)}px`,
+                               alignItems: "stretch",
                                zIndex: 15,
                              }}>
                                {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
@@ -1887,6 +1887,9 @@ export default function CenarioInterativoPage() {
                                  display: "flex",
                                  flexDirection: "column",
                                  gap: `${pvh(0.6)}px`,
+                                 zIndex: 2,
+                                 position: "relative",
+                                 flexShrink: 0,
                                }}>
                                  <div className="flex items-start justify-between" style={{ gap: `${pvh(0.6)}px`, minWidth: 0 }}>
                                    <div style={{ minWidth: 0, flex: 1 }}>
@@ -1922,26 +1925,30 @@ export default function CenarioInterativoPage() {
                                  </div>
                                </div>
 
-                               {/* ── BOX CAPA: quadrado 1:1 ── */}
-                               {musicData?.capa && (
-                                 <div style={{
-                                   width: `${pvh(16)}px`,
-                                   height: `${pvh(16)}px`,
-                                   borderRadius: `${pvh(2)}px`,
-                                   overflow: "hidden",
-                                   boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-                                   border: "1px solid rgba(255,255,255,0.1)",
-                                   flexShrink: 0,
-                                 }}>
+                               {/* ── BOX CAPA: slides out from behind locutor ── */}
+                               {musicData?.capa && !isBreakTrack && (
+                                 <div
+                                   key={musicData.capa}
+                                   style={{
+                                     width: `${pvh(16)}px`,
+                                     height: `${pvh(16)}px`,
+                                     borderRadius: `${pvh(2)}px`,
+                                     overflow: "hidden",
+                                     boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                                     border: "1px solid rgba(255,255,255,0.1)",
+                                     flexShrink: 0,
+                                     zIndex: 1,
+                                     marginLeft: `-${pvh(1)}px`,
+                                     animation: "cenario-capa-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both",
+                                   }}
+                                 >
                                    <img
-                                     key={musicData.capa}
                                      src={musicData.capa}
                                      alt=""
                                      style={{
                                        width: "100%",
                                        height: "100%",
                                        objectFit: "cover",
-                                       animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both",
                                      }}
                                    />
                                  </div>
