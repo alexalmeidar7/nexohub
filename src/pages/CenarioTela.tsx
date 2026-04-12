@@ -1353,64 +1353,67 @@ export default function CenarioTela() {
                      </div>
                    )}
 
-                   {/* ── CENTER-BOTTOM: Accent card with presenter, logo, photo, music ── */}
+                   {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
                    <div style={{
                      position: "absolute",
                      bottom: `${vhToPx(5)}${vu}`,
                      left: "50%",
                      transform: "translateX(-50%)",
                      width: `${vhToPx(16)}${vu}`,
+                     height: `${vhToPx(16)}${vu}`,
                      zIndex: 15,
                      borderRadius: `${vhToPx(2)}${vu}`,
                      background: `linear-gradient(145deg, ${accentRgba(0.7)}, ${accentRgba(0.4)})`,
                      backdropFilter: "blur(20px)",
                      WebkitBackdropFilter: "blur(20px)",
-                     padding: `${vhToPx(2)}${vu}`,
+                     padding: `${vhToPx(0.9)}${vu}`,
                      boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 ${accentRgba(0.3)}`,
                      border: `1px solid ${accentRgba(0.3)}`,
+                     display: "flex",
+                     flexDirection: "column",
+                     gap: `${vhToPx(0.6)}${vu}`,
                    }}>
-                     {/* Card header: presenter name + program logo */}
-                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: `${vhToPx(1.5)}${vu}` }}>
-                       <div>
-                         <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.6)}${vu}` }}>
-                           <Mic size={Number(vhToPx(1.4))} style={{ opacity: 0.8 }} />
-                           <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.6)}${vu}`, color: "#fff" }}>{currentProgram?.apresentador || ""}</span>
+                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: `${vhToPx(0.6)}${vu}`, minWidth: 0 }}>
+                       <div style={{ minWidth: 0, flex: 1 }}>
+                         <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.35)}${vu}`, minWidth: 0 }}>
+                           <Mic size={Number(vhToPx(1))} style={{ opacity: 0.8, flexShrink: 0 }} />
+                           <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.05)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram?.apresentador || ""}</span>
                          </div>
                        </div>
                        {currentProgram?.selo && (
-                          <img src={currentProgram.selo} alt="" style={{ maxHeight: `${vhToPx(7)}${vu}`, maxWidth: `${vhToPx(14)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
+                         <img src={currentProgram.selo} alt="" style={{ maxHeight: `${vhToPx(3.2)}${vu}`, maxWidth: `${vhToPx(4.8)}${vu}`, flexShrink: 0, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
                        )}
                      </div>
 
-                     {/* Card center: presenter photo */}
-                     {currentProgram?.apresentadorFoto && (
-                       <div style={{ display: "flex", justifyContent: "center", marginBottom: `${vhToPx(1.5)}${vu}` }}>
+                     <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                       {currentProgram?.apresentadorFoto && (
                          <img
                            src={currentProgram.apresentadorFoto}
                            alt=""
                            style={{
-                             height: `${vhToPx(30)}${vu}`,
+                             maxHeight: `${vhToPx(8.6)}${vu}`,
+                             maxWidth: "100%",
                              objectFit: "contain",
                              filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
                            }}
                          />
-                       </div>
-                     )}
+                       )}
+                     </div>
 
-                     {/* Card bottom: music info */}
-                     {musicData && (
-                       <div key={musicKey} style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                         <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.5)}${vu}`, marginBottom: `${vhToPx(0.4)}${vu}` }}>
-                           <Music size={Number(vhToPx(1.2))} style={{ opacity: 0.7 }} />
-                           <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", fontSize: `${vhToPx(0.9)}${vu}`, opacity: 0.7 }}>Tocando Agora</span>
+                     <div style={{ minHeight: 0 }}>
+                       {musicData ? (
+                         <div key={musicKey} style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                           <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.25)}${vu}` }}>
+                             <Music size={Number(vhToPx(0.85))} style={{ opacity: 0.7, flexShrink: 0 }} />
+                             <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", fontSize: `${vhToPx(0.72)}${vu}`, opacity: 0.7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Tocando Agora</span>
+                           </div>
+                           <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, lineHeight: 1.15, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
+                           <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.95)}${vu}`, opacity: 0.7, marginTop: `${vhToPx(0.15)}${vu}`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
                          </div>
-                         <div style={{ fontWeight: 800, fontSize: `${vhToPx(2)}${vu}`, lineHeight: 1.2, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
-                         <div style={{ fontWeight: 500, fontSize: `${vhToPx(1.4)}${vu}`, opacity: 0.7, marginTop: `${vhToPx(0.2)}${vu}`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
-                       </div>
-                     )}
-                     {!musicData && currentProgram && (
-                       <div style={{ fontWeight: 800, fontSize: `${vhToPx(2)}${vu}`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
-                     )}
+                       ) : currentProgram ? (
+                         <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram.nome}</div>
+                       ) : null}
+                     </div>
                    </div>
 
                    {/* ── Sponsor logos (top-right, below "a seguir") ── */}

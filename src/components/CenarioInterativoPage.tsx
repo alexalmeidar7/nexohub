@@ -1853,54 +1853,58 @@ export default function CenarioInterativoPage() {
                                </div>
                              )}
 
-                             {/* ── CENTER-BOTTOM: Accent card with presenter, logo, photo, music ── */}
+                             {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
                              <div style={{
                                position: "absolute",
                                bottom: `${pvh(5)}px`,
                                left: "50%",
                                transform: "translateX(-50%)",
                                width: `${pvh(16)}px`,
+                               height: `${pvh(16)}px`,
                                zIndex: 15,
                                borderRadius: `${pvh(2)}px`,
                                background: `linear-gradient(145deg, var(--layout-accent-color, rgba(200,50,50,0.7)), rgba(0,0,0,0.4))`,
                                backdropFilter: "blur(20px)",
                                WebkitBackdropFilter: "blur(20px)",
-                               padding: `${pvh(2)}px`,
+                               padding: `${pvh(0.9)}px`,
                                boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
                                border: "1px solid rgba(255,255,255,0.1)",
+                               display: "flex",
+                               flexDirection: "column",
+                               gap: `${pvh(0.6)}px`,
                              }}>
-                               {/* Card header: presenter name + program logo */}
-                               <div className="flex items-center justify-between" style={{ marginBottom: `${pvh(1.5)}px` }}>
-                                 <div className="flex items-center" style={{ gap: `${pvh(0.6)}px` }}>
-                                   <Mic size={pvh(1.4)} style={{ opacity: 0.8 }} />
-                                   <span className="font-bold" style={{ fontSize: `${pvh(1.6)}px`, color: "#fff" }}>{currentProgram?.apresentador || ""}</span>
+                               <div className="flex items-start justify-between" style={{ gap: `${pvh(0.6)}px`, minWidth: 0 }}>
+                                 <div style={{ minWidth: 0, flex: 1 }}>
+                                   <div className="flex items-center" style={{ gap: `${pvh(0.35)}px`, minWidth: 0 }}>
+                                     <Mic size={pvh(1)} style={{ opacity: 0.8, flexShrink: 0 }} />
+                                     <span className="font-bold" style={{ fontSize: `${pvh(1.05)}px`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram?.apresentador || ""}</span>
+                                   </div>
                                  </div>
                                  {currentProgram?.selo && (
-                                   <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(7)}px`, maxWidth: `${pvh(14)}px`, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
+                                   <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(3.2)}px`, maxWidth: `${pvh(4.8)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
                                  )}
                                </div>
 
-                               {/* Card center: presenter photo */}
-                               {currentProgram?.apresentadorFoto && (
-                                 <div className="flex justify-center" style={{ marginBottom: `${pvh(1.5)}px` }}>
-                                   <img src={currentProgram.apresentadorFoto} alt="" style={{ height: `${pvh(30)}px`, objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))" }} />
-                                 </div>
-                               )}
+                               <div className="flex-1 flex items-center justify-center" style={{ minHeight: 0 }}>
+                                 {currentProgram?.apresentadorFoto && (
+                                   <img src={currentProgram.apresentadorFoto} alt="" style={{ maxHeight: `${pvh(8.6)}px`, maxWidth: "100%", objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))" }} />
+                                 )}
+                               </div>
 
-                               {/* Card bottom: music info */}
-                               {musicData && (
-                                 <div key={musicKey} style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                                   <div className="flex items-center" style={{ gap: `${pvh(0.5)}px`, marginBottom: `${pvh(0.4)}px` }}>
-                                     <Music size={pvh(1.2)} style={{ opacity: 0.7 }} />
-                                     <span className="font-semibold uppercase" style={{ letterSpacing: "0.12em", fontSize: `${pvh(0.9)}px`, opacity: 0.7 }}>Tocando Agora</span>
+                               <div style={{ minHeight: 0 }}>
+                                 {musicData ? (
+                                   <div key={musicKey} style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                                     <div className="flex items-center" style={{ gap: `${pvh(0.35)}px`, marginBottom: `${pvh(0.25)}px` }}>
+                                       <Music size={pvh(0.85)} style={{ opacity: 0.7, flexShrink: 0 }} />
+                                       <span className="font-semibold uppercase" style={{ letterSpacing: "0.12em", fontSize: `${pvh(0.72)}px`, opacity: 0.7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Tocando Agora</span>
+                                     </div>
+                                     <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, lineHeight: 1.15, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
+                                     <div className="font-medium" style={{ fontSize: `${pvh(0.95)}px`, opacity: 0.7, marginTop: `${pvh(0.15)}px`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
                                    </div>
-                                   <div className="font-extrabold" style={{ fontSize: `${pvh(2)}px`, lineHeight: 1.2, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
-                                   <div className="font-medium" style={{ fontSize: `${pvh(1.4)}px`, opacity: 0.7, marginTop: `${pvh(0.2)}px`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
-                                 </div>
-                               )}
-                               {!musicData && currentProgram && (
-                                 <div className="font-extrabold" style={{ fontSize: `${pvh(2)}px`, lineHeight: 1.1 }}>{currentProgram.nome}</div>
-                               )}
+                                 ) : currentProgram ? (
+                                   <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram.nome}</div>
+                                 ) : null}
+                               </div>
                              </div>
 
                              {/* ── Sponsor logos (top-right, below "a seguir") ── */}
