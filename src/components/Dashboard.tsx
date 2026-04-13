@@ -350,7 +350,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       page === "playerconfig" ||
       page === "cortevideo" ||
       page === "tp" ||
-      page === "fans"
+      page === "fans" ||
+      page === "apresentadores" ||
+      page === "programas" ||
+      page === "previsao"
     ) {
       return true;
     }
