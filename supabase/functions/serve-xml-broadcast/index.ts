@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const esc = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
 
 const timeToSeconds = (value: string | null | undefined): number => {
   if (!value) return -1;
@@ -19,22 +19,43 @@ const timeToSeconds = (value: string | null | undefined): number => {
   return Number.isFinite(total) ? total : -1;
 };
 
-const isCurrentProgram = (
+const getCurrentProgramSortKey = (
   nowSeconds: number,
   startTime: string | null | undefined,
   endTime: string | null | undefined,
-): boolean => {
+  weekDays: string[] | null | undefined,
+  todayName: string,
+  yesterdayName: string,
+): number => {
   const startSeconds = timeToSeconds(startTime);
   const endSeconds = timeToSeconds(endTime);
+  const days = Array.isArray(weekDays) ? weekDays : [];
 
-  if (startSeconds < 0 || endSeconds < 0) return false;
+  if (startSeconds < 0 || endSeconds < 0) return -1;
 
-  if (endSeconds <= startSeconds) {
-    return nowSeconds >= startSeconds || nowSeconds < endSeconds;
+  const runsToday = days.includes(todayName);
+  const ranYesterday = days.includes(yesterdayName);
+  const crossesMidnight = endSeconds <= startSeconds;
+
+  if (!crossesMidnight) {
+    return runsToday && nowSeconds >= startSeconds && nowSeconds < endSeconds
+      ? startSeconds
+      : -1;
   }
 
-  return nowSeconds >= startSeconds && nowSeconds < endSeconds;
+  if (runsToday && nowSeconds >= startSeconds) {
+    return startSeconds;
+  }
+
+  if (ranYesterday && nowSeconds < endSeconds) {
+    return startSeconds - 86400;
+  }
+
+  return -1;
 };
+
+const normalizeImageUrl = (value: string | null | undefined): string =>
+  (value || "").trim().replace(/\.webp(?=($|\?))/i, ".png");
 
 const SOCIAL_ICONS: Record<string, string> = {
   instagram: "https://img.icons8.com/ios-filled/100/000000/instagram-new.png",
@@ -75,65 +96,113 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // ── Current time & day (BRT) ──
     const now = new Date();
-    const brFormatter = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+    const brFormatter = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
     const brParts = brFormatter.formatToParts(now);
-    const hh = brParts.find(p => p.type === "hour")!.value;
-    const mm = brParts.find(p => p.type === "minute")!.value;
-    const ss = brParts.find(p => p.type === "second")!.value;
+    const hh = brParts.find((p) => p.type === "hour")?.value || "00";
+    const mm = brParts.find((p) => p.type === "minute")?.value || "00";
+    const ss = brParts.find((p) => p.type === "second")?.value || "00";
     const nowSeconds = Number(hh) * 3600 + Number(mm) * 60 + Number(ss);
-    const dayFormatter = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long" });
-    const dayLong = dayFormatter.format(now);
-    const dayMap: Record<string, string> = { "domingo": "Domingo", "segunda-feira": "Segunda", "terça-feira": "Terça", "quarta-feira": "Quarta", "quinta-feira": "Quinta", "sexta-feira": "Sexta", "sábado": "Sábado" };
-    const todayName = dayMap[dayLong.toLowerCase()] || "Segunda";
 
-    // ── Parallel fetches ──
+    const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "long",
+    });
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const dayMap: Record<string, string> = {
+      "domingo": "Domingo",
+      "segunda-feira": "Segunda",
+      "terça-feira": "Terça",
+      "quarta-feira": "Quarta",
+      "quinta-feira": "Quinta",
+      "sexta-feira": "Sexta",
+      "sábado": "Sábado",
+    };
+    const todayName = dayMap[dayFormatter.format(now).toLowerCase()] || "Segunda";
+    const yesterdayName = dayMap[dayFormatter.format(yesterday).toLowerCase()] || "Domingo";
+
     const [empRes, progsRes, roteiroRes, settingsRes] = await Promise.all([
-      supabase.from("empresa_config").select("instagram, facebook, youtube, site, telefone_participacao").eq("user_id", userId).maybeSingle(),
-      supabase.from("programas")
+      supabase
+        .from("empresa_config")
+        .select("instagram, facebook, youtube, site, telefone_participacao")
+        .eq("user_id", userId)
+        .maybeSingle(),
+      supabase
+        .from("programas")
         .select("id, nome, selo, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim")
-        .eq("user_id", userId).eq("ativo", true)
-        .contains("dias_semana", [todayName]),
-      supabase.from("roteiros")
+        .eq("user_id", userId)
+        .eq("ativo", true),
+      supabase
+        .from("roteiros")
         .select("tickertitulos")
-        .eq("user_id", userId).eq("tipo_programa", "Jornalístico")
-        .order("created_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("user_settings").select("dashboard_items, weather_city, cenario_config").eq("user_id", userId).maybeSingle(),
+        .eq("user_id", userId)
+        .eq("tipo_programa", "Jornalístico")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("user_settings")
+        .select("cenario_config")
+        .eq("user_id", userId)
+        .maybeSingle(),
     ]);
 
     const emp = empRes.data;
-    const prog = [...(progsRes.data || [])]
-      .sort((a, b) => timeToSeconds(b.horario_inicio) - timeToSeconds(a.horario_inicio))
-      .find((item) => isCurrentProgram(nowSeconds, item.horario_inicio, item.horario_fim)) || null;
+    const prog = (progsRes.data || [])
+      .map((item) => ({
+        item,
+        sortKey: getCurrentProgramSortKey(
+          nowSeconds,
+          item.horario_inicio,
+          item.horario_fim,
+          item.dias_semana,
+          todayName,
+          yesterdayName,
+        ),
+      }))
+      .filter((entry) => entry.sortKey >= 0)
+      .sort((a, b) => b.sortKey - a.sortKey)[0]?.item || null;
 
-    // ── Program & presenter ──
     let programaNome = "";
     let programaLogo = "";
     let locutorNome = "";
     let locutorInstagram = "";
+    let locutorFoto = "";
     let programaId = "";
 
     if (prog) {
       programaNome = prog.nome || "";
-      programaLogo = prog.selo || "";
+      programaLogo = normalizeImageUrl(prog.selo);
       programaId = prog.id || "";
 
-      const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0) ? prog.apresentadores_ids : (prog.apresentador_id ? [prog.apresentador_id] : []);
+      const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0)
+        ? prog.apresentadores_ids
+        : (prog.apresentador_id ? [prog.apresentador_id] : []);
+
       if (apIds.length > 0) {
         const { data: presenters } = await supabase
           .from("apresentadores")
-          .select("id, nome, instagram")
+          .select("id, nome, instagram, foto")
+          .eq("user_id", userId)
           .in("id", apIds);
-        const ap = (presenters || []).sort((a, b) => apIds.indexOf(a.id) - apIds.indexOf(b.id))[0];
+
+        const ap = (presenters || [])
+          .sort((a, b) => apIds.indexOf(a.id) - apIds.indexOf(b.id))[0];
+
         if (ap) {
           locutorNome = ap.nome || "";
-          locutorInstagram = ap.instagram || "";
+          locutorInstagram = ap.instagram ? extractHandle(ap.instagram) : "";
+          locutorFoto = normalizeImageUrl(ap.foto);
         }
       }
     }
 
-    // ── Sponsor logos ──
     let sponsorLogos: { nome: string; logo_url: string }[] = [];
     if (programaId) {
       const { data: logos } = await supabase
@@ -146,7 +215,6 @@ serve(async (req) => {
       if (logos) sponsorLogos = logos;
     }
 
-    // ── Social links (handle + icon) ──
     const socialItems: { handle: string; icon: string }[] = [];
     if (emp?.instagram) socialItems.push({ handle: extractHandle(emp.instagram), icon: SOCIAL_ICONS.instagram });
     if (emp?.facebook) socialItems.push({ handle: extractHandle(emp.facebook), icon: SOCIAL_ICONS.facebook });
@@ -155,13 +223,14 @@ serve(async (req) => {
       const raw = emp.site.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "");
       socialItems.push({ handle: raw, icon: SOCIAL_ICONS.site });
     }
+
     const whatsappRaw = emp?.telefone_participacao || "";
     const whatsappDigits = whatsappRaw.replace(/\D/g, "");
-    if (whatsappDigits) socialItems.push({ handle: whatsappRaw.trim(), icon: SOCIAL_ICONS.whatsapp });
+    if (whatsappDigits) {
+      socialItems.push({ handle: whatsappRaw.trim(), icon: SOCIAL_ICONS.whatsapp });
+    }
 
-    // Use request-time based rotation so XML + cache stay aligned on 5-second windows
     const rotationSlot = Math.floor(now.getTime() / 5000);
-    const nextRefreshAt = new Date((rotationSlot + 1) * 5000).toUTCString();
     let redeSocialAtual = "";
     let redeSocialIcone = "";
     if (socialItems.length > 0) {
@@ -170,22 +239,17 @@ serve(async (req) => {
       redeSocialIcone = socialItems[idx].icon;
     }
 
-    // ── QR Code link ──
     const qrLink = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
-
-    // ── Ticker & Titulo from broadcast config ──
     const broadcastConfig = (settingsRes.data?.cenario_config as any)?.broadcast || {};
     const assunto = broadcastConfig.assunto || "";
     const ticker = roteiroRes.data?.tickertitulos || "";
 
-    // ── Sponsor logo rotation (every 5s, .png enforced) ──
     let logoPatrocinador = "";
     if (sponsorLogos.length > 0) {
       const idx = rotationSlot % sponsorLogos.length;
-      logoPatrocinador = sponsorLogos[idx].logo_url.replace(/\.webp$/i, ".png");
+      logoPatrocinador = normalizeImageUrl(sponsorLogos[idx].logo_url);
     }
 
-    // ── Build flat XML for vMix Data Sources ──
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<items>");
@@ -193,6 +257,7 @@ serve(async (req) => {
     lines.push(`    <programa_nome>${esc(programaNome)}</programa_nome>`);
     lines.push(`    <programa_logo>${esc(programaLogo)}</programa_logo>`);
     lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
+    lines.push(`    <locutor_foto>${esc(locutorFoto)}</locutor_foto>`);
     lines.push(`    <locutor_social>${esc(locutorInstagram)}</locutor_social>`);
     lines.push(`    <rede_social_atual>${esc(redeSocialAtual)}</rede_social_atual>`);
     lines.push(`    <rede_social_icone>${esc(redeSocialIcone)}</rede_social_icone>`);
@@ -203,16 +268,15 @@ serve(async (req) => {
     lines.push("  </dados>");
     lines.push("</items>");
 
-    const xml = lines.join("\n");
-
-    return new Response(xml, {
+    return new Response(lines.join("\n"), {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=5, s-maxage=5, must-revalidate",
-        "CDN-Cache-Control": "public, max-age=5",
-        "Surrogate-Control": "public, max-age=5",
-        "Expires": nextRefreshAt,
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        "CDN-Cache-Control": "no-store",
+        "Surrogate-Control": "no-store",
+        "Pragma": "no-cache",
+        "Expires": "0",
       },
     });
   } catch (err) {
