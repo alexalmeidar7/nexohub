@@ -429,6 +429,23 @@ export default function MusicaNoAr() {
     }
 
     if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista) {
+      // Guard against overwriting a fresher entry from useGlobalMusicSync:
+      // if localStorage was updated < 5s ago with a DIFFERENT song, skip writing
+      const existingStartStr = localStorage.getItem(MUSIC_START_KEY);
+      if (existingStartStr && prev) {
+        const existingStart = parseInt(existingStartStr, 10);
+        const age = Date.now() - existingStart;
+        // If localStorage has recent data (< 5s old) with a different song than
+        // what we're about to write, useGlobalMusicSync likely has fresher data
+        if (age < 5000 && prev.titulo !== data.titulo) {
+          // Don't overwrite — just sync component state to localStorage
+          setMusic(prev);
+          setStartTime(existingStart);
+          setElapsed((Date.now() - existingStart) / 1000);
+          return;
+        }
+      }
+
       const now = Date.now();
       localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
       localStorage.setItem(MUSIC_START_KEY, now.toString());
