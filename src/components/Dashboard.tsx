@@ -344,6 +344,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [user, initialLoading, findCurrentOnAirThumb]);
 
   const isModuleEnabled = (page: Page): boolean => {
+    // Pages that are always accessible regardless of plan
     if (
       page === "dashboard" ||
       page === "configuracoes" ||
@@ -359,9 +360,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
 
     const modulesSource = planModules ?? enabledModules;
+    // If modules haven't loaded yet, allow navigation (don't redirect prematurely)
     if (!modulesSource) return true;
 
-
+    // Map pages to their parent module key
     if (page === "testemunhais" || page === "promocoes" || page === "configtelapromo" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") {
       return modulesSource.has("comercial");
     }
@@ -370,6 +372,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return modulesSource.has("vmix");
     }
 
+    // "musica", "agenda", "noticias" etc. — check by page name as module key
     return modulesSource.has(page);
   };
 
