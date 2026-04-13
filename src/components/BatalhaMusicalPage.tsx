@@ -55,14 +55,6 @@ function normalizeBattleState(value: unknown): BattleState {
   return { artista1, artista2 };
 }
 
-function escapeXml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
 
 async function fetchArtistImage(artistName: string): Promise<string> {
   const artist = artistName.trim();
@@ -305,19 +297,9 @@ export default function BatalhaMusicalPage() {
     }
   };
 
-  const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-<items>
-  <batalha>
-    <artista1_nome>${escapeXml(artista1.nome)}</artista1_nome>
-    <artista1_musica>${escapeXml(artista1.musica)}</artista1_musica>
-    <artista1_porcentagem>${artista1.porcentagem}</artista1_porcentagem>
-    <artista1_imagem>${escapeXml(artista1.imagemUrl)}</artista1_imagem>
-    <artista2_nome>${escapeXml(artista2.nome)}</artista2_nome>
-    <artista2_musica>${escapeXml(artista2.musica)}</artista2_musica>
-    <artista2_porcentagem>${artista2.porcentagem}</artista2_porcentagem>
-    <artista2_imagem>${escapeXml(artista2.imagemUrl)}</artista2_imagem>
-  </batalha>
-</items>`;
+  const batalhaXmlUrl = user
+    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-batalha?user_id=${user.id}`
+    : "";
 
   const color1 = "#3b82f6";
   const color2 = "#ef4444";
@@ -461,8 +443,8 @@ export default function BatalhaMusicalPage() {
       </div>
 
       {/* XML Link */}
-      {(artista1.nome || artista2.nome) && (
-        <XmlLinkRow label="XML BATALHA MUSICAL" xmlContent={xmlContent} dark />
+      {batalhaXmlUrl && (
+        <XmlLinkRow label="XML BATALHA MUSICAL" permanentUrl={batalhaXmlUrl} dark />
       )}
     </div>
   );
