@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import { Swords, Loader2 } from "lucide-react";
+import { Swords, Loader2, CalendarPlus, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import XmlLinkRow from "./XmlLinkRow";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import BatalhaScheduleTable, { type BatalhaAgendada } from "./batalha/BatalhaScheduleTable";
 
 interface Artista {
   nome: string;
@@ -320,6 +323,105 @@ export default function BatalhaMusicalPage() {
   const color1 = "#3b82f6";
   const color2 = "#ef4444";
 
+  // --- Scheduling state ---
+  const [schedDate, setSchedDate] = useState("");
+  const [schedStart, setSchedStart] = useState("");
+  const [schedEnd, setSchedEnd] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [batalhas, setBatalhas] = useState<BatalhaAgendada[]>([]);
+
+  const loadBatalhas = async () => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const now = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false });
+    const { data } = await supabase
+      .from("batalhas_agendadas")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("data_batalha", today)
+      .order("data_batalha", { ascending: true })
+      .order("horario_inicio", { ascending: true });
+
+    // Filter out past battles for today
+    const filtered = (data ?? []).filter((b: any) => {
+      if (b.data_batalha > today) return true;
+      return b.horario_fim >= now;
+    }) as BatalhaAgendada[];
+    setBatalhas(filtered);
+  };
+
+  useEffect(() => {
+    if (user) loadBatalhas();
+  }, [user]);
+
+  const handleSchedule = async () => {
+    if (!user) return;
+    if (!schedDate || !schedStart || !schedEnd) {
+      toast.error("Preencha data e horários");
+      return;
+    }
+    if (!artista1.nome && !artista2.nome) {
+      toast.error("Preencha pelo menos um artista");
+      return;
+    }
+    setSaving(true);
+    const payload = {
+      user_id: user.id,
+      artista1_nome: artista1.nome,
+      artista1_musica: artista1.musica,
+      artista1_porcentagem: artista1.porcentagem,
+      artista1_imagem: artista1.imagemUrl,
+      artista2_nome: artista2.nome,
+      artista2_musica: artista2.musica,
+      artista2_porcentagem: artista2.porcentagem,
+      artista2_imagem: artista2.imagemUrl,
+      data_batalha: schedDate,
+      horario_inicio: schedStart,
+      horario_fim: schedEnd,
+    };
+
+    let error;
+    if (editingId) {
+      ({ error } = await supabase.from("batalhas_agendadas").update(payload).eq("id", editingId));
+    } else {
+      ({ error } = await supabase.from("batalhas_agendadas").insert(payload));
+    }
+    setSaving(false);
+
+    if (error) {
+      toast.error("Erro ao salvar batalha agendada");
+      console.error(error);
+    } else {
+      toast.success(editingId ? "Batalha atualizada" : "Batalha agendada com sucesso");
+      setEditingId(null);
+      setSchedDate("");
+      setSchedStart("");
+      setSchedEnd("");
+      loadBatalhas();
+    }
+  };
+
+  const handleEditBatalha = (b: BatalhaAgendada) => {
+    setArtista1({
+      nome: b.artista1_nome,
+      musica: b.artista1_musica,
+      porcentagem: b.artista1_porcentagem,
+      imagemUrl: b.artista1_imagem,
+    });
+    setArtista2({
+      nome: b.artista2_nome,
+      musica: b.artista2_musica,
+      porcentagem: b.artista2_porcentagem,
+      imagemUrl: b.artista2_imagem,
+    });
+    setSchedDate(b.data_batalha);
+    setSchedStart(b.horario_inicio);
+    setSchedEnd(b.horario_fim);
+    setEditingId(b.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
@@ -462,6 +564,70 @@ export default function BatalhaMusicalPage() {
       {batalhaXmlUrl && (
         <XmlLinkRow label="XML BATALHA MUSICAL" permanentUrl={batalhaXmlUrl} dark />
       )}
+
+      {/* Schedule section */}
+      {user && (
+        <div className="rounded-2xl p-5 space-y-4" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center gap-2">
+            <CalendarPlus className="h-5 w-5 text-yellow-400" />
+            <h3 className="text-white font-bold text-sm uppercase tracking-wider">
+              {editingId ? "Editar Batalha Agendada" : "Agendar Batalha"}
+            </h3>
+          </div>
+          <p className="text-white/40 text-xs">
+            Os dados dos artistas acima serão usados para a batalha agendada.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">Data</label>
+              <Input
+                type="date"
+                value={schedDate}
+                onChange={(e) => setSchedDate(e.target.value)}
+                className="bg-white/5 border-white/10 text-white h-10"
+              />
+            </div>
+            <div>
+              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">Horário Início</label>
+              <Input
+                type="time"
+                value={schedStart}
+                onChange={(e) => setSchedStart(e.target.value)}
+                className="bg-white/5 border-white/10 text-white h-10"
+              />
+            </div>
+            <div>
+              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">Horário Fim</label>
+              <Input
+                type="time"
+                value={schedEnd}
+                onChange={(e) => setSchedEnd(e.target.value)}
+                className="bg-white/5 border-white/10 text-white h-10"
+              />
+            </div>
+          </div>
+          <Button
+            onClick={handleSchedule}
+            disabled={saving}
+            className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+            {editingId ? "Salvar Alterações" : "Agendar Batalha"}
+          </Button>
+          {editingId && (
+            <Button
+              variant="ghost"
+              onClick={() => { setEditingId(null); setSchedDate(""); setSchedStart(""); setSchedEnd(""); }}
+              className="text-white/50 hover:text-white ml-2"
+            >
+              Cancelar
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Scheduled battles table */}
+      <BatalhaScheduleTable batalhas={batalhas} onEdit={handleEditBatalha} onRefresh={loadBatalhas} />
     </div>
   );
 }

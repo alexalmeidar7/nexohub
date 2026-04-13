@@ -6,8 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LEGACY_UNTOUCHED_PERCENTAGE = 50;
-
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 
@@ -31,41 +29,64 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(supabaseUrl, serviceKey);
 
-    const { data, error } = await sb
-      .from("user_settings")
-      .select("cenario_config")
+    // Check for a scheduled battle matching now
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    const currentTime = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Sao_Paulo" });
+
+    const { data: scheduled } = await sb
+      .from("batalhas_agendadas")
+      .select("*")
       .eq("user_id", userId)
+      .eq("data_batalha", today)
+      .lte("horario_inicio", currentTime)
+      .gte("horario_fim", currentTime)
+      .order("horario_inicio", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    if (error) {
-      console.error("DB error:", error);
-      return new Response("<error>db error</error>", {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" },
-      });
+    let nome1 = "", musica1 = "", pct1 = 0, img1 = "";
+    let nome2 = "", musica2 = "", pct2 = 0, img2 = "";
+
+    if (scheduled) {
+      nome1 = scheduled.artista1_nome ?? "";
+      musica1 = scheduled.artista1_musica ?? "";
+      pct1 = scheduled.artista1_porcentagem ?? 0;
+      img1 = scheduled.artista1_imagem ?? "";
+      nome2 = scheduled.artista2_nome ?? "";
+      musica2 = scheduled.artista2_musica ?? "";
+      pct2 = scheduled.artista2_porcentagem ?? 0;
+      img2 = scheduled.artista2_imagem ?? "";
+    } else {
+      // Fallback to cenario_config
+      const { data, error } = await sb
+        .from("user_settings")
+        .select("cenario_config")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("DB error:", error);
+        return new Response("<error>db error</error>", {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" },
+        });
+      }
+
+      const config = data?.cenario_config as Record<string, unknown> | null;
+      const battle = config?.batalha_musical as Record<string, unknown> | null;
+      const a1 = (battle?.artista1 ?? {}) as Record<string, unknown>;
+      const a2 = (battle?.artista2 ?? {}) as Record<string, unknown>;
+
+      nome1 = typeof a1.nome === "string" ? a1.nome : "";
+      musica1 = typeof a1.musica === "string" ? a1.musica : "";
+      pct1 = typeof a1.porcentagem === "number" ? a1.porcentagem : 0;
+      img1 = typeof a1.imagemUrl === "string" ? a1.imagemUrl : "";
+      nome2 = typeof a2.nome === "string" ? a2.nome : "";
+      musica2 = typeof a2.musica === "string" ? a2.musica : "";
+      pct2 = typeof a2.porcentagem === "number" ? a2.porcentagem : 0;
+      img2 = typeof a2.imagemUrl === "string" ? a2.imagemUrl : "";
     }
-
-    const config = data?.cenario_config as Record<string, unknown> | null;
-    const battle = config?.batalha_musical as Record<string, unknown> | null;
-
-    const a1 = (battle?.artista1 ?? {}) as Record<string, unknown>;
-    const a2 = (battle?.artista2 ?? {}) as Record<string, unknown>;
-    const rawPct1 = typeof a1.porcentagem === "number" ? a1.porcentagem : 0;
-    const rawPct2 = typeof a2.porcentagem === "number" ? a2.porcentagem : 0;
-    const isLegacyUntouchedState =
-      battle?.percentagesTouched !== true &&
-      rawPct1 === LEGACY_UNTOUCHED_PERCENTAGE &&
-      rawPct2 === LEGACY_UNTOUCHED_PERCENTAGE;
-
-    const nome1 = typeof a1.nome === "string" ? a1.nome : "";
-    const musica1 = typeof a1.musica === "string" ? a1.musica : "";
-    const pct1 = isLegacyUntouchedState ? 0 : rawPct1;
-    const img1 = typeof a1.imagemUrl === "string" ? a1.imagemUrl : "";
-
-    const nome2 = typeof a2.nome === "string" ? a2.nome : "";
-    const musica2 = typeof a2.musica === "string" ? a2.musica : "";
-    const pct2 = isLegacyUntouchedState ? 0 : rawPct2;
-    const img2 = typeof a2.imagemUrl === "string" ? a2.imagemUrl : "";
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
