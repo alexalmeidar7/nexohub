@@ -276,7 +276,7 @@ export default function CenarioTela() {
       } catch { if (!cancelled) setArtistBgUrl(null); }
     })();
     return () => { cancelled = true; };
-  }, [musicData?.artista, isBreakTrack]);
+  }, [musicData?.artista, isBreakTrack, isJornalistico]);
 
   /* ─── Screen Rotation ─── */
   const [screenRotation, setScreenRotation] = useState(0);
