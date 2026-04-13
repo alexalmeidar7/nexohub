@@ -587,15 +587,15 @@ function MockupPreview({
                 padding: "8px 20px 6px",
                 borderRadius: "6px 6px 0 0",
                 minWidth: 180,
-                minHeight: locutorFoto ? 56 : undefined,
+                minHeight: locutorFoto ? 72 : undefined,
               }}
             >
               {locutorFoto && (
                 <img
                   src={locutorFoto}
                   alt={displayLocutor}
-                  className="absolute bottom-0 left-0 h-full object-contain object-left-bottom pointer-events-none"
-                  style={{ maxWidth: "40%", opacity: 0.92 }}
+                  className="absolute bottom-0 left-0 object-contain object-left-bottom pointer-events-none"
+                  style={{ height: "140%", maxWidth: "42%", opacity: 0.92 }}
                 />
               )}
               <div className="relative" style={{ marginLeft: locutorFoto ? "38%" : 0 }}>
