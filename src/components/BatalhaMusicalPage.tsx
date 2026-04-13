@@ -50,8 +50,6 @@ function normalizeBattleState(value: unknown): BattleState {
   const artista1 = normalizeArtista(battle.artista1);
   const artista2 = normalizeArtista(battle.artista2);
 
-  artista2.porcentagem = 100 - artista1.porcentagem;
-
   return { artista1, artista2 };
 }
 
