@@ -102,56 +102,187 @@ export default function RoteiroPrograma() {
     if (!txtEditRoteiroId || !txtEditText.trim()) return;
     setTxtSaving(true);
 
-    // Parse URLs from text
-    const urlRegex = /https?:\/\/[^\s,)}\]]+/gi;
-    const lines = txtEditText.split("\n");
-    const foundUrls: string[] = [];
-    lines.forEach(line => { const matches = line.match(urlRegex); if (matches) foundUrls.push(...matches); });
+    const roteiro = historico.find(r => r.id === txtEditRoteiroId);
 
-    // Fetch metadata for all new URLs
-    let updatedParticipantes: any = null;
-    if (foundUrls.length > 0) {
-      const roteiro = historico.find(r => r.id === txtEditRoteiroId);
-      if (roteiro) {
-        let parts: any = null;
-        try { let raw = roteiro.participantes; if (typeof raw === "string") raw = JSON.parse(raw); if (typeof raw === "string") raw = JSON.parse(raw); parts = raw; } catch { parts = {}; }
-        const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
-        const blocosList: any[] = parsed.blocos || [];
+    // ── Parse full text back into structured data ──
+    const linhas = txtEditText.split("\n").map(l => l.trim());
+    const cleanLabel = (s: string) => s.replace(/\*+/g, "").replace(/^[-•–]\s+/, "").replace(/^\d+[\.\)]\s*/, "").trim();
+    const extractUrl = (s: string): string | null => {
+      const mdLink = s.match(/\[.*?\]\((https?:\/\/[^\s)]+)\)/);
+      if (mdLink) return mdLink[1];
+      const plainUrl = s.match(/(https?:\/\/[^\s]+)/);
+      if (plainUrl) return plainUrl[1];
+      return null;
+    };
 
-        // Collect existing links
-        const existingLinks = new Set<string>();
-        blocosList.forEach((b: any) => (b.noticias || []).forEach((n: any) => { if (n.link) existingLinks.add(n.link); }));
+    const parsedParticipantes: any[] = [];
+    const parsedEscalada: any[] = [];
+    const parsedBlocos: any[] = [];
+    let secaoAtual = "cabecalho";
+    let blocoAtual: any[] | null = null;
 
-        // Find new links
-        const newUrls = foundUrls.filter(u => !existingLinks.has(u));
+    for (let i = 0; i < linhas.length; i++) {
+      const linha = linhas[i];
+      if (!linha) continue;
+      const cleaned = cleanLabel(linha);
+      if (!cleaned) continue;
 
-        if (newUrls.length > 0) {
-          toast.info(`Buscando dados de ${newUrls.length} link(s)...`);
-          const metaResults = await Promise.all(newUrls.map(u => fetchLinkMeta(u).then(meta => ({ url: u, meta }))));
+      if (linha.replace(/\*/g, "").trim().toUpperCase().startsWith("EQUIPE")) { secaoAtual = "equipe"; continue; }
+      if (linha.replace(/\*/g, "").trim().toUpperCase().startsWith("ESCALADA")) { secaoAtual = "escalada"; continue; }
+      if (linha.replace(/\*/g, "").trim().toUpperCase().match(/^BLOCO\s*\d*/i)) {
+        secaoAtual = "blocos";
+        if (blocoAtual && blocoAtual.length > 0) parsedBlocos.push({ noticias: blocoAtual });
+        blocoAtual = [];
+        continue;
+      }
 
-          // Add new links as noticias to the last bloco (or create one)
-          if (blocosList.length === 0) blocosList.push({ noticias: [] });
-          const lastBloco = blocosList[blocosList.length - 1];
-          if (!lastBloco.noticias) lastBloco.noticias = [];
+      if (secaoAtual === "cabecalho") continue; // skip Estúdio/Programa header lines
+      if (secaoAtual === "equipe") {
+        const partes = cleaned.match(/(.*?)[\s]*[-–—][\s]*(.*?):(.*)/);
+        if (partes) {
+          const nome = partes[1].trim();
+          const cargo = partes[2].trim();
+          let instagram = partes[3].trim();
+          if (instagram && !instagram.startsWith("@")) instagram = `@${instagram}`;
+          if (nome) parsedParticipantes.push({ nome, cargo, instagram });
+        } else if (cleaned) {
+          parsedParticipantes.push({ nome: cleaned, cargo: "", instagram: "" });
+        }
+      } else if (secaoAtual === "escalada") {
+        const item = cleaned.replace(/\*$/, "").trim();
+        if (item) parsedEscalada.push({ titulo: item, imagemUrl: "" });
+      } else if (secaoAtual === "blocos" && blocoAtual) {
+        const url = extractUrl(linha);
+        blocoAtual.push({ titulo: url ? "" : cleaned, imagemUrl: "", escalada: false, link: url || undefined });
+      }
+    }
+    if (blocoAtual && blocoAtual.length > 0) parsedBlocos.push({ noticias: blocoAtual });
 
-          for (const { url, meta } of metaResults) {
-            lastBloco.noticias.push({
-              titulo: meta?.titulo || url,
-              imagemUrl: meta?.imagemUrl || "",
-              escalada: false,
-              link: url,
-            });
-          }
+    // ── Fetch metadata for all URLs in blocos ──
+    const linksToFetch: { bi: number; ni: number; url: string }[] = [];
+    parsedBlocos.forEach((b, bi) => {
+      (b.noticias || []).forEach((n: any, ni: number) => {
+        if (n.link && n.link.startsWith("http")) linksToFetch.push({ bi, ni, url: n.link });
+      });
+    });
 
-          updatedParticipantes = { ...parsed, blocos: blocosList };
+    if (linksToFetch.length > 0) {
+      toast.info(`Buscando dados de ${linksToFetch.length} link(s)...`);
+      const metaResults = await Promise.all(
+        linksToFetch.map(({ bi, ni, url }) =>
+          fetchLinkMeta(url).then(meta => ({ bi, ni, url, meta }))
+        )
+      );
+      for (const { bi, ni, meta } of metaResults) {
+        if (meta) {
+          if (meta.titulo) parsedBlocos[bi].noticias[ni].titulo = meta.titulo;
+          if (meta.imagemUrl) parsedBlocos[bi].noticias[ni].imagemUrl = meta.imagemUrl;
         }
       }
     }
 
-    const updatePayload: any = { conteudo_html: txtEditText, updated_at: new Date().toISOString() };
-    if (updatedParticipantes) updatePayload.participantes = JSON.stringify(updatedParticipantes);
+    // ── Preserve existing structured data and merge parsed sections ──
+    let existingParsed: any = {};
+    if (roteiro) {
+      try {
+        let raw = roteiro.participantes;
+        if (typeof raw === "string") raw = JSON.parse(raw);
+        if (typeof raw === "string") raw = JSON.parse(raw);
+        existingParsed = Array.isArray(raw) ? { blocos: [], participantes: raw } : (raw || {});
+      } catch { existingParsed = {}; }
+    }
+
+    const updatedParticipantes = {
+      ...existingParsed,
+      participantes: parsedParticipantes.length > 0 ? parsedParticipantes : (existingParsed.participantes || []),
+      escaladaList: parsedEscalada.length > 0 ? parsedEscalada : (existingParsed.escaladaList || []),
+      blocos: parsedBlocos.length > 0 ? parsedBlocos : (existingParsed.blocos || []),
+    };
+
+    // ── Build tickertitulos for journalistic roteiros ──
+    let tickertitulos: string | null = null;
+    if (roteiro?.tipo_programa === "Jornalístico" || roteiro?.tipo_programa === "jornalistico") {
+      const allTitles: string[] = [];
+      (updatedParticipantes.blocos || []).forEach((b: any) => {
+        (b.noticias || []).forEach((n: any) => {
+          if (n.titulo) allTitles.push(n.titulo);
+        });
+      });
+      if (allTitles.length > 0) tickertitulos = allTitles.join(" • ");
+    }
+
+    const updatePayload: any = {
+      conteudo_html: txtEditText,
+      participantes: JSON.stringify(updatedParticipantes),
+      updated_at: new Date().toISOString(),
+    };
+    if (tickertitulos !== null) updatePayload.tickertitulos = tickertitulos;
 
     const { error } = await supabase.from("roteiros").update(updatePayload).eq("id", txtEditRoteiroId);
+
+    // ── Regenerate XML if roteiro has one ──
+    if (!error && roteiro?.subtitulo?.startsWith("express_xml::")) {
+      try {
+        const pList = updatedParticipantes.participantes || [];
+        const blocosList = updatedParticipantes.blocos || [];
+        const escaladaItems = updatedParticipantes.escaladaList || [];
+
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
+        xml += `  <programa>${escXml(roteiro.programa_nome || "")}</programa>\n`;
+        xml += `  <estudio>${escXml(roteiro.estudio || "")}</estudio>\n`;
+        xml += `  <data>${roteiro.data_programa || new Date().toISOString().split("T")[0]}</data>\n`;
+
+        if (pList.length > 0) {
+          xml += `  <participantes>\n`;
+          pList.forEach((p: any) => {
+            xml += `    <item>\n`;
+            xml += `      <nome>${escXml(p.nome || "")}</nome>\n`;
+            xml += `      <cargo>${escXml(p.cargo || "")}</cargo>\n`;
+            xml += `      <instagram>${escXml(p.instagram || "")}</instagram>\n`;
+            xml += `    </item>\n`;
+          });
+          xml += `  </participantes>\n`;
+        }
+
+        if (escaladaItems.length > 0) {
+          xml += `  <escalada>\n`;
+          escaladaItems.forEach((e: any, i: number) => {
+            xml += `    <item ordem="${i + 1}">\n`;
+            xml += `      <titulo>${escXml(typeof e === "string" ? e : e.titulo || "")}</titulo>\n`;
+            xml += `      <imagem>${escXml(typeof e === "string" ? "" : e.imagemUrl || "")}</imagem>\n`;
+            xml += `    </item>\n`;
+          });
+          xml += `  </escalada>\n`;
+        }
+
+        blocosList.forEach((b: any, bi: number) => {
+          xml += `  <bloco numero="${bi + 1}">\n`;
+          (b.noticias || []).forEach((n: any, ni: number) => {
+            if (!n.titulo) return;
+            xml += `    <noticia ordem="${ni + 1}">\n`;
+            xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
+            xml += `      <imagem>${escXml(n.imagemUrl || "")}</imagem>\n`;
+            xml += `      <escalada>${n.escalada || false}</escalada>\n`;
+            xml += `    </noticia>\n`;
+          });
+          xml += `  </bloco>\n`;
+        });
+
+        xml += `</programaExpress>`;
+
+        const xmlUrl = roteiro.subtitulo.replace("express_xml::", "");
+        const urlObj = new URL(xmlUrl);
+        const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
+        if (pathMatch) {
+          const filePath = decodeURIComponent(pathMatch[1]);
+          const blob = new Blob([new TextEncoder().encode(xml)], { type: "application/xml" });
+          await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+        }
+      } catch (e) {
+        console.warn("[TxtEdit] XML regen error:", e);
+      }
+    }
+
     setTxtSaving(false);
     if (error) { toast.error("Erro ao salvar"); return; }
     toast.success("Roteiro atualizado!");
@@ -507,7 +638,7 @@ export default function RoteiroPrograma() {
               className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:brightness-110 flex items-center justify-center gap-2 disabled:opacity-40"
               style={{ backgroundColor: "var(--layout-accent-color, #dc2626)", color: "#fff" }}
             >
-              <Check size={14} /> {txtSaving ? "Salvando..." : "Salvar Roteiro"}
+              <Check size={14} /> {txtSaving ? "Atualizando..." : "Atualizar Roteiro"}
             </button>
           </div>
         </div>
