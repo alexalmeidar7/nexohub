@@ -422,143 +422,134 @@ export default function BatalhaMusicalPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const inputStyle: React.CSSProperties = {
+    backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)",
+    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)",
+    borderRadius: "12px",
+    color: "var(--layout-page-text, #1a1a1a)",
+  };
+
+  const labelStyle: React.CSSProperties = {
+    color: "var(--layout-page-text, #1a1a1a)",
+  };
+
+  const cardBg = "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)";
+  const subtleText = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)";
+  const borderSubtle = "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)";
+
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)";
+    e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)";
+  };
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)";
+    e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)";
+  };
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="flex items-center justify-center gap-3">
-          <Swords className="h-7 w-7" style={{ color: accentColor }} />
-          <h2 className="text-2xl font-bold tracking-tight" style={{ color: "var(--layout-widget-text)" }}>Batalha Musical</h2>
-          <Swords className="h-7 w-7 scale-x-[-1]" style={{ color: accentColor }} />
-        </div>
-        <p className="text-sm opacity-50" style={{ color: "var(--layout-widget-text)" }}>Configure os artistas e acompanhe a disputa</p>
-      </div>
-
-      {/* Battle bar */}
-      <div className="relative h-12 rounded-2xl overflow-hidden" style={{ background: "var(--layout-widget-bg)", border: "1px solid var(--layout-border-color)" }}>
-        <div
-          className="absolute inset-y-0 left-0 transition-all duration-500 ease-out flex items-center justify-center"
-          style={{ width: `${artista1.porcentagem}%`, background: accentColor }}
-        >
-          {artista1.porcentagem > 15 && (
-            <span className="font-bold text-sm drop-shadow" style={{ color: "var(--layout-button-text)" }}>{artista1.nome || "Artista 1"} — {artista1.porcentagem}%</span>
-          )}
-        </div>
-        <div
-          className="absolute inset-y-0 right-0 transition-all duration-500 ease-out flex items-center justify-center"
-          style={{ width: `${artista2.porcentagem}%`, background: "var(--layout-header-bg)" }}
-        >
-          {artista2.porcentagem > 15 && (
-            <span className="font-bold text-sm drop-shadow" style={{ color: "var(--layout-header-text)" }}>{artista2.nome || "Artista 2"} — {artista2.porcentagem}%</span>
-          )}
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-          <span className="font-black text-xs px-2 py-1 rounded-full" style={{ background: "var(--layout-widget-bg)", color: accentColor, border: `1px solid ${accentColor}` }}>VS</span>
-        </div>
-      </div>
-
-      {/* Artists cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Artista 1 */}
-        <div className="rounded-2xl p-5 space-y-4" style={{ background: "var(--layout-widget-bg)", border: "1px solid var(--layout-border-color)" }}>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-3 h-3 rounded-full" style={{ background: accentColor }} />
-            <h3 className="font-bold text-sm uppercase tracking-wider" style={{ color: "var(--layout-widget-text)" }}>Artista 1</h3>
-            {loading1 && <Loader2 className="h-3 w-3 animate-spin opacity-40" style={{ color: "var(--layout-widget-text)" }} />}
+    <div className="animate-fade-in space-y-6">
+      {/* Main Form Card */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: cardBg, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+        {/* Card Header */}
+        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: borderSubtle }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
+            <Swords size={20} style={{ color: accentColor }} />
           </div>
-
-          {/* Artist image preview */}
-          {artista1.imagemUrl && (
-            <div className="flex justify-center">
-              <img src={artista1.imagemUrl} alt={artista1.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: accentColor }} />
-            </div>
-          )}
-
-          <div className="space-y-3">
-            <div>
-              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Nome do Artista</label>
-              <Input
-                value={artista1.nome}
-                onChange={e => updateArtista1("nome", e.target.value)}
-                placeholder="Ex: Bruno Mars"
-                className="h-10 rounded-[14px] border-0"
-                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
-              />
-            </div>
-            <div>
-              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Música</label>
-              <Input
-                value={artista1.musica}
-                onChange={e => updateArtista1("musica", e.target.value)}
-                placeholder="Ex: Uptown Funk"
-                className="h-10 rounded-[14px] border-0"
-                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
-              />
-            </div>
-            <div>
-              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>
-                Porcentagem: <span className="font-bold opacity-100" style={{ color: "var(--layout-widget-text)" }}>{artista1.porcentagem}%</span>
-              </label>
-              <Slider
-                value={[artista1.porcentagem]}
-                onValueChange={([v]) => updateArtista1("porcentagem", v)}
-                max={100}
-                min={0}
-                step={1}
-                className="py-2"
-              />
-            </div>
+          <div>
+            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Batalha Musical</h3>
+            <p className="text-[11px]" style={{ color: subtleText }}>Configure os artistas e acompanhe a disputa</p>
           </div>
         </div>
 
-        {/* Artista 2 */}
-        <div className="rounded-2xl p-5 space-y-4" style={{ background: "var(--layout-widget-bg)", border: "1px solid var(--layout-border-color)" }}>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-3 h-3 rounded-full" style={{ background: "var(--layout-header-bg)" }} />
-            <h3 className="font-bold text-sm uppercase tracking-wider" style={{ color: "var(--layout-widget-text)" }}>Artista 2</h3>
-            {loading2 && <Loader2 className="h-3 w-3 animate-spin opacity-40" style={{ color: "var(--layout-widget-text)" }} />}
+        {/* Card Body */}
+        <div className="px-6 py-5 space-y-5">
+          {/* Battle bar */}
+          <div className="relative h-12 rounded-xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}>
+            <div
+              className="absolute inset-y-0 left-0 transition-all duration-500 ease-out flex items-center justify-center"
+              style={{ width: `${artista1.porcentagem}%`, background: accentColor }}
+            >
+              {artista1.porcentagem > 15 && (
+                <span className="font-bold text-sm drop-shadow" style={{ color: "var(--layout-button-text)" }}>{artista1.nome || "Artista 1"} — {artista1.porcentagem}%</span>
+              )}
+            </div>
+            <div
+              className="absolute inset-y-0 right-0 transition-all duration-500 ease-out flex items-center justify-center"
+              style={{ width: `${artista2.porcentagem}%`, background: "var(--layout-header-bg)" }}
+            >
+              {artista2.porcentagem > 15 && (
+                <span className="font-bold text-sm drop-shadow" style={{ color: "var(--layout-header-text)" }}>{artista2.nome || "Artista 2"} — {artista2.porcentagem}%</span>
+              )}
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <span className="font-black text-xs px-2 py-1 rounded-full" style={{ background: cardBg, color: accentColor, border: `1px solid ${accentColor}` }}>VS</span>
+            </div>
           </div>
 
-          {/* Artist image preview */}
-          {artista2.imagemUrl && (
-            <div className="flex justify-center">
-              <img src={artista2.imagemUrl} alt={artista2.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: "var(--layout-header-bg)" }} />
+          {/* Artists grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Artista 1 */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ background: accentColor }} />
+                <h4 className="font-bold text-sm uppercase tracking-wider" style={labelStyle}>Artista 1</h4>
+                {loading1 && <Loader2 className="h-3 w-3 animate-spin opacity-40" style={labelStyle} />}
+              </div>
+              {artista1.imagemUrl && (
+                <div className="flex justify-center">
+                  <img src={artista1.imagemUrl} alt={artista1.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: accentColor }} />
+                </div>
+              )}
+              <div>
+                <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Nome do Artista</label>
+                <input value={artista1.nome} onChange={e => updateArtista1("nome", e.target.value)} placeholder="Ex: Bruno Mars"
+                  className="w-full px-4 py-2 outline-none transition-all text-sm" style={inputStyle}
+                  onFocus={handleInputFocus} onBlur={handleInputBlur} />
+              </div>
+              <div>
+                <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Música</label>
+                <input value={artista1.musica} onChange={e => updateArtista1("musica", e.target.value)} placeholder="Ex: Uptown Funk"
+                  className="w-full px-4 py-2 outline-none transition-all text-sm" style={inputStyle}
+                  onFocus={handleInputFocus} onBlur={handleInputBlur} />
+              </div>
+              <div>
+                <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>
+                  Porcentagem: <span className="font-bold">{artista1.porcentagem}%</span>
+                </label>
+                <Slider value={[artista1.porcentagem]} onValueChange={([v]) => updateArtista1("porcentagem", v)} max={100} min={0} step={1} className="py-2" />
+              </div>
             </div>
-          )}
 
-          <div className="space-y-3">
-            <div>
-              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Nome do Artista</label>
-              <Input
-                value={artista2.nome}
-                onChange={e => updateArtista2("nome", e.target.value)}
-                placeholder="Ex: The Weeknd"
-                className="h-10 rounded-[14px] border-0"
-                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
-              />
-            </div>
-            <div>
-              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Música</label>
-              <Input
-                value={artista2.musica}
-                onChange={e => updateArtista2("musica", e.target.value)}
-                placeholder="Ex: Blinding Lights"
-                className="h-10 rounded-[14px] border-0"
-                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
-              />
-            </div>
-            <div>
-              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>
-                Porcentagem: <span className="font-bold opacity-100" style={{ color: "var(--layout-widget-text)" }}>{artista2.porcentagem}%</span>
-              </label>
-              <Slider
-                value={[artista2.porcentagem]}
-                onValueChange={([v]) => updateArtista2("porcentagem", v)}
-                max={100}
-                min={0}
-                step={1}
-                className="py-2"
-              />
+            {/* Artista 2 */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ background: "var(--layout-header-bg)" }} />
+                <h4 className="font-bold text-sm uppercase tracking-wider" style={labelStyle}>Artista 2</h4>
+                {loading2 && <Loader2 className="h-3 w-3 animate-spin opacity-40" style={labelStyle} />}
+              </div>
+              {artista2.imagemUrl && (
+                <div className="flex justify-center">
+                  <img src={artista2.imagemUrl} alt={artista2.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: "var(--layout-header-bg)" }} />
+                </div>
+              )}
+              <div>
+                <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Nome do Artista</label>
+                <input value={artista2.nome} onChange={e => updateArtista2("nome", e.target.value)} placeholder="Ex: The Weeknd"
+                  className="w-full px-4 py-2 outline-none transition-all text-sm" style={inputStyle}
+                  onFocus={handleInputFocus} onBlur={handleInputBlur} />
+              </div>
+              <div>
+                <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Música</label>
+                <input value={artista2.musica} onChange={e => updateArtista2("musica", e.target.value)} placeholder="Ex: Blinding Lights"
+                  className="w-full px-4 py-2 outline-none transition-all text-sm" style={inputStyle}
+                  onFocus={handleInputFocus} onBlur={handleInputBlur} />
+              </div>
+              <div>
+                <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>
+                  Porcentagem: <span className="font-bold">{artista2.porcentagem}%</span>
+                </label>
+                <Slider value={[artista2.porcentagem]} onValueChange={([v]) => updateArtista2("porcentagem", v)} max={100} min={0} step={1} className="py-2" />
+              </div>
             </div>
           </div>
         </div>
@@ -569,70 +560,62 @@ export default function BatalhaMusicalPage() {
         <XmlLinkRow label="XML BATALHA MUSICAL" permanentUrl={batalhaXmlUrl} dark />
       )}
 
-      {/* Schedule section */}
+      {/* Schedule Card */}
       {user && (
-        <div className="rounded-2xl p-5 space-y-4" style={{ background: "var(--layout-widget-bg)", border: "1px solid var(--layout-border-color)" }}>
-          <div className="flex items-center gap-2">
-            <CalendarPlus className="h-5 w-5" style={{ color: accentColor }} />
-            <h3 className="font-bold text-sm uppercase tracking-wider" style={{ color: "var(--layout-widget-text)" }}>
-              {editingId ? "Editar Batalha Agendada" : "Agendar Batalha"}
-            </h3>
-          </div>
-          <p className="text-xs opacity-40" style={{ color: "var(--layout-widget-text)" }}>
-            Os dados dos artistas acima serão usados para a batalha agendada.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Data</label>
-              <Input
-                type="date"
-                value={schedDate}
-                onChange={(e) => setSchedDate(e.target.value)}
-                className="h-10 rounded-[14px] border-0"
-                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
-              />
+        <div className="rounded-2xl overflow-hidden" style={{ background: cardBg, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+          <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: borderSubtle }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
+              <CalendarPlus size={20} style={{ color: accentColor }} />
             </div>
             <div>
-              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Horário Início</label>
-              <Input
-                type="time"
-                value={schedStart}
-                onChange={(e) => setSchedStart(e.target.value)}
-                className="h-10 rounded-[14px] border-0"
-                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
-              />
-            </div>
-            <div>
-              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Horário Fim</label>
-              <Input
-                type="time"
-                value={schedEnd}
-                onChange={(e) => setSchedEnd(e.target.value)}
-                className="h-10 rounded-[14px] border-0"
-                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
-              />
+              <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                {editingId ? "Editar Batalha Agendada" : "Agendar Batalha"}
+              </h3>
+              <p className="text-[11px]" style={{ color: subtleText }}>Os dados dos artistas acima serão usados para a batalha agendada</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              onClick={handleSchedule}
-              disabled={saving}
-              className="w-full sm:w-auto font-bold rounded-[14px]"
-              style={{ background: accentColor, color: "var(--layout-button-text)" }}
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-              {editingId ? "Salvar Alterações" : "Agendar Batalha"}
-            </Button>
-            {editingId && (
+          <div className="px-6 py-5 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Data</label>
+                <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)}
+                  className="w-full px-4 py-2 outline-none transition-all text-sm" style={inputStyle}
+                  onFocus={handleInputFocus} onBlur={handleInputBlur} />
+              </div>
+              <div>
+                <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Horário Início</label>
+                <input type="time" value={schedStart} onChange={(e) => setSchedStart(e.target.value)}
+                  className="w-full px-4 py-2 outline-none transition-all text-sm" style={inputStyle}
+                  onFocus={handleInputFocus} onBlur={handleInputBlur} />
+              </div>
+              <div>
+                <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Horário Fim</label>
+                <input type="time" value={schedEnd} onChange={(e) => setSchedEnd(e.target.value)}
+                  className="w-full px-4 py-2 outline-none transition-all text-sm" style={inputStyle}
+                  onFocus={handleInputFocus} onBlur={handleInputBlur} />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
               <Button
-                variant="ghost"
-                onClick={() => { setEditingId(null); setSchedDate(""); setSchedStart(""); setSchedEnd(""); }}
-                className="opacity-50 hover:opacity-100"
-                style={{ color: "var(--layout-widget-text)" }}
+                onClick={handleSchedule}
+                disabled={saving}
+                className="w-full sm:w-auto font-bold rounded-xl"
+                style={{ background: accentColor, color: "var(--layout-button-text)" }}
               >
-                Cancelar
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                {editingId ? "Salvar Alterações" : "Agendar Batalha"}
               </Button>
-            )}
+              {editingId && (
+                <Button
+                  variant="ghost"
+                  onClick={() => { setEditingId(null); setSchedDate(""); setSchedStart(""); setSchedEnd(""); }}
+                  className="opacity-50 hover:opacity-100"
+                  style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+                >
+                  Cancelar
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
