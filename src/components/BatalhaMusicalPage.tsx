@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Swords, Copy, Check, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Swords, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { toast } from "sonner";
+import XmlLinkRow from "./XmlLinkRow";
 
 interface Artista {
   nome: string;
@@ -37,7 +37,6 @@ export default function BatalhaMusicalPage() {
   const [artista2, setArtista2] = useState<Artista>({ nome: "", musica: "", porcentagem: 50, imagemUrl: "" });
   const [loading1, setLoading1] = useState(false);
   const [loading2, setLoading2] = useState(false);
-  const [copied, setCopied] = useState(false);
   const debounce1 = useRef<ReturnType<typeof setTimeout>>();
   const debounce2 = useRef<ReturnType<typeof setTimeout>>();
 
