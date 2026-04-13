@@ -66,7 +66,7 @@ const getCurrentProgramSortKey = (
   return -1;
 };
 
-const normalizeImageUrl = (value: string | null | undefined): string => {
+const normalizeImageUrl = (value: string | null | undefined, size = 512): string => {
   const trimmed = (value || "").trim();
 
   if (!trimmed || trimmed.startsWith("data:")) {
@@ -86,7 +86,9 @@ const normalizeImageUrl = (value: string | null | undefined): string => {
       );
 
       if (!parsed.searchParams.has("width")) {
-        parsed.searchParams.set("width", "512");
+        parsed.searchParams.set("width", String(size));
+        parsed.searchParams.set("height", String(size));
+        parsed.searchParams.set("resize", "contain");
       }
 
       return parsed.toString();
