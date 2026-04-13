@@ -249,7 +249,7 @@ export default function CenarioTela() {
   const isBreakTrack = (() => {
     const titulo = (musicData?.titulo || "").toLowerCase();
     const artista = (musicData?.artista || "").toLowerCase();
-    return exceptionWordsList.some(w => titulo === w || artista === w);
+    return exceptionWordsList.some(w => titulo === w || artista === w || titulo.includes(w) || artista.includes(w));
   })();
   const isJornalistico = currentProgram?.tipo_programa?.toLowerCase() === "jornalístico" || currentProgram?.tipo_programa?.toLowerCase() === "jornalistico";
   useEffect(() => {
