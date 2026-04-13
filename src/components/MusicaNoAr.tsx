@@ -129,6 +129,9 @@ function parseXmlString(xmlStr: string): MusicData | null {
     const artista = normalizeMusicText(rawArtista);
     if (!titulo && !artista) return null;
 
+    const categoria = (doc.querySelector("categoria")?.textContent || "").trim().toUpperCase();
+    if (categoria === "STOPPED" && !titulo && !artista) return null;
+
     const duracaoStr =
       doc.querySelector("duracao")?.textContent ||
       doc.querySelector("duration")?.textContent ||
@@ -260,6 +263,7 @@ export default function MusicaNoAr() {
   const [localError, setLocalError] = useState<string | null>(null);
   const onlineFailCountRef = useRef(0);
   const localFailCountRef = useRef(0);
+  const onlineStoppedRef = useRef(false);
 
   const hasValidOnlineUrl = isValidXmlUrl(xmlUrl);
   const hasValidLocalSource = !!localFileName;
@@ -513,10 +517,20 @@ export default function MusicaNoAr() {
       setOnlineError(null);
 
       const parsed = parseXmlString(data.content);
-      if (parsed) {
-        if (isLocalSourceHealthy()) return;
-        await processMusic(parsed, "online");
+      if (!parsed) {
+        // XML is valid but empty (STOPPED) — mark online as stopped
+        // so local source gets priority even if localStorage has old data
+        const xmlLower = (data.content as string).toLowerCase();
+        if (xmlLower.includes("stopped") || (xmlLower.includes("<interprete>") && !xmlLower.includes("<interprete>") === false)) {
+          onlineStoppedRef.current = true;
+        }
+        return;
       }
+
+      onlineStoppedRef.current = false;
+      // Only defer to local source when online is NOT stopped
+      if (isLocalSourceHealthy()) return;
+      await processMusic(parsed, "online");
     } catch (err: any) {
       onlineFailCountRef.current++;
       if (onlineFailCountRef.current >= 3) {
