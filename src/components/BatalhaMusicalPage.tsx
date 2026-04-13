@@ -30,7 +30,7 @@ const SETTINGS_KEY = "batalha_musical";
 
 function clampPercentage(value: unknown) {
   const parsed = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(parsed)) return 50;
+  if (!Number.isFinite(parsed)) return 0;
   return Math.min(100, Math.max(0, Math.round(parsed)));
 }
 
