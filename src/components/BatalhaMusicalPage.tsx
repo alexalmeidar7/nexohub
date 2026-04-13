@@ -451,8 +451,8 @@ export default function BatalhaMusicalPage() {
       </div>
 
       {/* XML Link */}
-      {(artista1.nome || artista2.nome) && (
-        <XmlLinkRow label="XML BATALHA MUSICAL" xmlContent={xmlContent} dark />
+      {batalhaXmlUrl && (
+        <XmlLinkRow label="XML BATALHA MUSICAL" permanentUrl={batalhaXmlUrl} dark />
       )}
     </div>
   );
