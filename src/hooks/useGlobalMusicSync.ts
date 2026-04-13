@@ -7,6 +7,7 @@ import { mergeUserDashboardItems } from "@/lib/userSettings";
 const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
 const BOT_XML_LAST_RUN_KEY = "bot_xml_last_run";
+const LOCAL_SOURCE_GRACE_MS = 15000;
 
 function isPlaceholderTrack(data: { titulo?: string; artista?: string }) {
   const titulo = (data.titulo || "").trim().toLowerCase();
@@ -42,6 +43,17 @@ function parseXml(xmlStr: string) {
       capa,
     };
   } catch { return null; }
+}
+
+function buildFreshUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.set("_lvcb", Date.now().toString());
+    return parsed.toString();
+  } catch {
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}_lvcb=${Date.now()}`;
+  }
 }
 
 function getCurrentProgram(
@@ -80,6 +92,7 @@ export function useGlobalMusicSync() {
   const lastRecordedRef = useRef<string>("");
   const directFetchOkRef = useRef<boolean | null>(null);
   const fetchCountRef = useRef(0);
+  const lastLocalSyncAtRef = useRef(0);
 
   useEffect(() => {
     if (!user) return;
@@ -212,7 +225,11 @@ export function useGlobalMusicSync() {
       // Try direct fetch first
       if (directFetchOkRef.current !== false) {
         try {
-          const directRes = await fetch(url, {
+          const directRes = await fetch(buildFreshUrl(url), {
+            headers: {
+              "Cache-Control": "no-cache, no-store, max-age=0",
+              Pragma: "no-cache",
+            },
             signal: AbortSignal.timeout(4000),
             cache: "no-store",
           });
@@ -265,31 +282,41 @@ export function useGlobalMusicSync() {
       const useOnline = mode === "online" || mode === "both";
       const useLocal = mode === "pasta" || mode === "both";
 
-      const syncLocalFromStorage = async () => {
-        if (!useLocal || !localFileName) return;
+      const syncLocalFromStorage = async (): Promise<boolean> => {
+        if (!useLocal || !localFileName) return false;
         try {
           const filePath = `local-xml-${user.id}.xml`;
           const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
-          if (!urlData?.publicUrl) return;
+          if (!urlData?.publicUrl) return false;
           const res = await fetch(`${urlData.publicUrl}?t=${Date.now()}`, {
             signal: AbortSignal.timeout(4000),
             cache: "no-store",
           });
-          if (!res.ok) return;
+          if (!res.ok) return false;
           const text = await res.text();
-          if (!text) return;
+          if (!text) return false;
           const data = parseXml(text);
-          if (!data) return;
+          if (!data) return false;
+          lastLocalSyncAtRef.current = Date.now();
           fetchCoverAsync(data);
           applyMusicData(data);
           localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
+          return true;
         } catch {
           // keep online source running
+          return false;
         }
       };
 
       const syncOnline = async () => {
         if (!useOnline || !url) return;
+        const localSourceHealthy = useLocal
+          && !!localFileName
+          && lastLocalSyncAtRef.current > 0
+          && Date.now() - lastLocalSyncAtRef.current < LOCAL_SOURCE_GRACE_MS;
+
+        if (localSourceHealthy) return;
+
         const text = await fetchXmlFromUrl(url);
         if (!text) return;
 
@@ -301,7 +328,8 @@ export function useGlobalMusicSync() {
         localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
       };
 
-      await Promise.allSettled([syncLocalFromStorage(), syncOnline()]);
+      await syncLocalFromStorage();
+      await syncOnline();
 
       // If no configured source, still keep history from current canonical localStorage
       if ((!useOnline || !url) && (!useLocal || !localFileName)) {
