@@ -288,7 +288,7 @@ export default function BatalhaMusicalPage() {
       setArtista1(prev => ({ ...prev, porcentagem: value as number }));
       setArtista2(prev => ({ ...prev, porcentagem: 100 - (value as number) }));
     } else if (field === "nome") {
-      setArtista1(prev => ({ ...prev, nome: value as string, imagemUrl: "" }));
+      setArtista1(prev => ({ ...prev, nome: value as string }));
     } else {
       setArtista1(prev => ({ ...prev, [field]: value }));
     }
@@ -299,7 +299,7 @@ export default function BatalhaMusicalPage() {
       setArtista2(prev => ({ ...prev, porcentagem: value as number }));
       setArtista1(prev => ({ ...prev, porcentagem: 100 - (value as number) }));
     } else if (field === "nome") {
-      setArtista2(prev => ({ ...prev, nome: value as string, imagemUrl: "" }));
+      setArtista2(prev => ({ ...prev, nome: value as string }));
     } else {
       setArtista2(prev => ({ ...prev, [field]: value }));
     }
