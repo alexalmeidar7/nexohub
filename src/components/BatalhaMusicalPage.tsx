@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Swords, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import XmlLinkRow from "./XmlLinkRow";
 
 interface Artista {
@@ -11,64 +13,273 @@ interface Artista {
   imagemUrl: string;
 }
 
-async function fetchDeezerImage(artistName: string): Promise<string> {
-  if (!artistName.trim()) return "";
+interface BattleState {
+  artista1: Artista;
+  artista2: Artista;
+}
+
+const EMPTY_ARTIST: Artista = {
+  nome: "",
+  musica: "",
+  porcentagem: 50,
+  imagemUrl: "",
+};
+
+const LOCAL_STORAGE_KEY = "vmix-batalha-musical";
+const SETTINGS_KEY = "batalha_musical";
+
+function clampPercentage(value: unknown) {
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed)) return 50;
+  return Math.min(100, Math.max(0, Math.round(parsed)));
+}
+
+function normalizeArtista(value: unknown): Artista {
+  const artist = value && typeof value === "object" ? (value as Partial<Artista>) : {};
+
+  return {
+    nome: typeof artist.nome === "string" ? artist.nome : "",
+    musica: typeof artist.musica === "string" ? artist.musica : "",
+    porcentagem: clampPercentage(artist.porcentagem),
+    imagemUrl: typeof artist.imagemUrl === "string" ? artist.imagemUrl : "",
+  };
+}
+
+function normalizeBattleState(value: unknown): BattleState {
+  const battle = value && typeof value === "object" ? value as Partial<BattleState> : {};
+  const artista1 = normalizeArtista(battle.artista1);
+  const artista2 = normalizeArtista(battle.artista2);
+
+  artista2.porcentagem = 100 - artista1.porcentagem;
+
+  return { artista1, artista2 };
+}
+
+function escapeXml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+async function fetchArtistImage(artistName: string): Promise<string> {
+  const artist = artistName.trim();
+  if (!artist) return "";
+
   try {
-    const res = await fetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(artistName.trim())}&limit=1&output=jsonp&callback=`);
-    const text = await res.text();
-    // Handle JSONP or plain JSON
-    const clean = text.replace(/^\s*\(/, "").replace(/\)\s*;?\s*$/, "");
-    const data = JSON.parse(clean);
-    return data?.data?.[0]?.picture_xl || data?.data?.[0]?.picture_big || "";
-  } catch {
-    // Fallback: try via corsproxy
-    try {
-      const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://api.deezer.com/search/artist?q=${encodeURIComponent(artistName.trim())}&limit=1`)}`);
-      const data = await res.json();
-      return data?.data?.[0]?.picture_xl || data?.data?.[0]?.picture_big || "";
-    } catch {
+    const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
+      body: { artist },
+    });
+
+    if (error || !data?.ok || !data?.url) {
       return "";
     }
+
+    return data.url;
+  } catch {
+    return "";
   }
 }
 
 export default function BatalhaMusicalPage() {
-  const [artista1, setArtista1] = useState<Artista>({ nome: "", musica: "", porcentagem: 50, imagemUrl: "" });
-  const [artista2, setArtista2] = useState<Artista>({ nome: "", musica: "", porcentagem: 50, imagemUrl: "" });
+  const { user } = useAuth();
+  const [artista1, setArtista1] = useState<Artista>({ ...EMPTY_ARTIST });
+  const [artista2, setArtista2] = useState<Artista>({ ...EMPTY_ARTIST });
   const [loading1, setLoading1] = useState(false);
   const [loading2, setLoading2] = useState(false);
+  const [hasLoadedState, setHasLoadedState] = useState(false);
   const debounce1 = useRef<ReturnType<typeof setTimeout>>();
   const debounce2 = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const request1Ref = useRef(0);
+  const request2Ref = useRef(0);
+  const imageCacheRef = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const applyState = (state: BattleState) => {
+      if (state.artista1.nome && state.artista1.imagemUrl) {
+        imageCacheRef.current[state.artista1.nome.trim().toLowerCase()] = state.artista1.imagemUrl;
+      }
+
+      if (state.artista2.nome && state.artista2.imagemUrl) {
+        imageCacheRef.current[state.artista2.nome.trim().toLowerCase()] = state.artista2.imagemUrl;
+      }
+
+      setArtista1(state.artista1);
+      setArtista2(state.artista2);
+    };
+
+    const loadState = async () => {
+      try {
+        const localRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (localRaw) {
+          const localState = normalizeBattleState(JSON.parse(localRaw));
+          if (!cancelled) applyState(localState);
+        }
+      } catch {
+        // ignore invalid local data
+      }
+
+      if (!user) {
+        if (!cancelled) setHasLoadedState(true);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("user_settings")
+          .select("cenario_config")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!cancelled && !error && data?.cenario_config && typeof data.cenario_config === "object") {
+          const savedState = (data.cenario_config as Record<string, unknown>)[SETTINGS_KEY];
+          if (savedState) {
+            applyState(normalizeBattleState(savedState));
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao carregar Batalha Musical:", error);
+      }
+
+      if (!cancelled) {
+        setHasLoadedState(true);
+      }
+    };
+
+    loadState();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(saveTimeout.current);
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!hasLoadedState) return;
+
+    const payload: BattleState = { artista1, artista2 };
+
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // ignore local persistence errors
+    }
+
+    if (!user) return;
+
+    clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(async () => {
+      try {
+        const { data: existing } = await supabase
+          .from("user_settings")
+          .select("cenario_config")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const previousConfig = existing?.cenario_config && typeof existing.cenario_config === "object"
+          ? existing.cenario_config as Record<string, unknown>
+          : {};
+
+        const { error } = await supabase
+          .from("user_settings")
+          .upsert(
+            {
+              user_id: user.id,
+              cenario_config: {
+                ...previousConfig,
+                [SETTINGS_KEY]: payload,
+              } as any,
+            },
+            { onConflict: "user_id" }
+          );
+
+        if (error) {
+          console.error("Erro ao salvar Batalha Musical:", error);
+        }
+      } catch (error) {
+        console.error("Erro ao salvar Batalha Musical:", error);
+      }
+    }, 600);
+
+    return () => clearTimeout(saveTimeout.current);
+  }, [artista1, artista2, hasLoadedState, user]);
 
   // Fetch artist 1 image on name change (debounced)
   useEffect(() => {
     clearTimeout(debounce1.current);
-    if (!artista1.nome.trim()) {
-      setArtista1(prev => ({ ...prev, imagemUrl: "" }));
+    const artistName = artista1.nome.trim();
+    const requestId = ++request1Ref.current;
+
+    if (!artistName) {
+      setLoading1(false);
+      setArtista1(prev => prev.imagemUrl ? { ...prev, imagemUrl: "" } : prev);
       return;
     }
+
+    const cacheKey = artistName.toLowerCase();
+    const cachedUrl = imageCacheRef.current[cacheKey];
+
+    if (cachedUrl) {
+      setLoading1(false);
+      setArtista1(prev => prev.nome.trim() === artistName && prev.imagemUrl !== cachedUrl
+        ? { ...prev, imagemUrl: cachedUrl }
+        : prev);
+      return;
+    }
+
+    setLoading1(false);
     debounce1.current = setTimeout(async () => {
       setLoading1(true);
-      const url = await fetchDeezerImage(artista1.nome);
-      setArtista1(prev => ({ ...prev, imagemUrl: url }));
+      const url = await fetchArtistImage(artistName);
+      if (request1Ref.current !== requestId) return;
+      if (url) {
+        imageCacheRef.current[cacheKey] = url;
+      }
+      setArtista1(prev => prev.nome.trim() === artistName ? { ...prev, imagemUrl: url } : prev);
       setLoading1(false);
-    }, 800);
+    }, 500);
     return () => clearTimeout(debounce1.current);
   }, [artista1.nome]);
 
   // Fetch artist 2 image on name change (debounced)
   useEffect(() => {
     clearTimeout(debounce2.current);
-    if (!artista2.nome.trim()) {
-      setArtista2(prev => ({ ...prev, imagemUrl: "" }));
+    const artistName = artista2.nome.trim();
+    const requestId = ++request2Ref.current;
+
+    if (!artistName) {
+      setLoading2(false);
+      setArtista2(prev => prev.imagemUrl ? { ...prev, imagemUrl: "" } : prev);
       return;
     }
+
+    const cacheKey = artistName.toLowerCase();
+    const cachedUrl = imageCacheRef.current[cacheKey];
+
+    if (cachedUrl) {
+      setLoading2(false);
+      setArtista2(prev => prev.nome.trim() === artistName && prev.imagemUrl !== cachedUrl
+        ? { ...prev, imagemUrl: cachedUrl }
+        : prev);
+      return;
+    }
+
+    setLoading2(false);
     debounce2.current = setTimeout(async () => {
       setLoading2(true);
-      const url = await fetchDeezerImage(artista2.nome);
-      setArtista2(prev => ({ ...prev, imagemUrl: url }));
+      const url = await fetchArtistImage(artistName);
+      if (request2Ref.current !== requestId) return;
+      if (url) {
+        imageCacheRef.current[cacheKey] = url;
+      }
+      setArtista2(prev => prev.nome.trim() === artistName ? { ...prev, imagemUrl: url } : prev);
       setLoading2(false);
-    }, 800);
+    }, 500);
     return () => clearTimeout(debounce2.current);
   }, [artista2.nome]);
 
@@ -76,6 +287,8 @@ export default function BatalhaMusicalPage() {
     if (field === "porcentagem") {
       setArtista1(prev => ({ ...prev, porcentagem: value as number }));
       setArtista2(prev => ({ ...prev, porcentagem: 100 - (value as number) }));
+    } else if (field === "nome") {
+      setArtista1(prev => ({ ...prev, nome: value as string, imagemUrl: "" }));
     } else {
       setArtista1(prev => ({ ...prev, [field]: value }));
     }
@@ -85,6 +298,8 @@ export default function BatalhaMusicalPage() {
     if (field === "porcentagem") {
       setArtista2(prev => ({ ...prev, porcentagem: value as number }));
       setArtista1(prev => ({ ...prev, porcentagem: 100 - (value as number) }));
+    } else if (field === "nome") {
+      setArtista2(prev => ({ ...prev, nome: value as string, imagemUrl: "" }));
     } else {
       setArtista2(prev => ({ ...prev, [field]: value }));
     }
@@ -93,14 +308,14 @@ export default function BatalhaMusicalPage() {
   const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
   <batalha>
-    <artista1_nome>${artista1.nome}</artista1_nome>
-    <artista1_musica>${artista1.musica}</artista1_musica>
+    <artista1_nome>${escapeXml(artista1.nome)}</artista1_nome>
+    <artista1_musica>${escapeXml(artista1.musica)}</artista1_musica>
     <artista1_porcentagem>${artista1.porcentagem}</artista1_porcentagem>
-    <artista1_imagem>${artista1.imagemUrl}</artista1_imagem>
-    <artista2_nome>${artista2.nome}</artista2_nome>
-    <artista2_musica>${artista2.musica}</artista2_musica>
+    <artista1_imagem>${escapeXml(artista1.imagemUrl)}</artista1_imagem>
+    <artista2_nome>${escapeXml(artista2.nome)}</artista2_nome>
+    <artista2_musica>${escapeXml(artista2.musica)}</artista2_musica>
     <artista2_porcentagem>${artista2.porcentagem}</artista2_porcentagem>
-    <artista2_imagem>${artista2.imagemUrl}</artista2_imagem>
+    <artista2_imagem>${escapeXml(artista2.imagemUrl)}</artista2_imagem>
   </batalha>
 </items>`;
 
