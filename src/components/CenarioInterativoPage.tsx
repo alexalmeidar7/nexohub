@@ -802,7 +802,7 @@ export default function CenarioInterativoPage() {
     return exceptionWordsList.some(w => titulo === w || artista === w || titulo.includes(w) || artista.includes(w));
   })();
   useEffect(() => {
-    if (isBreakTrack) { setArtistBgUrl(null); setArtistBgReady(false); return; }
+    if (isBreakTrack) { setArtistBgUrl(null); setPrevArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
     if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
