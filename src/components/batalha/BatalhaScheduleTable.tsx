@@ -42,15 +42,15 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh }: Pr
   if (!batalhas.length) return null;
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-page-bg) 92%, white)", border: "1px solid color-mix(in srgb, var(--layout-border-color) 30%, transparent)" }}>
-      <div className="flex items-center gap-2 px-5 py-3" style={{ background: "color-mix(in srgb, var(--layout-page-bg) 85%, white)", borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color) 25%, transparent)" }}>
-        <CalendarClock className="h-4 w-4" style={{ color: "color-mix(in srgb, var(--layout-page-text) 50%, transparent)" }} />
-        <h3 className="font-semibold text-xs uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text) 60%, transparent)" }}>Batalhas Agendadas</h3>
+    <div className="rounded-2xl overflow-hidden" style={{ background: "#f5f5f5", border: "1px solid #e0e0e0" }}>
+      <div className="flex items-center gap-2 px-5 py-3" style={{ background: "#ebebeb", borderBottom: "1px solid #ddd" }}>
+        <CalendarClock className="h-4 w-4 text-gray-500" />
+        <h3 className="font-semibold text-xs uppercase tracking-wider text-gray-500">Batalhas Agendadas</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead>
-            <tr className="text-[11px] uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text) 35%, transparent)", borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color) 20%, transparent)" }}>
+            <tr className="text-[11px] uppercase tracking-wider text-gray-400" style={{ borderBottom: "1px solid #e5e5e5" }}>
               <th className="px-4 py-2.5 font-medium">Data</th>
               <th className="px-4 py-2.5 font-medium">Horário</th>
               <th className="px-4 py-2.5 font-medium">Artista 1</th>
@@ -60,25 +60,24 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh }: Pr
           </thead>
           <tbody>
             {batalhas.map((b) => (
-              <tr key={b.id} className="transition-colors" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color) 15%, transparent)" }}>
-                <td className="px-4 py-3 whitespace-nowrap" style={{ color: "color-mix(in srgb, var(--layout-page-text) 70%, transparent)" }}>
+              <tr key={b.id} className="transition-colors hover:bg-gray-100" style={{ borderBottom: "1px solid #ececec" }}>
+                <td className="px-4 py-3 whitespace-nowrap text-gray-600">
                   {new Date(b.data_batalha + "T12:00:00").toLocaleDateString("pt-BR")}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap" style={{ color: "color-mix(in srgb, var(--layout-page-text) 70%, transparent)" }}>
+                <td className="px-4 py-3 whitespace-nowrap text-gray-600">
                   {b.horario_inicio} — {b.horario_fim}
                 </td>
-                <td className="px-4 py-3 font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text) 80%, transparent)" }}>
-                  {b.artista1_nome || "—"} <span className="font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text) 35%, transparent)" }}>({b.artista1_porcentagem}%)</span>
+                <td className="px-4 py-3 font-medium text-gray-700">
+                  {b.artista1_nome || "—"} <span className="font-normal text-gray-400">({b.artista1_porcentagem}%)</span>
                 </td>
-                <td className="px-4 py-3 font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text) 80%, transparent)" }}>
-                  {b.artista2_nome || "—"} <span className="font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text) 35%, transparent)" }}>({b.artista2_porcentagem}%)</span>
+                <td className="px-4 py-3 font-medium text-gray-700">
+                  {b.artista2_nome || "—"} <span className="font-normal text-gray-400">({b.artista2_porcentagem}%)</span>
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => onEdit(b)}
-                      className="p-1.5 rounded-lg transition-colors hover:bg-black/5"
-                      style={{ color: "color-mix(in srgb, var(--layout-page-text) 40%, transparent)" }}
+                      className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-200"
                       title="Editar"
                     >
                       <Pencil className="h-4 w-4" />
@@ -86,8 +85,7 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh }: Pr
                     <button
                       onClick={() => handleDelete(b.id)}
                       disabled={deleting === b.id}
-                      className="p-1.5 rounded-lg transition-colors hover:bg-black/5 disabled:opacity-30"
-                      style={{ color: "color-mix(in srgb, var(--layout-page-text) 40%, transparent)" }}
+                      className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-red-500 hover:bg-gray-200 disabled:opacity-30"
                       title="Excluir"
                     >
                       <Trash2 className="h-4 w-4" />
