@@ -358,6 +358,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const modulesSource = planModules ?? enabledModules;
     if (!modulesSource) return true;
 
+    if (page === "apresentadores" || page === "programas" || page === "previsao") {
+      return modulesSource.has("cadastros");
+    }
+
     if (page === "testemunhais" || page === "promocoes" || page === "configtelapromo" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") {
       return modulesSource.has("comercial");
     }
