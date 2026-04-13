@@ -55,14 +55,6 @@ function normalizeBattleState(value: unknown): BattleState {
   return { artista1, artista2 };
 }
 
-function escapeXml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
 
 async function fetchArtistImage(artistName: string): Promise<string> {
   const artist = artistName.trim();
