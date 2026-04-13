@@ -253,7 +253,7 @@ serve(async (req) => {
         if (ap) {
           locutorNome = ap.nome || "";
           locutorInstagram = ap.instagram ? extractHandle(ap.instagram) : "";
-          locutorFoto = normalizeImageUrl(ap.foto);
+          locutorFoto = normalizeImageUrl(ap.foto, 1080);
         }
       }
     }
