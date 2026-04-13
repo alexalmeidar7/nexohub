@@ -524,13 +524,11 @@ function MockupPreview({
 
   return (
     <div
-      className="relative w-full rounded-xl overflow-hidden"
+      className="relative w-full rounded-2xl overflow-hidden"
       style={{
         aspectRatio: "16/9",
-        maxWidth: 900,
         backgroundColor: "#0a0a0a",
-        border: "1px solid #ffffff12",
-        boxShadow: "0 20px 60px -15px rgba(0,0,0,0.8)",
+        boxShadow: "0 24px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
       }}
     >
       {/* Safe area guides (invisible but layout-based on 1920x1080 proportions) */}
