@@ -247,7 +247,12 @@ export default function BatalhaMusicalPage() {
       if (url) {
         imageCacheRef.current[cacheKey] = url;
       }
-      setArtista1(prev => prev.nome.trim() === artistName ? { ...prev, imagemUrl: url } : prev);
+      setArtista1(prev => {
+        if (prev.nome.trim() !== artistName) return prev;
+        // Don't clear existing image if API returned nothing
+        if (!url && prev.imagemUrl) return prev;
+        return { ...prev, imagemUrl: url };
+      });
       setLoading1(false);
     }, 500);
     return () => clearTimeout(debounce1.current);
@@ -284,7 +289,11 @@ export default function BatalhaMusicalPage() {
       if (url) {
         imageCacheRef.current[cacheKey] = url;
       }
-      setArtista2(prev => prev.nome.trim() === artistName ? { ...prev, imagemUrl: url } : prev);
+      setArtista2(prev => {
+        if (prev.nome.trim() !== artistName) return prev;
+        if (!url && prev.imagemUrl) return prev;
+        return { ...prev, imagemUrl: url };
+      });
       setLoading2(false);
     }, 500);
     return () => clearTimeout(debounce2.current);
