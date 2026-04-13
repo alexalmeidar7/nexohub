@@ -189,6 +189,60 @@ export type Database = {
         }
         Relationships: []
       }
+      batalhas_agendadas: {
+        Row: {
+          artista1_imagem: string
+          artista1_musica: string
+          artista1_nome: string
+          artista1_porcentagem: number
+          artista2_imagem: string
+          artista2_musica: string
+          artista2_nome: string
+          artista2_porcentagem: number
+          created_at: string
+          data_batalha: string
+          horario_fim: string
+          horario_inicio: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artista1_imagem?: string
+          artista1_musica?: string
+          artista1_nome?: string
+          artista1_porcentagem?: number
+          artista2_imagem?: string
+          artista2_musica?: string
+          artista2_nome?: string
+          artista2_porcentagem?: number
+          created_at?: string
+          data_batalha: string
+          horario_fim: string
+          horario_inicio: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artista1_imagem?: string
+          artista1_musica?: string
+          artista1_nome?: string
+          artista1_porcentagem?: number
+          artista2_imagem?: string
+          artista2_musica?: string
+          artista2_nome?: string
+          artista2_porcentagem?: number
+          created_at?: string
+          data_batalha?: string
+          horario_fim?: string
+          horario_inicio?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_modules: {
         Row: {
           created_at: string
