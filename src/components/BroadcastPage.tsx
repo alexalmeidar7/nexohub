@@ -581,22 +581,33 @@ function MockupPreview({
           <div className="flex-shrink-0" style={{ maxWidth: "45%" }}>
             {/* Locutor box */}
             <div
-              className="backdrop-blur-sm"
+              className="backdrop-blur-sm relative overflow-hidden"
               style={{
                 backgroundColor: "rgba(255,255,255,0.97)",
                 padding: "8px 20px 6px",
                 borderRadius: "6px 6px 0 0",
                 minWidth: 180,
+                minHeight: locutorFoto ? 56 : undefined,
               }}
             >
-              <div className="text-sm font-black uppercase leading-tight tracking-wide" style={{ color: "#111" }}>
-                {displayLocutor}
-              </div>
-              {locutorInstagram && (
-                <div className="flex items-center gap-1 mt-0.5 text-[9px] font-semibold" style={{ color: accentColor }}>
-                  <Instagram size={9} /> {locutorInstagram}
-                </div>
+              {locutorFoto && (
+                <img
+                  src={locutorFoto}
+                  alt={displayLocutor}
+                  className="absolute bottom-0 left-0 h-full object-contain object-left-bottom pointer-events-none"
+                  style={{ maxWidth: "40%", opacity: 0.92 }}
+                />
               )}
+              <div className="relative" style={{ marginLeft: locutorFoto ? "38%" : 0 }}>
+                <div className="text-sm font-black uppercase leading-tight tracking-wide" style={{ color: "#111" }}>
+                  {displayLocutor}
+                </div>
+                {locutorInstagram && (
+                  <div className="flex items-center gap-1 mt-0.5 text-[9px] font-semibold" style={{ color: accentColor }}>
+                    <Instagram size={9} /> {locutorInstagram}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Subject bar – separated from ticker */}
