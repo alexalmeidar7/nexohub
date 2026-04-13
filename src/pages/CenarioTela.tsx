@@ -1477,29 +1477,29 @@ export default function CenarioTela() {
                      )}
                    </div>
 
-                   {/* ── Sponsor logos (top-right, below "a seguir") ── */}
-                   {sponsorLogos.length > 0 && (
-                     <div style={{ position: "absolute", top: `${vhToPx(10)}${vu}`, right: `${vhToPx(3)}${vu}`, zIndex: 10 }}>
-                       <div style={{ position: "relative", display: "flex", justifyContent: "flex-end", height: `${vhToPx(12)}${vu}` }}>
-                         {sponsorLogos.map((l: any, i: number) => l.logo_url && (
-                           <img
-                             key={l.id}
-                             src={l.logo_url}
-                             alt={l.nome}
-                             style={{
-                               position: "absolute",
-                               maxWidth: `${vhToPx(20)}${vu}`, maxHeight: `${vhToPx(11)}${vu}`,
-                               right: 0, objectFit: "contain",
-                               opacity: i === sponsorIdx ? 1 : 0,
-                               transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
-                               transition: "opacity 0.8s ease, transform 0.8s ease",
-                               filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
-                             }}
-                           />
-                         ))}
-                       </div>
-                     </div>
-                   )}
+                    {/* ── Sponsor logos (centered below locutor + capa boxes) ── */}
+                    {sponsorLogos.length > 0 && (
+                      <div style={{ position: "absolute", bottom: `${vhToPx(14)}${vu}`, left: "50%", transform: "translateX(-50%)", zIndex: 10 }}>
+                        <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: `${vhToPx(18)}${vu}` }}>
+                          {sponsorLogos.map((l: any, i: number) => l.logo_url && (
+                            <img
+                              key={l.id}
+                              src={l.logo_url}
+                              alt={l.nome}
+                              style={{
+                                position: "absolute",
+                                maxWidth: `${vhToPx(30)}${vu}`, maxHeight: `${vhToPx(16.5)}${vu}`,
+                                objectFit: "contain",
+                                opacity: i === sponsorIdx ? 1 : 0,
+                                transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
+                                transition: "opacity 0.8s ease, transform 0.8s ease",
+                                filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                    {/* Program progress bar — neon glow style */}
                    <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: 0, right: 0, height: "2px", background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
