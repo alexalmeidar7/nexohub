@@ -514,6 +514,33 @@ export default function MusicaNoAr() {
     }
   }, [isOnlineSelected, xmlUrl, processMusic]);
 
+  // Sync component state from localStorage (useGlobalMusicSync may update it)
+  useEffect(() => {
+    const syncFromStorage = () => {
+      const raw = localStorage.getItem(MUSIC_DATA_KEY);
+      const startStr = localStorage.getItem(MUSIC_START_KEY);
+      if (!raw || !startStr) return;
+      try {
+        const stored: MusicData = JSON.parse(raw);
+        const storedStart = parseInt(startStr, 10);
+        setMusic(prev => {
+          if (!prev || prev.titulo !== stored.titulo || prev.artista !== stored.artista) {
+            setStartTime(storedStart);
+            setElapsed((Date.now() - storedStart) / 1000);
+            return stored;
+          }
+          // Update cover if changed
+          if (stored.capa && prev.capa !== stored.capa) {
+            return { ...prev, capa: stored.capa };
+          }
+          return prev;
+        });
+      } catch {}
+    };
+    const interval = setInterval(syncFromStorage, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (!isOnlineSelected || !hasValidOnlineUrl) return;
     fetchXml();
