@@ -253,7 +253,7 @@ export default function CenarioTela() {
   })();
   const isJornalistico = currentProgram?.tipo_programa?.toLowerCase() === "jornalístico" || currentProgram?.tipo_programa?.toLowerCase() === "jornalistico";
   useEffect(() => {
-    if (isBreakTrack || isJornalistico) { setArtistBgUrl(null); setArtistBgReady(false); return; }
+    if (isBreakTrack || isJornalistico) { setArtistBgUrl(null); setPrevArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
     if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
