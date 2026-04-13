@@ -289,186 +289,187 @@ export default function BroadcastPage() {
   }, [handleSave]);
 
   return (
-    <div className="flex gap-6 h-full min-h-0">
-      {/* ── Left: Form ── */}
-      <div className="w-[340px] shrink-0 space-y-4 overflow-y-auto pr-2" style={{ maxHeight: "calc(100vh - 200px)" }}>
-        <h2 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#aaa" }}>Configurar Broadcast</h2>
-
-        {/* Assunto */}
-        <div className="space-y-1">
-          <label className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#888" }}>Assunto / Título</label>
-          <input
-            type="text"
-            value={data.assunto}
-            onChange={e => setData({ ...data, assunto: e.target.value })}
-            placeholder="Base para assunto"
-            className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-            style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
-            onBlur={onFieldBlur}
+    <div className="flex flex-col gap-6 h-full min-h-0">
+      {/* ── Top: Mockup Preview (hero) ── */}
+      <div className="w-full flex justify-center px-2 pt-2">
+        <div className="w-full" style={{ maxWidth: 960 }}>
+          <MockupPreview
+            empresaLogo={empresaLogo}
+            programaNome={programaNome}
+            programaLogo={programaLogo}
+            displayLocutor={displayLocutor}
+            locutorInstagram={locutorInstagram}
+            locutorFoto={locutorFoto}
+            accentColor={accentColor}
+            assunto={data.assunto}
+            showQrCode={data.showQrCode}
+            whatsappNumber={whatsappNumber}
+            empresaSocials={empresaSocials}
+            composedTicker={composedTicker}
+            sponsorLogos={sponsorLogos}
           />
         </div>
-
-        {/* Locutor override */}
-        <div className="space-y-1 relative">
-          <label className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#888" }}>Nome do Locutor (override)</label>
-          <div className="relative">
-            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "#666" }} />
-            <input
-              type="text"
-              value={data.locutor_override}
-              onChange={async e => {
-                const val = e.target.value;
-                setData({ ...data, locutor_override: val });
-                if (val.trim().length >= 2 && user) {
-                  const { data: results } = await supabase
-                    .from("apresentadores")
-                    .select("nome, instagram, foto")
-                    .eq("user_id", user.id)
-                    .ilike("nome", `%${val.trim()}%`)
-                    .limit(5);
-                  setLocutorSearchResults(results || []);
-                  setShowLocutorDropdown(true);
-                } else {
-                  setLocutorSearchResults([]);
-                  setShowLocutorDropdown(false);
-                }
-              }}
-              onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
-              onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
-              placeholder={locutorNome || "Buscar locutor..."}
-              className="w-full pl-7 pr-3 py-2 rounded-lg text-sm outline-none"
-              style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
-            />
-          </div>
-          {showLocutorDropdown && locutorSearchResults.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: "#1e1e24", border: "1px solid #ffffff20" }}>
-              {locutorSearchResults.map((r, i) => (
-                <button
-                  key={i}
-                  onMouseDown={e => {
-                    e.preventDefault();
-                    setData({ ...data, locutor_override: r.nome });
-                    if (r.instagram) setLocutorInstagram(r.instagram.startsWith("@") ? r.instagram : `@${r.instagram}`);
-                    if (r.foto) setLocutorFoto(r.foto);
-                    setShowLocutorDropdown(false);
-                    setLocutorSearchResults([]);
-                  }}
-                  className="w-full text-left px-3 py-2 text-xs hover:brightness-125 transition-all flex items-center gap-2"
-                  style={{ color: "#e0e0e0", borderBottom: i < locutorSearchResults.length - 1 ? "1px solid #ffffff10" : "none" }}
-                >
-                  {r.foto && <img src={r.foto} alt="" className="w-6 h-6 rounded-full object-cover" />}
-                  <span className="font-semibold flex-1 truncate">{r.nome}</span>
-                  {r.instagram && <span className="text-[10px]" style={{ color: accentColor }}>@{r.instagram.replace("@", "")}</span>}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Redes Sociais (read-only from empresa_config) */}
-        <div className="space-y-2">
-          <label className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#888" }}>Redes Sociais (da empresa)</label>
-          {empresaSocials.length === 0 ? (
-            <p className="text-[10px]" style={{ color: "#555" }}>Nenhuma rede social cadastrada em Configurações.</p>
-          ) : (
-            <div className="space-y-1.5">
-              {empresaSocials.map((s, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1e1e24", border: "1px solid #ffffff08" }}>
-                  <span style={{ color: accentColor }}>{s.icon}</span>
-                  <span className="text-xs" style={{ color: "#ccc" }}>{s.valor}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* QR Code check */}
-          {whatsappNumber && (
-            <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer mt-2" style={{ backgroundColor: "#1e1e24", border: `1px solid ${data.showQrCode ? accentColor + "60" : "#ffffff08"}` }}>
-              <input
-                type="checkbox"
-                checked={data.showQrCode}
-                onChange={e => { setData({ ...data, showQrCode: e.target.checked }); setTimeout(onFieldBlur, 100); }}
-                className="accent-current"
-                style={{ accentColor }}
-              />
-              <MessageCircle size={13} style={{ color: data.showQrCode ? accentColor : "#666" }} />
-              <div>
-                <span className="text-xs font-semibold" style={{ color: data.showQrCode ? "#e0e0e0" : "#888" }}>QR Code WhatsApp</span>
-                <p className="text-[9px]" style={{ color: "#555" }}>Exibir QR Code para enviar mensagem via WhatsApp</p>
-              </div>
-            </label>
-          )}
-        </div>
-
-        {/* Ticker Sources */}
-        <div className="space-y-2">
-          <label className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#888" }}>Conteúdo do Ticker</label>
-
-          {/* News check */}
-          <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer" style={{ backgroundColor: "#1e1e24", border: `1px solid ${data.tickerNews ? accentColor + "60" : "#ffffff08"}` }}>
-            <input
-              type="checkbox"
-              checked={data.tickerNews}
-              onChange={e => { setData({ ...data, tickerNews: e.target.checked }); setTimeout(onFieldBlur, 100); }}
-              className="accent-current"
-              style={{ accentColor }}
-            />
-            <Newspaper size={13} style={{ color: data.tickerNews ? accentColor : "#666" }} />
-            <div>
-              <span className="text-xs font-semibold" style={{ color: data.tickerNews ? "#e0e0e0" : "#888" }}>Notícias</span>
-              <p className="text-[9px]" style={{ color: "#555" }}>Títulos das últimas notícias selecionadas</p>
-            </div>
-          </label>
-
-          {/* Weather check */}
-          <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer" style={{ backgroundColor: "#1e1e24", border: `1px solid ${data.tickerWeather ? accentColor + "60" : "#ffffff08"}` }}>
-            <input
-              type="checkbox"
-              checked={data.tickerWeather}
-              onChange={e => { setData({ ...data, tickerWeather: e.target.checked }); setTimeout(onFieldBlur, 100); }}
-              className="accent-current"
-              style={{ accentColor }}
-            />
-            <CloudSun size={13} style={{ color: data.tickerWeather ? accentColor : "#666" }} />
-            <div>
-              <span className="text-xs font-semibold" style={{ color: data.tickerWeather ? "#e0e0e0" : "#888" }}>Previsão do Tempo</span>
-              <p className="text-[9px]" style={{ color: "#555" }}>Tempo atual e previsão para amanhã</p>
-            </div>
-          </label>
-
-          {/* Manual ticker text */}
-          <textarea
-            value={data.ticker}
-            onChange={e => setData({ ...data, ticker: e.target.value })}
-            placeholder="Texto adicional do ticker (opcional)..."
-            rows={2}
-            className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-none"
-            style={{ backgroundColor: "#1e1e24", color: "#e0e0e0", border: "1px solid #ffffff10" }}
-            onBlur={onFieldBlur}
-          />
-        </div>
-
-        {/* XML Link – permanent URL via Edge Function */}
-        <XmlLinkRow label="Broadcast XML" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`} />
       </div>
 
-      {/* ── Right: Mockup Preview ── */}
-      <div className="flex-1 flex items-center justify-center">
-        <MockupPreview
-          empresaLogo={empresaLogo}
-          programaNome={programaNome}
-          programaLogo={programaLogo}
-          displayLocutor={displayLocutor}
-          locutorInstagram={locutorInstagram}
-          locutorFoto={locutorFoto}
-          accentColor={accentColor}
-          assunto={data.assunto}
-          showQrCode={data.showQrCode}
-          whatsappNumber={whatsappNumber}
-          empresaSocials={empresaSocials}
-          composedTicker={composedTicker}
-          sponsorLogos={sponsorLogos}
-        />
+      {/* ── Bottom: Form controls in compact grid ── */}
+      <div className="flex-1 overflow-y-auto px-2 pb-4" style={{ maxHeight: "calc(100vh - 520px)" }}>
+        <div className="mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style={{ maxWidth: 960 }}>
+
+          {/* Card: Assunto + Locutor */}
+          <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-icon-color, #888)" }}>Identidade</h3>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Assunto / Título</label>
+              <input
+                type="text"
+                value={data.assunto}
+                onChange={e => setData({ ...data, assunto: e.target.value })}
+                placeholder="Base para assunto"
+                className="w-full px-3 py-2 rounded-xl text-xs outline-none"
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "none" }}
+                onBlur={onFieldBlur}
+              />
+            </div>
+
+            <div className="space-y-1 relative">
+              <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Locutor (override)</label>
+              <div className="relative">
+                <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-icon-color, #888)" }} />
+                <input
+                  type="text"
+                  value={data.locutor_override}
+                  onChange={async e => {
+                    const val = e.target.value;
+                    setData({ ...data, locutor_override: val });
+                    if (val.trim().length >= 2 && user) {
+                      const { data: results } = await supabase
+                        .from("apresentadores")
+                        .select("nome, instagram, foto")
+                        .eq("user_id", user.id)
+                        .ilike("nome", `%${val.trim()}%`)
+                        .limit(5);
+                      setLocutorSearchResults(results || []);
+                      setShowLocutorDropdown(true);
+                    } else {
+                      setLocutorSearchResults([]);
+                      setShowLocutorDropdown(false);
+                    }
+                  }}
+                  onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
+                  onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
+                  placeholder={locutorNome || "Buscar locutor..."}
+                  className="w-full pl-7 pr-3 py-2 rounded-xl text-xs outline-none"
+                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "none" }}
+                />
+              </div>
+              {showLocutorDropdown && locutorSearchResults.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 rounded-xl shadow-lg overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #fff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}>
+                  {locutorSearchResults.map((r, i) => (
+                    <button
+                      key={i}
+                      onMouseDown={e => {
+                        e.preventDefault();
+                        setData({ ...data, locutor_override: r.nome });
+                        if (r.instagram) setLocutorInstagram(r.instagram.startsWith("@") ? r.instagram : `@${r.instagram}`);
+                        if (r.foto) setLocutorFoto(r.foto);
+                        setShowLocutorDropdown(false);
+                        setLocutorSearchResults([]);
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs hover:brightness-110 transition-all flex items-center gap-2"
+                      style={{ color: "var(--layout-page-text, #1a1a1a)", borderBottom: i < locutorSearchResults.length - 1 ? "1px solid color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)" : "none" }}
+                    >
+                      {r.foto && <img src={r.foto} alt="" className="w-6 h-6 rounded-full object-cover" />}
+                      <span className="font-semibold flex-1 truncate">{r.nome}</span>
+                      {r.instagram && <span className="text-[10px]" style={{ color: "var(--layout-accent-color, #dc2626)" }}>@{r.instagram.replace("@", "")}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card: Redes Sociais */}
+          <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-icon-color, #888)" }}>Redes Sociais</h3>
+            {empresaSocials.length === 0 ? (
+              <p className="text-[10px]" style={{ color: "var(--layout-icon-color, #888)" }}>Nenhuma rede social cadastrada.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {empresaSocials.map((s, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
+                    <span style={{ color: "var(--layout-accent-color, #dc2626)" }}>{s.icon}</span>
+                    <span className="text-[11px]" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{s.valor}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {whatsappNumber && (
+              <label className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer mt-1" style={{ backgroundColor: data.showQrCode ? "color-mix(in srgb, var(--layout-accent-color, #dc2626) 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
+                <input
+                  type="checkbox"
+                  checked={data.showQrCode}
+                  onChange={e => { setData({ ...data, showQrCode: e.target.checked }); setTimeout(onFieldBlur, 100); }}
+                  className="accent-current"
+                  style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
+                />
+                <MessageCircle size={12} style={{ color: data.showQrCode ? "var(--layout-accent-color, #dc2626)" : "var(--layout-icon-color, #888)" }} />
+                <div>
+                  <span className="text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>QR Code WhatsApp</span>
+                  <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>Exibir QR Code para enviar mensagem</p>
+                </div>
+              </label>
+            )}
+          </div>
+
+          {/* Card: Ticker */}
+          <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-icon-color, #888)" }}>Ticker</h3>
+
+            <label className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer" style={{ backgroundColor: data.tickerNews ? "color-mix(in srgb, var(--layout-accent-color, #dc2626) 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
+              <input
+                type="checkbox"
+                checked={data.tickerNews}
+                onChange={e => { setData({ ...data, tickerNews: e.target.checked }); setTimeout(onFieldBlur, 100); }}
+                className="accent-current"
+                style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
+              />
+              <Newspaper size={12} style={{ color: data.tickerNews ? "var(--layout-accent-color, #dc2626)" : "var(--layout-icon-color, #888)" }} />
+              <div>
+                <span className="text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Notícias</span>
+                <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>Títulos das últimas notícias</p>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer" style={{ backgroundColor: data.tickerWeather ? "color-mix(in srgb, var(--layout-accent-color, #dc2626) 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
+              <input
+                type="checkbox"
+                checked={data.tickerWeather}
+                onChange={e => { setData({ ...data, tickerWeather: e.target.checked }); setTimeout(onFieldBlur, 100); }}
+                className="accent-current"
+                style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
+              />
+              <CloudSun size={12} style={{ color: data.tickerWeather ? "var(--layout-accent-color, #dc2626)" : "var(--layout-icon-color, #888)" }} />
+              <div>
+                <span className="text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Previsão do Tempo</span>
+                <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>Tempo atual e amanhã</p>
+              </div>
+            </label>
+
+            <textarea
+              value={data.ticker}
+              onChange={e => setData({ ...data, ticker: e.target.value })}
+              placeholder="Texto adicional (opcional)..."
+              rows={2}
+              className="w-full px-3 py-2 rounded-xl text-[11px] outline-none resize-none"
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "none" }}
+              onBlur={onFieldBlur}
+            />
+
+            <XmlLinkRow label="Broadcast XML" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`} />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -523,13 +524,11 @@ function MockupPreview({
 
   return (
     <div
-      className="relative w-full rounded-xl overflow-hidden"
+      className="relative w-full rounded-2xl overflow-hidden"
       style={{
         aspectRatio: "16/9",
-        maxWidth: 900,
         backgroundColor: "#0a0a0a",
-        border: "1px solid #ffffff12",
-        boxShadow: "0 20px 60px -15px rgba(0,0,0,0.8)",
+        boxShadow: "0 24px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
       }}
     >
       {/* Safe area guides (invisible but layout-based on 1920x1080 proportions) */}
