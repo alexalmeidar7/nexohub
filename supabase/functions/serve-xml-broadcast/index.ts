@@ -19,6 +19,9 @@ const timeToSeconds = (value: string | null | undefined): number => {
   return Number.isFinite(total) ? total : -1;
 };
 
+const normalizeDateValue = (value: string | null | undefined): string =>
+  (value || "").trim().slice(0, 10);
+
 const getCurrentProgramSortKey = (
   nowSeconds: number,
   startTime: string | null | undefined,
@@ -26,15 +29,24 @@ const getCurrentProgramSortKey = (
   weekDays: string[] | null | undefined,
   todayName: string,
   yesterdayName: string,
+  isVariable: boolean | null | undefined,
+  programDate: string | null | undefined,
+  todayDate: string,
+  yesterdayDate: string,
 ): number => {
   const startSeconds = timeToSeconds(startTime);
   const endSeconds = timeToSeconds(endTime);
   const days = Array.isArray(weekDays) ? weekDays : [];
+  const normalizedProgramDate = normalizeDateValue(programDate);
 
   if (startSeconds < 0 || endSeconds < 0) return -1;
 
-  const runsToday = days.includes(todayName);
-  const ranYesterday = days.includes(yesterdayName);
+  const runsToday = isVariable
+    ? normalizedProgramDate === todayDate
+    : days.includes(todayName);
+  const ranYesterday = isVariable
+    ? normalizedProgramDate === yesterdayDate
+    : days.includes(yesterdayName);
   const crossesMidnight = endSeconds <= startSeconds;
 
   if (!crossesMidnight) {
@@ -54,8 +66,37 @@ const getCurrentProgramSortKey = (
   return -1;
 };
 
-const normalizeImageUrl = (value: string | null | undefined): string =>
-  (value || "").trim().replace(/\.webp(?=($|\?))/i, ".png");
+const normalizeImageUrl = (value: string | null | undefined): string => {
+  const trimmed = (value || "").trim();
+
+  if (!trimmed || trimmed.startsWith("data:")) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+
+    if (
+      parsed.pathname.includes("/storage/v1/object/public/") &&
+      /\.webp$/i.test(parsed.pathname)
+    ) {
+      parsed.pathname = parsed.pathname.replace(
+        "/storage/v1/object/public/",
+        "/storage/v1/render/image/public/",
+      );
+
+      if (!parsed.searchParams.has("width")) {
+        parsed.searchParams.set("width", "512");
+      }
+
+      return parsed.toString();
+    }
+
+    return trimmed;
+  } catch {
+    return trimmed;
+  }
+};
 
 const SOCIAL_ICONS: Record<string, string> = {
   instagram: "https://img.icons8.com/ios-filled/100/000000/instagram-new.png",
@@ -114,6 +155,12 @@ serve(async (req) => {
       timeZone: "America/Sao_Paulo",
       weekday: "long",
     });
+    const dateFormatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const dayMap: Record<string, string> = {
       "domingo": "Domingo",
@@ -126,6 +173,8 @@ serve(async (req) => {
     };
     const todayName = dayMap[dayFormatter.format(now).toLowerCase()] || "Segunda";
     const yesterdayName = dayMap[dayFormatter.format(yesterday).toLowerCase()] || "Domingo";
+    const todayDate = dateFormatter.format(now);
+    const yesterdayDate = dateFormatter.format(yesterday);
 
     const [empRes, progsRes, roteiroRes, settingsRes] = await Promise.all([
       supabase
@@ -135,7 +184,7 @@ serve(async (req) => {
         .maybeSingle(),
       supabase
         .from("programas")
-        .select("id, nome, selo, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim")
+        .select("id, nome, selo, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim, variavel, data_variavel")
         .eq("user_id", userId)
         .eq("ativo", true),
       supabase
@@ -164,6 +213,10 @@ serve(async (req) => {
           item.dias_semana,
           todayName,
           yesterdayName,
+          item.variavel,
+          item.data_variavel,
+          todayDate,
+          yesterdayDate,
         ),
       }))
       .filter((entry) => entry.sortKey >= 0)
