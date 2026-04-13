@@ -1400,96 +1400,92 @@ export default function CenarioTela() {
                      alignItems: "stretch",
                      zIndex: 15,
                    }}>
-                     {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
-                     <div style={{
-                       width: `${vhToPx(16)}${vu}`,
-                       height: `${vhToPx(16)}${vu}`,
-                       borderRadius: `${vhToPx(2)}${vu}`,
-                       background: `linear-gradient(145deg, ${accentRgba(0.7)}, ${accentRgba(0.4)})`,
-                       backdropFilter: "blur(20px)",
-                       WebkitBackdropFilter: "blur(20px)",
-                       padding: `${vhToPx(0.9)}${vu}`,
-                       boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 ${accentRgba(0.3)}`,
-                       border: `1px solid ${accentRgba(0.3)}`,
-                       display: "flex",
-                       flexDirection: "column",
-                       gap: `${vhToPx(0.6)}${vu}`,
-                       zIndex: 2,
-                       position: "relative",
-                       flexShrink: 0,
-                     }}>
-                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: `${vhToPx(0.6)}${vu}`, minWidth: 0 }}>
-                         <div style={{ minWidth: 0, flex: 1 }}>
-                           <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.35)}${vu}`, minWidth: 0 }}>
-                             <Mic size={Number(vhToPx(1))} style={{ opacity: 0.8, flexShrink: 0 }} />
-                             <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.05)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram?.apresentador || ""}</span>
-                           </div>
-                         </div>
-                         {currentProgram?.selo && (
-                           <img src={currentProgram.selo} alt="" style={{ maxHeight: `${vhToPx(3.2)}${vu}`, maxWidth: `${vhToPx(4.8)}${vu}`, flexShrink: 0, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
-                         )}
-                       </div>
+                      {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
+                      <div style={{
+                        width: `${vhToPx(16)}${vu}`,
+                        height: `${vhToPx(16)}${vu}`,
+                        borderRadius: `${vhToPx(2)}${vu}`,
+                        background: `linear-gradient(145deg, ${accentRgba(0.7)}, ${accentRgba(0.4)})`,
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 ${accentRgba(0.3)}`,
+                        border: `1px solid ${accentRgba(0.3)}`,
+                        zIndex: 2,
+                        position: "relative",
+                        flexShrink: 0,
+                        overflow: "hidden",
+                      }}>
+                        {/* Presenter photo anchored at bottom */}
+                        {currentProgram?.apresentadorFoto && (
+                          <img
+                            src={currentProgram.apresentadorFoto}
+                            alt=""
+                            style={{
+                              position: "absolute",
+                              bottom: 0,
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              height: "140%",
+                              width: "auto",
+                              objectFit: "contain",
+                              filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
+                              pointerEvents: "none",
+                            }}
+                          />
+                        )}
+                        {/* Selo top-right */}
+                        {currentProgram?.selo && (
+                          <img src={currentProgram.selo} alt="" style={{ position: "absolute", top: `${vhToPx(0.8)}${vu}`, right: `${vhToPx(0.8)}${vu}`, maxHeight: `${vhToPx(3.2)}${vu}`, maxWidth: `${vhToPx(4.8)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))", zIndex: 3 }} />
+                        )}
+                        {/* Presenter name at bottom */}
+                        <div style={{ position: "absolute", bottom: `${vhToPx(1)}${vu}`, left: `${vhToPx(1)}${vu}`, right: `${vhToPx(1)}${vu}`, zIndex: 3 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}` }}>
+                            <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
+                            <span style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
+                          </div>
+                        </div>
+                      </div>
 
-                       <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                         {currentProgram?.apresentadorFoto && (
-                           <img
-                             src={currentProgram.apresentadorFoto}
-                             alt=""
-                             style={{
-                               maxHeight: `${vhToPx(8.6)}${vu}`,
-                               maxWidth: "100%",
-                               objectFit: "contain",
-                               filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
-                             }}
-                           />
-                         )}
-                       </div>
-
-                       <div style={{ minHeight: 0 }}>
-                         {musicData ? (
-                           <div key={musicKey} style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                             <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.25)}${vu}` }}>
-                               <Music size={Number(vhToPx(0.85))} style={{ opacity: 0.7, flexShrink: 0 }} />
-                               <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", fontSize: `${vhToPx(0.72)}${vu}`, opacity: 0.7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Tocando Agora</span>
-                             </div>
-                             <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, lineHeight: 1.15, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
-                             <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.95)}${vu}`, opacity: 0.7, marginTop: `${vhToPx(0.15)}${vu}`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
-                           </div>
-                         ) : currentProgram ? (
-                           <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram.nome}</div>
-                         ) : null}
-                       </div>
-                     </div>
-
-                     {/* ── BOX CAPA: slides out from behind locutor ── */}
-                     {musicData?.capa && !isBreakTrack && (
-                       <div
-                         key={musicData.capa}
-                         style={{
-                           width: `${vhToPx(16)}${vu}`,
-                           height: `${vhToPx(16)}${vu}`,
-                           borderRadius: `${vhToPx(2)}${vu}`,
-                           overflow: "hidden",
-                           boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 ${accentRgba(0.3)}`,
-                           border: `1px solid ${accentRgba(0.3)}`,
-                           flexShrink: 0,
-                           zIndex: 1,
-                           marginLeft: `-${vhToPx(1)}${vu}`,
-                           animation: "cenario-capa-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both",
-                         }}
-                       >
-                         <img
-                           src={musicData.capa}
-                           alt=""
-                           style={{
-                             width: "100%",
-                             height: "100%",
-                             objectFit: "cover",
-                           }}
-                         />
-                       </div>
-                     )}
-                   </div>
+                      {/* ── BOX CAPA: music cover with title overlay ── */}
+                      {musicData?.capa && !isBreakTrack && (
+                        <div
+                          key={musicData.capa}
+                          style={{
+                            width: `${vhToPx(16)}${vu}`,
+                            height: `${vhToPx(16)}${vu}`,
+                            borderRadius: `${vhToPx(2)}${vu}`,
+                            overflow: "hidden",
+                            boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 ${accentRgba(0.3)}`,
+                            border: `1px solid ${accentRgba(0.3)}`,
+                            flexShrink: 0,
+                            zIndex: 1,
+                            marginLeft: `-${vhToPx(1)}${vu}`,
+                            animation: "cenario-capa-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both",
+                            position: "relative",
+                          }}
+                        >
+                          <img
+                            src={musicData.capa}
+                            alt=""
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                          />
+                          {/* Gradient overlay at bottom for text readability */}
+                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "50%", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)", pointerEvents: "none" }} />
+                          {/* Music title + artist */}
+                          <div key={musicKey} style={{ position: "absolute", bottom: `${vhToPx(1)}${vu}`, left: `${vhToPx(1)}${vu}`, right: `${vhToPx(1)}${vu}`, zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.3)}${vu}` }}>
+                              <Music size={Number(vhToPx(1.1))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
+                            </div>
+                            <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, lineHeight: 1.15, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
+                            <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.95)}${vu}`, opacity: 0.8, marginTop: `${vhToPx(0.15)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>{musicData.artista}</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     {/* ── Sponsor logos (centered below locutor + capa boxes) ── */}
                     {sponsorLogos.length > 0 && (
