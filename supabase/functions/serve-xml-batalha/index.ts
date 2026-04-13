@@ -6,6 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const LEGACY_UNTOUCHED_PERCENTAGE = 50;
+
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 
@@ -48,15 +50,21 @@ serve(async (req) => {
 
     const a1 = (battle?.artista1 ?? {}) as Record<string, unknown>;
     const a2 = (battle?.artista2 ?? {}) as Record<string, unknown>;
+    const rawPct1 = typeof a1.porcentagem === "number" ? a1.porcentagem : 0;
+    const rawPct2 = typeof a2.porcentagem === "number" ? a2.porcentagem : 0;
+    const isLegacyUntouchedState =
+      battle?.percentagesTouched !== true &&
+      rawPct1 === LEGACY_UNTOUCHED_PERCENTAGE &&
+      rawPct2 === LEGACY_UNTOUCHED_PERCENTAGE;
 
     const nome1 = typeof a1.nome === "string" ? a1.nome : "";
     const musica1 = typeof a1.musica === "string" ? a1.musica : "";
-    const pct1 = typeof a1.porcentagem === "number" ? a1.porcentagem : 50;
+    const pct1 = isLegacyUntouchedState ? 0 : rawPct1;
     const img1 = typeof a1.imagemUrl === "string" ? a1.imagemUrl : "";
 
     const nome2 = typeof a2.nome === "string" ? a2.nome : "";
     const musica2 = typeof a2.musica === "string" ? a2.musica : "";
-    const pct2 = typeof a2.porcentagem === "number" ? a2.porcentagem : 50;
+    const pct2 = isLegacyUntouchedState ? 0 : rawPct2;
     const img2 = typeof a2.imagemUrl === "string" ? a2.imagemUrl : "";
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>

@@ -16,6 +16,7 @@ interface Artista {
 interface BattleState {
   artista1: Artista;
   artista2: Artista;
+  percentagesTouched: boolean;
 }
 
 const EMPTY_ARTIST: Artista = {
@@ -27,6 +28,7 @@ const EMPTY_ARTIST: Artista = {
 
 const LOCAL_STORAGE_KEY = "vmix-batalha-musical";
 const SETTINGS_KEY = "batalha_musical";
+const LEGACY_UNTOUCHED_PERCENTAGE = 50;
 
 function clampPercentage(value: unknown) {
   const parsed = typeof value === "number" ? value : Number(value);
@@ -49,8 +51,18 @@ function normalizeBattleState(value: unknown): BattleState {
   const battle = value && typeof value === "object" ? value as Partial<BattleState> : {};
   const artista1 = normalizeArtista(battle.artista1);
   const artista2 = normalizeArtista(battle.artista2);
+  const isLegacyUntouchedState =
+    battle.percentagesTouched !== true &&
+    artista1.porcentagem === LEGACY_UNTOUCHED_PERCENTAGE &&
+    artista2.porcentagem === LEGACY_UNTOUCHED_PERCENTAGE;
 
-  return { artista1, artista2 };
+  return {
+    artista1: isLegacyUntouchedState ? { ...artista1, porcentagem: 0 } : artista1,
+    artista2: isLegacyUntouchedState ? { ...artista2, porcentagem: 0 } : artista2,
+    percentagesTouched: typeof battle.percentagesTouched === "boolean"
+      ? battle.percentagesTouched
+      : !isLegacyUntouchedState && (artista1.porcentagem !== 0 || artista2.porcentagem !== 0),
+  };
 }
 
 
@@ -77,6 +89,7 @@ export default function BatalhaMusicalPage() {
   const { user } = useAuth();
   const [artista1, setArtista1] = useState<Artista>({ ...EMPTY_ARTIST });
   const [artista2, setArtista2] = useState<Artista>({ ...EMPTY_ARTIST });
+  const [percentagesTouched, setPercentagesTouched] = useState(false);
   const [loading1, setLoading1] = useState(false);
   const [loading2, setLoading2] = useState(false);
   const [hasLoadedState, setHasLoadedState] = useState(false);
@@ -101,6 +114,7 @@ export default function BatalhaMusicalPage() {
 
       setArtista1(state.artista1);
       setArtista2(state.artista2);
+      setPercentagesTouched(state.percentagesTouched);
     };
 
     const loadState = async () => {
@@ -152,7 +166,7 @@ export default function BatalhaMusicalPage() {
   useEffect(() => {
     if (!hasLoadedState) return;
 
-    const payload: BattleState = { artista1, artista2 };
+    const payload: BattleState = { artista1, artista2, percentagesTouched };
 
     try {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
@@ -197,7 +211,7 @@ export default function BatalhaMusicalPage() {
     }, 600);
 
     return () => clearTimeout(saveTimeout.current);
-  }, [artista1, artista2, hasLoadedState, user]);
+  }, [artista1, artista2, hasLoadedState, percentagesTouched, user]);
 
   // Fetch artist 1 image on name change (debounced)
   useEffect(() => {
@@ -275,8 +289,9 @@ export default function BatalhaMusicalPage() {
 
   const updateArtista1 = (field: keyof Artista, value: string | number) => {
     if (field === "porcentagem") {
-      setArtista1(prev => ({ ...prev, porcentagem: value as number }));
-      setArtista2(prev => ({ ...prev, porcentagem: 100 - (value as number) }));
+      const nextValue = clampPercentage(value);
+      setPercentagesTouched(true);
+      setArtista1(prev => ({ ...prev, porcentagem: nextValue }));
     } else if (field === "nome") {
       setArtista1(prev => ({ ...prev, nome: value as string }));
     } else {
@@ -286,8 +301,9 @@ export default function BatalhaMusicalPage() {
 
   const updateArtista2 = (field: keyof Artista, value: string | number) => {
     if (field === "porcentagem") {
-      setArtista2(prev => ({ ...prev, porcentagem: value as number }));
-      setArtista1(prev => ({ ...prev, porcentagem: 100 - (value as number) }));
+      const nextValue = clampPercentage(value);
+      setPercentagesTouched(true);
+      setArtista2(prev => ({ ...prev, porcentagem: nextValue }));
     } else if (field === "nome") {
       setArtista2(prev => ({ ...prev, nome: value as string }));
     } else {
