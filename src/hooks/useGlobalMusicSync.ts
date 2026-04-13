@@ -15,7 +15,8 @@ function isPlaceholderTrack(data: { titulo?: string; artista?: string }) {
   return (titulo === "" || titulo === "sem título" || titulo === "sem titulo") && (artista === "" || artista === "desconhecido");
 }
 
-function parseXml(xmlStr: string) {
+/** Returns parsed data, or "stopped" if the XML is valid but has no track, or null on parse error */
+function parseXml(xmlStr: string): { titulo: string; artista: string; duracao: number; capa: string } | "stopped" | null {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(xmlStr, "application/xml");
@@ -24,7 +25,8 @@ function parseXml(xmlStr: string) {
     const rawArtista = doc.querySelector("interprete")?.textContent || doc.querySelector("nome_interprete")?.textContent || doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "";
     const titulo = normalizeMusicText(rawTitulo);
     const artista = normalizeMusicText(rawArtista);
-    if (!titulo && !artista) return null;
+    const categoria = (doc.querySelector("categoria")?.textContent || "").trim().toUpperCase();
+    if (!titulo && !artista) return categoria === "STOPPED" || categoria === "" ? "stopped" : null;
     const duracaoStr = doc.querySelector("duracao")?.textContent || doc.querySelector("duration")?.textContent || "0";
     const capa = doc.querySelector("capa")?.textContent || doc.querySelector("cover")?.textContent || "";
     let duracao = 0;
@@ -93,6 +95,7 @@ export function useGlobalMusicSync() {
   const directFetchOkRef = useRef<boolean | null>(null);
   const fetchCountRef = useRef(0);
   const lastLocalSyncAtRef = useRef(0);
+  const onlineStoppedRef = useRef(false);
 
   useEffect(() => {
     if (!user) return;
@@ -296,7 +299,8 @@ export function useGlobalMusicSync() {
           const text = await res.text();
           if (!text) return false;
           const data = parseXml(text);
-          if (!data) return false;
+          if (!data || data === "stopped") return false;
+          if (isPlaceholderTrack(data)) return false;
           lastLocalSyncAtRef.current = Date.now();
           fetchCoverAsync(data);
           applyMusicData(data);
@@ -308,28 +312,57 @@ export function useGlobalMusicSync() {
         }
       };
 
-      const syncOnline = async () => {
-        if (!useOnline || !url) return;
-        const localSourceHealthy = useLocal
+      const syncOnline = async (): Promise<"ok" | "stopped" | "skip"> => {
+        if (!useOnline || !url) return "skip";
+
+        // When online is NOT stopped, respect local source grace period
+        const localSourceHealthy = !onlineStoppedRef.current
+          && useLocal
           && !!localFileName
           && lastLocalSyncAtRef.current > 0
           && Date.now() - lastLocalSyncAtRef.current < LOCAL_SOURCE_GRACE_MS;
 
-        if (localSourceHealthy) return;
+        if (localSourceHealthy) return "skip";
 
         const text = await fetchXmlFromUrl(url);
-        if (!text) return;
+        if (!text) return "skip";
 
         const data = parseXml(text);
-        if (!data) return;
+        if (data === "stopped") {
+          onlineStoppedRef.current = true;
+          return "stopped";
+        }
+        if (!data) return "skip";
 
+        onlineStoppedRef.current = false;
         fetchCoverAsync(data);
         applyMusicData(data);
         localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
+        return "ok";
       };
 
-      await syncLocalFromStorage();
-      await syncOnline();
+      // Run online FIRST so we can detect STOPPED before local runs
+      const onlineResult = await syncOnline();
+
+      // If online is STOPPED, try local — it might have fresher data
+      // If online is OK, still try local (it will be skipped if same data)
+      const localSynced = await syncLocalFromStorage();
+
+      // If online is STOPPED and local also didn't provide real data,
+      // clear stale music from localStorage so UI shows "Aguardando"
+      if (onlineResult === "stopped" && !localSynced) {
+        const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
+        const prevStart = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
+        if (prevRaw && prevStart > 0) {
+          const ageMs = Date.now() - prevStart;
+          const prev = JSON.parse(prevRaw) as { duracao?: number };
+          const maxAge = Math.max(15 * 60 * 1000, (prev.duracao || 0) * 1000 + 120000);
+          if (ageMs > maxAge) {
+            localStorage.removeItem(MUSIC_DATA_KEY);
+            localStorage.removeItem(MUSIC_START_KEY);
+          }
+        }
+      }
 
       // If no configured source, still keep history from current canonical localStorage
       if ((!useOnline || !url) && (!useLocal || !localFileName)) {
