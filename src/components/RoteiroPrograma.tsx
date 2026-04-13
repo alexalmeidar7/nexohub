@@ -638,7 +638,7 @@ export default function RoteiroPrograma() {
               className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:brightness-110 flex items-center justify-center gap-2 disabled:opacity-40"
               style={{ backgroundColor: "var(--layout-accent-color, #dc2626)", color: "#fff" }}
             >
-              <Check size={14} /> {txtSaving ? "Salvando..." : "Salvar Roteiro"}
+              <Check size={14} /> {txtSaving ? "Atualizando..." : "Atualizar Roteiro"}
             </button>
           </div>
         </div>
