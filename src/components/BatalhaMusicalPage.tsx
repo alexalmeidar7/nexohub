@@ -21,7 +21,7 @@ interface BattleState {
 const EMPTY_ARTIST: Artista = {
   nome: "",
   musica: "",
-  porcentagem: 50,
+  porcentagem: 0,
   imagemUrl: "",
 };
 
