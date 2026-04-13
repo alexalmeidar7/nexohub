@@ -1353,7 +1353,7 @@ export default function CenarioTela() {
 
                    {/* ── TOP-LEFT: Big neon clock + date + SYNC ── */}
                    <div style={{ position: "absolute", top: `${vhToPx(3)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
-                     <div style={{ fontWeight: 900, fontSize: `${vhToPx(3.4)}${vu}`, fontVariantNumeric: "tabular-nums", lineHeight: 1, color: "#fff", textShadow: `0 0 20px ${accentRgba(0.6)}, 0 0 40px ${accentRgba(0.3)}`, letterSpacing: "-0.02em" }}>
+                     <div style={{ fontWeight: 900, fontSize: `${vhToPx(2.4)}${vu}`, fontVariantNumeric: "tabular-nums", lineHeight: 1, color: "#fff", letterSpacing: "-0.02em" }}>
                        {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                      </div>
                      <div style={{ fontWeight: 600, fontSize: `${vhToPx(0.9)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.16)}${vu}` }}>
