@@ -127,6 +127,14 @@ export function useGlobalMusicSync() {
       const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
 
       if (songChanged) {
+        // Guard: if localStorage was updated very recently (< 5s) with a different song,
+        // another source (e.g. MusicaNoAr local file monitor) likely has fresher data — skip
+        const existingStartStr = localStorage.getItem(MUSIC_START_KEY);
+        if (existingStartStr && prev) {
+          const age = Date.now() - parseInt(existingStartStr, 10);
+          if (age < 5000) return; // recent update — don't overwrite
+        }
+
         const now = Date.now();
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
         localStorage.setItem(MUSIC_START_KEY, now.toString());
