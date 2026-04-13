@@ -320,8 +320,8 @@ export default function BatalhaMusicalPage() {
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-batalha?user_id=${user.id}`
     : "";
 
-  const color1 = "#3b82f6";
-  const color2 = "#ef4444";
+  // Use theme accent color for artista 1, and a complementary tone for artista 2
+  const accentColor = "var(--layout-accent-color)";
 
   // --- Scheduling state ---
   const [schedDate, setSchedDate] = useState("");
@@ -427,75 +427,77 @@ export default function BatalhaMusicalPage() {
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-3">
-          <Swords className="h-7 w-7 text-yellow-400" />
-          <h2 className="text-2xl font-bold text-white tracking-tight">Batalha Musical</h2>
-          <Swords className="h-7 w-7 text-yellow-400 scale-x-[-1]" />
+          <Swords className="h-7 w-7" style={{ color: accentColor }} />
+          <h2 className="text-2xl font-bold tracking-tight" style={{ color: "var(--layout-widget-text)" }}>Batalha Musical</h2>
+          <Swords className="h-7 w-7 scale-x-[-1]" style={{ color: accentColor }} />
         </div>
-        <p className="text-white/40 text-sm">Configure os artistas e acompanhe a disputa</p>
+        <p className="text-sm opacity-50" style={{ color: "var(--layout-widget-text)" }}>Configure os artistas e acompanhe a disputa</p>
       </div>
 
       {/* Battle bar */}
-      <div className="relative h-12 rounded-2xl overflow-hidden border border-white/10" style={{ background: "rgba(0,0,0,0.3)" }}>
+      <div className="relative h-12 rounded-2xl overflow-hidden" style={{ background: "var(--layout-widget-bg)", border: "1px solid var(--layout-border-color)" }}>
         <div
           className="absolute inset-y-0 left-0 transition-all duration-500 ease-out flex items-center justify-center"
-          style={{ width: `${artista1.porcentagem}%`, background: `linear-gradient(90deg, ${color1}, ${color1}cc)` }}
+          style={{ width: `${artista1.porcentagem}%`, background: accentColor }}
         >
           {artista1.porcentagem > 15 && (
-            <span className="text-white font-bold text-sm drop-shadow">{artista1.nome || "Artista 1"} — {artista1.porcentagem}%</span>
+            <span className="font-bold text-sm drop-shadow" style={{ color: "var(--layout-button-text)" }}>{artista1.nome || "Artista 1"} — {artista1.porcentagem}%</span>
           )}
         </div>
         <div
           className="absolute inset-y-0 right-0 transition-all duration-500 ease-out flex items-center justify-center"
-          style={{ width: `${artista2.porcentagem}%`, background: `linear-gradient(90deg, ${color2}cc, ${color2})` }}
+          style={{ width: `${artista2.porcentagem}%`, background: "var(--layout-header-bg)" }}
         >
           {artista2.porcentagem > 15 && (
-            <span className="text-white font-bold text-sm drop-shadow">{artista2.nome || "Artista 2"} — {artista2.porcentagem}%</span>
+            <span className="font-bold text-sm drop-shadow" style={{ color: "var(--layout-header-text)" }}>{artista2.nome || "Artista 2"} — {artista2.porcentagem}%</span>
           )}
         </div>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-          <span className="bg-black/70 text-yellow-400 font-black text-xs px-2 py-1 rounded-full border border-yellow-400/30">VS</span>
+          <span className="font-black text-xs px-2 py-1 rounded-full" style={{ background: "var(--layout-widget-bg)", color: accentColor, border: `1px solid ${accentColor}` }}>VS</span>
         </div>
       </div>
 
       {/* Artists cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Artista 1 */}
-        <div className="rounded-2xl p-5 space-y-4" style={{ background: "rgba(0,0,0,0.35)", border: `1px solid ${color1}33` }}>
+        <div className="rounded-2xl p-5 space-y-4" style={{ background: "var(--layout-widget-bg)", border: "1px solid var(--layout-border-color)" }}>
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-3 h-3 rounded-full" style={{ background: color1 }} />
-            <h3 className="text-white font-bold text-sm uppercase tracking-wider">Artista 1</h3>
-            {loading1 && <Loader2 className="h-3 w-3 animate-spin text-white/40" />}
+            <div className="w-3 h-3 rounded-full" style={{ background: accentColor }} />
+            <h3 className="font-bold text-sm uppercase tracking-wider" style={{ color: "var(--layout-widget-text)" }}>Artista 1</h3>
+            {loading1 && <Loader2 className="h-3 w-3 animate-spin opacity-40" style={{ color: "var(--layout-widget-text)" }} />}
           </div>
 
           {/* Artist image preview */}
           {artista1.imagemUrl && (
             <div className="flex justify-center">
-              <img src={artista1.imagemUrl} alt={artista1.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: `${color1}66` }} />
+              <img src={artista1.imagemUrl} alt={artista1.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: accentColor }} />
             </div>
           )}
 
           <div className="space-y-3">
             <div>
-              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">Nome do Artista</label>
+              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Nome do Artista</label>
               <Input
                 value={artista1.nome}
                 onChange={e => updateArtista1("nome", e.target.value)}
                 placeholder="Ex: Bruno Mars"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 h-10"
+                className="h-10 rounded-[14px] border-0"
+                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
               />
             </div>
             <div>
-              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">Música</label>
+              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Música</label>
               <Input
                 value={artista1.musica}
                 onChange={e => updateArtista1("musica", e.target.value)}
                 placeholder="Ex: Uptown Funk"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 h-10"
+                className="h-10 rounded-[14px] border-0"
+                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
               />
             </div>
             <div>
-              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">
-                Porcentagem: <span className="text-white font-bold">{artista1.porcentagem}%</span>
+              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>
+                Porcentagem: <span className="font-bold opacity-100" style={{ color: "var(--layout-widget-text)" }}>{artista1.porcentagem}%</span>
               </label>
               <Slider
                 value={[artista1.porcentagem]}
@@ -510,42 +512,44 @@ export default function BatalhaMusicalPage() {
         </div>
 
         {/* Artista 2 */}
-        <div className="rounded-2xl p-5 space-y-4" style={{ background: "rgba(0,0,0,0.35)", border: `1px solid ${color2}33` }}>
+        <div className="rounded-2xl p-5 space-y-4" style={{ background: "var(--layout-widget-bg)", border: "1px solid var(--layout-border-color)" }}>
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-3 h-3 rounded-full" style={{ background: color2 }} />
-            <h3 className="text-white font-bold text-sm uppercase tracking-wider">Artista 2</h3>
-            {loading2 && <Loader2 className="h-3 w-3 animate-spin text-white/40" />}
+            <div className="w-3 h-3 rounded-full" style={{ background: "var(--layout-header-bg)" }} />
+            <h3 className="font-bold text-sm uppercase tracking-wider" style={{ color: "var(--layout-widget-text)" }}>Artista 2</h3>
+            {loading2 && <Loader2 className="h-3 w-3 animate-spin opacity-40" style={{ color: "var(--layout-widget-text)" }} />}
           </div>
 
           {/* Artist image preview */}
           {artista2.imagemUrl && (
             <div className="flex justify-center">
-              <img src={artista2.imagemUrl} alt={artista2.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: `${color2}66` }} />
+              <img src={artista2.imagemUrl} alt={artista2.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: "var(--layout-header-bg)" }} />
             </div>
           )}
 
           <div className="space-y-3">
             <div>
-              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">Nome do Artista</label>
+              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Nome do Artista</label>
               <Input
                 value={artista2.nome}
                 onChange={e => updateArtista2("nome", e.target.value)}
                 placeholder="Ex: The Weeknd"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 h-10"
+                className="h-10 rounded-[14px] border-0"
+                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
               />
             </div>
             <div>
-              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">Música</label>
+              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Música</label>
               <Input
                 value={artista2.musica}
                 onChange={e => updateArtista2("musica", e.target.value)}
                 placeholder="Ex: Blinding Lights"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 h-10"
+                className="h-10 rounded-[14px] border-0"
+                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
               />
             </div>
             <div>
-              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">
-                Porcentagem: <span className="text-white font-bold">{artista2.porcentagem}%</span>
+              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>
+                Porcentagem: <span className="font-bold opacity-100" style={{ color: "var(--layout-widget-text)" }}>{artista2.porcentagem}%</span>
               </label>
               <Slider
                 value={[artista2.porcentagem]}
@@ -567,62 +571,69 @@ export default function BatalhaMusicalPage() {
 
       {/* Schedule section */}
       {user && (
-        <div className="rounded-2xl p-5 space-y-4" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="rounded-2xl p-5 space-y-4" style={{ background: "var(--layout-widget-bg)", border: "1px solid var(--layout-border-color)" }}>
           <div className="flex items-center gap-2">
-            <CalendarPlus className="h-5 w-5 text-yellow-400" />
-            <h3 className="text-white font-bold text-sm uppercase tracking-wider">
+            <CalendarPlus className="h-5 w-5" style={{ color: accentColor }} />
+            <h3 className="font-bold text-sm uppercase tracking-wider" style={{ color: "var(--layout-widget-text)" }}>
               {editingId ? "Editar Batalha Agendada" : "Agendar Batalha"}
             </h3>
           </div>
-          <p className="text-white/40 text-xs">
+          <p className="text-xs opacity-40" style={{ color: "var(--layout-widget-text)" }}>
             Os dados dos artistas acima serão usados para a batalha agendada.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">Data</label>
+              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Data</label>
               <Input
                 type="date"
                 value={schedDate}
                 onChange={(e) => setSchedDate(e.target.value)}
-                className="bg-white/5 border-white/10 text-white h-10"
+                className="h-10 rounded-[14px] border-0"
+                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
               />
             </div>
             <div>
-              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">Horário Início</label>
+              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Horário Início</label>
               <Input
                 type="time"
                 value={schedStart}
                 onChange={(e) => setSchedStart(e.target.value)}
-                className="bg-white/5 border-white/10 text-white h-10"
+                className="h-10 rounded-[14px] border-0"
+                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
               />
             </div>
             <div>
-              <label className="text-white/50 text-[11px] uppercase tracking-wider mb-1 block">Horário Fim</label>
+              <label className="text-[11px] uppercase tracking-wider mb-1 block opacity-50" style={{ color: "var(--layout-widget-text)" }}>Horário Fim</label>
               <Input
                 type="time"
                 value={schedEnd}
                 onChange={(e) => setSchedEnd(e.target.value)}
-                className="bg-white/5 border-white/10 text-white h-10"
+                className="h-10 rounded-[14px] border-0"
+                style={{ background: "var(--layout-slider-bg)", color: "var(--layout-widget-text)" }}
               />
             </div>
           </div>
-          <Button
-            onClick={handleSchedule}
-            disabled={saving}
-            className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-            {editingId ? "Salvar Alterações" : "Agendar Batalha"}
-          </Button>
-          {editingId && (
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
-              variant="ghost"
-              onClick={() => { setEditingId(null); setSchedDate(""); setSchedStart(""); setSchedEnd(""); }}
-              className="text-white/50 hover:text-white ml-2"
+              onClick={handleSchedule}
+              disabled={saving}
+              className="w-full sm:w-auto font-bold rounded-[14px]"
+              style={{ background: accentColor, color: "var(--layout-button-text)" }}
             >
-              Cancelar
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              {editingId ? "Salvar Alterações" : "Agendar Batalha"}
             </Button>
-          )}
+            {editingId && (
+              <Button
+                variant="ghost"
+                onClick={() => { setEditingId(null); setSchedDate(""); setSchedStart(""); setSchedEnd(""); }}
+                className="opacity-50 hover:opacity-100"
+                style={{ color: "var(--layout-widget-text)" }}
+              >
+                Cancelar
+              </Button>
+            )}
+          </div>
         </div>
       )}
 

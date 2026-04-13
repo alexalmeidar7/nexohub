@@ -42,15 +42,15 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh }: Pr
   if (!batalhas.length) return null;
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
-      <div className="flex items-center gap-2 px-5 py-3 border-b border-white/10">
-        <CalendarClock className="h-4 w-4 text-yellow-400" />
-        <h3 className="text-white font-bold text-sm uppercase tracking-wider">Batalhas Agendadas</h3>
+    <div className="rounded-2xl overflow-hidden" style={{ background: "var(--layout-widget-bg)", border: "1px solid var(--layout-border-color)" }}>
+      <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: "1px solid var(--layout-border-color)" }}>
+        <CalendarClock className="h-4 w-4" style={{ color: "var(--layout-accent-color)" }} />
+        <h3 className="font-bold text-sm uppercase tracking-wider" style={{ color: "var(--layout-widget-text)" }}>Batalhas Agendadas</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead>
-            <tr className="text-white/40 text-[11px] uppercase tracking-wider border-b border-white/5">
+            <tr className="text-[11px] uppercase tracking-wider opacity-40" style={{ color: "var(--layout-widget-text)", borderBottom: "1px solid var(--layout-border-color)" }}>
               <th className="px-4 py-3">Data</th>
               <th className="px-4 py-3">Horário</th>
               <th className="px-4 py-3">Artista 1</th>
@@ -60,24 +60,25 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh }: Pr
           </thead>
           <tbody>
             {batalhas.map((b) => (
-              <tr key={b.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="px-4 py-3 text-white/80 whitespace-nowrap">
+              <tr key={b.id} className="transition-colors" style={{ borderBottom: "1px solid var(--layout-border-color)" }}>
+                <td className="px-4 py-3 whitespace-nowrap opacity-80" style={{ color: "var(--layout-widget-text)" }}>
                   {new Date(b.data_batalha + "T12:00:00").toLocaleDateString("pt-BR")}
                 </td>
-                <td className="px-4 py-3 text-white/80 whitespace-nowrap">
+                <td className="px-4 py-3 whitespace-nowrap opacity-80" style={{ color: "var(--layout-widget-text)" }}>
                   {b.horario_inicio} — {b.horario_fim}
                 </td>
-                <td className="px-4 py-3 text-white font-medium">
-                  {b.artista1_nome || "—"} <span className="text-white/40 font-normal">({b.artista1_porcentagem}%)</span>
+                <td className="px-4 py-3 font-medium" style={{ color: "var(--layout-widget-text)" }}>
+                  {b.artista1_nome || "—"} <span className="font-normal opacity-40">({b.artista1_porcentagem}%)</span>
                 </td>
-                <td className="px-4 py-3 text-white font-medium">
-                  {b.artista2_nome || "—"} <span className="text-white/40 font-normal">({b.artista2_porcentagem}%)</span>
+                <td className="px-4 py-3 font-medium" style={{ color: "var(--layout-widget-text)" }}>
+                  {b.artista2_nome || "—"} <span className="font-normal opacity-40">({b.artista2_porcentagem}%)</span>
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => onEdit(b)}
-                      className="p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                      className="p-1.5 rounded-lg transition-colors opacity-50 hover:opacity-100"
+                      style={{ color: "var(--layout-widget-text)" }}
                       title="Editar"
                     >
                       <Pencil className="h-4 w-4" />
@@ -85,7 +86,8 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh }: Pr
                     <button
                       onClick={() => handleDelete(b.id)}
                       disabled={deleting === b.id}
-                      className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors disabled:opacity-50"
+                      className="p-1.5 rounded-lg transition-colors opacity-50 hover:opacity-100 disabled:opacity-30"
+                      style={{ color: "var(--layout-widget-text)" }}
                       title="Excluir"
                     >
                       <Trash2 className="h-4 w-4" />
