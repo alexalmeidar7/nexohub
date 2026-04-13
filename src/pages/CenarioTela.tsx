@@ -809,22 +809,29 @@ export default function CenarioTela() {
     return () => clearInterval(interval);
   }, [effectiveUserId, isAuthenticated]);
 
-  /* Fetch weather */
+  /* Fetch weather — initial + every 5 min to stay in sync with XML */
   const weatherCity = config.weather.city || config.city;
-  const weatherFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const weatherCoordsRef = useRef<{ lat: number; lon: number } | null>(null);
   useEffect(() => {
     if (!weatherCity) return;
-    if (weatherFetchRef.current) clearTimeout(weatherFetchRef.current);
-    weatherFetchRef.current = setTimeout(async () => {
+    let cancelled = false;
+
+    const doFetch = async () => {
       try {
-        const { data: geoData } = await supabase.functions.invoke("fetch-weather", { body: { action: "geocode", query: weatherCity, count: 1 } });
-        const results = geoData?.results;
-        if (!results?.length) return;
-        const { latitude, longitude } = results[0];
-        setWeatherCoords({ lat: latitude, lon: longitude });
+        let lat = weatherCoordsRef.current?.lat;
+        let lon = weatherCoordsRef.current?.lon;
+        if (!lat || !lon) {
+          const { data: geoData } = await supabase.functions.invoke("fetch-weather", { body: { action: "geocode", query: weatherCity, count: 1 } });
+          const results = geoData?.results;
+          if (!results?.length) return;
+          lat = results[0].latitude;
+          lon = results[0].longitude;
+          weatherCoordsRef.current = { lat, lon };
+          if (!cancelled) setWeatherCoords({ lat, lon });
+        }
         if (config.weather.enabled) {
-          const { data: forecastData } = await supabase.functions.invoke("fetch-weather", { body: { action: "forecast", lat: latitude, lon: longitude, forecast_days: 5 } });
-          if (forecastData?.ok && forecastData.data) {
+          const { data: forecastData } = await supabase.functions.invoke("fetch-weather", { body: { action: "forecast", lat, lon, forecast_days: 5 } });
+          if (!cancelled && forecastData?.ok && forecastData.data) {
             const d = forecastData.data;
             setLiveWeather({
               current: { temp: Math.round(d.current?.temperature_2m ?? 0), humidity: Math.round(d.current?.relative_humidity_2m ?? 0), code: d.current?.weather_code ?? 0 },
@@ -833,8 +840,14 @@ export default function CenarioTela() {
           }
         }
       } catch { /* silent */ }
-    }, 500);
-    return () => { if (weatherFetchRef.current) clearTimeout(weatherFetchRef.current); };
+    };
+
+    // Initial fetch after 500ms debounce
+    const initTimer = setTimeout(doFetch, 500);
+    // Re-fetch every 5 minutes to stay in sync with the XML feed
+    const interval = setInterval(doFetch, 5 * 60 * 1000);
+
+    return () => { cancelled = true; clearTimeout(initTimer); clearInterval(interval); weatherCoordsRef.current = null; };
   }, [config.weather.enabled, weatherCity, config.weather.showSatellite]);
 
   /* Geocode traffic */
