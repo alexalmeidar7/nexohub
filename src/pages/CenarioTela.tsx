@@ -251,8 +251,9 @@ export default function CenarioTela() {
     const artista = (musicData?.artista || "").toLowerCase();
     return exceptionWordsList.some(w => titulo === w || artista === w);
   })();
+  const isJornalistico = currentProgram?.tipo_programa?.toLowerCase() === "jornalístico" || currentProgram?.tipo_programa?.toLowerCase() === "jornalistico";
   useEffect(() => {
-    if (isBreakTrack) { setArtistBgUrl(null); setArtistBgReady(false); return; }
+    if (isBreakTrack || isJornalistico) { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
     if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
