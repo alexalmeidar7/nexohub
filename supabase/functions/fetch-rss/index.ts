@@ -7,6 +7,14 @@ const FETCH_TIMEOUTS_MS = [8000, 12000] as const;
 const MOJIBAKE_PATTERN = /(Ã.|Â.|â[\u0080-\u00BF]|ðŸ|ï¿½|�)/g;
 const CONTROL_CHAR_PATTERN = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g;
 
+const responseHeaders = {
+  ...corsHeaders,
+  "Content-Type": "application/json; charset=utf-8",
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
+
 type DecodeCandidate = {
   label: string;
   text: string;
@@ -17,10 +25,15 @@ const fetchWithRetry = async (url: string) => {
 
   for (const timeout of FETCH_TIMEOUTS_MS) {
     try {
-      const response = await fetch(url, {
+      const freshUrl = new URL(url);
+      freshUrl.searchParams.set("_lvcb", Date.now().toString());
+
+      const response = await fetch(freshUrl.toString(), {
         headers: {
           "User-Agent": "Mozilla/5.0 (compatible; RSSBot/1.0)",
           "Accept": "application/rss+xml, application/xml, text/xml, */*",
+          "Cache-Control": "no-cache, no-store, max-age=0",
+          "Pragma": "no-cache",
         },
         signal: AbortSignal.timeout(timeout),
       });
@@ -111,7 +124,7 @@ Deno.serve(async (req) => {
     if (!url) {
       return new Response(JSON.stringify({ error: "URL is required" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: responseHeaders,
       });
     }
 
@@ -121,7 +134,7 @@ Deno.serve(async (req) => {
       if (!/^https?:$/.test(parsedUrl.protocol)) throw new Error("invalid_protocol");
     } catch {
       return new Response(JSON.stringify({ content: "", error: "URL inválida", ok: false }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
+        headers: responseHeaders,
       });
     }
 
@@ -138,7 +151,7 @@ Deno.serve(async (req) => {
 
       // Retorna 200 para evitar quebra de fluxo no frontend em feeds intermitentes/lentos
       return new Response(JSON.stringify({ content: "", error: msg, ok: false }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
+        headers: responseHeaders,
       });
     }
 
@@ -147,11 +160,11 @@ Deno.serve(async (req) => {
     const text = pickBestDecodedText(buffer, contentType);
 
     return new Response(JSON.stringify({ content: text, ok: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
+      headers: responseHeaders,
     });
   } catch (error) {
     return new Response(JSON.stringify({ content: "", error: error instanceof Error ? error.message : "Erro interno", ok: false }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
+      headers: responseHeaders,
     });
   }
 });

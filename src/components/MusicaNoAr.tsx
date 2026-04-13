@@ -31,6 +31,7 @@ const SOURCE_MODE_KEY = "masterview_source_mode";
 const DEVICE_NAME_KEY = "masterview_device_name";
 const DEVICE_ID_KEY = "masterview_device_id";
 const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
+const LOCAL_SOURCE_GRACE_MS = 15000;
 
 function isValidXmlUrl(value: string): boolean {
   const trimmed = value.trim();
@@ -251,8 +252,8 @@ export default function MusicaNoAr() {
   const [showConfig, setShowConfig] = useState(true);
 
   // Source health tracking — tracks last SUCCESSFUL response (not song change)
-  const lastOnlineSuccessRef = useRef<number>(Date.now());
-  const lastLocalSuccessRef = useRef<number>(Date.now());
+  const lastOnlineSuccessRef = useRef<number>(0);
+  const lastLocalSuccessRef = useRef<number>(0);
   const [onlineDelay, setOnlineDelay] = useState(false);
   const [localDelay, setLocalDelay] = useState(false);
   const [onlineError, setOnlineError] = useState<string | null>(null);
@@ -264,6 +265,15 @@ export default function MusicaNoAr() {
   const hasValidLocalSource = !!localFileName;
   const isOnlineSelected = sourceMode === "online" || sourceMode === "both";
   const isLocalSelected = sourceMode === "pasta" || sourceMode === "both";
+
+  const isLocalSourceHealthy = useCallback(() => {
+    return (
+      isLocalSelected
+      && hasValidLocalSource
+      && lastLocalSuccessRef.current > 0
+      && Date.now() - lastLocalSuccessRef.current < LOCAL_SOURCE_GRACE_MS
+    );
+  }, [hasValidLocalSource, isLocalSelected]);
 
   const setSourceMode = async (mode: SourceMode) => {
     setSourceModeState(mode);
@@ -342,10 +352,10 @@ export default function MusicaNoAr() {
   useEffect(() => {
     const checkDelay = setInterval(() => {
       const now = Date.now();
-      if (isOnlineSelected && hasValidOnlineUrl && now - lastOnlineSuccessRef.current > 30000) {
+      if (isOnlineSelected && hasValidOnlineUrl && lastOnlineSuccessRef.current > 0 && now - lastOnlineSuccessRef.current > 30000) {
         setOnlineDelay(true);
       }
-      if (isLocalSelected && localMonitoring && now - lastLocalSuccessRef.current > 15000) {
+      if (isLocalSelected && localMonitoring && lastLocalSuccessRef.current > 0 && now - lastLocalSuccessRef.current > 15000) {
         setLocalDelay(true);
       }
     }, 5000);
@@ -437,7 +447,7 @@ export default function MusicaNoAr() {
         const age = Date.now() - existingStart;
         // If localStorage has recent data (< 5s old) with a different song than
         // what we're about to write, useGlobalMusicSync likely has fresher data
-        if (age < 5000 && prev.titulo !== data.titulo) {
+        if (age < 5000 && (prev.titulo !== data.titulo || prev.artista !== data.artista)) {
           // Don't overwrite — just sync component state to localStorage
           setMusic(prev);
           setStartTime(existingStart);
@@ -504,6 +514,7 @@ export default function MusicaNoAr() {
 
       const parsed = parseXmlString(data.content);
       if (parsed) {
+        if (isLocalSourceHealthy()) return;
         await processMusic(parsed, "online");
       }
     } catch (err: any) {
@@ -512,7 +523,7 @@ export default function MusicaNoAr() {
         setOnlineError(`Erro de rede: ${err?.message || "conexão recusada"}`);
       }
     }
-  }, [isOnlineSelected, xmlUrl, processMusic]);
+  }, [isLocalSourceHealthy, isOnlineSelected, xmlUrl, processMusic]);
 
   // Sync component state from localStorage (useGlobalMusicSync may update it)
   useEffect(() => {
