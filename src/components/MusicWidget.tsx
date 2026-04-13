@@ -30,7 +30,6 @@ export default function MusicWidget() {
     <div className="rounded-xl p-5" style={{ backgroundColor: "#aea4ee" }}>
       <div className="flex items-center gap-2 mb-3">
         <Disc3 size={16} className="text-gray-700 animate-spin" style={{ animationDuration: "3s" }} />
-        <span className="font-bold text-gray-700 text-sm">♫ TOCANDO</span>
       </div>
       <div className="flex gap-3">
         {m.capa ? (
