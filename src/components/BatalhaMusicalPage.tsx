@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Swords, Copy, Check, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Swords, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { toast } from "sonner";
+import XmlLinkRow from "./XmlLinkRow";
 
 interface Artista {
   nome: string;
@@ -37,7 +37,6 @@ export default function BatalhaMusicalPage() {
   const [artista2, setArtista2] = useState<Artista>({ nome: "", musica: "", porcentagem: 50, imagemUrl: "" });
   const [loading1, setLoading1] = useState(false);
   const [loading2, setLoading2] = useState(false);
-  const [copied, setCopied] = useState(false);
   const debounce1 = useRef<ReturnType<typeof setTimeout>>();
   const debounce2 = useRef<ReturnType<typeof setTimeout>>();
 
@@ -104,14 +103,6 @@ export default function BatalhaMusicalPage() {
     <artista2_imagem>${artista2.imagemUrl}</artista2_imagem>
   </batalha>
 </items>`;
-
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(xmlContent).then(() => {
-      setCopied(true);
-      toast.success("XML copiado!");
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [xmlContent]);
 
   const color1 = "#3b82f6";
   const color2 = "#ef4444";
@@ -254,30 +245,10 @@ export default function BatalhaMusicalPage() {
         </div>
       </div>
 
-      {/* XML Output */}
-      <div className="rounded-2xl p-5 space-y-3" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-white font-bold text-sm uppercase tracking-wider">XML da Batalha</h3>
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-            style={{
-              background: copied ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.08)",
-              color: copied ? "#22c55e" : "rgba(255,255,255,0.7)",
-              border: copied ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(255,255,255,0.1)",
-            }}
-          >
-            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copiado!" : "Copiar XML"}
-          </button>
-        </div>
-        <pre
-          className="text-[11px] leading-relaxed overflow-x-auto rounded-xl p-4 select-all"
-          style={{ background: "rgba(0,0,0,0.4)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.05)" }}
-        >
-          {xmlContent}
-        </pre>
-      </div>
+      {/* XML Link */}
+      {(artista1.nome || artista2.nome) && (
+        <XmlLinkRow label="XML BATALHA MUSICAL" xmlContent={xmlContent} dark />
+      )}
     </div>
   );
 }
