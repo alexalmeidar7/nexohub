@@ -148,7 +148,7 @@ export default function LogosPatrocinadoresPage() {
       for (const pf of pendingFiles) {
         const logo_url = await uploadLogo(pf.file);
         const { error } = await supabase.from("logos_patrocinadores").insert({
-          user_id: user.id,
+          user_id: dataUserId!,
           programa_id: programaId,
           logo_url,
           data_final: dataFinal,
