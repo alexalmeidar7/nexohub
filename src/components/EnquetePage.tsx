@@ -323,7 +323,7 @@ export default function EnquetePage() {
       for (let d = 1; d <= 90 && datesToSchedule.length < autoDaysAhead; d++) {
         const date = new Date(today);
         date.setDate(today.getDate() + d);
-        const dayName = DAY_NAMES[date.getDay()];
+        const dayName = DAY_NAMES_FULL[date.getDay()];
         if (targetDays.includes(dayName)) {
           datesToSchedule.push(date.toISOString().slice(0, 10));
         }
@@ -612,7 +612,7 @@ export default function EnquetePage() {
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Dias da Semana</label>
               <div className="flex flex-wrap gap-2">
-                {DAY_NAMES.map(day => (
+                {DAY_NAMES_SHORT.map(day => (
                   <button
                     key={day}
                     onClick={() => setAutoDiasSemana(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])}
