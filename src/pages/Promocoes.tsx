@@ -25,6 +25,7 @@ interface Promocao {
 
 interface ProgramaGrade {
   id: string;
+  mergedIds: string[];
   nome: string;
   apresentadorId: string;
   selo: string;
@@ -33,6 +34,7 @@ interface ProgramaGrade {
   horarioInicio: string;
   horarioFim: string;
   descricao: string;
+  schedules: { dias: string[]; horarioInicio: string; horarioFim: string }[];
 }
 
 interface Testemunhal {
@@ -160,9 +162,10 @@ export default function PromocoesKiosk() {
       }
 
       const mapped = (data.programas || []).map((p: any) => ({
-        id: p.id, nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
+        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
         capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
         horarioFim: p.horario_fim, descricao: p.descricao || "",
+        schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
       }));
       setProgramas(mapped);
 
@@ -196,9 +199,10 @@ export default function PromocoesKiosk() {
       setTestemunhais(testData || []);
 
       const mapped = (progsData || []).map((p: any) => ({
-        id: p.id, nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
+        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
         capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
         horarioFim: p.horario_fim, descricao: p.descricao || "",
+        schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
       }));
       setProgramas(mapped);
 
@@ -288,7 +292,12 @@ export default function PromocoesKiosk() {
       .reduce((map, programa) => {
         const dedupeKey = normalizeProgramName(programa.nome);
         if (!map.has(dedupeKey)) {
-          map.set(dedupeKey, programa);
+          map.set(dedupeKey, { ...programa });
+        } else {
+          const existing = map.get(dedupeKey)!;
+          existing.mergedIds = [...existing.mergedIds, ...programa.mergedIds];
+          existing.diasSemana = [...new Set([...existing.diasSemana, ...programa.diasSemana])];
+          existing.schedules = [...existing.schedules, ...programa.schedules];
         }
         return map;
       }, new Map<string, ProgramaGrade>())
@@ -418,9 +427,10 @@ export default function PromocoesKiosk() {
     };
   }, [selectedProgram, autoPlay, startAutoScroll]);
 
-  const getTestemunhaisForProgram = (programId: string) => {
+  const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
     const today = new Date().toISOString().split("T")[0];
-    return testemunhais.filter(t => t.programa_id === programId && t.data_inicio <= today && t.data_fim >= today);
+    const ids = new Set(prog.mergedIds);
+    return testemunhais.filter(t => t.programa_id && ids.has(t.programa_id) && t.data_inicio <= today && t.data_fim >= today);
   };
 
   const ProgressCircle = ({ active, progress }: { active: boolean; progress: number }) => {
@@ -701,10 +711,12 @@ export default function PromocoesKiosk() {
                       No Ar
                     </span>
                   )}
-                  <div className="absolute bottom-1 left-0 right-0 text-center">
-                    <span className="text-[10px] font-bold text-white drop-shadow-lg bg-black/50 px-1.5 py-0.5 rounded">
-                      {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
-                    </span>
+                  <div className="absolute bottom-1 left-0 right-0 text-center flex flex-col items-center gap-0.5">
+                    {prog.schedules.map((s, i) => (
+                      <span key={i} className="text-[10px] font-bold text-white drop-shadow-lg bg-black/50 px-1.5 py-0.5 rounded">
+                        {s.horarioInicio.slice(0, 5)} - {s.horarioFim.slice(0, 5)}
+                      </span>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -822,14 +834,18 @@ export default function PromocoesKiosk() {
           <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full">
               {/* Horário em destaque */}
               <div className="px-4 pt-4 pb-1 flex-shrink-0">
-                <div className="text-lg font-bold text-white">
-                  {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
-                </div>
-                {selectedProgram?.diasSemana && selectedProgram.diasSemana.length > 0 && (
-                  <div className="text-xs text-white/60 mt-0.5">
-                    {selectedProgram.diasSemana.join(", ")}
-                  </div>
-                )}
+                  {selectedProgram?.schedules && selectedProgram.schedules.length > 0 ? (
+                    selectedProgram.schedules.map((s, i) => (
+                      <div key={i} className="text-lg font-bold text-white">
+                        {s.horarioInicio.slice(0, 5)} às {s.horarioFim.slice(0, 5)}
+                        {s.dias.length > 0 && <span className="text-xs text-white/60 ml-2 font-normal">{s.dias.join(", ")}</span>}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-lg font-bold text-white">
+                      {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
+                    </div>
+                  )}
               </div>
 
               {/* Rótulo Citações */}
@@ -845,7 +861,7 @@ export default function PromocoesKiosk() {
               {/* Testemunhais com scroll, alinhado ao X */}
               <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
                 {(() => {
-                  const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram.id) : [];
+                  const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
                     return <p className="text-white/40 text-sm">Nenhum conteúdo disponível.</p>;
                   }
