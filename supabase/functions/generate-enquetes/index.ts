@@ -22,8 +22,8 @@ serve(async (req) => {
     const now = new Date();
     const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
 
-    const prompt = `Gere exatamente 5 perguntas de quiz sobre o tema "${categoria}" para um programa de rádio brasileiro. Cada pergunta deve ter 4 opções de resposta e indicar qual é a correta (1-4). Use a semente do dia ${dayOfYear} para variar as perguntas. Responda APENAS com um array JSON válido no formato:
-[{"pergunta":"...","respostas":["op1","op2","op3","op4"],"correta":1}]
+    const prompt = `Gere exatamente 5 perguntas de quiz sobre o tema "${categoria}" para um programa de rádio brasileiro. Cada pergunta deve ter exatamente 2 opções de resposta (uma correta e uma errada) e indicar qual é a correta (1 ou 2). Use a semente do dia ${dayOfYear} para variar as perguntas. Responda APENAS com um array JSON válido no formato:
+[{"pergunta":"...","respostas":["opção correta","opção errada"],"correta":1}]
 Sem explicação, sem markdown, apenas o JSON.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
