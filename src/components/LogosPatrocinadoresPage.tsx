@@ -267,10 +267,10 @@ export default function LogosPatrocinadoresPage() {
     .filter((g) => g.logos.length > 0);
 
   const logosXmlUrl = useMemo(() => {
-    if (!user?.id) return "";
+    if (!dataUserId) return "";
     const base = import.meta.env.VITE_SUPABASE_URL || "";
-    return `${base}/functions/v1/serve-xml-logos?user_id=${user.id}`;
-  }, [user?.id]);
+    return `${base}/functions/v1/serve-xml-logos?user_id=${dataUserId}`;
+  }, [dataUserId]);
 
   // LOGOS ALL: flat list of all active logos (no program grouping)
   const logosAllXmlContent = useMemo(() => {
