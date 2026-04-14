@@ -87,7 +87,8 @@ const QUIZ_BANK: Record<string, QuizItem[]> = {
   ],
 };
 
-const CATEGORIES = Object.keys(QUIZ_BANK);
+const DEFAULT_CATEGORIES = Object.keys(QUIZ_BANK);
+
 
 function getQuizzesForCategory(category: string): QuizItem[] {
   const bank = QUIZ_BANK[category] || [];
