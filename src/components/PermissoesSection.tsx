@@ -7,17 +7,62 @@ import {
   GripVertical, ShieldCheck, Key
 } from "lucide-react";
 
-// Available modules that can be assigned to sub-users
-const AVAILABLE_MODULES = [
-  { key: "cadastros", label: "Cadastros" },
-  { key: "noticias", label: "Roteiro de Programa" },
-  { key: "musica", label: "Música no Ar" },
-  { key: "agenda", label: "Agenda" },
-  { key: "player", label: "Player" },
-  { key: "comercial", label: "Comercial" },
-  { key: "vmix", label: "vMix" },
-  { key: "ferramentas", label: "Ferramentas" },
+// Available modules grouped by category for sub-user permissions
+const MODULE_GROUPS = [
+  {
+    category: "Cadastros",
+    items: [
+      { key: "apresentadores", label: "Apresentadores" },
+      { key: "programas", label: "Programas" },
+      { key: "previsao", label: "Cidade / Tempo" },
+    ],
+  },
+  {
+    category: "Roteiro / Música / Agenda",
+    items: [
+      { key: "noticias", label: "Roteiro de Programa" },
+      { key: "musica", label: "Música no Ar" },
+      { key: "agenda", label: "Agenda" },
+    ],
+  },
+  {
+    category: "Player",
+    items: [
+      { key: "playerconfig", label: "Configurações" },
+      { key: "preroll", label: "Roll" },
+      { key: "fans", label: "Fãs" },
+    ],
+  },
+  {
+    category: "Comercial",
+    items: [
+      { key: "testemunhais", label: "Testemunhais" },
+      { key: "promocoes", label: "Promoções" },
+      { key: "configtelapromo", label: "Config Tela Promo" },
+      { key: "shopping", label: "Shopping" },
+      { key: "propostas", label: "Propostas Comerciais" },
+    ],
+  },
+  {
+    category: "vMix",
+    items: [
+      { key: "broadcast", label: "Broadcast" },
+      { key: "logos", label: "Logos" },
+      { key: "cenario", label: "Cenário Interativo" },
+      { key: "batalha", label: "Batalha Musical" },
+      { key: "enquete", label: "Enquete" },
+    ],
+  },
+  {
+    category: "Ferramentas",
+    items: [
+      { key: "cortevideo", label: "Corte de Vídeo" },
+    ],
+  },
 ];
+
+// Flat list for counting
+const ALL_MODULE_KEYS = MODULE_GROUPS.flatMap(g => g.items.map(i => i.key));
 
 interface SubUser {
   id: string;
