@@ -429,7 +429,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return modulesSource.has("comercial");
     }
 
-    if (page === "cenario" || page === "vmix" || page === "broadcast" || page === "batalha" || page === "enquete") {
+    if (page === "cenario" || page === "vmix" || page === "broadcast" || page === "batalha" || page === "enquete" || page === "quiz") {
       return modulesSource.has("vmix");
     }
 
