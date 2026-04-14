@@ -566,6 +566,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         <div className="flex-1 flex flex-col items-center gap-1 px-1 overflow-visible">
           {sidebarMenu.filter(item => {
+            // Sub-user: only show menus for allowed modules
+            if (subUserModules !== null) {
+              if (item.label === "home") return true;
+              const modKey = menuToModuleKey[item.label];
+              if (!modKey) return false;
+              return subUserModules.has(modKey);
+            }
             if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
             const modKey = menuToModuleKey[item.label];
             if (!modKey) return true;
