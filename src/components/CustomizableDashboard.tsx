@@ -137,6 +137,21 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
+  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
+
+  // Resolve effective user ID (parent for sub-users)
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setEffectiveUserId(data?.ativo ? data.parent_user_id : user.id);
+      });
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const dataUserId = effectiveUserId || user?.id;
 
   // On-air program info
   interface OnAirProgram {
