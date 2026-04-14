@@ -389,18 +389,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
     // Sub-users: only allow modules explicitly assigned + always-accessible pages
     if (subUserModules !== null) {
-      // Sub-users can always access dashboard but NOT configuracoes (only parent manages settings)
       if (page === "configuracoes") return false;
-
-      // Map page to its parent module key
-      let moduleKey: string = page;
-      if (page === "apresentadores" || page === "programas" || page === "previsao") moduleKey = "cadastros";
-      if (page === "testemunhais" || page === "promocoes" || page === "configtelapromo" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") moduleKey = "comercial";
-      if (page === "cenario" || page === "vmix" || page === "broadcast" || page === "batalha" || page === "enquete") moduleKey = "vmix";
-      if (page === "playerconfig" || page === "fans") moduleKey = "player";
-      if (page === "cortevideo" || page === "tp") moduleKey = "ferramentas";
-
-      return subUserModules.has(moduleKey);
+      // Granular check: the page key itself is stored in allowed_modules
+      return subUserModules.has(page);
     }
 
     // Normal user flow
@@ -569,9 +560,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             // Sub-user: only show menus for allowed modules
             if (subUserModules !== null) {
               if (item.label === "home") return true;
-              const modKey = menuToModuleKey[item.label];
-              if (!modKey) return false;
-              return subUserModules.has(modKey);
+              // For items with children, show if any child page is allowed
+              if (item.children) {
+                return item.children.some(c => c.page && subUserModules.has(c.page));
+              }
+              // For standalone items, check the page directly
+              return item.page ? subUserModules.has(item.page) : false;
             }
             if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
             const modKey = menuToModuleKey[item.label];
@@ -633,7 +627,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       }}
                     >
                       <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: `${layoutColors.navText}66` }}>{item.label}</p>
-                      {item.children.map((child, ci) => {
+                      {(subUserModules !== null ? item.children.filter(c => !c.page || subUserModules.has(c.page)) : item.children).map((child, ci) => {
                         const ChildIcon = child.icon;
                         const childActive = currentPage === child.page;
                         return (
@@ -730,9 +724,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {sidebarMenu.filter(item => {
                   if (subUserModules !== null) {
                     if (item.label === "home") return true;
-                    const modKey = menuToModuleKey[item.label];
-                    if (!modKey) return false;
-                    return subUserModules.has(modKey);
+                    if (item.children) {
+                      return item.children.some(c => c.page && subUserModules.has(c.page));
+                    }
+                    return item.page ? subUserModules.has(item.page) : false;
                   }
                   if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
                   const modKey = menuToModuleKey[item.label];
@@ -756,7 +751,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       </button>
                       {item.children && expanded && (
                         <div className="ml-6 space-y-0.5 mt-0.5">
-                          {item.children.map(child => {
+                          {(subUserModules !== null ? item.children.filter(c => !c.page || subUserModules.has(c.page)) : item.children).map(child => {
                             const ChildIcon = child.icon;
                             const childActive = currentPage === child.page;
                             return (

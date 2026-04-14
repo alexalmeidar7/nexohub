@@ -7,17 +7,62 @@ import {
   GripVertical, ShieldCheck, Key
 } from "lucide-react";
 
-// Available modules that can be assigned to sub-users
-const AVAILABLE_MODULES = [
-  { key: "cadastros", label: "Cadastros" },
-  { key: "noticias", label: "Roteiro de Programa" },
-  { key: "musica", label: "Música no Ar" },
-  { key: "agenda", label: "Agenda" },
-  { key: "player", label: "Player" },
-  { key: "comercial", label: "Comercial" },
-  { key: "vmix", label: "vMix" },
-  { key: "ferramentas", label: "Ferramentas" },
+// Available modules grouped by category for sub-user permissions
+const MODULE_GROUPS = [
+  {
+    category: "Cadastros",
+    items: [
+      { key: "apresentadores", label: "Apresentadores" },
+      { key: "programas", label: "Programas" },
+      { key: "previsao", label: "Cidade / Tempo" },
+    ],
+  },
+  {
+    category: "Roteiro / Música / Agenda",
+    items: [
+      { key: "noticias", label: "Roteiro de Programa" },
+      { key: "musica", label: "Música no Ar" },
+      { key: "agenda", label: "Agenda" },
+    ],
+  },
+  {
+    category: "Player",
+    items: [
+      { key: "playerconfig", label: "Configurações" },
+      { key: "preroll", label: "Roll" },
+      { key: "fans", label: "Fãs" },
+    ],
+  },
+  {
+    category: "Comercial",
+    items: [
+      { key: "testemunhais", label: "Testemunhais" },
+      { key: "promocoes", label: "Promoções" },
+      { key: "configtelapromo", label: "Config Tela Promo" },
+      { key: "shopping", label: "Shopping" },
+      { key: "propostas", label: "Propostas Comerciais" },
+    ],
+  },
+  {
+    category: "vMix",
+    items: [
+      { key: "broadcast", label: "Broadcast" },
+      { key: "logos", label: "Logos" },
+      { key: "cenario", label: "Cenário Interativo" },
+      { key: "batalha", label: "Batalha Musical" },
+      { key: "enquete", label: "Enquete" },
+    ],
+  },
+  {
+    category: "Ferramentas",
+    items: [
+      { key: "cortevideo", label: "Corte de Vídeo" },
+    ],
+  },
 ];
+
+// Flat list for counting
+const ALL_MODULE_KEYS = MODULE_GROUPS.flatMap(g => g.items.map(i => i.key));
 
 interface SubUser {
   id: string;
@@ -304,35 +349,72 @@ export default function PermissoesSection() {
           {/* Expanded content */}
           {expandedId === sub.id && (
             <div className="p-4 space-y-4" style={{ backgroundColor: "var(--layout-page-bg, #fff)" }}>
-              {/* Module toggles */}
-              <div>
-                <label className="text-[11px] font-bold mb-2 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              {/* Module toggles by category */}
+              <div className="space-y-3">
+                <label className="text-[11px] font-bold block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   Módulos com acesso:
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {AVAILABLE_MODULES.map(mod => {
-                    const active = sub.allowed_modules.includes(mod.key);
-                    return (
-                      <button
-                        key={mod.key}
-                        onClick={() => toggleModule(sub, mod.key)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all"
-                        style={{
-                          backgroundColor: active
-                            ? "var(--layout-accent-color, #444)"
-                            : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 10%, var(--layout-page-bg, #fff) 90%)",
-                          color: active
-                            ? "var(--layout-button-text, #fff)"
-                            : "var(--layout-page-text, #1a1a1a)",
-                          border: `1px solid ${active ? "transparent" : "var(--layout-border-color, #333)"}`,
-                        }}
-                      >
-                        {active ? <Eye size={14} /> : <EyeOff size={14} style={{ opacity: 0.4 }} />}
-                        {mod.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                {MODULE_GROUPS.map(group => {
+                  const allActive = group.items.every(i => sub.allowed_modules.includes(i.key));
+                  const someActive = group.items.some(i => sub.allowed_modules.includes(i.key));
+                  return (
+                    <div key={group.category}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <button
+                          onClick={() => {
+                            // Toggle all in this group
+                            const keys = group.items.map(i => i.key);
+                            if (allActive) {
+                              // Remove all
+                              const updated = sub.allowed_modules.filter(k => !keys.includes(k));
+                              setSubUsers(prev => prev.map(s => s.id === sub.id ? { ...s, allowed_modules: updated } : s));
+                              setSavingId(sub.id);
+                              supabase.functions.invoke("manage-sub-users", {
+                                body: { action: "update_modules", sub_user_id: sub.id, allowed_modules: updated },
+                              }).then(() => setSavingId(null));
+                            } else {
+                              // Add all
+                              const updated = [...new Set([...sub.allowed_modules, ...keys])];
+                              setSubUsers(prev => prev.map(s => s.id === sub.id ? { ...s, allowed_modules: updated } : s));
+                              setSavingId(sub.id);
+                              supabase.functions.invoke("manage-sub-users", {
+                                body: { action: "update_modules", sub_user_id: sub.id, allowed_modules: updated },
+                              }).then(() => setSavingId(null));
+                            }
+                          }}
+                          className="text-[10px] font-bold uppercase tracking-wider"
+                          style={{ color: someActive ? "var(--layout-accent-color, #444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}
+                        >
+                          {group.category}
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                        {group.items.map(mod => {
+                          const active = sub.allowed_modules.includes(mod.key);
+                          return (
+                            <button
+                              key={mod.key}
+                              onClick={() => toggleModule(sub, mod.key)}
+                              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                              style={{
+                                backgroundColor: active
+                                  ? "var(--layout-accent-color, #444)"
+                                  : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 10%, var(--layout-page-bg, #fff) 90%)",
+                                color: active
+                                  ? "var(--layout-button-text, #fff)"
+                                  : "var(--layout-page-text, #1a1a1a)",
+                                border: `1px solid ${active ? "transparent" : "var(--layout-border-color, #333)"}`,
+                              }}
+                            >
+                              {active ? <Eye size={12} /> : <EyeOff size={12} style={{ opacity: 0.4 }} />}
+                              {mod.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Actions */}
