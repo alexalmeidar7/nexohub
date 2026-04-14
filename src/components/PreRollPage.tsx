@@ -161,10 +161,10 @@ export default function PreRollPage() {
 
       if (editId) {
         await supabase.from("comercial_preroll").update(payload).eq("id", editId);
-        toast({ title: "Pré-Roll atualizado!" });
+        toast({ title: "Anúncio atualizado!" });
       } else {
         await supabase.from("comercial_preroll").insert(payload);
-        toast({ title: "Pré-Roll cadastrado!" });
+        toast({ title: "Anúncio cadastrado!" });
       }
       resetForm(); loadData();
     } catch (err: any) {
@@ -174,7 +174,7 @@ export default function PreRollPage() {
 
   const handleDelete = async (id: string) => {
     await supabase.from("comercial_preroll").delete().eq("id", id);
-    toast({ title: "Pré-Roll removido" }); loadData();
+    toast({ title: "Anúncio removido" }); loadData();
   };
 
   const toggleActive = async (id: string, active: boolean) => {
@@ -227,7 +227,7 @@ export default function PreRollPage() {
             <Film size={20} style={{ color: "var(--layout-icon-color, #888888)" }} />
           </div>
           <div>
-            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Pré-Roll</h3>
+            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Anúncio</h3>
             <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie anúncios exibidos antes do conteúdo ao vivo</p>
           </div>
         </div>
@@ -236,7 +236,7 @@ export default function PreRollPage() {
         <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
           <div className="px-5 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
             <h3 className="text-sm font-bold">
-              {editId ? "✏️ Editar Pré-Roll" : "➕ Novo Pré-Roll"}
+              {editId ? "✏️ Editar Anúncio" : "➕ Novo Anúncio"}
             </h3>
             {editId && (
               <button type="button" onClick={resetForm}
@@ -253,7 +253,7 @@ export default function PreRollPage() {
             {sectionHeader(<Tag size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Identificação")}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
               <div>
-                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Pré-Roll</label>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Anúncio</label>
                 <input type="text" placeholder="Ex: Campanha Black Friday" value={nome} onChange={(e) => setNome(e.target.value)}
                   className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle}
                   onFocus={focusHandler} onBlur={blurHandler}
@@ -322,7 +322,7 @@ export default function PreRollPage() {
                   <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" }}>
                     <Film size={13} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Pré-Roll</span>
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Anúncio</span>
                 </div>
 
                 <div className="mb-4">
@@ -484,7 +484,7 @@ export default function PreRollPage() {
                 {/* Pre-Roll Preview */}
                 <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
                   <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}>
-                    <Film size={11} className="inline mr-1" /> Pré-Roll
+                    <Film size={11} className="inline mr-1" /> Anúncio
                   </div>
                   <div className="relative w-full flex items-center p-4" style={{
                     aspectRatio: "16 / 9",
@@ -553,7 +553,7 @@ export default function PreRollPage() {
               className="btn-skyglass-accent w-full sm:w-auto px-8 py-2.5 text-sm disabled:opacity-50"
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
-              {editId ? "Salvar Alterações" : "Cadastrar Pré-Roll"}
+              {editId ? "Salvar Alterações" : "Cadastrar Anúncio"}
             </button>
           </div>
         </form>
@@ -561,7 +561,7 @@ export default function PreRollPage() {
         {/* List */}
         <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
           <div className="px-5 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
-            <h3 className="text-sm font-bold">📋 Pré-Rolls Cadastrados</h3>
+            <h3 className="text-sm font-bold">📋 Anúncios Cadastrados</h3>
             <span className="text-[9px] font-normal px-2.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
               {prerolls.length} item{prerolls.length !== 1 ? "s" : ""}
             </span>
