@@ -139,8 +139,51 @@ export default function EnquetePage() {
     : "";
 
   useEffect(() => {
-    if (user) loadEnquetes();
+    if (user) {
+      loadEnquetes();
+      loadCustomCategories();
+    }
   }, [user]);
+
+  const loadCustomCategories = async () => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const { data } = await supabase
+      .from("custom_enquete_categories")
+      .select("*")
+      .eq("user_id", user.id);
+    if (!data) return;
+
+    const cats: Record<string, QuizItem[]> = {};
+    const toRegenerate: { id: string; nome: string }[] = [];
+
+    for (const row of data) {
+      if (row.generated_date === today) {
+        cats[row.nome] = row.quizzes as unknown as QuizItem[];
+      } else {
+        toRegenerate.push({ id: row.id, nome: row.nome });
+      }
+    }
+    setCustomCategories(cats);
+
+    // Regenerate outdated categories in background
+    for (const item of toRegenerate) {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-enquetes`,
+          { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoria: item.nome }) }
+        );
+        const quizzes = await res.json();
+        if (Array.isArray(quizzes) && quizzes.length > 0) {
+          await supabase
+            .from("custom_enquete_categories")
+            .update({ quizzes, generated_date: today } as any)
+            .eq("id", item.id);
+          setCustomCategories(prev => ({ ...prev, [item.nome]: quizzes }));
+        }
+      } catch { /* silent */ }
+    }
+  };
 
   const loadEnquetes = async () => {
     if (!user) return;
