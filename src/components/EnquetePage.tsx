@@ -373,6 +373,7 @@ export default function EnquetePage() {
     }
   };
 
+  const handleSelectPrebuilt = (quiz: QuizItem) => {
     setPergunta(quiz.pergunta);
     setRespostas([...quiz.respostas]);
     setCorreta(quiz.correta);
