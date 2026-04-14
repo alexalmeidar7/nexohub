@@ -64,6 +64,7 @@ interface MenuChild {
   label: string;
   page: Page;
   separator?: boolean;
+  permKey?: string;
 }
 interface MenuItem {
   icon: typeof Home;
@@ -96,7 +97,7 @@ const sidebarMenu: MenuItem[] = [
     icon: ShoppingBag, label: "comercial", children: [
       { icon: MessageSquareQuote, label: "testemunhais", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
-      { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page },
+      { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page, permKey: "telapromo" },
       { icon: Settings, label: "config tela promo", page: "configtelapromo", separator: true },
       { icon: ShoppingCart, label: "shopping", page: "shopping", separator: true },
       { icon: FileText, label: "propostas comerciais", page: "propostas" },
@@ -578,7 +579,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               if (item.label === "home") return true;
               // For items with children, show if any child page is allowed
               if (item.children) {
-                return item.children.some(c => c.page && subUserModules.has(c.page));
+                return item.children.some(c => (c.permKey && subUserModules.has(c.permKey)) || (c.page && subUserModules.has(c.page)));
               }
               // For standalone items, check the page directly
               return item.page ? subUserModules.has(item.page) : false;
@@ -643,7 +644,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       }}
                     >
                       <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: `${layoutColors.navText}66` }}>{item.label}</p>
-                      {(subUserModules !== null ? item.children.filter(c => !c.page || subUserModules.has(c.page)) : item.children).map((child, ci) => {
+                      {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map((child, ci) => {
                         const ChildIcon = child.icon;
                         const childActive = currentPage === child.page;
                         return (
@@ -741,7 +742,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   if (subUserModules !== null) {
                     if (item.label === "home") return true;
                     if (item.children) {
-                      return item.children.some(c => c.page && subUserModules.has(c.page));
+                      return item.children.some(c => (c.permKey && subUserModules.has(c.permKey)) || (c.page && subUserModules.has(c.page)));
                     }
                     return item.page ? subUserModules.has(item.page) : false;
                   }
@@ -767,7 +768,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       </button>
                       {item.children && expanded && (
                         <div className="ml-6 space-y-0.5 mt-0.5">
-                          {(subUserModules !== null ? item.children.filter(c => !c.page || subUserModules.has(c.page)) : item.children).map(child => {
+                          {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map(child => {
                             const ChildIcon = child.icon;
                             const childActive = currentPage === child.page;
                             return (

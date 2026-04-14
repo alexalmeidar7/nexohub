@@ -39,6 +39,7 @@ const MODULE_GROUPS = [
       { key: "testemunhais", label: "Testemunhais" },
       { key: "promocoes", label: "Promoções" },
       { key: "configtelapromo", label: "Config Tela Promo" },
+      { key: "telapromo", label: "Tela Promo" },
       { key: "shopping", label: "Shopping" },
       { key: "propostas", label: "Propostas Comerciais" },
     ],
