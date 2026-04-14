@@ -336,11 +336,11 @@ export default function EnquetePage() {
         return;
       }
 
-      // Gather all available quizzes from all categories
+      // Gather ALL quizzes from all pre-built and custom categories
       const allQuizzes: QuizItem[] = [];
       for (const cat of CATEGORIES) {
-        const quizzes = getQuizzesForCategory(cat, customCategories);
-        allQuizzes.push(...quizzes);
+        const bank = customCategories[cat] || QUIZ_BANK[cat] || [];
+        allQuizzes.push(...bank);
       }
 
       // Shuffle
