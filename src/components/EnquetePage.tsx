@@ -131,9 +131,7 @@ export default function EnquetePage() {
   const [customCategories, setCustomCategories] = useState<Record<string, QuizItem[]>>({});
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [newCategoryQuizzes, setNewCategoryQuizzes] = useState<QuizItem[]>(
-    Array.from({ length: 5 }, () => ({ pergunta: "", respostas: ["", "", "", ""], correta: 1 }))
-  );
+  const [loadingCategory, setLoadingCategory] = useState(false);
 
   const CATEGORIES = [...DEFAULT_CATEGORIES, ...Object.keys(customCategories)];
   const xmlUrl = user
@@ -452,7 +450,7 @@ export default function EnquetePage() {
       {showAddCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddCategory(false)}>
           <div
-            className="w-full max-w-lg mx-4 rounded-xl p-5 space-y-4 max-h-[85vh] overflow-y-auto"
+            className="w-full max-w-sm mx-4 rounded-xl p-5 space-y-4"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
             onClick={e => e.stopPropagation()}
           >
@@ -463,66 +461,48 @@ export default function EnquetePage() {
 
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Nome da Categoria</label>
-              <Input value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="Ex: Esportes" />
+              <Input value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="Ex: Esportes, Cinema, Música Pop..." />
+              <p className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                O sistema gerará 5 enquetes automaticamente, atualizando diariamente.
+              </p>
             </div>
 
-            {newCategoryQuizzes.map((q, qi) => (
-              <div key={qi} className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-border-color, #333))" }}>
-                <label className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Pergunta {qi + 1}</label>
-                <Input
-                  value={q.pergunta}
-                  onChange={e => {
-                    const next = [...newCategoryQuizzes];
-                    next[qi] = { ...next[qi], pergunta: e.target.value };
-                    setNewCategoryQuizzes(next);
-                  }}
-                  placeholder="Digite a pergunta"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  {q.respostas.map((r, ri) => (
-                    <div key={ri} className="flex items-center gap-1">
-                      <Checkbox
-                        checked={q.correta === ri + 1}
-                        onCheckedChange={() => {
-                          const next = [...newCategoryQuizzes];
-                          next[qi] = { ...next[qi], correta: ri + 1 };
-                          setNewCategoryQuizzes(next);
-                        }}
-                      />
-                      <Input
-                        value={r}
-                        onChange={e => {
-                          const next = [...newCategoryQuizzes];
-                          const resps = [...next[qi].respostas] as [string, string, string, string];
-                          resps[ri] = e.target.value;
-                          next[qi] = { ...next[qi], respostas: resps };
-                          setNewCategoryQuizzes(next);
-                        }}
-                        placeholder={`Opção ${ri + 1}`}
-                        className="text-xs h-8"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-
             <Button
-              onClick={() => {
-                if (!newCategoryName.trim()) { toast.error("Digite o nome da categoria."); return; }
-                if (CATEGORIES.includes(newCategoryName.trim())) { toast.error("Categoria já existe."); return; }
-                const valid = newCategoryQuizzes.filter(q => q.pergunta.trim() && q.respostas.every(r => r.trim()));
-                if (valid.length === 0) { toast.error("Preencha ao menos 1 enquete completa."); return; }
-                setCustomCategories(prev => ({ ...prev, [newCategoryName.trim()]: valid }));
-                setShowAddCategory(false);
-                setNewCategoryName("");
-                setNewCategoryQuizzes(Array.from({ length: 5 }, () => ({ pergunta: "", respostas: ["", "", "", ""], correta: 1 })));
-                toast.success("Categoria adicionada!");
+              disabled={loadingCategory}
+              onClick={async () => {
+                const name = newCategoryName.trim();
+                if (!name) { toast.error("Digite o nome da categoria."); return; }
+                if (CATEGORIES.includes(name)) { toast.error("Categoria já existe."); return; }
+                setLoadingCategory(true);
+                try {
+                  const res = await fetch(
+                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-enquetes`,
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ categoria: name }),
+                    }
+                  );
+                  const quizzes = await res.json();
+                  if (Array.isArray(quizzes) && quizzes.length > 0) {
+                    setCustomCategories(prev => ({ ...prev, [name]: quizzes }));
+                    setShowAddCategory(false);
+                    setNewCategoryName("");
+                    setSelectedCategory(name);
+                    toast.success(`Categoria "${name}" adicionada com 5 enquetes!`);
+                  } else {
+                    toast.error("Não foi possível gerar enquetes. Tente outro tema.");
+                  }
+                } catch {
+                  toast.error("Erro ao gerar enquetes.");
+                } finally {
+                  setLoadingCategory(false);
+                }
               }}
               className="w-full"
               style={{ backgroundColor: "var(--layout-accent-color, #268ffa)" }}
             >
-              <Plus size={14} className="mr-1" /> Adicionar Categoria
+              {loadingCategory ? <><Loader2 size={14} className="mr-1 animate-spin" /> Gerando enquetes...</> : <><Plus size={14} className="mr-1" /> Adicionar Categoria</>}
             </Button>
           </div>
         </div>
