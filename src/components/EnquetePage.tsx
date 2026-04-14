@@ -7,15 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import XmlLinkRow from "./XmlLinkRow";
 import { toast } from "sonner";
-
 /* ── pre-built quiz bank (rotate daily by dayOfYear) ── */
-
 interface QuizItem {
   pergunta: string;
   respostas: [string, string, string, string];
   correta: number; // 1-4
 }
-
 const QUIZ_BANK: Record<string, QuizItem[]> = {
   "Música Sertaneja": [
     { pergunta: "Qual dupla gravou 'Evidências'?", respostas: ["Chitãozinho & Xororó", "Zezé Di Camargo & Luciano", "Leandro & Leonardo", "Bruno & Marrone"], correta: 1 },
@@ -86,10 +83,7 @@ const QUIZ_BANK: Record<string, QuizItem[]> = {
     { pergunta: "Qual o metal mais caro do mundo?", respostas: ["Ouro", "Platina", "Ródio", "Paládio"], correta: 3 },
   ],
 };
-
 const DEFAULT_CATEGORIES = Object.keys(QUIZ_BANK);
-
-
 function getQuizzesForCategory(category: string, custom: Record<string, QuizItem[]>): QuizItem[] {
   const bank = custom[category] || QUIZ_BANK[category] || [];
   if (bank.length === 0) return [];
@@ -102,7 +96,6 @@ function getQuizzesForCategory(category: string, custom: Record<string, QuizItem
   }
   return result;
 }
-
 interface EnqueteAgendada {
   id: string;
   pergunta: string;
@@ -115,7 +108,6 @@ interface EnqueteAgendada {
   horario_inicio: string;
   horario_fim: string;
 }
-
 export default function EnquetePage() {
   const { user } = useAuth();
   const [pergunta, setPergunta] = useState("");
@@ -132,16 +124,52 @@ export default function EnquetePage() {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [loadingCategory, setLoadingCategory] = useState(false);
-
   const CATEGORIES = [...DEFAULT_CATEGORIES, ...Object.keys(customCategories)];
   const xmlUrl = user
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-enquete?user_id=${user.id}`
     : "";
-
   useEffect(() => {
-    if (user) loadEnquetes();
+    if (user) {
+      loadEnquetes();
+      loadCustomCategories();
+    }
   }, [user]);
-
+  const loadCustomCategories = async () => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const { data } = await supabase
+      .from("custom_enquete_categories")
+      .select("*")
+      .eq("user_id", user.id);
+    if (!data) return;
+    const cats: Record<string, QuizItem[]> = {};
+    const toRegenerate: { id: string; nome: string }[] = [];
+    for (const row of data) {
+      if (row.generated_date === today) {
+        cats[row.nome] = row.quizzes as unknown as QuizItem[];
+      } else {
+        toRegenerate.push({ id: row.id, nome: row.nome });
+      }
+    }
+    setCustomCategories(cats);
+    // Regenerate outdated categories in background
+    for (const item of toRegenerate) {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-enquetes`,
+          { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoria: item.nome }) }
+        );
+        const quizzes = await res.json();
+        if (Array.isArray(quizzes) && quizzes.length > 0) {
+          await supabase
+            .from("custom_enquete_categories")
+            .update({ quizzes, generated_date: today } as any)
+            .eq("id", item.id);
+          setCustomCategories(prev => ({ ...prev, [item.nome]: quizzes }));
+        }
+      } catch { /* silent */ }
+    }
+  };
   const loadEnquetes = async () => {
     if (!user) return;
     const today = new Date().toISOString().slice(0, 10);
@@ -153,7 +181,6 @@ export default function EnquetePage() {
       .order("data_enquete", { ascending: true });
     if (data) setEnquetes(data as EnqueteAgendada[]);
   };
-
   const updateResposta = (index: number, value: string) => {
     setRespostas(prev => {
       const next = [...prev];
@@ -161,7 +188,6 @@ export default function EnquetePage() {
       return next;
     });
   };
-
   const handleSchedule = async () => {
     if (!user) return;
     if (!pergunta.trim() || !dataEnquete || !horarioInicio || !horarioFim) {
@@ -172,7 +198,6 @@ export default function EnquetePage() {
       toast.error("Preencha todas as 4 respostas.");
       return;
     }
-
     setSaving(true);
     const payload = {
       user_id: user.id,
@@ -186,7 +211,6 @@ export default function EnquetePage() {
       horario_inicio: horarioInicio,
       horario_fim: horarioFim,
     };
-
     if (editingId) {
       const { error } = await supabase
         .from("enquetes_agendadas")
@@ -201,12 +225,10 @@ export default function EnquetePage() {
       if (error) toast.error("Erro ao agendar enquete.");
       else toast.success("Enquete agendada!");
     }
-
     clearForm();
     setSaving(false);
     loadEnquetes();
   };
-
   const clearForm = () => {
     setPergunta("");
     setRespostas(["", "", "", ""]);
@@ -217,7 +239,6 @@ export default function EnquetePage() {
     setEditingId(null);
     setSelectedCategory("");
   };
-
   const handleEdit = (e: EnqueteAgendada) => {
     setPergunta(e.pergunta);
     setRespostas([e.resposta1, e.resposta2, e.resposta3, e.resposta4]);
@@ -229,20 +250,17 @@ export default function EnquetePage() {
     setSelectedCategory("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
   const handleDelete = async (id: string) => {
     await supabase.from("enquetes_agendadas").delete().eq("id", id);
     toast.success("Enquete removida.");
     loadEnquetes();
   };
-
   const handleSelectPrebuilt = (quiz: QuizItem) => {
     setPergunta(quiz.pergunta);
     setRespostas([...quiz.respostas]);
     setCorreta(quiz.correta);
     setEditingId(null);
   };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -255,10 +273,8 @@ export default function EnquetePage() {
           <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Configure perguntas e respostas para exibição no ar</p>
         </div>
       </div>
-
       {/* XML Link */}
       {user && <XmlLinkRow label="XML ENQUETE" permanentUrl={xmlUrl} />}
-
       {/* Pre-built quizzes by category */}
       <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 96%, var(--layout-accent-color, #268ffa))", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
         <div className="flex items-center gap-2 mb-3">
@@ -283,8 +299,11 @@ export default function EnquetePage() {
                 <X
                   size={10}
                   className="inline ml-1 opacity-60 hover:opacity-100"
-                  onClick={(ev) => {
+                  onClick={async (ev) => {
                     ev.stopPropagation();
+                    if (user) {
+                      await supabase.from("custom_enquete_categories").delete().eq("user_id", user.id).eq("nome", cat);
+                    }
                     setCustomCategories(prev => {
                       const next = { ...prev };
                       delete next[cat];
@@ -343,7 +362,6 @@ export default function EnquetePage() {
           </div>
         )}
       </div>
-
       {/* Form */}
       <div className="rounded-xl p-4 space-y-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-border-color, #333))", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
         <div>
@@ -356,7 +374,6 @@ export default function EnquetePage() {
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
           />
         </div>
-
         {[0, 1, 2, 3].map(i => (
           <div key={i} className="flex items-center gap-3">
             <div className="flex-1">
@@ -384,7 +401,6 @@ export default function EnquetePage() {
             </div>
           </div>
         ))}
-
         {/* Schedule */}
         <div className="grid grid-cols-3 gap-3">
           <div>
@@ -400,7 +416,6 @@ export default function EnquetePage() {
             <Input type="time" value={horarioFim} onChange={e => setHorarioFim(e.target.value)} className="text-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
           </div>
         </div>
-
         <div className="flex gap-2">
           <Button
             onClick={handleSchedule}
@@ -418,7 +433,6 @@ export default function EnquetePage() {
           )}
         </div>
       </div>
-
       {/* Scheduled list */}
       {enquetes.length > 0 && (
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
@@ -445,7 +459,6 @@ export default function EnquetePage() {
           </div>
         </div>
       )}
-
       {/* Add Category Dialog */}
       {showAddCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddCategory(false)}>
@@ -458,7 +471,6 @@ export default function EnquetePage() {
               <h3 className="text-sm font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nova Categoria</h3>
               <button onClick={() => setShowAddCategory(false)} className="p-1 rounded hover:bg-black/5"><X size={16} /></button>
             </div>
-
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Nome da Categoria</label>
               <Input value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="Ex: Esportes, Cinema, Música Pop..." />
@@ -466,7 +478,6 @@ export default function EnquetePage() {
                 O sistema gerará 5 enquetes automaticamente, atualizando diariamente.
               </p>
             </div>
-
             <Button
               disabled={loadingCategory}
               onClick={async () => {
@@ -485,6 +496,15 @@ export default function EnquetePage() {
                   );
                   const quizzes = await res.json();
                   if (Array.isArray(quizzes) && quizzes.length > 0) {
+                    const today = new Date().toISOString().slice(0, 10);
+                    if (user) {
+                      await supabase.from("custom_enquete_categories").insert({
+                        user_id: user.id,
+                        nome: name,
+                        quizzes,
+                        generated_date: today,
+                      } as any);
+                    }
                     setCustomCategories(prev => ({ ...prev, [name]: quizzes }));
                     setShowAddCategory(false);
                     setNewCategoryName("");

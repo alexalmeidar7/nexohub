@@ -353,6 +353,33 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_enquete_categories: {
+        Row: {
+          created_at: string
+          generated_date: string
+          id: string
+          nome: string
+          quizzes: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_date?: string
+          id?: string
+          nome: string
+          quizzes?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_date?: string
+          id?: string
+          nome?: string
+          quizzes?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_news_sites: {
         Row: {
           created_at: string
