@@ -187,6 +187,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
+  const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const prevThumbRef = useRef<string | null>(null);
@@ -288,12 +289,46 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     let cancelled = false;
 
     const loadAll = async () => {
-      const [modulesRes, empresaRes] = await Promise.all([
+      const [modulesRes, empresaRes, subUserRes] = await Promise.all([
         supabase.from("client_modules").select("module_key, enabled").eq("user_id", user.id),
         supabase.from("empresa_config").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("sub_users").select("allowed_modules, parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle(),
       ]);
 
       if (cancelled) return;
+
+      // Check if this user is a sub-user
+      if (subUserRes.data && subUserRes.data.ativo) {
+        setSubUserModules(new Set(subUserRes.data.allowed_modules || []));
+        // For sub-users, load the PARENT's modules and empresa config
+        const parentId = subUserRes.data.parent_user_id;
+        const [parentModulesRes, parentEmpresaRes] = await Promise.all([
+          supabase.from("client_modules").select("module_key, enabled").eq("user_id", parentId),
+          supabase.from("empresa_config").select("*").eq("user_id", parentId).maybeSingle(),
+        ]);
+        if (cancelled) return;
+        if (parentModulesRes.data && parentModulesRes.data.length > 0) {
+          setEnabledModules(new Set(parentModulesRes.data.filter((m: any) => m.enabled).map((m: any) => m.module_key)));
+        }
+        const pd = parentEmpresaRes.data;
+        if (pd) {
+          const parentCfg = {
+            nome: pd.nome || "", logo: pd.logo || "", backgroundUrl: pd.background_url || "",
+            endereco: pd.endereco || "", telefoneComercial: pd.telefone_comercial || "",
+            telefoneParticipacao: pd.telefone_participacao || "", site: pd.site || "",
+            instagram: pd.instagram || "", facebook: pd.facebook || "", youtube: pd.youtube || "",
+            plano: pd.plano || "",
+          };
+          setEmpresa(parentCfg);
+          if (parentCfg.plano) {
+            supabase.from("planos").select("enabled_modules").eq("name", parentCfg.plano).maybeSingle().then(({ data }) => {
+              if (!cancelled && data?.enabled_modules) setPlanModules(new Set(data.enabled_modules));
+            });
+          }
+          setInitialLoading(false);
+          return;
+        }
+      }
 
       // Modules
       if (modulesRes.data && modulesRes.data.length > 0) {
@@ -350,8 +385,26 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const isModuleEnabled = (page: Page): boolean => {
     // Pages that are always accessible regardless of plan
+    if (page === "dashboard") return true;
+
+    // Sub-users: only allow modules explicitly assigned + always-accessible pages
+    if (subUserModules !== null) {
+      // Sub-users can always access dashboard but NOT configuracoes (only parent manages settings)
+      if (page === "configuracoes") return false;
+
+      // Map page to its parent module key
+      let moduleKey: string = page;
+      if (page === "apresentadores" || page === "programas" || page === "previsao") moduleKey = "cadastros";
+      if (page === "testemunhais" || page === "promocoes" || page === "configtelapromo" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") moduleKey = "comercial";
+      if (page === "cenario" || page === "vmix" || page === "broadcast" || page === "batalha" || page === "enquete") moduleKey = "vmix";
+      if (page === "playerconfig" || page === "fans") moduleKey = "player";
+      if (page === "cortevideo" || page === "tp") moduleKey = "ferramentas";
+
+      return subUserModules.has(moduleKey);
+    }
+
+    // Normal user flow
     if (
-      page === "dashboard" ||
       page === "configuracoes" ||
       page === "playerconfig" ||
       page === "cortevideo" ||
@@ -365,10 +418,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
 
     const modulesSource = planModules ?? enabledModules;
-    // If modules haven't loaded yet, allow navigation (don't redirect prematurely)
     if (!modulesSource) return true;
 
-    // Map pages to their parent module key
     if (page === "testemunhais" || page === "promocoes" || page === "configtelapromo" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") {
       return modulesSource.has("comercial");
     }
@@ -377,7 +428,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return modulesSource.has("vmix");
     }
 
-    // "musica", "agenda", "noticias" etc. — check by page name as module key
     return modulesSource.has(page);
   };
 
@@ -516,6 +566,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         <div className="flex-1 flex flex-col items-center gap-1 px-1 overflow-visible">
           {sidebarMenu.filter(item => {
+            // Sub-user: only show menus for allowed modules
+            if (subUserModules !== null) {
+              if (item.label === "home") return true;
+              const modKey = menuToModuleKey[item.label];
+              if (!modKey) return false;
+              return subUserModules.has(modKey);
+            }
             if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
             const modKey = menuToModuleKey[item.label];
             if (!modKey) return true;
@@ -671,6 +728,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
               <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2">
                 {sidebarMenu.filter(item => {
+                  if (subUserModules !== null) {
+                    if (item.label === "home") return true;
+                    const modKey = menuToModuleKey[item.label];
+                    if (!modKey) return false;
+                    return subUserModules.has(modKey);
+                  }
                   if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
                   const modKey = menuToModuleKey[item.label];
                   if (!modKey) return true;
