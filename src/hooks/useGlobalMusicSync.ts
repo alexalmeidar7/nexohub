@@ -82,7 +82,7 @@ function getCurrentProgram(
  * Polls the user's XML music source every 3s, keeps localStorage in sync,
  * and records song changes to musicas_tocadas for history.
  */
-export function useGlobalMusicSync() {
+export function useGlobalMusicSync(enabled: boolean = true) {
   const { user } = useAuth();
   const coverCacheRef = useRef<Record<string, string>>({});
   const cachedSettingsRef = useRef<{ url: string | null; mode: string; localFileName: string | null }>({
@@ -98,7 +98,7 @@ export function useGlobalMusicSync() {
   const onlineStoppedRef = useRef(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !enabled) return;
 
     const recordToHistory = async (titulo: string, artista: string) => {
       const now = new Date();
@@ -389,5 +389,5 @@ export function useGlobalMusicSync() {
     const urlRefresh = setInterval(() => { settingsFetchedRef.current = false; }, 15000);
 
     return () => { clearInterval(interval); clearInterval(urlRefresh); };
-  }, [user]);
+  }, [user, enabled]);
 }
