@@ -610,10 +610,10 @@ export default function RoteiroPrograma() {
         />
       </Suspense>
 
-      {/* TXT Edit Popup */}
-      {txtEditRoteiroId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={() => { setTxtEditRoteiroId(null); setTxtEditText(""); }}>
-          <div className="w-full max-w-lg mx-4 rounded-2xl p-5 space-y-3 shadow-2xl" style={{ backgroundColor: "var(--layout-page-bg, #fff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }} onClick={e => e.stopPropagation()}>
+      {/* TXT Edit Popup — rendered via portal to avoid parent re-render issues */}
+      {txtEditRoteiroId && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onMouseDown={(e) => { if (e.target === e.currentTarget) { setTxtEditRoteiroId(null); setTxtEditText(""); } }}>
+          <div className="w-full max-w-lg mx-4 rounded-2xl p-5 space-y-3 shadow-2xl" style={{ backgroundColor: "var(--layout-page-bg, #fff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }} onMouseDown={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
                 <FileText size={16} /> Editar Roteiro TXT
@@ -642,7 +642,8 @@ export default function RoteiroPrograma() {
               <Check size={14} /> {txtSaving ? "Atualizando..." : "Atualizar Roteiro"}
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
