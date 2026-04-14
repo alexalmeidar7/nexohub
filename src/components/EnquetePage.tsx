@@ -128,7 +128,14 @@ export default function EnquetePage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [customCategories, setCustomCategories] = useState<Record<string, QuizItem[]>>({});
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryQuizzes, setNewCategoryQuizzes] = useState<QuizItem[]>(
+    Array.from({ length: 5 }, () => ({ pergunta: "", respostas: ["", "", "", ""], correta: 1 }))
+  );
 
+  const CATEGORIES = [...DEFAULT_CATEGORIES, ...Object.keys(customCategories)];
   const xmlUrl = user
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-enquete?user_id=${user.id}`
     : "";
