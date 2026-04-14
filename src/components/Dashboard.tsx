@@ -303,11 +303,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         setSubUserModules(new Set(subUserRes.data.allowed_modules || []));
         setEffectiveUserId(parentId);
         // For sub-users, load the PARENT's modules and empresa config
-        const [parentModulesRes, parentEmpresaRes] = await Promise.all([
+        const [parentModulesRes, parentEmpresaRes, parentProfileRes] = await Promise.all([
           supabase.from("client_modules").select("module_key, enabled").eq("user_id", parentId),
           supabase.from("empresa_config").select("*").eq("user_id", parentId).maybeSingle(),
+          supabase.from("profiles").select("email").eq("user_id", parentId).maybeSingle(),
         ]);
         if (cancelled) return;
+        if (parentProfileRes.data?.email) setParentEmail(parentProfileRes.data.email);
         if (parentModulesRes.data && parentModulesRes.data.length > 0) {
           setEnabledModules(new Set(parentModulesRes.data.filter((m: any) => m.enabled).map((m: any) => m.module_key)));
         }
