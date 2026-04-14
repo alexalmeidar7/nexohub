@@ -496,6 +496,15 @@ export default function EnquetePage() {
                   );
                   const quizzes = await res.json();
                   if (Array.isArray(quizzes) && quizzes.length > 0) {
+                    const today = new Date().toISOString().slice(0, 10);
+                    if (user) {
+                      await supabase.from("custom_enquete_categories").insert({
+                        user_id: user.id,
+                        nome: name,
+                        quizzes,
+                        generated_date: today,
+                      } as any);
+                    }
                     setCustomCategories(prev => ({ ...prev, [name]: quizzes }));
                     setShowAddCategory(false);
                     setNewCategoryName("");
