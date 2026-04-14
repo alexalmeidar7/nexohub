@@ -10,8 +10,8 @@ import { toast } from "sonner";
 /* ── pre-built quiz bank (rotate daily by dayOfYear) ── */
 interface QuizItem {
   pergunta: string;
-  respostas: [string, string, string, string];
-  correta: number; // 1-4
+  respostas: [string, string];
+  correta: number; // 1-2
 }
 const QUIZ_BANK: Record<string, QuizItem[]> = {
   "Música Sertaneja": [
