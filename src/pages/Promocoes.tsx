@@ -274,8 +274,16 @@ export default function PromocoesKiosk() {
       .trim()
       .toUpperCase();
 
+  const today = new Date().toISOString().split("T")[0];
+  const programIdsWithTestemunhais = new Set(
+    testemunhais
+      .filter(t => t.programa_id && t.data_fim >= today)
+      .map(t => t.programa_id)
+  );
+
   const filteredPrograms = Array.from(
     programas
+      .filter(p => programIdsWithTestemunhais.has(p.id))
       .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
       .reduce((map, programa) => {
         const dedupeKey = normalizeProgramName(programa.nome);
