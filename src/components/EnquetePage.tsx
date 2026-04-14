@@ -111,7 +111,7 @@ interface EnqueteAgendada {
 export default function EnquetePage() {
   const { user } = useAuth();
   const [pergunta, setPergunta] = useState("");
-  const [respostas, setRespostas] = useState(["", "", "", ""]);
+  const [respostas, setRespostas] = useState(["", ""]);
   const [correta, setCorreta] = useState(1);
   const [dataEnquete, setDataEnquete] = useState("");
   const [horarioInicio, setHorarioInicio] = useState("");
@@ -195,7 +195,7 @@ export default function EnquetePage() {
       return;
     }
     if (respostas.some(r => !r.trim())) {
-      toast.error("Preencha todas as 4 respostas.");
+      toast.error("Preencha as duas respostas.");
       return;
     }
     setSaving(true);
@@ -204,8 +204,8 @@ export default function EnquetePage() {
       pergunta: pergunta.trim(),
       resposta1: respostas[0].trim(),
       resposta2: respostas[1].trim(),
-      resposta3: respostas[2].trim(),
-      resposta4: respostas[3].trim(),
+      resposta3: "",
+      resposta4: "",
       resposta_correta: correta,
       data_enquete: dataEnquete,
       horario_inicio: horarioInicio,
@@ -231,7 +231,7 @@ export default function EnquetePage() {
   };
   const clearForm = () => {
     setPergunta("");
-    setRespostas(["", "", "", ""]);
+    setRespostas(["", ""]);
     setCorreta(1);
     setDataEnquete("");
     setHorarioInicio("");
@@ -241,7 +241,7 @@ export default function EnquetePage() {
   };
   const handleEdit = (e: EnqueteAgendada) => {
     setPergunta(e.pergunta);
-    setRespostas([e.resposta1, e.resposta2, e.resposta3, e.resposta4]);
+    setRespostas([e.resposta1, e.resposta2]);
     setCorreta(e.resposta_correta);
     setDataEnquete(e.data_enquete);
     setHorarioInicio(e.horario_inicio);
@@ -374,7 +374,7 @@ export default function EnquetePage() {
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
           />
         </div>
-        {[0, 1, 2, 3].map(i => (
+        {[0, 1].map(i => (
           <div key={i} className="flex items-center gap-3">
             <div className="flex-1">
               <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
