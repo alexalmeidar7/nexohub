@@ -161,7 +161,7 @@ export default function TestemunhaisPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !texto || !dataInicio || !dataFim) return;
+    if (!user || !dataUserId || !texto || !dataInicio || !dataFim) return;
     setSaving(true);
 
     try {
@@ -180,7 +180,7 @@ export default function TestemunhaisPage() {
         toast({ title: "Testemunhal atualizado!" });
       } else {
         const { error } = await supabase.from("testemunhais").insert({
-          user_id: user.id,
+          user_id: dataUserId,
           programa_id: programaId || null,
           imagem_url,
           texto,
