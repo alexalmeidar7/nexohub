@@ -90,10 +90,10 @@ const QUIZ_BANK: Record<string, QuizItem[]> = {
 const DEFAULT_CATEGORIES = Object.keys(QUIZ_BANK);
 
 
-function getQuizzesForCategory(category: string): QuizItem[] {
-  const bank = QUIZ_BANK[category] || [];
+function getQuizzesForCategory(category: string, custom: Record<string, QuizItem[]>): QuizItem[] {
+  const bank = custom[category] || QUIZ_BANK[category] || [];
   if (bank.length === 0) return [];
-  // Rotate daily: pick 5 based on day of year
+  if (custom[category]) return bank.slice(0, 5);
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const startIdx = (dayOfYear * 5) % bank.length;
   const result: QuizItem[] = [];
