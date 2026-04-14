@@ -220,8 +220,16 @@ export default function TestemunhaisPage() {
     return Math.ceil((new Date(dataFim + "T23:59:59").getTime() - Date.now()) / 86400000);
   };
 
-  if (loading) {
-    return <ModulePageSkeleton variant="form" />;
+  if (loading || !dataUserId) {
+    return (
+      <div>
+        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent overflow-hidden">
+          <div className="h-full animate-pulse rounded-r" style={{ width: "60%", background: "var(--layout-accent-color, #e53e3e)", animation: "loadbar 1.2s ease-in-out infinite" }} />
+        </div>
+        <style>{`@keyframes loadbar { 0% { width: 10%; margin-left: 0; } 50% { width: 60%; margin-left: 20%; } 100% { width: 10%; margin-left: 90%; } }`}</style>
+        <ModulePageSkeleton variant="form" />
+      </div>
+    );
   }
 
   return (
