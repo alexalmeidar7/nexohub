@@ -199,10 +199,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
 
   // Helper: find current on-air program and fetch only its thumb
-  const findCurrentOnAirThumb = useCallback(async () => {
-    const uid = effectiveUserId || user?.id;
+  const findCurrentOnAirThumb = useCallback(async (overrideUserId?: string) => {
+    const uid = overrideUserId || effectiveUserId || user?.id;
     if (!uid) return null;
-    // First: lightweight query WITHOUT thumb column
     const { data } = await supabase
       .from("programas")
       .select("id, dias_semana, horario_inicio, horario_fim")
@@ -220,13 +219,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     );
     if (!current) return null;
 
-    // Second: fetch thumb ONLY for the matched program
     const { data: thumbData } = await supabase
       .from("programas")
       .select("thumb")
       .eq("id", current.id)
       .maybeSingle();
-    // Fallback to empresa background if no program thumb
     if (thumbData?.thumb) return thumbData.thumb;
     return null;
   }, [user, effectiveUserId]);
