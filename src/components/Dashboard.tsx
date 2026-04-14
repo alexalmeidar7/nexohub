@@ -49,13 +49,14 @@ const FansPage = lazy(() => import("./FansPage"));
 const BroadcastPage = lazy(() => import("./BroadcastPage"));
 const BatalhaMusicalPage = lazy(() => import("./BatalhaMusicalPage"));
 const EnquetePage = lazy(() => import("./EnquetePage"));
+const QuizPage = lazy(() => import("./QuizPage"));
 const IntercomWidget = lazy(() => import("./IntercomWidget"));
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -109,6 +110,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: MonitorPlay, label: "cenário interativo", page: "cenario" },
       { icon: Swords, label: "batalha musical", page: "batalha" },
       { icon: HelpCircle, label: "enquete", page: "enquete" },
+      { icon: HelpCircle, label: "quiz", page: "quiz" },
     ]
   },
   {
@@ -158,6 +160,7 @@ const pageTitle: Record<Page, string> = {
   configtelapromo: "Comercial — Config Tela Promo",
   batalha: "vMix — Batalha Musical",
   enquete: "vMix — Enquete",
+  quiz: "vMix — Quiz",
 };
 
 interface DashboardProps {
@@ -869,6 +872,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "broadcast" && <BroadcastPage />}
               {currentPage === "batalha" && <BatalhaMusicalPage />}
               {currentPage === "enquete" && <EnquetePage />}
+              {currentPage === "quiz" && <QuizPage />}
               {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
               
             </Suspense>
