@@ -289,12 +289,46 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     let cancelled = false;
 
     const loadAll = async () => {
-      const [modulesRes, empresaRes] = await Promise.all([
+      const [modulesRes, empresaRes, subUserRes] = await Promise.all([
         supabase.from("client_modules").select("module_key, enabled").eq("user_id", user.id),
         supabase.from("empresa_config").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("sub_users").select("allowed_modules, parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle(),
       ]);
 
       if (cancelled) return;
+
+      // Check if this user is a sub-user
+      if (subUserRes.data && subUserRes.data.ativo) {
+        setSubUserModules(new Set(subUserRes.data.allowed_modules || []));
+        // For sub-users, load the PARENT's modules and empresa config
+        const parentId = subUserRes.data.parent_user_id;
+        const [parentModulesRes, parentEmpresaRes] = await Promise.all([
+          supabase.from("client_modules").select("module_key, enabled").eq("user_id", parentId),
+          supabase.from("empresa_config").select("*").eq("user_id", parentId).maybeSingle(),
+        ]);
+        if (cancelled) return;
+        if (parentModulesRes.data && parentModulesRes.data.length > 0) {
+          setEnabledModules(new Set(parentModulesRes.data.filter((m: any) => m.enabled).map((m: any) => m.module_key)));
+        }
+        const pd = parentEmpresaRes.data;
+        if (pd) {
+          const parentCfg = {
+            nome: pd.nome || "", logo: pd.logo || "", backgroundUrl: pd.background_url || "",
+            endereco: pd.endereco || "", telefoneComercial: pd.telefone_comercial || "",
+            telefoneParticipacao: pd.telefone_participacao || "", site: pd.site || "",
+            instagram: pd.instagram || "", facebook: pd.facebook || "", youtube: pd.youtube || "",
+            plano: pd.plano || "",
+          };
+          setEmpresa(parentCfg);
+          if (parentCfg.plano) {
+            supabase.from("planos").select("enabled_modules").eq("name", parentCfg.plano).maybeSingle().then(({ data }) => {
+              if (!cancelled && data?.enabled_modules) setPlanModules(new Set(data.enabled_modules));
+            });
+          }
+          setInitialLoading(false);
+          return;
+        }
+      }
 
       // Modules
       if (modulesRes.data && modulesRes.data.length > 0) {
