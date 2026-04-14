@@ -287,7 +287,8 @@ export default function EnquetePage() {
     loadEnquetes();
   };
   const DAY_MAP: Record<string, number> = { "Dom": 0, "Seg": 1, "Ter": 2, "Qua": 3, "Qui": 4, "Sex": 5, "Sáb": 6 };
-  const DAY_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const DAY_NAMES_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const DAY_NAMES_FULL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
   const handleAutoGenerate = async () => {
     if (!user) return;
@@ -309,7 +310,8 @@ export default function EnquetePage() {
     } else {
       if (autoDiasSemana.length === 0) { toast.error("Selecione ao menos um dia da semana."); return; }
       if (!autoHorarioInicio || !autoHorarioFim) { toast.error("Preencha horário início e fim."); return; }
-      targetDays = autoDiasSemana;
+      const shortToFull: Record<string, string> = { "Dom": "Domingo", "Seg": "Segunda", "Ter": "Terça", "Qua": "Quarta", "Qui": "Quinta", "Sex": "Sexta", "Sáb": "Sábado" };
+      targetDays = autoDiasSemana.map(d => shortToFull[d] || d);
       hInicio = autoHorarioInicio;
       hFim = autoHorarioFim;
     }
@@ -322,7 +324,7 @@ export default function EnquetePage() {
       for (let d = 1; d <= 90 && datesToSchedule.length < autoDaysAhead; d++) {
         const date = new Date(today);
         date.setDate(today.getDate() + d);
-        const dayName = DAY_NAMES[date.getDay()];
+        const dayName = DAY_NAMES_FULL[date.getDay()];
         if (targetDays.includes(dayName)) {
           datesToSchedule.push(date.toISOString().slice(0, 10));
         }
@@ -611,7 +613,7 @@ export default function EnquetePage() {
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Dias da Semana</label>
               <div className="flex flex-wrap gap-2">
-                {DAY_NAMES.map(day => (
+                {DAY_NAMES_SHORT.map(day => (
                   <button
                     key={day}
                     onClick={() => setAutoDiasSemana(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])}
