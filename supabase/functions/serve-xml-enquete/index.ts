@@ -64,7 +64,7 @@ serve(async (req) => {
     <resposta2>${esc(r2)}</resposta2>
     <resposta3>${esc(r3)}</resposta3>
     <resposta4>${esc(r4)}</resposta4>
-    <resposta_correta>${correta}</resposta_correta>
+    <resposta_correta>${esc(correta >= 1 && correta <= 4 ? [r1, r2, r3, r4][correta - 1] : "")}</resposta_correta>
   </enquete>
 </items>`;
 
