@@ -25,6 +25,7 @@ interface Promocao {
 
 interface ProgramaGrade {
   id: string;
+  mergedIds: string[];
   nome: string;
   apresentadorId: string;
   selo: string;
@@ -33,6 +34,7 @@ interface ProgramaGrade {
   horarioInicio: string;
   horarioFim: string;
   descricao: string;
+  schedules: { dias: string[]; horarioInicio: string; horarioFim: string }[];
 }
 
 interface Testemunhal {
