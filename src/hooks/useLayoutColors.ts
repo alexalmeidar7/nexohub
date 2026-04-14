@@ -79,13 +79,26 @@ export const defaultLayoutColors: LayoutColors = {
 export function useLayoutColors() {
   const { user } = useAuth();
   const [colors, setColors] = useState<LayoutColors>(defaultLayoutColors);
+  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
+
+  // Resolve effective user id (parent for sub-users)
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle().then(({ data }) => {
+      if (data?.ativo && data.parent_user_id) {
+        setEffectiveUserId(data.parent_user_id);
+      } else {
+        setEffectiveUserId(user.id);
+      }
+    });
+  }, [user]);
 
   const fetchColors = useCallback(() => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     supabase
       .from("user_settings")
       .select("dashboard_items")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .maybeSingle()
       .then(({ data }) => {
         if (
@@ -100,7 +113,7 @@ export function useLayoutColors() {
           setColors(loaded);
         }
       });
-  }, [user]);
+  }, [effectiveUserId]);
 
   useEffect(() => {
     fetchColors();
