@@ -473,7 +473,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return;
     }
     if ((parentLabel === "ferramentas" || parentLabel === "comercial") && child.label === "tela promo") {
-      const slug = user?.email?.split("@")[0] || "";
+      const email = parentEmail || user?.email || "";
+      const slug = email.split("@")[0] || "";
       window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
       setHoveredMenu(null);
       return;
