@@ -310,7 +310,7 @@ export default function EnquetePage() {
                       return next;
                     });
                     if (selectedCategory === cat) setSelectedCategory("");
-                  }
+                  }}
                 />
               )}
             </button>
