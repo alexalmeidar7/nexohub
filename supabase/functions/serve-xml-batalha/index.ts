@@ -65,11 +65,11 @@ serve(async (req) => {
   <batalha>
     <artista1_nome>${esc(nome1)}</artista1_nome>
     <artista1_musica>${esc(musica1)}</artista1_musica>
-    <artista1_porcentagem>${pct1}</artista1_porcentagem>
+    <artista1_porcentagem>${pct1}%</artista1_porcentagem>
     <artista1_imagem>${esc(img1)}</artista1_imagem>
     <artista2_nome>${esc(nome2)}</artista2_nome>
     <artista2_musica>${esc(musica2)}</artista2_musica>
-    <artista2_porcentagem>${pct2}</artista2_porcentagem>
+    <artista2_porcentagem>${pct2}%</artista2_porcentagem>
     <artista2_imagem>${esc(img2)}</artista2_imagem>
   </batalha>
 </items>`;
