@@ -859,7 +859,7 @@ export default function PromocoesKiosk() {
               {/* Testemunhais com scroll, alinhado ao X */}
               <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
                 {(() => {
-                  const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram.id) : [];
+                  const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
                     return <p className="text-white/40 text-sm">Nenhum conteúdo disponível.</p>;
                   }
