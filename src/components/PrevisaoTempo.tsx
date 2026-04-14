@@ -189,14 +189,42 @@ export default function PrevisaoTempo() {
   const searchWeather = () => { setShowSuggestions(false); fetchWeather(city); };
 
   useEffect(() => {
-    const primary = getPrimaryCity();
-    if (primary) {
-      setCity(primary.name);
-      fetchWeatherByCoords(primary.lat, primary.lon, primary.name);
-    } else {
+    const loadCity = async () => {
+      // 1) Check localStorage first (fast)
+      const localPrimary = getPrimaryCity();
+      if (localPrimary) {
+        setCity(localPrimary.name);
+        fetchWeatherByCoords(localPrimary.lat, localPrimary.lon, localPrimary.name);
+        return;
+      }
+
+      // 2) Fallback: check database for saved city
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: settings } = await supabase
+            .from("user_settings")
+            .select("weather_city, weather_lat, weather_lon")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (settings?.weather_city && settings?.weather_lat != null && settings?.weather_lon != null) {
+            const pc = { name: settings.weather_city, lat: settings.weather_lat, lon: settings.weather_lon };
+            savePrimaryCity(pc);
+            setPrimaryCity(pc);
+            setCity(pc.name);
+            localStorage.setItem(STORAGE_KEY, pc.name);
+            fetchWeatherByCoords(pc.lat, pc.lon, pc.name);
+            return;
+          }
+        }
+      } catch { /* ignore */ }
+
+      // 3) Last fallback: localStorage city name
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) fetchWeather(saved);
-    }
+    };
+
+    loadCity();
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [fetchWeather, fetchWeatherByCoords]);
 
