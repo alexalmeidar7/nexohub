@@ -850,10 +850,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
               {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" />}
               {currentPage === "playerconfig" && <ConfiguracoesPage section="player" />}
-              {currentPage === "testemunhais" && <TestemunhaisPage />}
-              {currentPage === "promocoes" && <PromocoesPage />}
+              {currentPage === "testemunhais" && <TestemunhaisPage effectiveUserId={effectiveUserId} />}
+              {currentPage === "promocoes" && <PromocoesPage effectiveUserId={effectiveUserId} />}
               {currentPage === "configtelapromo" && <ConfigTelaPromoPage />}
-              {currentPage === "logos" && <LogosPatrocinadoresPage />}
+              {currentPage === "logos" && <LogosPatrocinadoresPage effectiveUserId={effectiveUserId} />}
               {currentPage === "shopping" && <ShoppingPage />}
               {currentPage === "preroll" && <PreRollPage />}
               {currentPage === "cortevideo" && <CortesVideoPage />}

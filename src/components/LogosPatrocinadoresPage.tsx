@@ -30,7 +30,11 @@ const inputStyle: React.CSSProperties = {
   backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
 };
 
-export default function LogosPatrocinadoresPage() {
+interface LogosPatrocinadoresPageProps {
+  effectiveUserId?: string | null;
+}
+
+export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatrocinadoresPageProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [logos, setLogos] = useState<Logo[]>([]);
@@ -38,7 +42,7 @@ export default function LogosPatrocinadoresPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [dataUserId, setDataUserId] = useState<string | null>(null);
+  const [dataUserId, setDataUserId] = useState<string | null>(effectiveUserId ?? null);
 
   const [programaId, setProgramaId] = useState("");
   const [dataFinal, setDataFinal] = useState("");
@@ -57,24 +61,36 @@ export default function LogosPatrocinadoresPage() {
   const dragItem = useRef<Logo | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Resolve effective user id (parent for sub-users)
   useEffect(() => {
+    if (effectiveUserId) {
+      setDataUserId(effectiveUserId);
+      return;
+    }
+
     if (!user) return;
-    supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle().then(({ data }) => {
-      setDataUserId(data?.ativo && data.parent_user_id ? data.parent_user_id : user.id);
-    });
-  }, [user]);
+    let cancelled = false;
 
-  useEffect(() => {
-    if (dataUserId) loadData();
-  }, [dataUserId]);
+    supabase
+      .from("sub_users")
+      .select("parent_user_id, ativo")
+      .eq("auth_user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setDataUserId(data?.ativo && data.parent_user_id ? data.parent_user_id : user.id);
+      });
 
-  const loadData = async () => {
-    if (!dataUserId) return;
+    return () => {
+      cancelled = true;
+    };
+  }, [user, effectiveUserId]);
+
+  const loadData = async (targetUserId = dataUserId) => {
+    if (!targetUserId) return;
     const [, { data: lData }, { data: pData }] = await Promise.all([
       supabase.rpc("cleanup_comercial"),
-      supabase.from("logos_patrocinadores").select("*").eq("user_id", dataUserId).order("created_at", { ascending: false }),
-      supabase.from("programas").select("id, nome").eq("user_id", dataUserId).eq("ativo", true),
+      supabase.from("logos_patrocinadores").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
+      supabase.from("programas").select("id, nome").eq("user_id", targetUserId).eq("ativo", true),
     ]);
 
     const all = (lData || []) as Logo[];
@@ -86,6 +102,10 @@ export default function LogosPatrocinadoresPage() {
     setProgramas(pData || []);
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (dataUserId) loadData(dataUserId);
+  }, [dataUserId]);
 
   const handleAddFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
