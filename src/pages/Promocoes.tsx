@@ -711,10 +711,12 @@ export default function PromocoesKiosk() {
                       No Ar
                     </span>
                   )}
-                  <div className="absolute bottom-1 left-0 right-0 text-center">
-                    <span className="text-[10px] font-bold text-white drop-shadow-lg bg-black/50 px-1.5 py-0.5 rounded">
-                      {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
-                    </span>
+                  <div className="absolute bottom-1 left-0 right-0 text-center flex flex-col items-center gap-0.5">
+                    {prog.schedules.map((s, i) => (
+                      <span key={i} className="text-[10px] font-bold text-white drop-shadow-lg bg-black/50 px-1.5 py-0.5 rounded">
+                        {s.horarioInicio.slice(0, 5)} - {s.horarioFim.slice(0, 5)}
+                      </span>
+                    ))}
                   </div>
                 </div>
               ))}
