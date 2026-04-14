@@ -832,14 +832,18 @@ export default function PromocoesKiosk() {
           <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full">
               {/* Horário em destaque */}
               <div className="px-4 pt-4 pb-1 flex-shrink-0">
-                <div className="text-lg font-bold text-white">
-                  {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
-                </div>
-                {selectedProgram?.diasSemana && selectedProgram.diasSemana.length > 0 && (
-                  <div className="text-xs text-white/60 mt-0.5">
-                    {selectedProgram.diasSemana.join(", ")}
-                  </div>
-                )}
+                  {selectedProgram?.schedules && selectedProgram.schedules.length > 0 ? (
+                    selectedProgram.schedules.map((s, i) => (
+                      <div key={i} className="text-lg font-bold text-white">
+                        {s.horarioInicio.slice(0, 5)} às {s.horarioFim.slice(0, 5)}
+                        {s.dias.length > 0 && <span className="text-xs text-white/60 ml-2 font-normal">{s.dias.join(", ")}</span>}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-lg font-bold text-white">
+                      {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
+                    </div>
+                  )}
               </div>
 
               {/* Rótulo Citações */}
