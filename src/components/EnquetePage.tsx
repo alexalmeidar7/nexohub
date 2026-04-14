@@ -151,8 +151,20 @@ export default function EnquetePage() {
     if (user) {
       loadEnquetes();
       loadCustomCategories();
+      loadProgramas();
     }
   }, [user]);
+
+  const loadProgramas = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("programas")
+      .select("id, nome, dias_semana, horario_inicio, horario_fim")
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .order("horario_inicio");
+    if (data) setProgramas(data as Programa[]);
+  };
   const loadCustomCategories = async () => {
     if (!user) return;
     const today = new Date().toISOString().slice(0, 10);
