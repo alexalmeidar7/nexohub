@@ -532,10 +532,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   })();
 
   const isDashboard = currentPage === "dashboard";
-
+ 
   return (
     <div className="h-screen flex animate-fade-in overflow-hidden relative" style={{ backgroundColor: layoutColors.pageBg }}>
-      <DashboardRuntimeEffects />
+      <DashboardRuntimeEffects pauseMusicSync={currentPage === "musica"} />
 
       {/* Background layers (full page, behind sidebar) */}
       {isDashboard && (
@@ -949,9 +949,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   );
 }
 
-function DashboardRuntimeEffects() {
+function DashboardRuntimeEffects({ pauseMusicSync = false }: { pauseMusicSync?: boolean }) {
   useGlobalMusicXmlUpload();
-  useGlobalMusicSync();
+  useGlobalMusicSync(!pauseMusicSync);
   return null;
 }
 
