@@ -286,7 +286,7 @@ export default function EnquetePage() {
         </div>
         {selectedCategory && (
           <div className="space-y-2">
-            {getQuizzesForCategory(selectedCategory).map((quiz, i) => (
+            {getQuizzesForCategory(selectedCategory, customCategories).map((quiz, i) => (
               <div
                 key={i}
                 onClick={() => handleSelectPrebuilt(quiz)}
