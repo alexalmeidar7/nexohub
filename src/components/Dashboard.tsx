@@ -55,7 +55,7 @@ import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -109,6 +109,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: MonitorPlay, label: "cenário interativo", page: "cenario" },
       { icon: Swords, label: "batalha musical", page: "batalha" },
       { icon: HelpCircle, label: "enquete", page: "enquete" },
+      { icon: HelpCircle, label: "quiz", page: "quiz" },
     ]
   },
   {
@@ -158,6 +159,7 @@ const pageTitle: Record<Page, string> = {
   configtelapromo: "Comercial — Config Tela Promo",
   batalha: "vMix — Batalha Musical",
   enquete: "vMix — Enquete",
+  quiz: "vMix — Quiz",
 };
 
 interface DashboardProps {
