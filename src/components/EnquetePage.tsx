@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { HelpCircle, Loader2, CalendarPlus, Save, Trash2, Pencil, Sparkles } from "lucide-react";
+import { HelpCircle, Loader2, CalendarPlus, Save, Trash2, Pencil, Sparkles, Plus, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -87,12 +87,13 @@ const QUIZ_BANK: Record<string, QuizItem[]> = {
   ],
 };
 
-const CATEGORIES = Object.keys(QUIZ_BANK);
+const DEFAULT_CATEGORIES = Object.keys(QUIZ_BANK);
 
-function getQuizzesForCategory(category: string): QuizItem[] {
-  const bank = QUIZ_BANK[category] || [];
+
+function getQuizzesForCategory(category: string, custom: Record<string, QuizItem[]>): QuizItem[] {
+  const bank = custom[category] || QUIZ_BANK[category] || [];
   if (bank.length === 0) return [];
-  // Rotate daily: pick 5 based on day of year
+  if (custom[category]) return bank.slice(0, 5);
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const startIdx = (dayOfYear * 5) % bank.length;
   const result: QuizItem[] = [];
@@ -127,7 +128,14 @@ export default function EnquetePage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [customCategories, setCustomCategories] = useState<Record<string, QuizItem[]>>({});
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryQuizzes, setNewCategoryQuizzes] = useState<QuizItem[]>(
+    Array.from({ length: 5 }, () => ({ pergunta: "", respostas: ["", "", "", ""], correta: 1 }))
+  );
 
+  const CATEGORIES = [...DEFAULT_CATEGORIES, ...Object.keys(customCategories)];
   const xmlUrl = user
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-enquete?user_id=${user.id}`
     : "";
@@ -259,7 +267,7 @@ export default function EnquetePage() {
           <Sparkles size={14} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
           <span className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Enquetes pré-prontas</span>
         </div>
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           {CATEGORIES.map(cat => (
             <button
               key={cat}
@@ -273,12 +281,38 @@ export default function EnquetePage() {
               }}
             >
               {cat}
+              {customCategories[cat] && (
+                <X
+                  size={10}
+                  className="inline ml-1 opacity-60 hover:opacity-100"
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    setCustomCategories(prev => {
+                      const next = { ...prev };
+                      delete next[cat];
+                      return next;
+                    });
+                    if (selectedCategory === cat) setSelectedCategory("");
+                  }}
+                />
+              )}
             </button>
           ))}
+          <button
+            onClick={() => setShowAddCategory(true)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-105"
+            style={{
+              backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #268ffa) 15%, transparent)",
+              color: "var(--layout-accent-color, #268ffa)",
+            }}
+            title="Incluir categoria"
+          >
+            <Plus size={14} />
+          </button>
         </div>
         {selectedCategory && (
           <div className="space-y-2">
-            {getQuizzesForCategory(selectedCategory).map((quiz, i) => (
+            {getQuizzesForCategory(selectedCategory, customCategories).map((quiz, i) => (
               <div
                 key={i}
                 onClick={() => handleSelectPrebuilt(quiz)}
@@ -410,6 +444,86 @@ export default function EnquetePage() {
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Add Category Dialog */}
+      {showAddCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddCategory(false)}>
+          <div
+            className="w-full max-w-lg mx-4 rounded-xl p-5 space-y-4 max-h-[85vh] overflow-y-auto"
+            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nova Categoria</h3>
+              <button onClick={() => setShowAddCategory(false)} className="p-1 rounded hover:bg-black/5"><X size={16} /></button>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Nome da Categoria</label>
+              <Input value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="Ex: Esportes" />
+            </div>
+
+            {newCategoryQuizzes.map((q, qi) => (
+              <div key={qi} className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-border-color, #333))" }}>
+                <label className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Pergunta {qi + 1}</label>
+                <Input
+                  value={q.pergunta}
+                  onChange={e => {
+                    const next = [...newCategoryQuizzes];
+                    next[qi] = { ...next[qi], pergunta: e.target.value };
+                    setNewCategoryQuizzes(next);
+                  }}
+                  placeholder="Digite a pergunta"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  {q.respostas.map((r, ri) => (
+                    <div key={ri} className="flex items-center gap-1">
+                      <Checkbox
+                        checked={q.correta === ri + 1}
+                        onCheckedChange={() => {
+                          const next = [...newCategoryQuizzes];
+                          next[qi] = { ...next[qi], correta: ri + 1 };
+                          setNewCategoryQuizzes(next);
+                        }}
+                      />
+                      <Input
+                        value={r}
+                        onChange={e => {
+                          const next = [...newCategoryQuizzes];
+                          const resps = [...next[qi].respostas] as [string, string, string, string];
+                          resps[ri] = e.target.value;
+                          next[qi] = { ...next[qi], respostas: resps };
+                          setNewCategoryQuizzes(next);
+                        }}
+                        placeholder={`Opção ${ri + 1}`}
+                        className="text-xs h-8"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <Button
+              onClick={() => {
+                if (!newCategoryName.trim()) { toast.error("Digite o nome da categoria."); return; }
+                if (CATEGORIES.includes(newCategoryName.trim())) { toast.error("Categoria já existe."); return; }
+                const valid = newCategoryQuizzes.filter(q => q.pergunta.trim() && q.respostas.every(r => r.trim()));
+                if (valid.length === 0) { toast.error("Preencha ao menos 1 enquete completa."); return; }
+                setCustomCategories(prev => ({ ...prev, [newCategoryName.trim()]: valid }));
+                setShowAddCategory(false);
+                setNewCategoryName("");
+                setNewCategoryQuizzes(Array.from({ length: 5 }, () => ({ pergunta: "", respostas: ["", "", "", ""], correta: 1 })));
+                toast.success("Categoria adicionada!");
+              }}
+              className="w-full"
+              style={{ backgroundColor: "var(--layout-accent-color, #268ffa)" }}
+            >
+              <Plus size={14} className="mr-1" /> Adicionar Categoria
+            </Button>
           </div>
         </div>
       )}
