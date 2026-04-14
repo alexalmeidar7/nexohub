@@ -936,6 +936,13 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           <PlayerLayoutCustomizer />
         </Suspense>
       </CollapsibleBox>}
+
+      {/* Box 5: Permissões */}
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Permissões — Sub-Usuários" icon={<ShieldCheck size={16} style={{ opacity: 0.8 }} />}>
+        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
+          <PermissoesSection />
+        </Suspense>
+      </CollapsibleBox>}
         </div>
       </div>
     </div>
