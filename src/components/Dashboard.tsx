@@ -49,6 +49,7 @@ const FansPage = lazy(() => import("./FansPage"));
 const BroadcastPage = lazy(() => import("./BroadcastPage"));
 const BatalhaMusicalPage = lazy(() => import("./BatalhaMusicalPage"));
 const EnquetePage = lazy(() => import("./EnquetePage"));
+const QuizPage = lazy(() => import("./QuizPage"));
 const IntercomWidget = lazy(() => import("./IntercomWidget"));
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
@@ -871,6 +872,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "broadcast" && <BroadcastPage />}
               {currentPage === "batalha" && <BatalhaMusicalPage />}
               {currentPage === "enquete" && <EnquetePage />}
+              {currentPage === "quiz" && <QuizPage />}
               {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
               
             </Suspense>
