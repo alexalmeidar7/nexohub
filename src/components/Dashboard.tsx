@@ -189,6 +189,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
   const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
   const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null); // parent_user_id for sub-users
+  const [parentEmail, setParentEmail] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const prevThumbRef = useRef<string | null>(null);
@@ -302,11 +303,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         setSubUserModules(new Set(subUserRes.data.allowed_modules || []));
         setEffectiveUserId(parentId);
         // For sub-users, load the PARENT's modules and empresa config
-        const [parentModulesRes, parentEmpresaRes] = await Promise.all([
+        const [parentModulesRes, parentEmpresaRes, parentProfileRes] = await Promise.all([
           supabase.from("client_modules").select("module_key, enabled").eq("user_id", parentId),
           supabase.from("empresa_config").select("*").eq("user_id", parentId).maybeSingle(),
+          supabase.from("profiles").select("email").eq("user_id", parentId).maybeSingle(),
         ]);
         if (cancelled) return;
+        if (parentProfileRes.data?.email) setParentEmail(parentProfileRes.data.email);
         if (parentModulesRes.data && parentModulesRes.data.length > 0) {
           setEnabledModules(new Set(parentModulesRes.data.filter((m: any) => m.enabled).map((m: any) => m.module_key)));
         }
@@ -464,13 +467,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
     if (parentLabel === "player" && child.label === "módulo externo") {
-      const slug = user?.email?.split("@")[0] || "";
+      const email = parentEmail || user?.email || "";
+      const slug = email.split("@")[0] || "";
       window.open(`/user/${slug}/nexohub/player`, "_blank");
       setHoveredMenu(null);
       return;
     }
     if ((parentLabel === "ferramentas" || parentLabel === "comercial") && child.label === "tela promo") {
-      const slug = user?.email?.split("@")[0] || "";
+      const email = parentEmail || user?.email || "";
+      const slug = email.split("@")[0] || "";
       window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
       setHoveredMenu(null);
       return;
