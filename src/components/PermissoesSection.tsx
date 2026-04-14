@@ -29,7 +29,7 @@ const MODULE_GROUPS = [
     category: "Player",
     items: [
       { key: "playerconfig", label: "Configurações" },
-      { key: "preroll", label: "Roll" },
+      { key: "preroll", label: "Anúncios" },
       { key: "fans", label: "Fãs" },
     ],
   },
