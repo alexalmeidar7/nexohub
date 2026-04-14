@@ -137,6 +137,21 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
+  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
+
+  // Resolve effective user ID (parent for sub-users)
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setEffectiveUserId(data?.ativo ? data.parent_user_id : user.id);
+      });
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const dataUserId = effectiveUserId || user?.id;
 
   // On-air program info
   interface OnAirProgram {
@@ -162,7 +177,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       const { data } = await supabase
         .from("programas")
         .select("nome, selo, thumb, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, tipo_programa, estudio, apresentadores(nome)")
-        .eq("user_id", user.id)
+        .eq("user_id", dataUserId!)
         .eq("ativo", true)
         .ilike("estudio", "%fm%");
       if (cancelled || !data) return;
@@ -186,7 +201,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         const { data: channels } = await supabase
           .from("streaming_channels")
           .select("is_hd, is_stereo")
-          .eq("user_id", user.id)
+          .eq("user_id", dataUserId!)
           .eq("active", true)
           .ilike("estudio", current.estudio)
           .limit(1);
@@ -242,7 +257,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       const { data, error } = await supabase
         .from("user_settings")
         .select("dashboard_items")
-        .eq("user_id", user.id)
+        .eq("user_id", dataUserId!)
         .maybeSingle();
 
       if (error) {
@@ -598,11 +613,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   </div>
                   <div className="p-4 flex-1 overflow-y-auto overflow-x-hidden widget-scroll">
                     <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
-                      {item.widgetType === "agenda" && <DashboardAgendaWidget onNavigate={onNavigate} />}
-                      {item.widgetType === "musica" && <MusicProgramWidget />}
-                      {item.widgetType === "stats" && <StatsWidget />}
+                      {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
+                      {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
+                      {item.widgetType === "stats" && <StatsWidget dataUserId={dataUserId || undefined} />}
                       {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                      {item.widgetType === "player" && <DashboardPlayerWidget onVideoChange={(active) => setPlayerVideoActive(active ? item.id : null)} />}
+                      {item.widgetType === "player" && <DashboardPlayerWidget dataUserId={dataUserId || undefined} onVideoChange={(active) => setPlayerVideoActive(active ? item.id : null)} />}
                     </Suspense>
                   </div>
                 </div>
@@ -1006,8 +1021,9 @@ function ShoppingPreview() {
 }
 
 /* ========== WIDGET: Agenda ========== */
-function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => void }) {
+function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string; onNavigate: (page: Page) => void }) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
   const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
@@ -1016,7 +1032,7 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
     supabase
       .from("agenda_eventos")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", uid!)
       .gte("data", today)
       .order("data", { ascending: true })
       .limit(5)
@@ -1063,8 +1079,9 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
 }
 
 /* ========== WIDGET: Music + Program ========== */
-function MusicProgramWidget() {
+function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
   const [music, setMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const [programa, setPrograma] = useState<string>("");
@@ -1108,7 +1125,7 @@ function MusicProgramWidget() {
       const { data } = await supabase
         .from("programas")
         .select("*, apresentadores(nome, foto)")
-        .eq("user_id", user.id)
+        .eq("user_id", uid!)
         .eq("ativo", true)
         .ilike("estudio", "%fm%")
         .lte("horario_inicio", currentTime)
@@ -1212,16 +1229,17 @@ function MusicProgramWidget() {
 }
 
 /* ========== WIDGET: Stats ========== */
-function StatsWidget() {
+function StatsWidget({ dataUserId }: { dataUserId?: string } = {}) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
   const [prerollCount, setPrerollCount] = useState(0);
   const [channelCount, setChannelCount] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true),
-      supabase.from("streaming_channels").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true),
+      supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", uid!).eq("active", true),
+      supabase.from("streaming_channels").select("id", { count: "exact", head: true }).eq("user_id", uid!).eq("active", true),
     ]).then(([pr, ch]) => {
       setPrerollCount(pr.count || 0);
       setChannelCount(ch.count || 0);
@@ -1382,8 +1400,9 @@ function DashboardWeatherWidget() {
 }
 
 /* ========== WIDGET: Player ========== */
-function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boolean) => void }) {
+function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: string; onVideoChange?: (active: boolean) => void }) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
   const [channels, setChannels] = useState<any[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -1400,12 +1419,12 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
   const hlsInitUrlRef = useRef<string>("");
 
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
     const fetchChannels = async () => {
       let { data, error } = await supabase
         .from("streaming_channels")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", uid)
         .eq("active", true)
         .neq("type", "catalog")
         .order("numero_canal");
@@ -1414,6 +1433,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
         const fallback = await supabase
           .from("streaming_channels")
           .select("*")
+          .eq("user_id", uid)
           .eq("active", true)
           .neq("type", "catalog")
           .order("numero_canal");
@@ -1425,7 +1445,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       if (data && data.length > 0) setChannels(data);
     };
     fetchChannels();
-  }, [user]);
+  }, [uid]);
 
   useEffect(() => {
     const poll = () => {
