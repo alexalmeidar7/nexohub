@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { HelpCircle, Loader2, CalendarPlus, Save, Trash2, Pencil, Sparkles, Plus, X } from "lucide-react";
+import { HelpCircle, Loader2, CalendarPlus, Save, Trash2, Pencil, Sparkles, Plus, X, Wand2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -108,6 +108,14 @@ interface EnqueteAgendada {
   horario_inicio: string;
   horario_fim: string;
 }
+interface Programa {
+  id: string;
+  nome: string;
+  dias_semana: string[] | null;
+  horario_inicio: string;
+  horario_fim: string;
+}
+
 export default function EnquetePage() {
   const { user } = useAuth();
   const [pergunta, setPergunta] = useState("");
@@ -124,6 +132,17 @@ export default function EnquetePage() {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [loadingCategory, setLoadingCategory] = useState(false);
+
+  // Auto-schedule state
+  const [autoMode, setAutoMode] = useState<"programa" | "custom">("programa");
+  const [autoPrograma, setAutoPrograma] = useState("");
+  const [autoDiasSemana, setAutoDiasSemana] = useState<string[]>([]);
+  const [autoHorarioInicio, setAutoHorarioInicio] = useState("");
+  const [autoHorarioFim, setAutoHorarioFim] = useState("");
+  const [autoDaysAhead, setAutoDaysAhead] = useState(5);
+  const [autoGenerating, setAutoGenerating] = useState(false);
+  const [programas, setProgramas] = useState<Programa[]>([]);
+
   const CATEGORIES = [...DEFAULT_CATEGORIES, ...Object.keys(customCategories)];
   const xmlUrl = user
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-enquete?user_id=${user.id}`
@@ -132,8 +151,20 @@ export default function EnquetePage() {
     if (user) {
       loadEnquetes();
       loadCustomCategories();
+      loadProgramas();
     }
   }, [user]);
+
+  const loadProgramas = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("programas")
+      .select("id, nome, dias_semana, horario_inicio, horario_fim")
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .order("horario_inicio");
+    if (data) setProgramas(data as Programa[]);
+  };
   const loadCustomCategories = async () => {
     if (!user) return;
     const today = new Date().toISOString().slice(0, 10);
@@ -255,6 +286,93 @@ export default function EnquetePage() {
     toast.success("Enquete removida.");
     loadEnquetes();
   };
+  const DAY_MAP: Record<string, number> = { "Dom": 0, "Seg": 1, "Ter": 2, "Qua": 3, "Qui": 4, "Sex": 5, "Sáb": 6 };
+  const DAY_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  const handleAutoGenerate = async () => {
+    if (!user) return;
+    if (CATEGORIES.length === 0) {
+      toast.error("Cadastre ao menos uma categoria de enquetes.");
+      return;
+    }
+
+    let targetDays: string[] = [];
+    let hInicio = "";
+    let hFim = "";
+
+    if (autoMode === "programa") {
+      const prog = programas.find(p => p.id === autoPrograma);
+      if (!prog) { toast.error("Selecione um programa."); return; }
+      targetDays = prog.dias_semana || [];
+      hInicio = prog.horario_inicio;
+      hFim = prog.horario_fim;
+    } else {
+      if (autoDiasSemana.length === 0) { toast.error("Selecione ao menos um dia da semana."); return; }
+      if (!autoHorarioInicio || !autoHorarioFim) { toast.error("Preencha horário início e fim."); return; }
+      targetDays = autoDiasSemana;
+      hInicio = autoHorarioInicio;
+      hFim = autoHorarioFim;
+    }
+
+    setAutoGenerating(true);
+    try {
+      const today = new Date();
+      const datesToSchedule: string[] = [];
+      for (let d = 0; d < autoDaysAhead; d++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + d);
+        const dayName = DAY_NAMES[date.getDay()];
+        if (targetDays.includes(dayName)) {
+          datesToSchedule.push(date.toISOString().slice(0, 10));
+        }
+      }
+
+      if (datesToSchedule.length === 0) {
+        toast.error("Nenhum dia corresponde aos dias selecionados no período.");
+        setAutoGenerating(false);
+        return;
+      }
+
+      // Gather all available quizzes from all categories
+      const allQuizzes: QuizItem[] = [];
+      for (const cat of CATEGORIES) {
+        const quizzes = getQuizzesForCategory(cat, customCategories);
+        allQuizzes.push(...quizzes);
+      }
+
+      // Shuffle
+      const shuffled = [...allQuizzes].sort(() => Math.random() - 0.5);
+
+      const inserts = datesToSchedule.map((date, i) => {
+        const quiz = shuffled[i % shuffled.length];
+        return {
+          user_id: user.id,
+          pergunta: quiz.pergunta,
+          resposta1: quiz.respostas[0],
+          resposta2: quiz.respostas[1],
+          resposta3: "",
+          resposta4: "",
+          resposta_correta: quiz.correta,
+          data_enquete: date,
+          horario_inicio: hInicio,
+          horario_fim: hFim,
+        };
+      });
+
+      const { error } = await supabase.from("enquetes_agendadas").insert(inserts);
+      if (error) {
+        toast.error("Erro ao gerar enquetes automáticas.");
+      } else {
+        toast.success(`${inserts.length} enquetes agendadas automaticamente!`);
+        loadEnquetes();
+      }
+    } catch {
+      toast.error("Erro ao gerar enquetes automáticas.");
+    } finally {
+      setAutoGenerating(false);
+    }
+  };
+
   const handleSelectPrebuilt = (quiz: QuizItem) => {
     setPergunta(quiz.pergunta);
     setRespostas([...quiz.respostas]);
@@ -433,7 +551,128 @@ export default function EnquetePage() {
           )}
         </div>
       </div>
-      {/* Scheduled list */}
+      {/* Auto Schedule Section */}
+      <div className="rounded-xl p-4 space-y-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-accent-color, #268ffa))", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #268ffa) 20%, transparent)" }}>
+        <div className="flex items-center gap-2">
+          <Wand2 size={16} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
+          <span className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programar Automático</span>
+        </div>
+
+        {/* Mode selection */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setAutoMode("programa")}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              backgroundColor: autoMode === "programa" ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, var(--layout-border-color, #333))",
+              color: autoMode === "programa" ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+            }}
+          >
+            Por Programa
+          </button>
+          <button
+            onClick={() => setAutoMode("custom")}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              backgroundColor: autoMode === "custom" ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, var(--layout-border-color, #333))",
+              color: autoMode === "custom" ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+            }}
+          >
+            Personalizado
+          </button>
+        </div>
+
+        {autoMode === "programa" ? (
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Programa</label>
+            <select
+              value={autoPrograma}
+              onChange={e => setAutoPrograma(e.target.value)}
+              className="w-full rounded-lg px-3 py-2 text-sm"
+              style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+            >
+              <option value="">Selecione um programa...</option>
+              {programas.map(p => (
+                <option key={p.id} value={p.id}>{p.nome} ({p.horario_inicio}–{p.horario_fim})</option>
+              ))}
+            </select>
+            {autoPrograma && (() => {
+              const prog = programas.find(p => p.id === autoPrograma);
+              return prog ? (
+                <p className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                  Dias: {(prog.dias_semana || []).join(", ")} • Horário: {prog.horario_inicio}–{prog.horario_fim}
+                </p>
+              ) : null;
+            })()}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Dias da Semana</label>
+              <div className="flex flex-wrap gap-2">
+                {DAY_NAMES.map(day => (
+                  <button
+                    key={day}
+                    onClick={() => setAutoDiasSemana(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])}
+                    className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all"
+                    style={{
+                      backgroundColor: autoDiasSemana.includes(day) ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-bg, #ffffff) 88%, var(--layout-border-color, #333))",
+                      color: autoDiasSemana.includes(day) ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+                    }}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Início</label>
+                <Input type="time" value={autoHorarioInicio} onChange={e => setAutoHorarioInicio(e.target.value)} className="text-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Fim</label>
+                <Input type="time" value={autoHorarioFim} onChange={e => setAutoHorarioFim(e.target.value)} className="text-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Days ahead */}
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Gerar para os próximos</label>
+          <div className="flex gap-2">
+            {[5, 10, 15].map(d => (
+              <button
+                key={d}
+                onClick={() => setAutoDaysAhead(d)}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                style={{
+                  backgroundColor: autoDaysAhead === d ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, var(--layout-border-color, #333))",
+                  color: autoDaysAhead === d ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+                }}
+              >
+                {d} dias
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Button
+          onClick={handleAutoGenerate}
+          disabled={autoGenerating}
+          className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl text-white"
+          style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}
+        >
+          {autoGenerating ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+          {autoGenerating ? "Gerando..." : "Programar Automático"}
+        </Button>
+
+        <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+          As enquetes serão distribuídas aleatoriamente entre as categorias cadastradas.
+        </p>
+      </div>
+
       {enquetes.length > 0 && (
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
           <div className="px-4 py-2.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-border-color, #333))" }}>
