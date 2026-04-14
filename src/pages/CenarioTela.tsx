@@ -1032,19 +1032,45 @@ export default function CenarioTela() {
       })();
     }
 
-    // ─── 4. Unauthenticated: poll XML directly from browser every 3s ───
+    // ─── 4. Unauthenticated: resilient music polling via edge function + direct XML every 4s ───
     let fallbackInterval: ReturnType<typeof setInterval> | null = null;
     if (!isAuthenticated && effectiveUserId) {
+      let musicPollBusy = false;
       fallbackInterval = setInterval(async () => {
-        const xmlUrl = musicXmlUrlRef.current;
-        if (!xmlUrl) return;
+        if (musicPollBusy) return;
+        musicPollBusy = true;
         try {
-          const directMusic = await fetchMusicFromXmlDirect(xmlUrl);
-          if (directMusic) {
-            setMusicWithCoverFallback(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+          // Always try edge function first (works even when music_xml_url is empty)
+          const now = new Date();
+          const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+          const day = dayNames[now.getDay()];
+          const time = now.toTimeString().slice(0, 5);
+          const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${effectiveUserId}&day=${encodeURIComponent(day)}&time=${time}&_t=${Date.now()}`;
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 6000);
+          const resp = await fetch(baseUrl, {
+            headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+            signal: controller.signal,
+          });
+          clearTimeout(timer);
+          if (resp.ok) {
+            const json = await resp.json();
+            if (json?.ok && json.musicData?.titulo && json.musicData.titulo !== "Sem título") {
+              setMusicWithCoverFallback(json.musicData.titulo, json.musicData.artista || "", json.musicData.capa || "", undefined, json.musicStartTime || null);
+            } else {
+              // Fallback: try direct XML from browser (for local-network XMLs)
+              const xmlUrl = json?.musicXmlUrl || musicXmlUrlRef.current;
+              if (xmlUrl) {
+                const directMusic = await fetchMusicFromXmlDirect(xmlUrl);
+                if (directMusic) {
+                  setMusicWithCoverFallback(directMusic.titulo, directMusic.artista, directMusic.capa, undefined, null);
+                }
+              }
+            }
           }
         } catch { /* silent */ }
-      }, 3000);
+        musicPollBusy = false;
+      }, 4000);
     }
     // ─── 5. Same-tab polling for localStorage changes (useGlobalMusicSync writes here) ───
     let localPollInterval: ReturnType<typeof setInterval> | null = null;
