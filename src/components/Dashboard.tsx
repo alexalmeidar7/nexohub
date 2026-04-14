@@ -86,7 +86,7 @@ const sidebarMenu: MenuItem[] = [
   {
     icon: MonitorPlay, label: "player", children: [
       { icon: Settings, label: "configurações", page: "playerconfig" },
-      { icon: Film, label: "roll", page: "preroll" },
+      { icon: Film, label: "anúncios", page: "preroll" },
       { icon: Heart, label: "fãs", page: "fans" },
       { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
     ]
@@ -146,7 +146,7 @@ const pageTitle: Record<Page, string> = {
   promocoes: "Comercial — Promoções",
   logos: "Comercial — Logos Patrocinadores",
   shopping: "Comercial — Shopping",
-  preroll: "Comercial — Pré-Roll",
+  preroll: "Player — Anúncios",
   propostas: "Comercial — Propostas Comerciais",
   cortevideo: "Ferramentas — Cortes de Vídeo",
   tp: "Ferramentas — TP",
