@@ -301,9 +301,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       // Check if this user is a sub-user
       if (subUserRes.data && subUserRes.data.ativo) {
-        setSubUserModules(new Set(subUserRes.data.allowed_modules || []));
-        // For sub-users, load the PARENT's modules and empresa config
         const parentId = subUserRes.data.parent_user_id;
+        setSubUserModules(new Set(subUserRes.data.allowed_modules || []));
+        setEffectiveUserId(parentId);
+        // For sub-users, load the PARENT's modules and empresa config
         const [parentModulesRes, parentEmpresaRes] = await Promise.all([
           supabase.from("client_modules").select("module_key, enabled").eq("user_id", parentId),
           supabase.from("empresa_config").select("*").eq("user_id", parentId).maybeSingle(),
@@ -328,6 +329,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             });
           }
           setInitialLoading(false);
+
+          // Fetch thumb for sub-user using parent's data
+          const thumb = await findCurrentOnAirThumb();
+          if (!cancelled) {
+            const finalThumb = thumb || parentCfg.backgroundUrl || null;
+            prevThumbRef.current = finalThumb;
+            setOnAirThumb(finalThumb);
+          }
           return;
         }
       }
