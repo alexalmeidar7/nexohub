@@ -1223,6 +1223,42 @@ export type Database = {
         }
         Relationships: []
       }
+      sub_users: {
+        Row: {
+          allowed_modules: string[]
+          ativo: boolean
+          auth_user_id: string
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          parent_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_modules?: string[]
+          ativo?: boolean
+          auth_user_id: string
+          created_at?: string
+          email: string
+          id?: string
+          nome?: string
+          parent_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_modules?: string[]
+          ativo?: boolean
+          auth_user_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          parent_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       teleprompters: {
         Row: {
           ativo: boolean
