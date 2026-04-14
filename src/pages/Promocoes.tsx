@@ -162,9 +162,10 @@ export default function PromocoesKiosk() {
       }
 
       const mapped = (data.programas || []).map((p: any) => ({
-        id: p.id, nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
+        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
         capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
         horarioFim: p.horario_fim, descricao: p.descricao || "",
+        schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
       }));
       setProgramas(mapped);
 
@@ -198,9 +199,10 @@ export default function PromocoesKiosk() {
       setTestemunhais(testData || []);
 
       const mapped = (progsData || []).map((p: any) => ({
-        id: p.id, nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
+        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
         capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
         horarioFim: p.horario_fim, descricao: p.descricao || "",
+        schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
       }));
       setProgramas(mapped);
 
@@ -290,7 +292,12 @@ export default function PromocoesKiosk() {
       .reduce((map, programa) => {
         const dedupeKey = normalizeProgramName(programa.nome);
         if (!map.has(dedupeKey)) {
-          map.set(dedupeKey, programa);
+          map.set(dedupeKey, { ...programa });
+        } else {
+          const existing = map.get(dedupeKey)!;
+          existing.mergedIds = [...existing.mergedIds, ...programa.mergedIds];
+          existing.diasSemana = [...new Set([...existing.diasSemana, ...programa.diasSemana])];
+          existing.schedules = [...existing.schedules, ...programa.schedules];
         }
         return map;
       }, new Map<string, ProgramaGrade>())
@@ -420,9 +427,10 @@ export default function PromocoesKiosk() {
     };
   }, [selectedProgram, autoPlay, startAutoScroll]);
 
-  const getTestemunhaisForProgram = (programId: string) => {
+  const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
     const today = new Date().toISOString().split("T")[0];
-    return testemunhais.filter(t => t.programa_id === programId && t.data_inicio <= today && t.data_fim >= today);
+    const ids = new Set(prog.mergedIds);
+    return testemunhais.filter(t => t.programa_id && ids.has(t.programa_id) && t.data_inicio <= today && t.data_fim >= today);
   };
 
   const ProgressCircle = ({ active, progress }: { active: boolean; progress: number }) => {
