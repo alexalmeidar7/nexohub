@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
@@ -48,13 +48,14 @@ const MessageNotification = lazy(() => import("./MessageNotification"));
 const FansPage = lazy(() => import("./FansPage"));
 const BroadcastPage = lazy(() => import("./BroadcastPage"));
 const BatalhaMusicalPage = lazy(() => import("./BatalhaMusicalPage"));
+const EnquetePage = lazy(() => import("./EnquetePage"));
 const IntercomWidget = lazy(() => import("./IntercomWidget"));
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -107,6 +108,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Image, label: "logos", page: "logos" },
       { icon: MonitorPlay, label: "cenário interativo", page: "cenario" },
       { icon: Swords, label: "batalha musical", page: "batalha" },
+      { icon: HelpCircle, label: "enquete", page: "enquete" },
     ]
   },
   {
@@ -155,6 +157,7 @@ const pageTitle: Record<Page, string> = {
   fans: "Player — Fãs",
   configtelapromo: "Comercial — Config Tela Promo",
   batalha: "vMix — Batalha Musical",
+  enquete: "vMix — Enquete",
 };
 
 interface DashboardProps {
@@ -370,7 +373,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return modulesSource.has("comercial");
     }
 
-    if (page === "cenario" || page === "vmix" || page === "broadcast" || page === "batalha") {
+    if (page === "cenario" || page === "vmix" || page === "broadcast" || page === "batalha" || page === "enquete") {
       return modulesSource.has("vmix");
     }
 
@@ -794,6 +797,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "cenario" && <CenarioInterativoPage />}
               {currentPage === "broadcast" && <BroadcastPage />}
               {currentPage === "batalha" && <BatalhaMusicalPage />}
+              {currentPage === "enquete" && <EnquetePage />}
               {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
               
             </Suspense>
