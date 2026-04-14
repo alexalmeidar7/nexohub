@@ -38,6 +38,7 @@ export default function LogosPatrocinadoresPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [dataUserId, setDataUserId] = useState<string | null>(null);
 
   const [programaId, setProgramaId] = useState("");
   const [dataFinal, setDataFinal] = useState("");
@@ -56,16 +57,24 @@ export default function LogosPatrocinadoresPage() {
   const dragItem = useRef<Logo | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
+  // Resolve effective user id (parent for sub-users)
   useEffect(() => {
-    if (user) loadData();
+    if (!user) return;
+    supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle().then(({ data }) => {
+      setDataUserId(data?.ativo && data.parent_user_id ? data.parent_user_id : user.id);
+    });
   }, [user]);
 
+  useEffect(() => {
+    if (dataUserId) loadData();
+  }, [dataUserId]);
+
   const loadData = async () => {
-    if (!user) return;
+    if (!dataUserId) return;
     const [, { data: lData }, { data: pData }] = await Promise.all([
       supabase.rpc("cleanup_comercial"),
-      supabase.from("logos_patrocinadores").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("programas").select("id, nome").eq("user_id", user.id).eq("ativo", true),
+      supabase.from("logos_patrocinadores").select("*").eq("user_id", dataUserId).order("created_at", { ascending: false }),
+      supabase.from("programas").select("id, nome").eq("user_id", dataUserId).eq("ativo", true),
     ]);
 
     const all = (lData || []) as Logo[];

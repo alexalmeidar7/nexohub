@@ -66,6 +66,7 @@ export default function PromocoesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [dataUserId, setDataUserId] = useState<string | null>(null);
 
   const [titulo, setTitulo] = useState("");
   const [texto, setTexto] = useState("");
@@ -76,15 +77,23 @@ export default function PromocoesPage() {
   const [imagePreview, setImagePreview] = useState("");
   const textoEditorRef = useRef<HTMLDivElement>(null);
 
+  // Resolve effective user id (parent for sub-users)
   useEffect(() => {
-    if (user) loadData();
+    if (!user) return;
+    supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle().then(({ data }) => {
+      setDataUserId(data?.ativo && data.parent_user_id ? data.parent_user_id : user.id);
+    });
   }, [user]);
 
+  useEffect(() => {
+    if (dataUserId) loadData();
+  }, [dataUserId]);
+
   const loadData = async () => {
-    if (!user) return;
+    if (!dataUserId) return;
     const [, { data }] = await Promise.all([
       supabase.rpc("cleanup_comercial"),
-      supabase.from("promocoes").select("*").eq("user_id", user.id).order("data_inicio"),
+      supabase.from("promocoes").select("*").eq("user_id", dataUserId).order("data_inicio"),
     ]);
     setItems(data || []);
     setLoading(false);
@@ -147,7 +156,7 @@ export default function PromocoesPage() {
         toast({ title: "Promoção atualizada!" });
       } else {
         const { error } = await supabase.from("promocoes").insert({
-          user_id: user.id,
+          user_id: dataUserId!,
           imagem_url,
           botao_url,
           texto,
