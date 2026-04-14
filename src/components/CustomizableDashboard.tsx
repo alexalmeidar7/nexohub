@@ -1419,12 +1419,12 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
   const hlsInitUrlRef = useRef<string>("");
 
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
     const fetchChannels = async () => {
       let { data, error } = await supabase
         .from("streaming_channels")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", uid)
         .eq("active", true)
         .neq("type", "catalog")
         .order("numero_canal");
@@ -1433,6 +1433,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
         const fallback = await supabase
           .from("streaming_channels")
           .select("*")
+          .eq("user_id", uid)
           .eq("active", true)
           .neq("type", "catalog")
           .order("numero_canal");
@@ -1444,7 +1445,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
       if (data && data.length > 0) setChannels(data);
     };
     fetchChannels();
-  }, [user]);
+  }, [uid]);
 
   useEffect(() => {
     const poll = () => {
