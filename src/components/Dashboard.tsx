@@ -328,7 +328,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           setInitialLoading(false);
 
           // Fetch thumb for sub-user using parent's data
-          const thumb = await findCurrentOnAirThumb();
+          const thumb = await findCurrentOnAirThumb(parentId);
           if (!cancelled) {
             const finalThumb = thumb || parentCfg.backgroundUrl || null;
             prevThumbRef.current = finalThumb;
