@@ -318,7 +318,8 @@ export default function EnquetePage() {
     try {
       const today = new Date();
       const datesToSchedule: string[] = [];
-      for (let d = 0; d < autoDaysAhead; d++) {
+      // Scan up to 90 calendar days to collect exactly autoDaysAhead matching dates
+      for (let d = 1; d <= 90 && datesToSchedule.length < autoDaysAhead; d++) {
         const date = new Date(today);
         date.setDate(today.getDate() + d);
         const dayName = DAY_NAMES[date.getDay()];
