@@ -560,9 +560,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             // Sub-user: only show menus for allowed modules
             if (subUserModules !== null) {
               if (item.label === "home") return true;
-              const modKey = menuToModuleKey[item.label];
-              if (!modKey) return false;
-              return subUserModules.has(modKey);
+              // For items with children, show if any child page is allowed
+              if (item.children) {
+                return item.children.some(c => c.page && subUserModules.has(c.page));
+              }
+              // For standalone items, check the page directly
+              return item.page ? subUserModules.has(item.page) : false;
             }
             if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
             const modKey = menuToModuleKey[item.label];
