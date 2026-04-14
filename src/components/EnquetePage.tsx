@@ -551,7 +551,128 @@ export default function EnquetePage() {
           )}
         </div>
       </div>
-      {/* Scheduled list */}
+      {/* Auto Schedule Section */}
+      <div className="rounded-xl p-4 space-y-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-accent-color, #268ffa))", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #268ffa) 20%, transparent)" }}>
+        <div className="flex items-center gap-2">
+          <Wand2 size={16} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
+          <span className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programar Automático</span>
+        </div>
+
+        {/* Mode selection */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setAutoMode("programa")}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              backgroundColor: autoMode === "programa" ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, var(--layout-border-color, #333))",
+              color: autoMode === "programa" ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+            }}
+          >
+            Por Programa
+          </button>
+          <button
+            onClick={() => setAutoMode("custom")}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              backgroundColor: autoMode === "custom" ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, var(--layout-border-color, #333))",
+              color: autoMode === "custom" ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+            }}
+          >
+            Personalizado
+          </button>
+        </div>
+
+        {autoMode === "programa" ? (
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Programa</label>
+            <select
+              value={autoPrograma}
+              onChange={e => setAutoPrograma(e.target.value)}
+              className="w-full rounded-lg px-3 py-2 text-sm"
+              style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+            >
+              <option value="">Selecione um programa...</option>
+              {programas.map(p => (
+                <option key={p.id} value={p.id}>{p.nome} ({p.horario_inicio}–{p.horario_fim})</option>
+              ))}
+            </select>
+            {autoPrograma && (() => {
+              const prog = programas.find(p => p.id === autoPrograma);
+              return prog ? (
+                <p className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                  Dias: {(prog.dias_semana || []).join(", ")} • Horário: {prog.horario_inicio}–{prog.horario_fim}
+                </p>
+              ) : null;
+            })()}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Dias da Semana</label>
+              <div className="flex flex-wrap gap-2">
+                {DAY_NAMES.map(day => (
+                  <button
+                    key={day}
+                    onClick={() => setAutoDiasSemana(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])}
+                    className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all"
+                    style={{
+                      backgroundColor: autoDiasSemana.includes(day) ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-bg, #ffffff) 88%, var(--layout-border-color, #333))",
+                      color: autoDiasSemana.includes(day) ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+                    }}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Início</label>
+                <Input type="time" value={autoHorarioInicio} onChange={e => setAutoHorarioInicio(e.target.value)} className="text-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Fim</label>
+                <Input type="time" value={autoHorarioFim} onChange={e => setAutoHorarioFim(e.target.value)} className="text-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Days ahead */}
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Gerar para os próximos</label>
+          <div className="flex gap-2">
+            {[5, 10, 15].map(d => (
+              <button
+                key={d}
+                onClick={() => setAutoDaysAhead(d)}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                style={{
+                  backgroundColor: autoDaysAhead === d ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, var(--layout-border-color, #333))",
+                  color: autoDaysAhead === d ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+                }}
+              >
+                {d} dias
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Button
+          onClick={handleAutoGenerate}
+          disabled={autoGenerating}
+          className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl text-white"
+          style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}
+        >
+          {autoGenerating ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+          {autoGenerating ? "Gerando..." : "Programar Automático"}
+        </Button>
+
+        <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+          As enquetes serão distribuídas aleatoriamente entre as categorias cadastradas.
+        </p>
+      </div>
+
       {enquetes.length > 0 && (
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
           <div className="px-4 py-2.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-border-color, #333))" }}>
