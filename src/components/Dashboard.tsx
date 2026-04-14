@@ -724,9 +724,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {sidebarMenu.filter(item => {
                   if (subUserModules !== null) {
                     if (item.label === "home") return true;
-                    const modKey = menuToModuleKey[item.label];
-                    if (!modKey) return false;
-                    return subUserModules.has(modKey);
+                    if (item.children) {
+                      return item.children.some(c => c.page && subUserModules.has(c.page));
+                    }
+                    return item.page ? subUserModules.has(item.page) : false;
                   }
                   if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
                   const modKey = menuToModuleKey[item.label];
