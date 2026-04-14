@@ -79,6 +79,7 @@ export default function TestemunhaisPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [dataUserId, setDataUserId] = useState<string | null>(null);
 
   const editorRef = useRef<HTMLDivElement>(null);
   const [texto, setTexto] = useState("");
@@ -88,16 +89,28 @@ export default function TestemunhaisPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
 
+  // Resolve effective user id (parent for sub-users)
   useEffect(() => {
-    if (user) loadData();
+    if (!user) return;
+    supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle().then(({ data }) => {
+      if (data?.ativo && data.parent_user_id) {
+        setDataUserId(data.parent_user_id);
+      } else {
+        setDataUserId(user.id);
+      }
+    });
   }, [user]);
 
+  useEffect(() => {
+    if (dataUserId) loadData();
+  }, [dataUserId]);
+
   const loadData = async () => {
-    if (!user) return;
+    if (!dataUserId) return;
     const [, { data: tData }, { data: pData }] = await Promise.all([
       supabase.rpc("cleanup_comercial"),
-      supabase.from("testemunhais").select("*").eq("user_id", user.id).order("data_fim"),
-      supabase.from("programas").select("id, nome").eq("user_id", user.id).eq("ativo", true),
+      supabase.from("testemunhais").select("*").eq("user_id", dataUserId).order("data_fim"),
+      supabase.from("programas").select("id, nome").eq("user_id", dataUserId).eq("ativo", true),
     ]);
 
     const testemunhais = tData || [];
@@ -148,7 +161,7 @@ export default function TestemunhaisPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !texto || !dataInicio || !dataFim) return;
+    if (!user || !dataUserId || !texto || !dataInicio || !dataFim) return;
     setSaving(true);
 
     try {
@@ -167,7 +180,7 @@ export default function TestemunhaisPage() {
         toast({ title: "Testemunhal atualizado!" });
       } else {
         const { error } = await supabase.from("testemunhais").insert({
-          user_id: user.id,
+          user_id: dataUserId,
           programa_id: programaId || null,
           imagem_url,
           texto,
