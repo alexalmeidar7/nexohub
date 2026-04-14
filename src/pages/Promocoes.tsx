@@ -276,23 +276,12 @@ export default function PromocoesKiosk() {
 
   const filteredPrograms = Array.from(
     programas
-      .filter((programa) =>
-        PROGRAMAS_VISIVEIS.some((visibleName) =>
-          normalizeProgramName(programa.nome).includes(normalizeProgramName(visibleName)),
-        ),
-      )
       .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
       .reduce((map, programa) => {
-        const normalizedName = normalizeProgramName(programa.nome);
-        const dedupeKey =
-          PROGRAMAS_VISIVEIS.find((visibleName) =>
-            normalizedName.includes(normalizeProgramName(visibleName)),
-          ) ?? normalizedName;
-
+        const dedupeKey = normalizeProgramName(programa.nome);
         if (!map.has(dedupeKey)) {
           map.set(dedupeKey, programa);
         }
-
         return map;
       }, new Map<string, ProgramaGrade>())
       .values(),
