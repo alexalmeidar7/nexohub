@@ -1021,8 +1021,9 @@ function ShoppingPreview() {
 }
 
 /* ========== WIDGET: Agenda ========== */
-function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => void }) {
+function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string; onNavigate: (page: Page) => void }) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
   const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
@@ -1078,8 +1079,9 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
 }
 
 /* ========== WIDGET: Music + Program ========== */
-function MusicProgramWidget() {
+function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
   const [music, setMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const [programa, setPrograma] = useState<string>("");
@@ -1227,8 +1229,9 @@ function MusicProgramWidget() {
 }
 
 /* ========== WIDGET: Stats ========== */
-function StatsWidget() {
+function StatsWidget({ dataUserId }: { dataUserId?: string } = {}) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
   const [prerollCount, setPrerollCount] = useState(0);
   const [channelCount, setChannelCount] = useState(0);
 
@@ -1397,8 +1400,9 @@ function DashboardWeatherWidget() {
 }
 
 /* ========== WIDGET: Player ========== */
-function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boolean) => void }) {
+function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: string; onVideoChange?: (active: boolean) => void }) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
   const [channels, setChannels] = useState<any[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
