@@ -310,7 +310,8 @@ export default function EnquetePage() {
     } else {
       if (autoDiasSemana.length === 0) { toast.error("Selecione ao menos um dia da semana."); return; }
       if (!autoHorarioInicio || !autoHorarioFim) { toast.error("Preencha horário início e fim."); return; }
-      targetDays = autoDiasSemana;
+      const shortToFull: Record<string, string> = { "Dom": "Domingo", "Seg": "Segunda", "Ter": "Terça", "Qua": "Quarta", "Qui": "Quinta", "Sex": "Sexta", "Sáb": "Sábado" };
+      targetDays = autoDiasSemana.map(d => shortToFull[d] || d);
       hInicio = autoHorarioInicio;
       hFim = autoHorarioFim;
     }
