@@ -467,6 +467,54 @@ export type Database = {
         }
         Relationships: []
       }
+      enquetes_agendadas: {
+        Row: {
+          created_at: string
+          data_enquete: string
+          horario_fim: string
+          horario_inicio: string
+          id: string
+          pergunta: string
+          resposta_correta: number
+          resposta1: string
+          resposta2: string
+          resposta3: string
+          resposta4: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_enquete: string
+          horario_fim: string
+          horario_inicio: string
+          id?: string
+          pergunta?: string
+          resposta_correta?: number
+          resposta1?: string
+          resposta2?: string
+          resposta3?: string
+          resposta4?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_enquete?: string
+          horario_fim?: string
+          horario_inicio?: string
+          id?: string
+          pergunta?: string
+          resposta_correta?: number
+          resposta1?: string
+          resposta2?: string
+          resposta3?: string
+          resposta4?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       escalada_news: {
         Row: {
           created_at: string
