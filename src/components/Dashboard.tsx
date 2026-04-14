@@ -728,6 +728,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
               <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2">
                 {sidebarMenu.filter(item => {
+                  if (subUserModules !== null) {
+                    if (item.label === "home") return true;
+                    const modKey = menuToModuleKey[item.label];
+                    if (!modKey) return false;
+                    return subUserModules.has(modKey);
+                  }
                   if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
                   const modKey = menuToModuleKey[item.label];
                   if (!modKey) return true;
