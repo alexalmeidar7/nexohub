@@ -131,9 +131,7 @@ export default function EnquetePage() {
   const [customCategories, setCustomCategories] = useState<Record<string, QuizItem[]>>({});
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [newCategoryQuizzes, setNewCategoryQuizzes] = useState<QuizItem[]>(
-    Array.from({ length: 5 }, () => ({ pergunta: "", respostas: ["", "", "", ""], correta: 1 }))
-  );
+  const [loadingCategory, setLoadingCategory] = useState(false);
 
   const CATEGORIES = [...DEFAULT_CATEGORIES, ...Object.keys(customCategories)];
   const xmlUrl = user
