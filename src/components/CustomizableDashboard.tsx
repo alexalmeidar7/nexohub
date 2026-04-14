@@ -177,7 +177,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       const { data } = await supabase
         .from("programas")
         .select("nome, selo, thumb, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, tipo_programa, estudio, apresentadores(nome)")
-        .eq("user_id", user.id)
+        .eq("user_id", dataUserId!)
         .eq("ativo", true)
         .ilike("estudio", "%fm%");
       if (cancelled || !data) return;
@@ -201,7 +201,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         const { data: channels } = await supabase
           .from("streaming_channels")
           .select("is_hd, is_stereo")
-          .eq("user_id", user.id)
+          .eq("user_id", dataUserId!)
           .eq("active", true)
           .ilike("estudio", current.estudio)
           .limit(1);
@@ -257,7 +257,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       const { data, error } = await supabase
         .from("user_settings")
         .select("dashboard_items")
-        .eq("user_id", user.id)
+        .eq("user_id", dataUserId!)
         .maybeSingle();
 
       if (error) {
@@ -876,7 +876,7 @@ function AgendaPreview() {
   useEffect(() => {
     if (!user) return;
     const today = new Date().toISOString().split("T")[0];
-    supabase.from("agenda_eventos").select("data, descricao").eq("user_id", user.id).gte("data", today).order("data").limit(3)
+    supabase.from("agenda_eventos").select("data, descricao").eq("user_id", dataUserId!).gte("data", today).order("data").limit(3)
       .then(({ data }) => { if (data) setEvents(data); });
   }, [user]);
 
@@ -952,7 +952,7 @@ function NoticiasPreview() {
   const [news, setNews] = useState<any[]>([]);
   useEffect(() => {
     if (!user) return;
-    supabase.from("selected_news").select("title").eq("user_id", user.id).order("created_at", { ascending: false }).limit(2)
+    supabase.from("selected_news").select("title").eq("user_id", dataUserId!).order("created_at", { ascending: false }).limit(2)
       .then(({ data }) => { if (data) setNews(data); });
   }, [user]);
   return news.length > 0 ? (
@@ -969,7 +969,7 @@ function ApresentadoresPreview() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!user) return;
-    supabase.from("apresentadores").select("id", { count: "exact", head: true }).eq("user_id", user.id)
+    supabase.from("apresentadores").select("id", { count: "exact", head: true }).eq("user_id", dataUserId!)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
@@ -980,7 +980,7 @@ function ProgramasPreview() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!user) return;
-    supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true).ilike("estudio", "%fm%")
+    supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", dataUserId!).eq("ativo", true).ilike("estudio", "%fm%")
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
@@ -992,7 +992,7 @@ function PromosPreview() {
   useEffect(() => {
     if (!user) return;
     const today = new Date().toISOString().split("T")[0];
-    supabase.from("promocoes").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("data_fim", today)
+    supabase.from("promocoes").select("id", { count: "exact", head: true }).eq("user_id", dataUserId!).gte("data_fim", today)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} promoção{count !== 1 ? "ões" : ""} ativa{count !== 1 ? "s" : ""}</p>;
@@ -1003,7 +1003,7 @@ function PrerollPreview() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!user) return;
-    supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
+    supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", dataUserId!).eq("active", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
@@ -1014,7 +1014,7 @@ function ShoppingPreview() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!user) return;
-    supabase.from("shopping_products").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
+    supabase.from("shopping_products").select("id", { count: "exact", head: true }).eq("user_id", dataUserId!).eq("active", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} produto{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
@@ -1031,7 +1031,7 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
     supabase
       .from("agenda_eventos")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", dataUserId!)
       .gte("data", today)
       .order("data", { ascending: true })
       .limit(5)
@@ -1123,7 +1123,7 @@ function MusicProgramWidget() {
       const { data } = await supabase
         .from("programas")
         .select("*, apresentadores(nome, foto)")
-        .eq("user_id", user.id)
+        .eq("user_id", dataUserId!)
         .eq("ativo", true)
         .ilike("estudio", "%fm%")
         .lte("horario_inicio", currentTime)
@@ -1235,8 +1235,8 @@ function StatsWidget() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true),
-      supabase.from("streaming_channels").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true),
+      supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", dataUserId!).eq("active", true),
+      supabase.from("streaming_channels").select("id", { count: "exact", head: true }).eq("user_id", dataUserId!).eq("active", true),
     ]).then(([pr, ch]) => {
       setPrerollCount(pr.count || 0);
       setChannelCount(ch.count || 0);
