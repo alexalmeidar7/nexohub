@@ -103,118 +103,12 @@ export default function BatalhaMusicalPage() {
   const request2Ref = useRef(0);
   const imageCacheRef = useRef<Record<string, string>>({});
 
+  // Form always starts empty — no state restoration
   useEffect(() => {
-    let cancelled = false;
-
-    const applyState = (state: BattleState) => {
-      if (state.artista1.nome && state.artista1.imagemUrl) {
-        imageCacheRef.current[state.artista1.nome.trim().toLowerCase()] = state.artista1.imagemUrl;
-      }
-
-      if (state.artista2.nome && state.artista2.imagemUrl) {
-        imageCacheRef.current[state.artista2.nome.trim().toLowerCase()] = state.artista2.imagemUrl;
-      }
-
-      setArtista1(state.artista1);
-      setArtista2(state.artista2);
-      setPercentagesTouched(state.percentagesTouched);
-    };
-
-    const loadState = async () => {
-      try {
-        const localRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (localRaw) {
-          const localState = normalizeBattleState(JSON.parse(localRaw));
-          if (!cancelled) applyState(localState);
-        }
-      } catch {
-        // ignore invalid local data
-      }
-
-      if (!user) {
-        if (!cancelled) setHasLoadedState(true);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from("user_settings")
-          .select("cenario_config")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (!cancelled && !error && data?.cenario_config && typeof data.cenario_config === "object") {
-          const savedState = (data.cenario_config as Record<string, unknown>)[SETTINGS_KEY];
-          if (savedState) {
-            applyState(normalizeBattleState(savedState));
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao carregar Batalha Musical:", error);
-      }
-
-      if (!cancelled) {
-        setHasLoadedState(true);
-      }
-    };
-
-    loadState();
-
-    return () => {
-      cancelled = true;
-      clearTimeout(saveTimeout.current);
-    };
+    setHasLoadedState(true);
   }, [user]);
 
-  useEffect(() => {
-    if (!hasLoadedState) return;
-
-    const payload: BattleState = { artista1, artista2, percentagesTouched };
-
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
-    } catch {
-      // ignore local persistence errors
-    }
-
-    if (!user) return;
-
-    clearTimeout(saveTimeout.current);
-    saveTimeout.current = setTimeout(async () => {
-      try {
-        const { data: existing } = await supabase
-          .from("user_settings")
-          .select("cenario_config")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        const previousConfig = existing?.cenario_config && typeof existing.cenario_config === "object"
-          ? existing.cenario_config as Record<string, unknown>
-          : {};
-
-        const { error } = await supabase
-          .from("user_settings")
-          .upsert(
-            {
-              user_id: user.id,
-              cenario_config: {
-                ...previousConfig,
-                [SETTINGS_KEY]: payload,
-              } as any,
-            },
-            { onConflict: "user_id" }
-          );
-
-        if (error) {
-          console.error("Erro ao salvar Batalha Musical:", error);
-        }
-      } catch (error) {
-        console.error("Erro ao salvar Batalha Musical:", error);
-      }
-    }, 600);
-
-    return () => clearTimeout(saveTimeout.current);
-  }, [artista1, artista2, hasLoadedState, percentagesTouched, user]);
+  // No auto-save — data is only persisted via scheduled battles
 
   // Fetch artist 1 image on name change (debounced)
   useEffect(() => {

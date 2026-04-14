@@ -57,36 +57,8 @@ serve(async (req) => {
       musica2 = scheduled.artista2_musica ?? "";
       pct2 = scheduled.artista2_porcentagem ?? 0;
       img2 = scheduled.artista2_imagem ?? "";
-    } else {
-      // Fallback to cenario_config
-      const { data, error } = await sb
-        .from("user_settings")
-        .select("cenario_config")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error("DB error:", error);
-        return new Response("<error>db error</error>", {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" },
-        });
-      }
-
-      const config = data?.cenario_config as Record<string, unknown> | null;
-      const battle = config?.batalha_musical as Record<string, unknown> | null;
-      const a1 = (battle?.artista1 ?? {}) as Record<string, unknown>;
-      const a2 = (battle?.artista2 ?? {}) as Record<string, unknown>;
-
-      nome1 = typeof a1.nome === "string" ? a1.nome : "";
-      musica1 = typeof a1.musica === "string" ? a1.musica : "";
-      pct1 = typeof a1.porcentagem === "number" ? a1.porcentagem : 0;
-      img1 = typeof a1.imagemUrl === "string" ? a1.imagemUrl : "";
-      nome2 = typeof a2.nome === "string" ? a2.nome : "";
-      musica2 = typeof a2.musica === "string" ? a2.musica : "";
-      pct2 = typeof a2.porcentagem === "number" ? a2.porcentagem : 0;
-      img2 = typeof a2.imagemUrl === "string" ? a2.imagemUrl : "";
     }
+    // No fallback — XML only serves data from scheduled battles
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
