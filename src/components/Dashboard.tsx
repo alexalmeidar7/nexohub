@@ -627,7 +627,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       }}
                     >
                       <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: `${layoutColors.navText}66` }}>{item.label}</p>
-                      {item.children.map((child, ci) => {
+                      {(subUserModules !== null ? item.children.filter(c => !c.page || subUserModules.has(c.page)) : item.children).map((child, ci) => {
                         const ChildIcon = child.icon;
                         const childActive = currentPage === child.page;
                         return (
