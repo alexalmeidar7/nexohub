@@ -267,7 +267,7 @@ export default function EnquetePage() {
           <Sparkles size={14} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
           <span className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Enquetes pré-prontas</span>
         </div>
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           {CATEGORIES.map(cat => (
             <button
               key={cat}
@@ -281,8 +281,34 @@ export default function EnquetePage() {
               }}
             >
               {cat}
+              {customCategories[cat] && (
+                <X
+                  size={10}
+                  className="inline ml-1 opacity-60 hover:opacity-100"
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    setCustomCategories(prev => {
+                      const next = { ...prev };
+                      delete next[cat];
+                      return next;
+                    });
+                    if (selectedCategory === cat) setSelectedCategory("");
+                  }}
+                />
+              )}
             </button>
           ))}
+          <button
+            onClick={() => setShowAddCategory(true)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-105"
+            style={{
+              backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #268ffa) 15%, transparent)",
+              color: "var(--layout-accent-color, #268ffa)",
+            }}
+            title="Incluir categoria"
+          >
+            <Plus size={14} />
+          </button>
         </div>
         {selectedCategory && (
           <div className="space-y-2">
