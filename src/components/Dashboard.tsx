@@ -187,6 +187,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
+  const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const prevThumbRef = useRef<string | null>(null);
