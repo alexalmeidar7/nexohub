@@ -167,12 +167,19 @@ export default function LoginScreen() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-4"
-      style={{ backgroundColor: "#0f1058" }}
+      className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden"
+      style={{ background: "linear-gradient(145deg, #080830 0%, #0f1058 40%, #1a1280 100%)" }}
     >
-      <div className="relative w-full max-w-md">
+      {/* Ambient glow orbs */}
+      <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full opacity-20 blur-[120px] pointer-events-none" style={{ background: "radial-gradient(circle, #268ffa 0%, transparent 70%)" }} />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full opacity-15 blur-[100px] pointer-events-none" style={{ background: "radial-gradient(circle, #6c3ce0 0%, transparent 70%)" }} />
+
+      <div className="relative w-full max-w-md z-10">
         {/* Main Login Box */}
-        <div className="relative z-10 w-full p-10 shadow-2xl animate-fade-in bg-white" style={{ fontSize: "12px", borderRadius: "2rem" }}>
+        <div
+          className="relative z-10 w-full p-10 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.08)] animate-fade-in backdrop-blur-xl"
+          style={{ fontSize: "12px", borderRadius: "1.5rem", background: "rgba(255,255,255,0.97)" }}
+        >
           <h1 className="text-center font-semibold tracking-wide mb-8" style={{ color: "#0f1058", fontSize: "12px" }}>
             NexoHub login
           </h1>
@@ -183,12 +190,12 @@ export default function LoginScreen() {
               placeholder="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-full px-5 py-2.5 outline-none transition-colors"
-              style={{ fontSize: "12px", color: "#0f1058", border: "2px solid #0d379a", backgroundColor: "#fff" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
-              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#0d379a"; }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
+              className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200"
+              style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid rgba(13,55,154,0.2)", backgroundColor: "rgba(15,16,88,0.03)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)")}
+              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(38,143,250,0.12)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
             />
             <input
               type="password"
@@ -196,15 +203,15 @@ export default function LoginScreen() {
               value={pass}
               onChange={(e) => setPass(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              className="w-full rounded-full px-5 py-2.5 outline-none transition-colors"
-              style={{ fontSize: "12px", color: "#0f1058", border: "2px solid #0d379a", backgroundColor: "#fff" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
-              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#0d379a"; }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
+              className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200"
+              style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid rgba(13,55,154,0.2)", backgroundColor: "rgba(15,16,88,0.03)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)")}
+              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(38,143,250,0.12)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
             />
 
-            {error && <p className="text-center font-medium" style={{ fontSize: "12px", color: "#0f1058" }}>{error}</p>}
+            {error && <p className="text-center font-medium" style={{ fontSize: "12px", color: "#dc2626" }}>{error}</p>}
 
             <div className="flex justify-between items-center pt-2">
               <button
@@ -217,21 +224,18 @@ export default function LoginScreen() {
                 Esqueci a senha
               </button>
 
-              {/* Botão Entrar com hover outline + seta animada */}
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="group relative flex items-center gap-3 px-6 py-2 rounded-full font-medium disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent hover:bg-transparent"
-                style={{ fontSize: "12px", backgroundColor: "#268ffa" }}
+                className="group relative flex items-center gap-3 px-7 py-2.5 rounded-full font-semibold disabled:opacity-50 transition-all duration-300 text-white overflow-hidden"
+                style={{ fontSize: "12px", background: "linear-gradient(135deg, #268ffa 0%, #1a6ad4 100%)", boxShadow: "0 4px 16px -2px rgba(38,143,250,0.4)" }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.borderColor = "#268ffa";
-                  e.currentTarget.style.color = "#0f1058";
+                  e.currentTarget.style.boxShadow = "0 6px 24px -2px rgba(38,143,250,0.55)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#268ffa";
-                  e.currentTarget.style.borderColor = "transparent";
-                  e.currentTarget.style.color = "#ffffff";
+                  e.currentTarget.style.boxShadow = "0 4px 16px -2px rgba(38,143,250,0.4)";
+                  e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
                 {loading ? (
@@ -251,7 +255,7 @@ export default function LoginScreen() {
           </div>
         </div>
 
-        {/* Forgot Password Box - slides down from behind login box */}
+        {/* Forgot Password Box */}
         <div
           className="absolute left-0 right-0 z-0 overflow-hidden transition-all duration-500 ease-in-out"
           style={{
@@ -260,7 +264,10 @@ export default function LoginScreen() {
             pointerEvents: showForgot ? "auto" : "none",
           }}
         >
-          <div className="px-10 pt-10 pb-8 shadow-xl" style={{ backgroundColor: "#0d0446", fontSize: "12px", borderRadius: "0 0 2rem 2rem" }}>
+          <div
+            className="px-10 pt-10 pb-8 shadow-[0_16px_50px_-10px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+            style={{ background: "linear-gradient(145deg, #0d0446 0%, #1a1280 100%)", fontSize: "12px", borderRadius: "0 0 1.5rem 1.5rem" }}
+          >
             {forgotSent ? (
               <div className="flex flex-col items-center gap-3">
                 <CheckCircle className="text-green-400" size={40} />
@@ -288,12 +295,12 @@ export default function LoginScreen() {
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleForgot()}
-                  className="w-full rounded-full px-5 py-2.5 outline-none transition-colors"
-                  style={{ fontSize: "12px", color: "#0f1058", border: "2px solid rgba(255,255,255,0.3)", backgroundColor: "#fff" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
-                  onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)")}
+                  className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200"
+                  style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid rgba(255,255,255,0.2)", backgroundColor: "rgba(255,255,255,0.95)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)")}
+                  onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(38,143,250,0.15)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
                 />
                 {forgotError && <p className="text-red-400 text-center" style={{ fontSize: "12px" }}>{forgotError}</p>}
                 <div className="flex justify-between items-center">
@@ -309,17 +316,15 @@ export default function LoginScreen() {
                   <button
                     onClick={handleForgot}
                     disabled={forgotLoading}
-                    className="group flex items-center gap-3 px-6 py-2 rounded-full font-medium disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent"
-                    style={{ fontSize: "12px", backgroundColor: "#268ffa" }}
+                    className="group flex items-center gap-3 px-7 py-2.5 rounded-full font-semibold disabled:opacity-50 transition-all duration-300 text-white"
+                    style={{ fontSize: "12px", background: "linear-gradient(135deg, #268ffa 0%, #1a6ad4 100%)", boxShadow: "0 4px 16px -2px rgba(38,143,250,0.4)" }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
-                      e.currentTarget.style.borderColor = "#268ffa";
-                      e.currentTarget.style.color = "#ffffff";
+                      e.currentTarget.style.boxShadow = "0 6px 24px -2px rgba(38,143,250,0.55)";
+                      e.currentTarget.style.transform = "translateY(-1px)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#268ffa";
-                      e.currentTarget.style.borderColor = "transparent";
-                      e.currentTarget.style.color = "#ffffff";
+                      e.currentTarget.style.boxShadow = "0 4px 16px -2px rgba(38,143,250,0.4)";
+                      e.currentTarget.style.transform = "translateY(0)";
                     }}
                   >
                     {forgotLoading ? (
@@ -338,7 +343,7 @@ export default function LoginScreen() {
         </div>
       </div>
 
-      <p className="text-center mt-8 text-white/50" style={{ fontSize: "11px" }}>
+      <p className="text-center mt-8 text-white/40 z-10" style={{ fontSize: "11px" }}>
         © {new Date().getFullYear()} Nexo Soluções Visuais
       </p>
     </div>
