@@ -71,7 +71,11 @@ const inputStyle: React.CSSProperties = {
   backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
 };
 
-export default function TestemunhaisPage() {
+interface TestemunhaisPageProps {
+  effectiveUserId?: string | null;
+}
+
+export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPageProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [items, setItems] = useState<Testemunhal[]>([]);
@@ -79,7 +83,7 @@ export default function TestemunhaisPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [dataUserId, setDataUserId] = useState<string | null>(null);
+  const [dataUserId, setDataUserId] = useState<string | null>(effectiveUserId ?? null);
 
   const editorRef = useRef<HTMLDivElement>(null);
   const [texto, setTexto] = useState("");
@@ -89,28 +93,36 @@ export default function TestemunhaisPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
 
-  // Resolve effective user id (parent for sub-users)
   useEffect(() => {
+    if (effectiveUserId) {
+      setDataUserId(effectiveUserId);
+      return;
+    }
+
     if (!user) return;
-    supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle().then(({ data }) => {
-      if (data?.ativo && data.parent_user_id) {
-        setDataUserId(data.parent_user_id);
-      } else {
-        setDataUserId(user.id);
-      }
-    });
-  }, [user]);
+    let cancelled = false;
 
-  useEffect(() => {
-    if (dataUserId) loadData();
-  }, [dataUserId]);
+    supabase
+      .from("sub_users")
+      .select("parent_user_id, ativo")
+      .eq("auth_user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setDataUserId(data?.ativo && data.parent_user_id ? data.parent_user_id : user.id);
+      });
 
-  const loadData = async () => {
-    if (!dataUserId) return;
+    return () => {
+      cancelled = true;
+    };
+  }, [user, effectiveUserId]);
+
+  const loadData = async (targetUserId = dataUserId) => {
+    if (!targetUserId) return;
     const [, { data: tData }, { data: pData }] = await Promise.all([
       supabase.rpc("cleanup_comercial"),
-      supabase.from("testemunhais").select("*").eq("user_id", dataUserId).order("data_fim"),
-      supabase.from("programas").select("id, nome").eq("user_id", dataUserId).eq("ativo", true),
+      supabase.from("testemunhais").select("*").eq("user_id", targetUserId).order("data_fim"),
+      supabase.from("programas").select("id, nome").eq("user_id", targetUserId).eq("ativo", true),
     ]);
 
     const testemunhais = tData || [];
@@ -125,6 +137,10 @@ export default function TestemunhaisPage() {
     );
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (dataUserId) loadData(dataUserId);
+  }, [dataUserId]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
