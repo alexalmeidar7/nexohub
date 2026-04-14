@@ -188,6 +188,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
   const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
+  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null); // parent_user_id for sub-users
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const prevThumbRef = useRef<string | null>(null);
@@ -198,13 +199,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
 
   // Helper: find current on-air program and fetch only its thumb
-  const findCurrentOnAirThumb = useCallback(async () => {
-    if (!user) return null;
-    // First: lightweight query WITHOUT thumb column
+  const findCurrentOnAirThumb = useCallback(async (overrideUserId?: string) => {
+    const uid = overrideUserId || effectiveUserId || user?.id;
+    if (!uid) return null;
     const { data } = await supabase
       .from("programas")
       .select("id, dias_semana, horario_inicio, horario_fim")
-      .eq("user_id", user.id)
+      .eq("user_id", uid)
       .eq("ativo", true)
       .ilike("estudio", "%fm%");
     if (!data) return null;
@@ -218,16 +219,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     );
     if (!current) return null;
 
-    // Second: fetch thumb ONLY for the matched program
     const { data: thumbData } = await supabase
       .from("programas")
       .select("thumb")
       .eq("id", current.id)
       .maybeSingle();
-    // Fallback to empresa background if no program thumb
     if (thumbData?.thumb) return thumbData.thumb;
     return null;
-  }, [user]);
+  }, [user, effectiveUserId]);
 
   const updateContentScrollIndicator = useCallback(() => {
     const el = contentScrollRef.current;
@@ -299,9 +298,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       // Check if this user is a sub-user
       if (subUserRes.data && subUserRes.data.ativo) {
-        setSubUserModules(new Set(subUserRes.data.allowed_modules || []));
-        // For sub-users, load the PARENT's modules and empresa config
         const parentId = subUserRes.data.parent_user_id;
+        setSubUserModules(new Set(subUserRes.data.allowed_modules || []));
+        setEffectiveUserId(parentId);
+        // For sub-users, load the PARENT's modules and empresa config
         const [parentModulesRes, parentEmpresaRes] = await Promise.all([
           supabase.from("client_modules").select("module_key, enabled").eq("user_id", parentId),
           supabase.from("empresa_config").select("*").eq("user_id", parentId).maybeSingle(),
@@ -326,6 +326,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             });
           }
           setInitialLoading(false);
+
+          // Fetch thumb for sub-user using parent's data
+          const thumb = await findCurrentOnAirThumb(parentId);
+          if (!cancelled) {
+            const finalThumb = thumb || parentCfg.backgroundUrl || null;
+            prevThumbRef.current = finalThumb;
+            setOnAirThumb(finalThumb);
+          }
           return;
         }
       }
