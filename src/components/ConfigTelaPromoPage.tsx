@@ -43,17 +43,18 @@ export const defaultTelaPromoConfig: TelaPromoConfig = {
 };
 
 export function buildTelaPromoBgStyle(config: TelaPromoConfig): React.CSSProperties {
+  const gradientFallback = { background: `linear-gradient(${config.gradient_angle}deg, ${config.gradient_color_a}, ${config.gradient_color_b})` };
   switch (config.bg_type) {
     case "cor":
       return { backgroundColor: config.bg_color };
     case "imagem":
       return config.bg_image_url
         ? { backgroundImage: `url(${config.bg_image_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-        : { backgroundColor: "#000" };
+        : gradientFallback;
     case "degrade":
-      return { background: `linear-gradient(${config.gradient_angle}deg, ${config.gradient_color_a}, ${config.gradient_color_b})` };
+      return gradientFallback;
     default:
-      return { backgroundColor: "#000" };
+      return gradientFallback;
   }
 }
 
