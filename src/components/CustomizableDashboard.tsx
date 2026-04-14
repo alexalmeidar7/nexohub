@@ -876,7 +876,7 @@ function AgendaPreview() {
   useEffect(() => {
     if (!user) return;
     const today = new Date().toISOString().split("T")[0];
-    supabase.from("agenda_eventos").select("data, descricao").eq("user_id", uid!).gte("data", today).order("data").limit(3)
+    supabase.from("agenda_eventos").select("data, descricao").eq("user_id", user.id).gte("data", today).order("data").limit(3)
       .then(({ data }) => { if (data) setEvents(data); });
   }, [user]);
 
@@ -952,7 +952,7 @@ function NoticiasPreview() {
   const [news, setNews] = useState<any[]>([]);
   useEffect(() => {
     if (!user) return;
-    supabase.from("selected_news").select("title").eq("user_id", uid!).order("created_at", { ascending: false }).limit(2)
+    supabase.from("selected_news").select("title").eq("user_id", user.id).order("created_at", { ascending: false }).limit(2)
       .then(({ data }) => { if (data) setNews(data); });
   }, [user]);
   return news.length > 0 ? (
@@ -969,7 +969,7 @@ function ApresentadoresPreview() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!user) return;
-    supabase.from("apresentadores").select("id", { count: "exact", head: true }).eq("user_id", uid!)
+    supabase.from("apresentadores").select("id", { count: "exact", head: true }).eq("user_id", user.id)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
@@ -980,7 +980,7 @@ function ProgramasPreview() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!user) return;
-    supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", uid!).eq("ativo", true).ilike("estudio", "%fm%")
+    supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true).ilike("estudio", "%fm%")
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
@@ -992,7 +992,7 @@ function PromosPreview() {
   useEffect(() => {
     if (!user) return;
     const today = new Date().toISOString().split("T")[0];
-    supabase.from("promocoes").select("id", { count: "exact", head: true }).eq("user_id", uid!).gte("data_fim", today)
+    supabase.from("promocoes").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("data_fim", today)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} promoção{count !== 1 ? "ões" : ""} ativa{count !== 1 ? "s" : ""}</p>;
@@ -1003,7 +1003,7 @@ function PrerollPreview() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!user) return;
-    supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", uid!).eq("active", true)
+    supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
@@ -1014,7 +1014,7 @@ function ShoppingPreview() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!user) return;
-    supabase.from("shopping_products").select("id", { count: "exact", head: true }).eq("user_id", uid!).eq("active", true)
+    supabase.from("shopping_products").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} produto{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
