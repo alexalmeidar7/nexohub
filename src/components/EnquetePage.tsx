@@ -286,7 +286,93 @@ export default function EnquetePage() {
     toast.success("Enquete removida.");
     loadEnquetes();
   };
-  const handleSelectPrebuilt = (quiz: QuizItem) => {
+  const DAY_MAP: Record<string, number> = { "Dom": 0, "Seg": 1, "Ter": 2, "Qua": 3, "Qui": 4, "Sex": 5, "Sáb": 6 };
+  const DAY_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  const handleAutoGenerate = async () => {
+    if (!user) return;
+    if (CATEGORIES.length === 0) {
+      toast.error("Cadastre ao menos uma categoria de enquetes.");
+      return;
+    }
+
+    let targetDays: string[] = [];
+    let hInicio = "";
+    let hFim = "";
+
+    if (autoMode === "programa") {
+      const prog = programas.find(p => p.id === autoPrograma);
+      if (!prog) { toast.error("Selecione um programa."); return; }
+      targetDays = prog.dias_semana || [];
+      hInicio = prog.horario_inicio;
+      hFim = prog.horario_fim;
+    } else {
+      if (autoDiasSemana.length === 0) { toast.error("Selecione ao menos um dia da semana."); return; }
+      if (!autoHorarioInicio || !autoHorarioFim) { toast.error("Preencha horário início e fim."); return; }
+      targetDays = autoDiasSemana;
+      hInicio = autoHorarioInicio;
+      hFim = autoHorarioFim;
+    }
+
+    setAutoGenerating(true);
+    try {
+      const today = new Date();
+      const datesToSchedule: string[] = [];
+      for (let d = 0; d < autoDaysAhead; d++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + d);
+        const dayName = DAY_NAMES[date.getDay()];
+        if (targetDays.includes(dayName)) {
+          datesToSchedule.push(date.toISOString().slice(0, 10));
+        }
+      }
+
+      if (datesToSchedule.length === 0) {
+        toast.error("Nenhum dia corresponde aos dias selecionados no período.");
+        setAutoGenerating(false);
+        return;
+      }
+
+      // Gather all available quizzes from all categories
+      const allQuizzes: QuizItem[] = [];
+      for (const cat of CATEGORIES) {
+        const quizzes = getQuizzesForCategory(cat, customCategories);
+        allQuizzes.push(...quizzes);
+      }
+
+      // Shuffle
+      const shuffled = [...allQuizzes].sort(() => Math.random() - 0.5);
+
+      const inserts = datesToSchedule.map((date, i) => {
+        const quiz = shuffled[i % shuffled.length];
+        return {
+          user_id: user.id,
+          pergunta: quiz.pergunta,
+          resposta1: quiz.respostas[0],
+          resposta2: quiz.respostas[1],
+          resposta3: "",
+          resposta4: "",
+          resposta_correta: quiz.correta,
+          data_enquete: date,
+          horario_inicio: hInicio,
+          horario_fim: hFim,
+        };
+      });
+
+      const { error } = await supabase.from("enquetes_agendadas").insert(inserts);
+      if (error) {
+        toast.error("Erro ao gerar enquetes automáticas.");
+      } else {
+        toast.success(`${inserts.length} enquetes agendadas automaticamente!`);
+        loadEnquetes();
+      }
+    } catch {
+      toast.error("Erro ao gerar enquetes automáticas.");
+    } finally {
+      setAutoGenerating(false);
+    }
+  };
+
     setPergunta(quiz.pergunta);
     setRespostas([...quiz.respostas]);
     setCorreta(quiz.correta);
