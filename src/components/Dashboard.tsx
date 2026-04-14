@@ -389,18 +389,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
     // Sub-users: only allow modules explicitly assigned + always-accessible pages
     if (subUserModules !== null) {
-      // Sub-users can always access dashboard but NOT configuracoes (only parent manages settings)
       if (page === "configuracoes") return false;
-
-      // Map page to its parent module key
-      let moduleKey: string = page;
-      if (page === "apresentadores" || page === "programas" || page === "previsao") moduleKey = "cadastros";
-      if (page === "testemunhais" || page === "promocoes" || page === "configtelapromo" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") moduleKey = "comercial";
-      if (page === "cenario" || page === "vmix" || page === "broadcast" || page === "batalha" || page === "enquete") moduleKey = "vmix";
-      if (page === "playerconfig" || page === "fans") moduleKey = "player";
-      if (page === "cortevideo" || page === "tp") moduleKey = "ferramentas";
-
-      return subUserModules.has(moduleKey);
+      // Granular check: the page key itself is stored in allowed_modules
+      return subUserModules.has(page);
     }
 
     // Normal user flow
