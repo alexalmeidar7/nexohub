@@ -108,6 +108,14 @@ interface EnqueteAgendada {
   horario_inicio: string;
   horario_fim: string;
 }
+interface Programa {
+  id: string;
+  nome: string;
+  dias_semana: string[] | null;
+  horario_inicio: string;
+  horario_fim: string;
+}
+
 export default function EnquetePage() {
   const { user } = useAuth();
   const [pergunta, setPergunta] = useState("");
@@ -124,6 +132,17 @@ export default function EnquetePage() {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [loadingCategory, setLoadingCategory] = useState(false);
+
+  // Auto-schedule state
+  const [autoMode, setAutoMode] = useState<"programa" | "custom">("programa");
+  const [autoPrograma, setAutoPrograma] = useState("");
+  const [autoDiasSemana, setAutoDiasSemana] = useState<string[]>([]);
+  const [autoHorarioInicio, setAutoHorarioInicio] = useState("");
+  const [autoHorarioFim, setAutoHorarioFim] = useState("");
+  const [autoDaysAhead, setAutoDaysAhead] = useState(5);
+  const [autoGenerating, setAutoGenerating] = useState(false);
+  const [programas, setProgramas] = useState<Programa[]>([]);
+
   const CATEGORIES = [...DEFAULT_CATEGORIES, ...Object.keys(customCategories)];
   const xmlUrl = user
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-enquete?user_id=${user.id}`
