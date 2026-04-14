@@ -751,7 +751,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       </button>
                       {item.children && expanded && (
                         <div className="ml-6 space-y-0.5 mt-0.5">
-                          {item.children.map(child => {
+                          {(subUserModules !== null ? item.children.filter(c => !c.page || subUserModules.has(c.page)) : item.children).map(child => {
                             const ChildIcon = child.icon;
                             const childActive = currentPage === child.page;
                             return (
