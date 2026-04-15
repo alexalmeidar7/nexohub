@@ -403,7 +403,7 @@ export default function EnquetePage() {
     canvas.height = 1920;
     const ctx = canvas.getContext("2d")!;
 
-    // Draw background
+    // Draw background image (cover)
     const img = new Image();
     img.crossOrigin = "anonymous";
     await new Promise<void>((resolve, reject) => {
@@ -411,37 +411,54 @@ export default function EnquetePage() {
       img.onerror = () => reject();
       img.src = arteBgImage;
     });
-    // Cover the canvas with the image
     const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
     const w = img.width * scale;
     const h = img.height * scale;
     ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
 
-    // Semi-transparent overlay at bottom for text readability
-    const overlayH = 600;
-    const overlayY = canvas.height - overlayH;
-    const gradient = ctx.createLinearGradient(0, overlayY, 0, canvas.height);
-    gradient.addColorStop(0, "rgba(0,0,0,0)");
-    gradient.addColorStop(0.3, "rgba(0,0,0,0.7)");
-    gradient.addColorStop(1, "rgba(0,0,0,0.85)");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, overlayY, canvas.width, overlayH);
+    // ── White box for the question (centered, upper-middle area) ──
+    const boxW = 880;
+    const boxH = 260;
+    const boxX = (canvas.width - boxW) / 2;
+    const boxY = 380;
+    const boxR = 24;
 
-    // Draw question
     ctx.fillStyle = "#ffffff";
-    ctx.textAlign = "center";
-    ctx.font = "bold 52px sans-serif";
-    wrapText(ctx, enq.pergunta, canvas.width / 2, canvas.height - 380, canvas.width - 120, 64);
+    ctx.beginPath();
+    ctx.roundRect(boxX, boxY, boxW, boxH, boxR);
+    ctx.fill();
 
-    // Draw options
-    ctx.font = "44px sans-serif";
-    const optY = canvas.height - 180;
-    // Option A
-    ctx.fillStyle = enq.resposta_correta === 1 ? "#4ade80" : "#ffffff";
-    ctx.fillText(`A) ${enq.resposta1}`, canvas.width / 2, optY);
-    // Option B
-    ctx.fillStyle = enq.resposta_correta === 2 ? "#4ade80" : "#ffffff";
-    ctx.fillText(`B) ${enq.resposta2}`, canvas.width / 2, optY + 70);
+    // Question text — black, bold, centered inside white box
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "center";
+    ctx.font = "bold 46px sans-serif";
+    wrapText(ctx, enq.pergunta, canvas.width / 2, boxY + 80, boxW - 60, 58);
+
+    // ── Black boxes for answers ──
+    const ansBoxW = 780;
+    const ansBoxH = 90;
+    const ansBoxX = (canvas.width - ansBoxW) / 2;
+    const ansBoxR = 20;
+    const ans1Y = boxY + boxH + 60;
+    const ans2Y = ans1Y + ansBoxH + 30;
+
+    // Answer 1
+    ctx.fillStyle = "#000000";
+    ctx.beginPath();
+    ctx.roundRect(ansBoxX, ans1Y, ansBoxW, ansBoxH, ansBoxR);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 40px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`A) ${enq.resposta1}`, canvas.width / 2, ans1Y + ansBoxH / 2 + 14);
+
+    // Answer 2
+    ctx.fillStyle = "#000000";
+    ctx.beginPath();
+    ctx.roundRect(ansBoxX, ans2Y, ansBoxW, ansBoxH, ansBoxR);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(`B) ${enq.resposta2}`, canvas.width / 2, ans2Y + ansBoxH / 2 + 14);
 
     // Download
     const link = document.createElement("a");
