@@ -1,86 +1,65 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { HelpCircle, Loader2, CalendarPlus, Save, Trash2, Pencil, Sparkles, Plus, X, Wand2, ImageIcon, Download, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import XmlLinkRow from "./XmlLinkRow";
 import { toast } from "sonner";
-/* ── pre-built quiz bank (rotate daily by dayOfYear) ── */
+
+/* ── pre-built enquete bank (rotate daily by dayOfYear) ── */
 interface QuizItem {
   pergunta: string;
-  respostas: [string, string];
-  correta: number; // 1-2
+  respostas: [string, string, string, string];
 }
 const QUIZ_BANK: Record<string, QuizItem[]> = {
   "Música Sertaneja": [
-    { pergunta: "Qual dupla gravou 'Evidências'?", respostas: ["Chitãozinho & Xororó", "Zezé Di Camargo & Luciano"], correta: 1 },
-    { pergunta: "Quem canta 'Boate Azul'?", respostas: ["Milionário & José Rico", "Bruno & Marrone"], correta: 1 },
-    { pergunta: "Qual cantor é conhecido como 'Rei do Sertanejo'?", respostas: ["Leonardo", "Daniel"], correta: 1 },
-    { pergunta: "Qual dupla gravou 'É o Amor'?", respostas: ["Zezé Di Camargo & Luciano", "Chitãozinho & Xororó"], correta: 1 },
-    { pergunta: "Quem canta 'Telefone Mudo'?", respostas: ["Leandro & Leonardo", "Milionário & José Rico"], correta: 1 },
-    { pergunta: "Qual artista gravou 'Inventor dos Amores'?", respostas: ["Luan Santana", "Gusttavo Lima"], correta: 1 },
-    { pergunta: "Qual dupla é famosa por 'Fio de Cabelo'?", respostas: ["Chitãozinho & Xororó", "Zezé Di Camargo & Luciano"], correta: 1 },
-    { pergunta: "Quem gravou 'Ainda Ontem Chorei de Saudade'?", respostas: ["João Paulo & Daniel", "Leandro & Leonardo"], correta: 1 },
-    { pergunta: "Qual cantora é conhecida como 'Rainha da Sofrência'?", respostas: ["Marília Mendonça", "Simone Mendes"], correta: 1 },
-    { pergunta: "Quem canta 'Amor da Minha Vida'?", respostas: ["Daniel", "Leonardo"], correta: 1 },
-    { pergunta: "Qual dupla gravou 'Pense em Mim'?", respostas: ["Leandro & Leonardo", "Chitãozinho & Xororó"], correta: 1 },
-    { pergunta: "Quem é o intérprete de 'Tarde Demais'?", respostas: ["Cristiano Araújo", "Gusttavo Lima"], correta: 1 },
-    { pergunta: "Qual artista gravou 'Apelido Carinhoso'?", respostas: ["Gusttavo Lima", "Jorge & Mateus"], correta: 1 },
-    { pergunta: "Quem canta 'Pot-Pourri do Amor'?", respostas: ["Milionário & José Rico", "Tonico & Tinoco"], correta: 1 },
-    { pergunta: "Qual dupla gravou 'Temporal de Amor'?", respostas: ["Leandro & Leonardo", "Bruno & Marrone"], correta: 1 },
+    { pergunta: "Qual dupla gravou 'Evidências'?", respostas: ["Chitãozinho & Xororó", "Zezé Di Camargo & Luciano", "Bruno & Marrone", "Leandro & Leonardo"] },
+    { pergunta: "Quem canta 'Boate Azul'?", respostas: ["Milionário & José Rico", "Bruno & Marrone", "Daniel", "Leonardo"] },
+    { pergunta: "Qual cantor é conhecido como 'Rei do Sertanejo'?", respostas: ["Leonardo", "Daniel", "Gusttavo Lima", "Luan Santana"] },
+    { pergunta: "Qual dupla gravou 'É o Amor'?", respostas: ["Zezé Di Camargo & Luciano", "Chitãozinho & Xororó", "Leandro & Leonardo", "Jorge & Mateus"] },
+    { pergunta: "Quem canta 'Telefone Mudo'?", respostas: ["Leandro & Leonardo", "Milionário & José Rico", "Bruno & Marrone", "Daniel"] },
+    { pergunta: "Qual artista gravou 'Inventor dos Amores'?", respostas: ["Luan Santana", "Gusttavo Lima", "Michel Teló", "Cristiano Araújo"] },
+    { pergunta: "Qual dupla é famosa por 'Fio de Cabelo'?", respostas: ["Chitãozinho & Xororó", "Zezé Di Camargo & Luciano", "Milionário & José Rico", "Tonico & Tinoco"] },
+    { pergunta: "Quem gravou 'Ainda Ontem Chorei de Saudade'?", respostas: ["João Paulo & Daniel", "Leandro & Leonardo", "Bruno & Marrone", "Rick & Renner"] },
+    { pergunta: "Qual cantora é conhecida como 'Rainha da Sofrência'?", respostas: ["Marília Mendonça", "Simone Mendes", "Maiara & Maraisa", "Naiara Azevedo"] },
+    { pergunta: "Quem canta 'Amor da Minha Vida'?", respostas: ["Daniel", "Leonardo", "Chitãozinho & Xororó", "Zezé Di Camargo & Luciano"] },
   ],
   "Política": [
-    { pergunta: "Quem foi o 1º presidente do Brasil?", respostas: ["Deodoro da Fonseca", "Floriano Peixoto"], correta: 1 },
-    { pergunta: "Em que ano foi promulgada a Constituição atual?", respostas: ["1988", "1985"], correta: 1 },
-    { pergunta: "Quantos senadores cada estado brasileiro elege?", respostas: ["3", "2"], correta: 1 },
-    { pergunta: "Quem foi o presidente mais jovem do Brasil?", respostas: ["Fernando Collor", "Jânio Quadros"], correta: 1 },
-    { pergunta: "Qual é a idade mínima para ser presidente no Brasil?", respostas: ["35 anos", "30 anos"], correta: 1 },
-    { pergunta: "Quantos deputados federais o Brasil possui?", respostas: ["513", "400"], correta: 1 },
-    { pergunta: "Quem foi o último presidente militar do Brasil?", respostas: ["João Figueiredo", "Ernesto Geisel"], correta: 1 },
-    { pergunta: "Em que ano o voto feminino foi instituído no Brasil?", respostas: ["1932", "1920"], correta: 1 },
-    { pergunta: "Qual presidente construiu Brasília?", respostas: ["Juscelino Kubitschek", "Getúlio Vargas"], correta: 1 },
-    { pergunta: "Qual é o órgão máximo do Poder Judiciário brasileiro?", respostas: ["STF", "TSE"], correta: 1 },
-    { pergunta: "Quantos ministros compõem o STF?", respostas: ["11", "9"], correta: 1 },
-    { pergunta: "Quem proclamou a República do Brasil?", respostas: ["Deodoro da Fonseca", "Dom Pedro II"], correta: 1 },
-    { pergunta: "Qual presidente sofreu impeachment em 1992?", respostas: ["Fernando Collor", "Itamar Franco"], correta: 1 },
-    { pergunta: "Quantos estados o Brasil possui?", respostas: ["26", "24"], correta: 1 },
-    { pergunta: "Qual é o mandato de um senador no Brasil?", respostas: ["6 anos", "4 anos"], correta: 1 },
+    { pergunta: "Quem foi o 1º presidente do Brasil?", respostas: ["Deodoro da Fonseca", "Floriano Peixoto", "Prudente de Morais", "Campos Sales"] },
+    { pergunta: "Em que ano foi promulgada a Constituição atual?", respostas: ["1988", "1985", "1991", "1982"] },
+    { pergunta: "Quantos senadores cada estado brasileiro elege?", respostas: ["3", "2", "4", "5"] },
+    { pergunta: "Quem foi o presidente mais jovem do Brasil?", respostas: ["Fernando Collor", "Jânio Quadros", "Juscelino Kubitschek", "Tancredo Neves"] },
+    { pergunta: "Qual é a idade mínima para ser presidente no Brasil?", respostas: ["35 anos", "30 anos", "40 anos", "25 anos"] },
+    { pergunta: "Quantos deputados federais o Brasil possui?", respostas: ["513", "400", "600", "450"] },
+    { pergunta: "Quem foi o último presidente militar do Brasil?", respostas: ["João Figueiredo", "Ernesto Geisel", "Emílio Médici", "Costa e Silva"] },
+    { pergunta: "Em que ano o voto feminino foi instituído no Brasil?", respostas: ["1932", "1920", "1945", "1950"] },
+    { pergunta: "Qual presidente construiu Brasília?", respostas: ["Juscelino Kubitschek", "Getúlio Vargas", "João Goulart", "Jânio Quadros"] },
+    { pergunta: "Quantos ministros compõem o STF?", respostas: ["11", "9", "13", "15"] },
   ],
   "História do Brasil": [
-    { pergunta: "Em que ano o Brasil foi descoberto?", respostas: ["1500", "1492"], correta: 1 },
-    { pergunta: "Quem liderou a Inconfidência Mineira?", respostas: ["Tiradentes", "Tomás Antônio Gonzaga"], correta: 1 },
-    { pergunta: "Em que ano a escravidão foi abolida no Brasil?", respostas: ["1888", "1850"], correta: 1 },
-    { pergunta: "Qual tratado dividiu o mundo entre Portugal e Espanha?", respostas: ["Tratado de Tordesilhas", "Tratado de Madrid"], correta: 1 },
-    { pergunta: "Quem assinou a Lei Áurea?", respostas: ["Princesa Isabel", "Dom Pedro II"], correta: 1 },
-    { pergunta: "Em que ano o Brasil se tornou independente?", respostas: ["1822", "1808"], correta: 1 },
-    { pergunta: "Qual foi a primeira capital do Brasil?", respostas: ["Salvador", "Rio de Janeiro"], correta: 1 },
-    { pergunta: "Quem liderou a Revolução Farroupilha?", respostas: ["Bento Gonçalves", "Garibaldi"], correta: 1 },
-    { pergunta: "Em que ano a família real chegou ao Brasil?", respostas: ["1808", "1800"], correta: 1 },
-    { pergunta: "Qual era o nome oficial do Brasil colônia?", respostas: ["Terra de Santa Cruz", "Terra de Vera Cruz"], correta: 1 },
-    { pergunta: "Quem gritou 'Independência ou Morte'?", respostas: ["Dom Pedro I", "José Bonifácio"], correta: 1 },
-    { pergunta: "Qual revolta ocorreu na Bahia em 1798?", respostas: ["Conjuração Baiana", "Balaiada"], correta: 1 },
-    { pergunta: "Em que ano Getúlio Vargas assumiu pela 1ª vez?", respostas: ["1930", "1928"], correta: 1 },
-    { pergunta: "Qual foi o primeiro produto de exportação do Brasil?", respostas: ["Pau-Brasil", "Café"], correta: 1 },
-    { pergunta: "Em que ano começou a ditadura militar?", respostas: ["1964", "1960"], correta: 1 },
+    { pergunta: "Em que ano o Brasil foi descoberto?", respostas: ["1500", "1492", "1510", "1498"] },
+    { pergunta: "Quem liderou a Inconfidência Mineira?", respostas: ["Tiradentes", "Tomás Antônio Gonzaga", "Cláudio Manuel da Costa", "Alvarenga Peixoto"] },
+    { pergunta: "Em que ano a escravidão foi abolida no Brasil?", respostas: ["1888", "1850", "1871", "1895"] },
+    { pergunta: "Quem assinou a Lei Áurea?", respostas: ["Princesa Isabel", "Dom Pedro II", "Dom Pedro I", "José Bonifácio"] },
+    { pergunta: "Em que ano o Brasil se tornou independente?", respostas: ["1822", "1808", "1831", "1815"] },
+    { pergunta: "Qual foi a primeira capital do Brasil?", respostas: ["Salvador", "Rio de Janeiro", "Recife", "São Paulo"] },
+    { pergunta: "Quem liderou a Revolução Farroupilha?", respostas: ["Bento Gonçalves", "Garibaldi", "David Canabarro", "Anita Garibaldi"] },
+    { pergunta: "Em que ano a família real chegou ao Brasil?", respostas: ["1808", "1800", "1815", "1820"] },
+    { pergunta: "Quem gritou 'Independência ou Morte'?", respostas: ["Dom Pedro I", "José Bonifácio", "Tiradentes", "Dom Pedro II"] },
+    { pergunta: "Em que ano começou a ditadura militar?", respostas: ["1964", "1960", "1968", "1970"] },
   ],
   "Curiosidades": [
-    { pergunta: "Qual é o maior osso do corpo humano?", respostas: ["Fêmur", "Tíbia"], correta: 1 },
-    { pergunta: "Quantos litros de sangue o corpo humano possui?", respostas: ["5 litros", "3 litros"], correta: 1 },
-    { pergunta: "Qual é o animal mais rápido do mundo?", respostas: ["Falcão-peregrino", "Leopardo"], correta: 1 },
-    { pergunta: "Qual planeta é conhecido como Estrela d'Alva?", respostas: ["Vênus", "Marte"], correta: 1 },
-    { pergunta: "Quantos dentes tem um adulto?", respostas: ["32", "28"], correta: 1 },
-    { pergunta: "Qual é o menor país do mundo?", respostas: ["Vaticano", "Mônaco"], correta: 1 },
-    { pergunta: "Qual é o rio mais extenso do mundo?", respostas: ["Amazonas", "Nilo"], correta: 1 },
-    { pergunta: "Quantos ossos tem o corpo humano adulto?", respostas: ["206", "186"], correta: 1 },
-    { pergunta: "Qual é o elemento químico mais abundante no universo?", respostas: ["Hidrogênio", "Oxigênio"], correta: 1 },
-    { pergunta: "Qual é o maior oceano do planeta?", respostas: ["Pacífico", "Atlântico"], correta: 1 },
-    { pergunta: "Quantas cores tem o arco-íris?", respostas: ["7", "5"], correta: 1 },
-    { pergunta: "Qual é a vitamina do sol?", respostas: ["Vitamina D", "Vitamina A"], correta: 1 },
-    { pergunta: "Qual animal é o símbolo da paz?", respostas: ["Pomba", "Águia"], correta: 1 },
-    { pergunta: "Quantos fusos horários o Brasil possui?", respostas: ["4", "3"], correta: 1 },
-    { pergunta: "Qual o metal mais caro do mundo?", respostas: ["Ródio", "Ouro"], correta: 1 },
+    { pergunta: "Qual é o maior osso do corpo humano?", respostas: ["Fêmur", "Tíbia", "Úmero", "Rádio"] },
+    { pergunta: "Quantos litros de sangue o corpo humano possui?", respostas: ["5 litros", "3 litros", "7 litros", "10 litros"] },
+    { pergunta: "Qual é o animal mais rápido do mundo?", respostas: ["Falcão-peregrino", "Leopardo", "Águia", "Cavalo"] },
+    { pergunta: "Qual planeta é conhecido como Estrela d'Alva?", respostas: ["Vênus", "Marte", "Júpiter", "Mercúrio"] },
+    { pergunta: "Quantos dentes tem um adulto?", respostas: ["32", "28", "30", "34"] },
+    { pergunta: "Qual é o menor país do mundo?", respostas: ["Vaticano", "Mônaco", "San Marino", "Liechtenstein"] },
+    { pergunta: "Qual é o rio mais extenso do mundo?", respostas: ["Amazonas", "Nilo", "Yangtzé", "Mississippi"] },
+    { pergunta: "Quantos ossos tem o corpo humano adulto?", respostas: ["206", "186", "220", "196"] },
+    { pergunta: "Qual é o maior oceano do planeta?", respostas: ["Pacífico", "Atlântico", "Índico", "Ártico"] },
+    { pergunta: "Quantas cores tem o arco-íris?", respostas: ["7", "5", "6", "8"] },
   ],
 };
 const DEFAULT_CATEGORIES = Object.keys(QUIZ_BANK);
@@ -119,8 +98,7 @@ interface Programa {
 export default function EnquetePage() {
   const { user } = useAuth();
   const [pergunta, setPergunta] = useState("");
-  const [respostas, setRespostas] = useState(["", ""]);
-  const [correta, setCorreta] = useState(1);
+  const [respostas, setRespostas] = useState(["", "", "", ""]);
   const [dataEnquete, setDataEnquete] = useState("");
   const [horarioInicio, setHorarioInicio] = useState("");
   const [horarioFim, setHorarioFim] = useState("");
@@ -189,7 +167,6 @@ export default function EnquetePage() {
       }
     }
     setCustomCategories(cats);
-    // Regenerate outdated categories in background
     for (const item of toRegenerate) {
       try {
         const res = await fetch(
@@ -231,8 +208,8 @@ export default function EnquetePage() {
       toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
-    if (respostas.some(r => !r.trim())) {
-      toast.error("Preencha as duas respostas.");
+    if (respostas.slice(0, 2).some(r => !r.trim())) {
+      toast.error("Preencha ao menos as duas primeiras respostas.");
       return;
     }
     setSaving(true);
@@ -241,9 +218,9 @@ export default function EnquetePage() {
       pergunta: pergunta.trim(),
       resposta1: respostas[0].trim(),
       resposta2: respostas[1].trim(),
-      resposta3: "",
-      resposta4: "",
-      resposta_correta: correta,
+      resposta3: respostas[2].trim(),
+      resposta4: respostas[3].trim(),
+      resposta_correta: 0,
       data_enquete: dataEnquete,
       horario_inicio: horarioInicio,
       horario_fim: horarioFim,
@@ -268,8 +245,7 @@ export default function EnquetePage() {
   };
   const clearForm = () => {
     setPergunta("");
-    setRespostas(["", ""]);
-    setCorreta(1);
+    setRespostas(["", "", "", ""]);
     setDataEnquete("");
     setHorarioInicio("");
     setHorarioFim("");
@@ -278,8 +254,7 @@ export default function EnquetePage() {
   };
   const handleEdit = (e: EnqueteAgendada) => {
     setPergunta(e.pergunta);
-    setRespostas([e.resposta1, e.resposta2]);
-    setCorreta(e.resposta_correta);
+    setRespostas([e.resposta1, e.resposta2, e.resposta3 || "", e.resposta4 || ""]);
     setDataEnquete(e.data_enquete);
     setHorarioInicio(e.horario_inicio);
     setHorarioFim(e.horario_fim);
@@ -326,7 +301,6 @@ export default function EnquetePage() {
     try {
       const today = new Date();
       const datesToSchedule: string[] = [];
-      // Scan up to 90 calendar days to collect exactly autoDaysAhead matching dates
       for (let d = 1; d <= 90 && datesToSchedule.length < autoDaysAhead; d++) {
         const date = new Date(today);
         date.setDate(today.getDate() + d);
@@ -342,14 +316,12 @@ export default function EnquetePage() {
         return;
       }
 
-      // Gather ALL quizzes from all pre-built and custom categories
       const allQuizzes: QuizItem[] = [];
       for (const cat of CATEGORIES) {
         const bank = customCategories[cat] || QUIZ_BANK[cat] || [];
         allQuizzes.push(...bank);
       }
 
-      // Shuffle
       const shuffled = [...allQuizzes].sort(() => Math.random() - 0.5);
 
       const inserts = datesToSchedule.map((date, i) => {
@@ -359,9 +331,9 @@ export default function EnquetePage() {
           pergunta: quiz.pergunta,
           resposta1: quiz.respostas[0],
           resposta2: quiz.respostas[1],
-          resposta3: "",
-          resposta4: "",
-          resposta_correta: quiz.correta,
+          resposta3: quiz.respostas[2] || "",
+          resposta4: quiz.respostas[3] || "",
+          resposta_correta: 0,
           data_enquete: date,
           horario_inicio: hInicio,
           horario_fim: hFim,
@@ -385,7 +357,6 @@ export default function EnquetePage() {
   const handleSelectPrebuilt = (quiz: QuizItem) => {
     setPergunta(quiz.pergunta);
     setRespostas([...quiz.respostas]);
-    setCorreta(quiz.correta);
     setEditingId(null);
   };
   const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -403,7 +374,6 @@ export default function EnquetePage() {
     canvas.height = 1920;
     const ctx = canvas.getContext("2d")!;
 
-    // Draw background image (cover)
     const img = new Image();
     img.crossOrigin = "anonymous";
     await new Promise<void>((resolve, reject) => {
@@ -416,11 +386,11 @@ export default function EnquetePage() {
     const h = img.height * scale;
     ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
 
-    // ── White box for the question (centered, upper-middle area) ──
+    // White box for the question
     const boxW = 880;
     const boxH = 260;
     const boxX = (canvas.width - boxW) / 2;
-    const boxY = 430;
+    const boxY = 350;
     const boxR = 40;
 
     ctx.fillStyle = "#ffffff";
@@ -428,39 +398,32 @@ export default function EnquetePage() {
     ctx.roundRect(boxX, boxY, boxW, boxH, boxR);
     ctx.fill();
 
-    // Question text — black, bold, centered inside white box
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
     ctx.font = "bold 60px sans-serif";
     wrapText(ctx, enq.pergunta, canvas.width / 2, boxY + 80, boxW - 60, 58);
 
-    // ── Black boxes for answers ──
+    // Answer boxes (up to 4)
+    const answers = [enq.resposta1, enq.resposta2, enq.resposta3, enq.resposta4].filter(a => a?.trim());
+    const labels = ["A", "B", "C", "D"];
     const ansBoxW = 780;
-    const ansBoxH = 90;
+    const ansBoxH = 80;
     const ansBoxX = (canvas.width - ansBoxW) / 2;
     const ansBoxR = 40;
-    const ans1Y = boxY + boxH + 60;
-    const ans2Y = ans1Y + ansBoxH + 30;
+    let ansY = boxY + boxH + 50;
 
-    // Answer 1
-    ctx.fillStyle = "#000000";
-    ctx.beginPath();
-    ctx.roundRect(ansBoxX, ans1Y, ansBoxW, ansBoxH, ansBoxR);
-    ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 40px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(`A) ${enq.resposta1}`, canvas.width / 2, ans1Y + ansBoxH / 2 + 14);
+    for (let i = 0; i < answers.length; i++) {
+      ctx.fillStyle = "#000000";
+      ctx.beginPath();
+      ctx.roundRect(ansBoxX, ansY, ansBoxW, ansBoxH, ansBoxR);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 36px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`${labels[i]}) ${answers[i]}`, canvas.width / 2, ansY + ansBoxH / 2 + 12);
+      ansY += ansBoxH + 24;
+    }
 
-    // Answer 2
-    ctx.fillStyle = "#000000";
-    ctx.beginPath();
-    ctx.roundRect(ansBoxX, ans2Y, ansBoxW, ansBoxH, ansBoxR);
-    ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(`B) ${enq.resposta2}`, canvas.width / 2, ans2Y + ansBoxH / 2 + 14);
-
-    // Download
     const link = document.createElement("a");
     const dateStr = new Date(enq.data_enquete + "T12:00:00").toLocaleDateString("pt-BR").replace(/\//g, "-");
     link.download = `enquete_${dateStr}.png`;
@@ -468,7 +431,6 @@ export default function EnquetePage() {
     link.click();
   }, [arteBgImage]);
 
-  // Helper: wrap text on canvas
   function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
     const words = text.split(" ");
     let line = "";
@@ -571,11 +533,8 @@ export default function EnquetePage() {
                       key={j}
                       className="text-[10px] px-2 py-0.5 rounded-full"
                       style={{
-                        backgroundColor: j + 1 === quiz.correta
-                          ? "color-mix(in srgb, var(--layout-accent-color, #268ffa) 20%, transparent)"
-                          : "color-mix(in srgb, var(--layout-page-bg, #ffffff) 85%, var(--layout-border-color, #333))",
-                        color: j + 1 === quiz.correta ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)",
-                        fontWeight: j + 1 === quiz.correta ? 700 : 400,
+                        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 85%, var(--layout-border-color, #333))",
+                        color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)",
                       }}
                     >
                       {r}
@@ -599,31 +558,18 @@ export default function EnquetePage() {
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
           />
         </div>
-        {[0, 1].map(i => (
-          <div key={i} className="flex items-center gap-3">
-            <div className="flex-1">
-              <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-                Resposta {i + 1}
-              </label>
-              <Input
-                value={respostas[i]}
-                onChange={e => updateResposta(i, e.target.value)}
-                placeholder={`Opção ${i + 1}`}
-                className="text-sm"
-                style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
-              />
-            </div>
-            <div className="flex items-center gap-2 pt-4">
-              <Checkbox
-                checked={correta === i + 1}
-                onCheckedChange={() => setCorreta(i + 1)}
-                className="border-2"
-                style={{ borderColor: correta === i + 1 ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)" }}
-              />
-              <span className="text-[10px] font-semibold whitespace-nowrap" style={{ color: correta === i + 1 ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                Correta
-              </span>
-            </div>
+        {[0, 1, 2, 3].map(i => (
+          <div key={i}>
+            <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+              Resposta {i + 1} {i >= 2 && <span className="font-normal opacity-50">(opcional)</span>}
+            </label>
+            <Input
+              value={respostas[i]}
+              onChange={e => updateResposta(i, e.target.value)}
+              placeholder={`Opção ${i + 1}`}
+              className="text-sm"
+              style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+            />
           </div>
         ))}
         {/* Schedule */}
@@ -665,7 +611,6 @@ export default function EnquetePage() {
           <span className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programar Automático</span>
         </div>
 
-        {/* Mode selection */}
         <div className="flex gap-2">
           <button
             onClick={() => setAutoMode("programa")}
@@ -745,7 +690,6 @@ export default function EnquetePage() {
           </div>
         )}
 
-        {/* Days ahead */}
         <div>
           <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Gerar para os próximos</label>
           <div className="flex gap-2">
@@ -780,7 +724,7 @@ export default function EnquetePage() {
         </p>
       </div>
 
-      {/* Máscara (Arte) Section — only background upload */}
+      {/* Máscara (Arte) Section */}
       <div className="rounded-xl p-4 space-y-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-accent-color, #268ffa))", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #268ffa) 20%, transparent)" }}>
         <div className="flex items-center gap-2">
           <ImageIcon size={16} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
@@ -824,32 +768,35 @@ export default function EnquetePage() {
             <span className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Enquetes Agendadas</span>
           </div>
           <div className="divide-y" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 8%, transparent)" }}>
-            {enquetes.map(e => (
-              <div key={e.id} className="px-4 py-3 flex items-center gap-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{e.pergunta}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                    {new Date(e.data_enquete + "T12:00:00").toLocaleDateString("pt-BR")} • {e.horario_inicio}–{e.horario_fim} • Correta: {e[`resposta${e.resposta_correta}` as keyof EnqueteAgendada]}
-                  </p>
+            {enquetes.map(e => {
+              const answers = [e.resposta1, e.resposta2, e.resposta3, e.resposta4].filter(a => a?.trim());
+              return (
+                <div key={e.id} className="px-4 py-3 flex items-center gap-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{e.pergunta}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                      {new Date(e.data_enquete + "T12:00:00").toLocaleDateString("pt-BR")} • {e.horario_inicio}–{e.horario_fim} • {answers.length} opções
+                    </p>
+                  </div>
+                  {arteBgImage && (
+                    <Button
+                      size="sm"
+                      onClick={() => generateArteForEnquete(e)}
+                      className="flex items-center gap-1.5 text-[10px] font-bold rounded-lg text-white px-3 py-1 shrink-0"
+                      style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}
+                    >
+                      <Download size={12} /> Baixar Arte
+                    </Button>
+                  )}
+                  <button onClick={() => handleEdit(e)} className="p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Editar">
+                    <Pencil size={14} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
+                  </button>
+                  <button onClick={() => handleDelete(e.id)} className="p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Excluir">
+                    <Trash2 size={14} className="text-red-500" />
+                  </button>
                 </div>
-                {arteBgImage && (
-                  <Button
-                    size="sm"
-                    onClick={() => generateArteForEnquete(e)}
-                    className="flex items-center gap-1.5 text-[10px] font-bold rounded-lg text-white px-3 py-1 shrink-0"
-                    style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}
-                  >
-                    <Download size={12} /> Baixar Arte
-                  </Button>
-                )}
-                <button onClick={() => handleEdit(e)} className="p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Editar">
-                  <Pencil size={14} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
-                </button>
-                <button onClick={() => handleDelete(e.id)} className="p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Excluir">
-                  <Trash2 size={14} className="text-red-500" />
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

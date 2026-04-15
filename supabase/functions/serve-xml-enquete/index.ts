@@ -44,14 +44,14 @@ serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    let pergunta = "", r1 = "", r2 = "";
-    let correta = 0;
+    let pergunta = "", r1 = "", r2 = "", r3 = "", r4 = "";
 
     if (scheduled) {
       pergunta = scheduled.pergunta ?? "";
       r1 = scheduled.resposta1 ?? "";
       r2 = scheduled.resposta2 ?? "";
-      correta = scheduled.resposta_correta ?? 0;
+      r3 = scheduled.resposta3 ?? "";
+      r4 = scheduled.resposta4 ?? "";
     }
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -60,7 +60,8 @@ serve(async (req) => {
     <pergunta>${esc(pergunta)}</pergunta>
     <resposta1>${esc(r1)}</resposta1>
     <resposta2>${esc(r2)}</resposta2>
-    <resposta_correta>${esc(correta >= 1 && correta <= 2 ? [r1, r2][correta - 1] : "")}</resposta_correta>
+    <resposta3>${esc(r3)}</resposta3>
+    <resposta4>${esc(r4)}</resposta4>
   </enquete>
 </items>`;
 
