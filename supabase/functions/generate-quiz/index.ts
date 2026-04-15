@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,10 +25,9 @@ serve(async (req) => {
 
     const prompt = `Gere exatamente 5 perguntas de quiz sobre o tema "${categoria}" para um programa de rádio brasileiro. Cada pergunta deve ter exatamente 4 opções de resposta (uma correta e três erradas) e indicar qual é a correta (1, 2, 3 ou 4). Para cada pergunta, inclua também:
 - "explicacao": um texto curto de NO MÁXIMO 3 linhas explicando a resposta correta
-- "imagem_url": uma URL de imagem PNG do Wikimedia Commons (formato https://upload.wikimedia.org/.../*.png) relacionada à resposta correta. A URL DEVE terminar em .png.
 
 Use a semente do dia ${dayOfYear} para variar as perguntas. Responda APENAS com um array JSON válido no formato:
-[{"pergunta":"...","respostas":["opção correta","opção errada 1","opção errada 2","opção errada 3"],"correta":1,"explicacao":"...","imagem_url":"https://upload.wikimedia.org/.../algo.png"}]
+[{"pergunta":"...","respostas":["opção correta","opção errada 1","opção errada 2","opção errada 3"],"correta":1,"explicacao":"..."}]
 Sem explicação, sem markdown, apenas o JSON.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -78,6 +78,56 @@ Sem explicação, sem markdown, apenas o JSON.`;
 
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     const quizzes = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+
+    // Generate images for each quiz answer using AI
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    for (const quiz of quizzes) {
+      try {
+        const respostaCorreta = quiz.respostas[quiz.correta - 1];
+        const imgPrompt = `Uma ilustração clara e informativa sobre "${respostaCorreta}" relacionada a "${quiz.pergunta}". Estilo editorial, cores vibrantes, fundo limpo, sem texto na imagem.`;
+
+        const imgResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-image",
+            messages: [{ role: "user", content: imgPrompt }],
+            modalities: ["image", "text"],
+          }),
+        });
+
+        if (imgResponse.ok) {
+          const imgData = await imgResponse.json();
+          const imageB64 = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+          if (imageB64) {
+            const base64Data = imageB64.replace(/^data:image\/\w+;base64,/, "");
+            const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+
+            const fileName = `quiz-img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+            const filePath = `quiz-images/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+              .from("xml-files")
+              .upload(filePath, binaryData, { contentType: "image/png", upsert: true });
+
+            if (!uploadError) {
+              const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+              quiz.imagem_url = urlData.publicUrl;
+            }
+          }
+        }
+      } catch (imgErr) {
+        console.error("Image gen error for quiz:", imgErr);
+        quiz.imagem_url = "";
+      }
+    }
 
     return new Response(JSON.stringify(quizzes), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
