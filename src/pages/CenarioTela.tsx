@@ -1444,6 +1444,7 @@ export default function CenarioTela() {
                         {currentProgram?.apresentadorFoto && (
                           <>
                             <img
+                              key={currentProgram.apresentadorFoto}
                               src={currentProgram.apresentadorFoto}
                               alt=""
                               style={{
@@ -1456,6 +1457,7 @@ export default function CenarioTela() {
                                 objectFit: "contain",
                                 filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
                                 pointerEvents: "none",
+                                animation: "presenter-enter 0.8s cubic-bezier(0.16,1,0.3,1) both",
                               }}
                             />
                             {/* Gradient fade at bottom — CEF 86 compatible */}
@@ -1558,7 +1560,7 @@ export default function CenarioTela() {
                        boxShadow: `0 0 6px ${accentRgba(0.6)}, 0 0 14px ${accentRgba(0.3)}`,
                      }} />
                    </div>
-                   <style>{`@keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+                   <style>{`@keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } @keyframes presenter-enter { 0% { opacity: 0; transform: translateX(-50%) translateY(15%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }`}</style>
                 </div>
               );
             })()}
