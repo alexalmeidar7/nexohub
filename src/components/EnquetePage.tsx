@@ -858,6 +858,7 @@ export default function EnquetePage() {
             </div>
           );
         })()}
+      </div>
 
       {enquetes.length > 0 && (
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
