@@ -43,12 +43,15 @@ serve(async (req) => {
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<items>\n  <dados>\n';
     if (quiz) {
+      const respostaCorretaNum = quiz.resposta_correta as number;
+      const respostaCorretaTexto = respostaCorretaNum === 1 ? quiz.resposta1 : respostaCorretaNum === 2 ? quiz.resposta2 : respostaCorretaNum === 3 ? quiz.resposta3 : quiz.resposta4;
       xml += `    <pergunta>${escapeXml(quiz.pergunta)}</pergunta>\n`;
       xml += `    <resposta1>${escapeXml(quiz.resposta1)}</resposta1>\n`;
       xml += `    <resposta2>${escapeXml(quiz.resposta2)}</resposta2>\n`;
       xml += `    <resposta3>${escapeXml(quiz.resposta3)}</resposta3>\n`;
       xml += `    <resposta4>${escapeXml(quiz.resposta4)}</resposta4>\n`;
       xml += `    <resposta_correta>${quiz.resposta_correta}</resposta_correta>\n`;
+      xml += `    <resposta_correta_texto>${escapeXml(respostaCorretaTexto || '')}</resposta_correta_texto>\n`;
       xml += `    <horario_inicio>${escapeXml(quiz.horario_inicio)}</horario_inicio>\n`;
       xml += `    <horario_fim>${escapeXml(quiz.horario_fim)}</horario_fim>\n`;
       xml += `    <explicacao>${escapeXml(quiz.explicacao || '')}</explicacao>\n`;
@@ -60,6 +63,7 @@ serve(async (req) => {
       xml += `    <resposta3></resposta3>\n`;
       xml += `    <resposta4></resposta4>\n`;
       xml += `    <resposta_correta></resposta_correta>\n`;
+      xml += `    <resposta_correta_texto></resposta_correta_texto>\n`;
       xml += `    <horario_inicio></horario_inicio>\n`;
       xml += `    <horario_fim></horario_fim>\n`;
       xml += `    <explicacao></explicacao>\n`;

@@ -30,11 +30,11 @@ serve(async (req) => {
     const prompt = `Para um quiz de rádio brasileiro, a pergunta é: "${pergunta}" e a resposta correta é: "${resposta_correta_texto}".
 
 Forneça:
-1. "explicacao": um parágrafo educativo de 5 linhas explicando por que essa é a resposta correta, com curiosidades interessantes.
-2. "imagem_url": uma URL válida e acessível de imagem do Wikimedia Commons (formato https://upload.wikimedia.org/wikipedia/commons/...) que seja relevante à resposta correta. Use apenas URLs reais de imagens que existam no Wikimedia Commons.
+1. "explicacao": um texto curto de NO MÁXIMO 3 linhas explicando por que essa é a resposta correta.
+2. "imagem_url": uma URL válida e acessível de imagem PNG do Wikimedia Commons (formato https://upload.wikimedia.org/wikipedia/commons/.../*.png) que seja relevante à resposta correta. A URL DEVE terminar em .png.
 
 Responda APENAS com JSON válido no formato:
-{"explicacao":"...","imagem_url":"https://upload.wikimedia.org/wikipedia/commons/..."}
+{"explicacao":"...","imagem_url":"https://upload.wikimedia.org/wikipedia/commons/...algo.png"}
 Sem explicação adicional, sem markdown, apenas o JSON.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

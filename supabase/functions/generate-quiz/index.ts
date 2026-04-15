@@ -23,11 +23,11 @@ serve(async (req) => {
     const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
 
     const prompt = `Gere exatamente 5 perguntas de quiz sobre o tema "${categoria}" para um programa de rádio brasileiro. Cada pergunta deve ter exatamente 4 opções de resposta (uma correta e três erradas) e indicar qual é a correta (1, 2, 3 ou 4). Para cada pergunta, inclua também:
-- "explicacao": um parágrafo curto de 5 linhas explicando a resposta correta de forma educativa e interessante
-- "imagem_url": uma URL de imagem relevante do Wikimedia Commons (formato https://upload.wikimedia.org/...) relacionada à resposta correta
+- "explicacao": um texto curto de NO MÁXIMO 3 linhas explicando a resposta correta
+- "imagem_url": uma URL de imagem PNG do Wikimedia Commons (formato https://upload.wikimedia.org/.../*.png) relacionada à resposta correta. A URL DEVE terminar em .png.
 
 Use a semente do dia ${dayOfYear} para variar as perguntas. Responda APENAS com um array JSON válido no formato:
-[{"pergunta":"...","respostas":["opção correta","opção errada 1","opção errada 2","opção errada 3"],"correta":1,"explicacao":"...","imagem_url":"https://upload.wikimedia.org/..."}]
+[{"pergunta":"...","respostas":["opção correta","opção errada 1","opção errada 2","opção errada 3"],"correta":1,"explicacao":"...","imagem_url":"https://upload.wikimedia.org/.../algo.png"}]
 Sem explicação, sem markdown, apenas o JSON.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
