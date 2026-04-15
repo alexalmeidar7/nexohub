@@ -227,6 +227,8 @@ export default function QuizPage() {
       data_quiz: dataQuiz,
       horario_inicio: horarioInicio,
       horario_fim: horarioFim,
+      explicacao: explicacao.trim(),
+      imagem_resposta: imagemResposta.trim(),
     };
     if (editingId) {
       const { error } = await supabase
@@ -256,6 +258,8 @@ export default function QuizPage() {
     setHorarioFim("");
     setEditingId(null);
     setSelectedCategory("");
+    setExplicacao("");
+    setImagemResposta("");
   };
 
   const handleEdit = (e: QuizAgendado) => {
@@ -267,6 +271,8 @@ export default function QuizPage() {
     setHorarioFim(e.horario_fim);
     setEditingId(e.id);
     setSelectedCategory("");
+    setExplicacao(e.explicacao || "");
+    setImagemResposta(e.imagem_resposta || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -281,6 +287,8 @@ export default function QuizPage() {
     setRespostas([...quiz.respostas]);
     setCorreta(quiz.correta);
     setEditingId(null);
+    setExplicacao(quiz.explicacao || "");
+    setImagemResposta(quiz.imagem_url || "");
   };
 
   return (
