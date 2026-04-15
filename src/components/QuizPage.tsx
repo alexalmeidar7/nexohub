@@ -12,6 +12,8 @@ interface QuizItem {
   pergunta: string;
   respostas: [string, string, string, string];
   correta: number; // 1-4
+  explicacao?: string;
+  imagem_url?: string;
 }
 
 const QUIZ_BANK: Record<string, QuizItem[]> = {
@@ -111,6 +113,8 @@ interface QuizAgendado {
   data_quiz: string;
   horario_inicio: string;
   horario_fim: string;
+  explicacao: string;
+  imagem_resposta: string;
 }
 
 export default function QuizPage() {
