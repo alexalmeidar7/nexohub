@@ -1464,9 +1464,9 @@ export default function CenarioTela() {
                         )}
                         {/* Presenter name at bottom */}
                         <div style={{ position: "absolute", bottom: `${vhToPx(1)}${vu}`, left: `${vhToPx(1)}${vu}`, right: `${vhToPx(1)}${vu}`, zIndex: 3 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}` }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.4)}${vu}` }}>
                             <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
-                            <span style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
+                            <span style={{ fontWeight: 400, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
                           </div>
                         </div>
                       </div>
