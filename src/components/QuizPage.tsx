@@ -434,6 +434,31 @@ export default function QuizPage() {
             </div>
           </div>
         ))}
+        {/* Explicação e Imagem */}
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Explicação da Resposta</label>
+          <textarea
+            value={explicacao}
+            onChange={e => setExplicacao(e.target.value)}
+            placeholder="Parágrafo explicando a resposta correta..."
+            rows={3}
+            className="w-full rounded-lg px-3 py-2 text-sm resize-none"
+            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>URL da Imagem da Resposta</label>
+          <Input
+            value={imagemResposta}
+            onChange={e => setImagemResposta(e.target.value)}
+            placeholder="https://upload.wikimedia.org/..."
+            className="text-sm"
+            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+          />
+          {imagemResposta && (
+            <img src={imagemResposta} alt="Preview" className="mt-2 rounded-lg max-h-32 object-contain" onError={e => (e.currentTarget.style.display = 'none')} />
+          )}
+        </div>
         {/* Schedule */}
         <div className="grid grid-cols-3 gap-3">
           <div>
