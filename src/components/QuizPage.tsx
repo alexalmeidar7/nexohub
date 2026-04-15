@@ -463,22 +463,28 @@ export default function QuizPage() {
         ))}
         {/* Explicação e Imagem */}
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Explicação da Resposta</label>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+            Explicação da Resposta
+            <span className="font-normal ml-1 opacity-50">(preenchido automaticamente pela IA)</span>
+          </label>
           <textarea
             value={explicacao}
             onChange={e => setExplicacao(e.target.value)}
-            placeholder="Parágrafo explicando a resposta correta..."
+            placeholder="Será gerado automaticamente ao agendar..."
             rows={3}
             className="w-full rounded-lg px-3 py-2 text-sm resize-none"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
           />
         </div>
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>URL da Imagem da Resposta</label>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+            URL da Imagem da Resposta
+            <span className="font-normal ml-1 opacity-50">(preenchido automaticamente pela IA)</span>
+          </label>
           <Input
             value={imagemResposta}
             onChange={e => setImagemResposta(e.target.value)}
-            placeholder="https://upload.wikimedia.org/..."
+            placeholder="Será gerado automaticamente ao agendar..."
             className="text-sm"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
           />
