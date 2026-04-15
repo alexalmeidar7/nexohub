@@ -763,6 +763,102 @@ export default function EnquetePage() {
         </p>
       </div>
 
+      {/* Máscara (Arte) Section */}
+      <div className="rounded-xl p-4 space-y-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-accent-color, #268ffa))", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #268ffa) 20%, transparent)" }}>
+        <div className="flex items-center gap-2">
+          <ImageIcon size={16} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
+          <span className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cadastro de Máscara (Arte)</span>
+        </div>
+        <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+          Selecione um programa e faça upload de uma imagem de fundo. O sistema irá gerar artes com o texto das enquetes agendadas no formato 9:16 (1080x1920).
+        </p>
+
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Programa</label>
+          <select
+            value={artePrograma}
+            onChange={e => setArtePrograma(e.target.value)}
+            className="w-full rounded-lg px-3 py-2 text-sm"
+            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+          >
+            <option value="">Selecione um programa...</option>
+            {programas.map(p => (
+              <option key={p.id} value={p.id}>{p.nome} ({p.horario_inicio}–{p.horario_fim})</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Imagem de Fundo (9:16)</label>
+          <input
+            ref={arteBgInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleBgUpload}
+          />
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => arteBgInputRef.current?.click()}
+              className="flex items-center gap-2 text-xs rounded-xl"
+            >
+              <Upload size={14} />
+              {arteBgImage ? "Trocar Imagem" : "Upload Fundo"}
+            </Button>
+            {arteBgImage && (
+              <div className="flex items-center gap-2">
+                <img src={arteBgImage} alt="preview" className="h-16 rounded-lg border object-cover" style={{ aspectRatio: "9/16" }} />
+                <button onClick={() => setArteBgImage(null)} className="p-1 rounded hover:bg-black/5"><X size={14} className="text-red-500" /></button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Preview & download list */}
+        {arteBgImage && artePrograma && (() => {
+          const prog = programas.find(p => p.id === artePrograma);
+          if (!prog) return null;
+          const matched = enquetes.filter(e => e.horario_inicio === prog.horario_inicio && e.horario_fim === prog.horario_fim);
+          if (matched.length === 0) return (
+            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+              Nenhuma enquete agendada para este programa.
+            </p>
+          );
+          return (
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wide block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+                Enquetes Disponíveis ({matched.length})
+              </label>
+              {matched.map(enq => (
+                <div
+                  key={enq.id}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 92%, var(--layout-border-color, #333))",
+                    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)",
+                  }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{enq.pergunta}</p>
+                    <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                      {new Date(enq.data_enquete + "T12:00:00").toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => generateArteForEnquete(enq)}
+                    className="flex items-center gap-1.5 text-[10px] font-bold rounded-lg text-white px-3 py-1"
+                    style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}
+                  >
+                    <Download size={12} /> Baixar Arte
+                  </Button>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
       {enquetes.length > 0 && (
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
           <div className="px-4 py-2.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-border-color, #333))" }}>
