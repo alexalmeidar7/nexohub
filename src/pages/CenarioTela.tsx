@@ -1536,16 +1536,20 @@ export default function CenarioTela() {
                       </div>
                     )}
 
-                   {/* Program progress bar — neon glow style */}
-                   <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: 0, right: 0, height: "2px", background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "visible" }}>
+                   {/* Program progress bar — premium animated */}
+                   <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: 0, right: 0, height: `${vhToPx(0.5)}${vu}`, background: "rgba(255,255,255,0.15)", zIndex: 15, overflow: "hidden", borderRadius: `${vhToPx(0.3)}${vu}` }}>
                      <div style={{
                        width: `${progressPct}%`,
                        height: "100%",
-                       background: accentColor,
+                       borderRadius: `${vhToPx(0.3)}${vu}`,
+                       background: `linear-gradient(90deg, ${accentColor}, ${accentRgba(0.7)}, ${accentColor})`,
+                       backgroundSize: "200% 100%",
+                       animation: "shimmerProgress 2s linear infinite",
                        transition: "width 1s linear",
-                       boxShadow: `0 0 3px ${accentRgba(0.8)}, 0 0 8px ${accentRgba(0.5)}, 0 0 16px ${accentRgba(0.3)}, 0 -1px 4px ${accentRgba(0.6)}`,
+                       boxShadow: `0 0 6px ${accentRgba(0.6)}, 0 0 14px ${accentRgba(0.3)}`,
                      }} />
                    </div>
+                   <style>{`@keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
                 </div>
               );
             })()}
