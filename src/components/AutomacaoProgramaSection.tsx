@@ -57,7 +57,7 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro 
   const [formHorario, setFormHorario] = useState("08:00");
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const jornalisticos = programas.filter(p => p.tipo_programa === "jornalistico");
+  const jornalisticos = programas.filter(p => p.tipo_programa?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === "jornalistico");
 
   const fetchAutomacoes = useCallback(async () => {
     if (!user) return;
