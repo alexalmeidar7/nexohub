@@ -1940,7 +1940,7 @@ export default function CenarioInterativoPage() {
 
                                  <div className="flex-1 flex items-center justify-center" style={{ minHeight: 0 }}>
                                    {currentProgram?.apresentadorFoto && (
-                                     <img src={currentProgram.apresentadorFoto} alt="" style={{ maxHeight: `${pvh(8.6)}px`, maxWidth: "100%", objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))" }} />
+                                     <img src={currentProgram.apresentadorFoto} alt="" style={{ maxHeight: `${pvh(8.6)}px`, maxWidth: "100%", objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))", WebkitMaskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)", maskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)" }} />
                                    )}
                                  </div>
 
