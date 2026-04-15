@@ -143,6 +143,12 @@ export default function EnquetePage() {
   const [autoGenerating, setAutoGenerating] = useState(false);
   const [programas, setProgramas] = useState<Programa[]>([]);
 
+  // Máscara (Arte) state
+  const [artePrograma, setArtePrograma] = useState("");
+  const [arteBgImage, setArteBgImage] = useState<string | null>(null);
+  const [arteGenerating, setArteGenerating] = useState(false);
+  const arteBgInputRef = useRef<HTMLInputElement>(null);
+
   const CATEGORIES = [...DEFAULT_CATEGORIES, ...Object.keys(customCategories)];
   const xmlUrl = user
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-enquete?user_id=${user.id}`
