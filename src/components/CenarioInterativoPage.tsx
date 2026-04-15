@@ -1934,7 +1934,7 @@ export default function CenarioInterativoPage() {
                                      </div>
                                    </div>
                                    {currentProgram?.selo && (
-                                     <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(4.16)}px`, maxWidth: `${pvh(6.24)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
+                                     <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5.82)}px`, maxWidth: `${pvh(8.74)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
                                    )}
                                  </div>
 
