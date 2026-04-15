@@ -1412,7 +1412,7 @@ export default function CenarioTela() {
                      <div style={{ position: "absolute", top: `${vhToPx(3)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
                        <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.3)}${vu}` }}>a seguir</div>
                        <div style={{ fontWeight: 700, fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, wordBreak: "break-word", overflowWrap: "break-word" }}>{nextProgram.nome}</div>
-                       <div style={{ fontWeight: 500, fontSize: `${vhToPx(1.2)}${vu}`, color: accentColor, fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                       <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                      </div>
                    )}
 
