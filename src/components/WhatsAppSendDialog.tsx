@@ -376,12 +376,20 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
               <Copy size={12} /> Copiar
             </button>
             <button
+              onClick={enviarViaAPI}
+              disabled={loading || sendingApi || !formattedText.trim() || contatos.length === 0}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[11px] font-bold text-white hover:opacity-90 transition disabled:opacity-30"
+              style={{ backgroundColor: "#128c7e" }}
+            >
+              {sendingApi ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} API ({contatos.length})
+            </button>
+            <button
               onClick={enviar}
               disabled={loading || !formattedText.trim() || contatos.length === 0}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold text-white hover:opacity-90 transition disabled:opacity-30"
               style={{ backgroundColor: "#25d366" }}
             >
-              <Send size={12} /> Enviar ({contatos.length})
+              <Send size={12} /> Link ({contatos.length})
             </button>
           </div>
         </div>
