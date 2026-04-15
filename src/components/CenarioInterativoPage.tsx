@@ -1989,12 +1989,12 @@ export default function CenarioInterativoPage() {
                                )}
                              </div>
 
-                             {/* ── Sponsor logos (top-right, below "a seguir") ── */}
+                             {/* ── Sponsor logos (centered bottom, same as external screen) ── */}
                              {sponsorLogos.length > 0 && (
-                               <div style={{ position: "absolute", top: `${pvh(10)}px`, right: `${pvh(3)}px`, zIndex: 10 }}>
-                                 <div className="relative flex justify-end" style={{ height: `${pvh(12)}px`, minWidth: `${pvh(8)}px` }}>
+                               <div style={{ position: "absolute", bottom: `${pvh(14)}px`, left: "50%", transform: "translateX(-50%)", zIndex: 10 }}>
+                                 <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: `${pvh(18)}px` }}>
                                    {sponsorLogos.map((l, i) => l.logo_url && (
-                                     <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain absolute" style={{ right: 0, maxWidth: `${pvh(20)}px`, maxHeight: `${pvh(11)}px`, opacity: i === sponsorIdx ? 1 : 0, transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)", transition: "opacity 0.8s ease, transform 0.8s ease", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" }} />
+                                     <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain" style={{ position: "absolute", maxWidth: `${pvh(30)}px`, maxHeight: `${pvh(16.5)}px`, opacity: i === sponsorIdx ? 1 : 0, transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)", transition: "opacity 0.8s ease, transform 0.8s ease", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" }} />
                                    ))}
                                  </div>
                                </div>
