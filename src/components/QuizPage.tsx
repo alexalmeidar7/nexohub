@@ -217,10 +217,11 @@ export default function QuizPage() {
     }
     setSaving(true);
 
-    // Auto-generate explanation and image if not provided
+    // Auto-generate explanation and image if not provided or when editing
     let finalExplicacao = explicacao.trim();
     let finalImagem = imagemResposta.trim();
-    if (!finalExplicacao || !finalImagem) {
+    const shouldRegenerate = editingId || !finalExplicacao || !finalImagem;
+    if (shouldRegenerate) {
       try {
         const respostaCorretaTexto = respostas[correta - 1].trim();
         const res = await fetch(
@@ -233,8 +234,8 @@ export default function QuizPage() {
         );
         if (res.ok) {
           const aiData = await res.json();
-          if (!finalExplicacao && aiData.explicacao) finalExplicacao = aiData.explicacao;
-          if (!finalImagem && aiData.imagem_url) finalImagem = aiData.imagem_url;
+          if (aiData.explicacao) finalExplicacao = aiData.explicacao;
+          if (aiData.imagem_url) finalImagem = aiData.imagem_url;
           setExplicacao(finalExplicacao);
           setImagemResposta(finalImagem);
         }
