@@ -438,7 +438,7 @@ export default function EnquetePage() {
     const ansBoxW = 780;
     const ansBoxH = 90;
     const ansBoxX = (canvas.width - ansBoxW) / 2;
-    const ansBoxR = 20;
+    const ansBoxR = 40;
     const ans1Y = boxY + boxH + 60;
     const ans2Y = ans1Y + ansBoxH + 30;
 
