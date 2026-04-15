@@ -402,6 +402,15 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     }
   };
 
+  // Handle external paste text (from automation)
+  useEffect(() => {
+    if (externalPasteText && externalPasteText.trim()) {
+      setPasteText(externalPasteText);
+      setShowPastePopup(true);
+      onExternalPasteConsumed?.();
+    }
+  }, [externalPasteText]);
+
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
     if (editingId) markEdited(`noticia-${bi}-${ni}-${field}`);
     setBlocos(prev => {
