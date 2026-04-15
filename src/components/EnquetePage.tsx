@@ -832,6 +832,16 @@ export default function EnquetePage() {
                     {new Date(e.data_enquete + "T12:00:00").toLocaleDateString("pt-BR")} • {e.horario_inicio}–{e.horario_fim} • Correta: {e[`resposta${e.resposta_correta}` as keyof EnqueteAgendada]}
                   </p>
                 </div>
+                {arteBgImage && (
+                  <Button
+                    size="sm"
+                    onClick={() => generateArteForEnquete(e)}
+                    className="flex items-center gap-1.5 text-[10px] font-bold rounded-lg text-white px-3 py-1 shrink-0"
+                    style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}
+                  >
+                    <Download size={12} /> Baixar Arte
+                  </Button>
+                )}
                 <button onClick={() => handleEdit(e)} className="p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Editar">
                   <Pencil size={14} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
                 </button>
