@@ -34,6 +34,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
   const [searchResults, setSearchResults] = useState<{ nome: string; whatsapp: string; cargo: string }[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [pendingUpdateNome, setPendingUpdateNome] = useState<string | null>(null);
+  const [sendingApi, setSendingApi] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -165,6 +166,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     } catch { toast.error("Não foi possível copiar"); }
   };
 
+
   const enviar = async () => {
     if (!formattedText.trim()) { toast.error("Aguarde a formatação"); return; }
     if (contatos.length === 0) { toast.error("Adicione pelo menos um contato"); return; }
@@ -176,6 +178,30 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     });
     toast.success(`Abrindo WhatsApp para ${contatos.length} contato(s)`);
     setTimeout(onClose, 1600);
+  };
+
+  const enviarViaAPI = async () => {
+    if (!formattedText.trim()) { toast.error("Aguarde a formatação"); return; }
+    if (contatos.length === 0) { toast.error("Adicione pelo menos um contato"); return; }
+    setSendingApi(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: { contatos, mensagem: formattedText },
+      });
+      if (error) throw error;
+      if (data?.ok) {
+        toast.success(`✅ ${data.enviados}/${data.total} mensagem(ns) enviada(s) via API`);
+        if (data.falhas > 0) toast.warning(`${data.falhas} falha(s) no envio`);
+        setTimeout(onClose, 1200);
+      } else {
+        toast.error(data?.error || "Erro ao enviar via API");
+      }
+    } catch (err: any) {
+      console.error("Erro envio API:", err);
+      toast.error("Falha ao enviar via API. Tente via link.");
+    } finally {
+      setSendingApi(false);
+    }
   };
 
   if (!open) return null;
@@ -350,12 +376,20 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
               <Copy size={12} /> Copiar
             </button>
             <button
+              onClick={enviarViaAPI}
+              disabled={loading || sendingApi || !formattedText.trim() || contatos.length === 0}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[11px] font-bold text-white hover:opacity-90 transition disabled:opacity-30"
+              style={{ backgroundColor: "#128c7e" }}
+            >
+              {sendingApi ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} API ({contatos.length})
+            </button>
+            <button
               onClick={enviar}
               disabled={loading || !formattedText.trim() || contatos.length === 0}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold text-white hover:opacity-90 transition disabled:opacity-30"
               style={{ backgroundColor: "#25d366" }}
             >
-              <Send size={12} /> Enviar ({contatos.length})
+              <Send size={12} /> Link ({contatos.length})
             </button>
           </div>
         </div>
