@@ -388,6 +388,87 @@ export default function EnquetePage() {
     setCorreta(quiz.correta);
     setEditingId(null);
   };
+  const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setArteBgImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const generateArteForEnquete = useCallback(async (enq: EnqueteAgendada) => {
+    if (!arteBgImage) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const ctx = canvas.getContext("2d")!;
+
+    // Draw background
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject();
+      img.src = arteBgImage;
+    });
+    // Cover the canvas with the image
+    const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+
+    // Semi-transparent overlay at bottom for text readability
+    const overlayH = 600;
+    const overlayY = canvas.height - overlayH;
+    const gradient = ctx.createLinearGradient(0, overlayY, 0, canvas.height);
+    gradient.addColorStop(0, "rgba(0,0,0,0)");
+    gradient.addColorStop(0.3, "rgba(0,0,0,0.7)");
+    gradient.addColorStop(1, "rgba(0,0,0,0.85)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, overlayY, canvas.width, overlayH);
+
+    // Draw question
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.font = "bold 52px sans-serif";
+    wrapText(ctx, enq.pergunta, canvas.width / 2, canvas.height - 380, canvas.width - 120, 64);
+
+    // Draw options
+    ctx.font = "44px sans-serif";
+    const optY = canvas.height - 180;
+    // Option A
+    ctx.fillStyle = enq.resposta_correta === 1 ? "#4ade80" : "#ffffff";
+    ctx.fillText(`A) ${enq.resposta1}`, canvas.width / 2, optY);
+    // Option B
+    ctx.fillStyle = enq.resposta_correta === 2 ? "#4ade80" : "#ffffff";
+    ctx.fillText(`B) ${enq.resposta2}`, canvas.width / 2, optY + 70);
+
+    // Download
+    const link = document.createElement("a");
+    const dateStr = new Date(enq.data_enquete + "T12:00:00").toLocaleDateString("pt-BR").replace(/\//g, "-");
+    link.download = `enquete_${dateStr}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }, [arteBgImage]);
+
+  // Helper: wrap text on canvas
+  function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
+    const words = text.split(" ");
+    let line = "";
+    let curY = y;
+    for (const word of words) {
+      const testLine = line + word + " ";
+      if (ctx.measureText(testLine).width > maxWidth && line) {
+        ctx.fillText(line.trim(), x, curY);
+        line = word + " ";
+        curY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line.trim(), x, curY);
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
