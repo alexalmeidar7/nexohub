@@ -431,7 +431,7 @@ export default function EnquetePage() {
     // Question text — black, bold, centered inside white box
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
-    ctx.font = "bold 46px sans-serif";
+    ctx.font = "bold 60px sans-serif";
     wrapText(ctx, enq.pergunta, canvas.width / 2, boxY + 80, boxW - 60, 58);
 
     // ── Black boxes for answers ──
