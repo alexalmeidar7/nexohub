@@ -61,6 +61,8 @@ interface Props {
   onFinish: () => void;
   editData?: ExpressEditData | null;
   afterHeader?: React.ReactNode;
+  externalPasteText?: string | null;
+  onExternalPasteConsumed?: () => void;
 }
 
 /* Inline participant row with editable cargo */
