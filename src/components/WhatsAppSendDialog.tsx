@@ -293,7 +293,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
 
               {/* Search results dropdown */}
               {showResults && searchResults.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)" }}>
+                <div className="absolute z-50 w-full bottom-full mb-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)" }}>
                   {searchResults.map((r, i) => (
                     <button
                       key={i}
