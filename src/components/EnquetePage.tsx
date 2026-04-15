@@ -420,8 +420,8 @@ export default function EnquetePage() {
     const boxW = 880;
     const boxH = 260;
     const boxX = (canvas.width - boxW) / 2;
-    const boxY = 380;
-    const boxR = 24;
+    const boxY = 430;
+    const boxR = 40;
 
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
