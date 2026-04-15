@@ -196,7 +196,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto overflow-x-visible px-5 py-4 space-y-4" style={{ position: "relative" }}>
           {/* Message preview */}
           <div>
             <label className="text-[10px] font-bold uppercase mb-1.5 flex items-center gap-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
