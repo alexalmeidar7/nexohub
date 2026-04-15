@@ -40,6 +40,7 @@ export default function RoteiroPrograma() {
   const [txtEditRoteiroId, setTxtEditRoteiroId] = useState<string | null>(null);
   const [txtEditText, setTxtEditText] = useState("");
   const [txtSaving, setTxtSaving] = useState(false);
+  const [externalPasteText, setExternalPasteText] = useState<string | null>(null);
 
   const roteiroToPlainText = (r: any): string => {
     let parts: any = null;
