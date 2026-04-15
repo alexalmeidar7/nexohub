@@ -1,10 +1,50 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+async function searchWikipediaImage(query: string): Promise<string> {
+  try {
+    const searchUrl = `https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+    const res = await fetch(searchUrl, { headers: { "User-Agent": "NexoHub/1.0" } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.thumbnail?.source) {
+        return data.thumbnail.source.replace(/\/\d+px-/, "/500px-");
+      }
+      if (data.originalimage?.source) return data.originalimage.source;
+    }
+
+    const openSearchUrl = `https://pt.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(query)}&prop=pageimages&format=json&pithumbsize=500&redirects=1`;
+    const res2 = await fetch(openSearchUrl, { headers: { "User-Agent": "NexoHub/1.0" } });
+    if (res2.ok) {
+      const data2 = await res2.json();
+      const pages = data2.query?.pages;
+      if (pages) {
+        for (const page of Object.values(pages) as any[]) {
+          if (page.thumbnail?.source) return page.thumbnail.source;
+        }
+      }
+    }
+
+    const searchApiUrl = `https://pt.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=3&prop=pageimages&format=json&pithumbsize=500`;
+    const res3 = await fetch(searchApiUrl, { headers: { "User-Agent": "NexoHub/1.0" } });
+    if (res3.ok) {
+      const data3 = await res3.json();
+      const pages3 = data3.query?.pages;
+      if (pages3) {
+        for (const page of Object.values(pages3) as any[]) {
+          if (page.thumbnail?.source) return page.thumbnail.source;
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Wikipedia image search error:", e);
+  }
+  return "";
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -32,7 +72,6 @@ Sem explicação, sem markdown, apenas o JSON.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      console.error("LOVABLE_API_KEY not configured");
       return new Response(JSON.stringify({ error: "AI not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -56,77 +95,23 @@ Sem explicação, sem markdown, apenas o JSON.`;
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded, try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(JSON.stringify({ error: "Rate limit exceeded, try again later." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(JSON.stringify({ error: "AI credits exhausted." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({ error: "AI gateway error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "[]";
-
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     const quizzes = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
 
-    // Generate images for each quiz answer using AI
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
+    // Search Wikipedia for images (FREE)
     for (const quiz of quizzes) {
-      try {
-        const respostaCorreta = quiz.respostas[quiz.correta - 1];
-        const imgPrompt = `Uma ilustração clara e informativa sobre "${respostaCorreta}" relacionada a "${quiz.pergunta}". Estilo editorial, cores vibrantes, fundo limpo, sem texto na imagem.`;
-
-        const imgResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash-image",
-            messages: [{ role: "user", content: imgPrompt }],
-            modalities: ["image", "text"],
-          }),
-        });
-
-        if (imgResponse.ok) {
-          const imgData = await imgResponse.json();
-          const imageB64 = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-          if (imageB64) {
-            const base64Data = imageB64.replace(/^data:image\/\w+;base64,/, "");
-            const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-
-            const fileName = `quiz-img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
-            const filePath = `quiz-images/${fileName}`;
-
-            const { error: uploadError } = await supabase.storage
-              .from("xml-files")
-              .upload(filePath, binaryData, { contentType: "image/png", upsert: true });
-
-            if (!uploadError) {
-              const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
-              quiz.imagem_url = urlData.publicUrl;
-            }
-          }
-        }
-      } catch (imgErr) {
-        console.error("Image gen error for quiz:", imgErr);
-        quiz.imagem_url = "";
-      }
+      const respostaCorreta = quiz.respostas?.[quiz.correta - 1] || "";
+      quiz.imagem_url = await searchWikipediaImage(respostaCorreta);
     }
 
     return new Response(JSON.stringify(quizzes), {
