@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,17 +28,13 @@ serve(async (req) => {
       });
     }
 
-    const prompt = `Para um quiz de rádio brasileiro, a pergunta é: "${pergunta}" e a resposta correta é: "${resposta_correta_texto}".
-
-Forneça:
-1. "explicacao": um texto curto de NO MÁXIMO 3 linhas explicando por que essa é a resposta correta.
-2. "imagem_url": uma URL válida e acessível de imagem PNG do Wikimedia Commons (formato https://upload.wikimedia.org/wikipedia/commons/.../*.png) que seja relevante à resposta correta. A URL DEVE terminar em .png.
-
-Responda APENAS com JSON válido no formato:
-{"explicacao":"...","imagem_url":"https://upload.wikimedia.org/wikipedia/commons/...algo.png"}
+    // Step 1: Generate explanation text
+    const explPrompt = `Para um quiz de rádio brasileiro, a pergunta é: "${pergunta}" e a resposta correta é: "${resposta_correta_texto}".
+Forneça um texto curto de NO MÁXIMO 3 linhas explicando por que essa é a resposta correta.
+Responda APENAS com JSON válido no formato: {"explicacao":"..."}
 Sem explicação adicional, sem markdown, apenas o JSON.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const explResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${LOVABLE_API_KEY}`,
@@ -45,42 +42,76 @@ Sem explicação adicional, sem markdown, apenas o JSON.`;
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
-        messages: [{ role: "user", content: prompt }],
+        messages: [{ role: "user", content: explPrompt }],
         temperature: 0.5,
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+    let explicacao = "";
+    if (explResponse.ok) {
+      const data = await explResponse.json();
+      const content = data.choices?.[0]?.message?.content || "{}";
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          explicacao = parsed.explicacao || "";
+        } catch {}
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "{}";
+    // Step 2: Generate image using AI image model
+    let imagem_url = "";
+    try {
+      const imgPrompt = `Uma ilustração clara e informativa sobre "${resposta_correta_texto}" relacionada a "${pergunta}". Estilo editorial, cores vibrantes, fundo limpo, sem texto na imagem.`;
+      
+      const imgResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [{ role: "user", content: imgPrompt }],
+          modalities: ["image", "text"],
+        }),
+      });
 
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    const result = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+      if (imgResponse.ok) {
+        const imgData = await imgResponse.json();
+        const imageB64 = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+        
+        if (imageB64) {
+          // Extract base64 data
+          const base64Data = imageB64.replace(/^data:image\/\w+;base64,/, "");
+          const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+          
+          // Upload to Supabase Storage
+          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+          const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          
+          const fileName = `quiz-img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+          const filePath = `quiz-images/${fileName}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from("xml-files")
+            .upload(filePath, binaryData, { contentType: "image/png", upsert: true });
+          
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+            imagem_url = urlData.publicUrl;
+          } else {
+            console.error("Upload error:", uploadError);
+          }
+        }
+      }
+    } catch (imgErr) {
+      console.error("Image generation error:", imgErr);
+    }
 
-    return new Response(JSON.stringify({
-      explicacao: result.explicacao || "",
-      imagem_url: result.imagem_url || "",
-    }), {
+    return new Response(JSON.stringify({ explicacao, imagem_url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
