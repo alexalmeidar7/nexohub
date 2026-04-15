@@ -10,6 +10,7 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const WhatsAppSendDialog = lazy(() => import("./WhatsAppSendDialog"));
 const ProgramaExpressInline = lazy(() => import("./ProgramaExpressInline"));
+const AutomacaoProgramaSection = lazy(() => import("./AutomacaoProgramaSection"));
 import type { ExpressEditData } from "./ProgramaExpressInline";
 
 interface Programa {
