@@ -216,6 +216,33 @@ export default function QuizPage() {
       return;
     }
     setSaving(true);
+
+    // Auto-generate explanation and image if not provided
+    let finalExplicacao = explicacao.trim();
+    let finalImagem = imagemResposta.trim();
+    if (!finalExplicacao || !finalImagem) {
+      try {
+        const respostaCorretaTexto = respostas[correta - 1].trim();
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz-explanation`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pergunta: pergunta.trim(), resposta_correta_texto: respostaCorretaTexto }),
+          }
+        );
+        if (res.ok) {
+          const aiData = await res.json();
+          if (!finalExplicacao && aiData.explicacao) finalExplicacao = aiData.explicacao;
+          if (!finalImagem && aiData.imagem_url) finalImagem = aiData.imagem_url;
+          setExplicacao(finalExplicacao);
+          setImagemResposta(finalImagem);
+        }
+      } catch {
+        console.warn("Failed to auto-generate explanation");
+      }
+    }
+
     const payload = {
       user_id: user.id,
       pergunta: pergunta.trim(),
@@ -227,8 +254,8 @@ export default function QuizPage() {
       data_quiz: dataQuiz,
       horario_inicio: horarioInicio,
       horario_fim: horarioFim,
-      explicacao: explicacao.trim(),
-      imagem_resposta: imagemResposta.trim(),
+      explicacao: finalExplicacao,
+      imagem_resposta: finalImagem,
     };
     if (editingId) {
       const { error } = await supabase
@@ -436,22 +463,28 @@ export default function QuizPage() {
         ))}
         {/* Explicação e Imagem */}
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Explicação da Resposta</label>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+            Explicação da Resposta
+            <span className="font-normal ml-1 opacity-50">(preenchido automaticamente pela IA)</span>
+          </label>
           <textarea
             value={explicacao}
             onChange={e => setExplicacao(e.target.value)}
-            placeholder="Parágrafo explicando a resposta correta..."
+            placeholder="Será gerado automaticamente ao agendar..."
             rows={3}
             className="w-full rounded-lg px-3 py-2 text-sm resize-none"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
           />
         </div>
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>URL da Imagem da Resposta</label>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+            URL da Imagem da Resposta
+            <span className="font-normal ml-1 opacity-50">(preenchido automaticamente pela IA)</span>
+          </label>
           <Input
             value={imagemResposta}
             onChange={e => setImagemResposta(e.target.value)}
-            placeholder="https://upload.wikimedia.org/..."
+            placeholder="Será gerado automaticamente ao agendar..."
             className="text-sm"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
           />
