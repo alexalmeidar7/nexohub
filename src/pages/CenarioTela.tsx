@@ -1480,13 +1480,17 @@ export default function CenarioTela() {
                             height: `${vhToPx(20)}${vu}`,
                             borderRadius: `${vhToPx(2)}${vu}`,
                             overflow: "hidden",
-                            boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 ${accentRgba(0.3)}`,
-                            border: `1px solid ${accentRgba(0.3)}`,
                             flexShrink: 0,
                             zIndex: 1,
                             marginLeft: `-${vhToPx(1)}${vu}`,
                             animation: "cenario-capa-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both",
                             position: "relative",
+                            padding: `${vhToPx(0.78)}${vu}`,
+                            background: "rgba(255,255,255,0.12)",
+                            backdropFilter: "blur(20px)",
+                            WebkitBackdropFilter: "blur(20px)",
+                            border: `1px solid rgba(255,255,255,0.25)`,
+                            boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)`,
                           }}
                         >
                           <img
@@ -1496,6 +1500,7 @@ export default function CenarioTela() {
                               width: "100%",
                               height: "100%",
                               objectFit: "cover",
+                              borderRadius: `${vhToPx(1.4)}${vu}`,
                             }}
                           />
                           {/* Gradient overlay at bottom for text readability */}
