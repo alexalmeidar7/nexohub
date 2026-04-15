@@ -10,6 +10,7 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const WhatsAppSendDialog = lazy(() => import("./WhatsAppSendDialog"));
 const ProgramaExpressInline = lazy(() => import("./ProgramaExpressInline"));
+const AutomacaoProgramaSection = lazy(() => import("./AutomacaoProgramaSection"));
 import type { ExpressEditData } from "./ProgramaExpressInline";
 
 interface Programa {
@@ -39,6 +40,7 @@ export default function RoteiroPrograma() {
   const [txtEditRoteiroId, setTxtEditRoteiroId] = useState<string | null>(null);
   const [txtEditText, setTxtEditText] = useState("");
   const [txtSaving, setTxtSaving] = useState(false);
+  const [externalPasteText, setExternalPasteText] = useState<string | null>(null);
 
   const roteiroToPlainText = (r: any): string => {
     let parts: any = null;
@@ -590,7 +592,17 @@ export default function RoteiroPrograma() {
           estudios={estudios}
           onFinish={async () => { setExpressEditData(null); await fetchHistorico(); }}
           editData={expressEditData}
-          afterHeader={historicoSlot}
+          afterHeader={<>
+            <Suspense fallback={null}>
+              <AutomacaoProgramaSection
+                programas={programas}
+                onGenerateRoteiro={(text) => setExternalPasteText(text)}
+              />
+            </Suspense>
+            {historicoSlot}
+          </>}
+          externalPasteText={externalPasteText}
+          onExternalPasteConsumed={() => setExternalPasteText(null)}
         />
       </Suspense>
 

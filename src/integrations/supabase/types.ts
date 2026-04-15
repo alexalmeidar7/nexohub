@@ -895,6 +895,56 @@ export type Database = {
         }
         Relationships: []
       }
+      programa_automacoes: {
+        Row: {
+          ativo: boolean
+          briefing: string
+          created_at: string
+          dias_semana: string[]
+          horario: string
+          id: string
+          programa_id: string
+          sites_source: string[]
+          updated_at: string
+          use_custom_news_sites: boolean
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          briefing?: string
+          created_at?: string
+          dias_semana?: string[]
+          horario?: string
+          id?: string
+          programa_id: string
+          sites_source?: string[]
+          updated_at?: string
+          use_custom_news_sites?: boolean
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          briefing?: string
+          created_at?: string
+          dias_semana?: string[]
+          horario?: string
+          id?: string
+          programa_id?: string
+          sites_source?: string[]
+          updated_at?: string
+          use_custom_news_sites?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programa_automacoes_programa_id_fkey"
+            columns: ["programa_id"]
+            isOneToOne: false
+            referencedRelation: "programas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       programas: {
         Row: {
           apresentador_id: string | null

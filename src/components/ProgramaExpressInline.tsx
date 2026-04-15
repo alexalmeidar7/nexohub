@@ -61,6 +61,8 @@ interface Props {
   onFinish: () => void;
   editData?: ExpressEditData | null;
   afterHeader?: React.ReactNode;
+  externalPasteText?: string | null;
+  onExternalPasteConsumed?: () => void;
 }
 
 /* Inline participant row with editable cargo */
@@ -112,7 +114,7 @@ function EditedCheck() {
   return <CheckCircle2 size={11} className="shrink-0" style={{ color: "#22c55e" }} />;
 }
 
-export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader }: Props) {
+export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader, externalPasteText, onExternalPasteConsumed }: Props) {
   const { user } = useAuth();
   const [estudio, setEstudio] = useState("");
   const [programaId, setProgramaId] = useState("");
@@ -399,6 +401,15 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       if (linksToFetch.length > 0) { toast.info(`Buscando dados de ${linksToFetch.length} links...`); linksToFetch.forEach(({ bi, ni, url }) => fetchFromLink(bi, ni, url)); }
     }
   };
+
+  // Handle external paste text (from automation)
+  useEffect(() => {
+    if (externalPasteText && externalPasteText.trim()) {
+      setPasteText(externalPasteText);
+      setShowPastePopup(true);
+      onExternalPasteConsumed?.();
+    }
+  }, [externalPasteText]);
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
     if (editingId) markEdited(`noticia-${bi}-${ni}-${field}`);
