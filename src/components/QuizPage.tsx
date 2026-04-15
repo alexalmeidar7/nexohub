@@ -216,6 +216,33 @@ export default function QuizPage() {
       return;
     }
     setSaving(true);
+
+    // Auto-generate explanation and image if not provided
+    let finalExplicacao = explicacao.trim();
+    let finalImagem = imagemResposta.trim();
+    if (!finalExplicacao || !finalImagem) {
+      try {
+        const respostaCorretaTexto = respostas[correta - 1].trim();
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz-explanation`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pergunta: pergunta.trim(), resposta_correta_texto: respostaCorretaTexto }),
+          }
+        );
+        if (res.ok) {
+          const aiData = await res.json();
+          if (!finalExplicacao && aiData.explicacao) finalExplicacao = aiData.explicacao;
+          if (!finalImagem && aiData.imagem_url) finalImagem = aiData.imagem_url;
+          setExplicacao(finalExplicacao);
+          setImagemResposta(finalImagem);
+        }
+      } catch {
+        console.warn("Failed to auto-generate explanation");
+      }
+    }
+
     const payload = {
       user_id: user.id,
       pergunta: pergunta.trim(),
@@ -227,8 +254,8 @@ export default function QuizPage() {
       data_quiz: dataQuiz,
       horario_inicio: horarioInicio,
       horario_fim: horarioFim,
-      explicacao: explicacao.trim(),
-      imagem_resposta: imagemResposta.trim(),
+      explicacao: finalExplicacao,
+      imagem_resposta: finalImagem,
     };
     if (editingId) {
       const { error } = await supabase
