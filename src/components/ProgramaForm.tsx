@@ -1103,8 +1103,8 @@ export default function ProgramaForm() {
                           color: isToday ? "#ffffff" : "var(--layout-header-text, #ffffff)",
                           backgroundColor: isToday ? "var(--layout-accent-color, #dc2626)" : undefined,
                         }}>
-                        <div style={{ color: isToday ? "#ffffff" : undefined }}>{dia.slice(0, 3).toUpperCase()}</div>
-                        <div className="text-[10px] font-semibold mt-0.5" style={{ color: isToday ? "rgba(255,255,255,0.9)" : undefined, opacity: isToday ? 1 : 0.7 }}>{weekDates[dia]}</div>
+                        <div style={isToday ? { color: "#ffffff", fontWeight: 900 } : undefined}>{dia.slice(0, 3).toUpperCase()}</div>
+                        <div style={isToday ? { color: "#ffffff", fontWeight: 700, fontSize: "10px", marginTop: "2px" } : { fontSize: "10px", marginTop: "2px", opacity: 0.7 }}>{weekDates[dia]}</div>
                       </th>
                     );
                   })}
