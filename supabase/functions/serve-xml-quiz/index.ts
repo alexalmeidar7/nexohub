@@ -51,6 +51,8 @@ serve(async (req) => {
       xml += `    <resposta_correta>${quiz.resposta_correta}</resposta_correta>\n`;
       xml += `    <horario_inicio>${escapeXml(quiz.horario_inicio)}</horario_inicio>\n`;
       xml += `    <horario_fim>${escapeXml(quiz.horario_fim)}</horario_fim>\n`;
+      xml += `    <explicacao>${escapeXml(quiz.explicacao || '')}</explicacao>\n`;
+      xml += `    <imagem_resposta>${escapeXml(quiz.imagem_resposta || '')}</imagem_resposta>\n`;
     } else {
       xml += `    <pergunta></pergunta>\n`;
       xml += `    <resposta1></resposta1>\n`;
@@ -60,6 +62,8 @@ serve(async (req) => {
       xml += `    <resposta_correta></resposta_correta>\n`;
       xml += `    <horario_inicio></horario_inicio>\n`;
       xml += `    <horario_fim></horario_fim>\n`;
+      xml += `    <explicacao></explicacao>\n`;
+      xml += `    <imagem_resposta></imagem_resposta>\n`;
     }
     xml += `  </dados>\n</items>`;
 

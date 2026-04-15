@@ -1009,9 +1009,11 @@ export type Database = {
         Row: {
           created_at: string
           data_quiz: string
+          explicacao: string
           horario_fim: string
           horario_inicio: string
           id: string
+          imagem_resposta: string
           pergunta: string
           resposta_correta: number
           resposta1: string
@@ -1024,9 +1026,11 @@ export type Database = {
         Insert: {
           created_at?: string
           data_quiz: string
+          explicacao?: string
           horario_fim: string
           horario_inicio: string
           id?: string
+          imagem_resposta?: string
           pergunta?: string
           resposta_correta?: number
           resposta1?: string
@@ -1039,9 +1043,11 @@ export type Database = {
         Update: {
           created_at?: string
           data_quiz?: string
+          explicacao?: string
           horario_fim?: string
           horario_inicio?: string
           id?: string
+          imagem_resposta?: string
           pergunta?: string
           resposta_correta?: number
           resposta1?: string

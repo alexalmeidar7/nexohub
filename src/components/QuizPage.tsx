@@ -12,6 +12,8 @@ interface QuizItem {
   pergunta: string;
   respostas: [string, string, string, string];
   correta: number; // 1-4
+  explicacao?: string;
+  imagem_url?: string;
 }
 
 const QUIZ_BANK: Record<string, QuizItem[]> = {
@@ -111,6 +113,8 @@ interface QuizAgendado {
   data_quiz: string;
   horario_inicio: string;
   horario_fim: string;
+  explicacao: string;
+  imagem_resposta: string;
 }
 
 export default function QuizPage() {
@@ -129,6 +133,8 @@ export default function QuizPage() {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [loadingCategory, setLoadingCategory] = useState(false);
+  const [explicacao, setExplicacao] = useState("");
+  const [imagemResposta, setImagemResposta] = useState("");
 
   const CATEGORIES = [...DEFAULT_CATEGORIES, ...Object.keys(customCategories)];
 
@@ -221,6 +227,8 @@ export default function QuizPage() {
       data_quiz: dataQuiz,
       horario_inicio: horarioInicio,
       horario_fim: horarioFim,
+      explicacao: explicacao.trim(),
+      imagem_resposta: imagemResposta.trim(),
     };
     if (editingId) {
       const { error } = await supabase
@@ -250,6 +258,8 @@ export default function QuizPage() {
     setHorarioFim("");
     setEditingId(null);
     setSelectedCategory("");
+    setExplicacao("");
+    setImagemResposta("");
   };
 
   const handleEdit = (e: QuizAgendado) => {
@@ -261,6 +271,8 @@ export default function QuizPage() {
     setHorarioFim(e.horario_fim);
     setEditingId(e.id);
     setSelectedCategory("");
+    setExplicacao(e.explicacao || "");
+    setImagemResposta(e.imagem_resposta || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -275,6 +287,8 @@ export default function QuizPage() {
     setRespostas([...quiz.respostas]);
     setCorreta(quiz.correta);
     setEditingId(null);
+    setExplicacao(quiz.explicacao || "");
+    setImagemResposta(quiz.imagem_url || "");
   };
 
   return (
@@ -420,6 +434,31 @@ export default function QuizPage() {
             </div>
           </div>
         ))}
+        {/* Explicação e Imagem */}
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Explicação da Resposta</label>
+          <textarea
+            value={explicacao}
+            onChange={e => setExplicacao(e.target.value)}
+            placeholder="Parágrafo explicando a resposta correta..."
+            rows={3}
+            className="w-full rounded-lg px-3 py-2 text-sm resize-none"
+            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>URL da Imagem da Resposta</label>
+          <Input
+            value={imagemResposta}
+            onChange={e => setImagemResposta(e.target.value)}
+            placeholder="https://upload.wikimedia.org/..."
+            className="text-sm"
+            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+          />
+          {imagemResposta && (
+            <img src={imagemResposta} alt="Preview" className="mt-2 rounded-lg max-h-32 object-contain" onError={e => (e.currentTarget.style.display = 'none')} />
+          )}
+        </div>
         {/* Schedule */}
         <div className="grid grid-cols-3 gap-3">
           <div>
@@ -461,12 +500,18 @@ export default function QuizPage() {
           </div>
           <div className="divide-y" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 8%, transparent)" }}>
             {quizzes.map(e => (
-              <div key={e.id} className="px-4 py-3 flex items-center gap-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+              <div key={e.id} className="px-4 py-3 flex items-start gap-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+                {e.imagem_resposta && (
+                  <img src={e.imagem_resposta} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 mt-0.5" onError={ev => (ev.currentTarget.style.display = 'none')} />
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{e.pergunta}</p>
                   <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                     {new Date(e.data_quiz + "T12:00:00").toLocaleDateString("pt-BR")} • {e.horario_inicio}–{e.horario_fim} • Correta: {e[`resposta${e.resposta_correta}` as keyof QuizAgendado]}
                   </p>
+                  {e.explicacao && (
+                    <p className="text-[10px] mt-1 line-clamp-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{e.explicacao}</p>
+                  )}
                 </div>
                 <button onClick={() => handleEdit(e)} className="p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Editar">
                   <Pencil size={14} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
