@@ -592,7 +592,17 @@ export default function RoteiroPrograma() {
           estudios={estudios}
           onFinish={async () => { setExpressEditData(null); await fetchHistorico(); }}
           editData={expressEditData}
-          afterHeader={historicoSlot}
+          afterHeader={<>
+            <Suspense fallback={null}>
+              <AutomacaoProgramaSection
+                programas={programas}
+                onGenerateRoteiro={(text) => setExternalPasteText(text)}
+              />
+            </Suspense>
+            {historicoSlot}
+          </>}
+          externalPasteText={externalPasteText}
+          onExternalPasteConsumed={() => setExternalPasteText(null)}
         />
       </Suspense>
 
