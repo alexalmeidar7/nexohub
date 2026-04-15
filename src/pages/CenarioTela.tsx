@@ -1442,23 +1442,24 @@ export default function CenarioTela() {
                        }}>
                         {/* Presenter photo anchored at bottom */}
                         {currentProgram?.apresentadorFoto && (
-                          <img
-                            src={currentProgram.apresentadorFoto}
-                            alt=""
-                            style={{
-                              position: "absolute",
-                              bottom: 0,
-                              left: "50%",
-                              transform: "translateX(-50%)",
-                              height: "140%",
-                              width: "auto",
-                              objectFit: "contain",
-                              filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
-                              pointerEvents: "none",
-                              WebkitMaskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)",
-                              maskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)",
-                            }}
-                          />
+                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, top: 0, overflow: "hidden", pointerEvents: "none" }}>
+                            <img
+                              src={currentProgram.apresentadorFoto}
+                              alt=""
+                              style={{
+                                position: "absolute",
+                                bottom: 0,
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                height: "140%",
+                                width: "auto",
+                                objectFit: "contain",
+                                filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
+                              }}
+                            />
+                            {/* Gradient fade at bottom — CEF 86 compatible */}
+                            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "25%", background: `linear-gradient(to top, ${accentRgba(0.7)} 0%, transparent 100%)`, pointerEvents: "none" }} />
+                          </div>
                         )}
                         {/* Selo top-right */}
                         {currentProgram?.selo && (
