@@ -1095,16 +1095,19 @@ export default function ProgramaForm() {
               <thead className="sticky top-0 z-10">
                 <tr style={{ background: "var(--layout-header-bg, #1a1a1a)" }}>
                   <th className="px-3 py-2.5 text-left w-20 text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-header-text, #ffffff)" }}>Horário</th>
-                  {DIAS_SEMANA.map(dia => (
-                    <th key={dia} className="px-2 py-2.5 text-center text-[10px] font-bold uppercase tracking-widest"
-                      style={{
-                        color: "var(--layout-header-text, #ffffff)",
-                        backgroundColor: dia === diaAtual ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, var(--layout-header-bg, #1a1a1a))" : undefined,
-                      }}>
-                      <div>{dia.slice(0, 3).toUpperCase()}</div>
-                      <div className="text-[10px] font-semibold mt-0.5 opacity-70">{weekDates[dia]}</div>
-                    </th>
-                  ))}
+                  {DIAS_SEMANA.map(dia => {
+                    const isToday = dia === diaAtual;
+                    return (
+                      <th key={dia} className="px-2 py-2.5 text-center text-[10px] font-bold uppercase tracking-widest"
+                        style={{
+                          color: isToday ? "#ffffff" : "var(--layout-header-text, #ffffff)",
+                          backgroundColor: isToday ? "var(--layout-accent-color, #dc2626)" : undefined,
+                        }}>
+                        <div>{dia.slice(0, 3).toUpperCase()}</div>
+                        <div className="text-[10px] font-semibold mt-0.5" style={{ opacity: isToday ? 0.9 : 0.7 }}>{weekDates[dia]}</div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <GradeBody
