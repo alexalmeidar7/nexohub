@@ -34,6 +34,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
   const [searchResults, setSearchResults] = useState<{ nome: string; whatsapp: string; cargo: string }[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [pendingUpdateNome, setPendingUpdateNome] = useState<string | null>(null);
+  const [sendingApi, setSendingApi] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
