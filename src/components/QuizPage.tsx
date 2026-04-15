@@ -500,12 +500,18 @@ export default function QuizPage() {
           </div>
           <div className="divide-y" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 8%, transparent)" }}>
             {quizzes.map(e => (
-              <div key={e.id} className="px-4 py-3 flex items-center gap-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+              <div key={e.id} className="px-4 py-3 flex items-start gap-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+                {e.imagem_resposta && (
+                  <img src={e.imagem_resposta} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 mt-0.5" onError={ev => (ev.currentTarget.style.display = 'none')} />
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{e.pergunta}</p>
                   <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                     {new Date(e.data_quiz + "T12:00:00").toLocaleDateString("pt-BR")} • {e.horario_inicio}–{e.horario_fim} • Correta: {e[`resposta${e.resposta_correta}` as keyof QuizAgendado]}
                   </p>
+                  {e.explicacao && (
+                    <p className="text-[10px] mt-1 line-clamp-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{e.explicacao}</p>
+                  )}
                 </div>
                 <button onClick={() => handleEdit(e)} className="p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Editar">
                   <Pencil size={14} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
