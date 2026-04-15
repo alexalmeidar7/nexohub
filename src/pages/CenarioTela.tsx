@@ -1419,7 +1419,7 @@ export default function CenarioTela() {
                    {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA ── */}
                    <div style={{
                      position: "absolute",
-                     bottom: `${vhToPx(30)}${vu}`,
+                     bottom: `${vhToPx(31.5)}${vu}`,
                      left: "50%",
                      transform: "translateX(-50%)",
                      display: "flex",
@@ -1428,8 +1428,8 @@ export default function CenarioTela() {
                    }}>
                       {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
                        <div style={{
-                         width: `${vhToPx(16)}${vu}`,
-                         height: `${vhToPx(16)}${vu}`,
+                         width: `${vhToPx(20)}${vu}`,
+                         height: `${vhToPx(20)}${vu}`,
                          borderRadius: `${vhToPx(2)}${vu}`,
                          background: `linear-gradient(145deg, ${accentRgba(0.7)}, ${accentRgba(0.4)})`,
                          backdropFilter: "blur(20px)",
@@ -1476,8 +1476,8 @@ export default function CenarioTela() {
                         <div
                           key={musicData.capa}
                           style={{
-                            width: `${vhToPx(16)}${vu}`,
-                            height: `${vhToPx(16)}${vu}`,
+                            width: `${vhToPx(20)}${vu}`,
+                            height: `${vhToPx(20)}${vu}`,
                             borderRadius: `${vhToPx(2)}${vu}`,
                             overflow: "hidden",
                             boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 ${accentRgba(0.3)}`,
