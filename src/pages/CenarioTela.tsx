@@ -1505,15 +1505,15 @@ export default function CenarioTela() {
                               borderRadius: `${vhToPx(1.4)}${vu}`,
                             }}
                           />
-                          {/* Gradient overlay at bottom for text readability */}
-                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "50%", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)", pointerEvents: "none" }} />
-                          {/* Music title + artist */}
-                          <div key={musicKey} style={{ position: "absolute", bottom: `${vhToPx(1)}${vu}`, left: `${vhToPx(1)}${vu}`, right: `${vhToPx(1)}${vu}`, zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.3)}${vu}` }}>
+                          {/* Gradient overlay for text readability */}
+                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "70%", background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)", pointerEvents: "none", borderRadius: `0 0 ${vhToPx(1.4)}${vu} ${vhToPx(1.4)}${vu}` }} />
+                          {/* Music title + artist — centered */}
+                          <div key={musicKey} style={{ position: "absolute", top: "50%", left: `${vhToPx(1.2)}${vu}`, right: `${vhToPx(1.2)}${vu}`, transform: "translateY(-30%)", zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", textAlign: "center" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.4)}${vu}` }}>
                               <Music size={Number(vhToPx(1.1))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
                             </div>
-                            <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, lineHeight: 1.15, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
-                            <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.95)}${vu}`, opacity: 0.8, marginTop: `${vhToPx(0.15)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>{musicData.artista}</div>
+                            <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.4)}${vu}`, lineHeight: 1.2, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 12px rgba(0,0,0,0.8), 0 0 4px rgba(0,0,0,0.6)" }}>{musicData.titulo}</div>
+                            <div style={{ fontWeight: 500, fontSize: `${vhToPx(1)}${vu}`, opacity: 0.85, marginTop: `${vhToPx(0.25)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}>{musicData.artista}</div>
                           </div>
                         </div>
                       )}
