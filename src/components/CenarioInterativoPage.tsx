@@ -1901,7 +1901,7 @@ export default function CenarioInterativoPage() {
                              {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA ── */}
                              <div style={{
                                position: "absolute",
-                               bottom: `${pvh(30)}px`,
+                               bottom: `${pvh(31.5)}px`,
                                left: "50%",
                                transform: "translateX(-50%)",
                                display: "flex",
@@ -1910,8 +1910,8 @@ export default function CenarioInterativoPage() {
                              }}>
                                {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
                                <div style={{
-                                 width: `${pvh(16)}px`,
-                                 height: `${pvh(16)}px`,
+                                 width: `${pvh(20)}px`,
+                                 height: `${pvh(20)}px`,
                                  borderRadius: `${pvh(2)}px`,
                                  background: `linear-gradient(145deg, var(--layout-accent-color, rgba(200,50,50,0.7)), rgba(0,0,0,0.4))`,
                                  backdropFilter: "blur(20px)",
@@ -1965,8 +1965,8 @@ export default function CenarioInterativoPage() {
                                  <div
                                    key={musicData.capa}
                                    style={{
-                                     width: `${pvh(16)}px`,
-                                     height: `${pvh(16)}px`,
+                                     width: `${pvh(20)}px`,
+                                     height: `${pvh(20)}px`,
                                      borderRadius: `${pvh(2)}px`,
                                      overflow: "hidden",
                                      boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
