@@ -133,6 +133,8 @@ export default function QuizPage() {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [loadingCategory, setLoadingCategory] = useState(false);
+  const [explicacao, setExplicacao] = useState("");
+  const [imagemResposta, setImagemResposta] = useState("");
 
   const CATEGORIES = [...DEFAULT_CATEGORIES, ...Object.keys(customCategories)];
 
