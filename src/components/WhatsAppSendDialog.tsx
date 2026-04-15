@@ -165,6 +165,8 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     } catch { toast.error("Não foi possível copiar"); }
   };
 
+  const [sendingApi, setSendingApi] = useState(false);
+
   const enviar = async () => {
     if (!formattedText.trim()) { toast.error("Aguarde a formatação"); return; }
     if (contatos.length === 0) { toast.error("Adicione pelo menos um contato"); return; }
@@ -176,6 +178,30 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     });
     toast.success(`Abrindo WhatsApp para ${contatos.length} contato(s)`);
     setTimeout(onClose, 1600);
+  };
+
+  const enviarViaAPI = async () => {
+    if (!formattedText.trim()) { toast.error("Aguarde a formatação"); return; }
+    if (contatos.length === 0) { toast.error("Adicione pelo menos um contato"); return; }
+    setSendingApi(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: { contatos, mensagem: formattedText },
+      });
+      if (error) throw error;
+      if (data?.ok) {
+        toast.success(`✅ ${data.enviados}/${data.total} mensagem(ns) enviada(s) via API`);
+        if (data.falhas > 0) toast.warning(`${data.falhas} falha(s) no envio`);
+        setTimeout(onClose, 1200);
+      } else {
+        toast.error(data?.error || "Erro ao enviar via API");
+      }
+    } catch (err: any) {
+      console.error("Erro envio API:", err);
+      toast.error("Falha ao enviar via API. Tente via link.");
+    } finally {
+      setSendingApi(false);
+    }
   };
 
   if (!open) return null;
