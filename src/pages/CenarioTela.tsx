@@ -1440,9 +1440,9 @@ export default function CenarioTela() {
                          position: "relative",
                          flexShrink: 0,
                        }}>
-                        {/* Presenter photo anchored at bottom */}
+                        {/* Presenter photo anchored at bottom, overflows top */}
                         {currentProgram?.apresentadorFoto && (
-                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, top: 0, overflow: "hidden", pointerEvents: "none" }}>
+                          <>
                             <img
                               src={currentProgram.apresentadorFoto}
                               alt=""
@@ -1455,11 +1455,12 @@ export default function CenarioTela() {
                                 width: "auto",
                                 objectFit: "contain",
                                 filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
+                                pointerEvents: "none",
                               }}
                             />
                             {/* Gradient fade at bottom — CEF 86 compatible */}
-                            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "25%", background: `linear-gradient(to top, ${accentRgba(0.7)} 0%, transparent 100%)`, pointerEvents: "none" }} />
-                          </div>
+                            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "25%", background: `linear-gradient(to top, ${accentRgba(0.7)} 0%, transparent 100%)`, pointerEvents: "none", borderRadius: `0 0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu}` }} />
+                          </>
                         )}
                         {/* Selo top-right */}
                         {currentProgram?.selo && (
