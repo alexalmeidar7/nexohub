@@ -166,7 +166,6 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     } catch { toast.error("Não foi possível copiar"); }
   };
 
-  const [sendingApi, setSendingApi] = useState(false);
 
   const enviar = async () => {
     if (!formattedText.trim()) { toast.error("Aguarde a formatação"); return; }
