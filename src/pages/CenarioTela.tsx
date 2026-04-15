@@ -1419,7 +1419,7 @@ export default function CenarioTela() {
                    {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA ── */}
                    <div style={{
                      position: "absolute",
-                     bottom: `${vhToPx(31.5)}${vu}`,
+                     bottom: `${vhToPx(37.75)}${vu}`,
                      left: "50%",
                      transform: "translateX(-50%)",
                      display: "flex",
