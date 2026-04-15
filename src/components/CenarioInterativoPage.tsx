@@ -1928,9 +1928,9 @@ export default function CenarioInterativoPage() {
                                }}>
                                  <div className="flex items-start justify-between" style={{ gap: `${pvh(0.6)}px`, minWidth: 0 }}>
                                    <div style={{ minWidth: 0, flex: 1 }}>
-                                     <div className="flex items-center" style={{ gap: `${pvh(0.35)}px`, minWidth: 0 }}>
+                                     <div className="flex items-center justify-center" style={{ gap: `${pvh(0.35)}px`, minWidth: 0 }}>
                                        <Mic size={pvh(1)} style={{ opacity: 0.8, flexShrink: 0 }} />
-                                       <span className="font-bold" style={{ fontSize: `${pvh(1.05)}px`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram?.apresentador || ""}</span>
+                                       <span className="font-normal" style={{ fontSize: `${pvh(1.05)}px`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram?.apresentador || ""}</span>
                                      </div>
                                    </div>
                                    {currentProgram?.selo && (
