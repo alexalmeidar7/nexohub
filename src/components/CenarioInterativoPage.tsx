@@ -1969,12 +1969,16 @@ export default function CenarioInterativoPage() {
                                      height: `${pvh(20)}px`,
                                      borderRadius: `${pvh(2)}px`,
                                      overflow: "hidden",
-                                     boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-                                     border: "1px solid rgba(255,255,255,0.1)",
                                      flexShrink: 0,
                                      zIndex: 1,
                                      marginLeft: `-${pvh(1)}px`,
                                      animation: "cenario-capa-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both",
+                                     padding: `${pvh(0.78)}px`,
+                                     background: "rgba(255,255,255,0.12)",
+                                     backdropFilter: "blur(20px)",
+                                     WebkitBackdropFilter: "blur(20px)",
+                                     border: "1px solid rgba(255,255,255,0.25)",
+                                     boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
                                    }}
                                  >
                                    <img
@@ -1984,6 +1988,7 @@ export default function CenarioInterativoPage() {
                                        width: "100%",
                                        height: "100%",
                                        objectFit: "cover",
+                                       borderRadius: `${pvh(1.4)}px`,
                                      }}
                                    />
                                  </div>
