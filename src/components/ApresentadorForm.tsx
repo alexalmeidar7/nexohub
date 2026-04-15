@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, UserPlus, Camera, Shield, Phone, FileSpreadsheet } from "lucide-react";
+import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, UserPlus, Camera, Shield, Phone, FileSpreadsheet, Search } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,6 +52,7 @@ export default function ApresentadorForm() {
   const [ativo, setAtivo] = useState(true);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [filterCategoria, setFilterCategoria] = useState("todos");
+  const [searchNome, setSearchNome] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
@@ -210,9 +211,9 @@ export default function ApresentadorForm() {
     setTimeout(() => setShowSuccess(false), 2000);
   };
 
-  const filtered = filterCategoria === "todos"
-    ? apresentadores
-    : apresentadores.filter(a => a.cargo === filterCategoria);
+  const filtered = apresentadores
+    .filter(a => filterCategoria === "todos" || a.cargo === filterCategoria)
+    .filter(a => !searchNome || a.nome.toLowerCase().includes(searchNome.toLowerCase()));
 
   const stats = {
     total: apresentadores.length,
@@ -450,17 +451,30 @@ export default function ApresentadorForm() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cadastrados</h4>
-            <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-              <SelectTrigger className="w-[160px]" style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "12px", border: "none", fontSize: "12px", height: "30px", padding: "0 12px" }}>
-                <SelectValue placeholder="Filtrar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                {CATEGORIA_OPTIONS.map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.6 }} />
+                <input
+                  type="text"
+                  value={searchNome}
+                  onChange={(e) => setSearchNome(e.target.value)}
+                  placeholder="Buscar nome..."
+                  className="pl-8 pr-3 text-xs outline-none"
+                  style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "12px", border: "none", fontSize: "12px", height: "30px", width: "180px" }}
+                />
+              </div>
+              <Select value={filterCategoria} onValueChange={setFilterCategoria}>
+                <SelectTrigger className="w-[160px]" style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "12px", border: "none", fontSize: "12px", height: "30px", padding: "0 12px" }}>
+                  <SelectValue placeholder="Filtrar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  {CATEGORIA_OPTIONS.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
