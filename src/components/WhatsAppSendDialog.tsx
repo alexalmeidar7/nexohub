@@ -33,6 +33,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
   const [novoWhatsapp, setNovoWhatsapp] = useState("");
   const [searchResults, setSearchResults] = useState<{ nome: string; whatsapp: string; cargo: string }[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [pendingUpdateNome, setPendingUpdateNome] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,6 +94,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     if (contatos.some(c => c.nome === r.nome)) { toast.info("Já adicionado"); return; }
     if (!r.whatsapp.trim()) {
       setNovoNome(r.nome);
+      setPendingUpdateNome(r.nome);
       setShowResults(false);
       toast.info("Sem WhatsApp cadastrado, preencha manualmente");
       return;
@@ -130,11 +132,23 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     }
   };
 
-  const addContato = () => {
+  const addContato = async () => {
     if (!novoNome.trim() && !novoWhatsapp.trim()) return;
     const phone = novoWhatsapp.trim().replace(/\D/g, "");
     if (!phone) { toast.error("Insira um número válido"); return; }
     setContatos(prev => [...prev, { nome: novoNome.trim() || "Sem nome", whatsapp: phone }]);
+
+    // Update apresentador record if this contact came from search without a phone
+    if (pendingUpdateNome && user) {
+      const formatted = phone.length === 11 ? `(${phone.slice(0,2)}) ${phone.slice(2,7)}-${phone.slice(7)}` : phone;
+      await supabase
+        .from("apresentadores")
+        .update({ whatsapp: formatted })
+        .eq("user_id", user.id)
+        .eq("nome", pendingUpdateNome);
+      setPendingUpdateNome(null);
+    }
+
     setNovoNome("");
     setNovoWhatsapp("");
     setSearchResults([]);
