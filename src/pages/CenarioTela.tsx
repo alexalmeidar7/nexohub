@@ -1514,7 +1514,7 @@ export default function CenarioTela() {
 
                     {/* ── Sponsor logos (centered below locutor + capa boxes) ── */}
                     {sponsorLogos.length > 0 && (
-                      <div style={{ position: "absolute", bottom: `${vhToPx(14)}${vu}`, left: "50%", transform: "translateX(-50%)", zIndex: 10 }}>
+                      <div style={{ position: "absolute", bottom: `${vhToPx(9)}${vu}`, left: "50%", transform: "translateX(-50%)", zIndex: 10 }}>
                         <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: `${vhToPx(23.4)}${vu}` }}>
                           {sponsorLogos.map((l: any, i: number) => l.logo_url && (
                             <img

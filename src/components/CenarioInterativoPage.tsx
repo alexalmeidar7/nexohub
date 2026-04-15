@@ -1992,7 +1992,7 @@ export default function CenarioInterativoPage() {
 
                              {/* ── Sponsor logos (centered bottom, same as external screen) ── */}
                              {sponsorLogos.length > 0 && (
-                               <div style={{ position: "absolute", bottom: `${pvh(14)}px`, left: "50%", transform: "translateX(-50%)", zIndex: 10 }}>
+                               <div style={{ position: "absolute", bottom: `${pvh(9)}px`, left: "50%", transform: "translateX(-50%)", zIndex: 10 }}>
                                  <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: `${pvh(23.4)}px` }}>
                                    {sponsorLogos.map((l, i) => l.logo_url && (
                                      <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain" style={{ position: "absolute", maxWidth: `${pvh(39)}px`, maxHeight: `${pvh(21.5)}px`, opacity: i === sponsorIdx ? 1 : 0, transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)", transition: "opacity 0.8s ease, transform 0.8s ease", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" }} />
