@@ -42,12 +42,15 @@ serve(async (req) => {
       );
     }
 
-    // Fetch ALL active programs for the user (so programs without sponsors get the default logo)
+    // Fetch ALL active programs for the user, ordered by creation date
+    // to ensure stable XML positions (programa 1, programa 2, etc never change)
     const { data: programas } = await supabase
       .from("programas")
-      .select("id, nome")
+      .select("id, nome, created_at")
       .eq("user_id", userId)
-      .eq("ativo", true);
+      .eq("ativo", true)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true });
 
     const origin = `${url.protocol}//${url.host}`;
     const DEFAULT_LOGO_URL = `https://nexohub.lovable.app/default-sponsor-logo.png`;
