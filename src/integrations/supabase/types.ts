@@ -57,6 +57,7 @@ export type Database = {
           prioridade: string
           programa_id: string | null
           recorrencia: string
+          tipo_evento: string
           user_id: string
         }
         Insert: {
@@ -68,6 +69,7 @@ export type Database = {
           prioridade?: string
           programa_id?: string | null
           recorrencia?: string
+          tipo_evento?: string
           user_id: string
         }
         Update: {
@@ -79,6 +81,7 @@ export type Database = {
           prioridade?: string
           programa_id?: string | null
           recorrencia?: string
+          tipo_evento?: string
           user_id?: string
         }
         Relationships: [
