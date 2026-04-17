@@ -22,6 +22,23 @@ const timeToSeconds = (value: string | null | undefined): number => {
 const normalizeDateValue = (value: string | null | undefined): string =>
   (value || "").trim().slice(0, 10);
 
+const resolveDataOwnerId = async (
+  supabase: ReturnType<typeof createClient>,
+  requestedUserId: string,
+): Promise<string> => {
+  const { data: subUser } = await supabase
+    .from("sub_users")
+    .select("parent_user_id, ativo")
+    .eq("auth_user_id", requestedUserId)
+    .maybeSingle();
+
+  if (subUser?.ativo && subUser.parent_user_id) {
+    return subUser.parent_user_id;
+  }
+
+  return requestedUserId;
+};
+
 const getCurrentProgramSortKey = (
   nowSeconds: number,
   startTime: string | null | undefined,
@@ -139,6 +156,8 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    const dataOwnerId = await resolveDataOwnerId(supabase, userId);
+
     const now = new Date();
     const brFormatter = new Intl.DateTimeFormat("pt-BR", {
       timeZone: "America/Sao_Paulo",
@@ -190,17 +209,17 @@ serve(async (req) => {
       supabase
         .from("empresa_config")
         .select("instagram, facebook, youtube, site, telefone_participacao")
-        .eq("user_id", userId)
+        .eq("user_id", dataOwnerId)
         .maybeSingle(),
       supabase
         .from("programas")
         .select("id, nome, selo, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim, variavel, data_variavel")
-        .eq("user_id", userId)
+        .eq("user_id", dataOwnerId)
         .eq("ativo", true),
       supabase
         .from("roteiros")
         .select("tickertitulos")
-        .eq("user_id", userId)
+        .eq("user_id", dataOwnerId)
         .eq("tipo_programa", "Jornalístico")
         .order("created_at", { ascending: false })
         .limit(1)
@@ -208,7 +227,7 @@ serve(async (req) => {
       supabase
         .from("user_settings")
         .select("cenario_config, weather_lat, weather_lon, weather_city")
-        .eq("user_id", userId)
+        .eq("user_id", dataOwnerId)
         .maybeSingle(),
     ]);
 
@@ -252,7 +271,7 @@ serve(async (req) => {
         const { data: presenters } = await supabase
           .from("apresentadores")
           .select("id, nome, instagram, foto")
-          .eq("user_id", userId)
+          .eq("user_id", dataOwnerId)
           .in("id", apIds);
 
         const ap = (presenters || [])
@@ -271,7 +290,7 @@ serve(async (req) => {
       const { data: logos } = await supabase
         .from("logos_patrocinadores")
         .select("nome, logo_url")
-        .eq("user_id", userId)
+        .eq("user_id", dataOwnerId)
         .eq("programa_id", programaId)
         .eq("ativo", true)
         .eq("excluido", false);
