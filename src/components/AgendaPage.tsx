@@ -173,10 +173,12 @@ export default function AgendaPage() {
 
   const resetForm = () => {
     setFormProgramaId("");
+    setFormEstudioFilter("todos");
     setFormData(undefined);
     setFormLocal("");
     setFormDescricao("");
     setFormRecorrencia("unico");
+    setFormTipoEvento("live");
     setFormPrioridade("normal");
     setFormParticipantes([{ nome: "", instagram: "" }]);
     setEditingId(null);
@@ -190,10 +192,12 @@ export default function AgendaPage() {
   const startEdit = (evt: Evento) => {
     setEditingId(evt.id);
     setFormProgramaId(evt.programa_id);
+    setFormEstudioFilter(evt.programa?.estudio || "todos");
     setFormData(new Date(evt.data + "T12:00:00"));
     setFormLocal(evt.local);
     setFormDescricao(evt.descricao);
     setFormRecorrencia(evt.recorrencia);
+    setFormTipoEvento(evt.tipo_evento || "live");
     setFormPrioridade(evt.prioridade || "normal");
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
