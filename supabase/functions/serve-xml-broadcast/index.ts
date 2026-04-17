@@ -178,6 +178,14 @@ serve(async (req) => {
     const todayDate = dateFormatter.format(now);
     const yesterdayDate = dateFormatter.format(yesterday);
 
+    const WMO_LABELS: Record<number, string> = {
+      0: "Ensolarado", 1: "Quase limpo", 2: "Parcialmente nublado", 3: "Nublado",
+      45: "Neblina", 48: "Neblina densa", 51: "Garoa fraca", 53: "Garoa", 55: "Garoa intensa",
+      61: "Chuva fraca", 63: "Chuva", 65: "Chuva forte", 71: "Neve fraca", 73: "Neve", 75: "Neve forte",
+      80: "Pancadas de chuva", 81: "Pancadas fortes", 82: "Pancadas violentas",
+      95: "Tempestade", 96: "Tempestade c/ granizo", 99: "Tempestade severa",
+    };
+
     const [empRes, progsRes, roteiroRes, settingsRes] = await Promise.all([
       supabase
         .from("empresa_config")
