@@ -52,6 +52,7 @@ interface Evento {
   descricao: string;
   recorrencia: string;
   prioridade: string;
+  tipo_evento?: string;
   programa?: Programa;
   participantes?: Participante[];
 }
