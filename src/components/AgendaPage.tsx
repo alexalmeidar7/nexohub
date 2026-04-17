@@ -218,6 +218,7 @@ export default function AgendaPage() {
       descricao: formDescricao,
       recorrencia: formRecorrencia,
       prioridade: formPrioridade,
+      tipo_evento: formTipoEvento,
     } as any;
 
     if (editingId) {
