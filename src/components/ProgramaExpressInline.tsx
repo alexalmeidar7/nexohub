@@ -142,6 +142,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   // Track edited fields for green check indicators
   const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
   const initialDataRef = useRef<{ estudio: string; programaId: string; blocos: string; participantes: string } | null>(null);
+  const isAutoGenRef = useRef<boolean>(typeof window !== "undefined" && sessionStorage.getItem("roteiro_auto_generated") === "1");
+  const autoTitlePrefix = () => (isAutoGenRef.current ? "[AUTO] " : "");
 
   const markEdited = useCallback((field: string) => {
     setEditedFields(prev => { const n = new Set(prev); n.add(field); return n; });
@@ -252,7 +254,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
         const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
         const autoTickerTitulos = blocos.flatMap(b => b.noticias.filter(n => n.titulo.trim()).map(n => n.titulo.trim())).join("  •  ");
-        await supabase.from("roteiros").update({ programa_nome: pNome, estudio, titulo: `PROGRAMA EXPRESS — ${pNome}`, subtitulo: `express_xml::${urlData.publicUrl}`, conteudo_html: html, participantes: blocosJson, tickertitulos: autoTickerTitulos } as any).eq("id", editingId);
+        await supabase.from("roteiros").update({ programa_nome: pNome, estudio, titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${pNome}`, subtitulo: `express_xml::${urlData.publicUrl}`, conteudo_html: html, participantes: blocosJson, tickertitulos: autoTickerTitulos } as any).eq("id", editingId);
         setLastAutoSaved(Date.now());
       } catch (e) { console.error("Auto-save error:", e); }
       setAutoSaving(false);
@@ -564,7 +566,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       let roteiroId = editingId;
       if (!roteiroId) {
         // Insert first to get a stable ID for the XML path
-        const { data: inserted, error } = await supabase.from("roteiros").insert({ user_id: user.id, programa_nome: programaNome, estudio, titulo: `PROGRAMA EXPRESS — ${programaNome}`, subtitulo: "", tipo_programa: tipoProg, data_programa: new Date().toISOString().split("T")[0], horario: new Date().toTimeString().slice(0, 5), conteudo_html: html, participantes: blocosJson, status: "feito", tickertitulos } as any).select("id").single();
+        const { data: inserted, error } = await supabase.from("roteiros").insert({ user_id: user.id, programa_nome: programaNome, estudio, titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`, subtitulo: "", tipo_programa: tipoProg, data_programa: new Date().toISOString().split("T")[0], horario: new Date().toTimeString().slice(0, 5), conteudo_html: html, participantes: blocosJson, status: "feito", tickertitulos } as any).select("id").single();
         if (error || !inserted) throw error || new Error("Falha ao criar roteiro");
         roteiroId = inserted.id;
         setEditingId(roteiroId);
@@ -577,8 +579,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
 
-      const { error: updErr } = await supabase.from("roteiros").update({ programa_nome: programaNome, estudio, titulo: `PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, conteudo_html: html, participantes: blocosJson, tickertitulos } as any).eq("id", roteiroId);
+      const { error: updErr } = await supabase.from("roteiros").update({ programa_nome: programaNome, estudio, titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, conteudo_html: html, participantes: blocosJson, tickertitulos } as any).eq("id", roteiroId);
       if (updErr) throw updErr;
+      try { sessionStorage.removeItem("roteiro_auto_generated"); } catch {}
+      isAutoGenRef.current = false;
       toast.success("Roteiro salvo ✨", { duration: 3000, style: { background: "#22c55e", color: "#fff", fontWeight: 600, borderRadius: "12px", boxShadow: "0 8px 32px rgba(34,197,94,0.35)" } });
       reset();
       onFinish();
