@@ -305,7 +305,36 @@ serve(async (req) => {
     const qrLink = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
     const broadcastConfig = (settingsRes.data?.cenario_config as any)?.broadcast || {};
     const assunto = broadcastConfig.assunto || "";
-    const ticker = roteiroRes.data?.tickertitulos || "";
+
+    const tickerParts: string[] = [];
+    if (broadcastConfig.tickerNews) {
+      const titulos = (roteiroRes.data?.tickertitulos || "").trim();
+      if (titulos) tickerParts.push(titulos);
+    }
+    if (broadcastConfig.tickerWeather && settingsRes.data?.weather_lat && settingsRes.data?.weather_lon) {
+      try {
+        const lat = settingsRes.data.weather_lat;
+        const lon = settingsRes.data.weather_lon;
+        const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=2&timezone=America/Sao_Paulo`;
+        const wxRes = await fetch(wxUrl);
+        if (wxRes.ok) {
+          const d = await wxRes.json();
+          const t = Math.round(d.current?.temperature_2m);
+          const label = WMO_LABELS[d.current?.weather_code] || "—";
+          let tomorrow = "";
+          if (d.daily?.temperature_2m_min?.[1] !== undefined) {
+            const tMin = Math.round(d.daily.temperature_2m_min[1]);
+            const tMax = Math.round(d.daily.temperature_2m_max[1]);
+            const tLabel = WMO_LABELS[d.daily.weather_code?.[1]] || "—";
+            tomorrow = ` | Amanhã: ${tMin}°–${tMax}° ${tLabel}`;
+          }
+          const city = settingsRes.data.weather_city || "";
+          tickerParts.push(`${city ? city + ": " : ""}Agora ${t}° ${label}${tomorrow}`);
+        }
+      } catch { /* silent */ }
+    }
+    if (broadcastConfig.ticker) tickerParts.push(broadcastConfig.ticker);
+    const ticker = tickerParts.join("  •  ");
 
     let logoPatrocinador = "";
     if (sponsorLogos.length > 0) {
