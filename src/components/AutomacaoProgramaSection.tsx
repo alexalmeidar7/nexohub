@@ -150,6 +150,7 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro 
       }
       if (data?.pasteText) {
         toast.success(`Roteiro gerado com ${data.totalNoticias} notícias!`);
+        try { sessionStorage.setItem("roteiro_auto_generated", "1"); } catch {}
         onGenerateRoteiro(data.pasteText);
       }
     } catch (e) {
