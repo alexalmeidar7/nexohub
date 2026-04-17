@@ -100,7 +100,36 @@ export function extractRoteiroHtml(html: string): string {
     return blocks.join("");
   }
 
-  return sanitizeInlineHtml(div) || div.textContent || "";
+  // Fallback: plain text / paragraph content (e.g. Podcast / Express scripts)
+  // Split by numbered question markers (1), 2), 3)...) and double line breaks
+  const rawHtml = sanitizeInlineHtml(div) || div.textContent || "";
+  const plain = (div.textContent || "").trim();
+
+  if (plain) {
+    // Insert paragraph breaks before "N)" markers and after "?" / "."
+    let parts: string[] = [];
+
+    // Split on numbered markers like "1)", "2)" — keep the marker with the question
+    const numberedSplit = plain.split(/(?=\b\d{1,2}\)\s)/g).map(s => s.trim()).filter(Boolean);
+
+    if (numberedSplit.length > 1) {
+      parts = numberedSplit;
+    } else {
+      // Otherwise split on blank lines or sentence-ending punctuation followed by capital
+      parts = plain.split(/\n\s*\n+/).map(s => s.trim()).filter(Boolean);
+      if (parts.length <= 1) {
+        parts = plain.split(/(?<=[.?!])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/g).map(s => s.trim()).filter(Boolean);
+      }
+    }
+
+    if (parts.length > 1) {
+      const paraStyle = "display:block;margin-bottom:1.2em;line-height:1.5";
+      const out = parts.map(p => `<div style="${paraStyle}">${p.replace(/</g, "&lt;")}</div>`).join("");
+      return out + '<div style="display:block;margin-top:2em;text-align:center"><span style="opacity:0.35;font-size:0.5em;letter-spacing:4px">*** FIM DO TEXTO ***</span></div>';
+    }
+  }
+
+  return rawHtml;
 }
 
 export function stripHtml(html: string): string {
