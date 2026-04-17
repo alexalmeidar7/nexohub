@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     // Fetch roteiro
     const { data: roteiro, error } = await supabase
       .from("roteiros")
-      .select("titulo, subtitulo, participantes, programa_nome, user_id")
+      .select("titulo, subtitulo, participantes, programa_nome, user_id, estudio")
       .eq("id", roteiroId)
       .maybeSingle();
 
@@ -123,8 +123,8 @@ Deno.serve(async (req) => {
     if (participantes.length === 0) {
       // Single row with general data
       xml += `  <dados>\n`;
-      xml += `    <titulo>${esc(roteiro.titulo || "")}</titulo>\n`;
-      xml += `    <subtitulo>${esc(roteiro.subtitulo || "")}</subtitulo>\n`;
+      xml += `    <titulo>${esc(tituloOut)}</titulo>\n`;
+      xml += `    <subtitulo>${esc(subtituloOut)}</subtitulo>\n`;
       xml += `    <programa>${esc(roteiro.programa_nome || "")}</programa>\n`;
       xml += `    <logo_url>${esc(logoUrl)}</logo_url>\n`;
       xml += `    <participante_nome></participante_nome>\n`;
@@ -143,8 +143,8 @@ Deno.serve(async (req) => {
       for (let idx = 0; idx < participantes.length; idx++) {
         const p = participantes[idx];
         xml += `  <dados>\n`;
-        xml += `    <titulo>${esc(roteiro.titulo || "")}</titulo>\n`;
-        xml += `    <subtitulo>${esc(roteiro.subtitulo || "")}</subtitulo>\n`;
+        xml += `    <titulo>${esc(tituloOut)}</titulo>\n`;
+        xml += `    <subtitulo>${esc(subtituloOut)}</subtitulo>\n`;
         xml += `    <programa>${esc(roteiro.programa_nome || "")}</programa>\n`;
         xml += `    <logo_url>${esc(logoUrl)}</logo_url>\n`;
         xml += `    <participante_nome>${esc(p.nome || "")}</participante_nome>\n`;
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=5",
+        "Cache-Control": "public, max-age=15",
       },
     });
   } catch (err) {
