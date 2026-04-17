@@ -777,6 +777,32 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                   />
                 </div>
 
+                {/* Agendamento de Publicação */}
+                <div className="rounded-lg p-3" style={{ border: "1px dashed #8b5cf666", backgroundColor: "#8b5cf608" }}>
+                  <label className="text-[11px] font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#8b5cf6" }}>
+                    📅 Agendar publicação no XML (opcional)
+                  </label>
+                  <p className="text-[10px] mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                    Antes da data/hora informada, o XML mostrará apenas o programa. Depois, será atualizado com o conteúdo completo.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      value={podcastData.agendamentoData}
+                      onChange={e => setPodcastData(prev => ({ ...prev, agendamentoData: e.target.value }))}
+                      className="px-3 py-2 rounded-lg text-[12px] outline-none"
+                      style={inputStyle}
+                    />
+                    <input
+                      type="time"
+                      value={podcastData.agendamentoHorario}
+                      onChange={e => setPodcastData(prev => ({ ...prev, agendamentoHorario: e.target.value }))}
+                      className="px-3 py-2 rounded-lg text-[12px] outline-none"
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+
                 {/* Introdução do Tema */}
                 <div>
                   <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>

@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
     let participantes: { nome: string; categoria?: string; cargo?: string; instagram?: string; whatsapp?: string }[] = [];
     let apoioImagens: string[] = [];
     let apoioVideos: string[] = [];
+    let podcastData: any = null;
     try {
       const raw = typeof roteiro.participantes === "string"
         ? JSON.parse(roteiro.participantes)
@@ -80,6 +81,7 @@ Deno.serve(async (req) => {
       } else {
         participantes = raw.participantes || [];
         if (raw.podcastData) {
+          podcastData = raw.podcastData;
           apoioImagens = (raw.podcastData.apoioImagens || []).filter((u: string) => u && u.trim());
           apoioVideos = (raw.podcastData.apoioVideos || []).filter((u: string) => u && u.trim());
         }
@@ -88,11 +90,30 @@ Deno.serve(async (req) => {
       participantes = [];
     }
 
+    // Check podcast scheduling: if scheduled and not yet released, hide content
+    let scheduledHidden = false;
+    if (podcastData?.agendamentoData && podcastData?.agendamentoHorario) {
+      // Build a Date in São Paulo time (UTC-3) and compare to now
+      const releaseAt = new Date(`${podcastData.agendamentoData}T${podcastData.agendamentoHorario}:00-03:00`);
+      if (!isNaN(releaseAt.getTime()) && Date.now() < releaseAt.getTime()) {
+        scheduledHidden = true;
+      }
+    }
+
+    if (scheduledHidden) {
+      participantes = [];
+      apoioImagens = [];
+      apoioVideos = [];
+    }
+
     const logoUrl = programa?.selo || programa?.capa || "";
     const whatsappNum = empresa?.telefone_participacao || "";
-    const qrcodeLink = whatsappNum
+    const qrcodeLink = whatsappNum && !scheduledHidden
       ? `https://wa.me/${whatsappNum.replace(/\D/g, "")}`
       : "";
+
+    const tituloOut = scheduledHidden ? "" : (roteiro.titulo || "");
+    const subtituloOut = scheduledHidden ? "" : (roteiro.subtitulo || "");
 
     // Build flat/tabular XML for vMix Data Sources
     // Each participant becomes a <dados> row with all fields as flat columns
