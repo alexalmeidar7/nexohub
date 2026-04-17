@@ -134,7 +134,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
-    tituloTarja: "", introducao: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""],
+    tituloTarja: "", introducao: "", agendamentoData: "", agendamentoHorario: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""],
   });
 
   const isPodcast = estudio.toLowerCase() === "podcast";
@@ -205,6 +205,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         setPodcastData({
           tituloTarja: editData.podcastData.tituloTarja || "",
           introducao: editData.podcastData.introducao || "",
+          agendamentoData: (editData.podcastData as any).agendamentoData || "",
+          agendamentoHorario: (editData.podcastData as any).agendamentoHorario || "",
           perguntas: editData.podcastData.perguntas?.length ? editData.podcastData.perguntas : [""],
           concluindo: editData.podcastData.concluindo || "",
           apoioImagens: editData.podcastData.apoioImagens?.length ? editData.podcastData.apoioImagens : [""],
@@ -321,7 +323,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setEditedFields(new Set());
     setLastAutoSaved(null);
     initialDataRef.current = null;
-    setPodcastData({ tituloTarja: "", introducao: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""] });
+    setPodcastData({ tituloTarja: "", introducao: "", agendamentoData: "", agendamentoHorario: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""] });
   };
 
   /* Generate plain-text representation of current script for editing */
