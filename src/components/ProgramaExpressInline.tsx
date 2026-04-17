@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface PodcastData {
   tituloTarja: string;
   introducao: string;
+  agendamentoData: string;
+  agendamentoHorario: string;
   perguntas: string[];
   concluindo: string;
   apoioImagens: string[];
