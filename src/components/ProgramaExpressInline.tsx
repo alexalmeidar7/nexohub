@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface PodcastData {
   tituloTarja: string;
   introducao: string;
+  agendamentoData: string;
+  agendamentoHorario: string;
   perguntas: string[];
   concluindo: string;
   apoioImagens: string[];
@@ -132,7 +134,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
-    tituloTarja: "", introducao: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""],
+    tituloTarja: "", introducao: "", agendamentoData: "", agendamentoHorario: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""],
   });
 
   const isPodcast = estudio.toLowerCase() === "podcast";
@@ -203,6 +205,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         setPodcastData({
           tituloTarja: editData.podcastData.tituloTarja || "",
           introducao: editData.podcastData.introducao || "",
+          agendamentoData: (editData.podcastData as any).agendamentoData || "",
+          agendamentoHorario: (editData.podcastData as any).agendamentoHorario || "",
           perguntas: editData.podcastData.perguntas?.length ? editData.podcastData.perguntas : [""],
           concluindo: editData.podcastData.concluindo || "",
           apoioImagens: editData.podcastData.apoioImagens?.length ? editData.podcastData.apoioImagens : [""],
@@ -319,7 +323,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setEditedFields(new Set());
     setLastAutoSaved(null);
     initialDataRef.current = null;
-    setPodcastData({ tituloTarja: "", introducao: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""] });
+    setPodcastData({ tituloTarja: "", introducao: "", agendamentoData: "", agendamentoHorario: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""] });
   };
 
   /* Generate plain-text representation of current script for editing */
@@ -771,6 +775,32 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                     className="w-full px-3 py-2.5 rounded-lg text-[12px] outline-none"
                     style={inputStyle}
                   />
+                </div>
+
+                {/* Agendamento de Publicação */}
+                <div className="rounded-lg p-3" style={{ border: "1px dashed #8b5cf666", backgroundColor: "#8b5cf608" }}>
+                  <label className="text-[11px] font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#8b5cf6" }}>
+                    📅 Agendar publicação no XML (opcional)
+                  </label>
+                  <p className="text-[10px] mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                    Antes da data/hora informada, o XML mostrará apenas o programa. Depois, será atualizado com o conteúdo completo.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      value={podcastData.agendamentoData}
+                      onChange={e => setPodcastData(prev => ({ ...prev, agendamentoData: e.target.value }))}
+                      className="px-3 py-2 rounded-lg text-[12px] outline-none"
+                      style={inputStyle}
+                    />
+                    <input
+                      type="time"
+                      value={podcastData.agendamentoHorario}
+                      onChange={e => setPodcastData(prev => ({ ...prev, agendamentoHorario: e.target.value }))}
+                      className="px-3 py-2 rounded-lg text-[12px] outline-none"
+                      style={inputStyle}
+                    />
+                  </div>
                 </div>
 
                 {/* Introdução do Tema */}
