@@ -618,28 +618,46 @@ export default function AgendaPage() {
                 .agenda-dialog-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--layout-accent-color, #2563eb) 80%, black 20%), var(--layout-accent-color, #2563eb)); }
               `}</style>
 
-              {/* Programa */}
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Programa</Label>
-                <Select value={formProgramaId} onValueChange={setFormProgramaId}>
-                  <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <SelectValue placeholder="Selecione o programa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {programas.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.nome} ({p.horario_inicio} - {p.horario_fim})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedPrograma && (
-                  <p className="text-[10px] mt-1.5 px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
-                    ⏰ {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
-                    {selectedPrograma.estudio && ` • ${selectedPrograma.estudio}`}
-                  </p>
-                )}
+              {/* Estudio + Programa (side by side) */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Estúdio</Label>
+                  <Select value={formEstudioFilter} onValueChange={(v) => { setFormEstudioFilter(v); setFormProgramaId(""); }}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos os estúdios</SelectItem>
+                      {estudios.map((e) => (
+                        <SelectItem key={e} value={e}>{e}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Programa</Label>
+                  <Select value={formProgramaId} onValueChange={setFormProgramaId}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <SelectValue placeholder="Selecione o programa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {programas
+                        .filter((p) => formEstudioFilter === "todos" || p.estudio === formEstudioFilter)
+                        .map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.nome} ({p.horario_inicio} - {p.horario_fim})
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              {selectedPrograma && (
+                <p className="text-[10px] -mt-3 px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
+                  ⏰ {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
+                  {selectedPrograma.estudio && ` • ${selectedPrograma.estudio}`}
+                </p>
+              )}
 
               {/* Calendário */}
               <div>
