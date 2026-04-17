@@ -411,6 +411,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   // Handle external paste text (from automation)
   useEffect(() => {
     if (externalPasteText && externalPasteText.trim()) {
+      isAutoGenRef.current = true;
       setPasteText(externalPasteText);
       setShowPastePopup(true);
       onExternalPasteConsumed?.();
