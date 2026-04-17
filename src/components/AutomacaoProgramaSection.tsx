@@ -124,6 +124,13 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro 
     setSaving(false);
   };
 
+  const handleToggleAtivo = async (a: Automacao) => {
+    const novo = !a.ativo;
+    await supabase.from("programa_automacoes").update({ ativo: novo }).eq("id", a.id);
+    toast.success(novo ? "Automação ativada" : "Automação desativada");
+    await fetchAutomacoes();
+  };
+
   const handleDelete = async (id: string) => {
     await supabase.from("programa_automacoes").delete().eq("id", id);
     toast.success("Automação removida");
