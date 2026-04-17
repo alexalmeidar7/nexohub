@@ -142,7 +142,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   // Track edited fields for green check indicators
   const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
   const initialDataRef = useRef<{ estudio: string; programaId: string; blocos: string; participantes: string } | null>(null);
-  const isAutoGenRef = useRef<boolean>(typeof window !== "undefined" && sessionStorage.getItem("roteiro_auto_generated") === "1");
+  const isAutoGenRef = useRef<boolean>(false);
   const autoTitlePrefix = () => (isAutoGenRef.current ? "[AUTO] " : "");
 
   const markEdited = useCallback((field: string) => {
