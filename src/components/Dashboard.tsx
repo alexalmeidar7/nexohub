@@ -940,7 +940,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </footer>
       </div>
 
-      {subUserModules === null && (
+      {subUserModules === null && isDashboard && (
         <>
           <Suspense fallback={null}><IntercomWidget /></Suspense>
           <BotsStatusBox />
