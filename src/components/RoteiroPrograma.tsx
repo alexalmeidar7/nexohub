@@ -11,6 +11,7 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 const WhatsAppSendDialog = lazy(() => import("./WhatsAppSendDialog"));
 const ProgramaExpressInline = lazy(() => import("./ProgramaExpressInline"));
 const AutomacaoProgramaSection = lazy(() => import("./AutomacaoProgramaSection"));
+import HistoricoTable from "./HistoricoTable";
 import type { ExpressEditData } from "./ProgramaExpressInline";
 
 interface Programa {
@@ -41,6 +42,7 @@ export default function RoteiroPrograma() {
   const [txtEditText, setTxtEditText] = useState("");
   const [txtSaving, setTxtSaving] = useState(false);
   const [externalPasteText, setExternalPasteText] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"recentes" | "historico">("recentes");
 
   const roteiroToPlainText = (r: any): string => {
     let parts: any = null;
@@ -479,18 +481,37 @@ export default function RoteiroPrograma() {
         <div className="rounded-xl p-3" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
           <div className="flex items-center gap-2 mb-2">
             <History size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
-            <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Últimos roteiros</p>
-            <button
-              onClick={regenerateAllXmls}
-              disabled={regenerating}
-              className="text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 hover:opacity-80 transition disabled:opacity-40 ml-auto"
-              style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}
-              title="Regenerar todos os XMLs com a estrutura atualizada"
-            >
-              <RefreshCw size={10} className={regenerating ? "animate-spin" : ""} />
-              {regenerating ? "Regenerando..." : "Regenerar XMLs"}
-            </button>
+            <div className="flex items-center gap-1">
+              {(["recentes", "historico"] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setActiveTab(t)}
+                  className="text-[11px] font-bold px-2 py-0.5 rounded-md transition"
+                  style={{
+                    backgroundColor: activeTab === t ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "transparent",
+                    color: activeTab === t ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)",
+                  }}
+                >
+                  {t === "recentes" ? "Últimos roteiros" : "Histórico (30 dias)"}
+                </button>
+              ))}
+            </div>
+            {activeTab === "recentes" && (
+              <button
+                onClick={regenerateAllXmls}
+                disabled={regenerating}
+                className="text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 hover:opacity-80 transition disabled:opacity-40 ml-auto"
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}
+                title="Regenerar todos os XMLs com a estrutura atualizada"
+              >
+                <RefreshCw size={10} className={regenerating ? "animate-spin" : ""} />
+                {regenerating ? "Regenerando..." : "Regenerar XMLs"}
+              </button>
+            )}
           </div>
+          {activeTab === "historico" ? (
+            <HistoricoTable historico={historico} />
+          ) : (
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {historico.map((r, idx) => {
               const dataFormatada = format(new Date(r.data_programa), "dd/MM/yyyy");
@@ -583,10 +604,11 @@ export default function RoteiroPrograma() {
               );
             })}
           </div>
+          )}
         </div>
       </div>
     );
-  }, [historico, programas]);
+  }, [historico, programas, activeTab, regenerating]);
 
   if (loading) return <ModulePageSkeleton />;
 
