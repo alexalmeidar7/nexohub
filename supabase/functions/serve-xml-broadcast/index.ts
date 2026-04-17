@@ -178,6 +178,14 @@ serve(async (req) => {
     const todayDate = dateFormatter.format(now);
     const yesterdayDate = dateFormatter.format(yesterday);
 
+    const WMO_LABELS: Record<number, string> = {
+      0: "Ensolarado", 1: "Quase limpo", 2: "Parcialmente nublado", 3: "Nublado",
+      45: "Neblina", 48: "Neblina densa", 51: "Garoa fraca", 53: "Garoa", 55: "Garoa intensa",
+      61: "Chuva fraca", 63: "Chuva", 65: "Chuva forte", 71: "Neve fraca", 73: "Neve", 75: "Neve forte",
+      80: "Pancadas de chuva", 81: "Pancadas fortes", 82: "Pancadas violentas",
+      95: "Tempestade", 96: "Tempestade c/ granizo", 99: "Tempestade severa",
+    };
+
     const [empRes, progsRes, roteiroRes, settingsRes] = await Promise.all([
       supabase
         .from("empresa_config")
@@ -199,7 +207,7 @@ serve(async (req) => {
         .maybeSingle(),
       supabase
         .from("user_settings")
-        .select("cenario_config")
+        .select("cenario_config, weather_lat, weather_lon, weather_city")
         .eq("user_id", userId)
         .maybeSingle(),
     ]);
@@ -297,7 +305,36 @@ serve(async (req) => {
     const qrLink = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
     const broadcastConfig = (settingsRes.data?.cenario_config as any)?.broadcast || {};
     const assunto = broadcastConfig.assunto || "";
-    const ticker = roteiroRes.data?.tickertitulos || "";
+
+    const tickerParts: string[] = [];
+    if (broadcastConfig.tickerNews) {
+      const titulos = (roteiroRes.data?.tickertitulos || "").trim();
+      if (titulos) tickerParts.push(titulos);
+    }
+    if (broadcastConfig.tickerWeather && settingsRes.data?.weather_lat && settingsRes.data?.weather_lon) {
+      try {
+        const lat = settingsRes.data.weather_lat;
+        const lon = settingsRes.data.weather_lon;
+        const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=2&timezone=America/Sao_Paulo`;
+        const wxRes = await fetch(wxUrl);
+        if (wxRes.ok) {
+          const d = await wxRes.json();
+          const t = Math.round(d.current?.temperature_2m);
+          const label = WMO_LABELS[d.current?.weather_code] || "—";
+          let tomorrow = "";
+          if (d.daily?.temperature_2m_min?.[1] !== undefined) {
+            const tMin = Math.round(d.daily.temperature_2m_min[1]);
+            const tMax = Math.round(d.daily.temperature_2m_max[1]);
+            const tLabel = WMO_LABELS[d.daily.weather_code?.[1]] || "—";
+            tomorrow = ` | Amanhã: ${tMin}°–${tMax}° ${tLabel}`;
+          }
+          const city = settingsRes.data.weather_city || "";
+          tickerParts.push(`${city ? city + ": " : ""}Agora ${t}° ${label}${tomorrow}`);
+        }
+      } catch { /* silent */ }
+    }
+    if (broadcastConfig.ticker) tickerParts.push(broadcastConfig.ticker);
+    const ticker = tickerParts.join("  •  ");
 
     let logoPatrocinador = "";
     if (sponsorLogos.length > 0) {
