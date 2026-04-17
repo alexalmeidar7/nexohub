@@ -679,8 +679,8 @@ export default function AgendaPage() {
                 )}
               </div>
 
-              {/* Recorrência + Local (side by side) */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Recorrência + Tipo + Local (side by side) */}
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
                   <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
@@ -692,6 +692,18 @@ export default function AgendaPage() {
                       <SelectItem value="semanal">Toda semana</SelectItem>
                       <SelectItem value="mensal">Todo mês</SelectItem>
                       <SelectItem value="programa_semanal">Programa semanal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Tipo</Label>
+                  <Select value={formTipoEvento} onValueChange={setFormTipoEvento}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="live">🔴 Ao vivo</SelectItem>
+                      <SelectItem value="gravacao">🎬 Gravação</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
