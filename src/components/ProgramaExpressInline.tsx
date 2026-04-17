@@ -581,6 +581,25 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       const { error: updErr } = await supabase.from("roteiros").update({ programa_nome: programaNome, estudio, titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, conteudo_html: html, participantes: blocosJson, tickertitulos } as any).eq("id", roteiroId);
       if (updErr) throw updErr;
+
+      // Create agenda event when podcast is scheduled
+      if (isPodcast && podcastData.agendamentoData) {
+        try {
+          const horario = podcastData.agendamentoHorario || "00:00";
+          const descricao = `Roteiro: ${programaNome}${horario ? ` às ${horario}` : ""}${podcastData.tituloTarja ? ` — ${podcastData.tituloTarja}` : ""}`;
+          await supabase.from("agenda_eventos").insert({
+            user_id: user.id,
+            data: podcastData.agendamentoData,
+            local: estudio || "Podcast",
+            descricao,
+            prioridade: "alta",
+            programa_id: programaId,
+            recorrencia: "unico",
+          } as any);
+          toast.success("Evento adicionado à agenda 📅", { duration: 2500 });
+        } catch (e) { console.warn("Falha ao criar evento na agenda:", e); }
+      }
+
       try { sessionStorage.removeItem("roteiro_auto_generated"); } catch {}
       isAutoGenRef.current = false;
       toast.success("Roteiro salvo ✨", { duration: 3000, style: { background: "#22c55e", color: "#fff", fontWeight: 600, borderRadius: "12px", boxShadow: "0 8px 32px rgba(34,197,94,0.35)" } });
