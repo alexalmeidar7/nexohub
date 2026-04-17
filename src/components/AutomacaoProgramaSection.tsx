@@ -124,6 +124,13 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro 
     setSaving(false);
   };
 
+  const handleToggleAtivo = async (a: Automacao) => {
+    const novo = !a.ativo;
+    await supabase.from("programa_automacoes").update({ ativo: novo }).eq("id", a.id);
+    toast.success(novo ? "Automação ativada" : "Automação desativada");
+    await fetchAutomacoes();
+  };
+
   const handleDelete = async (id: string) => {
     await supabase.from("programa_automacoes").delete().eq("id", id);
     toast.success("Automação removida");
@@ -201,6 +208,19 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro 
                         <Clock size={9} className="inline mr-1" />{a.horario} · {a.dias_semana.map(d => DIAS.find(x => x.key === d)?.label).join(", ") || "Sem dias"}
                       </p>
                     </div>
+                    <button
+                      onClick={() => handleToggleAtivo(a)}
+                      className="text-[9px] px-2 py-1 rounded-md font-bold hover:opacity-80 transition"
+                      style={{
+                        backgroundColor: a.ativo
+                          ? "color-mix(in srgb, #16a34a 15%, transparent)"
+                          : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                        color: a.ativo ? "#16a34a" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)",
+                      }}
+                      title={a.ativo ? "Clique para desativar" : "Clique para ativar"}
+                    >
+                      {a.ativo ? "Ativa" : "Inativa"}
+                    </button>
                     <button
                       onClick={() => handleGenerate(a.id)}
                       disabled={!!generating}
