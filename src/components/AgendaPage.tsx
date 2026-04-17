@@ -90,10 +90,12 @@ export default function AgendaPage() {
 
   // Form
   const [formProgramaId, setFormProgramaId] = useState("");
+  const [formEstudioFilter, setFormEstudioFilter] = useState<string>("todos");
   const [formData, setFormData] = useState<Date | undefined>(undefined);
   const [formLocal, setFormLocal] = useState("");
   const [formDescricao, setFormDescricao] = useState("");
   const [formRecorrencia, setFormRecorrencia] = useState<string>("unico");
+  const [formTipoEvento, setFormTipoEvento] = useState<string>("live");
   const [formPrioridade, setFormPrioridade] = useState("normal");
   const [formParticipantes, setFormParticipantes] = useState<Participante[]>([
     { nome: "", instagram: "" },
