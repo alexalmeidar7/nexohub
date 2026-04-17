@@ -209,6 +209,19 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro 
                       </p>
                     </div>
                     <button
+                      onClick={() => handleToggleAtivo(a)}
+                      className="text-[9px] px-2 py-1 rounded-md font-bold hover:opacity-80 transition"
+                      style={{
+                        backgroundColor: a.ativo
+                          ? "color-mix(in srgb, #16a34a 15%, transparent)"
+                          : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                        color: a.ativo ? "#16a34a" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)",
+                      }}
+                      title={a.ativo ? "Clique para desativar" : "Clique para ativar"}
+                    >
+                      {a.ativo ? "Ativa" : "Inativa"}
+                    </button>
+                    <button
                       onClick={() => handleGenerate(a.id)}
                       disabled={!!generating}
                       className="text-[9px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 hover:opacity-80 transition disabled:opacity-40"
