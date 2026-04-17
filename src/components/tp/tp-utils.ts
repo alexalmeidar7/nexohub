@@ -50,7 +50,11 @@ export function extractRoteiroHtml(html: string): string {
   div.innerHTML = html;
 
   const rows = div.querySelectorAll("tr[data-pergunta], table tr");
-  const lines: string[] = [];
+  const blocks: string[] = [];
+
+  const labelStyle = "display:block;font-size:0.45em;opacity:0.5;letter-spacing:3px;margin-bottom:0.35em;font-weight:400";
+  const contentStyle = "display:block;line-height:1.5";
+  const blockStyle = "display:block;margin-bottom:1.4em";
 
   if (rows.length > 0) {
     rows.forEach((row) => {
@@ -59,24 +63,41 @@ export function extractRoteiroHtml(html: string): string {
       if (row.querySelector("[contenteditable='false']") && !row.getAttribute("data-pergunta")) return;
 
       const cells = row.querySelectorAll("td");
-      if (cells.length < 3) return;
+      if (cells.length < 2) return;
 
-      const elemento = (cells[1]?.textContent || "").trim();
-      const descricaoHtml = sanitizeInlineHtml(cells[2]).trim();
-      const descricaoText = (cells[2]?.textContent || "").trim();
+      // Try to detect: [tempo, elemento, descricao] or [elemento, descricao]
+      let elemento = "";
+      let descricaoCell: Element | null = null;
+      let descricaoText = "";
+
+      if (cells.length >= 3) {
+        elemento = (cells[1]?.textContent || "").trim();
+        descricaoCell = cells[2];
+        descricaoText = (cells[2]?.textContent || "").trim();
+      } else {
+        elemento = (cells[0]?.textContent || "").trim();
+        descricaoCell = cells[1];
+        descricaoText = (cells[1]?.textContent || "").trim();
+      }
 
       if (!elemento && !descricaoText) return;
       if (descricaoText === "[Insira a pergunta aqui]" || descricaoText === "[Insira o texto aqui]") return;
 
-      if (elemento) lines.push(`<span style="font-size:0.6em;opacity:0.55;letter-spacing:2px">${elemento.toUpperCase()}</span>`);
-      if (descricaoHtml) lines.push(descricaoHtml);
-      lines.push("");
+      const descricaoHtml = descricaoCell ? sanitizeInlineHtml(descricaoCell).trim() : "";
+
+      const parts: string[] = [];
+      if (elemento) parts.push(`<span style="${labelStyle}">${elemento.toUpperCase()}</span>`);
+      if (descricaoHtml) parts.push(`<span style="${contentStyle}">${descricaoHtml}</span>`);
+
+      if (parts.length > 0) {
+        blocks.push(`<div style="${blockStyle}">${parts.join("")}</div>`);
+      }
     });
   }
 
-  if (lines.filter((l) => l.trim()).length > 0) {
-    lines.push('<br/><br/><span style="opacity:0.4;font-size:0.5em;letter-spacing:3px">*** FIM DO TEXTO ***</span>');
-    return lines.join("<br/>").trim();
+  if (blocks.length > 0) {
+    blocks.push('<div style="display:block;margin-top:2em;text-align:center"><span style="opacity:0.35;font-size:0.5em;letter-spacing:4px">*** FIM DO TEXTO ***</span></div>');
+    return blocks.join("");
   }
 
   return sanitizeInlineHtml(div) || div.textContent || "";
