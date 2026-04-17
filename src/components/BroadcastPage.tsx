@@ -71,10 +71,15 @@ export default function BroadcastPage() {
   const [sponsorLogos, setSponsorLogos] = useState<{nome: string; logo_url: string}[]>([]);
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
+  const latestDataRef = useRef<BroadcastData>(defaultBroadcast);
 
   // Ticker auto-content
   const [newsTitles, setNewsTitles] = useState<string[]>([]);
   const [weatherText, setWeatherText] = useState("");
+
+  useEffect(() => {
+    latestDataRef.current = data;
+  }, [data]);
 
   // Load data
   useEffect(() => {
@@ -265,16 +270,17 @@ export default function BroadcastPage() {
     return lines.join("\n");
   }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo, sponsorLogos]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (payload?: BroadcastData) => {
     if (!user) return;
     setSaving(true);
     const toastId = toast("Atualizando XML...", { icon: <RefreshCw size={14} className="animate-spin" /> });
     try {
       const { data: current } = await supabase.from("user_settings").select("cenario_config").eq("user_id", user.id).maybeSingle();
       const existing = (current?.cenario_config && typeof current.cenario_config === "object") ? current.cenario_config as Record<string, any> : {};
+      const nextData = payload || latestDataRef.current;
       
       await supabase.from("user_settings").update({
-        cenario_config: { ...existing, broadcast: data } as any,
+        cenario_config: { ...existing, broadcast: nextData } as any,
       }).eq("user_id", user.id);
 
       toast.success("XML atualizado!", { id: toastId });
@@ -282,7 +288,7 @@ export default function BroadcastPage() {
       toast.error("Erro ao salvar", { id: toastId });
     }
     setSaving(false);
-  }, [user, data]);
+  }, [user]);
 
   const onFieldBlur = useCallback(() => {
     handleSave();
@@ -410,7 +416,11 @@ export default function BroadcastPage() {
                 <input
                   type="checkbox"
                   checked={data.showQrCode}
-                  onChange={e => { setData({ ...data, showQrCode: e.target.checked }); setTimeout(onFieldBlur, 100); }}
+                  onChange={e => {
+                    const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
+                    setData(nextData);
+                    void handleSave(nextData);
+                  }}
                   className="accent-current"
                   style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
                 />
@@ -431,7 +441,11 @@ export default function BroadcastPage() {
               <input
                 type="checkbox"
                 checked={data.tickerNews}
-                onChange={e => { setData({ ...data, tickerNews: e.target.checked }); setTimeout(onFieldBlur, 100); }}
+                onChange={e => {
+                  const nextData = { ...latestDataRef.current, tickerNews: e.target.checked };
+                  setData(nextData);
+                  void handleSave(nextData);
+                }}
                 className="accent-current"
                 style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
               />
@@ -446,7 +460,11 @@ export default function BroadcastPage() {
               <input
                 type="checkbox"
                 checked={data.tickerWeather}
-                onChange={e => { setData({ ...data, tickerWeather: e.target.checked }); setTimeout(onFieldBlur, 100); }}
+                onChange={e => {
+                  const nextData = { ...latestDataRef.current, tickerWeather: e.target.checked };
+                  setData(nextData);
+                  void handleSave(nextData);
+                }}
                 className="accent-current"
                 style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
               />
