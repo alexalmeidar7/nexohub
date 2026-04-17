@@ -52,6 +52,7 @@ interface Evento {
   descricao: string;
   recorrencia: string;
   prioridade: string;
+  tipo_evento?: string;
   programa?: Programa;
   participantes?: Participante[];
 }
@@ -90,10 +91,12 @@ export default function AgendaPage() {
 
   // Form
   const [formProgramaId, setFormProgramaId] = useState("");
+  const [formEstudioFilter, setFormEstudioFilter] = useState<string>("todos");
   const [formData, setFormData] = useState<Date | undefined>(undefined);
   const [formLocal, setFormLocal] = useState("");
   const [formDescricao, setFormDescricao] = useState("");
   const [formRecorrencia, setFormRecorrencia] = useState<string>("unico");
+  const [formTipoEvento, setFormTipoEvento] = useState<string>("live");
   const [formPrioridade, setFormPrioridade] = useState("normal");
   const [formParticipantes, setFormParticipantes] = useState<Participante[]>([
     { nome: "", instagram: "" },
@@ -170,10 +173,12 @@ export default function AgendaPage() {
 
   const resetForm = () => {
     setFormProgramaId("");
+    setFormEstudioFilter("todos");
     setFormData(undefined);
     setFormLocal("");
     setFormDescricao("");
     setFormRecorrencia("unico");
+    setFormTipoEvento("live");
     setFormPrioridade("normal");
     setFormParticipantes([{ nome: "", instagram: "" }]);
     setEditingId(null);
@@ -187,10 +192,12 @@ export default function AgendaPage() {
   const startEdit = (evt: Evento) => {
     setEditingId(evt.id);
     setFormProgramaId(evt.programa_id);
+    setFormEstudioFilter(evt.programa?.estudio || "todos");
     setFormData(new Date(evt.data + "T12:00:00"));
     setFormLocal(evt.local);
     setFormDescricao(evt.descricao);
     setFormRecorrencia(evt.recorrencia);
+    setFormTipoEvento(evt.tipo_evento || "live");
     setFormPrioridade(evt.prioridade || "normal");
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
@@ -211,6 +218,7 @@ export default function AgendaPage() {
       descricao: formDescricao,
       recorrencia: formRecorrencia,
       prioridade: formPrioridade,
+      tipo_evento: formTipoEvento,
     } as any;
 
     if (editingId) {
@@ -610,28 +618,46 @@ export default function AgendaPage() {
                 .agenda-dialog-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--layout-accent-color, #2563eb) 80%, black 20%), var(--layout-accent-color, #2563eb)); }
               `}</style>
 
-              {/* Programa */}
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Programa</Label>
-                <Select value={formProgramaId} onValueChange={setFormProgramaId}>
-                  <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <SelectValue placeholder="Selecione o programa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {programas.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.nome} ({p.horario_inicio} - {p.horario_fim})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedPrograma && (
-                  <p className="text-[10px] mt-1.5 px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
-                    ⏰ {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
-                    {selectedPrograma.estudio && ` • ${selectedPrograma.estudio}`}
-                  </p>
-                )}
+              {/* Estudio + Programa (side by side) */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Estúdio</Label>
+                  <Select value={formEstudioFilter} onValueChange={(v) => { setFormEstudioFilter(v); setFormProgramaId(""); }}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos os estúdios</SelectItem>
+                      {estudios.map((e) => (
+                        <SelectItem key={e} value={e}>{e}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Programa</Label>
+                  <Select value={formProgramaId} onValueChange={setFormProgramaId}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <SelectValue placeholder="Selecione o programa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {programas
+                        .filter((p) => formEstudioFilter === "todos" || p.estudio === formEstudioFilter)
+                        .map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.nome} ({p.horario_inicio} - {p.horario_fim})
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              {selectedPrograma && (
+                <p className="text-[10px] -mt-3 px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
+                  ⏰ {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
+                  {selectedPrograma.estudio && ` • ${selectedPrograma.estudio}`}
+                </p>
+              )}
 
               {/* Calendário */}
               <div>
@@ -653,8 +679,8 @@ export default function AgendaPage() {
                 )}
               </div>
 
-              {/* Recorrência + Local (side by side) */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Recorrência + Tipo + Local (side by side) */}
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
                   <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
@@ -666,6 +692,18 @@ export default function AgendaPage() {
                       <SelectItem value="semanal">Toda semana</SelectItem>
                       <SelectItem value="mensal">Todo mês</SelectItem>
                       <SelectItem value="programa_semanal">Programa semanal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Tipo</Label>
+                  <Select value={formTipoEvento} onValueChange={setFormTipoEvento}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="live">🔴 Ao vivo</SelectItem>
+                      <SelectItem value="gravacao">🎬 Gravação</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
