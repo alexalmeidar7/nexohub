@@ -496,13 +496,19 @@ export default function RoteiroPrograma() {
               const dataFormatada = format(new Date(r.data_programa), "dd/MM/yyyy");
               const isFeito = r.status === "feito";
               const isAgd = r.status === "agendado";
+              const isAuto = typeof r.titulo === "string" && r.titulo.includes("[AUTO]");
               return (
-                <div key={r.id} className="flex-shrink-0 rounded-lg p-2.5 flex flex-col gap-1.5 transition-all hover:brightness-95" style={{ minWidth: "220px", maxWidth: "280px", backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)" }}>
-                  <div className="flex items-center gap-1.5">
+                <div key={r.id} className="flex-shrink-0 rounded-lg p-2.5 flex flex-col gap-1.5 transition-all hover:brightness-95" style={{ minWidth: "220px", maxWidth: "280px", backgroundColor: isAuto ? "color-mix(in srgb, #8b5cf6 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: isAuto ? "2px solid #8b5cf6" : "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)", boxShadow: isAuto ? "0 0 0 3px color-mix(in srgb, #8b5cf6 18%, transparent)" : undefined }}>
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="text-xs font-bold truncate flex-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                       {r.programa_nome || "Sem programa"}
                       {r.numero_roteiro && <span className="text-[10px] font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}> #{r.numero_roteiro}</span>}
                     </p>
+                    {isAuto && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0 flex items-center gap-0.5" style={{ backgroundColor: "#8b5cf6", color: "#fff" }} title="Gerado por Automação">
+                        🤖 AUTO
+                      </span>
+                    )}
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0" style={{
                       backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
                       color: isFeito ? "#16a34a" : isAgd ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
