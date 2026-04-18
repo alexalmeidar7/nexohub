@@ -324,6 +324,7 @@ serve(async (req) => {
     const qrLink = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
     const broadcastConfig = (settingsRes.data?.cenario_config as any)?.broadcast || {};
     const assunto = broadcastConfig.assunto || "";
+    const fundoAssunto = broadcastConfig.useCustomAssuntoBg && broadcastConfig.assuntoBgUrl ? broadcastConfig.assuntoBgUrl : "";
 
     const tickerParts: string[] = [];
     if (broadcastConfig.tickerNews) {
