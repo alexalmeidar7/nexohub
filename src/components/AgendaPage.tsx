@@ -870,7 +870,23 @@ export default function AgendaPage() {
                 />
               </div>
 
-              {/* Submit */}
+              {/* Criar Roteiro Express (apenas para gravação de podcast) */}
+              {formTipoEvento === "gravacao" && (
+                <button
+                  type="button"
+                  onClick={handleCreateRoteiroFromEvento}
+                  disabled={!formProgramaId || !formData || creatingRoteiro}
+                  className="w-full h-10 text-xs font-semibold rounded-[12px] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{
+                    border: "1.5px dashed color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, transparent)",
+                    color: "var(--layout-accent-color, #2563eb)",
+                    backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 6%, transparent)",
+                  }}
+                >
+                  {creatingRoteiro ? "Criando…" : "📝 Deseja criar/agendar o roteiro desse programa?"}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={handleSave}
