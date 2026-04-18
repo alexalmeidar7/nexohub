@@ -132,6 +132,10 @@ export default function AgendaPage() {
   const [formParticipantes, setFormParticipantes] = useState<Participante[]>([
     { nome: "", instagram: "" },
   ]);
+  const [formYoutubeUrl, setFormYoutubeUrl] = useState("");
+  const [formArtesUrls, setFormArtesUrls] = useState<string[]>([]);
+  const [uploadingArte, setUploadingArte] = useState(false);
+  const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
 
   const [loadingData, setLoadingData] = useState(true);
   const [expressOpen, setExpressOpen] = useState(false);
@@ -147,6 +151,15 @@ export default function AgendaPage() {
       .eq("user_id", user.id)
       .order("horario_inicio");
     setProgramas((data as Programa[]) || []);
+  }, [user]);
+
+  const fetchApresentadores = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("apresentadores")
+      .select("id, nome, instagram, cargo")
+      .eq("user_id", user.id);
+    setApresentadores((data as Apresentador[]) || []);
   }, [user]);
 
   const fetchEventos = useCallback(async () => {
