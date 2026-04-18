@@ -928,6 +928,83 @@ export default function AgendaPage() {
           </div>
         </div>
 
+        {/* Week schedule (Mon-Sun) */}
+        <div className="mt-5">
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
+              <span className="flex items-center gap-1.5">
+                <CalendarIcon size={12} /> Programação da Semana
+                {weekEvents.length > 0 && (
+                  <span className="opacity-70 font-normal ml-1">
+                    ({format(weekEvents[0].date, "dd/MM")} – {format(weekEvents[6].date, "dd/MM")})
+                  </span>
+                )}
+              </span>
+              <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                {weekEvents.reduce((sum, d) => sum + d.events.length, 0)} evento{weekEvents.reduce((sum, d) => sum + d.events.length, 0) !== 1 ? "s" : ""}
+              </span>
+            </div>
+            <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
+              {weekEvents.map(({ dateStr, date, events: dayEvents }) => {
+                const isToday = format(new Date(), "yyyy-MM-dd") === dateStr;
+                return (
+                  <button
+                    type="button"
+                    key={dateStr}
+                    onClick={() => setSelectedDate(date)}
+                    className="text-left rounded-lg p-2 flex flex-col gap-1.5 hover:shadow-sm transition-all"
+                    style={{
+                      backgroundColor: isToday
+                        ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
+                        : "rgba(13,4,70,0.03)",
+                      border: `1px solid color-mix(in srgb, var(--layout-border-color, #333333) ${isToday ? 50 : 20}%, transparent)`,
+                      minHeight: 110,
+                    }}
+                  >
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-icon-color, #888888)" }}>
+                        {format(date, "EEE", { locale: ptBR })}
+                      </span>
+                      <span className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                        {format(date, "dd/MM")}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {dayEvents.length === 0 ? (
+                        <p className="text-[9px] italic" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 35%, transparent)" }}>
+                          Sem eventos
+                        </p>
+                      ) : (
+                        dayEvents.slice(0, 4).map((evt) => (
+                          <div
+                            key={evt.id}
+                            className="rounded px-1.5 py-1"
+                            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }}
+                          >
+                            <p className="text-[10px] font-semibold leading-tight truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                              {evt.programa?.nome || "Programa removido"}
+                            </p>
+                            {evt.programa && (
+                              <p className="text-[9px] leading-tight" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                                {evt.programa.horario_inicio.slice(0, 5)}
+                              </p>
+                            )}
+                          </div>
+                        ))
+                      )}
+                      {dayEvents.length > 4 && (
+                        <p className="text-[9px] font-semibold" style={{ color: "var(--layout-icon-color, #888888)" }}>
+                          + {dayEvents.length - 4} mais
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {/* Past events history */}
         <div className="mt-5">
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
