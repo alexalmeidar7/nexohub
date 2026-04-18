@@ -1052,3 +1052,10 @@ table:not([data-no-row-hover]) tbody tr:hover {
   top: 0 !important;
   bottom: 0 !important;
 }
+
+/* Agenda widget: hoje pulsing border */
+@keyframes agendaTodayPulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--layout-accent-color, #2563eb); border-color: var(--layout-accent-color, #2563eb); }
+  50%      { box-shadow: 0 0 10px 3px color-mix(in srgb, var(--layout-accent-color, #2563eb) 55%, transparent); border-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, transparent); }
+}
+.agenda-today-pulse { animation: agendaTodayPulse 1.4s ease-in-out infinite; }
