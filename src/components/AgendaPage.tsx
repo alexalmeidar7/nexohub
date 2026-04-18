@@ -103,6 +103,7 @@ export default function AgendaPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [historyDateFilter, setHistoryDateFilter] = useState<Date | undefined>(undefined);
+  const [weekOffset, setWeekOffset] = useState(0);
 
   // Form
   const [formProgramaId, setFormProgramaId] = useState("");
@@ -441,7 +442,7 @@ export default function AgendaPage() {
     const dow = ref.getDay(); // 0=Sun..6=Sat
     const diffToMonday = dow === 0 ? -6 : 1 - dow;
     const monday = new Date(ref);
-    monday.setDate(ref.getDate() + diffToMonday);
+    monday.setDate(ref.getDate() + diffToMonday + weekOffset * 7);
     monday.setHours(0, 0, 0, 0);
     const days: { dateStr: string; date: Date; events: Evento[] }[] = [];
     for (let i = 0; i < 7; i++) {
@@ -455,7 +456,7 @@ export default function AgendaPage() {
       days.push({ dateStr: ds, date: new Date(d), events: dayEvents });
     }
     return days;
-  }, [eventos, filterLocal, selectedDate]);
+  }, [eventos, filterLocal, selectedDate, weekOffset]);
 
   const renderEventCard = (evt: Evento, inactive = false) => (
     <div
@@ -947,12 +948,38 @@ export default function AgendaPage() {
         <div className="mt-5">
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 flex-wrap">
                 <CalendarIcon size={12} /> Programação da Semana
                 {weekEvents.length > 0 && (
                   <span className="opacity-70 font-normal ml-1">
                     ({format(weekEvents[0].date, "dd/MM")} – {format(weekEvents[6].date, "dd/MM")})
                   </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset((w) => w - 1)}
+                  className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
+                >
+                  ← Semana anterior
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset((w) => w + 1)}
+                  className="px-2 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
+                >
+                  Próxima semana →
+                </button>
+                {weekOffset !== 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setWeekOffset(0)}
+                    className="px-2 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 35%, transparent)", color: "var(--layout-header-text, #ffffff)" }}
+                  >
+                    Hoje
+                  </button>
                 )}
               </span>
               <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
