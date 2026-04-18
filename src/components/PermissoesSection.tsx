@@ -36,7 +36,7 @@ const MODULE_GROUPS = [
   {
     category: "Comercial",
     items: [
-      { key: "testemunhais", label: "Testemunhais" },
+      { key: "testemunhais", label: "Citações" },
       { key: "promocoes", label: "Promoções" },
       { key: "configtelapromo", label: "Config Tela Promo" },
       { key: "telapromo", label: "Tela Promo" },

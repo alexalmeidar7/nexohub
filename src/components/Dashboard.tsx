@@ -95,7 +95,7 @@ const sidebarMenu: MenuItem[] = [
   },
   {
     icon: ShoppingBag, label: "comercial", children: [
-      { icon: MessageSquareQuote, label: "testemunhais", page: "testemunhais" },
+      { icon: MessageSquareQuote, label: "citações", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
       { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page, permKey: "telapromo" },
       { icon: Settings, label: "config tela promo", page: "configtelapromo", separator: true },
@@ -145,7 +145,7 @@ const pageTitle: Record<Page, string> = {
   agenda: "Agenda",
   curtidas: "Músicas Curtidas",
   configuracoes: "Configurações",
-  testemunhais: "Comercial — Testemunhais",
+  testemunhais: "Comercial — Citações",
   promocoes: "Comercial — Promoções",
   logos: "Comercial — Logos Patrocinadores",
   shopping: "Comercial — Shopping",
