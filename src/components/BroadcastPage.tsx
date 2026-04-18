@@ -38,6 +38,7 @@ interface BroadcastData {
   showQrCode: boolean;
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
+  assuntoBgProgramaIds: string[];
 }
 
 const defaultBroadcast: BroadcastData = {
@@ -49,6 +50,7 @@ const defaultBroadcast: BroadcastData = {
   showQrCode: false,
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
+  assuntoBgProgramaIds: [],
 };
 
 interface SocialItem {
