@@ -3,8 +3,9 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw } from "lucide-react";
+import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon } from "lucide-react";
 import XmlLinkRow from "@/components/XmlLinkRow";
+
 
 /** Extract @username from a URL or handle string */
 function extractHandle(value: string): string {
@@ -35,6 +36,8 @@ interface BroadcastData {
   tickerNews: boolean;
   tickerWeather: boolean;
   showQrCode: boolean;
+  assuntoBgUrl: string;
+  useCustomAssuntoBg: boolean;
 }
 
 const defaultBroadcast: BroadcastData = {
@@ -44,6 +47,8 @@ const defaultBroadcast: BroadcastData = {
   tickerNews: false,
   tickerWeather: false,
   showQrCode: false,
+  assuntoBgUrl: "",
+  useCustomAssuntoBg: false,
 };
 
 interface SocialItem {
@@ -239,6 +244,7 @@ export default function BroadcastPage() {
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<broadcast>");
     lines.push(`  <titulo>${escXml(data.assunto || "")}</titulo>`);
+    lines.push(`  <fundo_assunto>${escXml(data.useCustomAssuntoBg ? data.assuntoBgUrl : "")}</fundo_assunto>`);
     lines.push("  <programa>");
     lines.push(`    <nome>${escXml(programaNome || "")}</nome>`);
     lines.push(`    <logo_url>${escXml(programaLogo || "")}</logo_url>`);
@@ -294,6 +300,39 @@ export default function BroadcastPage() {
     handleSave();
   }, [handleSave]);
 
+  const [uploadingBg, setUploadingBg] = useState(false);
+  const handleBgUpload = useCallback(async (file: File) => {
+    if (!user || !file) return;
+    if (file.type !== "image/png") {
+      toast.error("A imagem deve ser .png");
+      return;
+    }
+    setUploadingBg(true);
+    try {
+      const path = `broadcast/${user.id}/assunto-bg-${Date.now()}.png`;
+      const { error } = await supabase.storage
+        .from("empresa-assets")
+        .upload(path, file, { upsert: true, contentType: "image/png", cacheControl: "3600" });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+      const url = `${urlData.publicUrl}?t=${Date.now()}`;
+      const next = { ...latestDataRef.current, assuntoBgUrl: url, useCustomAssuntoBg: true };
+      setData(next);
+      await handleSave(next);
+      toast.success("Fundo do assunto atualizado!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao enviar imagem");
+    }
+    setUploadingBg(false);
+  }, [user, handleSave]);
+
+  const removeBgImage = useCallback(() => {
+    const next = { ...latestDataRef.current, assuntoBgUrl: "", useCustomAssuntoBg: false };
+    setData(next);
+    void handleSave(next);
+  }, [handleSave]);
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0 px-2 pt-2 pb-4">
       {/* ── Left: Mockup Preview ── */}
@@ -312,6 +351,7 @@ export default function BroadcastPage() {
           empresaSocials={empresaSocials}
           composedTicker={composedTicker}
           sponsorLogos={sponsorLogos}
+          assuntoBgUrl={data.useCustomAssuntoBg ? data.assuntoBgUrl : ""}
         />
       </div>
 
@@ -390,6 +430,59 @@ export default function BroadcastPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Background image upload for Assunto */}
+            <div className="space-y-1 pt-2 border-t" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+              <label className="text-[10px] font-semibold uppercase tracking-wider flex items-center justify-between" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                <span>Fundo do Assunto (.png)</span>
+                {data.assuntoBgUrl && (
+                  <label className="flex items-center gap-1 cursor-pointer normal-case tracking-normal text-[9px]">
+                    <input
+                      type="checkbox"
+                      checked={data.useCustomAssuntoBg}
+                      onChange={e => {
+                        const next = { ...latestDataRef.current, useCustomAssuntoBg: e.target.checked };
+                        setData(next);
+                        void handleSave(next);
+                      }}
+                      style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
+                    />
+                    Usar
+                  </label>
+                )}
+              </label>
+              {data.assuntoBgUrl ? (
+                <div className="relative rounded-xl overflow-hidden" style={{ backgroundColor: "#0a0a0a", aspectRatio: "16/4" }}>
+                  <img src={data.assuntoBgUrl} alt="Fundo assunto" className="w-full h-full object-contain" />
+                  <button
+                    onClick={removeBgImage}
+                    className="absolute top-1 right-1 p-1 rounded-full"
+                    style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#fff" }}
+                    title="Remover"
+                  >
+                    <X size={11} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl cursor-pointer text-[11px] font-medium border-2 border-dashed" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)", color: "var(--layout-icon-color, #888)" }}>
+                  {uploadingBg ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                  <span>{uploadingBg ? "Enviando..." : "Enviar PNG"}</span>
+                  <input
+                    type="file"
+                    accept="image/png"
+                    className="hidden"
+                    onChange={e => {
+                      const f = e.target.files?.[0];
+                      if (f) handleBgUpload(f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              )}
+              <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>
+                Padrão: apenas o texto. Imagem opcional substituirá o fundo da tarja.
+              </p>
             </div>
           </div>
 
@@ -495,13 +588,14 @@ export default function BroadcastPage() {
 function MockupPreview({
   empresaLogo, programaNome, programaLogo, displayLocutor, locutorInstagram,
   locutorFoto, accentColor, assunto, showQrCode, whatsappNumber,
-  empresaSocials, composedTicker, sponsorLogos,
+  empresaSocials, composedTicker, sponsorLogos, assuntoBgUrl,
 }: {
   empresaLogo: string; programaNome: string; programaLogo: string;
   displayLocutor: string; locutorInstagram: string; locutorFoto: string;
   accentColor: string; assunto: string; showQrCode: boolean;
   whatsappNumber: string; empresaSocials: SocialItem[]; composedTicker: string;
   sponsorLogos: {nome: string; logo_url: string}[];
+  assuntoBgUrl?: string;
 }) {
   // Social cycling animation
   const [socialIdx, setSocialIdx] = useState(0);
@@ -629,14 +723,27 @@ function MockupPreview({
             {/* Subject bar – separated from ticker */}
             <div
               style={{
-                backgroundColor: "rgba(240,240,240,0.95)",
+                backgroundColor: assuntoBgUrl ? "transparent" : "rgba(240,240,240,0.95)",
+                backgroundImage: assuntoBgUrl ? `url(${assuntoBgUrl})` : undefined,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
                 padding: "10px 16px",
                 borderRadius: "0 0 6px 6px",
+                minHeight: assuntoBgUrl ? 38 : undefined,
               }}
             >
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-5 rounded-sm flex-shrink-0" style={{ backgroundColor: accentColor }} />
-                <span className="text-sm font-black uppercase truncate" style={{ color: "#111" }}>
+                {!assuntoBgUrl && (
+                  <div className="w-1.5 h-5 rounded-sm flex-shrink-0" style={{ backgroundColor: accentColor }} />
+                )}
+                <span
+                  className="text-sm font-black uppercase truncate"
+                  style={{
+                    color: assuntoBgUrl ? "#fff" : "#111",
+                    textShadow: assuntoBgUrl ? "0 1px 4px rgba(0,0,0,0.7)" : undefined,
+                  }}
+                >
                   {assunto || "BASE PARA ASSUNTO"}
                 </span>
               </div>

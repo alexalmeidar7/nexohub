@@ -324,6 +324,7 @@ serve(async (req) => {
     const qrLink = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
     const broadcastConfig = (settingsRes.data?.cenario_config as any)?.broadcast || {};
     const assunto = broadcastConfig.assunto || "";
+    const fundoAssunto = broadcastConfig.useCustomAssuntoBg && broadcastConfig.assuntoBgUrl ? broadcastConfig.assuntoBgUrl : "";
 
     const tickerParts: string[] = [];
     if (broadcastConfig.tickerNews) {
@@ -374,6 +375,7 @@ serve(async (req) => {
     lines.push(`    <rede_social_icone>${esc(redeSocialIcone)}</rede_social_icone>`);
     lines.push(`    <logo_patrocinador>${esc(logoPatrocinador)}</logo_patrocinador>`);
     lines.push(`    <titulo>${esc(assunto)}</titulo>`);
+    lines.push(`    <fundo_assunto>${esc(fundoAssunto)}</fundo_assunto>`);
     lines.push(`    <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`    <ticker>${esc(ticker)}</ticker>`);
     lines.push("  </dados>");
