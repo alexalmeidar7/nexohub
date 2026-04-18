@@ -49,6 +49,7 @@ export type Database = {
       }
       agenda_eventos: {
         Row: {
+          artes_urls: string[] | null
           created_at: string
           data: string
           descricao: string | null
@@ -59,8 +60,10 @@ export type Database = {
           recorrencia: string
           tipo_evento: string
           user_id: string
+          youtube_url: string | null
         }
         Insert: {
+          artes_urls?: string[] | null
           created_at?: string
           data: string
           descricao?: string | null
@@ -71,8 +74,10 @@ export type Database = {
           recorrencia?: string
           tipo_evento?: string
           user_id: string
+          youtube_url?: string | null
         }
         Update: {
+          artes_urls?: string[] | null
           created_at?: string
           data?: string
           descricao?: string | null
@@ -83,6 +88,7 @@ export type Database = {
           recorrencia?: string
           tipo_evento?: string
           user_id?: string
+          youtube_url?: string | null
         }
         Relationships: [
           {
