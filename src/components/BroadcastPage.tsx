@@ -36,6 +36,8 @@ interface BroadcastData {
   tickerNews: boolean;
   tickerWeather: boolean;
   showQrCode: boolean;
+  assuntoBgUrl: string;
+  useCustomAssuntoBg: boolean;
 }
 
 const defaultBroadcast: BroadcastData = {
@@ -45,6 +47,8 @@ const defaultBroadcast: BroadcastData = {
   tickerNews: false,
   tickerWeather: false,
   showQrCode: false,
+  assuntoBgUrl: "",
+  useCustomAssuntoBg: false,
 };
 
 interface SocialItem {
