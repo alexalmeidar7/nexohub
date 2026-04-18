@@ -957,6 +957,120 @@ export default function AgendaPage() {
                 />
               </div>
 
+              {/* Live event extras: YouTube, Participants, Artwork uploads */}
+              {formTipoEvento === "live" && (
+                <div className="space-y-4 rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, #ef4444 4%, transparent)", border: "1px solid color-mix(in srgb, #ef4444 20%, transparent)" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-pulse" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#ef4444" }}>Configurações do Evento Ao Vivo</span>
+                  </div>
+
+                  {/* YouTube link */}
+                  <div>
+                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                      <Youtube size={12} /> Link do YouTube
+                    </Label>
+                    <Input
+                      value={formYoutubeUrl}
+                      onChange={(e) => setFormYoutubeUrl(e.target.value)}
+                      placeholder="https://youtube.com/watch?v=..."
+                      className="agenda-form-input h-10 text-xs"
+                      style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}
+                    />
+                  </div>
+
+                  {/* Participantes */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                        <Users size={12} /> Participantes
+                      </Label>
+                      <Button type="button" size="sm" variant="ghost" onClick={addParticipante} className="h-7 text-[10px] gap-1">
+                        <Plus size={12} /> Adicionar
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      {formParticipantes.map((p, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <div className="flex-1 grid grid-cols-2 gap-2">
+                            <Input
+                              value={p.nome}
+                              onChange={(e) => updateParticipante(idx, "nome", e.target.value)}
+                              placeholder="Nome"
+                              disabled={p.obrigatorio}
+                              className="agenda-form-input h-9 text-xs"
+                              style={{ borderColor: p.obrigatorio ? "color-mix(in srgb, #ef4444 30%, transparent)" : "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "10px", backgroundColor: p.obrigatorio ? "color-mix(in srgb, #ef4444 6%, transparent)" : "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}
+                            />
+                            <Input
+                              value={p.instagram}
+                              onChange={(e) => updateParticipante(idx, "instagram", e.target.value)}
+                              placeholder="@instagram"
+                              className="agenda-form-input h-9 text-xs"
+                              style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "10px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}
+                            />
+                          </div>
+                          {p.obrigatorio ? (
+                            <span className="text-[9px] font-bold px-2 py-1 rounded-md" style={{ backgroundColor: "color-mix(in srgb, #ef4444 12%, transparent)", color: "#ef4444" }} title="Apresentador do programa (obrigatório)">FIXO</span>
+                          ) : (
+                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeParticipante(idx)}>
+                              <Trash2 size={14} className="text-destructive" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[9px] mt-1.5 px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
+                      Apresentadores marcados com FIXO são obrigatórios e adicionados automaticamente do cadastro do programa.
+                    </p>
+                  </div>
+
+                  {/* Artes do evento */}
+                  <div>
+                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                      <ImageIcon size={12} /> Artes do Evento
+                    </Label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {formArtesUrls.map((url, idx) => (
+                        <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden group" style={{ border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
+                          <img src={url} alt={`Arte ${idx + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeArte(idx)}
+                            className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            style={{ backgroundColor: "rgba(239,68,68,0.9)", color: "#fff" }}
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                      <label
+                        className="w-20 h-20 rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition-all"
+                        style={{
+                          border: "1.5px dashed color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)",
+                          backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)",
+                          color: "var(--layout-accent-color, #2563eb)",
+                          opacity: uploadingArte ? 0.5 : 1,
+                        }}
+                      >
+                        <Upload size={16} />
+                        <span className="text-[9px] font-semibold">{uploadingArte ? "..." : "Upload"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingArte}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleUploadArte(file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Criar Roteiro Express (apenas para gravação de podcast) */}
               {formTipoEvento === "gravacao" && (
                 <button
