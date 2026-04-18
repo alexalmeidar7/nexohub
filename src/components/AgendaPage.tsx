@@ -78,6 +78,21 @@ const prioridadeColors: Record<string, string> = {
   urgente: "bg-red-100 text-red-800",
 };
 
+// Deterministic HSL color for each studio name
+const studioHue = (name?: string) => {
+  if (!name) return 220;
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return h;
+};
+const studioColors = (name?: string) => {
+  const h = studioHue(name);
+  return {
+    bg: `hsl(${h} 75% 96%)`,
+    border: `hsl(${h} 65% 55%)`,
+    text: `hsl(${h} 70% 28%)`,
+  };
+};
 export default function AgendaPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -975,22 +990,39 @@ export default function AgendaPage() {
                           Sem eventos
                         </p>
                       ) : (
-                        dayEvents.slice(0, 4).map((evt) => (
-                          <div
-                            key={evt.id}
-                            className="rounded px-1.5 py-1"
-                            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }}
-                          >
-                            <p className="text-[10px] font-semibold leading-tight truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                              {evt.programa?.nome || "Programa removido"}
-                            </p>
-                            {evt.programa && (
-                              <p className="text-[9px] leading-tight" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                                {evt.programa.horario_inicio.slice(0, 5)}
-                              </p>
-                            )}
-                          </div>
-                        ))
+                        dayEvents.slice(0, 4).map((evt) => {
+                          const sc = studioColors(evt.programa?.estudio);
+                          const isLive = (evt.tipo_evento || "live") === "live";
+                          return (
+                            <div
+                              key={evt.id}
+                              className="rounded px-1.5 py-1"
+                              style={{ backgroundColor: sc.bg, borderLeft: `3px solid ${sc.border}`, border: `1px solid ${sc.border}40`, borderLeftWidth: 3 }}
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <p className="text-[10px] font-semibold leading-tight truncate" style={{ color: sc.text }}>
+                                  {evt.programa?.nome || "Programa removido"}
+                                </p>
+                                <span
+                                  className="text-[8px] font-bold px-1 py-[1px] rounded shrink-0"
+                                  style={{
+                                    backgroundColor: isLive ? "#dc2626" : "#475569",
+                                    color: "#ffffff",
+                                  }}
+                                  title={isLive ? "Ao vivo" : "Gravação"}
+                                >
+                                  {isLive ? "● LIVE" : "🎬 REC"}
+                                </span>
+                              </div>
+                              {evt.programa && (
+                                <p className="text-[9px] leading-tight" style={{ color: `${sc.text}99` }}>
+                                  {evt.programa.horario_inicio.slice(0, 5)}
+                                  {evt.programa.estudio && ` • ${evt.programa.estudio}`}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })
                       )}
                       {dayEvents.length > 4 && (
                         <p className="text-[9px] font-semibold" style={{ color: "var(--layout-icon-color, #888888)" }}>
