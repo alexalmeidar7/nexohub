@@ -193,7 +193,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
           data_fim: dataFim,
         }).eq("id", editingId);
         if (error) throw error;
-        toast({ title: "Testemunhal atualizado!" });
+        toast({ title: "Citação atualizada!" });
       } else {
         const { error } = await supabase.from("testemunhais").insert({
           user_id: dataUserId,
@@ -204,7 +204,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
           data_fim: dataFim,
         });
         if (error) throw error;
-        toast({ title: "Testemunhal salvo com sucesso!" });
+        toast({ title: "Citação salva com sucesso!" });
       }
 
       setEditingId(null);
@@ -257,7 +257,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
             <ImageIcon size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
           </div>
           <div>
-            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Testemunhais</h3>
+            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Citações</h3>
             <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie depoimentos de clientes vinculados a programas</p>
           </div>
         </div>
@@ -266,7 +266,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
         <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
           <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
             <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>
-              {editingId ? "✏️ Editar Testemunhal" : "➕ Novo Testemunhal"}
+              {editingId ? "✏️ Editar Citação" : "➕ Nova Citação"}
             </h3>
             {editingId && (
               <button type="button" onClick={cancelEdit}
@@ -303,7 +303,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
                 </div>
 
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Texto do Testemunhal</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Texto da Citação</label>
                   <div style={{ ...inputStyle, borderRadius: "12px", overflow: "hidden" }}
                     onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = "#be0101"; }}
                     onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
@@ -362,7 +362,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
                 <button type="submit" disabled={saving}
                   className="btn-skyglass-accent w-full py-2.5 text-sm disabled:opacity-50"
                 >
-                  {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingId ? "Atualizar Testemunhal" : "Cadastrar Testemunhal"}
+                  {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingId ? "Atualizar Citação" : "Cadastrar Citação"}
                 </button>
               </div>
             </div>
@@ -372,11 +372,11 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
         {/* List */}
         <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
           <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>📋 Testemunhais Cadastrados</h3>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>📋 Citações Cadastradas</h3>
           </div>
 
           {items.length === 0 ? (
-            <p className="text-sm py-8 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhum testemunhal cadastrado.</p>
+            <p className="text-sm py-8 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhuma citação cadastrada.</p>
           ) : (
             <>
               {/* Desktop table */}
