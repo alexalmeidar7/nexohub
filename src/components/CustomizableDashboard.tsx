@@ -1049,14 +1049,26 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
         <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 35%, transparent)" }}>Nenhum evento próximo</p>
       ) : (
         <div className="space-y-2">
-          {events.map(ev => (
-            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 10%, transparent)" }}>
-              <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text)" }}>{ev.descricao || "Evento"}</p>
-              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 45%, transparent)" }}>
-                {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — {ev.local}
-              </p>
-            </div>
-          ))}
+          {events.map(ev => {
+            const todayStr = new Date().toISOString().split("T")[0];
+            const isToday = ev.data === todayStr;
+            return (
+              <div
+                key={ev.id}
+                className={`px-3 py-2 rounded-lg ${isToday ? "agenda-today-pulse" : ""}`}
+                style={{
+                  background: "color-mix(in srgb, var(--layout-accent-color) 10%, transparent)",
+                  border: isToday ? "2px solid var(--layout-accent-color)" : "2px solid transparent",
+                }}
+              >
+                <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text)" }}>{ev.descricao || "Evento"}</p>
+                <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 45%, transparent)" }}>
+                  {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — {ev.local}
+                  {isToday && <span className="ml-2 font-bold" style={{ color: "var(--layout-accent-color)" }}>● HOJE</span>}
+                </p>
+              </div>
+            );
+          })}
         </div>
       )}
       <div className="mt-auto pt-3">
