@@ -120,6 +120,9 @@ export default function AgendaPage() {
   ]);
 
   const [loadingData, setLoadingData] = useState(true);
+  const [expressOpen, setExpressOpen] = useState(false);
+  const [expressEditData, setExpressEditData] = useState<ExpressEditData | null>(null);
+  const [creatingRoteiro, setCreatingRoteiro] = useState(false);
   const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
   const fetchProgramas = useCallback(async () => {
