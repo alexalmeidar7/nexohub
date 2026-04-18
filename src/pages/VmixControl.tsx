@@ -22,6 +22,12 @@ export default function VmixControl() {
   });
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.protocol === "https:" && window.location.hostname !== "localhost" && !window.location.hostname.includes("lovable.app") && !window.location.hostname.includes("lovableproject.com")) {
+      window.location.replace(`http://${window.location.host}${window.location.pathname}${window.location.search}${window.location.hash}`);
+    }
+  }, []);
+
+  useEffect(() => {
     const id = setInterval(() => {
       const now = new Date();
       setClock({
