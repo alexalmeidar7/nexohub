@@ -71,34 +71,65 @@ serve(async (req) => {
 
     const results: { phone: string; ok: boolean; error?: string; sid?: string }[] = [];
 
+    // Twilio limita mensagens em 1600 caracteres. Dividimos em pedaços respeitando quebras de linha.
+    const MAX_LEN = 1500;
+    function splitMessage(text: string): string[] {
+      if (text.length <= MAX_LEN) return [text];
+      const parts: string[] = [];
+      let remaining = text;
+      while (remaining.length > MAX_LEN) {
+        let cut = remaining.lastIndexOf("\n", MAX_LEN);
+        if (cut < MAX_LEN * 0.5) cut = remaining.lastIndexOf(" ", MAX_LEN);
+        if (cut < MAX_LEN * 0.5) cut = MAX_LEN;
+        parts.push(remaining.slice(0, cut).trimEnd());
+        remaining = remaining.slice(cut).trimStart();
+      }
+      if (remaining) parts.push(remaining);
+      return parts.map((p, i) => `(${i + 1}/${parts.length})\n${p}`);
+    }
+
+    const chunks = splitMessage(mensagem);
+
     for (const contato of contatos) {
       const phone = contato.whatsapp.startsWith("55") ? contato.whatsapp : `55${contato.whatsapp}`;
-      try {
-        const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "X-Connection-Api-Key": TWILIO_API_KEY,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({
-            To: `whatsapp:+${phone}`,
-            From: `whatsapp:+${TWILIO_FROM}`,
-            Body: mensagem,
-          }),
-        });
+      let allOk = true;
+      let lastSid: string | undefined;
+      let lastError: string | undefined;
 
-        const data = await response.json();
-        if (!response.ok) {
-          console.error(`Twilio error for ${phone}:`, JSON.stringify(data));
-          results.push({ phone, ok: false, error: data.message || `HTTP ${response.status}` });
-        } else {
-          results.push({ phone, ok: true, sid: data.sid });
+      for (const chunk of chunks) {
+        try {
+          const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "X-Connection-Api-Key": TWILIO_API_KEY,
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              To: `whatsapp:+${phone}`,
+              From: `whatsapp:+${TWILIO_FROM}`,
+              Body: chunk,
+            }),
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            console.error(`Twilio error for ${phone}:`, JSON.stringify(data));
+            allOk = false;
+            lastError = data.message || `HTTP ${response.status}`;
+            break;
+          } else {
+            lastSid = data.sid;
+          }
+        } catch (err) {
+          console.error(`Error sending to ${phone}:`, err);
+          allOk = false;
+          lastError = err instanceof Error ? err.message : "Unknown";
+          break;
         }
-      } catch (err) {
-        console.error(`Error sending to ${phone}:`, err);
-        results.push({ phone, ok: false, error: err instanceof Error ? err.message : "Unknown" });
       }
+
+      results.push({ phone, ok: allOk, sid: lastSid, error: allOk ? undefined : lastError });
     }
 
     const successCount = results.filter(r => r.ok).length;
