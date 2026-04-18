@@ -116,6 +116,15 @@ export default function BroadcastPage() {
       }
       setEmpresaSocials(socials);
 
+      // All programs (for linking assunto background)
+      const { data: allProgs } = await supabase
+        .from("programas")
+        .select("id, nome")
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+        .order("nome");
+      if (allProgs) setAllProgramas(allProgs);
+
       // Current program – match by time AND day of week
       const now = new Date();
       const hh = String(now.getHours()).padStart(2, "0");
