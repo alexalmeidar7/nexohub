@@ -254,12 +254,21 @@ export default function BroadcastPage() {
   // Generate XML content
   const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+  const effectiveAssuntoBgUrl = useMemo(() => {
+    if (!data.useCustomAssuntoBg || !data.assuntoBgUrl) return "";
+    const linked = data.assuntoBgProgramaIds || [];
+    // If no programs linked, apply globally; otherwise only when current program is in the linked list
+    if (linked.length === 0) return data.assuntoBgUrl;
+    if (activeProgramaId && linked.includes(activeProgramaId)) return data.assuntoBgUrl;
+    return "";
+  }, [data.useCustomAssuntoBg, data.assuntoBgUrl, data.assuntoBgProgramaIds, activeProgramaId]);
+
   const broadcastXml = useMemo(() => {
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<broadcast>");
     lines.push(`  <titulo>${escXml(data.assunto || "")}</titulo>`);
-    lines.push(`  <fundo_assunto>${escXml(data.useCustomAssuntoBg ? data.assuntoBgUrl : "")}</fundo_assunto>`);
+    lines.push(`  <fundo_assunto>${escXml(effectiveAssuntoBgUrl)}</fundo_assunto>`);
     lines.push("  <programa>");
     lines.push(`    <nome>${escXml(programaNome || "")}</nome>`);
     lines.push(`    <logo_url>${escXml(programaLogo || "")}</logo_url>`);
