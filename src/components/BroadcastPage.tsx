@@ -295,31 +295,29 @@ export default function BroadcastPage() {
   }, [handleSave]);
 
   return (
-    <div className="flex flex-col gap-6 h-full min-h-0">
-      {/* ── Top: Mockup Preview (hero) ── */}
-      <div className="w-full flex justify-center px-2 pt-2">
-        <div className="w-full" style={{ maxWidth: 960 }}>
-          <MockupPreview
-            empresaLogo={empresaLogo}
-            programaNome={programaNome}
-            programaLogo={programaLogo}
-            displayLocutor={displayLocutor}
-            locutorInstagram={locutorInstagram}
-            locutorFoto={locutorFoto}
-            accentColor={accentColor}
-            assunto={data.assunto}
-            showQrCode={data.showQrCode}
-            whatsappNumber={whatsappNumber}
-            empresaSocials={empresaSocials}
-            composedTicker={composedTicker}
-            sponsorLogos={sponsorLogos}
-          />
-        </div>
+    <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0 px-2 pt-2 pb-4">
+      {/* ── Left: Mockup Preview ── */}
+      <div className="flex-1 min-w-0">
+        <MockupPreview
+          empresaLogo={empresaLogo}
+          programaNome={programaNome}
+          programaLogo={programaLogo}
+          displayLocutor={displayLocutor}
+          locutorInstagram={locutorInstagram}
+          locutorFoto={locutorFoto}
+          accentColor={accentColor}
+          assunto={data.assunto}
+          showQrCode={data.showQrCode}
+          whatsappNumber={whatsappNumber}
+          empresaSocials={empresaSocials}
+          composedTicker={composedTicker}
+          sponsorLogos={sponsorLogos}
+        />
       </div>
 
-      {/* ── Bottom: Form controls in compact grid ── */}
-      <div className="flex-1 overflow-y-auto px-2 pb-4" style={{ maxHeight: "calc(100vh - 520px)" }}>
-        <div className="mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style={{ maxWidth: 960 }}>
+      {/* ── Right: Form controls stacked ── */}
+      <div className="w-full lg:w-[360px] flex-shrink-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 180px)" }}>
+        <div className="grid grid-cols-1 gap-4">
 
           {/* Card: Assunto + Locutor */}
           <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
