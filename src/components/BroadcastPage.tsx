@@ -244,6 +244,7 @@ export default function BroadcastPage() {
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<broadcast>");
     lines.push(`  <titulo>${escXml(data.assunto || "")}</titulo>`);
+    lines.push(`  <fundo_assunto>${escXml(data.useCustomAssuntoBg ? data.assuntoBgUrl : "")}</fundo_assunto>`);
     lines.push("  <programa>");
     lines.push(`    <nome>${escXml(programaNome || "")}</nome>`);
     lines.push(`    <logo_url>${escXml(programaLogo || "")}</logo_url>`);
