@@ -198,17 +198,47 @@ export default function AgendaPage() {
   useEffect(() => {
     const loadAll = async () => {
       setLoadingData(true);
-      await Promise.all([fetchProgramas(), fetchEventos()]);
+      await Promise.all([fetchProgramas(), fetchEventos(), fetchApresentadores()]);
       setLoadingData(false);
     };
     loadAll();
-  }, [fetchProgramas, fetchEventos]);
+  }, [fetchProgramas, fetchEventos, fetchApresentadores]);
+
+  // Auto-include program presenters as mandatory participants for live events
+  useEffect(() => {
+    if (formTipoEvento !== "live" || !formProgramaId) return;
+    const prog = programas.find(p => p.id === formProgramaId);
+    if (!prog) return;
+    const presenterIds: string[] = [
+      ...(prog.apresentadores_ids || []),
+      ...(prog.apresentador_id ? [prog.apresentador_id] : []),
+    ];
+    const uniquePresenters = apresentadores.filter(a => presenterIds.includes(a.id));
+    if (!uniquePresenters.length) return;
+    setFormParticipantes(prev => {
+      const manual = prev.filter(p => !p.obrigatorio && p.nome.trim());
+      const required = uniquePresenters.map(a => ({
+        nome: a.nome,
+        instagram: a.instagram || "",
+        obrigatorio: true,
+      }));
+      // Avoid duplicates by name
+      const filteredManual = manual.filter(m => !required.some(r => r.nome.toLowerCase() === m.nome.toLowerCase()));
+      const merged = [...required, ...filteredManual];
+      return merged.length ? merged : [{ nome: "", instagram: "" }];
+    });
+  }, [formProgramaId, formTipoEvento, programas, apresentadores]);
 
   const addParticipante = () => {
     setFormParticipantes([...formParticipantes, { nome: "", instagram: "" }]);
   };
 
   const removeParticipante = (idx: number) => {
+    const p = formParticipantes[idx];
+    if (p?.obrigatorio) {
+      toast({ title: "Apresentador obrigatório", description: "Não é possível remover apresentadores do programa.", variant: "destructive" });
+      return;
+    }
     setFormParticipantes(formParticipantes.filter((_, i) => i !== idx));
   };
 
@@ -216,6 +246,30 @@ export default function AgendaPage() {
     const updated = [...formParticipantes];
     updated[idx] = { ...updated[idx], [field]: value };
     setFormParticipantes(updated);
+  };
+
+  const handleUploadArte = async (file: File) => {
+    if (!user) return;
+    setUploadingArte(true);
+    try {
+      const reader = new FileReader();
+      const dataUrl: string = await new Promise((res, rej) => {
+        reader.onload = () => res(reader.result as string);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      const path = `agenda/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.webp`;
+      const url = await uploadImageToStorage(dataUrl, "empresa-assets", path);
+      setFormArtesUrls(prev => [...prev, url]);
+    } catch (e: any) {
+      toast({ title: "Erro no upload", description: e?.message, variant: "destructive" });
+    } finally {
+      setUploadingArte(false);
+    }
+  };
+
+  const removeArte = (idx: number) => {
+    setFormArtesUrls(prev => prev.filter((_, i) => i !== idx));
   };
 
   const resetForm = () => {
@@ -228,6 +282,8 @@ export default function AgendaPage() {
     setFormTipoEvento("live");
     setFormPrioridade("normal");
     setFormParticipantes([{ nome: "", instagram: "" }]);
+    setFormYoutubeUrl("");
+    setFormArtesUrls([]);
     setEditingId(null);
   };
 
@@ -246,6 +302,8 @@ export default function AgendaPage() {
     setFormRecorrencia(evt.recorrencia);
     setFormTipoEvento(evt.tipo_evento || "live");
     setFormPrioridade(evt.prioridade || "normal");
+    setFormYoutubeUrl(evt.youtube_url || "");
+    setFormArtesUrls(evt.artes_urls || []);
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
         ? evt.participantes.map(p => ({ id: p.id, nome: p.nome, instagram: p.instagram }))
