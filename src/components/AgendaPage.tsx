@@ -29,6 +29,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressPopup, { type ExpressEditData } from "@/components/ProgramaExpressPopup";
+import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
+import { Youtube, Image as ImageIcon, Upload } from "lucide-react";
 
 interface Programa {
   id: string;
@@ -37,6 +39,15 @@ interface Programa {
   horario_fim: string;
   estudio: string;
   dias_semana: string[];
+  apresentador_id?: string | null;
+  apresentadores_ids?: string[] | null;
+}
+
+interface Apresentador {
+  id: string;
+  nome: string;
+  instagram?: string | null;
+  cargo?: string | null;
 }
 
 interface Participante {
