@@ -54,6 +54,7 @@ interface Participante {
   id?: string;
   nome: string;
   instagram: string;
+  obrigatorio?: boolean;
 }
 
 interface Evento {
@@ -65,6 +66,8 @@ interface Evento {
   recorrencia: string;
   prioridade: string;
   tipo_evento?: string;
+  youtube_url?: string;
+  artes_urls?: string[];
   programa?: Programa;
   participantes?: Participante[];
 }
