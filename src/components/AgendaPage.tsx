@@ -29,6 +29,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressPopup, { type ExpressEditData } from "@/components/ProgramaExpressPopup";
+import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
+import { Youtube, Image as ImageIcon, Upload } from "lucide-react";
 
 interface Programa {
   id: string;
@@ -37,12 +39,22 @@ interface Programa {
   horario_fim: string;
   estudio: string;
   dias_semana: string[];
+  apresentador_id?: string | null;
+  apresentadores_ids?: string[] | null;
+}
+
+interface Apresentador {
+  id: string;
+  nome: string;
+  instagram?: string | null;
+  cargo?: string | null;
 }
 
 interface Participante {
   id?: string;
   nome: string;
   instagram: string;
+  obrigatorio?: boolean;
 }
 
 interface Evento {
@@ -54,6 +66,8 @@ interface Evento {
   recorrencia: string;
   prioridade: string;
   tipo_evento?: string;
+  youtube_url?: string;
+  artes_urls?: string[];
   programa?: Programa;
   participantes?: Participante[];
 }
@@ -118,6 +132,10 @@ export default function AgendaPage() {
   const [formParticipantes, setFormParticipantes] = useState<Participante[]>([
     { nome: "", instagram: "" },
   ]);
+  const [formYoutubeUrl, setFormYoutubeUrl] = useState("");
+  const [formArtesUrls, setFormArtesUrls] = useState<string[]>([]);
+  const [uploadingArte, setUploadingArte] = useState(false);
+  const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
 
   const [loadingData, setLoadingData] = useState(true);
   const [expressOpen, setExpressOpen] = useState(false);
@@ -133,6 +151,15 @@ export default function AgendaPage() {
       .eq("user_id", user.id)
       .order("horario_inicio");
     setProgramas((data as Programa[]) || []);
+  }, [user]);
+
+  const fetchApresentadores = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("apresentadores")
+      .select("id, nome, instagram, cargo")
+      .eq("user_id", user.id);
+    setApresentadores((data as Apresentador[]) || []);
   }, [user]);
 
   const fetchEventos = useCallback(async () => {
@@ -171,17 +198,47 @@ export default function AgendaPage() {
   useEffect(() => {
     const loadAll = async () => {
       setLoadingData(true);
-      await Promise.all([fetchProgramas(), fetchEventos()]);
+      await Promise.all([fetchProgramas(), fetchEventos(), fetchApresentadores()]);
       setLoadingData(false);
     };
     loadAll();
-  }, [fetchProgramas, fetchEventos]);
+  }, [fetchProgramas, fetchEventos, fetchApresentadores]);
+
+  // Auto-include program presenters as mandatory participants for live events
+  useEffect(() => {
+    if (formTipoEvento !== "live" || !formProgramaId) return;
+    const prog = programas.find(p => p.id === formProgramaId);
+    if (!prog) return;
+    const presenterIds: string[] = [
+      ...(prog.apresentadores_ids || []),
+      ...(prog.apresentador_id ? [prog.apresentador_id] : []),
+    ];
+    const uniquePresenters = apresentadores.filter(a => presenterIds.includes(a.id));
+    if (!uniquePresenters.length) return;
+    setFormParticipantes(prev => {
+      const manual = prev.filter(p => !p.obrigatorio && p.nome.trim());
+      const required = uniquePresenters.map(a => ({
+        nome: a.nome,
+        instagram: a.instagram || "",
+        obrigatorio: true,
+      }));
+      // Avoid duplicates by name
+      const filteredManual = manual.filter(m => !required.some(r => r.nome.toLowerCase() === m.nome.toLowerCase()));
+      const merged = [...required, ...filteredManual];
+      return merged.length ? merged : [{ nome: "", instagram: "" }];
+    });
+  }, [formProgramaId, formTipoEvento, programas, apresentadores]);
 
   const addParticipante = () => {
     setFormParticipantes([...formParticipantes, { nome: "", instagram: "" }]);
   };
 
   const removeParticipante = (idx: number) => {
+    const p = formParticipantes[idx];
+    if (p?.obrigatorio) {
+      toast({ title: "Apresentador obrigatório", description: "Não é possível remover apresentadores do programa.", variant: "destructive" });
+      return;
+    }
     setFormParticipantes(formParticipantes.filter((_, i) => i !== idx));
   };
 
@@ -189,6 +246,30 @@ export default function AgendaPage() {
     const updated = [...formParticipantes];
     updated[idx] = { ...updated[idx], [field]: value };
     setFormParticipantes(updated);
+  };
+
+  const handleUploadArte = async (file: File) => {
+    if (!user) return;
+    setUploadingArte(true);
+    try {
+      const reader = new FileReader();
+      const dataUrl: string = await new Promise((res, rej) => {
+        reader.onload = () => res(reader.result as string);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      const path = `agenda/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.webp`;
+      const url = await uploadImageToStorage(dataUrl, "empresa-assets", path);
+      setFormArtesUrls(prev => [...prev, url]);
+    } catch (e: any) {
+      toast({ title: "Erro no upload", description: e?.message, variant: "destructive" });
+    } finally {
+      setUploadingArte(false);
+    }
+  };
+
+  const removeArte = (idx: number) => {
+    setFormArtesUrls(prev => prev.filter((_, i) => i !== idx));
   };
 
   const resetForm = () => {
@@ -201,6 +282,8 @@ export default function AgendaPage() {
     setFormTipoEvento("live");
     setFormPrioridade("normal");
     setFormParticipantes([{ nome: "", instagram: "" }]);
+    setFormYoutubeUrl("");
+    setFormArtesUrls([]);
     setEditingId(null);
   };
 
@@ -219,6 +302,8 @@ export default function AgendaPage() {
     setFormRecorrencia(evt.recorrencia);
     setFormTipoEvento(evt.tipo_evento || "live");
     setFormPrioridade(evt.prioridade || "normal");
+    setFormYoutubeUrl(evt.youtube_url || "");
+    setFormArtesUrls(evt.artes_urls || []);
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
         ? evt.participantes.map(p => ({ id: p.id, nome: p.nome, instagram: p.instagram }))
@@ -239,6 +324,8 @@ export default function AgendaPage() {
       recorrencia: formRecorrencia,
       prioridade: formPrioridade,
       tipo_evento: formTipoEvento,
+      youtube_url: formTipoEvento === "live" ? formYoutubeUrl : "",
+      artes_urls: formTipoEvento === "live" ? formArtesUrls : [],
     } as any;
 
     if (editingId) {
@@ -869,6 +956,120 @@ export default function AgendaPage() {
                   style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
                 />
               </div>
+
+              {/* Live event extras: YouTube, Participants, Artwork uploads */}
+              {formTipoEvento === "live" && (
+                <div className="space-y-4 rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, #ef4444 4%, transparent)", border: "1px solid color-mix(in srgb, #ef4444 20%, transparent)" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-pulse" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#ef4444" }}>Configurações do Evento Ao Vivo</span>
+                  </div>
+
+                  {/* YouTube link */}
+                  <div>
+                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                      <Youtube size={12} /> Link do YouTube
+                    </Label>
+                    <Input
+                      value={formYoutubeUrl}
+                      onChange={(e) => setFormYoutubeUrl(e.target.value)}
+                      placeholder="https://youtube.com/watch?v=..."
+                      className="agenda-form-input h-10 text-xs"
+                      style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}
+                    />
+                  </div>
+
+                  {/* Participantes */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                        <Users size={12} /> Participantes
+                      </Label>
+                      <Button type="button" size="sm" variant="ghost" onClick={addParticipante} className="h-7 text-[10px] gap-1">
+                        <Plus size={12} /> Adicionar
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      {formParticipantes.map((p, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <div className="flex-1 grid grid-cols-2 gap-2">
+                            <Input
+                              value={p.nome}
+                              onChange={(e) => updateParticipante(idx, "nome", e.target.value)}
+                              placeholder="Nome"
+                              disabled={p.obrigatorio}
+                              className="agenda-form-input h-9 text-xs"
+                              style={{ borderColor: p.obrigatorio ? "color-mix(in srgb, #ef4444 30%, transparent)" : "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "10px", backgroundColor: p.obrigatorio ? "color-mix(in srgb, #ef4444 6%, transparent)" : "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}
+                            />
+                            <Input
+                              value={p.instagram}
+                              onChange={(e) => updateParticipante(idx, "instagram", e.target.value)}
+                              placeholder="@instagram"
+                              className="agenda-form-input h-9 text-xs"
+                              style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "10px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}
+                            />
+                          </div>
+                          {p.obrigatorio ? (
+                            <span className="text-[9px] font-bold px-2 py-1 rounded-md" style={{ backgroundColor: "color-mix(in srgb, #ef4444 12%, transparent)", color: "#ef4444" }} title="Apresentador do programa (obrigatório)">FIXO</span>
+                          ) : (
+                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeParticipante(idx)}>
+                              <Trash2 size={14} className="text-destructive" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[9px] mt-1.5 px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
+                      Apresentadores marcados com FIXO são obrigatórios e adicionados automaticamente do cadastro do programa.
+                    </p>
+                  </div>
+
+                  {/* Artes do evento */}
+                  <div>
+                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                      <ImageIcon size={12} /> Artes do Evento
+                    </Label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {formArtesUrls.map((url, idx) => (
+                        <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden group" style={{ border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
+                          <img src={url} alt={`Arte ${idx + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeArte(idx)}
+                            className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            style={{ backgroundColor: "rgba(239,68,68,0.9)", color: "#fff" }}
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                      <label
+                        className="w-20 h-20 rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition-all"
+                        style={{
+                          border: "1.5px dashed color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)",
+                          backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)",
+                          color: "var(--layout-accent-color, #2563eb)",
+                          opacity: uploadingArte ? 0.5 : 1,
+                        }}
+                      >
+                        <Upload size={16} />
+                        <span className="text-[9px] font-semibold">{uploadingArte ? "..." : "Upload"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingArte}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleUploadArte(file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Criar Roteiro Express (apenas para gravação de podcast) */}
               {formTipoEvento === "gravacao" && (
