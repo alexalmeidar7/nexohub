@@ -299,6 +299,38 @@ export default function BroadcastPage() {
     handleSave();
   }, [handleSave]);
 
+  const [uploadingBg, setUploadingBg] = useState(false);
+  const handleBgUpload = useCallback(async (file: File) => {
+    if (!user || !file) return;
+    if (file.type !== "image/png") {
+      toast.error("A imagem deve ser .png");
+      return;
+    }
+    setUploadingBg(true);
+    try {
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const url = await uploadImageToStorage(dataUrl, "company-assets", `broadcast/${user.id}/assunto-bg.png`, 1920, 1);
+      const next = { ...latestDataRef.current, assuntoBgUrl: url, useCustomAssuntoBg: true };
+      setData(next);
+      await handleSave(next);
+      toast.success("Fundo do assunto atualizado!");
+    } catch (e) {
+      toast.error("Erro ao enviar imagem");
+    }
+    setUploadingBg(false);
+  }, [user, handleSave]);
+
+  const removeBgImage = useCallback(() => {
+    const next = { ...latestDataRef.current, assuntoBgUrl: "", useCustomAssuntoBg: false };
+    setData(next);
+    void handleSave(next);
+  }, [handleSave]);
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0 px-2 pt-2 pb-4">
       {/* ── Left: Mockup Preview ── */}
