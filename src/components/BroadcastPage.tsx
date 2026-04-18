@@ -375,7 +375,7 @@ export default function BroadcastPage() {
           empresaSocials={empresaSocials}
           composedTicker={composedTicker}
           sponsorLogos={sponsorLogos}
-          assuntoBgUrl={data.useCustomAssuntoBg ? data.assuntoBgUrl : ""}
+          assuntoBgUrl={effectiveAssuntoBgUrl}
         />
       </div>
 
