@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon } from "lucide-react";
 import XmlLinkRow from "@/components/XmlLinkRow";
-import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
+
 
 /** Extract @username from a URL or handle string */
 function extractHandle(value: string): string {
