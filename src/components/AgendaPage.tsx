@@ -910,6 +910,15 @@ export default function AgendaPage() {
           </DialogContent>
         </Dialog>
 
+        <ProgramaExpressPopup
+          open={expressOpen}
+          onOpenChange={(o) => { setExpressOpen(o); if (!o) setExpressEditData(null); }}
+          programas={programas.map(p => ({ id: p.id, nome: p.nome, estudio: p.estudio }))}
+          estudios={estudios}
+          onFinish={() => { setExpressOpen(false); setExpressEditData(null); }}
+          editData={expressEditData}
+        />
+
         {/* Calendar + Events Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Calendar */}
