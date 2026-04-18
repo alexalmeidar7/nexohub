@@ -507,6 +507,66 @@ export default function BroadcastPage() {
               <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>
                 Padrão: apenas o texto. Imagem opcional substituirá o fundo da tarja.
               </p>
+
+              {/* Vincular fundo a programas */}
+              {data.assuntoBgUrl && (
+                <div className="space-y-1 pt-2 relative">
+                  <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                    Vincular a programas
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowProgramDropdown(v => !v)}
+                    className="w-full px-3 py-2 rounded-xl text-[11px] outline-none text-left flex items-center justify-between"
+                    style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
+                  >
+                    <span className="truncate">
+                      {data.assuntoBgProgramaIds.length === 0
+                        ? "Todos os programas (global)"
+                        : `${data.assuntoBgProgramaIds.length} programa(s) selecionado(s)`}
+                    </span>
+                    <span className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>{showProgramDropdown ? "▲" : "▼"}</span>
+                  </button>
+                  {showProgramDropdown && (
+                    <div
+                      className="absolute z-50 w-full mt-1 rounded-xl shadow-lg overflow-y-auto max-h-48"
+                      style={{ backgroundColor: "var(--layout-page-bg, #fff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+                    >
+                      {allProgramas.length === 0 ? (
+                        <div className="px-3 py-2 text-[10px]" style={{ color: "var(--layout-icon-color, #888)" }}>Nenhum programa cadastrado</div>
+                      ) : (
+                        allProgramas.map(p => {
+                          const checked = data.assuntoBgProgramaIds.includes(p.id);
+                          return (
+                            <label
+                              key={p.id}
+                              className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:brightness-110"
+                              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={e => {
+                                  const ids = new Set(latestDataRef.current.assuntoBgProgramaIds || []);
+                                  if (e.target.checked) ids.add(p.id); else ids.delete(p.id);
+                                  const next = { ...latestDataRef.current, assuntoBgProgramaIds: Array.from(ids) };
+                                  setData(next);
+                                  void handleSave(next);
+                                }}
+                                style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
+                              />
+                              <span className="text-[11px] flex-1 truncate">{p.nome}</span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                  <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>
+                    Vazio = aplica em todos. Selecione múltiplos para reusar a mesma arte.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
