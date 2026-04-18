@@ -375,6 +375,7 @@ serve(async (req) => {
     lines.push(`    <rede_social_icone>${esc(redeSocialIcone)}</rede_social_icone>`);
     lines.push(`    <logo_patrocinador>${esc(logoPatrocinador)}</logo_patrocinador>`);
     lines.push(`    <titulo>${esc(assunto)}</titulo>`);
+    lines.push(`    <fundo_assunto>${esc(fundoAssunto)}</fundo_assunto>`);
     lines.push(`    <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`    <ticker>${esc(ticker)}</ticker>`);
     lines.push("  </dados>");
