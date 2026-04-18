@@ -74,14 +74,11 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Note: edge functions run in cloud and cannot reach local IPs (192.168.x.x, 10.x.x.x).
+    // We attempt the request anyway and let the network layer fail with a clear timeout message,
+    // since the user explicitly configured this URL in their settings.
     if (isPrivateOrLocalUrl(vmixBaseUrl)) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "URL local/privada não é acessível no modo Proxy em nuvem. Use modo Direto em rede local ou configure URL pública (port forwarding/túnel HTTPS).",
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      console.log(`Warning: attempting to proxy to private/local URL: ${vmixBaseUrl}`);
     }
 
     const { path } = await req.json();
