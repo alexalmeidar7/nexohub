@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import ProgramaExpressPopup, { type ExpressEditData } from "@/components/ProgramaExpressPopup";
 
 interface Programa {
   id: string;
