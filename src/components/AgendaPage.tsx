@@ -456,7 +456,7 @@ export default function AgendaPage() {
       days.push({ dateStr: ds, date: new Date(d), events: dayEvents });
     }
     return days;
-  }, [eventos, filterLocal, selectedDate]);
+  }, [eventos, filterLocal, selectedDate, weekOffset]);
 
   const renderEventCard = (evt: Evento, inactive = false) => (
     <div
