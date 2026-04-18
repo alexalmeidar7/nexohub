@@ -288,6 +288,72 @@ export default function AgendaPage() {
     fetchEventos();
   };
 
+  const handleCreateRoteiroFromEvento = async () => {
+    if (!user || !formProgramaId || !formData) {
+      toast({ title: "Selecione programa e data", variant: "destructive" });
+      return;
+    }
+    const prog = programas.find(p => p.id === formProgramaId);
+    if (!prog) return;
+    setCreatingRoteiro(true);
+    try {
+      const tituloRoteiro = (formDescricao || prog.nome).trim().slice(0, 200);
+      const dataPrograma = format(formData, "yyyy-MM-dd");
+
+      // Try to find existing roteiro for same program+date
+      const { data: existing } = await supabase
+        .from("roteiros")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("programa_nome", prog.nome)
+        .eq("data_programa", dataPrograma)
+        .maybeSingle();
+
+      let roteiroId = existing?.id;
+
+      if (!roteiroId) {
+        const { data: novo, error } = await supabase
+          .from("roteiros")
+          .insert({
+            user_id: user.id,
+            titulo: tituloRoteiro,
+            subtitulo: "",
+            programa_nome: prog.nome,
+            estudio: prog.estudio || "",
+            data_programa: dataPrograma,
+            horario: prog.horario_inicio || "00:00",
+            tipo_programa: "podcast",
+            conteudo_html: "",
+            participantes: formParticipantes
+              .filter(p => p.nome.trim())
+              .map(p => ({ nome: p.nome, cargo: "", instagram: p.instagram || "" })) as any,
+          })
+          .select("id")
+          .single();
+        if (error || !novo) {
+          toast({ title: "Erro ao criar roteiro", description: error?.message, variant: "destructive" });
+          setCreatingRoteiro(false);
+          return;
+        }
+        roteiroId = novo.id;
+      }
+
+      setExpressEditData({
+        roteiroId: roteiroId!,
+        estudio: prog.estudio || "",
+        programaId: prog.id,
+        blocos: [{ noticias: [] }],
+        participantes: formParticipantes
+          .filter(p => p.nome.trim())
+          .map(p => ({ nome: p.nome, cargo: "", instagram: p.instagram || "" })),
+      });
+      setExpressOpen(true);
+    } finally {
+      setCreatingRoteiro(false);
+    }
+  };
+
+
   const handleClearAllPast = async () => {
     if (!user) return;
     const pastIds = pastEventos.map(e => e.id);
