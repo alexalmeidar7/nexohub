@@ -78,6 +78,21 @@ const prioridadeColors: Record<string, string> = {
   urgente: "bg-red-100 text-red-800",
 };
 
+// Deterministic HSL color for each studio name
+const studioHue = (name?: string) => {
+  if (!name) return 220;
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return h;
+};
+const studioColors = (name?: string) => {
+  const h = studioHue(name);
+  return {
+    bg: `hsl(${h} 75% 96%)`,
+    border: `hsl(${h} 65% 55%)`,
+    text: `hsl(${h} 70% 28%)`,
+  };
+};
 export default function AgendaPage() {
   const { user } = useAuth();
   const { toast } = useToast();
