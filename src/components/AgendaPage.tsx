@@ -996,7 +996,12 @@ export default function AgendaPage() {
                           return (
                             <div
                               key={evt.id}
-                              className="rounded px-1.5 py-1"
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => { e.stopPropagation(); startEdit(evt); }}
+                              onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); startEdit(evt); } }}
+                              className="rounded px-1.5 py-1 cursor-pointer hover:shadow-md hover:-translate-y-[1px] transition-all"
+                              title="Clique para editar"
                               style={{ backgroundColor: sc.bg, borderLeft: `3px solid ${sc.border}`, border: `1px solid ${sc.border}40`, borderLeftWidth: 3 }}
                             >
                               <div className="flex items-center justify-between gap-1">
