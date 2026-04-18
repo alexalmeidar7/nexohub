@@ -78,6 +78,9 @@ export default function BroadcastPage() {
   const [sponsorLogos, setSponsorLogos] = useState<{nome: string; logo_url: string}[]>([]);
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
+  const [allProgramas, setAllProgramas] = useState<{id: string; nome: string}[]>([]);
+  const [activeProgramaId, setActiveProgramaId] = useState<string | null>(null);
+  const [showProgramDropdown, setShowProgramDropdown] = useState(false);
   const latestDataRef = useRef<BroadcastData>(defaultBroadcast);
 
   // Ticker auto-content
