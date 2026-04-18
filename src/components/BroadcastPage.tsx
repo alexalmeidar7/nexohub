@@ -135,6 +135,7 @@ export default function BroadcastPage() {
 
       const prog = progs?.find(() => true);
       if (prog) {
+        setActiveProgramaId(prog.id);
         setProgramaNome(prog.nome);
         const logoUrl = prog.selo || null;
         if (logoUrl) setProgramaLogo(logoUrl);
