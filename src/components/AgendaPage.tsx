@@ -324,6 +324,8 @@ export default function AgendaPage() {
       recorrencia: formRecorrencia,
       prioridade: formPrioridade,
       tipo_evento: formTipoEvento,
+      youtube_url: formTipoEvento === "live" ? formYoutubeUrl : "",
+      artes_urls: formTipoEvento === "live" ? formArtesUrls : [],
     } as any;
 
     if (editingId) {
