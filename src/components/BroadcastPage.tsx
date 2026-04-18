@@ -38,6 +38,7 @@ interface BroadcastData {
   showQrCode: boolean;
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
+  assuntoBgProgramaIds: string[];
 }
 
 const defaultBroadcast: BroadcastData = {
@@ -49,6 +50,7 @@ const defaultBroadcast: BroadcastData = {
   showQrCode: false,
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
+  assuntoBgProgramaIds: [],
 };
 
 interface SocialItem {
@@ -76,6 +78,9 @@ export default function BroadcastPage() {
   const [sponsorLogos, setSponsorLogos] = useState<{nome: string; logo_url: string}[]>([]);
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
+  const [allProgramas, setAllProgramas] = useState<{id: string; nome: string}[]>([]);
+  const [activeProgramaId, setActiveProgramaId] = useState<string | null>(null);
+  const [showProgramDropdown, setShowProgramDropdown] = useState(false);
   const latestDataRef = useRef<BroadcastData>(defaultBroadcast);
 
   // Ticker auto-content
@@ -111,6 +116,15 @@ export default function BroadcastPage() {
       }
       setEmpresaSocials(socials);
 
+      // All programs (for linking assunto background)
+      const { data: allProgs } = await supabase
+        .from("programas")
+        .select("id, nome")
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+        .order("nome");
+      if (allProgs) setAllProgramas(allProgs);
+
       // Current program – match by time AND day of week
       const now = new Date();
       const hh = String(now.getHours()).padStart(2, "0");
@@ -130,6 +144,7 @@ export default function BroadcastPage() {
 
       const prog = progs?.find(() => true);
       if (prog) {
+        setActiveProgramaId(prog.id);
         setProgramaNome(prog.nome);
         const logoUrl = prog.selo || null;
         if (logoUrl) setProgramaLogo(logoUrl);
@@ -239,12 +254,21 @@ export default function BroadcastPage() {
   // Generate XML content
   const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+  const effectiveAssuntoBgUrl = useMemo(() => {
+    if (!data.useCustomAssuntoBg || !data.assuntoBgUrl) return "";
+    const linked = data.assuntoBgProgramaIds || [];
+    // If no programs linked, apply globally; otherwise only when current program is in the linked list
+    if (linked.length === 0) return data.assuntoBgUrl;
+    if (activeProgramaId && linked.includes(activeProgramaId)) return data.assuntoBgUrl;
+    return "";
+  }, [data.useCustomAssuntoBg, data.assuntoBgUrl, data.assuntoBgProgramaIds, activeProgramaId]);
+
   const broadcastXml = useMemo(() => {
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<broadcast>");
     lines.push(`  <titulo>${escXml(data.assunto || "")}</titulo>`);
-    lines.push(`  <fundo_assunto>${escXml(data.useCustomAssuntoBg ? data.assuntoBgUrl : "")}</fundo_assunto>`);
+    lines.push(`  <fundo_assunto>${escXml(effectiveAssuntoBgUrl)}</fundo_assunto>`);
     lines.push("  <programa>");
     lines.push(`    <nome>${escXml(programaNome || "")}</nome>`);
     lines.push(`    <logo_url>${escXml(programaLogo || "")}</logo_url>`);
@@ -351,7 +375,7 @@ export default function BroadcastPage() {
           empresaSocials={empresaSocials}
           composedTicker={composedTicker}
           sponsorLogos={sponsorLogos}
-          assuntoBgUrl={data.useCustomAssuntoBg ? data.assuntoBgUrl : ""}
+          assuntoBgUrl={effectiveAssuntoBgUrl}
         />
       </div>
 
@@ -483,6 +507,66 @@ export default function BroadcastPage() {
               <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>
                 Padrão: apenas o texto. Imagem opcional substituirá o fundo da tarja.
               </p>
+
+              {/* Vincular fundo a programas */}
+              {data.assuntoBgUrl && (
+                <div className="space-y-1 pt-2 relative">
+                  <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                    Vincular a programas
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowProgramDropdown(v => !v)}
+                    className="w-full px-3 py-2 rounded-xl text-[11px] outline-none text-left flex items-center justify-between"
+                    style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
+                  >
+                    <span className="truncate">
+                      {data.assuntoBgProgramaIds.length === 0
+                        ? "Todos os programas (global)"
+                        : `${data.assuntoBgProgramaIds.length} programa(s) selecionado(s)`}
+                    </span>
+                    <span className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>{showProgramDropdown ? "▲" : "▼"}</span>
+                  </button>
+                  {showProgramDropdown && (
+                    <div
+                      className="absolute z-50 w-full mt-1 rounded-xl shadow-lg overflow-y-auto max-h-48"
+                      style={{ backgroundColor: "var(--layout-page-bg, #fff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
+                    >
+                      {allProgramas.length === 0 ? (
+                        <div className="px-3 py-2 text-[10px]" style={{ color: "var(--layout-icon-color, #888)" }}>Nenhum programa cadastrado</div>
+                      ) : (
+                        allProgramas.map(p => {
+                          const checked = data.assuntoBgProgramaIds.includes(p.id);
+                          return (
+                            <label
+                              key={p.id}
+                              className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:brightness-110"
+                              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={e => {
+                                  const ids = new Set(latestDataRef.current.assuntoBgProgramaIds || []);
+                                  if (e.target.checked) ids.add(p.id); else ids.delete(p.id);
+                                  const next = { ...latestDataRef.current, assuntoBgProgramaIds: Array.from(ids) };
+                                  setData(next);
+                                  void handleSave(next);
+                                }}
+                                style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
+                              />
+                              <span className="text-[11px] flex-1 truncate">{p.nome}</span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                  <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>
+                    Vazio = aplica em todos. Selecione múltiplos para reusar a mesma arte.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
