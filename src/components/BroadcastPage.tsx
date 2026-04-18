@@ -309,18 +309,19 @@ export default function BroadcastPage() {
     }
     setUploadingBg(true);
     try {
-      const reader = new FileReader();
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      const url = await uploadImageToStorage(dataUrl, "company-assets", `broadcast/${user.id}/assunto-bg.png`, 1920, 1);
+      const path = `broadcast/${user.id}/assunto-bg-${Date.now()}.png`;
+      const { error } = await supabase.storage
+        .from("empresa-assets")
+        .upload(path, file, { upsert: true, contentType: "image/png", cacheControl: "3600" });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+      const url = `${urlData.publicUrl}?t=${Date.now()}`;
       const next = { ...latestDataRef.current, assuntoBgUrl: url, useCustomAssuntoBg: true };
       setData(next);
       await handleSave(next);
       toast.success("Fundo do assunto atualizado!");
     } catch (e) {
+      console.error(e);
       toast.error("Erro ao enviar imagem");
     }
     setUploadingBg(false);
