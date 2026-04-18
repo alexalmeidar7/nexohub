@@ -145,7 +145,7 @@ const pageTitle: Record<Page, string> = {
   agenda: "Agenda",
   curtidas: "Músicas Curtidas",
   configuracoes: "Configurações",
-  testemunhais: "Comercial — Testemunhais",
+  testemunhais: "Comercial — Citações",
   promocoes: "Comercial — Promoções",
   logos: "Comercial — Logos Patrocinadores",
   shopping: "Comercial — Shopping",
