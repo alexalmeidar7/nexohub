@@ -420,6 +420,28 @@ export default function AgendaPage() {
     return days;
   }, [eventos, filterLocal]);
 
+  // Week view: Monday to Sunday of the currently selected week
+  const weekEvents = useMemo(() => {
+    const ref = selectedDate ? new Date(selectedDate) : new Date();
+    const dow = ref.getDay(); // 0=Sun..6=Sat
+    const diffToMonday = dow === 0 ? -6 : 1 - dow;
+    const monday = new Date(ref);
+    monday.setDate(ref.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    const days: { dateStr: string; date: Date; events: Evento[] }[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const dayEvents = eventos.filter((e) => {
+        const matchLocal = filterLocal === "todos" || e.local === filterLocal;
+        return matchLocal && eventMatchesDate(e, ds);
+      });
+      days.push({ dateStr: ds, date: new Date(d), events: dayEvents });
+    }
+    return days;
+  }, [eventos, filterLocal, selectedDate]);
+
   const renderEventCard = (evt: Evento, inactive = false) => (
     <div
       key={evt.id}
