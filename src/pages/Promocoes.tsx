@@ -802,18 +802,16 @@ export default function PromocoesKiosk() {
 
           {/* Corpo: texto + oferecimento dentro do scroll, alinhado ao X */}
           <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
-            <div className="text-white font-bold whitespace-pre-line" style={{ fontSize: `${fontSize}px` }}>
-              {selectedPromo?.texto?.replace(/\/\//g, "\n").split("\n").map((line, i) => (
-                <p
-                  key={i}
-                  className="px-1 py-0.5 rounded transition-colors cursor-default"
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#a30101")}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
-                >
-                  {line ? renderBoldMarkdown(line) : "\u00A0"}
-                </p>
-              ))}
-            </div>
+            <div
+              className="text-white font-bold promo-html-content"
+              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4 }}
+              dangerouslySetInnerHTML={{
+                __html: (selectedPromo?.texto || "")
+                  .replace(/\/\//g, "<br/>")
+                  .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
+                  .replace(/color:\s*#000(?:000)?/gi, "color: white"),
+              }}
+            />
 
             {/* Oferecimento dentro do scroll, após o texto */}
             {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
