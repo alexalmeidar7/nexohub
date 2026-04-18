@@ -442,7 +442,7 @@ export default function AgendaPage() {
     const dow = ref.getDay(); // 0=Sun..6=Sat
     const diffToMonday = dow === 0 ? -6 : 1 - dow;
     const monday = new Date(ref);
-    monday.setDate(ref.getDate() + diffToMonday);
+    monday.setDate(ref.getDate() + diffToMonday + weekOffset * 7);
     monday.setHours(0, 0, 0, 0);
     const days: { dateStr: string; date: Date; events: Evento[] }[] = [];
     for (let i = 0; i < 7; i++) {
