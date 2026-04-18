@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           error:
-            "URL local/privada não é acessível no modo Proxy em nuvem. Use modo Direto em rede local ou configure URL pública (port forwarding/túnel HTTPS).",
+            "URL local (192.168.x.x) inacessível pela nuvem. Soluções: 1) Acesse este painel via HTTP (não HTTPS) na mesma rede do vMix; 2) Configure port forwarding no roteador e use o IP público; 3) Use túnel HTTPS (ngrok/Cloudflare Tunnel).",
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
