@@ -721,14 +721,27 @@ function MockupPreview({
             {/* Subject bar – separated from ticker */}
             <div
               style={{
-                backgroundColor: "rgba(240,240,240,0.95)",
+                backgroundColor: assuntoBgUrl ? "transparent" : "rgba(240,240,240,0.95)",
+                backgroundImage: assuntoBgUrl ? `url(${assuntoBgUrl})` : undefined,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
                 padding: "10px 16px",
                 borderRadius: "0 0 6px 6px",
+                minHeight: assuntoBgUrl ? 38 : undefined,
               }}
             >
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-5 rounded-sm flex-shrink-0" style={{ backgroundColor: accentColor }} />
-                <span className="text-sm font-black uppercase truncate" style={{ color: "#111" }}>
+                {!assuntoBgUrl && (
+                  <div className="w-1.5 h-5 rounded-sm flex-shrink-0" style={{ backgroundColor: accentColor }} />
+                )}
+                <span
+                  className="text-sm font-black uppercase truncate"
+                  style={{
+                    color: assuntoBgUrl ? "#fff" : "#111",
+                    textShadow: assuntoBgUrl ? "0 1px 4px rgba(0,0,0,0.7)" : undefined,
+                  }}
+                >
                   {assunto || "BASE PARA ASSUNTO"}
                 </span>
               </div>
