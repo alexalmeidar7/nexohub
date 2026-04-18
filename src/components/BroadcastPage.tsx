@@ -586,13 +586,14 @@ export default function BroadcastPage() {
 function MockupPreview({
   empresaLogo, programaNome, programaLogo, displayLocutor, locutorInstagram,
   locutorFoto, accentColor, assunto, showQrCode, whatsappNumber,
-  empresaSocials, composedTicker, sponsorLogos,
+  empresaSocials, composedTicker, sponsorLogos, assuntoBgUrl,
 }: {
   empresaLogo: string; programaNome: string; programaLogo: string;
   displayLocutor: string; locutorInstagram: string; locutorFoto: string;
   accentColor: string; assunto: string; showQrCode: boolean;
   whatsappNumber: string; empresaSocials: SocialItem[]; composedTicker: string;
   sponsorLogos: {nome: string; logo_url: string}[];
+  assuntoBgUrl?: string;
 }) {
   // Social cycling animation
   const [socialIdx, setSocialIdx] = useState(0);
