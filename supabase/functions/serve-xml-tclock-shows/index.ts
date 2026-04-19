@@ -170,7 +170,7 @@ serve(async (req) => {
 
     // Rotação: 1 programa a cada 5 segundos
     const list = (programs || []);
-    const rotationSlot = Math.floor(Date.now() / 5000);
+    const rotationSlot = Math.floor(Date.now() / 10000);
     const current = list.length > 0 ? list[rotationSlot % list.length] : null;
 
     const programaNome = current?.nome || "";
