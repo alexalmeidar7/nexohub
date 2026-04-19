@@ -1071,12 +1071,25 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
             return (
               <div
                 key={ev.id}
-                className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg ${isToday ? "agenda-today-pulse" : ""}`}
+                className={`agenda-event-item flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer ${isToday ? "agenda-today-pulse" : ""}`}
                 style={{
                   background: "color-mix(in srgb, var(--layout-widget-text) 5%, transparent)",
                   border: isToday
                     ? "1px solid color-mix(in srgb, var(--layout-accent-color) 55%, transparent)"
                     : "1px solid color-mix(in srgb, var(--layout-widget-text) 8%, transparent)",
+                  transition: "all 0.25s ease",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "var(--layout-widget-text)";
+                  e.currentTarget.style.transform = "translateX(4px)";
+                  e.currentTarget.style.borderColor = "var(--layout-widget-text)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "color-mix(in srgb, var(--layout-widget-text) 5%, transparent)";
+                  e.currentTarget.style.transform = "translateX(0)";
+                  e.currentTarget.style.borderColor = isToday
+                    ? "color-mix(in srgb, var(--layout-accent-color) 55%, transparent)"
+                    : "color-mix(in srgb, var(--layout-widget-text) 8%, transparent)";
                 }}
               >
                 <div

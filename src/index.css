@@ -1059,3 +1059,12 @@ table:not([data-no-row-hover]) tbody tr:hover {
   50%      { box-shadow: 0 0 10px 3px color-mix(in srgb, var(--layout-accent-color, #2563eb) 55%, transparent); border-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, transparent); }
 }
 .agenda-today-pulse { animation: agendaTodayPulse 1.4s ease-in-out infinite; }
+
+/* Agenda widget: invert colors on hover */
+.agenda-event-item:hover * {
+  color: var(--layout-widget-bg, #000) !important;
+}
+.agenda-event-item:hover span,
+.agenda-event-item:hover div[style*="background"] {
+  background: color-mix(in srgb, var(--layout-widget-bg, #000) 15%, transparent) !important;
+}
