@@ -23,31 +23,30 @@ const resolveDataOwnerId = async (
   return requestedUserId;
 };
 
-const normalizeImageUrl = (value: string | null | undefined, size = 512): string => {
+// Return only clean http(s) URLs ending in .png. Drops data: URIs and other formats.
+const normalizeImageUrl = (value: string | null | undefined): string => {
   const trimmed = (value || "").trim();
-  if (!trimmed || trimmed.startsWith("data:")) return trimmed;
-  try {
-    const parsed = new URL(trimmed);
-    // Force .png output via Supabase image transform when possible
-    if (parsed.pathname.includes("/storage/v1/object/public/")) {
-      parsed.pathname = parsed.pathname.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-      parsed.searchParams.set("width", String(size));
-      parsed.searchParams.set("height", String(size));
-      parsed.searchParams.set("resize", "contain");
-      parsed.searchParams.set("format", "png");
-      return parsed.toString();
-    }
-    return trimmed;
-  } catch {
-    return trimmed;
-  }
+  if (!trimmed) return "";
+  if (!/^https?:\/\//i.test(trimmed)) return ""; // skip data: and invalid
+  // Strip query string for cleanliness
+  const noQuery = trimmed.split("?")[0];
+  if (/\.png$/i.test(noQuery)) return noQuery;
+  return "";
 };
 
-// Convert basmilius .svg icon URLs to .png via a public image proxy (wsrv.nl)
-const toPngIconUrl = (svgUrl: string, size = 256): string => {
-  if (!svgUrl) return "";
-  const clean = svgUrl.replace(/^https?:\/\//, "");
-  return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&output=png&w=${size}&h=${size}`;
+// Animated PNG weather icons (Meteocons - amCharts CDN, .png extension)
+const toPngIconUrl = (code: number): string => {
+  const map: Record<number, string> = {
+    0: "day", 1: "cloudy-day-1", 2: "cloudy-day-2", 3: "cloudy",
+    45: "cloudy", 48: "cloudy",
+    51: "rainy-1", 53: "rainy-2", 55: "rainy-3",
+    61: "rainy-4", 63: "rainy-5", 65: "rainy-6",
+    71: "snowy-4", 73: "snowy-5", 75: "snowy-6",
+    80: "rainy-4", 81: "rainy-5", 82: "rainy-6",
+    95: "thunder", 96: "thunder", 99: "thunder",
+  };
+  const name = map[code] || "day";
+  return `https://amcharts.com/wp-content/uploads/assets/animated-svg-icons/weather/animated/${name}.png`;
 };
 
 const WMO_LABELS: Record<number, string> = {
