@@ -661,6 +661,7 @@ export default function BroadcastPage() {
             />
 
             <XmlLinkRow label="Broadcast XML" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`} />
+            <XmlLinkRow label="TClock Shows" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-tclock-shows?user_id=${user?.id}`} />
           </div>
         </div>
       </div>
