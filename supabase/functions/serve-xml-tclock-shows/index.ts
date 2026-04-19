@@ -119,7 +119,7 @@ serve(async (req) => {
           if (typeof t === "number") tempAtual = `${Math.round(t)}°`;
           descAtual = WMO_LABELS[code] || "—";
           const iconFile = WMO_ICON[code] || "clear-day.svg";
-          iconAtual = `${WEATHER_ICON_BASE}/${iconFile}`;
+          iconAtual = toPngIconUrl(`${WEATHER_ICON_BASE}/${iconFile}`, 256);
         }
       } catch { /* silent */ }
     }
