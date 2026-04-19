@@ -176,10 +176,10 @@ serve(async (req) => {
     const programaNome = current?.nome || "";
     const programaDescricao = current?.descricao || "";
     const programaThumb = current
-      ? await ensurePngImageUrl(supabase, current.thumb || current.capa || "", `tclock-shows/${dataOwnerId}/${current.id}-thumb.png`, 512)
+      ? await ensurePngImageUrl(supabase, current.thumb || current.capa || current.selo || "", `tclock-shows/${dataOwnerId}/${current.id}-thumb.png`, 512)
       : "";
     const programaLogo = current
-      ? await ensurePngImageUrl(supabase, current.selo || "", `tclock-shows/${dataOwnerId}/${current.id}-logo.png`, 512)
+      ? await ensurePngImageUrl(supabase, current.selo || current.thumb || current.capa || "", `tclock-shows/${dataOwnerId}/${current.id}-logo.png`, 512)
       : "";
 
     const lines: string[] = [];
