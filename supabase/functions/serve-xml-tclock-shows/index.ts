@@ -179,8 +179,12 @@ serve(async (req) => {
 
     const programaNome = current?.nome || "";
     const programaDescricao = current?.descricao || "";
-    const programaThumb = normalizeImageUrl(current?.thumb || current?.capa || "");
-    const programaLogo = normalizeImageUrl(current?.selo || "");
+    const programaThumb = current
+      ? await ensurePngImageUrl(supabase, current.thumb || current.capa || "", `tclock-shows/${dataOwnerId}/${current.id}-thumb.png`, 512)
+      : "";
+    const programaLogo = current
+      ? await ensurePngImageUrl(supabase, current.selo || "", `tclock-shows/${dataOwnerId}/${current.id}-logo.png`, 512)
+      : "";
 
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
