@@ -270,7 +270,7 @@ serve(async (req) => {
     const [empRes, progsRes, roteiroRes, settingsRes] = await Promise.all([
       supabase
         .from("empresa_config")
-        .select("instagram, facebook, youtube, site, telefone_participacao")
+        .select("logo, instagram, facebook, youtube, site, telefone_participacao")
         .eq("user_id", dataOwnerId)
         .maybeSingle(),
       supabase
