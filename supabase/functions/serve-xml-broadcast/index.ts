@@ -322,8 +322,10 @@ serve(async (req) => {
 
     if (prog) {
       programaNome = prog.nome || "";
-      programaLogo = normalizeImageUrl(prog.selo);
       programaId = prog.id || "";
+      programaLogo = prog.selo
+        ? await ensurePngImageUrl(supabase, prog.selo, `broadcast/${dataOwnerId}/${prog.id}-logo.png`, 512)
+        : "";
 
       const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0)
         ? prog.apresentadores_ids
