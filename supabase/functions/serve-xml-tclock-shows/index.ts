@@ -23,15 +23,13 @@ const resolveDataOwnerId = async (
   return requestedUserId;
 };
 
-// Return only clean http(s) URLs ending in .png. Drops data: URIs and other formats.
+// Return only clean http(s) URLs ending in .png (no query string, no data: URIs).
 const normalizeImageUrl = (value: string | null | undefined): string => {
   const trimmed = (value || "").trim();
   if (!trimmed) return "";
-  if (!/^https?:\/\//i.test(trimmed)) return ""; // skip data: and invalid
-  // Strip query string for cleanliness
-  const noQuery = trimmed.split("?")[0];
-  if (/\.png$/i.test(noQuery)) return noQuery;
-  return "";
+  if (!/^https?:\/\//i.test(trimmed)) return ""; // drop data: URIs and invalid
+  const noQuery = trimmed.split("?")[0].split("#")[0];
+  return /\.png$/i.test(noQuery) ? noQuery : "";
 };
 
 // Animated PNG weather icons (Meteocons - amCharts CDN, .png extension)
