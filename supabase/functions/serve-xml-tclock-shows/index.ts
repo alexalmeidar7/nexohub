@@ -57,17 +57,7 @@ const WMO_LABELS: Record<number, string> = {
   95: "Tempestade", 96: "Tempestade c/ granizo", 99: "Tempestade severa",
 };
 
-// Animated weather icons (basmilius / meteocons - hospedados publicamente)
-const WEATHER_ICON_BASE = "https://basmilius.github.io/weather-icons/production/fill/all";
-const WMO_ICON: Record<number, string> = {
-  0: "clear-day.svg", 1: "partly-cloudy-day.svg", 2: "partly-cloudy-day.svg", 3: "cloudy.svg",
-  45: "fog.svg", 48: "fog.svg",
-  51: "drizzle.svg", 53: "drizzle.svg", 55: "drizzle.svg",
-  61: "rain.svg", 63: "rain.svg", 65: "rain.svg",
-  71: "snow.svg", 73: "snow.svg", 75: "snow.svg",
-  80: "rain.svg", 81: "rain.svg", 82: "rain.svg",
-  95: "thunderstorms-rain.svg", 96: "thunderstorms-rain.svg", 99: "thunderstorms-rain.svg",
-};
+// (weather icons resolved by toPngIconUrl above)
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
