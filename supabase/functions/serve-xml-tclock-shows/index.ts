@@ -23,13 +23,71 @@ const resolveDataOwnerId = async (
   return requestedUserId;
 };
 
-// Return only clean http(s) URLs ending in .png (no query string, no data: URIs).
-const normalizeImageUrl = (value: string | null | undefined): string => {
+const base64ToUint8Array = (dataUrl: string): { data: Uint8Array; contentType: string } => {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error("Invalid data URL");
+  const contentType = match[1];
+  const raw = atob(match[2]);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return { data: arr, contentType };
+};
+
+const uploadPublicPng = async (
+  supabase: ReturnType<typeof createClient>,
+  storagePath: string,
+  data: Uint8Array,
+): Promise<string> => {
+  const { error } = await supabase.storage
+    .from("xml-files")
+    .upload(storagePath, data, { upsert: true, contentType: "image/png", cacheControl: "3600" });
+  if (error) throw error;
+  const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(storagePath);
+  return (urlData?.publicUrl || "").split("?")[0];
+};
+
+const ensurePngImageUrl = async (
+  supabase: ReturnType<typeof createClient>,
+  value: string | null | undefined,
+  storagePath: string,
+  size = 512,
+): Promise<string> => {
   const trimmed = (value || "").trim();
   if (!trimmed) return "";
-  if (!/^https?:\/\//i.test(trimmed)) return ""; // drop data: URIs and invalid
-  const noQuery = trimmed.split("?")[0].split("#")[0];
-  return /\.png$/i.test(noQuery) ? noQuery : "";
+
+  if (trimmed.startsWith("data:image/png;base64,")) {
+    const { data } = base64ToUint8Array(trimmed);
+    return await uploadPublicPng(supabase, storagePath, data);
+  }
+
+  if (!/^https?:\/\//i.test(trimmed)) return "";
+
+  const cleanUrl = trimmed.split("?")[0].split("#")[0];
+  if (/\.png$/i.test(cleanUrl)) return cleanUrl;
+
+  try {
+    const parsed = new URL(trimmed);
+    let fetchUrl = trimmed;
+
+    if (/\.webp$/i.test(cleanUrl)) {
+      const source = trimmed.replace(/^https?:\/\//i, "");
+      fetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=${size}&h=${size}&fit=contain`;
+    }
+
+    const response = await fetch(fetchUrl);
+    if (!response.ok) return "";
+
+    const contentType = response.headers.get("content-type") || "";
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    if (contentType.includes("png") || fetchUrl.includes("output=png")) {
+      return await uploadPublicPng(supabase, storagePath, bytes);
+    }
+
+    return "";
+  } catch {
+    return "";
+  }
 };
 
 // Animated PNG weather icons (Meteocons - amCharts CDN, .png extension)
@@ -117,8 +175,12 @@ serve(async (req) => {
 
     const programaNome = current?.nome || "";
     const programaDescricao = current?.descricao || "";
-    const programaThumb = normalizeImageUrl(current?.thumb || current?.capa || "");
-    const programaLogo = normalizeImageUrl(current?.selo || "");
+    const programaThumb = current
+      ? await ensurePngImageUrl(supabase, current.thumb || current.capa || current.selo || "", `tclock-shows/${dataOwnerId}/${current.id}-thumb.png`, 512)
+      : "";
+    const programaLogo = current
+      ? await ensurePngImageUrl(supabase, current.selo || current.thumb || current.capa || "", `tclock-shows/${dataOwnerId}/${current.id}-logo.png`, 512)
+      : "";
 
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
