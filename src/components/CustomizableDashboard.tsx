@@ -1059,7 +1059,7 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
       {events.length === 0 ? (
         <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 35%, transparent)" }}>Nenhum evento próximo</p>
       ) : (
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {events.map(ev => {
             const todayStr = new Date().toISOString().split("T")[0];
             const isToday = ev.data === todayStr;
@@ -1071,37 +1071,35 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
             return (
               <div
                 key={ev.id}
-                className={`flex items-center gap-2 px-2 py-1.5 rounded-lg ${isToday ? "agenda-today-pulse" : ""}`}
+                className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg ${isToday ? "agenda-today-pulse" : ""}`}
                 style={{
-                  background: isToday
-                    ? "color-mix(in srgb, var(--layout-accent-color) 18%, transparent)"
-                    : "color-mix(in srgb, var(--layout-widget-text) 6%, transparent)",
-                  border: isToday ? "1px solid var(--layout-accent-color)" : "1px solid transparent",
+                  background: "color-mix(in srgb, var(--layout-widget-text) 5%, transparent)",
+                  border: isToday
+                    ? "1px solid color-mix(in srgb, var(--layout-accent-color) 55%, transparent)"
+                    : "1px solid color-mix(in srgb, var(--layout-widget-text) 8%, transparent)",
                 }}
               >
-                {/* Date badge */}
                 <div
                   className="flex flex-col items-center justify-center shrink-0 rounded-md px-1.5 py-1 leading-none"
                   style={{
-                    background: "color-mix(in srgb, var(--layout-accent-color) 25%, transparent)",
-                    minWidth: "34px",
+                    background: "color-mix(in srgb, var(--layout-widget-text) 10%, transparent)",
+                    minWidth: "36px",
                   }}
                 >
                   <span className="text-sm font-black" style={{ color: "var(--layout-widget-text)" }}>{day}</span>
-                  <span className="text-[8px] font-bold tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 70%, transparent)" }}>{month}</span>
+                  <span className="text-[8px] font-semibold tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 55%, transparent)" }}>{month}</span>
                 </div>
-                {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text)" }}>
+                  <p className="text-xs font-semibold truncate leading-tight" style={{ color: "var(--layout-widget-text)" }}>
                     {titulo}
                   </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className="flex items-center gap-1.5 mt-1">
                     {tipo && (
                       <span
-                        className="text-[8px] font-bold px-1 py-px rounded uppercase tracking-wide"
+                        className="text-[8px] font-semibold px-1.5 py-px rounded uppercase tracking-wide"
                         style={{
-                          background: "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)",
-                          color: "var(--layout-accent-color)",
+                          background: "color-mix(in srgb, var(--layout-widget-text) 12%, transparent)",
+                          color: "color-mix(in srgb, var(--layout-widget-text) 75%, transparent)",
                         }}
                       >
                         {tipo}
@@ -1113,7 +1111,15 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                       </span>
                     )}
                     {isToday && (
-                      <span className="text-[8px] font-bold ml-auto shrink-0" style={{ color: "var(--layout-accent-color)" }}>● HOJE</span>
+                      <span
+                        className="text-[8px] font-bold ml-auto shrink-0 px-1.5 py-px rounded-full"
+                        style={{
+                          background: "var(--layout-accent-color)",
+                          color: "#000",
+                        }}
+                      >
+                        HOJE
+                      </span>
                     )}
                   </div>
                 </div>
