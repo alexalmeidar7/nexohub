@@ -425,13 +425,24 @@ serve(async (req) => {
     let logoPatrocinador = "";
     if (sponsorLogos.length > 0) {
       const idx = rotationSlot % sponsorLogos.length;
-      logoPatrocinador = normalizeImageUrl(sponsorLogos[idx].logo_url);
+      const sponsor = sponsorLogos[idx];
+      logoPatrocinador = await ensurePngImageUrl(
+        supabase,
+        sponsor.logo_url,
+        `broadcast/${dataOwnerId}/sponsor-${idx}-${(sponsor.nome || "logo").replace(/[^a-z0-9]/gi, "_").toLowerCase()}.png`,
+        512,
+      );
     }
+
+    const empresaLogo = emp?.logo
+      ? await ensurePngImageUrl(supabase, emp.logo, `broadcast/${dataOwnerId}/empresa-logo.png`, 512)
+      : "";
 
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<items>");
     lines.push("  <dados>");
+    lines.push(`    <empresa_logo>${esc(empresaLogo)}</empresa_logo>`);
     lines.push(`    <programa_nome>${esc(programaNome)}</programa_nome>`);
     lines.push(`    <programa_logo>${esc(programaLogo)}</programa_logo>`);
     lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
