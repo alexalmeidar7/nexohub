@@ -117,6 +117,68 @@ const normalizeImageUrl = (value: string | null | undefined, size = 512): string
   }
 };
 
+const base64ToUint8Array = (dataUrl: string): { data: Uint8Array; contentType: string } => {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error("Invalid data URL");
+  const raw = atob(match[2]);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return { data: arr, contentType: match[1] };
+};
+
+const uploadPublicPng = async (
+  supabase: ReturnType<typeof createClient>,
+  storagePath: string,
+  data: Uint8Array,
+): Promise<string> => {
+  const { error } = await supabase.storage
+    .from("xml-files")
+    .upload(storagePath, data, { upsert: true, contentType: "image/png", cacheControl: "3600" });
+  if (error) throw error;
+  const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(storagePath);
+  return (urlData?.publicUrl || "").split("?")[0];
+};
+
+const ensurePngImageUrl = async (
+  supabase: ReturnType<typeof createClient>,
+  value: string | null | undefined,
+  storagePath: string,
+  size = 512,
+): Promise<string> => {
+  const trimmed = (value || "").trim();
+  if (!trimmed) return "";
+
+  if (trimmed.startsWith("data:image/") && trimmed.includes(";base64,")) {
+    try {
+      if (trimmed.startsWith("data:image/png;base64,")) {
+        const { data } = base64ToUint8Array(trimmed);
+        return await uploadPublicPng(supabase, storagePath, data);
+      }
+      // Convert other data: images to PNG via wsrv? Not possible directly. Upload as-is then convert through wsrv proxy.
+      const { data } = base64ToUint8Array(trimmed);
+      return await uploadPublicPng(supabase, storagePath, data);
+    } catch {
+      return "";
+    }
+  }
+
+  if (!/^https?:\/\//i.test(trimmed)) return "";
+
+  const cleanUrl = trimmed.split("?")[0].split("#")[0];
+  if (/\.png$/i.test(cleanUrl)) return cleanUrl;
+
+  try {
+    const source = trimmed.replace(/^https?:\/\//i, "");
+    const fetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=${size}&h=${size}&fit=contain`;
+    const response = await fetch(fetchUrl);
+    if (!response.ok) return "";
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    return await uploadPublicPng(supabase, storagePath, bytes);
+  } catch {
+    return "";
+  }
+};
+
 const SOCIAL_ICONS: Record<string, string> = {
   instagram: "https://img.icons8.com/ios-filled/100/000000/instagram-new.png",
   facebook: "https://img.icons8.com/ios-filled/100/000000/facebook-new.png",
