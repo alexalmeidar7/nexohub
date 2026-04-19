@@ -119,8 +119,8 @@ serve(async (req) => {
 
     const programaNome = current?.nome || "";
     const programaDescricao = current?.descricao || "";
-    const programaThumb = normalizeImageUrl(current?.thumb || current?.capa || "", 512);
-    const programaLogo = normalizeImageUrl(current?.selo || "", 512);
+    const programaThumb = normalizeImageUrl(current?.thumb || current?.capa || "");
+    const programaLogo = normalizeImageUrl(current?.selo || "");
 
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
