@@ -117,6 +117,68 @@ const normalizeImageUrl = (value: string | null | undefined, size = 512): string
   }
 };
 
+const base64ToUint8Array = (dataUrl: string): { data: Uint8Array; contentType: string } => {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error("Invalid data URL");
+  const raw = atob(match[2]);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return { data: arr, contentType: match[1] };
+};
+
+const uploadPublicPng = async (
+  supabase: ReturnType<typeof createClient>,
+  storagePath: string,
+  data: Uint8Array,
+): Promise<string> => {
+  const { error } = await supabase.storage
+    .from("xml-files")
+    .upload(storagePath, data, { upsert: true, contentType: "image/png", cacheControl: "3600" });
+  if (error) throw error;
+  const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(storagePath);
+  return (urlData?.publicUrl || "").split("?")[0];
+};
+
+const ensurePngImageUrl = async (
+  supabase: ReturnType<typeof createClient>,
+  value: string | null | undefined,
+  storagePath: string,
+  size = 512,
+): Promise<string> => {
+  const trimmed = (value || "").trim();
+  if (!trimmed) return "";
+
+  if (trimmed.startsWith("data:image/") && trimmed.includes(";base64,")) {
+    try {
+      if (trimmed.startsWith("data:image/png;base64,")) {
+        const { data } = base64ToUint8Array(trimmed);
+        return await uploadPublicPng(supabase, storagePath, data);
+      }
+      // Convert other data: images to PNG via wsrv? Not possible directly. Upload as-is then convert through wsrv proxy.
+      const { data } = base64ToUint8Array(trimmed);
+      return await uploadPublicPng(supabase, storagePath, data);
+    } catch {
+      return "";
+    }
+  }
+
+  if (!/^https?:\/\//i.test(trimmed)) return "";
+
+  const cleanUrl = trimmed.split("?")[0].split("#")[0];
+  if (/\.png$/i.test(cleanUrl)) return cleanUrl;
+
+  try {
+    const source = trimmed.replace(/^https?:\/\//i, "");
+    const fetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=${size}&h=${size}&fit=contain`;
+    const response = await fetch(fetchUrl);
+    if (!response.ok) return "";
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    return await uploadPublicPng(supabase, storagePath, bytes);
+  } catch {
+    return "";
+  }
+};
+
 const SOCIAL_ICONS: Record<string, string> = {
   instagram: "https://img.icons8.com/ios-filled/100/000000/instagram-new.png",
   facebook: "https://img.icons8.com/ios-filled/100/000000/facebook-new.png",
@@ -208,7 +270,7 @@ serve(async (req) => {
     const [empRes, progsRes, roteiroRes, settingsRes] = await Promise.all([
       supabase
         .from("empresa_config")
-        .select("instagram, facebook, youtube, site, telefone_participacao")
+        .select("logo, instagram, facebook, youtube, site, telefone_participacao")
         .eq("user_id", dataOwnerId)
         .maybeSingle(),
       supabase
@@ -260,8 +322,10 @@ serve(async (req) => {
 
     if (prog) {
       programaNome = prog.nome || "";
-      programaLogo = normalizeImageUrl(prog.selo);
       programaId = prog.id || "";
+      programaLogo = prog.selo
+        ? await ensurePngImageUrl(supabase, prog.selo, `broadcast/${dataOwnerId}/${prog.id}-logo.png`, 512)
+        : "";
 
       const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0)
         ? prog.apresentadores_ids
@@ -361,13 +425,24 @@ serve(async (req) => {
     let logoPatrocinador = "";
     if (sponsorLogos.length > 0) {
       const idx = rotationSlot % sponsorLogos.length;
-      logoPatrocinador = normalizeImageUrl(sponsorLogos[idx].logo_url);
+      const sponsor = sponsorLogos[idx];
+      logoPatrocinador = await ensurePngImageUrl(
+        supabase,
+        sponsor.logo_url,
+        `broadcast/${dataOwnerId}/sponsor-${idx}-${(sponsor.nome || "logo").replace(/[^a-z0-9]/gi, "_").toLowerCase()}.png`,
+        512,
+      );
     }
+
+    const empresaLogo = emp?.logo
+      ? await ensurePngImageUrl(supabase, emp.logo, `broadcast/${dataOwnerId}/empresa-logo.png`, 512)
+      : "";
 
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<items>");
     lines.push("  <dados>");
+    lines.push(`    <empresa_logo>${esc(empresaLogo)}</empresa_logo>`);
     lines.push(`    <programa_nome>${esc(programaNome)}</programa_nome>`);
     lines.push(`    <programa_logo>${esc(programaLogo)}</programa_logo>`);
     lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
