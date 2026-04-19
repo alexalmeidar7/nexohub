@@ -189,7 +189,7 @@ serve(async (req) => {
           const t = d.current?.temperature_2m;
           if (typeof t === "number") tempAtual = `${Math.round(t)}°`;
           descAtual = WMO_LABELS[code] || "—";
-          iconAtual = toPngIconUrl(code);
+          iconAtual = await resolveWeatherIconPng(supabase, code);
         }
       } catch { /* silent */ }
     }
