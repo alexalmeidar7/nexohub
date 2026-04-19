@@ -180,11 +180,11 @@ const ensurePngImageUrl = async (
 };
 
 const SOCIAL_ICONS: Record<string, string> = {
-  instagram: "https://img.icons8.com/ios-filled/100/000000/instagram-new.png",
-  facebook: "https://img.icons8.com/ios-filled/100/000000/facebook-new.png",
-  youtube: "https://img.icons8.com/ios-filled/100/000000/youtube-play.png",
-  site: "https://img.icons8.com/ios-filled/100/000000/domain.png",
-  whatsapp: "https://img.icons8.com/ios-filled/100/000000/whatsapp.png",
+  instagram: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExd2hxZjF0eHJqOXNyZWdmZjB6MWZpc2k0bWxpcm5pbW90eTM2eXJ4eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/Yh7VHWhKepubKvCkTL/giphy.gif",
+  facebook: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZWl5aHJoOXY3aWh3eXdma2lzZXh5OTJjOXdvbjJ1eGc4eGx2N2x6dyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/RKE3xH8sBnFRDg9Hr1/giphy.gif",
+  youtube: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmd6MzJxZmd0Z3F5dXdyMGM5d2ZjMjVlYjI1c3I4d2VtMnk2ZXJ2bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/QqdQHCDw3JTfeYZSm5/giphy.gif",
+  site: "https://img.icons8.com/fluency-systems-filled/200/ffffff/domain.png",
+  whatsapp: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ2t6dG1xeWk1aGM4Y2RrcWRubzZ4dWVxbm14eDQzcW8zMHc1aHJ4MyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/QvVc7HrxnZRiXG7lbE/giphy.gif",
 };
 
 function extractHandle(raw: string): string {
