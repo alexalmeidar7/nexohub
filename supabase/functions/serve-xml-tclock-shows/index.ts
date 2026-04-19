@@ -69,13 +69,9 @@ const ensurePngImageUrl = async (
     const parsed = new URL(trimmed);
     let fetchUrl = trimmed;
 
-    if (parsed.pathname.includes("/storage/v1/object/public/")) {
-      parsed.pathname = parsed.pathname.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-      parsed.searchParams.set("width", String(size));
-      parsed.searchParams.set("height", String(size));
-      parsed.searchParams.set("resize", "contain");
-      parsed.searchParams.set("format", "png");
-      fetchUrl = parsed.toString();
+    if (/\.webp$/i.test(cleanUrl)) {
+      const source = trimmed.replace(/^https?:\/\//i, "");
+      fetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=${size}&h=${size}&fit=contain`;
     }
 
     const response = await fetch(fetchUrl);
@@ -84,7 +80,7 @@ const ensurePngImageUrl = async (
     const contentType = response.headers.get("content-type") || "";
     const bytes = new Uint8Array(await response.arrayBuffer());
 
-    if (contentType.includes("png") || fetchUrl.includes("format=png")) {
+    if (contentType.includes("png") || fetchUrl.includes("output=png")) {
       return await uploadPublicPng(supabase, storagePath, bytes);
     }
 
