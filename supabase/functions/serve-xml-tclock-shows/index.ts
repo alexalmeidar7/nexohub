@@ -28,19 +28,26 @@ const normalizeImageUrl = (value: string | null | undefined, size = 512): string
   if (!trimmed || trimmed.startsWith("data:")) return trimmed;
   try {
     const parsed = new URL(trimmed);
-    if (parsed.pathname.includes("/storage/v1/object/public/") && /\.webp$/i.test(parsed.pathname)) {
+    // Force .png output via Supabase image transform when possible
+    if (parsed.pathname.includes("/storage/v1/object/public/")) {
       parsed.pathname = parsed.pathname.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-      if (!parsed.searchParams.has("width")) {
-        parsed.searchParams.set("width", String(size));
-        parsed.searchParams.set("height", String(size));
-        parsed.searchParams.set("resize", "contain");
-      }
+      parsed.searchParams.set("width", String(size));
+      parsed.searchParams.set("height", String(size));
+      parsed.searchParams.set("resize", "contain");
+      parsed.searchParams.set("format", "png");
       return parsed.toString();
     }
     return trimmed;
   } catch {
     return trimmed;
   }
+};
+
+// Convert basmilius .svg icon URLs to .png via a public image proxy (wsrv.nl)
+const toPngIconUrl = (svgUrl: string, size = 256): string => {
+  if (!svgUrl) return "";
+  const clean = svgUrl.replace(/^https?:\/\//, "");
+  return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&output=png&w=${size}&h=${size}`;
 };
 
 const WMO_LABELS: Record<number, string> = {
@@ -112,7 +119,7 @@ serve(async (req) => {
           if (typeof t === "number") tempAtual = `${Math.round(t)}°`;
           descAtual = WMO_LABELS[code] || "—";
           const iconFile = WMO_ICON[code] || "clear-day.svg";
-          iconAtual = `${WEATHER_ICON_BASE}/${iconFile}`;
+          iconAtual = toPngIconUrl(`${WEATHER_ICON_BASE}/${iconFile}`, 256);
         }
       } catch { /* silent */ }
     }
