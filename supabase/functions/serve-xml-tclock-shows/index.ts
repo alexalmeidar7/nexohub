@@ -23,31 +23,30 @@ const resolveDataOwnerId = async (
   return requestedUserId;
 };
 
-const normalizeImageUrl = (value: string | null | undefined, size = 512): string => {
+// Return only clean http(s) URLs ending in .png. Drops data: URIs and other formats.
+const normalizeImageUrl = (value: string | null | undefined): string => {
   const trimmed = (value || "").trim();
-  if (!trimmed || trimmed.startsWith("data:")) return trimmed;
-  try {
-    const parsed = new URL(trimmed);
-    // Force .png output via Supabase image transform when possible
-    if (parsed.pathname.includes("/storage/v1/object/public/")) {
-      parsed.pathname = parsed.pathname.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-      parsed.searchParams.set("width", String(size));
-      parsed.searchParams.set("height", String(size));
-      parsed.searchParams.set("resize", "contain");
-      parsed.searchParams.set("format", "png");
-      return parsed.toString();
-    }
-    return trimmed;
-  } catch {
-    return trimmed;
-  }
+  if (!trimmed) return "";
+  if (!/^https?:\/\//i.test(trimmed)) return ""; // skip data: and invalid
+  // Strip query string for cleanliness
+  const noQuery = trimmed.split("?")[0];
+  if (/\.png$/i.test(noQuery)) return noQuery;
+  return "";
 };
 
-// Convert basmilius .svg icon URLs to .png via a public image proxy (wsrv.nl)
-const toPngIconUrl = (svgUrl: string, size = 256): string => {
-  if (!svgUrl) return "";
-  const clean = svgUrl.replace(/^https?:\/\//, "");
-  return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&output=png&w=${size}&h=${size}`;
+// Animated PNG weather icons (Meteocons - amCharts CDN, .png extension)
+const toPngIconUrl = (code: number): string => {
+  const map: Record<number, string> = {
+    0: "day", 1: "cloudy-day-1", 2: "cloudy-day-2", 3: "cloudy",
+    45: "cloudy", 48: "cloudy",
+    51: "rainy-1", 53: "rainy-2", 55: "rainy-3",
+    61: "rainy-4", 63: "rainy-5", 65: "rainy-6",
+    71: "snowy-4", 73: "snowy-5", 75: "snowy-6",
+    80: "rainy-4", 81: "rainy-5", 82: "rainy-6",
+    95: "thunder", 96: "thunder", 99: "thunder",
+  };
+  const name = map[code] || "day";
+  return `https://amcharts.com/wp-content/uploads/assets/animated-svg-icons/weather/animated/${name}.png`;
 };
 
 const WMO_LABELS: Record<number, string> = {
@@ -58,17 +57,7 @@ const WMO_LABELS: Record<number, string> = {
   95: "Tempestade", 96: "Tempestade c/ granizo", 99: "Tempestade severa",
 };
 
-// Animated weather icons (basmilius / meteocons - hospedados publicamente)
-const WEATHER_ICON_BASE = "https://basmilius.github.io/weather-icons/production/fill/all";
-const WMO_ICON: Record<number, string> = {
-  0: "clear-day.svg", 1: "partly-cloudy-day.svg", 2: "partly-cloudy-day.svg", 3: "cloudy.svg",
-  45: "fog.svg", 48: "fog.svg",
-  51: "drizzle.svg", 53: "drizzle.svg", 55: "drizzle.svg",
-  61: "rain.svg", 63: "rain.svg", 65: "rain.svg",
-  71: "snow.svg", 73: "snow.svg", 75: "snow.svg",
-  80: "rain.svg", 81: "rain.svg", 82: "rain.svg",
-  95: "thunderstorms-rain.svg", 96: "thunderstorms-rain.svg", 99: "thunderstorms-rain.svg",
-};
+// (weather icons resolved by toPngIconUrl above)
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -118,8 +107,7 @@ serve(async (req) => {
           const t = d.current?.temperature_2m;
           if (typeof t === "number") tempAtual = `${Math.round(t)}°`;
           descAtual = WMO_LABELS[code] || "—";
-          const iconFile = WMO_ICON[code] || "clear-day.svg";
-          iconAtual = toPngIconUrl(`${WEATHER_ICON_BASE}/${iconFile}`, 256);
+          iconAtual = toPngIconUrl(code);
         }
       } catch { /* silent */ }
     }
@@ -131,8 +119,8 @@ serve(async (req) => {
 
     const programaNome = current?.nome || "";
     const programaDescricao = current?.descricao || "";
-    const programaThumb = normalizeImageUrl(current?.thumb || current?.capa || "", 512);
-    const programaLogo = normalizeImageUrl(current?.selo || "", 512);
+    const programaThumb = normalizeImageUrl(current?.thumb || current?.capa || "");
+    const programaLogo = normalizeImageUrl(current?.selo || "");
 
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
