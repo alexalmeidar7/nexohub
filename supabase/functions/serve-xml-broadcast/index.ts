@@ -179,13 +179,13 @@ const ensurePngImageUrl = async (
   }
 };
 
-// Animated white social icons (Icons8 animated GIFs, white variant)
+// Static white social icons (PNG, white variant)
 const SOCIAL_ICONS: Record<string, string> = {
-  instagram: "https://img.icons8.com/3d-fluency/200/ffffff/instagram-new.gif",
-  facebook: "https://img.icons8.com/3d-fluency/200/ffffff/facebook-new.gif",
-  youtube: "https://img.icons8.com/3d-fluency/200/ffffff/youtube-play.gif",
-  site: "https://img.icons8.com/3d-fluency/200/ffffff/domain.gif",
-  whatsapp: "https://img.icons8.com/3d-fluency/200/ffffff/whatsapp.gif",
+  instagram: "https://img.icons8.com/ios-filled/200/ffffff/instagram-new.png",
+  facebook: "https://img.icons8.com/ios-filled/200/ffffff/facebook-new.png",
+  youtube: "https://img.icons8.com/ios-filled/200/ffffff/youtube-play.png",
+  site: "https://img.icons8.com/ios-filled/200/ffffff/domain.png",
+  whatsapp: "https://img.icons8.com/ios-filled/200/ffffff/whatsapp.png",
 };
 
 function extractHandle(raw: string): string {
