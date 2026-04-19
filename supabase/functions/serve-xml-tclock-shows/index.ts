@@ -201,8 +201,8 @@ serve(async (req) => {
 
     const programaNome = current?.nome || "";
     const programaDescricao = current?.descricao || "";
-    const programaThumb = current
-      ? await ensurePngImageUrl(supabase, current.thumb || current.capa || current.selo || "", `tclock-shows/${dataOwnerId}/${current.id}-thumb.png`, 512)
+    const programaThumb = current && current.thumb
+      ? await ensurePngImageUrl(supabase, current.thumb, `tclock-shows/${dataOwnerId}/${current.id}-thumb.png`, 512)
       : "";
     const programaLogo = current && current.selo
       ? await ensurePngImageUrl(supabase, current.selo, `tclock-shows/${dataOwnerId}/${current.id}-logo.png`, 512)
