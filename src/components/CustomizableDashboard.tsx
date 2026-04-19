@@ -1044,28 +1044,79 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
       <div className="flex items-center gap-2 mb-3">
         <CalendarDays size={14} style={{ color: "var(--layout-accent-color)" }} />
         <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text)" }}>Agenda de Eventos</p>
+        {events.length > 0 && (
+          <span
+            className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+            style={{
+              background: "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)",
+              color: "var(--layout-accent-color)",
+            }}
+          >
+            {events.length}
+          </span>
+        )}
       </div>
       {events.length === 0 ? (
         <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 35%, transparent)" }}>Nenhum evento próximo</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {events.map(ev => {
             const todayStr = new Date().toISOString().split("T")[0];
             const isToday = ev.data === todayStr;
+            const evDate = new Date(ev.data + "T12:00:00");
+            const day = evDate.toLocaleDateString("pt-BR", { day: "2-digit" });
+            const month = evDate.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
+            const tipo = (ev.tipo_evento || "").toString().toUpperCase();
+            const titulo = (ev.descricao || "Evento").split("/")[0].trim();
             return (
               <div
                 key={ev.id}
-                className={`px-3 py-2 rounded-lg ${isToday ? "agenda-today-pulse" : ""}`}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-lg ${isToday ? "agenda-today-pulse" : ""}`}
                 style={{
-                  background: "color-mix(in srgb, var(--layout-accent-color) 10%, transparent)",
-                  border: isToday ? "2px solid var(--layout-accent-color)" : "2px solid transparent",
+                  background: isToday
+                    ? "color-mix(in srgb, var(--layout-accent-color) 18%, transparent)"
+                    : "color-mix(in srgb, var(--layout-widget-text) 6%, transparent)",
+                  border: isToday ? "1px solid var(--layout-accent-color)" : "1px solid transparent",
                 }}
               >
-                <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text)" }}>{ev.descricao || "Evento"}</p>
-                <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 45%, transparent)" }}>
-                  {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — {ev.local}
-                  {isToday && <span className="ml-2 font-bold" style={{ color: "var(--layout-accent-color)" }}>● HOJE</span>}
-                </p>
+                {/* Date badge */}
+                <div
+                  className="flex flex-col items-center justify-center shrink-0 rounded-md px-1.5 py-1 leading-none"
+                  style={{
+                    background: "color-mix(in srgb, var(--layout-accent-color) 25%, transparent)",
+                    minWidth: "34px",
+                  }}
+                >
+                  <span className="text-sm font-black" style={{ color: "var(--layout-widget-text)" }}>{day}</span>
+                  <span className="text-[8px] font-bold tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 70%, transparent)" }}>{month}</span>
+                </div>
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text)" }}>
+                    {titulo}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {tipo && (
+                      <span
+                        className="text-[8px] font-bold px-1 py-px rounded uppercase tracking-wide"
+                        style={{
+                          background: "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)",
+                          color: "var(--layout-accent-color)",
+                        }}
+                      >
+                        {tipo}
+                      </span>
+                    )}
+                    {ev.local && (
+                      <span className="text-[9px] truncate" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 50%, transparent)" }}>
+                        {ev.local}
+                      </span>
+                    )}
+                    {isToday && (
+                      <span className="text-[8px] font-bold ml-auto shrink-0" style={{ color: "var(--layout-accent-color)" }}>● HOJE</span>
+                    )}
+                  </div>
+                </div>
               </div>
             );
           })}
