@@ -90,19 +90,45 @@ const ensurePngImageUrl = async (
   }
 };
 
-// Animated PNG weather icons (Meteocons - amCharts CDN, .png extension)
-const toPngIconUrl = (code: number): string => {
-  const map: Record<number, string> = {
-    0: "day", 1: "cloudy-day-1", 2: "cloudy-day-2", 3: "cloudy",
-    45: "cloudy", 48: "cloudy",
-    51: "rainy-1", 53: "rainy-2", 55: "rainy-3",
-    61: "rainy-4", 63: "rainy-5", 65: "rainy-6",
-    71: "snowy-4", 73: "snowy-5", 75: "snowy-6",
-    80: "rainy-4", 81: "rainy-5", 82: "rainy-6",
-    95: "thunder", 96: "thunder", 99: "thunder",
-  };
-  const name = map[code] || "day";
-  return `https://amcharts.com/wp-content/uploads/assets/animated-svg-icons/weather/animated/${name}.png`;
+// Reliable weather icon source: basmilius/weather-icons (jsDelivr) → PNG via wsrv.nl,
+// then cached in our public bucket so the final URL ends with .png and never goes offline.
+const WMO_ICON_NAME: Record<number, string> = {
+  0: "clear-day", 1: "partly-cloudy-day", 2: "partly-cloudy-day", 3: "cloudy",
+  45: "fog", 48: "fog",
+  51: "drizzle", 53: "drizzle", 55: "drizzle",
+  61: "rain", 63: "rain", 65: "rain",
+  71: "snow", 73: "snow", 75: "snow",
+  80: "rain", 81: "rain", 82: "rain",
+  95: "thunderstorms-rain", 96: "thunderstorms-rain", 99: "thunderstorms-rain",
+};
+
+const resolveWeatherIconPng = async (
+  supabase: ReturnType<typeof createClient>,
+  code: number,
+): Promise<string> => {
+  const name = WMO_ICON_NAME[code] || "clear-day";
+  const storagePath = `tclock-shows/_weather-icons/${name}.png`;
+
+  // Reuse cached PNG if it already exists
+  const { data: existing } = supabase.storage.from("xml-files").getPublicUrl(storagePath);
+  const cachedUrl = (existing?.publicUrl || "").split("?")[0];
+  if (cachedUrl) {
+    try {
+      const head = await fetch(cachedUrl, { method: "HEAD" });
+      if (head.ok) return cachedUrl;
+    } catch { /* fall through to regenerate */ }
+  }
+
+  const svgSource = `cdn.jsdelivr.net/gh/basmilius/weather-icons@dev/production/fill/svg/${name}.svg`;
+  const pngUrl = `https://wsrv.nl/?url=${encodeURIComponent(svgSource)}&output=png&w=256&h=256`;
+  try {
+    const res = await fetch(pngUrl);
+    if (!res.ok) return "";
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    return await uploadPublicPng(supabase, storagePath, bytes);
+  } catch {
+    return "";
+  }
 };
 
 const WMO_LABELS: Record<number, string> = {
@@ -163,7 +189,7 @@ serve(async (req) => {
           const t = d.current?.temperature_2m;
           if (typeof t === "number") tempAtual = `${Math.round(t)}°`;
           descAtual = WMO_LABELS[code] || "—";
-          iconAtual = toPngIconUrl(code);
+          iconAtual = await resolveWeatherIconPng(supabase, code);
         }
       } catch { /* silent */ }
     }
