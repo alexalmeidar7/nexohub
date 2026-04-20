@@ -665,6 +665,37 @@ export default function BroadcastPage() {
             )}
           </div>
 
+          {/* Card: Insert Live */}
+          {insertLiveArt && (
+            <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-icon-color, #888)" }}>Insert Live</h3>
+              {insertLiveSchedule.length > 0 ? (
+                <div>
+                  <p className="text-[10px] mb-2" style={{ color: "var(--layout-icon-color, #888)" }}>
+                    Horários programados (30s cada):
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {insertLiveSchedule.map((t, i) => (
+                      <span key={i} className="text-[11px] font-mono font-semibold px-2 py-1 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #dc2626) 10%, transparent)", color: "var(--layout-accent-color, #dc2626)" }}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[10px]" style={{ color: "var(--layout-icon-color, #888)" }}>Sem agendamento (evento já iniciou ou antes das 07:00).</p>
+              )}
+              <button
+                onClick={handleInsertNow}
+                disabled={insertingNow}
+                className="w-full px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all disabled:opacity-60"
+                style={{ backgroundColor: "var(--layout-accent-color, #dc2626)", color: "#fff" }}
+              >
+                {insertingNow ? "Inserindo (30s)..." : "Inserir agora"}
+              </button>
+            </div>
+          )}
+
           {/* Card: Ticker */}
           <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
             <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-icon-color, #888)" }}>Ticker</h3>
