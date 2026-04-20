@@ -340,15 +340,21 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     dragItem.current = null;
   };
 
-  const handleProgramaContextMenu = async (e: React.MouseEvent, programa: Programa) => {
+  const [copyPrompt, setCopyPrompt] = useState<{ logo: Logo; programa: Programa } | null>(null);
+
+  const handleProgramaContextMenu = (e: React.MouseEvent, programa: Programa) => {
     const item = dragItem.current;
     if (!item || item.excluido) return;
     if (item.programa_id === programa.id) return;
     e.preventDefault();
-    if (window.confirm(`Deseja copiar a logo "${item.nome}" para o programa "${programa.nome}"?`)) {
-      await copyLogoToPrograma(item, programa.id);
-      dragItem.current = null;
-    }
+    setCopyPrompt({ logo: item, programa });
+  };
+
+  const confirmCopyPrompt = async () => {
+    if (!copyPrompt) return;
+    await copyLogoToPrograma(copyPrompt.logo, copyPrompt.programa.id);
+    dragItem.current = null;
+    setCopyPrompt(null);
   };
 
   const sortedProgramas = [...programas].sort((a, b) => (a.horario_inicio || "99:99").localeCompare(b.horario_inicio || "99:99"));
@@ -716,6 +722,27 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                       <ChevronDown size={16} className="transition-transform duration-200 ui-open:rotate-180" style={{ color: "var(--layout-header-text, #ffffff)" }} />
                     </button>
                   </CollapsibleTrigger>
+                  {copyPrompt && copyPrompt.programa.id === programa.id && (
+                    <div className="px-4 py-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #ffffff))", borderTop: "1px solid var(--layout-border-color, #333333)", borderBottom: "1px solid var(--layout-border-color, #333333)" }}>
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <p className="text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          Deseja copiar a logo <strong>"{copyPrompt.logo.nome}"</strong> para este programa?
+                        </p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setCopyPrompt(null)}
+                            className="px-4 py-1.5 text-xs font-semibold rounded-full"
+                            style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+                            Cancelar
+                          </button>
+                          <button onClick={confirmCopyPrompt}
+                            className="px-4 py-1.5 text-xs font-semibold rounded-full text-white"
+                            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}>
+                            Copiar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <CollapsibleContent>
                     <div className="p-3 sm:p-4 px-4 sm:px-10">
                       <Carousel opts={{ align: "start" }} className="w-full">
