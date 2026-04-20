@@ -76,7 +76,90 @@ function ParticipanteSearchPicker({
       </div>
       <div className="max-h-60 overflow-y-auto space-y-0.5">
         {filtered.length === 0 ? (
-          <p className="text-[10px] text-center py-3 opacity-70" style={{ color: "var(--layout-widget-text, hsl(var(--muted-foreground)))" }}>Nenhum participante encontrado</p>
+          <div className="py-3 space-y-2">
+            <p className="text-[10px] text-center opacity-70" style={{ color: "var(--layout-widget-text, hsl(var(--muted-foreground)))" }}>Nenhum participante encontrado</p>
+            {noResults && !showRegister && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => { setGuestNome(q); setGuestInsta(""); setShowRegister(true); }}
+                className="w-full h-8 text-[10px] gap-1 rounded-full"
+                style={{
+                  backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))",
+                  color: "var(--layout-accent-text, hsl(var(--primary-foreground)))",
+                }}
+              >
+                <Plus size={11} /> Cadastrar "{q}" como Convidado
+              </Button>
+            )}
+            {showRegister && (
+              <div
+                className="space-y-2 p-2 rounded-lg"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--layout-page-bg, hsl(var(--background))) 85%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--layout-accent-color, hsl(var(--accent))) 40%, var(--layout-border-color, hsl(var(--border))) 60%)",
+                }}
+              >
+                <p className="text-[10px] font-medium opacity-80" style={{ color: "var(--layout-widget-text, hsl(var(--foreground)))" }}>Novo Convidado</p>
+                <Input
+                  autoFocus
+                  value={guestNome}
+                  onChange={(e) => setGuestNome(e.target.value)}
+                  placeholder="Nome do convidado"
+                  className="h-8 text-xs"
+                  style={{
+                    backgroundColor: "var(--layout-page-bg, hsl(var(--background)))",
+                    color: "var(--layout-page-text, hsl(var(--foreground)))",
+                    borderColor: "var(--layout-border-color, hsl(var(--border)))",
+                  }}
+                />
+                <Input
+                  value={guestInsta}
+                  onChange={(e) => setGuestInsta(e.target.value)}
+                  placeholder="@instagram (opcional)"
+                  className="h-8 text-xs"
+                  style={{
+                    backgroundColor: "var(--layout-page-bg, hsl(var(--background)))",
+                    color: "var(--layout-page-text, hsl(var(--foreground)))",
+                    borderColor: "var(--layout-border-color, hsl(var(--border)))",
+                  }}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowRegister(false)}
+                    className="flex-1 h-7 text-[10px] rounded-full"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!guestNome.trim() || savingGuest}
+                    onClick={async () => {
+                      setSavingGuest(true);
+                      try {
+                        await onRegisterGuest(guestNome.trim(), guestInsta.trim());
+                        setShowRegister(false);
+                        setQ("");
+                      } finally {
+                        setSavingGuest(false);
+                      }
+                    }}
+                    className="flex-1 h-7 text-[10px] rounded-full"
+                    style={{
+                      backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))",
+                      color: "var(--layout-accent-text, hsl(var(--primary-foreground)))",
+                    }}
+                  >
+                    {savingGuest ? "Salvando..." : "Salvar"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           filtered.map((a) => (
             <button
