@@ -722,31 +722,29 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                       <ChevronDown size={16} className="transition-transform duration-200 ui-open:rotate-180" style={{ color: "var(--layout-header-text, #ffffff)" }} />
                     </button>
                   </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="p-3 sm:p-4 px-4 sm:px-10 relative">
-                      {copyPrompt && copyPrompt.programa.id === programa.id && (
-                        <div className="absolute inset-0 z-20 flex items-center justify-center backdrop-blur-sm rounded-b-xl"
-                          style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 85%, transparent)" }}>
-                          <div className="rounded-xl p-5 max-w-sm w-[90%] text-center shadow-2xl"
-                            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)" }}>
-                            <p className="text-sm mb-4">
-                              Deseja copiar a logo <strong>"{copyPrompt.logo.nome}"</strong> para o programa <strong>"{programa.nome}"</strong>?
-                            </p>
-                            <div className="flex gap-2 justify-center">
-                              <button onClick={() => setCopyPrompt(null)}
-                                className="px-4 py-1.5 text-xs font-semibold rounded-full"
-                                style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)" }}>
-                                Cancelar
-                              </button>
-                              <button onClick={confirmCopyPrompt}
-                                className="px-4 py-1.5 text-xs font-semibold rounded-full text-white"
-                                style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}>
-                                Copiar
-                              </button>
-                            </div>
-                          </div>
+                  {copyPrompt && copyPrompt.programa.id === programa.id && (
+                    <div className="px-4 py-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #ffffff))", borderTop: "1px solid var(--layout-border-color, #333333)", borderBottom: "1px solid var(--layout-border-color, #333333)" }}>
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <p className="text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          Deseja copiar a logo <strong>"{copyPrompt.logo.nome}"</strong> para este programa?
+                        </p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setCopyPrompt(null)}
+                            className="px-4 py-1.5 text-xs font-semibold rounded-full"
+                            style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+                            Cancelar
+                          </button>
+                          <button onClick={confirmCopyPrompt}
+                            className="px-4 py-1.5 text-xs font-semibold rounded-full text-white"
+                            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}>
+                            Copiar
+                          </button>
                         </div>
-                      )}
+                      </div>
+                    </div>
+                  )}
+                  <CollapsibleContent>
+                    <div className="p-3 sm:p-4 px-4 sm:px-10">
                       <Carousel opts={{ align: "start" }} className="w-full">
                         <CarouselContent>
                           {gLogos.map((logo) => {
