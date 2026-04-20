@@ -322,6 +322,7 @@ export default function AgendaPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [historyDateFilter, setHistoryDateFilter] = useState<Date | undefined>(undefined);
+  const [pastEventDetail, setPastEventDetail] = useState<Evento | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
 
   // Form
