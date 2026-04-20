@@ -441,10 +441,18 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                         </span>
                         <ChevronDown size={14} className="opacity-60 shrink-0 ml-2" />
                       </button>
-                      {programaPickerOpen && (
+                      {programaPickerOpen && programaPickerPos && createPortal(
                         <div
-                          className="absolute z-20 mt-1 w-full rounded-xl shadow-lg"
-                          style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)" }}
+                          ref={programaPickerRef}
+                          className="fixed rounded-xl shadow-2xl"
+                          style={{
+                            top: programaPickerPos.top,
+                            left: programaPickerPos.left,
+                            width: programaPickerPos.width,
+                            zIndex: 9999,
+                            backgroundColor: "var(--layout-page-bg, #ffffff)",
+                            border: "1px solid var(--layout-border-color, #333333)",
+                          }}
                         >
                           <div className="p-2 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                             <div className="relative">
@@ -473,7 +481,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                               {programaIds.length} selecionado{programaIds.length !== 1 ? "s" : ""}
                             </span>
                           </div>
-                          <div className="max-h-56 overflow-auto">
+                          <div className="max-h-72 overflow-auto">
                             {programas
                               .filter((p) => p.nome.toLowerCase().includes(programaSearch.toLowerCase()))
                               .map((p) => {
@@ -505,7 +513,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                               Concluir
                             </button>
                           </div>
-                        </div>
+                        </div>,
+                        document.body
                       )}
                     </div>
                   )}
