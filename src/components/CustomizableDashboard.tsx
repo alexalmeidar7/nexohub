@@ -1079,6 +1079,12 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                     : "1px solid color-mix(in srgb, var(--layout-widget-text) 8%, transparent)",
                   transition: "all 0.25s ease",
                 }}
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem("agenda_focus_event", JSON.stringify({ id: ev.id, data: ev.data }));
+                  } catch {}
+                  onNavigate("agenda");
+                }}
                 onMouseEnter={e => {
                   e.currentTarget.style.background = "var(--layout-widget-text)";
                   e.currentTarget.style.transform = "translateX(4px)";
