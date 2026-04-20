@@ -340,15 +340,21 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     dragItem.current = null;
   };
 
-  const handleProgramaContextMenu = async (e: React.MouseEvent, programa: Programa) => {
+  const [copyPrompt, setCopyPrompt] = useState<{ logo: Logo; programa: Programa } | null>(null);
+
+  const handleProgramaContextMenu = (e: React.MouseEvent, programa: Programa) => {
     const item = dragItem.current;
     if (!item || item.excluido) return;
     if (item.programa_id === programa.id) return;
     e.preventDefault();
-    if (window.confirm(`Deseja copiar a logo "${item.nome}" para o programa "${programa.nome}"?`)) {
-      await copyLogoToPrograma(item, programa.id);
-      dragItem.current = null;
-    }
+    setCopyPrompt({ logo: item, programa });
+  };
+
+  const confirmCopyPrompt = async () => {
+    if (!copyPrompt) return;
+    await copyLogoToPrograma(copyPrompt.logo, copyPrompt.programa.id);
+    dragItem.current = null;
+    setCopyPrompt(null);
   };
 
   const sortedProgramas = [...programas].sort((a, b) => (a.horario_inicio || "99:99").localeCompare(b.horario_inicio || "99:99"));
