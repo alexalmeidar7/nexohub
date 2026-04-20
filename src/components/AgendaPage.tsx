@@ -37,17 +37,25 @@ function ParticipanteSearchPicker({
   existingNames,
   onSelect,
   onAddBlank,
+  onRegisterGuest,
 }: {
   apresentadores: Apresentador[];
   existingNames: string[];
   onSelect: (a: Apresentador) => void;
   onAddBlank: () => void;
+  onRegisterGuest: (nome: string, instagram: string) => Promise<void>;
 }) {
   const [q, setQ] = useState("");
+  const [showRegister, setShowRegister] = useState(false);
+  const [guestNome, setGuestNome] = useState("");
+  const [guestInsta, setGuestInsta] = useState("");
+  const [savingGuest, setSavingGuest] = useState(false);
   const filtered = apresentadores
     .filter(a => !existingNames.includes(a.nome.trim().toLowerCase()))
     .filter(a => !q.trim() || a.nome.toLowerCase().includes(q.toLowerCase()) || (a.instagram || "").toLowerCase().includes(q.toLowerCase()))
     .slice(0, 50);
+
+  const noResults = q.trim().length > 0 && filtered.length === 0;
 
   return (
     <div className="space-y-2 rounded-xl p-2" style={{ backgroundColor: "var(--layout-widget-bg, hsl(var(--card)))", color: "var(--layout-widget-text, hsl(var(--card-foreground)))" }}>
@@ -68,7 +76,90 @@ function ParticipanteSearchPicker({
       </div>
       <div className="max-h-60 overflow-y-auto space-y-0.5">
         {filtered.length === 0 ? (
-          <p className="text-[10px] text-center py-3 opacity-70" style={{ color: "var(--layout-widget-text, hsl(var(--muted-foreground)))" }}>Nenhum participante encontrado</p>
+          <div className="py-3 space-y-2">
+            <p className="text-[10px] text-center opacity-70" style={{ color: "var(--layout-widget-text, hsl(var(--muted-foreground)))" }}>Nenhum participante encontrado</p>
+            {noResults && !showRegister && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => { setGuestNome(q); setGuestInsta(""); setShowRegister(true); }}
+                className="w-full h-8 text-[10px] gap-1 rounded-full"
+                style={{
+                  backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))",
+                  color: "var(--layout-accent-text, hsl(var(--primary-foreground)))",
+                }}
+              >
+                <Plus size={11} /> Cadastrar "{q}" como Convidado
+              </Button>
+            )}
+            {showRegister && (
+              <div
+                className="space-y-2 p-2 rounded-lg"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--layout-page-bg, hsl(var(--background))) 85%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--layout-accent-color, hsl(var(--accent))) 40%, var(--layout-border-color, hsl(var(--border))) 60%)",
+                }}
+              >
+                <p className="text-[10px] font-medium opacity-80" style={{ color: "var(--layout-widget-text, hsl(var(--foreground)))" }}>Novo Convidado</p>
+                <Input
+                  autoFocus
+                  value={guestNome}
+                  onChange={(e) => setGuestNome(e.target.value)}
+                  placeholder="Nome do convidado"
+                  className="h-8 text-xs"
+                  style={{
+                    backgroundColor: "var(--layout-page-bg, hsl(var(--background)))",
+                    color: "var(--layout-page-text, hsl(var(--foreground)))",
+                    borderColor: "var(--layout-border-color, hsl(var(--border)))",
+                  }}
+                />
+                <Input
+                  value={guestInsta}
+                  onChange={(e) => setGuestInsta(e.target.value)}
+                  placeholder="@instagram (opcional)"
+                  className="h-8 text-xs"
+                  style={{
+                    backgroundColor: "var(--layout-page-bg, hsl(var(--background)))",
+                    color: "var(--layout-page-text, hsl(var(--foreground)))",
+                    borderColor: "var(--layout-border-color, hsl(var(--border)))",
+                  }}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowRegister(false)}
+                    className="flex-1 h-7 text-[10px] rounded-full"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!guestNome.trim() || savingGuest}
+                    onClick={async () => {
+                      setSavingGuest(true);
+                      try {
+                        await onRegisterGuest(guestNome.trim(), guestInsta.trim());
+                        setShowRegister(false);
+                        setQ("");
+                      } finally {
+                        setSavingGuest(false);
+                      }
+                    }}
+                    className="flex-1 h-7 text-[10px] rounded-full"
+                    style={{
+                      backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))",
+                      color: "var(--layout-accent-text, hsl(var(--primary-foreground)))",
+                    }}
+                  >
+                    {savingGuest ? "Salvando..." : "Salvar"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           filtered.map((a) => (
             <button
@@ -1130,6 +1221,31 @@ export default function AgendaPage() {
                               });
                             }}
                             onAddBlank={addParticipante}
+                            onRegisterGuest={async (nome, instagram) => {
+                              if (!user) return;
+                              const cleanInsta = instagram.replace(/^@/, "").trim();
+                              const { data, error } = await supabase
+                                .from("apresentadores")
+                                .insert({ user_id: user.id, nome, instagram: cleanInsta, cargo: "Convidado", ativo: true })
+                                .select("id, nome, instagram, cargo")
+                                .single();
+                              if (error || !data) {
+                                toast({ title: "Erro ao cadastrar convidado", description: error?.message, variant: "destructive" });
+                                return;
+                              }
+                              setApresentadores(prev => [...prev, data as Apresentador]);
+                              setFormParticipantes(prev => {
+                                const empty = prev.findIndex(p => !p.nome.trim() && !p.obrigatorio);
+                                const newItem = { nome: data.nome, instagram: data.instagram || "" };
+                                if (empty >= 0) {
+                                  const next = [...prev];
+                                  next[empty] = newItem;
+                                  return next;
+                                }
+                                return [...prev, newItem];
+                              });
+                              toast({ title: "Convidado cadastrado!" });
+                            }}
                           />
                         </PopoverContent>
                       </Popover>
