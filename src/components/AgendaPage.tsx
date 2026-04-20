@@ -138,13 +138,28 @@ function ParticipanteSearchPicker({
                     borderColor: "var(--layout-border-color, hsl(var(--border)))",
                   }}
                 />
-                <div className="flex gap-2">
+                <Input
+                  value={guestWhats}
+                  onChange={(e) => setGuestWhats(formatWhatsapp(e.target.value))}
+                  placeholder="+55 (DDD) 00000-0000"
+                  className="h-8 text-xs"
+                  style={{
+                    backgroundColor: "var(--layout-page-bg, hsl(var(--background)))",
+                    color: "var(--layout-page-text, hsl(var(--foreground)))",
+                    borderColor: "var(--layout-border-color, hsl(var(--border)))",
+                  }}
+                />
+                <div className="flex gap-2 pt-1">
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
-                    onClick={() => setShowRegister(false)}
-                    className="flex-1 h-7 text-[10px] rounded-full"
+                    onClick={() => { setShowRegister(false); setGuestWhats("+55"); }}
+                    className="flex-1 h-9 text-xs font-semibold rounded-full border-2"
+                    style={{
+                      backgroundColor: "var(--layout-page-bg, hsl(var(--background)))",
+                      color: "var(--layout-page-text, hsl(var(--foreground)))",
+                      borderColor: "var(--layout-border-color, hsl(var(--border)))",
+                    }}
                   >
                     Cancelar
                   </Button>
@@ -155,20 +170,21 @@ function ParticipanteSearchPicker({
                     onClick={async () => {
                       setSavingGuest(true);
                       try {
-                        await onRegisterGuest(guestNome.trim(), guestInsta.trim());
+                        await onRegisterGuest(guestNome.trim(), guestInsta.trim(), guestWhats.trim());
                         setShowRegister(false);
+                        setGuestWhats("+55");
                         setQ("");
                       } finally {
                         setSavingGuest(false);
                       }
                     }}
-                    className="flex-1 h-7 text-[10px] rounded-full"
+                    className="flex-1 h-9 text-xs font-bold rounded-full shadow-md"
                     style={{
                       backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))",
                       color: "var(--layout-accent-text, hsl(var(--primary-foreground)))",
                     }}
                   >
-                    {savingGuest ? "Salvando..." : "Salvar"}
+                    {savingGuest ? "Salvando..." : "Salvar Convidado"}
                   </Button>
                 </div>
               </div>
