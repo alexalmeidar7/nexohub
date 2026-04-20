@@ -445,6 +445,46 @@ serve(async (req) => {
       ? await ensurePngImageUrl(supabase, emp.logo, `broadcast/${dataOwnerId}/empresa-logo.png`, 512)
       : "";
 
+    // ── INSERT LIVE scheduling ──
+    // 4 inserts mathematically distributed from 07:00 to the LIVE event start time.
+    // Each insert displays the event's arte INSERT LIVE (artes_urls[4]) for 30 seconds.
+    // Outside those 30s windows, the blank image is shown.
+    const IMG_BLANK_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
+    let insertLiveUrl = IMG_BLANK_URL;
+    const liveEvents = (liveEventsRes.data || []) as any[];
+    if (liveEvents.length > 0) {
+      // Build map of program id -> horario_inicio for today's LIVE events
+      const liveProgIds = liveEvents.map((e) => e.programa_id).filter(Boolean);
+      let progTimeMap = new Map<string, string>();
+      if (liveProgIds.length > 0) {
+        const { data: liveProgs } = await supabase
+          .from("programas")
+          .select("id, horario_inicio")
+          .in("id", liveProgIds);
+        progTimeMap = new Map((liveProgs || []).map((p: any) => [p.id, p.horario_inicio]));
+      }
+      const START_WINDOW = 7 * 3600; // 07:00:00
+      const INSERT_COUNT = 4;
+      const INSERT_DURATION = 30; // seconds
+      for (const ev of liveEvents) {
+        const eventStart = timeToSeconds(progTimeMap.get(ev.programa_id) || "");
+        if (eventStart <= START_WINDOW) continue;
+        const arte = Array.isArray(ev.artes_urls) ? (ev.artes_urls[4] || "").trim() : "";
+        if (!arte) continue;
+        // Distribute 4 insert start-times evenly across [START_WINDOW, eventStart)
+        // Using (i+1)/(N+1) placement so they're balanced and none lands exactly on boundaries.
+        const span = eventStart - START_WINDOW;
+        for (let i = 0; i < INSERT_COUNT; i++) {
+          const insertStart = Math.floor(START_WINDOW + (span * (i + 1)) / (INSERT_COUNT + 1));
+          if (nowSeconds >= insertStart && nowSeconds < insertStart + INSERT_DURATION) {
+            insertLiveUrl = arte;
+            break;
+          }
+        }
+        if (insertLiveUrl !== IMG_BLANK_URL) break;
+      }
+    }
+
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<items>");
@@ -462,6 +502,7 @@ serve(async (req) => {
     lines.push(`    <fundo_assunto>${esc(fundoAssunto)}</fundo_assunto>`);
     lines.push(`    <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`    <ticker>${esc(ticker)}</ticker>`);
+    lines.push(`    <insert_live>${esc(insertLiveUrl)}</insert_live>`);
     lines.push("  </dados>");
     lines.push("</items>");
 
