@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw, Search } from "lucide-react";
+import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw, Search, Copy } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 
@@ -308,6 +308,25 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     e.currentTarget.classList.remove("ring-2", "ring-blue-400");
   };
 
+  const copyLogoToPrograma = async (logo: Logo, targetProgramaId: string) => {
+    if (!targetProgramaId || targetProgramaId === logo.programa_id) return;
+    const { error } = await supabase.from("logos_patrocinadores").insert({
+      user_id: dataUserId,
+      programa_id: targetProgramaId,
+      logo_url: logo.logo_url,
+      nome: logo.nome,
+      data_final: logo.data_final,
+      ativo: true,
+      excluido: false,
+    });
+    if (error) {
+      toast({ title: "Erro ao copiar logo", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Logo copiada com sucesso" });
+      await loadData();
+    }
+  };
+
   const handleDrop = async (e: React.DragEvent, targetProgramaId?: string) => {
     e.preventDefault();
     e.currentTarget.classList.remove("ring-2", "ring-blue-400");
@@ -315,25 +334,21 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     if (!item) return;
     if (item.excluido) {
       await handleRestore(item);
-    } else if (targetProgramaId && targetProgramaId !== item.programa_id) {
-      // Copy active logo to another program (do NOT remove the original)
-      const { error } = await supabase.from("logos_patrocinadores").insert({
-        user_id: dataUserId,
-        programa_id: targetProgramaId,
-        logo_url: item.logo_url,
-        nome: item.nome,
-        data_final: item.data_final,
-        ativo: true,
-        excluido: false,
-      });
-      if (error) {
-        toast({ title: "Erro ao copiar logo", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Logo copiada com sucesso" });
-        await loadData();
-      }
+    } else if (targetProgramaId) {
+      await copyLogoToPrograma(item, targetProgramaId);
     }
     dragItem.current = null;
+  };
+
+  const handleProgramaContextMenu = async (e: React.MouseEvent, programa: Programa) => {
+    const item = dragItem.current;
+    if (!item || item.excluido) return;
+    if (item.programa_id === programa.id) return;
+    e.preventDefault();
+    if (window.confirm(`Deseja copiar a logo "${item.nome}" para o programa "${programa.nome}"?`)) {
+      await copyLogoToPrograma(item, programa.id);
+      dragItem.current = null;
+    }
   };
 
   const sortedProgramas = [...programas].sort((a, b) => (a.horario_inicio || "99:99").localeCompare(b.horario_inicio || "99:99"));
@@ -687,6 +702,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
               <Collapsible key={programa.id} defaultOpen={false}>
                 <div className="rounded-xl overflow-hidden mb-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
                   onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, programa.id)}
+                  onContextMenu={(e) => handleProgramaContextMenu(e, programa)}
                 >
                   <CollapsibleTrigger asChild>
                     <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
@@ -711,10 +727,16 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                                 <div className="space-y-2 text-center cursor-grab active:cursor-grabbing"
                                   draggable
                                   onDragStart={() => handleDragStart(logo)}
-                                  title="Arraste para outro programa para copiar"
+                                  onMouseDown={() => { dragItem.current = logo; }}
+                                  title="Arraste para outro programa para copiar (ou clique e use o botão direito no programa de destino)"
                                 >
                                   <div className="relative group">
-                                    <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-2" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "#2d2d2d" }} />
+                                    <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-2 transition-all group-hover:ring-2" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "#2d2d2d", ['--tw-ring-color' as any]: "var(--layout-accent-color, #2563eb)" }} />
+                                    <button onClick={(e) => { e.stopPropagation(); dragItem.current = logo; toast({ title: "Logo selecionada", description: "Clique com o botão direito no programa de destino para copiar." }); }}
+                                      className="absolute top-1 left-1 bg-blue-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                      title="Copiar para outro programa">
+                                      <Copy size={12} />
+                                    </button>
                                     <button onClick={() => handleSoftDelete(logo.id)}
                                       className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                                       <Trash2 size={12} />
