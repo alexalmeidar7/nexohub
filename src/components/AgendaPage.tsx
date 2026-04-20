@@ -30,7 +30,60 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressPopup, { type ExpressEditData } from "@/components/ProgramaExpressPopup";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
-import { Youtube, Image as ImageIcon, Upload, Download } from "lucide-react";
+import { Youtube, Image as ImageIcon, Upload, Download, Search } from "lucide-react";
+
+function ParticipanteSearchPicker({
+  apresentadores,
+  existingNames,
+  onSelect,
+  onAddBlank,
+}: {
+  apresentadores: Apresentador[];
+  existingNames: string[];
+  onSelect: (a: Apresentador) => void;
+  onAddBlank: () => void;
+}) {
+  const [q, setQ] = useState("");
+  const filtered = apresentadores
+    .filter(a => !existingNames.includes(a.nome.trim().toLowerCase()))
+    .filter(a => !q.trim() || a.nome.toLowerCase().includes(q.toLowerCase()) || (a.instagram || "").toLowerCase().includes(q.toLowerCase()))
+    .slice(0, 50);
+
+  return (
+    <div className="space-y-2">
+      <div className="relative">
+        <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 opacity-50" />
+        <Input
+          autoFocus
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Buscar participante..."
+          className="h-8 text-xs pl-7"
+        />
+      </div>
+      <div className="max-h-60 overflow-y-auto space-y-0.5">
+        {filtered.length === 0 ? (
+          <p className="text-[10px] text-center py-3 opacity-60">Nenhum participante encontrado</p>
+        ) : (
+          filtered.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => onSelect(a)}
+              className="w-full text-left px-2 py-1.5 rounded-md hover:bg-accent text-xs flex flex-col"
+            >
+              <span className="font-medium">{a.nome}</span>
+              {a.instagram && <span className="text-[10px] opacity-60">@{a.instagram.replace(/^@/, "")}</span>}
+            </button>
+          ))
+        )}
+      </div>
+      <Button type="button" size="sm" variant="outline" onClick={onAddBlank} className="w-full h-7 text-[10px] gap-1">
+        <Plus size={11} /> Adicionar manualmente
+      </Button>
+    </div>
+  );
+}
 
 interface Programa {
   id: string;
@@ -1000,9 +1053,32 @@ export default function AgendaPage() {
                       <Label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                         <Users size={12} /> Participantes
                       </Label>
-                      <Button type="button" size="sm" variant="ghost" onClick={addParticipante} className="h-7 text-[10px] gap-1">
-                        <Plus size={12} /> Adicionar
-                      </Button>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button type="button" size="sm" variant="ghost" className="h-7 text-[10px] gap-1">
+                            <Plus size={12} /> Adicionar
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-72 p-2" align="end">
+                          <ParticipanteSearchPicker
+                            apresentadores={apresentadores}
+                            existingNames={formParticipantes.map(p => p.nome.trim().toLowerCase()).filter(Boolean)}
+                            onSelect={(a) => {
+                              setFormParticipantes(prev => {
+                                const empty = prev.findIndex(p => !p.nome.trim() && !p.obrigatorio);
+                                const newItem = { nome: a.nome, instagram: a.instagram || "" };
+                                if (empty >= 0) {
+                                  const next = [...prev];
+                                  next[empty] = newItem;
+                                  return next;
+                                }
+                                return [...prev, newItem];
+                              });
+                            }}
+                            onAddBlank={addParticipante}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                     <div className="space-y-2">
                       {formParticipantes.map((p, idx) => (
