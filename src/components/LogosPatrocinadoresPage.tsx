@@ -727,10 +727,16 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                                 <div className="space-y-2 text-center cursor-grab active:cursor-grabbing"
                                   draggable
                                   onDragStart={() => handleDragStart(logo)}
-                                  title="Arraste para outro programa para copiar"
+                                  onMouseDown={() => { dragItem.current = logo; }}
+                                  title="Arraste para outro programa para copiar (ou clique e use o botão direito no programa de destino)"
                                 >
                                   <div className="relative group">
-                                    <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-2" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "#2d2d2d" }} />
+                                    <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-2 transition-all group-hover:ring-2" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "#2d2d2d", ['--tw-ring-color' as any]: "var(--layout-accent-color, #2563eb)" }} />
+                                    <button onClick={(e) => { e.stopPropagation(); dragItem.current = logo; toast({ title: "Logo selecionada", description: "Clique com o botão direito no programa de destino para copiar." }); }}
+                                      className="absolute top-1 left-1 bg-blue-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                      title="Copiar para outro programa">
+                                      <Copy size={12} />
+                                    </button>
                                     <button onClick={() => handleSoftDelete(logo.id)}
                                       className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                                       <Trash2 size={12} />
