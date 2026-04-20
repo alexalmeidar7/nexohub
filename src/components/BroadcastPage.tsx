@@ -364,6 +364,22 @@ export default function BroadcastPage() {
     handleSave();
   }, [handleSave]);
 
+  const handleInsertNow = useCallback(async () => {
+    if (!user || !insertLiveArt) return;
+    setInsertingNow(true);
+    try {
+      const { data: cur } = await supabase.from("user_settings").select("cenario_config").eq("user_id", user.id).maybeSingle();
+      const existing = (cur?.cenario_config && typeof cur.cenario_config === "object") ? cur.cenario_config as Record<string, any> : {};
+      const broadcast = { ...(existing.broadcast || {}), insertLiveManualUntil: new Date(Date.now() + 30_000).toISOString() };
+      await supabase.from("user_settings").update({ cenario_config: { ...existing, broadcast } as any }).eq("user_id", user.id);
+      toast.success("Insert Live ativo por 30 segundos!");
+      setTimeout(() => setInsertingNow(false), 30_000);
+    } catch {
+      toast.error("Erro ao inserir");
+      setInsertingNow(false);
+    }
+  }, [user, insertLiveArt]);
+
   const [uploadingBg, setUploadingBg] = useState(false);
   const handleBgUpload = useCallback(async (file: File) => {
     if (!user || !file) return;
