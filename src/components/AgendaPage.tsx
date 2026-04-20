@@ -1342,22 +1342,46 @@ export default function AgendaPage() {
                             const hasWhats = whatsRaw.length >= 10;
                             const linkYt = formYoutubeUrl.trim();
                             const feedUrl = formArtesUrls[1] || "";
-                            const sendWhats = () => {
+                            const sendWhats = async () => {
                               if (!linkYt) {
                                 toast({ title: "Link do YouTube vazio", description: "Preencha o link do YouTube acima.", variant: "destructive" });
                                 return;
                               }
-                              const parts: string[] = [];
-                              if (feedUrl) parts.push(feedUrl);
-                              parts.push(`Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)`);
-                              parts.push(`Segue o link da transmissão para você acompanhar:`);
-                              parts.push(linkYt);
-                              const text = encodeURIComponent(parts.join("\n\n"));
+                              const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}`;
+
+                              // Copy FEED image to clipboard as PNG so user can paste in WhatsApp
+                              if (feedUrl) {
+                                try {
+                                  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+                                    const i = new Image();
+                                    i.crossOrigin = "anonymous";
+                                    i.onload = () => resolve(i);
+                                    i.onerror = reject;
+                                    i.src = feedUrl;
+                                  });
+                                  const canvas = document.createElement("canvas");
+                                  canvas.width = img.naturalWidth;
+                                  canvas.height = img.naturalHeight;
+                                  canvas.getContext("2d")?.drawImage(img, 0, 0);
+                                  const pngBlob: Blob = await new Promise((resolve) =>
+                                    canvas.toBlob((b) => resolve(b!), "image/png")
+                                  );
+                                  await navigator.clipboard.write([
+                                    new ClipboardItem({ "image/png": pngBlob }),
+                                  ]);
+                                  toast({ title: "Imagem copiada", description: "Cole (Ctrl+V) a imagem do FEED no WhatsApp e envie a mensagem em seguida." });
+                                } catch (err) {
+                                  console.warn("Clipboard image failed:", err);
+                                  toast({ title: "Não foi possível copiar a imagem", description: "Anexe a imagem do FEED manualmente no WhatsApp.", variant: "destructive" });
+                                }
+                              }
+
+                              const encoded = encodeURIComponent(text);
                               if (hasWhats) {
                                 const phone = whatsRaw.startsWith("55") ? whatsRaw : `55${whatsRaw}`;
-                                window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+                                window.open(`https://wa.me/${phone}?text=${encoded}`, "_blank");
                               } else {
-                                window.open(`https://wa.me/?text=${text}`, "_blank");
+                                window.open(`https://wa.me/?text=${encoded}`, "_blank");
                               }
                             };
                             return (
