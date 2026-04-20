@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressPopup, { type ExpressEditData } from "@/components/ProgramaExpressPopup";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
-import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send } from "lucide-react";
+import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2 } from "lucide-react";
 
 function ParticipanteSearchPicker({
   apresentadores,
@@ -345,6 +345,7 @@ export default function AgendaPage() {
   const [expressOpen, setExpressOpen] = useState(false);
   const [expressEditData, setExpressEditData] = useState<ExpressEditData | null>(null);
   const [creatingRoteiro, setCreatingRoteiro] = useState(false);
+  const [sendingWhatsAppFor, setSendingWhatsAppFor] = useState<string | null>(null);
   const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
   const fetchProgramas = useCallback(async () => {
@@ -1339,49 +1340,53 @@ export default function AgendaPage() {
                           formParticipantes.filter(p => p.nome.trim()).map((p, idx) => {
                             const apre = apresentadores.find(a => a.nome.trim().toLowerCase() === p.nome.trim().toLowerCase());
                             const whatsRaw = (apre?.whatsapp || "").replace(/\D/g, "");
-                            const hasWhats = whatsRaw.length >= 10;
+                            const normalizedPhone = whatsRaw ? (whatsRaw.startsWith("55") ? whatsRaw : `55${whatsRaw}`) : "";
+                            const hasWhats = normalizedPhone.length >= 12;
                             const linkYt = formYoutubeUrl.trim();
                             const feedUrl = formArtesUrls[1] || "";
+                            const participantKey = `${idx}-${normalizedPhone || p.nome}`;
+                            const isSending = sendingWhatsAppFor === participantKey;
                             const sendWhats = async () => {
                               if (!linkYt) {
                                 toast({ title: "Link do YouTube vazio", description: "Preencha o link do YouTube acima.", variant: "destructive" });
                                 return;
                               }
-                              const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}`;
-
-                              // Copy FEED image to clipboard as PNG so user can paste in WhatsApp
-                              if (feedUrl) {
-                                try {
-                                  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-                                    const i = new Image();
-                                    i.crossOrigin = "anonymous";
-                                    i.onload = () => resolve(i);
-                                    i.onerror = reject;
-                                    i.src = feedUrl;
-                                  });
-                                  const canvas = document.createElement("canvas");
-                                  canvas.width = img.naturalWidth;
-                                  canvas.height = img.naturalHeight;
-                                  canvas.getContext("2d")?.drawImage(img, 0, 0);
-                                  const pngBlob: Blob = await new Promise((resolve) =>
-                                    canvas.toBlob((b) => resolve(b!), "image/png")
-                                  );
-                                  await navigator.clipboard.write([
-                                    new ClipboardItem({ "image/png": pngBlob }),
-                                  ]);
-                                  toast({ title: "Imagem copiada", description: "Cole (Ctrl+V) a imagem do FEED no WhatsApp e envie a mensagem em seguida." });
-                                } catch (err) {
-                                  console.warn("Clipboard image failed:", err);
-                                  toast({ title: "Não foi possível copiar a imagem", description: "Anexe a imagem do FEED manualmente no WhatsApp.", variant: "destructive" });
-                                }
+                              if (!feedUrl) {
+                                toast({ title: "Imagem do FEED ausente", description: "Faça upload da arte do FEED para enviar a foto no WhatsApp.", variant: "destructive" });
+                                return;
+                              }
+                              if (!hasWhats) {
+                                toast({ title: "WhatsApp não cadastrado", description: `Cadastre o WhatsApp de ${p.nome} para enviar a imagem com a mensagem.`, variant: "destructive" });
+                                return;
                               }
 
-                              const encoded = encodeURIComponent(text);
-                              if (hasWhats) {
-                                const phone = whatsRaw.startsWith("55") ? whatsRaw : `55${whatsRaw}`;
-                                window.open(`https://wa.me/${phone}?text=${encoded}`, "_blank");
-                              } else {
-                                window.open(`https://wa.me/?text=${encoded}`, "_blank");
+                              const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}`;
+
+                              setSendingWhatsAppFor(participantKey);
+                              try {
+                                const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+                                  body: {
+                                    contatos: [{ nome: p.nome, whatsapp: normalizedPhone }],
+                                    mensagem: text,
+                                    mediaUrl: feedUrl,
+                                  },
+                                });
+
+                                if (error) throw error;
+                                if (!data?.ok) {
+                                  throw new Error(data?.detalhes?.[0]?.error || data?.error || "Falha ao enviar a mensagem.");
+                                }
+
+                                toast({ title: "Convite enviado", description: `A arte do FEED foi enviada para ${p.nome} com a mensagem.` });
+                              } catch (err) {
+                                console.error("Erro ao enviar convite via WhatsApp:", err);
+                                toast({
+                                  title: "Erro ao enviar WhatsApp",
+                                  description: err instanceof Error ? err.message : "Não foi possível enviar a imagem com a mensagem.",
+                                  variant: "destructive",
+                                });
+                              } finally {
+                                setSendingWhatsAppFor(null);
                               }
                             };
                             return (
@@ -1397,18 +1402,20 @@ export default function AgendaPage() {
                                 )}
                                 <div className="flex-1 min-w-0">
                                   <div className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.nome}</div>
-                                  <div className="text-[10px] truncate" style={{ color: hasWhats ? "var(--layout-icon-color, #888)" : "#f59e0b" }}>
-                                    {hasWhats ? `+${whatsRaw.startsWith("55") ? whatsRaw : `55${whatsRaw}`}` : "Escolher contato no WhatsApp"}
+                                  <div className="text-[10px] truncate" style={{ color: hasWhats ? "var(--layout-icon-color, hsl(var(--muted-foreground)))" : "hsl(var(--destructive))" }}>
+                                    {hasWhats ? `+${normalizedPhone}` : "Cadastre o WhatsApp do participante"}
                                   </div>
                                 </div>
                                 <Button
                                   type="button"
                                   size="sm"
                                   onClick={sendWhats}
+                                  disabled={isSending}
                                   className="h-7 px-2.5 text-[10px] font-bold gap-1 shrink-0 hover:opacity-90"
-                                  style={{ backgroundColor: "#25D366", color: "#fff" }}
+                                  style={{ backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))", color: "var(--layout-accent-text, hsl(var(--primary-foreground)))" }}
                                 >
-                                  <Send size={11} /> Enviar
+                                  {isSending ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+                                  {isSending ? "Enviando" : "Enviar"}
                                 </Button>
                               </div>
                             );
