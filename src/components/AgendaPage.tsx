@@ -322,6 +322,7 @@ export default function AgendaPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [historyDateFilter, setHistoryDateFilter] = useState<Date | undefined>(undefined);
+  const [pastEventDetail, setPastEventDetail] = useState<Evento | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
 
   // Form
@@ -717,11 +718,14 @@ export default function AgendaPage() {
     return matchDate && matchLocal && isFuture && programaAtivo;
   });
 
-  // Past events
+  // Past events (limited to last 30 days)
   const pastEventos = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    const cutoffStr = format(cutoff, "yyyy-MM-dd");
     const past = eventos.filter((e) => {
       if (e.recorrencia !== "unico") return false;
-      return e.data < todayStr;
+      return e.data < todayStr && e.data >= cutoffStr;
     });
     // Apply history date filter
     if (historyDateFilter) {
@@ -1870,10 +1874,10 @@ export default function AgendaPage() {
                 </p>
               ) : (
                 pastEventos.map((evt) => (
-                  <div key={evt.id} className="relative group">
+                  <div key={evt.id} className="relative group cursor-pointer" onClick={() => setPastEventDetail(evt)}>
                     {renderEventCard(evt, true)}
                     <button
-                      onClick={() => handleDelete(evt.id)}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(evt.id); }}
                       className="absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       style={{ backgroundColor: "rgba(239,68,68,0.1)" }}
                       title="Remover evento"
@@ -1886,6 +1890,90 @@ export default function AgendaPage() {
             </div>
           </div>
         </div>
+
+        {/* Past event detail dialog */}
+        <Dialog open={!!pastEventDetail} onOpenChange={(o) => !o && setPastEventDetail(null)}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <History size={18} /> {pastEventDetail?.programa?.nome || "Evento passado"}
+              </DialogTitle>
+            </DialogHeader>
+            {pastEventDetail && (
+              <div className="space-y-4 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Data</Label>
+                    <p className="font-semibold">{format(new Date(pastEventDetail.data + "T12:00:00"), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                  </div>
+                  {pastEventDetail.programa && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Horário</Label>
+                      <p className="font-semibold">{pastEventDetail.programa.horario_inicio} - {pastEventDetail.programa.horario_fim}</p>
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Tipo</Label>
+                    <p className="font-semibold capitalize">{pastEventDetail.tipo_evento || "live"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Prioridade</Label>
+                    <p className="font-semibold">{prioridadeLabels[pastEventDetail.prioridade] || "Normal"}</p>
+                  </div>
+                  {pastEventDetail.local && (
+                    <div className="col-span-2">
+                      <Label className="text-xs text-muted-foreground">Local</Label>
+                      <p className="font-semibold flex items-center gap-1"><MapPin size={12} /> {pastEventDetail.local}</p>
+                    </div>
+                  )}
+                </div>
+
+                {pastEventDetail.descricao && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Descrição</Label>
+                    <p className="whitespace-pre-wrap">{pastEventDetail.descricao}</p>
+                  </div>
+                )}
+
+                {pastEventDetail.youtube_url && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Link YouTube</Label>
+                    <a href={pastEventDetail.youtube_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline break-all">
+                      <Youtube size={14} /> {pastEventDetail.youtube_url}
+                    </a>
+                  </div>
+                )}
+
+                {pastEventDetail.participantes && pastEventDetail.participantes.length > 0 && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-1"><Users size={12} /> Participantes</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {pastEventDetail.participantes.map((p, i) => (
+                        <span key={i} className="rounded-lg px-2 py-1 text-xs border" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)" }}>
+                          {p.nome}
+                          {p.instagram && <span className="ml-1 opacity-60"><Instagram size={10} className="inline mr-0.5" />{p.instagram}</span>}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {pastEventDetail.artes_urls && pastEventDetail.artes_urls.length > 0 && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-2"><ImageIcon size={12} /> Artes do Evento</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {pastEventDetail.artes_urls.map((url, i) => (
+                        <a key={i} href={url} target="_blank" rel="noreferrer" className="block rounded-lg overflow-hidden border hover:opacity-80 transition-opacity">
+                          <img src={url} alt={`Arte ${i + 1}`} className="w-full h-24 object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
