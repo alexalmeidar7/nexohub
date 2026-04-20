@@ -1031,7 +1031,7 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
     const today = new Date().toISOString().split("T")[0];
     supabase
       .from("agenda_eventos")
-      .select("*")
+      .select("*, programa:programas(horario_inicio, horario_fim)")
       .eq("user_id", uid!)
       .gte("data", today)
       .order("data", { ascending: true })
