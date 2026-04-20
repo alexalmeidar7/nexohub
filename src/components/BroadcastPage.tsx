@@ -77,6 +77,8 @@ export default function BroadcastPage() {
   const [empresaSocials, setEmpresaSocials] = useState<SocialItem[]>([]);
   const [sponsorLogos, setSponsorLogos] = useState<{nome: string; logo_url: string}[]>([]);
   const [insertLiveArt, setInsertLiveArt] = useState<string>("");
+  const [insertLiveSchedule, setInsertLiveSchedule] = useState<string[]>([]);
+  const [insertingNow, setInsertingNow] = useState(false);
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
   const [allProgramas, setAllProgramas] = useState<{id: string; nome: string}[]>([]);
