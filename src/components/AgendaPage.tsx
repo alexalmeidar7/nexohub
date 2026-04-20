@@ -1251,13 +1251,14 @@ export default function AgendaPage() {
                               });
                             }}
                             onAddBlank={addParticipante}
-                            onRegisterGuest={async (nome, instagram) => {
+                            onRegisterGuest={async (nome, instagram, whatsapp) => {
                               if (!user) return;
                               const cleanInsta = instagram.replace(/^@/, "").trim();
+                              const cleanWhats = whatsapp && whatsapp !== "+55" ? whatsapp : "";
                               const { data, error } = await supabase
                                 .from("apresentadores")
-                                .insert({ user_id: user.id, nome, instagram: cleanInsta, cargo: "Convidado", ativo: true })
-                                .select("id, nome, instagram, cargo")
+                                .insert({ user_id: user.id, nome, instagram: cleanInsta, whatsapp: cleanWhats, cargo: "Convidado", ativo: true })
+                                .select("id, nome, instagram, cargo, whatsapp")
                                 .single();
                               if (error || !data) {
                                 toast({ title: "Erro ao cadastrar convidado", description: error?.message, variant: "destructive" });
