@@ -308,6 +308,25 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     e.currentTarget.classList.remove("ring-2", "ring-blue-400");
   };
 
+  const copyLogoToPrograma = async (logo: Logo, targetProgramaId: string) => {
+    if (!targetProgramaId || targetProgramaId === logo.programa_id) return;
+    const { error } = await supabase.from("logos_patrocinadores").insert({
+      user_id: dataUserId,
+      programa_id: targetProgramaId,
+      logo_url: logo.logo_url,
+      nome: logo.nome,
+      data_final: logo.data_final,
+      ativo: true,
+      excluido: false,
+    });
+    if (error) {
+      toast({ title: "Erro ao copiar logo", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Logo copiada com sucesso" });
+      await loadData();
+    }
+  };
+
   const handleDrop = async (e: React.DragEvent, targetProgramaId?: string) => {
     e.preventDefault();
     e.currentTarget.classList.remove("ring-2", "ring-blue-400");
@@ -315,25 +334,21 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     if (!item) return;
     if (item.excluido) {
       await handleRestore(item);
-    } else if (targetProgramaId && targetProgramaId !== item.programa_id) {
-      // Copy active logo to another program (do NOT remove the original)
-      const { error } = await supabase.from("logos_patrocinadores").insert({
-        user_id: dataUserId,
-        programa_id: targetProgramaId,
-        logo_url: item.logo_url,
-        nome: item.nome,
-        data_final: item.data_final,
-        ativo: true,
-        excluido: false,
-      });
-      if (error) {
-        toast({ title: "Erro ao copiar logo", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Logo copiada com sucesso" });
-        await loadData();
-      }
+    } else if (targetProgramaId) {
+      await copyLogoToPrograma(item, targetProgramaId);
     }
     dragItem.current = null;
+  };
+
+  const handleProgramaContextMenu = async (e: React.MouseEvent, programa: Programa) => {
+    const item = dragItem.current;
+    if (!item || item.excluido) return;
+    if (item.programa_id === programa.id) return;
+    e.preventDefault();
+    if (window.confirm(`Deseja copiar a logo "${item.nome}" para o programa "${programa.nome}"?`)) {
+      await copyLogoToPrograma(item, programa.id);
+      dragItem.current = null;
+    }
   };
 
   const sortedProgramas = [...programas].sort((a, b) => (a.horario_inicio || "99:99").localeCompare(b.horario_inicio || "99:99"));
