@@ -77,6 +77,8 @@ export default function BroadcastPage() {
   const [empresaSocials, setEmpresaSocials] = useState<SocialItem[]>([]);
   const [sponsorLogos, setSponsorLogos] = useState<{nome: string; logo_url: string}[]>([]);
   const [insertLiveArt, setInsertLiveArt] = useState<string>("");
+  const [insertLiveSchedule, setInsertLiveSchedule] = useState<string[]>([]);
+  const [insertingNow, setInsertingNow] = useState(false);
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
   const [allProgramas, setAllProgramas] = useState<{id: string; nome: string}[]>([]);
@@ -176,13 +178,39 @@ export default function BroadcastPage() {
       const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       const { data: liveEvents } = await supabase
         .from("agenda_eventos")
-        .select("artes_urls")
+        .select("artes_urls, programa_id")
         .eq("user_id", user.id)
         .eq("tipo_evento", "live")
         .eq("data", todayStr)
         .limit(1);
-      const liveArt = liveEvents?.[0]?.artes_urls?.[4];
+      const liveEv = liveEvents?.[0];
+      const liveArt = liveEv?.artes_urls?.[4];
       if (liveArt) setInsertLiveArt(liveArt);
+      // Compute 4 distributed schedule times between 07:00 and event start
+      if (liveEv?.programa_id && liveArt) {
+        const { data: progLive } = await supabase
+          .from("programas")
+          .select("horario_inicio")
+          .eq("id", liveEv.programa_id)
+          .maybeSingle();
+        const hi = progLive?.horario_inicio;
+        if (hi) {
+          const [h, m] = hi.split(":").map(Number);
+          const eventStart = h * 3600 + (m || 0) * 60;
+          const START = 7 * 3600;
+          if (eventStart > START) {
+            const span = eventStart - START;
+            const times: string[] = [];
+            for (let i = 0; i < 4; i++) {
+              const t = Math.floor(START + (span * (i + 1)) / 5);
+              const hh = String(Math.floor(t / 3600)).padStart(2, "0");
+              const mm = String(Math.floor((t % 3600) / 60)).padStart(2, "0");
+              times.push(`${hh}:${mm}`);
+            }
+            setInsertLiveSchedule(times);
+          }
+        }
+      }
       // Accent color
       const { data: settings } = await supabase.from("user_settings").select("dashboard_items, weather_city, weather_lat, weather_lon").eq("user_id", user.id).maybeSingle();
       if (settings?.dashboard_items && typeof settings.dashboard_items === "object") {
@@ -335,6 +363,22 @@ export default function BroadcastPage() {
   const onFieldBlur = useCallback(() => {
     handleSave();
   }, [handleSave]);
+
+  const handleInsertNow = useCallback(async () => {
+    if (!user || !insertLiveArt) return;
+    setInsertingNow(true);
+    try {
+      const { data: cur } = await supabase.from("user_settings").select("cenario_config").eq("user_id", user.id).maybeSingle();
+      const existing = (cur?.cenario_config && typeof cur.cenario_config === "object") ? cur.cenario_config as Record<string, any> : {};
+      const broadcast = { ...(existing.broadcast || {}), insertLiveManualUntil: new Date(Date.now() + 30_000).toISOString() };
+      await supabase.from("user_settings").update({ cenario_config: { ...existing, broadcast } as any }).eq("user_id", user.id);
+      toast.success("Insert Live ativo por 30 segundos!");
+      setTimeout(() => setInsertingNow(false), 30_000);
+    } catch {
+      toast.error("Erro ao inserir");
+      setInsertingNow(false);
+    }
+  }, [user, insertLiveArt]);
 
   const [uploadingBg, setUploadingBg] = useState(false);
   const handleBgUpload = useCallback(async (file: File) => {
@@ -620,6 +664,37 @@ export default function BroadcastPage() {
               </label>
             )}
           </div>
+
+          {/* Card: Insert Live */}
+          {insertLiveArt && (
+            <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-icon-color, #888)" }}>Insert Live</h3>
+              {insertLiveSchedule.length > 0 ? (
+                <div>
+                  <p className="text-[10px] mb-2" style={{ color: "var(--layout-icon-color, #888)" }}>
+                    Horários programados (30s cada):
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {insertLiveSchedule.map((t, i) => (
+                      <span key={i} className="text-[11px] font-mono font-semibold px-2 py-1 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #dc2626) 10%, transparent)", color: "var(--layout-accent-color, #dc2626)" }}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[10px]" style={{ color: "var(--layout-icon-color, #888)" }}>Sem agendamento (evento já iniciou ou antes das 07:00).</p>
+              )}
+              <button
+                onClick={handleInsertNow}
+                disabled={insertingNow}
+                className="w-full px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all disabled:opacity-60"
+                style={{ backgroundColor: "var(--layout-accent-color, #dc2626)", color: "#fff" }}
+              >
+                {insertingNow ? "Inserindo (30s)..." : "Inserir agora"}
+              </button>
+            </div>
+          )}
 
           {/* Card: Ticker */}
           <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
