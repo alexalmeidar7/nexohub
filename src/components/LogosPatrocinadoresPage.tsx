@@ -409,6 +409,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                   ) : (
                     <div className="relative" ref={programaPickerRef}>
                       <button
+                        ref={programaTriggerRef}
                         type="button"
                         onClick={() => setProgramaPickerOpen((v) => !v)}
                         className="w-full px-4 py-1.5 text-sm outline-none text-left flex items-center justify-between"
