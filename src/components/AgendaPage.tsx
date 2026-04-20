@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressPopup, { type ExpressEditData } from "@/components/ProgramaExpressPopup";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
-import { Youtube, Image as ImageIcon, Upload, Download, Search } from "lucide-react";
+import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send } from "lucide-react";
 
 function ParticipanteSearchPicker({
   apresentadores,
