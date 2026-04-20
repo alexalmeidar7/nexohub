@@ -52,6 +52,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [programaPickerOpen, setProgramaPickerOpen] = useState(false);
   const [programaSearch, setProgramaSearch] = useState("");
   const programaPickerRef = useRef<HTMLDivElement>(null);
+  const programaPortalRef = useRef<HTMLDivElement>(null);
   const programaTriggerRef = useRef<HTMLButtonElement>(null);
   const [programaPickerPos, setProgramaPickerPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const [dataFinal, setDataFinal] = useState("");
@@ -121,8 +122,9 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     const onClick = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
-        programaPickerRef.current && !programaPickerRef.current.contains(target) &&
-        programaTriggerRef.current && !programaTriggerRef.current.contains(target)
+        (!programaPickerRef.current || !programaPickerRef.current.contains(target)) &&
+        (!programaPortalRef.current || !programaPortalRef.current.contains(target)) &&
+        (!programaTriggerRef.current || !programaTriggerRef.current.contains(target))
       ) {
         setProgramaPickerOpen(false);
       }
@@ -483,7 +485,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                       </button>
                       {programaPickerOpen && programaPickerPos && createPortal(
                         <div
-                          ref={programaPickerRef}
+                          ref={programaPortalRef}
                           className="fixed rounded-xl shadow-2xl"
                           style={{
                             top: programaPickerPos.top,
