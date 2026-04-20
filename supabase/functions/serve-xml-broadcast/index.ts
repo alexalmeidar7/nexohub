@@ -485,6 +485,18 @@ serve(async (req) => {
       }
     }
 
+    // Manual override: "Insert now" button sets insertLiveManualUntil (ISO timestamp)
+    const manualUntil = (broadcastConfig as any)?.insertLiveManualUntil;
+    if (manualUntil && insertLiveUrl === IMG_BLANK_URL) {
+      const untilMs = new Date(manualUntil).getTime();
+      if (Number.isFinite(untilMs) && Date.now() < untilMs) {
+        // Find any LIVE event today with arte
+        for (const ev of liveEvents) {
+          const arte = Array.isArray(ev.artes_urls) ? (ev.artes_urls[4] || "").trim() : "";
+          if (arte) { insertLiveUrl = arte; break; }
+        }
+      }
+    }
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<items>");
