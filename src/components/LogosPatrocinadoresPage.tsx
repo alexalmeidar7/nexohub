@@ -113,6 +113,24 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     if (dataUserId) loadData(dataUserId);
   }, [dataUserId]);
 
+  useEffect(() => {
+    if (!programaPickerOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (programaPickerRef.current && !programaPickerRef.current.contains(e.target as Node)) {
+        setProgramaPickerOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setProgramaPickerOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [programaPickerOpen]);
+
   const handleAddFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
