@@ -204,6 +204,21 @@ export default function AgendaPage() {
     loadAll();
   }, [fetchProgramas, fetchEventos, fetchApresentadores]);
 
+  // Focus event coming from dashboard agenda widget click
+  useEffect(() => {
+    if (loadingData || eventos.length === 0) return;
+    try {
+      const raw = sessionStorage.getItem("agenda_focus_event");
+      if (!raw) return;
+      sessionStorage.removeItem("agenda_focus_event");
+      const { id, data } = JSON.parse(raw) as { id: string; data: string };
+      if (data) setSelectedDate(new Date(data + "T12:00:00"));
+      const evt = eventos.find(e => e.id === id);
+      if (evt) startEdit(evt);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingData, eventos]);
+
   // Auto-include program presenters as mandatory participants for live events
   useEffect(() => {
     if (formTipoEvento !== "live" || !formProgramaId) return;
