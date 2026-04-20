@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw, Search } from "lucide-react";
@@ -51,6 +52,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [programaPickerOpen, setProgramaPickerOpen] = useState(false);
   const [programaSearch, setProgramaSearch] = useState("");
   const programaPickerRef = useRef<HTMLDivElement>(null);
+  const programaTriggerRef = useRef<HTMLButtonElement>(null);
+  const [programaPickerPos, setProgramaPickerPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const [dataFinal, setDataFinal] = useState("");
   const [nomeLogo, setNomeLogo] = useState("");
   const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string }[]>([]);
@@ -116,18 +119,31 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   useEffect(() => {
     if (!programaPickerOpen) return;
     const onClick = (e: MouseEvent) => {
-      if (programaPickerRef.current && !programaPickerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        programaPickerRef.current && !programaPickerRef.current.contains(target) &&
+        programaTriggerRef.current && !programaTriggerRef.current.contains(target)
+      ) {
         setProgramaPickerOpen(false);
       }
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setProgramaPickerOpen(false);
     };
+    const updatePos = () => {
+      const r = programaTriggerRef.current?.getBoundingClientRect();
+      if (r) setProgramaPickerPos({ top: r.bottom + 4, left: r.left, width: r.width });
+    };
+    updatePos();
     document.addEventListener("mousedown", onClick);
     document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", updatePos);
+    window.addEventListener("scroll", updatePos, true);
     return () => {
       document.removeEventListener("mousedown", onClick);
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", updatePos);
+      window.removeEventListener("scroll", updatePos, true);
     };
   }, [programaPickerOpen]);
 
@@ -409,6 +425,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                   ) : (
                     <div className="relative" ref={programaPickerRef}>
                       <button
+                        ref={programaTriggerRef}
                         type="button"
                         onClick={() => setProgramaPickerOpen((v) => !v)}
                         className="w-full px-4 py-1.5 text-sm outline-none text-left flex items-center justify-between"
@@ -424,10 +441,18 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                         </span>
                         <ChevronDown size={14} className="opacity-60 shrink-0 ml-2" />
                       </button>
-                      {programaPickerOpen && (
+                      {programaPickerOpen && programaPickerPos && createPortal(
                         <div
-                          className="absolute z-20 mt-1 w-full rounded-xl shadow-lg"
-                          style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)" }}
+                          ref={programaPickerRef}
+                          className="fixed rounded-xl shadow-2xl"
+                          style={{
+                            top: programaPickerPos.top,
+                            left: programaPickerPos.left,
+                            width: programaPickerPos.width,
+                            zIndex: 9999,
+                            backgroundColor: "var(--layout-page-bg, #ffffff)",
+                            border: "1px solid var(--layout-border-color, #333333)",
+                          }}
                         >
                           <div className="p-2 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                             <div className="relative">
@@ -456,7 +481,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                               {programaIds.length} selecionado{programaIds.length !== 1 ? "s" : ""}
                             </span>
                           </div>
-                          <div className="max-h-56 overflow-auto">
+                          <div className="max-h-72 overflow-auto">
                             {programas
                               .filter((p) => p.nome.toLowerCase().includes(programaSearch.toLowerCase()))
                               .map((p) => {
@@ -488,7 +513,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                               Concluir
                             </button>
                           </div>
-                        </div>
+                        </div>,
+                        document.body
                       )}
                     </div>
                   )}
