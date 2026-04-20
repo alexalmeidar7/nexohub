@@ -308,13 +308,32 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     e.currentTarget.classList.remove("ring-2", "ring-blue-400");
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent, targetProgramaId?: string) => {
     e.preventDefault();
     e.currentTarget.classList.remove("ring-2", "ring-blue-400");
-    if (dragItem.current && dragItem.current.excluido) {
-      await handleRestore(dragItem.current);
-      dragItem.current = null;
+    const item = dragItem.current;
+    if (!item) return;
+    if (item.excluido) {
+      await handleRestore(item);
+    } else if (targetProgramaId && targetProgramaId !== item.programa_id) {
+      // Copy active logo to another program (do NOT remove the original)
+      const { error } = await supabase.from("logos_patrocinadores").insert({
+        user_id: dataUserId,
+        programa_id: targetProgramaId,
+        logo_url: item.logo_url,
+        nome: item.nome,
+        data_final: item.data_final,
+        ativo: true,
+        excluido: false,
+      });
+      if (error) {
+        toast({ title: "Erro ao copiar logo", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Logo copiada com sucesso" });
+        await loadData();
+      }
     }
+    dragItem.current = null;
   };
 
   const sortedProgramas = [...programas].sort((a, b) => (a.horario_inicio || "99:99").localeCompare(b.horario_inicio || "99:99"));
