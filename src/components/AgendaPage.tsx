@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressPopup, { type ExpressEditData } from "@/components/ProgramaExpressPopup";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
-import { Youtube, Image as ImageIcon, Upload } from "lucide-react";
+import { Youtube, Image as ImageIcon, Upload, Download } from "lucide-react";
 
 interface Programa {
   id: string;
