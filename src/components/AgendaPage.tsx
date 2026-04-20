@@ -251,6 +251,7 @@ interface Apresentador {
   nome: string;
   instagram?: string | null;
   cargo?: string | null;
+  whatsapp?: string | null;
 }
 
 interface Participante {
