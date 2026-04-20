@@ -1055,7 +1055,12 @@ export default function AgendaPage() {
                       </Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button type="button" size="sm" variant="ghost" className="h-7 text-[10px] gap-1">
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-7 text-[10px] gap-1 px-3 font-semibold"
+                            style={{ backgroundColor: "#ef4444", color: "#ffffff", borderRadius: "8px" }}
+                          >
                             <Plus size={12} /> Adicionar
                           </Button>
                         </PopoverTrigger>
