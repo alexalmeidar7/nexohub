@@ -76,6 +76,7 @@ export default function BroadcastPage() {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [empresaSocials, setEmpresaSocials] = useState<SocialItem[]>([]);
   const [sponsorLogos, setSponsorLogos] = useState<{nome: string; logo_url: string}[]>([]);
+  const [insertLiveArt, setInsertLiveArt] = useState<string>("");
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
   const [allProgramas, setAllProgramas] = useState<{id: string; nome: string}[]>([]);
