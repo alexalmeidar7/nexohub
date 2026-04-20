@@ -1113,6 +1113,17 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                     {titulo}
                   </p>
                   <div className="flex items-center gap-1.5 mt-1">
+                    {ev.programa?.horario_inicio && (
+                      <span
+                        className="text-[9px] font-bold px-1.5 py-px rounded tabular-nums"
+                        style={{
+                          background: "color-mix(in srgb, var(--layout-accent-color) 18%, transparent)",
+                          color: "var(--layout-widget-text)",
+                        }}
+                      >
+                        {ev.programa.horario_inicio.slice(0, 5)}
+                      </span>
+                    )}
                     {tipo && (
                       <span
                         className="text-[8px] font-semibold px-1.5 py-px rounded uppercase tracking-wide"
