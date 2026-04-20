@@ -24,6 +24,8 @@ interface Logo {
 interface Programa {
   id: string;
   nome: string;
+  estudio?: string | null;
+  horario_inicio?: string | null;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -90,7 +92,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     const [, { data: lData }, { data: pData }] = await Promise.all([
       supabase.rpc("cleanup_comercial"),
       supabase.from("logos_patrocinadores").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
-      supabase.from("programas").select("id, nome").eq("user_id", targetUserId).eq("ativo", true),
+      supabase.from("programas").select("id, nome, estudio, horario_inicio").eq("user_id", targetUserId).eq("ativo", true),
     ]);
 
     const all = (lData || []) as Logo[];
@@ -272,12 +274,19 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     }
   };
 
-  const grouped = programas
-    .map((p) => ({
-      programa: p,
-      logos: logos.filter((l) => l.programa_id === p.id && l.ativo),
-    }))
-    .filter((g) => g.logos.length > 0);
+  const sortedProgramas = [...programas].sort((a, b) => (a.horario_inicio || "99:99").localeCompare(b.horario_inicio || "99:99"));
+  const isPodcast = (p: Programa) => /podcast/i.test(p.estudio || "");
+  const isFm = (p: Programa) => /fm/i.test(p.estudio || "");
+
+  const buildGroup = (filterFn: (p: Programa) => boolean) =>
+    sortedProgramas
+      .filter(filterFn)
+      .map((p) => ({ programa: p, logos: logos.filter((l) => l.programa_id === p.id && l.ativo) }))
+      .filter((g) => g.logos.length > 0);
+
+  const groupedFM = buildGroup(isFm);
+  const groupedPodcast = buildGroup(isPodcast);
+  const groupedOutros = buildGroup((p) => !isFm(p) && !isPodcast(p));
 
   const groupedExcluded = programas
     .map((p) => ({
