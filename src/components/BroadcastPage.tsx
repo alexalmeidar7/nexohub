@@ -388,6 +388,7 @@ export default function BroadcastPage() {
           composedTicker={composedTicker}
           sponsorLogos={sponsorLogos}
           assuntoBgUrl={effectiveAssuntoBgUrl}
+          insertLiveArt={insertLiveArt}
         />
       </div>
 
