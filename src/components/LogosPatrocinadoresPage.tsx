@@ -47,6 +47,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [dataUserId, setDataUserId] = useState<string | null>(effectiveUserId ?? null);
 
   const [programaId, setProgramaId] = useState("");
+  const [programaIds, setProgramaIds] = useState<string[]>([]);
+  const [programaPickerOpen, setProgramaPickerOpen] = useState(false);
   const [dataFinal, setDataFinal] = useState("");
   const [nomeLogo, setNomeLogo] = useState("");
   const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string }[]>([]);
