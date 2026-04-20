@@ -1050,6 +1050,31 @@ export default function AgendaPage() {
                           <img src={url} alt={`Arte ${idx + 1}`} className="w-full h-full object-cover" />
                           <button
                             type="button"
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(url);
+                                const blob = await res.blob();
+                                const blobUrl = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = blobUrl;
+                                const ext = (url.split(".").pop() || "jpg").split("?")[0];
+                                a.download = `arte-${idx + 1}.${ext}`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                              } catch {
+                                window.open(url, "_blank");
+                              }
+                            }}
+                            title="Download original"
+                            className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                          >
+                            <Download size={12} />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => removeArte(idx)}
                             className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                             style={{ backgroundColor: "rgba(239,68,68,0.9)", color: "#fff" }}
