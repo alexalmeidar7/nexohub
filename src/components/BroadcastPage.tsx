@@ -851,6 +851,14 @@ function MockupPreview({
 
           {/* Sponsor logo + Social item cycling */}
           <div className="flex-1 flex flex-col items-end justify-end pb-2 pr-1 gap-2" style={{ minHeight: 40 }}>
+            {/* Insert Live art (above sponsor) */}
+            {insertLiveArt && (
+              <img
+                src={insertLiveArt}
+                alt="Insert Live"
+                className="h-[60px] max-w-[180px] object-contain"
+              />
+            )}
             {/* Sponsor logo */}
             {currentSponsor && (
               <div
