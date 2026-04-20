@@ -373,18 +373,85 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                   />
                 </div>
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Programa *</label>
-                  <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
-                    className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
-                    style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                  >
-                    <option value="">Selecione um programa</option>
-                    {programas.map((p) => (
-                      <option key={p.id} value={p.id}>{p.nome}</option>
-                    ))}
-                  </select>
+                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>
+                    Programa(s) * {!editingFullId && programaIds.length > 0 && <span className="font-normal opacity-60">({programaIds.length} selecionado{programaIds.length > 1 ? "s" : ""})</span>}
+                  </label>
+                  {editingFullId ? (
+                    <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
+                      className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
+                      style={inputStyle}
+                    >
+                      <option value="">Selecione um programa</option>
+                      {programas.map((p) => (
+                        <option key={p.id} value={p.id}>{p.nome}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setProgramaPickerOpen((v) => !v)}
+                        className="w-full px-4 py-1.5 text-sm outline-none text-left flex items-center justify-between"
+                        style={inputStyle}
+                      >
+                        <span className="truncate">
+                          {programaIds.length === 0
+                            ? "Selecione um ou mais programas"
+                            : programaIds
+                                .map((id) => programas.find((p) => p.id === id)?.nome)
+                                .filter(Boolean)
+                                .join(", ")}
+                        </span>
+                        <ChevronDown size={14} className="opacity-60 shrink-0 ml-2" />
+                      </button>
+                      {programaPickerOpen && (
+                        <div
+                          className="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded-xl shadow-lg"
+                          style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)" }}
+                        >
+                          <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+                            <button
+                              type="button"
+                              onClick={() => setProgramaIds(programas.map((p) => p.id))}
+                              className="text-[11px] font-semibold opacity-70 hover:opacity-100"
+                              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+                            >
+                              Selecionar todos
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setProgramaIds([])}
+                              className="text-[11px] font-semibold opacity-70 hover:opacity-100"
+                              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+                            >
+                              Limpar
+                            </button>
+                          </div>
+                          {programas.map((p) => {
+                            const checked = programaIds.includes(p.id);
+                            return (
+                              <label
+                                key={p.id}
+                                className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-black/5"
+                                style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(e) =>
+                                    setProgramaIds((prev) =>
+                                      e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id)
+                                    )
+                                  }
+                                />
+                                <span className="text-sm">{p.nome}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div>
