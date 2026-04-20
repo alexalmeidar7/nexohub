@@ -178,13 +178,39 @@ export default function BroadcastPage() {
       const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       const { data: liveEvents } = await supabase
         .from("agenda_eventos")
-        .select("artes_urls")
+        .select("artes_urls, programa_id")
         .eq("user_id", user.id)
         .eq("tipo_evento", "live")
         .eq("data", todayStr)
         .limit(1);
-      const liveArt = liveEvents?.[0]?.artes_urls?.[4];
+      const liveEv = liveEvents?.[0];
+      const liveArt = liveEv?.artes_urls?.[4];
       if (liveArt) setInsertLiveArt(liveArt);
+      // Compute 4 distributed schedule times between 07:00 and event start
+      if (liveEv?.programa_id && liveArt) {
+        const { data: progLive } = await supabase
+          .from("programas")
+          .select("horario_inicio")
+          .eq("id", liveEv.programa_id)
+          .maybeSingle();
+        const hi = progLive?.horario_inicio;
+        if (hi) {
+          const [h, m] = hi.split(":").map(Number);
+          const eventStart = h * 3600 + (m || 0) * 60;
+          const START = 7 * 3600;
+          if (eventStart > START) {
+            const span = eventStart - START;
+            const times: string[] = [];
+            for (let i = 0; i < 4; i++) {
+              const t = Math.floor(START + (span * (i + 1)) / 5);
+              const hh = String(Math.floor(t / 3600)).padStart(2, "0");
+              const mm = String(Math.floor((t % 3600) / 60)).padStart(2, "0");
+              times.push(`${hh}:${mm}`);
+            }
+            setInsertLiveSchedule(times);
+          }
+        }
+      }
       // Accent color
       const { data: settings } = await supabase.from("user_settings").select("dashboard_items, weather_city, weather_lat, weather_lon").eq("user_id", user.id).maybeSingle();
       if (settings?.dashboard_items && typeof settings.dashboard_items === "object") {
