@@ -708,7 +708,11 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                             const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
                             return (
                               <CarouselItem key={logo.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
-                                <div className="space-y-2 text-center">
+                                <div className="space-y-2 text-center cursor-grab active:cursor-grabbing"
+                                  draggable
+                                  onDragStart={() => handleDragStart(logo)}
+                                  title="Arraste para outro programa para copiar"
+                                >
                                   <div className="relative group">
                                     <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-2" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "#2d2d2d" }} />
                                     <button onClick={() => handleSoftDelete(logo.id)}
