@@ -172,6 +172,17 @@ export default function BroadcastPage() {
         if (logos && logos.length > 0) setSponsorLogos(logos);
       }
 
+      // Fetch today's LIVE event art (artes_urls[4] = INSERT LIVE)
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      const { data: liveEvents } = await supabase
+        .from("agenda_eventos")
+        .select("artes_urls")
+        .eq("user_id", user.id)
+        .eq("tipo_evento", "live")
+        .eq("data", todayStr)
+        .limit(1);
+      const liveArt = liveEvents?.[0]?.artes_urls?.[4];
+      if (liveArt) setInsertLiveArt(liveArt);
       // Accent color
       const { data: settings } = await supabase.from("user_settings").select("dashboard_items, weather_city, weather_lat, weather_lon").eq("user_id", user.id).maybeSingle();
       if (settings?.dashboard_items && typeof settings.dashboard_items === "object") {
