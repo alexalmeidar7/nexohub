@@ -37,17 +37,25 @@ function ParticipanteSearchPicker({
   existingNames,
   onSelect,
   onAddBlank,
+  onRegisterGuest,
 }: {
   apresentadores: Apresentador[];
   existingNames: string[];
   onSelect: (a: Apresentador) => void;
   onAddBlank: () => void;
+  onRegisterGuest: (nome: string, instagram: string) => Promise<void>;
 }) {
   const [q, setQ] = useState("");
+  const [showRegister, setShowRegister] = useState(false);
+  const [guestNome, setGuestNome] = useState("");
+  const [guestInsta, setGuestInsta] = useState("");
+  const [savingGuest, setSavingGuest] = useState(false);
   const filtered = apresentadores
     .filter(a => !existingNames.includes(a.nome.trim().toLowerCase()))
     .filter(a => !q.trim() || a.nome.toLowerCase().includes(q.toLowerCase()) || (a.instagram || "").toLowerCase().includes(q.toLowerCase()))
     .slice(0, 50);
+
+  const noResults = q.trim().length > 0 && filtered.length === 0;
 
   return (
     <div className="space-y-2 rounded-xl p-2" style={{ backgroundColor: "var(--layout-widget-bg, hsl(var(--card)))", color: "var(--layout-widget-text, hsl(var(--card-foreground)))" }}>
