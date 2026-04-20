@@ -717,11 +717,14 @@ export default function AgendaPage() {
     return matchDate && matchLocal && isFuture && programaAtivo;
   });
 
-  // Past events
+  // Past events (limited to last 30 days)
   const pastEventos = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    const cutoffStr = format(cutoff, "yyyy-MM-dd");
     const past = eventos.filter((e) => {
       if (e.recorrencia !== "unico") return false;
-      return e.data < todayStr;
+      return e.data < todayStr && e.data >= cutoffStr;
     });
     // Apply history date filter
     if (historyDateFilter) {
