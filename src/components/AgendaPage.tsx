@@ -316,7 +316,7 @@ export default function AgendaPage() {
     setFormParticipantes(updated);
   };
 
-  const handleUploadArte = async (file: File) => {
+  const handleUploadArte = async (file: File, slotIdx?: number) => {
     if (!user) return;
     setUploadingArte(true);
     try {
@@ -328,7 +328,15 @@ export default function AgendaPage() {
       });
       const path = `agenda/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.webp`;
       const url = await uploadImageToStorage(dataUrl, "empresa-assets", path);
-      setFormArtesUrls(prev => [...prev, url]);
+      setFormArtesUrls(prev => {
+        if (typeof slotIdx === "number") {
+          const next = [...prev];
+          while (next.length <= slotIdx) next.push("");
+          next[slotIdx] = url;
+          return next;
+        }
+        return [...prev, url];
+      });
     } catch (e: any) {
       toast({ title: "Erro no upload", description: e?.message, variant: "destructive" });
     } finally {
@@ -337,7 +345,11 @@ export default function AgendaPage() {
   };
 
   const removeArte = (idx: number) => {
-    setFormArtesUrls(prev => prev.filter((_, i) => i !== idx));
+    setFormArtesUrls(prev => {
+      const next = [...prev];
+      if (idx < next.length) next[idx] = "";
+      return next;
+    });
   };
 
   const resetForm = () => {
@@ -1120,73 +1132,84 @@ export default function AgendaPage() {
                     </p>
                   </div>
 
-                  {/* Artes do evento */}
+                  {/* Artes do evento - slots tipados */}
                   <div>
                     <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                       <ImageIcon size={12} /> Artes do Evento
                     </Label>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {formArtesUrls.map((url, idx) => (
-                        <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden group" style={{ border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
-                          <img src={url} alt={`Arte ${idx + 1}`} className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              try {
-                                const res = await fetch(url);
-                                const blob = await res.blob();
-                                const blobUrl = URL.createObjectURL(blob);
-                                const a = document.createElement("a");
-                                a.href = blobUrl;
-                                const ext = (url.split(".").pop() || "jpg").split("?")[0];
-                                a.download = `arte-${idx + 1}.${ext}`;
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-                              } catch {
-                                window.open(url, "_blank");
-                              }
-                            }}
-                            title="Download original"
-                            className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
-                          >
-                            <Download size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeArte(idx)}
-                            className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            style={{ backgroundColor: "rgba(239,68,68,0.9)", color: "#fff" }}
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
-                      ))}
-                      <label
-                        className="w-20 h-20 rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition-all"
-                        style={{
-                          border: "1.5px dashed color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)",
-                          backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)",
-                          color: "var(--layout-accent-color, #2563eb)",
-                          opacity: uploadingArte ? 0.5 : 1,
-                        }}
-                      >
-                        <Upload size={16} />
-                        <span className="text-[9px] font-semibold">{uploadingArte ? "..." : "Upload"}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={uploadingArte}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleUploadArte(file);
-                            e.target.value = "";
-                          }}
-                        />
-                      </label>
+                    <div className="grid grid-cols-5 gap-2 mb-2">
+                      {["THUMB", "FEED", "STORIE", "CAPA AUDIO", "INSERT LIVE"].map((slotLabel, slotIdx) => {
+                        const url = formArtesUrls[slotIdx] || "";
+                        return (
+                          <div key={slotIdx} className="flex flex-col items-center gap-1">
+                            {url ? (
+                              <div className="relative w-full aspect-square rounded-lg overflow-hidden group" style={{ border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
+                                <img src={url} alt={slotLabel} className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    try {
+                                      const res = await fetch(url);
+                                      const blob = await res.blob();
+                                      const blobUrl = URL.createObjectURL(blob);
+                                      const a = document.createElement("a");
+                                      a.href = blobUrl;
+                                      const ext = (url.split(".").pop() || "jpg").split("?")[0];
+                                      a.download = `${slotLabel.toLowerCase().replace(/\s+/g, "-")}.${ext}`;
+                                      document.body.appendChild(a);
+                                      a.click();
+                                      document.body.removeChild(a);
+                                      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                                    } catch {
+                                      window.open(url, "_blank");
+                                    }
+                                  }}
+                                  title="Download original"
+                                  className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                  style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                                >
+                                  <Download size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeArte(slotIdx)}
+                                  className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                  style={{ backgroundColor: "rgba(239,68,68,0.9)", color: "#fff" }}
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            ) : (
+                              <label
+                                className="w-full aspect-square rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition-all"
+                                style={{
+                                  border: "1.5px dashed color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)",
+                                  backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)",
+                                  color: "var(--layout-accent-color, #2563eb)",
+                                  opacity: uploadingArte ? 0.5 : 1,
+                                }}
+                              >
+                                <Upload size={14} />
+                                <span className="text-[8px] font-semibold">{uploadingArte ? "..." : "Upload"}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  disabled={uploadingArte}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleUploadArte(file, slotIdx);
+                                    e.target.value = "";
+                                  }}
+                                />
+                              </label>
+                            )}
+                            <span className="text-[8px] font-bold uppercase tracking-wider text-center leading-tight" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
+                              {slotLabel}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
