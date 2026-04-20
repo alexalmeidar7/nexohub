@@ -1334,13 +1334,24 @@ export default function AgendaPage() {
                                   type="button"
                                   onClick={async () => {
                                     try {
-                                      const res = await fetch(url);
-                                      const blob = await res.blob();
-                                      const blobUrl = URL.createObjectURL(blob);
+                                      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+                                        const i = new Image();
+                                        i.crossOrigin = "anonymous";
+                                        i.onload = () => resolve(i);
+                                        i.onerror = reject;
+                                        i.src = url;
+                                      });
+                                      const canvas = document.createElement("canvas");
+                                      canvas.width = img.naturalWidth;
+                                      canvas.height = img.naturalHeight;
+                                      canvas.getContext("2d")?.drawImage(img, 0, 0);
+                                      const pngBlob: Blob = await new Promise((resolve) =>
+                                        canvas.toBlob((b) => resolve(b!), "image/png")
+                                      );
+                                      const blobUrl = URL.createObjectURL(pngBlob);
                                       const a = document.createElement("a");
                                       a.href = blobUrl;
-                                      const ext = (url.split(".").pop() || "jpg").split("?")[0];
-                                      a.download = `${slotLabel.toLowerCase().replace(/\s+/g, "-")}.${ext}`;
+                                      a.download = `${slotLabel.toLowerCase().replace(/\s+/g, "-")}.png`;
                                       document.body.appendChild(a);
                                       a.click();
                                       document.body.removeChild(a);
