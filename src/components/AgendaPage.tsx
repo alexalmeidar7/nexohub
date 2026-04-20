@@ -1076,7 +1076,15 @@ export default function AgendaPage() {
                             <Plus size={12} /> Adicionar
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-72 p-2" align="end">
+                        <PopoverContent
+                          className="w-72 p-2 border z-[60]"
+                          align="end"
+                          style={{
+                            background: "var(--layout-card-bg, hsl(var(--card)))",
+                            color: "var(--layout-card-text, hsl(var(--card-foreground)))",
+                            borderColor: "var(--layout-card-border, hsl(var(--border)))",
+                          }}
+                        >
                           <ParticipanteSearchPicker
                             apresentadores={apresentadores}
                             existingNames={formParticipantes.map(p => p.nome.trim().toLowerCase()).filter(Boolean)}
