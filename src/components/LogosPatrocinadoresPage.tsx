@@ -308,13 +308,32 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     e.currentTarget.classList.remove("ring-2", "ring-blue-400");
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent, targetProgramaId?: string) => {
     e.preventDefault();
     e.currentTarget.classList.remove("ring-2", "ring-blue-400");
-    if (dragItem.current && dragItem.current.excluido) {
-      await handleRestore(dragItem.current);
-      dragItem.current = null;
+    const item = dragItem.current;
+    if (!item) return;
+    if (item.excluido) {
+      await handleRestore(item);
+    } else if (targetProgramaId && targetProgramaId !== item.programa_id) {
+      // Copy active logo to another program (do NOT remove the original)
+      const { error } = await supabase.from("logos_patrocinadores").insert({
+        user_id: dataUserId,
+        programa_id: targetProgramaId,
+        logo_url: item.logo_url,
+        nome: item.nome,
+        data_final: item.data_final,
+        ativo: true,
+        excluido: false,
+      });
+      if (error) {
+        toast({ title: "Erro ao copiar logo", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Logo copiada com sucesso" });
+        await loadData();
+      }
     }
+    dragItem.current = null;
   };
 
   const sortedProgramas = [...programas].sort((a, b) => (a.horario_inicio || "99:99").localeCompare(b.horario_inicio || "99:99"));
@@ -667,7 +686,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
             {section.items.map(({ programa, logos: gLogos }) => (
               <Collapsible key={programa.id} defaultOpen={false}>
                 <div className="rounded-xl overflow-hidden mb-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
-                  onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+                  onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, programa.id)}
                 >
                   <CollapsibleTrigger asChild>
                     <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
@@ -689,7 +708,11 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                             const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
                             return (
                               <CarouselItem key={logo.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
-                                <div className="space-y-2 text-center">
+                                <div className="space-y-2 text-center cursor-grab active:cursor-grabbing"
+                                  draggable
+                                  onDragStart={() => handleDragStart(logo)}
+                                  title="Arraste para outro programa para copiar"
+                                >
                                   <div className="relative group">
                                     <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-2" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "#2d2d2d" }} />
                                     <button onClick={() => handleSoftDelete(logo.id)}
