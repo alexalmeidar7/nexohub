@@ -361,7 +361,7 @@ export default function AgendaPage() {
     if (!user) return;
     const { data } = await supabase
       .from("apresentadores")
-      .select("id, nome, instagram, cargo")
+      .select("id, nome, instagram, cargo, whatsapp")
       .eq("user_id", user.id);
     setApresentadores((data as Apresentador[]) || []);
   }, [user]);
