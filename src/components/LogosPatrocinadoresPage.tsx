@@ -49,6 +49,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [programaId, setProgramaId] = useState("");
   const [programaIds, setProgramaIds] = useState<string[]>([]);
   const [programaPickerOpen, setProgramaPickerOpen] = useState(false);
+  const [programaSearch, setProgramaSearch] = useState("");
+  const programaPickerRef = useRef<HTMLDivElement>(null);
   const [dataFinal, setDataFinal] = useState("");
   const [nomeLogo, setNomeLogo] = useState("");
   const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string }[]>([]);
@@ -110,6 +112,24 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   useEffect(() => {
     if (dataUserId) loadData(dataUserId);
   }, [dataUserId]);
+
+  useEffect(() => {
+    if (!programaPickerOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (programaPickerRef.current && !programaPickerRef.current.contains(e.target as Node)) {
+        setProgramaPickerOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setProgramaPickerOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [programaPickerOpen]);
 
   const handleAddFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -387,7 +407,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                       ))}
                     </select>
                   ) : (
-                    <div className="relative">
+                    <div className="relative" ref={programaPickerRef}>
                       <button
                         type="button"
                         onClick={() => setProgramaPickerOpen((v) => !v)}
@@ -406,48 +426,68 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                       </button>
                       {programaPickerOpen && (
                         <div
-                          className="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded-xl shadow-lg"
+                          className="absolute z-20 mt-1 w-full rounded-xl shadow-lg"
                           style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)" }}
                         >
-                          <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+                          <div className="p-2 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+                            <div className="relative">
+                              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50" style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+                              <input
+                                type="text"
+                                autoFocus
+                                value={programaSearch}
+                                onChange={(e) => setProgramaSearch(e.target.value)}
+                                placeholder="Buscar programa..."
+                                className="w-full pl-7 pr-2 py-1.5 text-xs outline-none rounded-md"
+                                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between px-3 py-1.5 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+                            <div className="flex gap-3">
+                              <button type="button" onClick={() => setProgramaIds(programas.map((p) => p.id))} className="text-[11px] font-semibold opacity-70 hover:opacity-100" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                                Todos
+                              </button>
+                              <button type="button" onClick={() => setProgramaIds([])} className="text-[11px] font-semibold opacity-70 hover:opacity-100" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                                Limpar
+                              </button>
+                            </div>
+                            <span className="text-[10px] opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                              {programaIds.length} selecionado{programaIds.length !== 1 ? "s" : ""}
+                            </span>
+                          </div>
+                          <div className="max-h-56 overflow-auto">
+                            {programas
+                              .filter((p) => p.nome.toLowerCase().includes(programaSearch.toLowerCase()))
+                              .map((p) => {
+                                const checked = programaIds.includes(p.id);
+                                return (
+                                  <label key={p.id} className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-black/5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={(e) =>
+                                        setProgramaIds((prev) => (e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id)))
+                                      }
+                                    />
+                                    <span className="text-sm">{p.nome}</span>
+                                  </label>
+                                );
+                              })}
+                            {programas.filter((p) => p.nome.toLowerCase().includes(programaSearch.toLowerCase())).length === 0 && (
+                              <div className="px-3 py-3 text-xs opacity-60 text-center" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nenhum programa encontrado</div>
+                            )}
+                          </div>
+                          <div className="p-2 border-t" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                             <button
                               type="button"
-                              onClick={() => setProgramaIds(programas.map((p) => p.id))}
-                              className="text-[11px] font-semibold opacity-70 hover:opacity-100"
-                              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+                              onClick={() => { setProgramaPickerOpen(false); setProgramaSearch(""); }}
+                              className="w-full py-1.5 text-xs font-semibold rounded-md"
+                              style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
                             >
-                              Selecionar todos
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setProgramaIds([])}
-                              className="text-[11px] font-semibold opacity-70 hover:opacity-100"
-                              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-                            >
-                              Limpar
+                              Concluir
                             </button>
                           </div>
-                          {programas.map((p) => {
-                            const checked = programaIds.includes(p.id);
-                            return (
-                              <label
-                                key={p.id}
-                                className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-black/5"
-                                style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={(e) =>
-                                    setProgramaIds((prev) =>
-                                      e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id)
-                                    )
-                                  }
-                                />
-                                <span className="text-sm">{p.nome}</span>
-                              </label>
-                            );
-                          })}
                         </div>
                       )}
                     </div>
