@@ -50,27 +50,45 @@ function ParticipanteSearchPicker({
     .slice(0, 50);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 rounded-xl p-2" style={{ backgroundColor: "var(--layout-widget-bg, hsl(var(--card)))", color: "var(--layout-widget-text, hsl(var(--card-foreground)))" }}>
       <div className="relative">
-        <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 opacity-50" />
+        <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 opacity-60" style={{ color: "var(--layout-icon-color, var(--layout-widget-text, hsl(var(--muted-foreground))))" }} />
         <Input
           autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar participante..."
           className="h-8 text-xs pl-7"
+          style={{
+            backgroundColor: "var(--layout-page-bg, hsl(var(--background)))",
+            color: "var(--layout-page-text, hsl(var(--foreground)))",
+            borderColor: "var(--layout-border-color, hsl(var(--border)))",
+          }}
         />
       </div>
       <div className="max-h-60 overflow-y-auto space-y-0.5">
         {filtered.length === 0 ? (
-          <p className="text-[10px] text-center py-3 opacity-60">Nenhum participante encontrado</p>
+          <p className="text-[10px] text-center py-3 opacity-70" style={{ color: "var(--layout-widget-text, hsl(var(--muted-foreground)))" }}>Nenhum participante encontrado</p>
         ) : (
           filtered.map((a) => (
             <button
               key={a.id}
               type="button"
               onClick={() => onSelect(a)}
-              className="w-full text-left px-2 py-1.5 rounded-md hover:bg-accent text-xs flex flex-col"
+              className="w-full text-left px-2 py-1.5 rounded-lg text-xs flex flex-col transition-colors"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--layout-page-bg, hsl(var(--background))) 82%, transparent)",
+                color: "var(--layout-widget-text, hsl(var(--foreground)))",
+                border: "1px solid color-mix(in srgb, var(--layout-border-color, hsl(var(--border))) 45%, transparent)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, hsl(var(--accent))) 14%, var(--layout-page-bg, hsl(var(--background))) 86%)";
+                e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-accent-color, hsl(var(--accent))) 55%, transparent)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-page-bg, hsl(var(--background))) 82%, transparent)";
+                e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-border-color, hsl(var(--border))) 45%, transparent)";
+              }}
             >
               <span className="font-medium">{a.nome}</span>
               {a.instagram && <span className="text-[10px] opacity-60">@{a.instagram.replace(/^@/, "")}</span>}
@@ -78,7 +96,18 @@ function ParticipanteSearchPicker({
           ))
         )}
       </div>
-      <Button type="button" size="sm" variant="outline" onClick={onAddBlank} className="w-full h-7 text-[10px] gap-1">
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={onAddBlank}
+        className="w-full h-8 text-[10px] gap-1 rounded-full border"
+        style={{
+          backgroundColor: "color-mix(in srgb, var(--layout-widget-bg, hsl(var(--card))) 75%, var(--layout-page-bg, hsl(var(--background))) 25%)",
+          color: "var(--layout-widget-text, hsl(var(--foreground)))",
+          borderColor: "color-mix(in srgb, var(--layout-accent-color, hsl(var(--accent))) 40%, var(--layout-border-color, hsl(var(--border))) 60%)",
+        }}
+      >
         <Plus size={11} /> Adicionar manualmente
       </Button>
     </div>
@@ -1080,9 +1109,9 @@ export default function AgendaPage() {
                           className="w-72 p-2 border z-[60]"
                           align="end"
                           style={{
-                            background: "var(--layout-card-bg, hsl(var(--card)))",
-                            color: "var(--layout-card-text, hsl(var(--card-foreground)))",
-                            borderColor: "var(--layout-card-border, hsl(var(--border)))",
+                            background: "var(--layout-widget-bg, hsl(var(--card)))",
+                            color: "var(--layout-widget-text, hsl(var(--card-foreground)))",
+                            borderColor: "var(--layout-border-color, hsl(var(--border)))",
                           }}
                         >
                           <ParticipanteSearchPicker
