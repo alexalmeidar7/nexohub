@@ -1000,9 +1000,32 @@ export default function AgendaPage() {
                       <Label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                         <Users size={12} /> Participantes
                       </Label>
-                      <Button type="button" size="sm" variant="ghost" onClick={addParticipante} className="h-7 text-[10px] gap-1">
-                        <Plus size={12} /> Adicionar
-                      </Button>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button type="button" size="sm" variant="ghost" className="h-7 text-[10px] gap-1">
+                            <Plus size={12} /> Adicionar
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-72 p-2" align="end">
+                          <ParticipanteSearchPicker
+                            apresentadores={apresentadores}
+                            existingNames={formParticipantes.map(p => p.nome.trim().toLowerCase()).filter(Boolean)}
+                            onSelect={(a) => {
+                              setFormParticipantes(prev => {
+                                const empty = prev.findIndex(p => !p.nome.trim() && !p.obrigatorio);
+                                const newItem = { nome: a.nome, instagram: a.instagram || "" };
+                                if (empty >= 0) {
+                                  const next = [...prev];
+                                  next[empty] = newItem;
+                                  return next;
+                                }
+                                return [...prev, newItem];
+                              });
+                            }}
+                            onAddBlank={addParticipante}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                     <div className="space-y-2">
                       {formParticipantes.map((p, idx) => (
