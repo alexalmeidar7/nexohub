@@ -43,13 +43,27 @@ function ParticipanteSearchPicker({
   existingNames: string[];
   onSelect: (a: Apresentador) => void;
   onAddBlank: () => void;
-  onRegisterGuest: (nome: string, instagram: string) => Promise<void>;
+  onRegisterGuest: (nome: string, instagram: string, whatsapp: string) => Promise<void>;
 }) {
   const [q, setQ] = useState("");
   const [showRegister, setShowRegister] = useState(false);
   const [guestNome, setGuestNome] = useState("");
   const [guestInsta, setGuestInsta] = useState("");
+  const [guestWhats, setGuestWhats] = useState("+55");
   const [savingGuest, setSavingGuest] = useState(false);
+
+  const formatWhatsapp = (value: string) => {
+    let digits = value.replace(/\D/g, "");
+    if (!digits.startsWith("55")) digits = "55" + digits.replace(/^55*/, "");
+    digits = digits.slice(0, 13);
+    let formatted = "+55";
+    const local = digits.slice(2);
+    if (local.length > 0) formatted += " (" + local.slice(0, 2);
+    if (local.length >= 2) formatted += ")";
+    if (local.length > 2) formatted += " " + local.slice(2, 7);
+    if (local.length > 7) formatted += "-" + local.slice(7, 11);
+    return formatted;
+  };
   const filtered = apresentadores
     .filter(a => !existingNames.includes(a.nome.trim().toLowerCase()))
     .filter(a => !q.trim() || a.nome.toLowerCase().includes(q.toLowerCase()) || (a.instagram || "").toLowerCase().includes(q.toLowerCase()))
@@ -124,13 +138,28 @@ function ParticipanteSearchPicker({
                     borderColor: "var(--layout-border-color, hsl(var(--border)))",
                   }}
                 />
-                <div className="flex gap-2">
+                <Input
+                  value={guestWhats}
+                  onChange={(e) => setGuestWhats(formatWhatsapp(e.target.value))}
+                  placeholder="+55 (DDD) 00000-0000"
+                  className="h-8 text-xs"
+                  style={{
+                    backgroundColor: "var(--layout-page-bg, hsl(var(--background)))",
+                    color: "var(--layout-page-text, hsl(var(--foreground)))",
+                    borderColor: "var(--layout-border-color, hsl(var(--border)))",
+                  }}
+                />
+                <div className="flex gap-2 pt-1">
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
-                    onClick={() => setShowRegister(false)}
-                    className="flex-1 h-7 text-[10px] rounded-full"
+                    onClick={() => { setShowRegister(false); setGuestWhats("+55"); }}
+                    className="flex-1 h-9 text-xs font-semibold rounded-full border-2"
+                    style={{
+                      backgroundColor: "var(--layout-page-bg, hsl(var(--background)))",
+                      color: "var(--layout-page-text, hsl(var(--foreground)))",
+                      borderColor: "var(--layout-border-color, hsl(var(--border)))",
+                    }}
                   >
                     Cancelar
                   </Button>
@@ -141,20 +170,21 @@ function ParticipanteSearchPicker({
                     onClick={async () => {
                       setSavingGuest(true);
                       try {
-                        await onRegisterGuest(guestNome.trim(), guestInsta.trim());
+                        await onRegisterGuest(guestNome.trim(), guestInsta.trim(), guestWhats.trim());
                         setShowRegister(false);
+                        setGuestWhats("+55");
                         setQ("");
                       } finally {
                         setSavingGuest(false);
                       }
                     }}
-                    className="flex-1 h-7 text-[10px] rounded-full"
+                    className="flex-1 h-9 text-xs font-bold rounded-full shadow-md"
                     style={{
                       backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))",
                       color: "var(--layout-accent-text, hsl(var(--primary-foreground)))",
                     }}
                   >
-                    {savingGuest ? "Salvando..." : "Salvar"}
+                    {savingGuest ? "Salvando..." : "Salvar Convidado"}
                   </Button>
                 </div>
               </div>
@@ -1221,13 +1251,14 @@ export default function AgendaPage() {
                               });
                             }}
                             onAddBlank={addParticipante}
-                            onRegisterGuest={async (nome, instagram) => {
+                            onRegisterGuest={async (nome, instagram, whatsapp) => {
                               if (!user) return;
                               const cleanInsta = instagram.replace(/^@/, "").trim();
+                              const cleanWhats = whatsapp && whatsapp !== "+55" ? whatsapp : "";
                               const { data, error } = await supabase
                                 .from("apresentadores")
-                                .insert({ user_id: user.id, nome, instagram: cleanInsta, cargo: "Convidado", ativo: true })
-                                .select("id, nome, instagram, cargo")
+                                .insert({ user_id: user.id, nome, instagram: cleanInsta, whatsapp: cleanWhats, cargo: "Convidado", ativo: true })
+                                .select("id, nome, instagram, cargo, whatsapp")
                                 .single();
                               if (error || !data) {
                                 toast({ title: "Erro ao cadastrar convidado", description: error?.message, variant: "destructive" });
