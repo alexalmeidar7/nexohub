@@ -134,7 +134,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !programaId || !dataFinal) {
+    const targets = editingFullId ? (programaId ? [programaId] : []) : programaIds;
+    if (!user || targets.length === 0 || !dataFinal) {
       toast({ title: "Preencha todos os campos obrigatórios.", variant: "destructive" });
       return;
     }
@@ -143,8 +144,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     if (editingFullId) {
       setSaving(true);
       try {
-        const updateData: any = { programa_id: programaId, data_final: dataFinal, nome: nomeLogo };
-        // If new file uploaded, replace image
+        const updateData: any = { programa_id: targets[0], data_final: dataFinal, nome: nomeLogo };
         if (pendingFiles.length > 0) {
           updateData.logo_url = await uploadLogo(pendingFiles[0].file);
         }
@@ -169,19 +169,23 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     setSaving(true);
 
     try {
+      let count = 0;
       for (const pf of pendingFiles) {
         const logo_url = await uploadLogo(pf.file);
-        const { error } = await supabase.from("logos_patrocinadores").insert({
-          user_id: dataUserId!,
-          programa_id: programaId,
-          logo_url,
-          data_final: dataFinal,
-          nome: nomeLogo,
-        });
-        if (error) throw error;
+        for (const pid of targets) {
+          const { error } = await supabase.from("logos_patrocinadores").insert({
+            user_id: dataUserId!,
+            programa_id: pid,
+            logo_url,
+            data_final: dataFinal,
+            nome: nomeLogo,
+          });
+          if (error) throw error;
+          count++;
+        }
       }
 
-      toast({ title: `${pendingFiles.length} logo(s) salva(s) com sucesso!` });
+      toast({ title: `${count} logo(s) salva(s) em ${targets.length} programa(s)!` });
       resetForm();
       await loadData();
     } catch (err: any) {
@@ -193,6 +197,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const resetForm = () => {
     setProgramaId("");
+    setProgramaIds([]);
     setDataFinal("");
     setNomeLogo("");
     setPendingFiles([]);
