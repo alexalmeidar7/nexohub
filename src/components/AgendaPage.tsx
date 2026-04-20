@@ -316,7 +316,7 @@ export default function AgendaPage() {
     setFormParticipantes(updated);
   };
 
-  const handleUploadArte = async (file: File) => {
+  const handleUploadArte = async (file: File, slotIdx?: number) => {
     if (!user) return;
     setUploadingArte(true);
     try {
@@ -328,7 +328,15 @@ export default function AgendaPage() {
       });
       const path = `agenda/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.webp`;
       const url = await uploadImageToStorage(dataUrl, "empresa-assets", path);
-      setFormArtesUrls(prev => [...prev, url]);
+      setFormArtesUrls(prev => {
+        if (typeof slotIdx === "number") {
+          const next = [...prev];
+          while (next.length <= slotIdx) next.push("");
+          next[slotIdx] = url;
+          return next;
+        }
+        return [...prev, url];
+      });
     } catch (e: any) {
       toast({ title: "Erro no upload", description: e?.message, variant: "destructive" });
     } finally {
@@ -337,7 +345,11 @@ export default function AgendaPage() {
   };
 
   const removeArte = (idx: number) => {
-    setFormArtesUrls(prev => prev.filter((_, i) => i !== idx));
+    setFormArtesUrls(prev => {
+      const next = [...prev];
+      if (idx < next.length) next[idx] = "";
+      return next;
+    });
   };
 
   const resetForm = () => {
