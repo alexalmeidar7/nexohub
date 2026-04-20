@@ -268,7 +268,7 @@ serve(async (req) => {
       95: "Tempestade", 96: "Tempestade c/ granizo", 99: "Tempestade severa",
     };
 
-    const [empRes, progsRes, roteiroRes, settingsRes] = await Promise.all([
+    const [empRes, progsRes, roteiroRes, settingsRes, liveEventsRes] = await Promise.all([
       supabase
         .from("empresa_config")
         .select("logo, instagram, facebook, youtube, site, telefone_participacao")
@@ -292,6 +292,12 @@ serve(async (req) => {
         .select("cenario_config, weather_lat, weather_lon, weather_city")
         .eq("user_id", dataOwnerId)
         .maybeSingle(),
+      supabase
+        .from("agenda_eventos")
+        .select("id, programa_id, data, tipo_evento, artes_urls")
+        .eq("user_id", dataOwnerId)
+        .eq("data", todayDate)
+        .eq("tipo_evento", "live"),
     ]);
 
     const emp = empRes.data;
