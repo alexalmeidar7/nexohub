@@ -55,7 +55,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { contatos, mensagem } = body;
+    const { contatos, mensagem, mediaUrl } = body;
 
     if (!contatos || !Array.isArray(contatos) || contatos.length === 0) {
       return new Response(JSON.stringify({ error: "Nenhum contato informado" }), {
@@ -68,6 +68,8 @@ serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const normalizedMediaUrl = typeof mediaUrl === "string" && mediaUrl.trim() ? mediaUrl.trim() : undefined;
 
     const results: { phone: string; ok: boolean; error?: string; sid?: string }[] = [];
 
@@ -96,8 +98,19 @@ serve(async (req) => {
       let lastSid: string | undefined;
       let lastError: string | undefined;
 
-      for (const chunk of chunks) {
+      for (let index = 0; index < chunks.length; index++) {
+        const chunk = chunks[index];
         try {
+          const payload = new URLSearchParams({
+            To: `whatsapp:+${phone}`,
+            From: `whatsapp:+${TWILIO_FROM}`,
+            Body: chunk,
+          });
+
+          if (normalizedMediaUrl && index === 0) {
+            payload.set("MediaUrl", normalizedMediaUrl);
+          }
+
           const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
             method: "POST",
             headers: {
@@ -105,11 +118,7 @@ serve(async (req) => {
               "X-Connection-Api-Key": TWILIO_API_KEY,
               "Content-Type": "application/x-www-form-urlencoded",
             },
-            body: new URLSearchParams({
-              To: `whatsapp:+${phone}`,
-              From: `whatsapp:+${TWILIO_FROM}`,
-              Body: chunk,
-            }),
+            body: payload,
           });
 
           const data = await response.json();
