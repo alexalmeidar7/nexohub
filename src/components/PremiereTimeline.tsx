@@ -27,9 +27,12 @@ export default function PremiereTimeline({
 }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const audioCanvasRef = useRef<HTMLCanvasElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
   const [thumbs, setThumbs] = useState<string[]>([]);
   const [waveform, setWaveform] = useState<number[] | null>(null);
   const [dragging, setDragging] = useState<"start" | "end" | "range" | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [playhead, setPlayhead] = useState(0);
   const dragOffsetRef = useRef(0);
 
   // Generate thumbnails from the video element
@@ -106,7 +109,7 @@ export default function PremiereTimeline({
     return () => { cancelled = true; };
   }, [audioFile]);
 
-  // Draw waveform
+  // Draw waveform — uses accent color from layout
   useEffect(() => {
     const canvas = audioCanvasRef.current;
     if (!canvas) return;
@@ -117,22 +120,29 @@ export default function PremiereTimeline({
     ctx.clearRect(0, 0, w, h);
 
     const peaks = waveform || (() => {
-      // placeholder pseudo-random waveform
       const arr: number[] = [];
       for (let i = 0; i < 400; i++) arr.push(0.2 + Math.abs(Math.sin(i * 0.3) * Math.cos(i * 0.07)) * 0.7);
       return arr;
     })();
 
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--layout-accent-hex").trim() || "#888888";
     const barW = w / peaks.length;
-    ctx.fillStyle = waveform ? "rgba(56, 189, 248, 0.85)" : "rgba(148, 163, 184, 0.5)";
+    ctx.fillStyle = waveform
+      ? `color-mix(in srgb, ${accent} 85%, transparent)` as string
+      : `color-mix(in srgb, ${accent} 35%, transparent)` as string;
+    // canvas fillStyle does not support color-mix in all browsers — fallback to accent w/ alpha
+    ctx.fillStyle = accent;
+    ctx.globalAlpha = waveform ? 0.85 : 0.35;
     peaks.forEach((p, i) => {
       const bh = Math.max(1, p * h * 0.9);
       ctx.fillRect(i * barW, (h - bh) / 2, Math.max(1, barW - 1), bh);
     });
+    ctx.globalAlpha = 1;
   }, [waveform]);
 
   const pctStart = duration > 0 ? (startSec / duration) * 100 : 0;
   const pctEnd = duration > 0 ? (endSec / duration) * 100 : 0;
+  const pctPlay = duration > 0 ? (playhead / duration) * 100 : 0;
 
   const xToTime = useCallback((clientX: number) => {
     const rect = trackRef.current?.getBoundingClientRect();
@@ -175,32 +185,103 @@ export default function PremiereTimeline({
     setDragging(kind);
   };
 
+  // Toggle play/pause inside selected range
+  const togglePlay = useCallback(() => {
+    const v = previewVideoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      if (v.currentTime < startSec || v.currentTime >= endSec) v.currentTime = startSec;
+      v.play().catch(() => {});
+    } else {
+      v.pause();
+    }
+  }, [startSec, endSec]);
+
+  // Spacebar shortcut
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      const tgt = e.target as HTMLElement;
+      const tag = tgt?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tgt?.isContentEditable) return;
+      e.preventDefault();
+      togglePlay();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [togglePlay]);
+
+  // Track playhead and stop at endSec
+  useEffect(() => {
+    const v = previewVideoRef.current;
+    if (!v) return;
+    const onTime = () => {
+      setPlayhead(v.currentTime);
+      if (v.currentTime >= endSec) { v.pause(); v.currentTime = endSec; }
+    };
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    v.addEventListener("timeupdate", onTime);
+    v.addEventListener("play", onPlay);
+    v.addEventListener("pause", onPause);
+    return () => {
+      v.removeEventListener("timeupdate", onTime);
+      v.removeEventListener("play", onPlay);
+      v.removeEventListener("pause", onPause);
+    };
+  }, [endSec]);
+
+  // Layout-derived colors via CSS variables
+  const bg = "var(--layout-page-bg, #ffffff)";
+  const headerBg = "var(--layout-header-bg, #1a1a1a)";
+  const headerText = "var(--layout-header-text, #ffffff)";
+  const accent = "var(--layout-accent-color, #444444)";
+  const accentText = "var(--layout-button-text, #ffffff)";
+  const border = "var(--layout-border-color, #333333)";
+  const text = "var(--layout-page-text, #1a1a1a)";
+  const muted = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)";
+
   return (
-    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#0f172a", border: "1px solid #1e293b" }}>
-      <div className="px-3 py-2 flex items-center justify-between text-[10px] font-mono" style={{ backgroundColor: "#1e293b", color: "#cbd5e1" }}>
-        <span className="font-bold truncate max-w-[60%]">{videoTitle || "Timeline"}</span>
-        <span>{fmt(startSec)} → {fmt(endSec)} • {fmt(endSec - startSec)}</span>
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: bg, border: `1px solid color-mix(in srgb, ${border} 40%, transparent)`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      {/* Hidden controllable video for spacebar playback */}
+      <video ref={previewVideoRef} src={videoUrl} className="hidden" preload="metadata" />
+
+      {/* Header bar */}
+      <div className="px-3 py-2 flex items-center justify-between text-[10px] font-mono" style={{ background: `linear-gradient(135deg, ${headerBg}, color-mix(in srgb, ${headerBg} 80%, white 20%))`, color: headerText }}>
+        <div className="flex items-center gap-2 truncate max-w-[60%]">
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="rounded-full w-6 h-6 flex items-center justify-center transition-transform hover:scale-110"
+            style={{ backgroundColor: accent, color: accentText }}
+            title="Espaço para Play/Pause"
+          >
+            {playing ? "❚❚" : "▶"}
+          </button>
+          <span className="font-bold truncate">{videoTitle || "Timeline"}</span>
+        </div>
+        <span className="opacity-90">{fmt(startSec)} → {fmt(endSec)} • {fmt(endSec - startSec)}</span>
       </div>
 
       <div ref={trackRef} className="relative select-none" style={{ touchAction: "none" }}>
         {/* Video layer */}
-        <div className="flex h-16 bg-black">
+        <div className="flex h-16" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 90%, black)` }}>
           {Array.from({ length: thumbCount }).map((_, i) => (
-            <div key={i} className="flex-1 border-r border-black overflow-hidden" style={{ backgroundColor: "#1e293b" }}>
+            <div key={i} className="flex-1 overflow-hidden" style={{ borderRight: `1px solid color-mix(in srgb, ${border} 30%, transparent)`, backgroundColor: `color-mix(in srgb, ${headerBg} 70%, black)` }}>
               {thumbs[i] && <img src={thumbs[i]} alt="" className="w-full h-full object-cover" draggable={false} />}
             </div>
           ))}
         </div>
 
         {/* Audio layer */}
-        <div className="h-12" style={{ backgroundColor: "#0c1424" }}>
+        <div className="h-12" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 95%, black)` }}>
           <canvas ref={audioCanvasRef} className="w-full h-full block" />
         </div>
 
         {/* Time ruler */}
-        <div className="h-5 flex items-center text-[8px] font-mono" style={{ backgroundColor: "#1e293b", color: "#94a3b8" }}>
+        <div className="h-5 flex items-center text-[8px] font-mono" style={{ background: `linear-gradient(135deg, ${headerBg}, color-mix(in srgb, ${headerBg} 80%, white 20%))`, color: `color-mix(in srgb, ${headerText} 70%, transparent)` }}>
           {Array.from({ length: 11 }).map((_, i) => (
-            <div key={i} className="flex-1 border-l border-slate-700 pl-1">
+            <div key={i} className="flex-1 pl-1" style={{ borderLeft: `1px solid color-mix(in srgb, ${headerText} 15%, transparent)` }}>
               {fmt((duration / 10) * i)}
             </div>
           ))}
@@ -209,22 +290,26 @@ export default function PremiereTimeline({
         {/* Selection overlay */}
         {duration > 0 && (
           <>
-            {/* Dim outside */}
             <div className="absolute top-0 bottom-0 left-0 pointer-events-none" style={{ width: `${pctStart}%`, backgroundColor: "rgba(0,0,0,0.55)" }} />
             <div className="absolute top-0 bottom-0 right-0 pointer-events-none" style={{ width: `${100 - pctEnd}%`, backgroundColor: "rgba(0,0,0,0.55)" }} />
 
-            {/* Range bar (draggable) */}
+            {/* Range bar */}
             <div
               onPointerDown={startHandle("range")}
               className="absolute top-0 bottom-0 cursor-grab active:cursor-grabbing"
               style={{
                 left: `${pctStart}%`,
                 width: `${pctEnd - pctStart}%`,
-                border: "2px solid #f59e0b",
-                background: "rgba(245, 158, 11, 0.08)",
-                boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.4)",
+                border: `2px solid ${accent}`,
+                background: `color-mix(in srgb, ${accent} 12%, transparent)`,
+                boxShadow: `inset 0 0 0 1px rgba(0,0,0,0.4), 0 0 0 1px color-mix(in srgb, ${accent} 40%, transparent)`,
               }}
             />
+
+            {/* Playhead */}
+            {playing && (
+              <div className="absolute top-0 bottom-0 pointer-events-none" style={{ left: `${pctPlay}%`, width: 2, backgroundColor: accentText, boxShadow: `0 0 6px ${accent}` }} />
+            )}
 
             {/* Start handle */}
             <div
@@ -232,9 +317,9 @@ export default function PremiereTimeline({
               className="absolute top-0 bottom-0 flex items-center justify-center cursor-ew-resize"
               style={{ left: `calc(${pctStart}% - 8px)`, width: 16 }}
             >
-              <div style={{ width: 4, height: "100%", backgroundColor: "#f59e0b", borderRadius: 2 }} />
+              <div style={{ width: 4, height: "100%", backgroundColor: accent, borderRadius: 2, boxShadow: `0 0 4px ${accent}` }} />
               <div className="absolute -top-5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold whitespace-nowrap"
-                style={{ backgroundColor: "#f59e0b", color: "#000" }}>
+                style={{ backgroundColor: accent, color: accentText }}>
                 {fmt(startSec)}
               </div>
             </div>
@@ -245,9 +330,9 @@ export default function PremiereTimeline({
               className="absolute top-0 bottom-0 flex items-center justify-center cursor-ew-resize"
               style={{ left: `calc(${pctEnd}% - 8px)`, width: 16 }}
             >
-              <div style={{ width: 4, height: "100%", backgroundColor: "#f59e0b", borderRadius: 2 }} />
+              <div style={{ width: 4, height: "100%", backgroundColor: accent, borderRadius: 2, boxShadow: `0 0 4px ${accent}` }} />
               <div className="absolute -top-5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold whitespace-nowrap"
-                style={{ backgroundColor: "#f59e0b", color: "#000" }}>
+                style={{ backgroundColor: accent, color: accentText }}>
                 {fmt(endSec)}
               </div>
             </div>
@@ -255,10 +340,11 @@ export default function PremiereTimeline({
         )}
       </div>
 
-      <div className="px-3 py-1.5 text-[9px] font-mono flex items-center gap-3" style={{ backgroundColor: "#1e293b", color: "#94a3b8" }}>
+      <div className="px-3 py-1.5 text-[9px] font-mono flex items-center gap-3" style={{ backgroundColor: `color-mix(in srgb, ${bg} 92%, ${border})`, color: muted, borderTop: `1px solid color-mix(in srgb, ${border} 25%, transparent)` }}>
         <span>🎬 Vídeo</span>
         <span>🔊 Áudio {waveform ? "(real)" : "(preview)"}</span>
-        <span className="ml-auto">Arraste as alças laranja para ajustar o corte</span>
+        <span className="hidden sm:inline">⌨️ Espaço = Play/Pause do trecho</span>
+        <span className="ml-auto">Arraste as alças para ajustar o corte</span>
       </div>
     </div>
   );
