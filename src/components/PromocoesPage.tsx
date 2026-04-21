@@ -80,6 +80,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
   const textoEditorRef = useRef<HTMLDivElement>(null);
+  const oferecimentoEditorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (effectiveUserId) {
@@ -142,6 +143,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     setTexto(item.texto);
     setTimeout(() => { if (textoEditorRef.current) textoEditorRef.current.innerHTML = item.texto || ""; }, 0);
     setOferecimento(item.oferecimento || "");
+    setTimeout(() => { if (oferecimentoEditorRef.current) oferecimentoEditorRef.current.innerHTML = item.oferecimento || ""; }, 0);
     setDataInicio(item.data_inicio);
     setDataFim(item.data_fim);
     setImagePreview(item.imagem_url || "");
@@ -203,6 +205,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     setTexto("");
     if (textoEditorRef.current) textoEditorRef.current.innerHTML = "";
     setOferecimento("");
+    if (oferecimentoEditorRef.current) oferecimentoEditorRef.current.innerHTML = "";
     setDataInicio("");
     setDataFim("");
     setImageFile(null);
@@ -319,12 +322,18 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Oferecimento</label>
-                  <input value={oferecimento} onChange={(e) => setOferecimento(e.target.value)} placeholder="Quem assina a promoção"
-                    className="w-full px-4 py-1.5 text-sm outline-none"
-                    style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                  />
+                  <div className="overflow-hidden" style={{ ...inputStyle, borderRadius: "12px" }}>
+                    <RichTextToolbar editorRef={oferecimentoEditorRef} onInput={() => setOferecimento(oferecimentoEditorRef.current?.innerHTML || "")} />
+                    <div
+                      ref={oferecimentoEditorRef}
+                      contentEditable
+                      data-placeholder="Quem assina a promoção"
+                      className="w-full px-4 py-2 text-sm outline-none min-h-[80px]"
+                      style={{ color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "transparent" }}
+                      onInput={() => setOferecimento(oferecimentoEditorRef.current?.innerHTML || "")}
+                      suppressContentEditableWarning
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
