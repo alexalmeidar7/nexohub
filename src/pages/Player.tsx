@@ -2549,14 +2549,14 @@ export default function PlayerPage() {
     setTimeout(() => {
       setMidrollActive(false);
       setMidrollFading("in");
-    }, 700);
-    // Fade-in volume over 2s
-    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.3)]), 1100);
-    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.6)]), 1700);
+    }, 500);
+    // Fade-in volume (~1s)
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.4)]), 700);
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.7)]), 1100);
     setTimeout(() => {
       ytPostMessage("setVolume", [volume]);
       setMidrollFading(null);
-    }, 2700);
+    }, 1500);
   }, [ytPostMessage, midrollResumeTime, volume, midrollIndex, midrollQueue]);
 
   const handleYtHome = useCallback(() => {
