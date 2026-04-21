@@ -290,6 +290,16 @@
   z-index: 10;
 }
 
+@keyframes playerProgressShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes playerMidrollPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 2px rgba(0,0,0,0.7), 0 0 8px rgba(250,204,21,0.8); }
+  50% { transform: translate(-50%, -50%) scale(1.25); box-shadow: 0 0 0 2px rgba(0,0,0,0.7), 0 0 14px rgba(250,204,21,1); }
+}
+
 
 *::-webkit-scrollbar {
   width: 6px;
