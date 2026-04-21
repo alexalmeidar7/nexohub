@@ -1731,15 +1731,14 @@ export default function CenarioInterativoPage() {
               ref={previewWrapRef}
               className="relative rounded-2xl overflow-hidden mx-auto flex-1"
               style={{
-                width: "100%",
-                maxWidth: "calc((100vh - 120px) * 9 / 16)",
+                height: "100%",
+                aspectRatio: "9 / 16",
+                maxWidth: "100%",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
                 border: "2px solid rgba(255,255,255,0.08)",
                 minHeight: 0,
               }}
             >
-              {/* 9:16 aspect ratio spacer */}
-              <div style={{ paddingBottom: "177.78%" }} />
               <div className="absolute inset-0 overflow-hidden">
                 {/* Virtual 1080×1920 canvas, scaled to fit — mirrors CenarioTela exactly */}
                 <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left" }}>
