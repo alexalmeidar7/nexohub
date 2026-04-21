@@ -542,9 +542,9 @@ export default function CortesVideoPage() {
           <div className="space-y-4">
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
               <div className="p-4 flex justify-center">
-                <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 640 }}>
+                <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: result.is_local && format === "reel" ? 320 : 640 }}>
                   {result.is_local && result.blob_url ? (
-                    <video src={result.blob_url} controls autoPlay className="w-full aspect-video bg-black" />
+                    <video src={result.blob_url} controls autoPlay className="w-full bg-black" style={{ aspectRatio: format === "reel" ? "9 / 16" : "16 / 9" }} />
                   ) : (
                     <iframe src={result.clip_embed_url} title="Clip preview" className="w-full aspect-video"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
