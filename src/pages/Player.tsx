@@ -2418,6 +2418,7 @@ export default function PlayerPage() {
     setMidrollPreroll(null);
     // Reset Top 10 fade state for new clip
     top10FadeTriggeredRef.current = false;
+    top10AdvanceStartedRef.current = false;
     if (isTop10Mode) {
       setTop10Fading("in"); // Fade-in new clip over 1.5s
       setTimeout(() => setTop10Fading(null), 1600);
@@ -2426,6 +2427,8 @@ export default function PlayerPage() {
 
   // Top 10: build inter-clip advance routine (mid-roll between songs, with black-fade fallback)
   const runTop10InterClip = useCallback(() => {
+    if (top10AdvanceStartedRef.current) return;
+    top10AdvanceStartedRef.current = true;
     ytPostMessage("pauseVideo");
     const idx = youtubeVideos.findIndex(v => v.videoId === selectedVideoId);
     const next = idx < youtubeVideos.length - 1 ? idx + 1 : 0;
@@ -2451,12 +2454,13 @@ export default function PlayerPage() {
 
     (async () => {
       try {
-        if (user) {
+        const ownerId = top10OwnerUserId || effectiveUserId;
+        if (ownerId) {
           const now = new Date();
           const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-          const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
+          const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", ownerId).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
           if (data && data.length > 0) {
-            const pool = filterCampaignsByType(data, now, false);
+            const pool = filterCampaignsByType(data, now, true);
             if (pool.length > 0) {
               const selected = pool[Math.floor(Math.random() * pool.length)];
               setPrerollUrl(selected.video_url);
@@ -2477,23 +2481,20 @@ export default function PlayerPage() {
       }
       advanceFallback();
     })();
-  }, [ytPostMessage, youtubeVideos, selectedVideoId, user, handleSelectVideo]);
+  }, [ytPostMessage, youtubeVideos, selectedVideoId, top10OwnerUserId, effectiveUserId, handleSelectVideo]);
 
   // Keep ref in sync so playerState=0 fallback can call latest advance
   useEffect(() => { top10AdvanceRef.current = runTop10InterClip; }, [runTop10InterClip]);
 
-  // Top 10: fade-out 10 seconds before end and auto-advance with inter-clip pre-roll
+  // Top 10: do not cut songs early; only fade during the natural ended event.
   useEffect(() => {
-    if (!isTop10Mode || !isYoutube || !selectedVideoId || ytDuration < 20) return;
+    if (!isTop10Mode || !isYoutube || !selectedVideoId || ytDuration < 1) return;
     if (top10FadeTriggeredRef.current) return;
     const timeRemaining = ytDuration - ytCurrentTime;
-    if (timeRemaining <= 10 && timeRemaining > 0) {
+    if (timeRemaining <= 0.6 && timeRemaining >= 0) {
       top10FadeTriggeredRef.current = true;
       setTop10Fading("out");
-      ytPostMessage("setVolume", [Math.round(volume * 0.5)]);
-      setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.2)]), 3000);
-      setTimeout(() => ytPostMessage("setVolume", [0]), 6000);
-      setTimeout(() => { runTop10InterClip(); }, 8000);
+      ytPostMessage("setVolume", [0]);
     }
   }, [ytCurrentTime, ytDuration, isTop10Mode, isYoutube, selectedVideoId, volume, ytPostMessage, runTop10InterClip]);
 
