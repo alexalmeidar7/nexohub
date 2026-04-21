@@ -34,6 +34,7 @@ export default function PremiereTimeline({
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
   const dragOffsetRef = useRef(0);
+  const reverseRef = useRef<number | null>(null);
 
   // Generate thumbnails from the video element
   useEffect(() => {
@@ -197,19 +198,54 @@ export default function PremiereTimeline({
     }
   }, [startSec, endSec]);
 
-  // Spacebar shortcut
+  // Keyboard shortcuts: Space play/pause, ←/→ frame step (Shift = 1s), J/K/L Premiere-style
   useEffect(() => {
+    const FRAME = 1 / 30;
+    const seekBy = (delta: number) => {
+      const v = previewVideoRef.current;
+      if (!v) return;
+      const t = Math.max(startSec, Math.min(endSec, (v.currentTime || startSec) + delta));
+      v.currentTime = t;
+      setPlayhead(t);
+    };
+    const setRate = (r: number) => {
+      const v = previewVideoRef.current;
+      if (!v) return;
+      if (reverseRef.current) { window.clearInterval(reverseRef.current); reverseRef.current = null; }
+      if (r === 0) { v.pause(); return; }
+      if (r < 0) {
+        v.pause();
+        const id = window.setInterval(() => {
+          const nt = (v.currentTime || 0) - FRAME * Math.abs(r);
+          if (nt <= startSec) { v.currentTime = startSec; window.clearInterval(id); reverseRef.current = null; return; }
+          v.currentTime = nt;
+        }, 33);
+        reverseRef.current = id;
+      } else {
+        v.playbackRate = r;
+        if (v.currentTime < startSec || v.currentTime >= endSec) v.currentTime = startSec;
+        v.play().catch(() => {});
+      }
+    };
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== "Space") return;
       const tgt = e.target as HTMLElement;
       const tag = tgt?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tgt?.isContentEditable) return;
-      e.preventDefault();
-      togglePlay();
+      switch (e.code) {
+        case "Space": e.preventDefault(); togglePlay(); break;
+        case "ArrowLeft": e.preventDefault(); seekBy(e.shiftKey ? -1 : -FRAME); break;
+        case "ArrowRight": e.preventDefault(); seekBy(e.shiftKey ? 1 : FRAME); break;
+        case "KeyJ": e.preventDefault(); setRate(-1); break;
+        case "KeyK": e.preventDefault(); setRate(0); break;
+        case "KeyL": e.preventDefault(); setRate(1); break;
+      }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [togglePlay]);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      if (reverseRef.current) { window.clearInterval(reverseRef.current); reverseRef.current = null; }
+    };
+  }, [togglePlay, startSec, endSec]);
 
   // Track playhead and stop at endSec
   useEffect(() => {
