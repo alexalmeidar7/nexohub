@@ -147,6 +147,27 @@ Deno.serve(async (req) => {
 
     const userId = matchedProfile.user_id;
 
+    // ── FAST PATH: active mid-rolls for public Top 10 playback ──────
+    if (section === "active_midrolls") {
+      const now = new Date();
+      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const { data, error } = await supabase
+        .from("comercial_preroll")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("active", true)
+        .lte("horario_inicio", currentTime)
+        .gte("horario_fim", currentTime)
+        .eq("is_midroll", true)
+        .order("priority", { ascending: true });
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ userId, prerolls: data || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ── FAST PATH: now_playing ──────────────────────────────────────
     if (section === "now_playing") {
       const { data: settingsData, error: settingsError } = await supabase
