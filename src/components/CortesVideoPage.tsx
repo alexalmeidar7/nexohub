@@ -134,35 +134,69 @@ export default function CortesVideoPage() {
 
   const handleCutLocal = async () => {
     if (!localFile || !canCut) return;
+
+    // Validate against actual video duration
+    if (localDuration > 0 && endSeconds > Math.ceil(localDuration)) {
+      toast({
+        title: "Tempo final inválido",
+        description: `O vídeo tem apenas ${formatDuration(Math.floor(localDuration))}. Ajuste o tempo final.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    if (localDuration > 0 && startSeconds >= Math.ceil(localDuration)) {
+      toast({
+        title: "Tempo inicial inválido",
+        description: `O tempo inicial deve ser menor que ${formatDuration(Math.floor(localDuration))}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCutting(true);
     setProgress(0);
     setResult(null);
 
+    let ffmpegLog = "";
     try {
       const ffmpeg = await loadFfmpeg();
+      ffmpeg.on("log", ({ message }) => {
+        ffmpegLog += message + "\n";
+        console.log("[ffmpeg]", message);
+      });
+
       setStatusMsg("Carregando arquivo...");
-      const ext = localFile.name.split(".").pop() || "mp4";
+      const ext = (localFile.name.split(".").pop() || "mp4").toLowerCase();
       const inputName = `input.${ext}`;
       const outputName = `corte_${Date.now()}.mp4`;
 
       await ffmpeg.writeFile(inputName, await fetchFile(localFile));
 
       setStatusMsg("Processando corte...");
-      // Use stream copy when possible for speed; fallback to re-encode if needed
-      await ffmpeg.exec([
+      const exitCode = await ffmpeg.exec([
         "-ss", String(startSeconds),
         "-i", inputName,
         "-t", String(duration),
         "-c:v", "libx264",
         "-preset", "ultrafast",
+        "-pix_fmt", "yuv420p",
         "-c:a", "aac",
+        "-b:a", "128k",
         "-movflags", "+faststart",
+        "-y",
         outputName,
       ]);
+
+      if (exitCode !== 0) {
+        throw new Error(`ffmpeg falhou (código ${exitCode}). Verifique se o formato do vídeo é suportado.`);
+      }
 
       setStatusMsg("Finalizando...");
       const data = await ffmpeg.readFile(outputName);
       const u8 = data as Uint8Array;
+      if (!u8 || u8.byteLength === 0) {
+        throw new Error("Arquivo gerado está vazio. Verifique os tempos selecionados.");
+      }
       const buf = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
       const blob = new Blob([buf], { type: "video/mp4" });
       const blobUrl = URL.createObjectURL(blob);
@@ -180,9 +214,14 @@ export default function CortesVideoPage() {
       setStatusMsg("");
       toast({ title: "Corte gerado!", description: "O vídeo está pronto para download." });
     } catch (err: any) {
-      console.error(err);
-      toast({ title: "Erro ao processar", description: err?.message || "Falha no processamento.", variant: "destructive" });
+      console.error("Cut error:", err, "\nffmpeg log:\n", ffmpegLog);
+      toast({
+        title: "Erro ao processar",
+        description: err?.message || "Falha no processamento. Verifique o console para detalhes.",
+        variant: "destructive",
+      });
       setStatusMsg("");
+
     } finally {
       setCutting(false);
     }
