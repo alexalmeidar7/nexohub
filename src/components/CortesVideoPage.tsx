@@ -80,6 +80,7 @@ export default function CortesVideoPage() {
   // Shared
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [format, setFormat] = useState<"fullhd" | "reel">("fullhd");
   const [cutting, setCutting] = useState(false);
   const [result, setResult] = useState<{
     blob_url?: string;
@@ -193,10 +194,17 @@ export default function CortesVideoPage() {
       await ffmpeg.writeFile(inputName, await fetchFile(localFile));
 
       setStatusMsg("Processando corte...");
+      // FULL HD: scale to fit inside 1920x1080 with letterbox-free crop centered.
+      // REEL: scale to fill 1080x1920 then center-crop (no stretching).
+      const vf =
+        format === "reel"
+          ? "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920"
+          : "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080";
       const exitCode = await ffmpeg.exec([
         "-ss", String(startSeconds),
         "-i", inputName,
         "-t", String(duration),
+        "-vf", vf,
         "-c:v", "libx264",
         "-preset", "ultrafast",
         "-pix_fmt", "yuv420p",
@@ -428,38 +436,85 @@ export default function CortesVideoPage() {
         )}
 
 
-        {/* Time inputs */}
-        <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>⏱️ Definir Trecho</h3>
-          </div>
-          <div className="p-5">
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
-              <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Inicial</label>
-                <input type="text" value={startTime} onChange={(e) => setStartTime(maskHMS(e.target.value))}
-                  placeholder="HH:MM:SS.mmm" maxLength={12}
-                  className="w-36 text-center py-2 rounded-lg text-sm font-mono outline-none"
-                  style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
-              </div>
-
-              <div className="flex flex-col items-center justify-center gap-1">
-                <Scissors size={20} style={{ color: duration > 0 ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
-                <div className="flex items-center gap-1.5 px-4 py-2 rounded-full"
-                  style={{ backgroundColor: duration > 0 ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: duration > 0 ? "#fff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                  <Clock size={14} />
-                  <span className="text-sm font-bold font-mono">{formatDuration(duration > 0 ? duration : 0)}</span>
+        {/* Time inputs + Format */}
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-5">
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+              <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>⏱️ Definir Trecho</h3>
+            </div>
+            <div className="p-5">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+                <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+                  <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Inicial</label>
+                  <input type="text" value={startTime} onChange={(e) => setStartTime(maskHMS(e.target.value))}
+                    placeholder="HH:MM:SS.mmm" maxLength={12}
+                    className="w-36 text-center py-2 rounded-lg text-sm font-mono outline-none"
+                    style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
                 </div>
-                {duration > 600 && <p className="text-[10px] mt-1 text-center" style={{ color: "#ef4444" }}>Máximo 10 min</p>}
-              </div>
 
-              <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Final</label>
-                <input type="text" value={endTime} onChange={(e) => setEndTime(maskHMS(e.target.value))}
-                  placeholder="HH:MM:SS.mmm" maxLength={12}
-                  className="w-36 text-center py-2 rounded-lg text-sm font-mono outline-none"
-                  style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
+                <div className="flex flex-col items-center justify-center gap-1">
+                  <Scissors size={20} style={{ color: duration > 0 ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
+                  <div className="flex items-center gap-1.5 px-4 py-2 rounded-full"
+                    style={{ backgroundColor: duration > 0 ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: duration > 0 ? "#fff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                    <Clock size={14} />
+                    <span className="text-sm font-bold font-mono">{formatDuration(duration > 0 ? duration : 0)}</span>
+                  </div>
+                  {duration > 600 && <p className="text-[10px] mt-1 text-center" style={{ color: "#ef4444" }}>Máximo 10 min</p>}
+                </div>
+
+                <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+                  <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Final</label>
+                  <input type="text" value={endTime} onChange={(e) => setEndTime(maskHMS(e.target.value))}
+                    placeholder="HH:MM:SS.mmm" maxLength={12}
+                    className="w-36 text-center py-2 rounded-lg text-sm font-mono outline-none"
+                    style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
+                </div>
               </div>
+            </div>
+          </div>
+
+          {/* Format */}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+              <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>🎞️ Formato</h3>
+            </div>
+            <div className="p-5 flex flex-col gap-3">
+              {([
+                { k: "fullhd" as const, label: "FULL HD", sub: "1920 × 1080", w: 56, h: 32 },
+                { k: "reel" as const, label: "REEL", sub: "1080 × 1920", w: 32, h: 56 },
+              ]).map(({ k, label, sub, w, h }) => {
+                const active = format === k;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setFormat(k)}
+                    className="flex items-center gap-3 p-3 rounded-xl transition-all text-left"
+                    style={{
+                      border: `2px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)"}`,
+                      backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: w, height: h,
+                        backgroundColor: active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)",
+                        borderRadius: 4,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div>
+                      <div className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{label}</div>
+                      <div className="text-[10px] font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>{sub}</div>
+                    </div>
+                  </button>
+                );
+              })}
+              <p className="text-[10px] leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                {format === "reel"
+                  ? "Vertical: o vídeo é centralizado e cortado nas laterais (sem distorção)."
+                  : "Horizontal padrão para TV/web."}
+              </p>
             </div>
           </div>
         </div>
@@ -487,9 +542,9 @@ export default function CortesVideoPage() {
           <div className="space-y-4">
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
               <div className="p-4 flex justify-center">
-                <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 640 }}>
+                <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: result.is_local && format === "reel" ? 320 : 640 }}>
                   {result.is_local && result.blob_url ? (
-                    <video src={result.blob_url} controls autoPlay className="w-full aspect-video bg-black" />
+                    <video src={result.blob_url} controls autoPlay className="w-full bg-black" style={{ aspectRatio: format === "reel" ? "9 / 16" : "16 / 9" }} />
                   ) : (
                     <iframe src={result.clip_embed_url} title="Clip preview" className="w-full aspect-video"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
