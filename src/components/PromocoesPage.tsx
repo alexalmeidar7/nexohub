@@ -143,6 +143,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     setTexto(item.texto);
     setTimeout(() => { if (textoEditorRef.current) textoEditorRef.current.innerHTML = item.texto || ""; }, 0);
     setOferecimento(item.oferecimento || "");
+    setTimeout(() => { if (oferecimentoEditorRef.current) oferecimentoEditorRef.current.innerHTML = item.oferecimento || ""; }, 0);
     setDataInicio(item.data_inicio);
     setDataFim(item.data_fim);
     setImagePreview(item.imagem_url || "");
