@@ -3692,22 +3692,26 @@ export default function PlayerPage() {
                       }
 
                       // 2) Safari / AirPlay
-                      if (typeof v.webkitShowPlaybackTargetPicker === "function") {
-                        try { v.webkitShowPlaybackTargetPicker(); return; } catch (e) { console.warn("[cast] airplay failed", e); }
+                      if (typeof media.webkitShowPlaybackTargetPicker === "function") {
+                        console.info("[cast] strategy=airplay");
+                        try { media.webkitShowPlaybackTargetPicker(); return; } catch (e: any) { console.warn("[cast] airplay failed", { name: e?.name, message: e?.message }); }
                       }
 
                       // 3) Presentation API fallback (Chromecast via media URL)
                       try {
                         const PR = (window as any).PresentationRequest;
-                        if (PR && v.currentSrc) {
-                          const req = new PR([v.currentSrc]);
+                        if (PR && media.currentSrc) {
+                          console.info("[cast] strategy=presentation", { url: media.currentSrc });
+                          const req = new PR([media.currentSrc]);
                           await req.start();
                           return;
                         }
+                        console.warn("[cast] presentation unavailable", { hasPR: !!PR, hasSrc: !!media.currentSrc });
                       } catch (e: any) {
-                        console.warn("[cast] presentation failed", e?.name, e?.message);
+                        console.warn("[cast] presentation failed", { name: e?.name, message: e?.message });
                       }
 
+                      console.error("[cast] all strategies exhausted");
                       toast.info("Transmissão indisponível. Verifique se há um dispositivo Chromecast na rede e use o Google Chrome.");
                     }}
                     className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-full items-center justify-center transition-all hover:scale-105 border-2 border-transparent hover:border-white/70"
