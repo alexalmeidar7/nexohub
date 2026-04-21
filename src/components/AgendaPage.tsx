@@ -887,6 +887,17 @@ export default function AgendaPage() {
             {evt.prioridade === "urgente" && <AlertTriangle size={10} className="inline mr-0.5" />}
             {prioridadeLabels[evt.prioridade] || "Normal"}
           </span>
+          {evt.status && evt.status !== "ativo" && (
+            <span
+              className="inline-block text-[10px] font-bold px-2 py-0.5 rounded mt-0.5 ml-1 uppercase"
+              style={{
+                backgroundColor: statusOptions.find(s => s.value === evt.status)?.color || "#888",
+                color: "#fff",
+              }}
+            >
+              {statusOptions.find(s => s.value === evt.status)?.label || evt.status}
+            </span>
+          )}
           {evt.local && (
             <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
               <MapPin size={12} className="inline mr-1" />
