@@ -163,7 +163,75 @@ export default function PremiereTimeline({
     return ratio * duration;
   }, [duration]);
 
-  const handleMove = useCallback((e: PointerEvent) => {
+  const tToPct = useCallback((t: number) => ((t - viewStart) / viewSpan) * 100, [viewStart, viewSpan]);
+  const pctStart = tToPct(startSec);
+  const pctEnd = tToPct(endSec);
+  const pctPlay = tToPct(playhead);
+
+  const xToTime = useCallback((clientX: number) => {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return 0;
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return viewStart + ratio * viewSpan;
+  }, [viewStart, viewSpan]);
+
+  // Wheel zoom (around cursor) + Shift-wheel horizontal pan
+  const onWheel = useCallback((e: React.WheelEvent) => {
+    if (!duration) return;
+    e.preventDefault();
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const ratio = (e.clientX - rect.left) / rect.width;
+    const cursorT = viewStart + ratio * viewSpan;
+    if (e.shiftKey) {
+      const delta = (e.deltaY || e.deltaX) * (viewSpan / rect.width);
+      let ns = viewStart + delta, ne = viewEnd + delta;
+      if (ns < 0) { ne -= ns; ns = 0; }
+      if (ne > duration) { ns -= (ne - duration); ne = duration; }
+      setViewStart(Math.max(0, ns)); setViewEnd(Math.min(duration, ne));
+    } else {
+      const factor = e.deltaY > 0 ? 1.25 : 0.8;
+      let newSpan = Math.max(0.5, Math.min(duration, viewSpan * factor));
+      let ns = cursorT - ratio * newSpan;
+      let ne = ns + newSpan;
+      if (ns < 0) { ne -= ns; ns = 0; }
+      if (ne > duration) { ns -= (ne - duration); ne = duration; }
+      setViewStart(Math.max(0, ns)); setViewEnd(Math.min(duration, ne));
+    }
+  }, [duration, viewStart, viewEnd, viewSpan]);
+
+  // Middle-mouse / Alt drag to pan
+  const onPointerDownPan = (e: React.PointerEvent) => {
+    if (!(e.button === 1 || e.altKey)) return;
+    e.preventDefault();
+    panRef.current = { x: e.clientX, vs: viewStart, ve: viewEnd };
+  };
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const p = panRef.current;
+      if (!p) return;
+      const rect = trackRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const delta = ((p.x - e.clientX) / rect.width) * (p.ve - p.vs);
+      let ns = p.vs + delta, ne = p.ve + delta;
+      if (ns < 0) { ne -= ns; ns = 0; }
+      if (ne > duration) { ns -= (ne - duration); ne = duration; }
+      setViewStart(ns); setViewEnd(ne);
+    };
+    const up = () => { panRef.current = null; };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+  }, [duration]);
+
+  const resetZoom = () => { setViewStart(0); setViewEnd(duration); };
+  const zoomToSelection = () => {
+    if (endSec <= startSec) return;
+    const pad = (endSec - startSec) * 0.2;
+    setViewStart(Math.max(0, startSec - pad));
+    setViewEnd(Math.min(duration, endSec + pad));
+  };
+  const zoomPct = duration > 0 ? Math.round((duration / viewSpan) * 10) / 10 : 1;
     if (!dragging) return;
     const t = xToTime(e.clientX);
     if (dragging === "start") {
