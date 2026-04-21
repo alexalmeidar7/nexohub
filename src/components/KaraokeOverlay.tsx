@@ -114,26 +114,32 @@ export default function KaraokeOverlay({
     setSyncMode(false);
     lastElapsedRef.current = null;
 
+    let cancelled = false;
+
     supabase.functions.invoke("fetch-lyrics", {
       body: { artist, title, duration: duration ? Math.round(duration) : undefined },
     }).then(({ data, error: err }) => {
+      // Discard stale response if the song changed while fetching
+      if (cancelled || lastFetchRef.current !== key) return;
       setLoading(false);
       if (err || !data?.success || !data?.syncedLyrics) {
         setError(true);
-        setTimeout(() => setExitAnim(true), 1500);
+        setTimeout(() => { if (lastFetchRef.current === key) setExitAnim(true); }, 1500);
         onLyricsNotFound?.();
         return;
       }
       const parsed = parseLrc(data.syncedLyrics);
       if (parsed.length === 0) {
         setError(true);
-        setTimeout(() => setExitAnim(true), 1500);
+        setTimeout(() => { if (lastFetchRef.current === key) setExitAnim(true); }, 1500);
         onLyricsNotFound?.();
         return;
       }
       setLines(parsed);
       onLyricsFound?.();
     });
+
+    return () => { cancelled = true; };
   }, [artist, title, duration, onLyricsNotFound, onLyricsFound]);
 
   // Animation loop
