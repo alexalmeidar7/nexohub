@@ -2072,22 +2072,22 @@ export default function CenarioInterativoPage() {
                                         boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
                                         gap: `${pvh(2)}px`,
                                       }}>
-                                        <div style={{ minWidth: `${pvh(10)}px` }}>
-                                          <span className="font-black capitalize" style={{ fontSize: `${pvh(2.2)}px`, lineHeight: 1.1 }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                                        <div style={{ minWidth: `${pvh(11)}px` }}>
+                                          <span className="font-black capitalize" style={{ fontSize: `${pvh(2)}px`, lineHeight: 1.1 }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
                                         </div>
                                         <div style={{ width: `${pvh(6)}px`, height: `${pvh(6)}px`, flexShrink: 0 }}>
                                           <WeatherIcon code={d.code} size={pvh(6)} forceDay />
                                         </div>
-                                        <div className="flex flex-col flex-1" style={{ minWidth: 0 }}>
-                                          <div className="flex items-center" style={{ gap: `${pvh(1.5)}px`, fontSize: `${pvh(1.4)}px`, opacity: 0.6 }}>
+                                        <div className="flex flex-col flex-1" style={{ minWidth: 0, gap: `${pvh(0.4)}px` }}>
+                                          <div className="flex items-center" style={{ gap: `${pvh(1)}px`, fontSize: `${pvh(1.3)}px`, opacity: 0.7, lineHeight: 1 }}>
                                             <span style={{ color: "#7dd3fc" }}>💧{d.precip}%</span>
                                             <span>{d.rainMm}mm</span>
-                                            <span>🌬 {d.windMax}km/h</span>
                                           </div>
+                                          <div style={{ fontSize: `${pvh(1.3)}px`, opacity: 0.6, lineHeight: 1 }}>🌬 {d.windMax}km/h</div>
                                         </div>
-                                        <div className="flex flex-col items-end" style={{ flexShrink: 0 }}>
-                                          <div className="font-black tabular-nums" style={{ fontSize: `${pvh(3)}px`, lineHeight: 1.1 }}>{d.max}°</div>
-                                          <div className="font-medium tabular-nums" style={{ fontSize: `${pvh(2)}px`, opacity: 0.5, lineHeight: 1.1 }}>{d.min}°</div>
+                                        <div className="flex items-baseline" style={{ flexShrink: 0, gap: `${pvh(0.6)}px` }}>
+                                          <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2.8)}px`, lineHeight: 1 }}>{d.max}°</span>
+                                          <span className="font-medium tabular-nums" style={{ fontSize: `${pvh(1.7)}px`, opacity: 0.55, lineHeight: 1 }}>{d.min}°</span>
                                         </div>
                                       </div>
                                     ))}
