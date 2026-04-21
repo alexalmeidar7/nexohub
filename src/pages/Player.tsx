@@ -629,6 +629,9 @@ export default function PlayerPage() {
   const [top10Fading, setTop10Fading] = useState<"out" | "in" | null>(null);
   const [top10InterPreroll, setTop10InterPreroll] = useState(false); // showing inter-clip preroll
   const top10PendingNextRef = useRef<string | null>(null);
+  // Queue of next clip ids — only drained AFTER the current mid-roll finishes
+  // so we never cut from one song to the next without the ad fully playing.
+  const top10QueueRef = useRef<string[]>([]);
   const top10FadeTriggeredRef = useRef(false);
   const top10AdvanceStartedRef = useRef(false);
   const top10AdvanceRef = useRef<(() => void) | null>(null);
@@ -2455,7 +2458,9 @@ export default function PlayerPage() {
     const next = idx < youtubeVideos.length - 1 ? idx + 1 : 0;
     const nextId = youtubeVideos[next]?.videoId;
     if (!nextId) return;
+    // Enqueue the next clip — it will be played AFTER the mid-roll/black fade ends.
     top10PendingNextRef.current = nextId;
+    top10QueueRef.current = [nextId];
 
     const advanceFallback = () => {
       // Brief black fade between songs when no preroll campaign is configured
@@ -2466,8 +2471,9 @@ export default function PlayerPage() {
       setTimeout(() => {
         setTop10InterPreroll(false);
         setTop10Fading(null);
-        if (top10PendingNextRef.current) {
-          handleSelectVideo(top10PendingNextRef.current);
+        const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
+        if (nextQueued) {
+          handleSelectVideo(nextQueued);
           top10PendingNextRef.current = null;
         }
       }, 1200);
@@ -2496,6 +2502,7 @@ export default function PlayerPage() {
               setPrerollVideoPosition((selected as any).video_position || "center");
               setTop10InterPreroll(true);
               setPrerollShowing(true);
+              // The queued clip will play in onEnded/onSkip below.
               return;
             }
           }
@@ -2799,20 +2806,26 @@ export default function PlayerPage() {
             const wasTop10Inter = top10InterPreroll;
             setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center");
             setTop10InterPreroll(false);
-            if (wasTop10Inter && top10PendingNextRef.current) {
+            if (wasTop10Inter) {
               setTop10Fading(null);
-              handleSelectVideo(top10PendingNextRef.current);
-              top10PendingNextRef.current = null;
+              const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
+              if (nextQueued) {
+                handleSelectVideo(nextQueued);
+                top10PendingNextRef.current = null;
+              }
             }
           }}
           onEnded={() => {
             const wasTop10Inter = top10InterPreroll;
             setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center");
             setTop10InterPreroll(false);
-            if (wasTop10Inter && top10PendingNextRef.current) {
+            if (wasTop10Inter) {
               setTop10Fading(null);
-              handleSelectVideo(top10PendingNextRef.current);
-              top10PendingNextRef.current = null;
+              const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
+              if (nextQueued) {
+                handleSelectVideo(nextQueued);
+                top10PendingNextRef.current = null;
+              }
             }
           }}
         />
