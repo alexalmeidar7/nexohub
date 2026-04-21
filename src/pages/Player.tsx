@@ -2200,6 +2200,13 @@ export default function PlayerPage() {
   // Ref for auto-advance (avoids declaration order issue with ytNextVideo)
   const ytNextVideoRef = useRef<() => void>(() => {});
 
+  // Track latest currentTime/duration in refs so the message handler can
+  // validate the natural end of a clip without re-binding on every tick.
+  const ytCurrentTimeRef = useRef(0);
+  const ytDurationRef = useRef(0);
+  useEffect(() => { ytCurrentTimeRef.current = ytCurrentTime; }, [ytCurrentTime]);
+  useEffect(() => { ytDurationRef.current = ytDuration; }, [ytDuration]);
+
   // Listen for YouTube player state messages to track currentTime/duration
   useEffect(() => {
     if (!isYoutube || !selectedVideoId) { setYtCurrentTime(0); setYtDuration(0); return; }
@@ -2209,10 +2216,24 @@ export default function PlayerPage() {
         if (data?.event === "infoDelivery" && data?.info) {
           if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
-          // playerState 0 = ENDED
+          // playerState 0 = ENDED — but YouTube sometimes fires it spuriously
+          // (e.g. while the source is still loading or during quality switch),
+          // which would skip clips at ~7 s. Validate against current/duration.
           if (typeof data.info.playerState === "number" && data.info.playerState === 0) {
+            const dur = ytDurationRef.current;
+            const cur = ytCurrentTimeRef.current;
+            const reachedEnd = dur > 0 && cur > 0 && cur >= dur - 1.5;
+
+            if (!reachedEnd) {
+              // Spurious ENDED — ask YouTube for fresh metadata and ignore.
+              console.log("[player] ignoring spurious ENDED", { cur, dur });
+              ytPostMessage("getDuration");
+              ytPostMessage("getCurrentTime");
+              return;
+            }
+
             if (isTop10Mode) {
-              // Top 10: advance only after the natural YouTube ended event.
+              // Top 10: advance only after the real natural end of the clip.
               top10FadeTriggeredRef.current = true;
               top10AdvanceRef.current?.();
             } else {
@@ -2225,6 +2246,8 @@ export default function PlayerPage() {
           ytPostMessage("addEventListener", ["onStateChange"]);
           ytPostMessage("setPlaybackQuality", ["hd1080"]);
           ytPostMessage("setPlaybackQualityRange", [{ min: "hd1080", max: "highres" }]);
+          // Prime duration so the ENDED guard above has something to compare to.
+          ytPostMessage("getDuration");
         }
       } catch {}
     };
