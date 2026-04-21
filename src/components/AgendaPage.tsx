@@ -269,6 +269,7 @@ interface Evento {
   descricao: string;
   recorrencia: string;
   prioridade: string;
+  status?: string;
   tipo_evento?: string;
   youtube_url?: string;
   artes_urls?: string[];
@@ -334,6 +335,7 @@ export default function AgendaPage() {
   const [formRecorrencia, setFormRecorrencia] = useState<string>("unico");
   const [formTipoEvento, setFormTipoEvento] = useState<string>("live");
   const [formPrioridade, setFormPrioridade] = useState("normal");
+  const [formStatus, setFormStatus] = useState<string>("ativo");
   const [formParticipantes, setFormParticipantes] = useState<Participante[]>([
     { nome: "", instagram: "" },
   ]);
