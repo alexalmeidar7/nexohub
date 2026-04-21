@@ -259,6 +259,18 @@ export default function CortesVideoPage() {
     if (!canCut || !user) return;
     setCutting(true);
     setResult(null);
+    setProgress(0);
+    setStatusMsg("Enviando para o servidor...");
+
+    const progressTimer = setInterval(() => {
+      setProgress((p) => {
+        if (p >= 95) return p;
+        const inc = p < 50 ? 4 : p < 80 ? 2 : 1;
+        return Math.min(95, p + inc);
+      });
+      setStatusMsg("Processando trecho no servidor...");
+    }, 600);
+
     try {
       const { data, error } = await supabase.functions.invoke("cut-youtube-video", {
         body: { youtube_url: youtubeUrl, start_seconds: startSeconds, end_seconds: endSeconds },
@@ -274,10 +286,14 @@ export default function CortesVideoPage() {
         duration: data.duration,
         is_local: false,
       });
+      setProgress(100);
+      setStatusMsg("");
       toast({ title: "Trecho gerado!", description: "Use o player abaixo ou baixe via link externo." });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message || "Tente novamente.", variant: "destructive" });
+      setStatusMsg("");
     } finally {
+      clearInterval(progressTimer);
       setCutting(false);
     }
   };
@@ -525,7 +541,7 @@ export default function CortesVideoPage() {
             className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
             {cutting ? <><Loader2 size={16} className="animate-spin" /> Processando...</> : <><Scissors size={16} /> Gerar Corte</>}
           </button>
-          {cutting && mode === "local" && (
+          {cutting && (
             <div className="w-full max-w-md flex flex-col items-center gap-1">
               <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
                 <div className="h-full transition-all" style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color, #2563eb)" }} />
