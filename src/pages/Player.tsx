@@ -2529,23 +2529,33 @@ export default function PlayerPage() {
       setMidrollPreroll(midrollQueue[nextIdx]);
       return;
     }
-    // All ads done — resume video
-    setMidrollActive(false);
+    // All ads done — resume video FROM exact resume time
+    const resumeAt = Math.max(1, midrollResumeTime);
     setMidrollPreroll(null);
     setMidrollQueue([]);
     setMidrollIndex(0);
     setMidrollTotal(0);
-    ytPostMessage("seekTo", [midrollResumeTime, true]);
+    // Pre-seek with mute, allow YT to buffer the correct position before unhiding
     ytPostMessage("setVolume", [0]);
-    setTimeout(() => ytPostMessage("playVideo"), 100);
-    // Fade-in: gradually restore video and volume over 2s
-    setMidrollFading("in");
-    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.3)]), 400);
-    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.6)]), 1000);
+    ytPostMessage("seekTo", [resumeAt, true]);
+    ytPostMessage("playVideo");
+    // Re-seek after a short delay to defeat the YT "restart from 0" race
+    setTimeout(() => {
+      ytPostMessage("seekTo", [resumeAt, true]);
+      ytPostMessage("playVideo");
+    }, 350);
+    // Only remove the black overlay AFTER the video is actually playing the right frame
+    setTimeout(() => {
+      setMidrollActive(false);
+      setMidrollFading("in");
+    }, 700);
+    // Fade-in volume over 2s
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.3)]), 1100);
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.6)]), 1700);
     setTimeout(() => {
       ytPostMessage("setVolume", [volume]);
       setMidrollFading(null);
-    }, 2000);
+    }, 2700);
   }, [ytPostMessage, midrollResumeTime, volume, midrollIndex, midrollQueue]);
 
   const handleYtHome = useCallback(() => {
