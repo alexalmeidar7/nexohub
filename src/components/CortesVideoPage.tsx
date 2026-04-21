@@ -28,26 +28,33 @@ function pad(n: number) {
 }
 
 function parseHMS(value: string): number {
-  const parts = value.split(":").map((p) => parseInt(p || "0", 10));
+  const [hms, msStr] = value.split(".");
+  const parts = (hms || "").split(":").map((p) => parseInt(p || "0", 10));
   const h = parts[0] || 0;
   const m = parts[1] || 0;
   const s = parts[2] || 0;
-  return h * 3600 + m * 60 + s;
+  const ms = msStr ? parseInt(msStr.padEnd(3, "0").slice(0, 3), 10) || 0 : 0;
+  return h * 3600 + m * 60 + s + ms / 1000;
 }
 
 function formatDuration(seconds: number): string {
-  if (seconds <= 0) return "00:00:00";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+  if (seconds <= 0) return "00:00:00.000";
+  return toHMS(seconds);
 }
 
 function maskHMS(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 6);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return digits.slice(0, 2) + ":" + digits.slice(2);
-  return digits.slice(0, 2) + ":" + digits.slice(2, 4) + ":" + digits.slice(4);
+  // Accept digits + optional "." for ms; produce HH:MM:SS.mmm
+  const cleaned = raw.replace(/[^\d.]/g, "");
+  const [intPart, msPart = ""] = cleaned.split(".");
+  const digits = intPart.replace(/\D/g, "").slice(0, 6);
+  let base = digits;
+  if (digits.length > 2) base = digits.slice(0, 2) + ":" + digits.slice(2);
+  if (digits.length > 4) base = digits.slice(0, 2) + ":" + digits.slice(2, 4) + ":" + digits.slice(4);
+  if (cleaned.includes(".") || msPart) {
+    const ms = msPart.replace(/\D/g, "").slice(0, 3);
+    return base + "." + ms;
+  }
+  return base;
 }
 
 type Mode = "youtube" | "local";
