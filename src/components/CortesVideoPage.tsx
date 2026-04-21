@@ -259,6 +259,18 @@ export default function CortesVideoPage() {
     if (!canCut || !user) return;
     setCutting(true);
     setResult(null);
+    setProgress(0);
+    setStatusMsg("Enviando para o servidor...");
+
+    const progressTimer = setInterval(() => {
+      setProgress((p) => {
+        if (p >= 95) return p;
+        const inc = p < 50 ? 4 : p < 80 ? 2 : 1;
+        return Math.min(95, p + inc);
+      });
+      setStatusMsg("Processando trecho no servidor...");
+    }, 600);
+
     try {
       const { data, error } = await supabase.functions.invoke("cut-youtube-video", {
         body: { youtube_url: youtubeUrl, start_seconds: startSeconds, end_seconds: endSeconds },
@@ -274,10 +286,14 @@ export default function CortesVideoPage() {
         duration: data.duration,
         is_local: false,
       });
+      setProgress(100);
+      setStatusMsg("");
       toast({ title: "Trecho gerado!", description: "Use o player abaixo ou baixe via link externo." });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message || "Tente novamente.", variant: "destructive" });
+      setStatusMsg("");
     } finally {
+      clearInterval(progressTimer);
       setCutting(false);
     }
   };
