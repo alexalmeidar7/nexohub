@@ -472,9 +472,12 @@ export default function IntercomWidget() {
   if (!open) {
     return (
       <button onClick={() => setOpen(true)}
-        className="fixed z-[100] rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
-        style={{ ...glassStyle, width: 40, height: 40, padding: 10, top: 14, right: 120 }} title="Intercomunicador">
-        <Radio size={18} className="text-white/85" />
+        className="fixed z-[100] rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95
+                   top-2 right-[88px] w-8 h-8
+                   sm:top-3 sm:right-[100px] sm:w-9 sm:h-9
+                   lg:top-[14px] lg:right-[120px] lg:w-10 lg:h-10"
+        style={{ ...glassStyle }} title="Intercomunicador">
+        <Radio className="text-white/85 w-[14px] h-[14px] sm:w-4 sm:h-4 lg:w-[18px] lg:h-[18px]" />
       </button>
     );
   }
