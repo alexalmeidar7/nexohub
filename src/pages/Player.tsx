@@ -2543,7 +2543,7 @@ export default function PlayerPage() {
       }
       advanceFallback();
     })();
-  }, [ytPostMessage, youtubeVideos, selectedVideoId, top10OwnerUserId, effectiveUserId, isPublicMode, userSlug, handleSelectVideo]);
+  }, [ytPostMessage, youtubeVideos, selectedVideoId, top10OwnerUserId, effectiveUserId, isPublicMode, userSlug, drainTop10QueueWithGate]);
 
   // Keep ref in sync so playerState=0 fallback can call latest advance
   useEffect(() => { top10AdvanceRef.current = runTop10InterClip; }, [runTop10InterClip]);
