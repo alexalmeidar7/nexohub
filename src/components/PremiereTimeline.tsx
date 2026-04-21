@@ -388,15 +388,19 @@ export default function PremiereTimeline({
       </div>
 
       <div ref={trackRef} onWheel={onWheel} onPointerDown={onPointerDownPan} className="relative select-none overflow-hidden" style={{ touchAction: "none" }}>
-        {/* Video layer */}
+        {/* Video layer — frames positioned at exact timestamps within viewport */}
         <div className="relative h-16 overflow-hidden" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 90%, black)` }}>
-          <div className="absolute top-0 bottom-0 flex" style={{ left: `${-(viewStart/Math.max(0.001,duration))*100*(duration/viewSpan)}%`, width: `${(duration/viewSpan)*100}%` }}>
-            {Array.from({ length: thumbCount }).map((_, i) => (
-              <div key={i} className="flex-1 overflow-hidden" style={{ borderRight: `1px solid color-mix(in srgb, ${border} 30%, transparent)`, backgroundColor: `color-mix(in srgb, ${headerBg} 70%, black)` }}>
-                {thumbs[i] && <img src={thumbs[i]} alt="" className="w-full h-full object-cover" draggable={false} />}
+          {thumbs.map((th, i) => {
+            const left = ((th.t - viewStart) / viewSpan) * 100;
+            const next = thumbs[i + 1]?.t ?? (th.t + viewSpan / Math.max(1, thumbs.length));
+            const width = ((next - th.t) / viewSpan) * 100;
+            if (left + width < 0 || left > 100) return null;
+            return (
+              <div key={i} className="absolute top-0 bottom-0 overflow-hidden" style={{ left: `${left}%`, width: `${Math.max(0.5, width)}%`, borderRight: `1px solid color-mix(in srgb, ${border} 30%, transparent)` }} title={fmt(th.t, true)}>
+                <img src={th.url} alt="" className="w-full h-full object-cover" draggable={false} />
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
         {/* Audio layer */}
