@@ -2183,6 +2183,29 @@ export default function PlayerPage() {
     setYtPlaying(true);
   }, []);
 
+  // Drain the Top 10 queue with a readiness gate: keep a black hold overlay
+  // visible until the new YouTube iframe reports a real duration (>0), which
+  // means the media is loaded and ready to start. This prevents cutting from
+  // one clip to a blank/unbuffered next clip.
+  const drainTop10QueueWithGate = useCallback(() => {
+    const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
+    if (!nextQueued) return;
+    top10PendingNextRef.current = null;
+    awaitingNextClipReadyRef.current = nextQueued;
+    setTransitionHold(true);
+    // Reset duration ref so the gate only lifts when fresh metadata arrives
+    ytDurationRef.current = 0;
+    ytCurrentTimeRef.current = 0;
+    handleSelectVideo(nextQueued);
+    // Safety: never hold the gate for more than 6s
+    setTimeout(() => {
+      if (awaitingNextClipReadyRef.current === nextQueued) {
+        awaitingNextClipReadyRef.current = null;
+        setTransitionHold(false);
+      }
+    }, 6000);
+  }, [handleSelectVideo]);
+
   // YouTube IFrame API: sync volume
   const ytPostMessage = useCallback((command: string, args: any[] = []) => {
     if (ytIframeRef.current?.contentWindow) {
