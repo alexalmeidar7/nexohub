@@ -1061,8 +1061,12 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
       ) : (
         <div className="space-y-1">
           {events.map(ev => {
-            const todayStr = new Date().toISOString().split("T")[0];
+            const _now = new Date();
+            const todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}-${String(_now.getDate()).padStart(2, "0")}`;
+            const _tomorrow = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate() + 1);
+            const tomorrowStr = `${_tomorrow.getFullYear()}-${String(_tomorrow.getMonth() + 1).padStart(2, "0")}-${String(_tomorrow.getDate()).padStart(2, "0")}`;
             const isToday = ev.data === todayStr;
+            const isTomorrow = ev.data === tomorrowStr;
             const evDate = new Date(ev.data + "T12:00:00");
             const day = evDate.toLocaleDateString("pt-BR", { day: "2-digit" });
             const month = evDate.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
