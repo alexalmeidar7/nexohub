@@ -1727,18 +1727,20 @@ export default function CenarioInterativoPage() {
               </div>
             )}
 
-            <div
-              ref={previewWrapRef}
-              className="relative rounded-2xl overflow-hidden mx-auto flex-1"
-              style={{
-                height: "100%",
-                aspectRatio: "9 / 16",
-                maxWidth: "100%",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-                border: "2px solid rgba(255,255,255,0.08)",
-                minHeight: 0,
-              }}
-            >
+            <div className="flex-1 min-h-0 flex items-center justify-center w-full">
+              <div
+                ref={previewWrapRef}
+                className="relative rounded-2xl overflow-hidden"
+                style={{
+                  height: "100%",
+                  width: "auto",
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  aspectRatio: "9 / 16",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+                  border: "2px solid rgba(255,255,255,0.08)",
+                }}
+              >
               <div className="absolute inset-0 overflow-hidden">
                 {/* Virtual 1080×1920 canvas, scaled to fit — mirrors CenarioTela exactly */}
                 <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left" }}>
