@@ -130,11 +130,27 @@ export default function CortesVideoPage() {
     ffmpeg.on("progress", ({ progress: p }) => {
       setProgress(Math.min(99, Math.round(p * 100)));
     });
-    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
-    await ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
-    });
+    // Use single-thread build (no SharedArrayBuffer / COOP-COEP required).
+    // Try jsDelivr first, fallback to unpkg if it fails.
+    const cdns = [
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd",
+      "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
+    ];
+    let lastErr: any = null;
+    for (const baseURL of cdns) {
+      try {
+        await ffmpeg.load({
+          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+        });
+        lastErr = null;
+        break;
+      } catch (e) {
+        console.warn("[ffmpeg] CDN load failed:", baseURL, e);
+        lastErr = e;
+      }
+    }
+    if (lastErr) throw new Error("Não foi possível carregar o motor de vídeo. Verifique sua conexão e tente novamente.");
     ffmpegRef.current = ffmpeg;
     setFfmpegReady(true);
     return ffmpeg;
@@ -198,24 +214,31 @@ export default function CortesVideoPage() {
         format === "reel"
           ? "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1"
           : "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,setsar=1";
-      const exitCode = await ffmpeg.exec([
-        "-i", inputName,
-        "-ss", String(startSeconds),
-        "-t", String(duration),
-        "-vf", vf,
-        "-c:v", "libx264",
-        "-preset", "ultrafast",
-        "-pix_fmt", "yuv420p",
-        "-c:a", "aac",
-        "-b:a", "128k",
-        "-ac", "2",
-        "-movflags", "+faststart",
-        "-y",
-        outputName,
-      ]);
+
+      // Detect audio track presence by probing log output
+      let hasAudio = true;
+      try {
+        const probeLog: string[] = [];
+        const probeListener = ({ message }: { message: string }) => probeLog.push(message);
+        ffmpeg.on("log", probeListener);
+        await ffmpeg.exec(["-i", inputName, "-hide_banner"]).catch(() => {});
+        ffmpeg.off("log", probeListener);
+        hasAudio = probeLog.some((l) => /Stream #\d+:\d+.*Audio:/i.test(l));
+      } catch { /* assume audio */ }
+
+      const args: string[] = ["-i", inputName, "-ss", String(startSeconds), "-t", String(duration), "-vf", vf,
+        "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p"];
+      if (hasAudio) {
+        args.push("-c:a", "aac", "-b:a", "128k", "-ac", "2");
+      } else {
+        args.push("-an");
+      }
+      args.push("-movflags", "+faststart", "-y", outputName);
+
+      const exitCode = await ffmpeg.exec(args);
 
       if (exitCode !== 0) {
-        throw new Error(`ffmpeg falhou (código ${exitCode}). Verifique se o formato do vídeo é suportado.`);
+        throw new Error(`Falha ao recortar (código ${exitCode}). Tente outro trecho ou um vídeo .mp4 padrão.`);
       }
 
       setStatusMsg("Finalizando...");
