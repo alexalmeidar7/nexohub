@@ -2458,7 +2458,9 @@ export default function PlayerPage() {
     const next = idx < youtubeVideos.length - 1 ? idx + 1 : 0;
     const nextId = youtubeVideos[next]?.videoId;
     if (!nextId) return;
+    // Enqueue the next clip — it will be played AFTER the mid-roll/black fade ends.
     top10PendingNextRef.current = nextId;
+    top10QueueRef.current = [nextId];
 
     const advanceFallback = () => {
       // Brief black fade between songs when no preroll campaign is configured
@@ -2469,8 +2471,9 @@ export default function PlayerPage() {
       setTimeout(() => {
         setTop10InterPreroll(false);
         setTop10Fading(null);
-        if (top10PendingNextRef.current) {
-          handleSelectVideo(top10PendingNextRef.current);
+        const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
+        if (nextQueued) {
+          handleSelectVideo(nextQueued);
           top10PendingNextRef.current = null;
         }
       }, 1200);
@@ -2499,6 +2502,7 @@ export default function PlayerPage() {
               setPrerollVideoPosition((selected as any).video_position || "center");
               setTop10InterPreroll(true);
               setPrerollShowing(true);
+              // The queued clip will play in onEnded/onSkip below.
               return;
             }
           }
