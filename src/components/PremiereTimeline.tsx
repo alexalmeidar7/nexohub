@@ -450,7 +450,7 @@ export default function PremiereTimeline({
               <div style={{ width: 4, height: "100%", backgroundColor: accent, borderRadius: 2, boxShadow: `0 0 4px ${accent}` }} />
               <div className="absolute -top-5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold whitespace-nowrap"
                 style={{ backgroundColor: accent, color: accentText }}>
-                {fmt(startSec)}
+                {fmt(startSec, true)}
               </div>
             </div>
 
@@ -463,7 +463,7 @@ export default function PremiereTimeline({
               <div style={{ width: 4, height: "100%", backgroundColor: accent, borderRadius: 2, boxShadow: `0 0 4px ${accent}` }} />
               <div className="absolute -top-5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold whitespace-nowrap"
                 style={{ backgroundColor: accent, color: accentText }}>
-                {fmt(endSec)}
+                {fmt(endSec, true)}
               </div>
             </div>
           </>
