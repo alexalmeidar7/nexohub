@@ -194,10 +194,17 @@ export default function CortesVideoPage() {
       await ffmpeg.writeFile(inputName, await fetchFile(localFile));
 
       setStatusMsg("Processando corte...");
+      // FULL HD: scale to fit inside 1920x1080 with letterbox-free crop centered.
+      // REEL: scale to fill 1080x1920 then center-crop (no stretching).
+      const vf =
+        format === "reel"
+          ? "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920"
+          : "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080";
       const exitCode = await ffmpeg.exec([
         "-ss", String(startSeconds),
         "-i", inputName,
         "-t", String(duration),
+        "-vf", vf,
         "-c:v", "libx264",
         "-preset", "ultrafast",
         "-pix_fmt", "yuv420p",
