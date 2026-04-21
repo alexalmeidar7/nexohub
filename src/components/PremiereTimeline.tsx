@@ -35,6 +35,17 @@ export default function PremiereTimeline({
   const [playhead, setPlayhead] = useState(0);
   const dragOffsetRef = useRef(0);
   const reverseRef = useRef<number | null>(null);
+  // Viewport (zoom/pan window) in seconds
+  const [viewStart, setViewStart] = useState(0);
+  const [viewEnd, setViewEnd] = useState(0);
+  const panRef = useRef<{ x: number; vs: number; ve: number } | null>(null);
+
+  // Initialize / reset viewport when duration changes
+  useEffect(() => {
+    if (duration > 0) { setViewStart(0); setViewEnd(duration); }
+  }, [duration]);
+
+  const viewSpan = Math.max(0.5, viewEnd - viewStart);
 
   // Generate thumbnails from the video element
   useEffect(() => {
