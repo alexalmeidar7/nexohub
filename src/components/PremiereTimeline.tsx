@@ -376,7 +376,7 @@ export default function PremiereTimeline({
           <span className="font-bold truncate">{videoTitle || "Timeline"}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="opacity-90">{fmt(startSec)} → {fmt(endSec)} • {fmt(endSec - startSec)}</span>
+          <span className="opacity-90">{fmt(startSec, true)} → {fmt(endSec, true)} • {fmt(endSec - startSec, true)}</span>
           <div className="flex items-center gap-1 ml-2">
             <button type="button" onClick={() => { const c = (viewStart+viewEnd)/2, ns = Math.max(0.5, viewSpan*0.6); setViewStart(Math.max(0, c-ns/2)); setViewEnd(Math.min(duration, c+ns/2)); }} className="w-5 h-5 rounded text-[11px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Zoom +">＋</button>
             <span className="text-[9px] opacity-80 w-10 text-center">{zoomPct}x</span>
