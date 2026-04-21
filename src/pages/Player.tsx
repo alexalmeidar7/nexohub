@@ -3577,18 +3577,33 @@ export default function PlayerPage() {
                   </button>
                 )}
 
-                {/* Cast / Transmitir */}
+                {/* Cast / Transmitir — only the media stream (RemotePlayback API), not the tab/window */}
                 <button
-                  onClick={() => {
-                    const v = videoRef.current || audioRef.current;
-                    if (!v) return;
-                    if ("remote" in v && (v as any).remote) {
-                      (v as any).remote.prompt().catch(() => {});
+                  onClick={async () => {
+                    const v = (videoRef.current || audioRef.current) as any;
+                    if (!v) {
+                      toast.info("Inicie a reprodução antes de transmitir.");
+                      return;
+                    }
+                    // Use RemotePlayback API — picker shows ONLY media receivers (Chromecast, AirPlay)
+                    // Tab/window casting is a separate browser menu and is NOT triggered here.
+                    if (v.remote && typeof v.remote.prompt === "function") {
+                      try {
+                        await v.remote.prompt();
+                      } catch (err: any) {
+                        if (err?.name === "NotFoundError") {
+                          toast.info("Nenhum dispositivo de transmissão encontrado nesta rede.");
+                        } else if (err?.name !== "NotAllowedError" && err?.name !== "AbortError") {
+                          toast.error("Não foi possível abrir o seletor de transmissão.");
+                        }
+                      }
+                    } else {
+                      toast.info("Seu navegador não suporta transmissão de mídia. Use o Google Chrome para esta funcionalidade.");
                     }
                   }}
                   className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-full items-center justify-center transition-all hover:scale-105 border-2 border-transparent hover:border-white/70"
                   style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
-                  title="Transmitir"
+                  title="Transmitir mídia"
                 >
                   <Cast size={16} />
                 </button>
