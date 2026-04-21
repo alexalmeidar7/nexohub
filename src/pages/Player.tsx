@@ -3354,12 +3354,55 @@ export default function PlayerPage() {
                     onMouseLeave={(e) => { const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement; if (tooltip) tooltip.style.opacity = "0"; }}
                   >
                     <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
-                    <div className="w-full h-[3px] rounded-full overflow-visible group-hover:h-[5px] transition-all relative" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-                      <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "hsl(var(--player-accent))", boxShadow: `0 0 8px hsla(var(--player-accent) / 0.5)` }} />
+                    <div className="w-full h-[4px] rounded-full overflow-visible group-hover:h-[7px] transition-all relative" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
+                      {/* Filled portion with animated shimmer */}
+                      <div
+                        className="h-full rounded-full transition-[width] duration-300 relative overflow-hidden"
+                        style={{
+                          width: `${ytProgressPct}%`,
+                          background: `linear-gradient(90deg, hsl(var(--player-accent)) 0%, hsl(var(--player-accent) / 0.85) 100%)`,
+                          boxShadow: `0 0 10px hsla(var(--player-accent) / 0.6), 0 0 4px hsla(var(--player-accent) / 0.8)`,
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{
+                            background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%)",
+                            animation: "playerProgressShimmer 2s linear infinite",
+                            backgroundSize: "200% 100%",
+                          }}
+                        />
+                      </div>
+                      {/* Drag handle dot at progress tip */}
+                      <div
+                        className="absolute top-1/2 w-3 h-3 rounded-full -translate-y-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                        style={{
+                          left: `${ytProgressPct}%`,
+                          backgroundColor: "hsl(var(--player-accent))",
+                          boxShadow: "0 0 8px hsla(var(--player-accent) / 0.9), 0 0 0 2px rgba(255,255,255,0.95)",
+                        }}
+                      />
                     </div>
-                    {midrollBreakPoints.map((bp, i) => (
-                      <div key={i} className="absolute top-0 w-[6px] rounded-full bg-white" style={{ left: `${(bp / ytDuration) * 100}%`, height: "100%", minHeight: "4px", transform: "translateX(-50%)", opacity: 0.9 }} title={`Intervalo ${i + 1} — ${fmtTime(bp)}`} />
-                    ))}
+                    {midrollBreakPoints.map((bp, i) => {
+                      const passed = ytCurrentTime >= bp;
+                      return (
+                        <div
+                          key={i}
+                          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full pointer-events-none"
+                          style={{
+                            left: `${(bp / ytDuration) * 100}%`,
+                            width: passed ? "8px" : "10px",
+                            height: passed ? "8px" : "10px",
+                            backgroundColor: passed ? "rgba(255,255,255,0.5)" : "#facc15",
+                            boxShadow: passed
+                              ? "0 0 0 2px rgba(0,0,0,0.5)"
+                              : "0 0 0 2px rgba(0,0,0,0.7), 0 0 8px rgba(250,204,21,0.8)",
+                            animation: passed ? undefined : "playerMidrollPulse 1.8s ease-in-out infinite",
+                          }}
+                          title={`Intervalo comercial ${i + 1} — ${fmtTime(bp)}`}
+                        />
+                      );
+                    })}
                   </div>
                   <span className="text-[11px] tabular-nums text-white/60 shrink-0 w-9">{fmtTime(ytDuration)}</span>
                 </div>
