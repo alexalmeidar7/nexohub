@@ -8,12 +8,14 @@ import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import PremiereTimeline from "./PremiereTimeline";
 
 function toHMS(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
+  const total = Math.max(0, seconds);
+  const whole = Math.floor(total);
+  const ms = Math.round((total - whole) * 1000);
+  const h = Math.floor(whole / 3600);
+  const m = Math.floor((whole % 3600) / 60);
+  const sec = whole % 60;
   const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(h)}:${p(m)}:${p(sec)}`;
+  return `${p(h)}:${p(m)}:${p(sec)}.${String(ms).padStart(3, "0")}`;
 }
 
 function extractYoutubeId(url: string): string | null {
