@@ -35,6 +35,17 @@ export default function PremiereTimeline({
   const [playhead, setPlayhead] = useState(0);
   const dragOffsetRef = useRef(0);
   const reverseRef = useRef<number | null>(null);
+  // Viewport (zoom/pan window) in seconds
+  const [viewStart, setViewStart] = useState(0);
+  const [viewEnd, setViewEnd] = useState(0);
+  const panRef = useRef<{ x: number; vs: number; ve: number } | null>(null);
+
+  // Initialize / reset viewport when duration changes
+  useEffect(() => {
+    if (duration > 0) { setViewStart(0); setViewEnd(duration); }
+  }, [duration]);
+
+  const viewSpan = Math.max(0.5, viewEnd - viewStart);
 
   // Generate thumbnails from the video element
   useEffect(() => {
@@ -120,18 +131,20 @@ export default function PremiereTimeline({
     const h = canvas.height = canvas.clientHeight * window.devicePixelRatio;
     ctx.clearRect(0, 0, w, h);
 
-    const peaks = waveform || (() => {
+    const fullPeaks = waveform || (() => {
       const arr: number[] = [];
       for (let i = 0; i < 400; i++) arr.push(0.2 + Math.abs(Math.sin(i * 0.3) * Math.cos(i * 0.07)) * 0.7);
       return arr;
     })();
+    // Slice peaks to current viewport
+    const total = fullPeaks.length;
+    const dur = duration > 0 ? duration : viewSpan;
+    const i0 = Math.max(0, Math.floor((viewStart / dur) * total));
+    const i1 = Math.max(i0 + 1, Math.ceil((viewEnd / dur) * total));
+    const peaks = fullPeaks.slice(i0, i1);
 
     const accent = getComputedStyle(document.documentElement).getPropertyValue("--layout-accent-hex").trim() || "#888888";
-    const barW = w / peaks.length;
-    ctx.fillStyle = waveform
-      ? `color-mix(in srgb, ${accent} 85%, transparent)` as string
-      : `color-mix(in srgb, ${accent} 35%, transparent)` as string;
-    // canvas fillStyle does not support color-mix in all browsers — fallback to accent w/ alpha
+    const barW = w / Math.max(1, peaks.length);
     ctx.fillStyle = accent;
     ctx.globalAlpha = waveform ? 0.85 : 0.35;
     peaks.forEach((p, i) => {
@@ -139,21 +152,79 @@ export default function PremiereTimeline({
       ctx.fillRect(i * barW, (h - bh) / 2, Math.max(1, barW - 1), bh);
     });
     ctx.globalAlpha = 1;
-  }, [waveform]);
+  }, [waveform, viewStart, viewEnd, viewSpan, duration]);
 
-  const pctStart = duration > 0 ? (startSec / duration) * 100 : 0;
-  const pctEnd = duration > 0 ? (endSec / duration) * 100 : 0;
-  const pctPlay = duration > 0 ? (playhead / duration) * 100 : 0;
+  const tToPct = useCallback((t: number) => ((t - viewStart) / viewSpan) * 100, [viewStart, viewSpan]);
+  const pctStart = tToPct(startSec);
+  const pctEnd = tToPct(endSec);
+  const pctPlay = tToPct(playhead);
 
   const xToTime = useCallback((clientX: number) => {
     const rect = trackRef.current?.getBoundingClientRect();
     if (!rect) return 0;
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    return ratio * duration;
+    return viewStart + ratio * viewSpan;
+  }, [viewStart, viewSpan]);
+
+  // Wheel zoom (around cursor) + Shift-wheel horizontal pan
+  const onWheel = useCallback((e: React.WheelEvent) => {
+    if (!duration) return;
+    e.preventDefault();
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const ratio = (e.clientX - rect.left) / rect.width;
+    const cursorT = viewStart + ratio * viewSpan;
+    if (e.shiftKey) {
+      const delta = (e.deltaY || e.deltaX) * (viewSpan / rect.width);
+      let ns = viewStart + delta, ne = viewEnd + delta;
+      if (ns < 0) { ne -= ns; ns = 0; }
+      if (ne > duration) { ns -= (ne - duration); ne = duration; }
+      setViewStart(Math.max(0, ns)); setViewEnd(Math.min(duration, ne));
+    } else {
+      const factor = e.deltaY > 0 ? 1.25 : 0.8;
+      let newSpan = Math.max(0.5, Math.min(duration, viewSpan * factor));
+      let ns = cursorT - ratio * newSpan;
+      let ne = ns + newSpan;
+      if (ns < 0) { ne -= ns; ns = 0; }
+      if (ne > duration) { ns -= (ne - duration); ne = duration; }
+      setViewStart(Math.max(0, ns)); setViewEnd(Math.min(duration, ne));
+    }
+  }, [duration, viewStart, viewEnd, viewSpan]);
+
+  // Middle-mouse / Alt drag to pan
+  const onPointerDownPan = (e: React.PointerEvent) => {
+    if (!(e.button === 1 || e.altKey)) return;
+    e.preventDefault();
+    panRef.current = { x: e.clientX, vs: viewStart, ve: viewEnd };
+  };
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const p = panRef.current;
+      if (!p) return;
+      const rect = trackRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const delta = ((p.x - e.clientX) / rect.width) * (p.ve - p.vs);
+      let ns = p.vs + delta, ne = p.ve + delta;
+      if (ns < 0) { ne -= ns; ns = 0; }
+      if (ne > duration) { ns -= (ne - duration); ne = duration; }
+      setViewStart(ns); setViewEnd(ne);
+    };
+    const up = () => { panRef.current = null; };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
   }, [duration]);
 
+  const resetZoom = () => { setViewStart(0); setViewEnd(duration); };
+  const zoomToSelection = () => {
+    if (endSec <= startSec) return;
+    const pad = (endSec - startSec) * 0.2;
+    setViewStart(Math.max(0, startSec - pad));
+    setViewEnd(Math.min(duration, endSec + pad));
+  };
+  const zoomPct = duration > 0 ? Math.round((duration / viewSpan) * 10) / 10 : 1;
+
   const handleMove = useCallback((e: PointerEvent) => {
-    if (!dragging) return;
     const t = xToTime(e.clientX);
     if (dragging === "start") {
       onChange(Math.min(t, endSec - 0.5), endSec);
@@ -296,17 +367,28 @@ export default function PremiereTimeline({
           </button>
           <span className="font-bold truncate">{videoTitle || "Timeline"}</span>
         </div>
-        <span className="opacity-90">{fmt(startSec)} → {fmt(endSec)} • {fmt(endSec - startSec)}</span>
+        <div className="flex items-center gap-2">
+          <span className="opacity-90">{fmt(startSec)} → {fmt(endSec)} • {fmt(endSec - startSec)}</span>
+          <div className="flex items-center gap-1 ml-2">
+            <button type="button" onClick={() => { const c = (viewStart+viewEnd)/2, ns = Math.max(0.5, viewSpan*0.6); setViewStart(Math.max(0, c-ns/2)); setViewEnd(Math.min(duration, c+ns/2)); }} className="w-5 h-5 rounded text-[11px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Zoom +">＋</button>
+            <span className="text-[9px] opacity-80 w-10 text-center">{zoomPct}x</span>
+            <button type="button" onClick={() => { const c = (viewStart+viewEnd)/2, ns = Math.min(duration, viewSpan/0.6); setViewStart(Math.max(0, c-ns/2)); setViewEnd(Math.min(duration, c+ns/2)); }} className="w-5 h-5 rounded text-[11px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Zoom −">−</button>
+            <button type="button" onClick={zoomToSelection} className="px-1.5 h-5 rounded text-[9px] font-bold" style={{ backgroundColor: accent, color: accentText }} title="Zoom no trecho">⛶</button>
+            <button type="button" onClick={resetZoom} className="px-1.5 h-5 rounded text-[9px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Reset zoom">⟲</button>
+          </div>
+        </div>
       </div>
 
-      <div ref={trackRef} className="relative select-none" style={{ touchAction: "none" }}>
+      <div ref={trackRef} onWheel={onWheel} onPointerDown={onPointerDownPan} className="relative select-none overflow-hidden" style={{ touchAction: "none" }}>
         {/* Video layer */}
-        <div className="flex h-16" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 90%, black)` }}>
-          {Array.from({ length: thumbCount }).map((_, i) => (
-            <div key={i} className="flex-1 overflow-hidden" style={{ borderRight: `1px solid color-mix(in srgb, ${border} 30%, transparent)`, backgroundColor: `color-mix(in srgb, ${headerBg} 70%, black)` }}>
-              {thumbs[i] && <img src={thumbs[i]} alt="" className="w-full h-full object-cover" draggable={false} />}
-            </div>
-          ))}
+        <div className="relative h-16 overflow-hidden" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 90%, black)` }}>
+          <div className="absolute top-0 bottom-0 flex" style={{ left: `${-(viewStart/Math.max(0.001,duration))*100*(duration/viewSpan)}%`, width: `${(duration/viewSpan)*100}%` }}>
+            {Array.from({ length: thumbCount }).map((_, i) => (
+              <div key={i} className="flex-1 overflow-hidden" style={{ borderRight: `1px solid color-mix(in srgb, ${border} 30%, transparent)`, backgroundColor: `color-mix(in srgb, ${headerBg} 70%, black)` }}>
+                {thumbs[i] && <img src={thumbs[i]} alt="" className="w-full h-full object-cover" draggable={false} />}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Audio layer */}
@@ -318,7 +400,7 @@ export default function PremiereTimeline({
         <div className="h-5 flex items-center text-[8px] font-mono" style={{ background: `linear-gradient(135deg, ${headerBg}, color-mix(in srgb, ${headerBg} 80%, white 20%))`, color: `color-mix(in srgb, ${headerText} 70%, transparent)` }}>
           {Array.from({ length: 11 }).map((_, i) => (
             <div key={i} className="flex-1 pl-1" style={{ borderLeft: `1px solid color-mix(in srgb, ${headerText} 15%, transparent)` }}>
-              {fmt((duration / 10) * i)}
+              {fmt(viewStart + (viewSpan / 10) * i)}
             </div>
           ))}
         </div>
@@ -376,10 +458,11 @@ export default function PremiereTimeline({
         )}
       </div>
 
-      <div className="px-3 py-1.5 text-[9px] font-mono flex items-center gap-3" style={{ backgroundColor: `color-mix(in srgb, ${bg} 92%, ${border})`, color: muted, borderTop: `1px solid color-mix(in srgb, ${border} 25%, transparent)` }}>
+      <div className="px-3 py-1.5 text-[9px] font-mono flex items-center gap-3 flex-wrap" style={{ backgroundColor: `color-mix(in srgb, ${bg} 92%, ${border})`, color: muted, borderTop: `1px solid color-mix(in srgb, ${border} 25%, transparent)` }}>
         <span>🎬 Vídeo</span>
         <span>🔊 Áudio {waveform ? "(real)" : "(preview)"}</span>
-        <span className="hidden sm:inline">⌨️ Espaço = Play/Pause do trecho</span>
+        <span className="hidden sm:inline">⌨️ Espaço = Play/Pause • ←/→ frame • J/K/L</span>
+        <span className="hidden sm:inline">🔍 Scroll = Zoom • Shift+Scroll / Alt+Drag = Pan</span>
         <span className="ml-auto">Arraste as alças para ajustar o corte</span>
       </div>
     </div>
