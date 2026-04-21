@@ -1144,7 +1144,7 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                         {ev.local}
                       </span>
                     )}
-                    {isToday && (
+                    {(isToday || isTomorrow) && (
                       <span
                         className="text-[8px] font-bold ml-auto shrink-0 px-1.5 py-px rounded-full"
                         style={{
@@ -1152,7 +1152,7 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                           color: "#000",
                         }}
                       >
-                        HOJE
+                        {isToday ? "HOJE" : "AMANHÃ"}
                       </span>
                     )}
                   </div>
