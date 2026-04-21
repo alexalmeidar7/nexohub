@@ -329,13 +329,16 @@ export default function PremiereTimeline({
     };
   }, [togglePlay, startSec, endSec]);
 
-  // Track playhead and stop at endSec
+  // Track playhead — LOOP within selected range
   useEffect(() => {
     const v = previewVideoRef.current;
     if (!v) return;
     const onTime = () => {
       setPlayhead(v.currentTime);
-      if (v.currentTime >= endSec) { v.pause(); v.currentTime = endSec; }
+      if (v.currentTime >= endSec) {
+        try { v.currentTime = startSec; } catch { /* ignore */ }
+        if (v.paused) v.play().catch(() => {});
+      }
     };
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
@@ -347,7 +350,7 @@ export default function PremiereTimeline({
       v.removeEventListener("play", onPlay);
       v.removeEventListener("pause", onPause);
     };
-  }, [endSec]);
+  }, [startSec, endSec, previewVideoRef]);
 
   // Layout-derived colors via CSS variables
   const bg = "var(--layout-page-bg, #ffffff)";
