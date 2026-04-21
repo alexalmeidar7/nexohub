@@ -10,6 +10,8 @@ interface Props {
   /** When provided, real audio waveform is drawn from this file. Otherwise placeholder. */
   audioFile?: File | null;
   videoTitle?: string;
+  /** Optional external video element to control (so playback shows in the visible player). */
+  externalVideoRef?: React.RefObject<HTMLVideoElement | null>;
 }
 
 function fmt(sec: number, ms = false) {
@@ -26,11 +28,12 @@ function fmt(sec: number, ms = false) {
 
 export default function PremiereTimeline({
   videoUrl, duration, startSec, endSec, onChange,
-  thumbCount = 12, audioFile, videoTitle,
+  thumbCount = 12, audioFile, videoTitle, externalVideoRef,
 }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const audioCanvasRef = useRef<HTMLCanvasElement>(null);
-  const previewVideoRef = useRef<HTMLVideoElement>(null);
+  const internalVideoRef = useRef<HTMLVideoElement>(null);
+  const previewVideoRef = (externalVideoRef ?? internalVideoRef) as React.RefObject<HTMLVideoElement>;
   const [thumbs, setThumbs] = useState<{ t: number; url: string }[]>([]);
   const [waveform, setWaveform] = useState<number[] | null>(null);
   const [dragging, setDragging] = useState<"start" | "end" | "range" | null>(null);
@@ -326,13 +329,16 @@ export default function PremiereTimeline({
     };
   }, [togglePlay, startSec, endSec]);
 
-  // Track playhead and stop at endSec
+  // Track playhead — LOOP within selected range
   useEffect(() => {
     const v = previewVideoRef.current;
     if (!v) return;
     const onTime = () => {
       setPlayhead(v.currentTime);
-      if (v.currentTime >= endSec) { v.pause(); v.currentTime = endSec; }
+      if (v.currentTime >= endSec) {
+        try { v.currentTime = startSec; } catch { /* ignore */ }
+        if (v.paused) v.play().catch(() => {});
+      }
     };
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
@@ -344,7 +350,7 @@ export default function PremiereTimeline({
       v.removeEventListener("play", onPlay);
       v.removeEventListener("pause", onPause);
     };
-  }, [endSec]);
+  }, [startSec, endSec, previewVideoRef]);
 
   // Layout-derived colors via CSS variables
   const bg = "var(--layout-page-bg, #ffffff)";
@@ -358,8 +364,8 @@ export default function PremiereTimeline({
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: bg, border: `1px solid color-mix(in srgb, ${border} 40%, transparent)`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-      {/* Hidden controllable video for spacebar playback */}
-      <video ref={previewVideoRef} src={videoUrl} className="hidden" preload="metadata" />
+      {/* Hidden controllable video — only when no external player is provided */}
+      {!externalVideoRef && <video ref={internalVideoRef} src={videoUrl} className="hidden" preload="metadata" />}
 
       {/* Header bar */}
       <div className="px-3 py-2 flex items-center justify-between text-[10px] font-mono" style={{ background: `linear-gradient(135deg, ${headerBg}, color-mix(in srgb, ${headerBg} 80%, white 20%))`, color: headerText }}>
