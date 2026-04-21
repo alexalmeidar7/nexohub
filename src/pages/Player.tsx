@@ -3581,27 +3581,57 @@ export default function PlayerPage() {
                 {/* Cast / Transmitir — only available for VIDEO channels, transmits media stream only */}
                 {isVideo && (
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       const v = videoRef.current as any;
+                      console.info("[cast] click", { hasVideo: !!v, src: v?.currentSrc, hasRemote: !!v?.remote, state: v?.remote?.state });
                       if (!v) {
                         toast.info("Inicie a reprodução antes de transmitir.");
                         return;
                       }
-                      // Call prompt() synchronously inside the click handler to preserve user gesture
+                      if (!v.currentSrc && !v.src) {
+                        toast.info("Inicie a reprodução antes de transmitir.");
+                        return;
+                      }
+                      // Ensure remote playback is enabled on this element
+                      try { v.disableRemotePlayback = false; } catch {}
+                      v.removeAttribute?.("disableRemotePlayback");
+
+                      // 1) Standard Remote Playback API (Chrome/Edge)
                       if (v.remote && typeof v.remote.prompt === "function") {
-                        v.remote.prompt().catch((err: any) => {
+                        try {
+                          await v.remote.prompt();
+                          return;
+                        } catch (err: any) {
+                          console.warn("[cast] remote.prompt failed", err?.name, err?.message);
                           if (err?.name === "NotFoundError") {
                             toast.info("Nenhum dispositivo de transmissão encontrado nesta rede.");
-                          } else if (err?.name !== "NotAllowedError" && err?.name !== "AbortError") {
-                            toast.error("Não foi possível abrir o seletor de transmissão.");
+                            return;
                           }
-                        });
-                      } else if (typeof (v as any).webkitShowPlaybackTargetPicker === "function") {
-                        // Safari / AirPlay fallback
-                        (v as any).webkitShowPlaybackTargetPicker();
-                      } else {
-                        toast.info("Seu navegador não suporta transmissão de mídia. Use o Google Chrome para esta funcionalidade.");
+                          if (err?.name === "NotAllowedError" || err?.name === "AbortError") {
+                            return;
+                          }
+                          // fall through to other strategies
+                        }
                       }
+
+                      // 2) Safari / AirPlay
+                      if (typeof v.webkitShowPlaybackTargetPicker === "function") {
+                        try { v.webkitShowPlaybackTargetPicker(); return; } catch (e) { console.warn("[cast] airplay failed", e); }
+                      }
+
+                      // 3) Presentation API fallback (Chromecast via media URL)
+                      try {
+                        const PR = (window as any).PresentationRequest;
+                        if (PR && v.currentSrc) {
+                          const req = new PR([v.currentSrc]);
+                          await req.start();
+                          return;
+                        }
+                      } catch (e: any) {
+                        console.warn("[cast] presentation failed", e?.name, e?.message);
+                      }
+
+                      toast.info("Transmissão indisponível. Verifique se há um dispositivo Chromecast na rede e use o Google Chrome.");
                     }}
                     className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-full items-center justify-center transition-all hover:scale-105 border-2 border-transparent hover:border-white/70"
                     style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
