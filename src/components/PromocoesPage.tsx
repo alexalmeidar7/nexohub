@@ -205,6 +205,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     setTexto("");
     if (textoEditorRef.current) textoEditorRef.current.innerHTML = "";
     setOferecimento("");
+    if (oferecimentoEditorRef.current) oferecimentoEditorRef.current.innerHTML = "";
     setDataInicio("");
     setDataFim("");
     setImageFile(null);
