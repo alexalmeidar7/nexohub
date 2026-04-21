@@ -80,6 +80,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
   const textoEditorRef = useRef<HTMLDivElement>(null);
+  const oferecimentoEditorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (effectiveUserId) {
