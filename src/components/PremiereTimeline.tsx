@@ -458,10 +458,11 @@ export default function PremiereTimeline({
         )}
       </div>
 
-      <div className="px-3 py-1.5 text-[9px] font-mono flex items-center gap-3" style={{ backgroundColor: `color-mix(in srgb, ${bg} 92%, ${border})`, color: muted, borderTop: `1px solid color-mix(in srgb, ${border} 25%, transparent)` }}>
+      <div className="px-3 py-1.5 text-[9px] font-mono flex items-center gap-3 flex-wrap" style={{ backgroundColor: `color-mix(in srgb, ${bg} 92%, ${border})`, color: muted, borderTop: `1px solid color-mix(in srgb, ${border} 25%, transparent)` }}>
         <span>🎬 Vídeo</span>
         <span>🔊 Áudio {waveform ? "(real)" : "(preview)"}</span>
-        <span className="hidden sm:inline">⌨️ Espaço = Play/Pause do trecho</span>
+        <span className="hidden sm:inline">⌨️ Espaço = Play/Pause • ←/→ frame • J/K/L</span>
+        <span className="hidden sm:inline">🔍 Scroll = Zoom • Shift+Scroll / Alt+Drag = Pan</span>
         <span className="ml-auto">Arraste as alças para ajustar o corte</span>
       </div>
     </div>
