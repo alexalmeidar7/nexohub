@@ -635,6 +635,11 @@ export default function PlayerPage() {
   const top10FadeTriggeredRef = useRef(false);
   const top10AdvanceStartedRef = useRef(false);
   const top10AdvanceRef = useRef<(() => void) | null>(null);
+  // Readiness gate: while a transition is awaiting the next clip's media to load,
+  // we keep a black hold overlay up so the previous clip never cuts to a blank
+  // or unbuffered new clip. Cleared when the iframe reports duration > 0.
+  const awaitingNextClipReadyRef = useRef<string | null>(null);
+  const [transitionHold, setTransitionHold] = useState(false);
 
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
@@ -2178,6 +2183,29 @@ export default function PlayerPage() {
     setYtPlaying(true);
   }, []);
 
+  // Drain the Top 10 queue with a readiness gate: keep a black hold overlay
+  // visible until the new YouTube iframe reports a real duration (>0), which
+  // means the media is loaded and ready to start. This prevents cutting from
+  // one clip to a blank/unbuffered next clip.
+  const drainTop10QueueWithGate = useCallback(() => {
+    const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
+    if (!nextQueued) return;
+    top10PendingNextRef.current = null;
+    awaitingNextClipReadyRef.current = nextQueued;
+    setTransitionHold(true);
+    // Reset duration ref so the gate only lifts when fresh metadata arrives
+    ytDurationRef.current = 0;
+    ytCurrentTimeRef.current = 0;
+    handleSelectVideo(nextQueued);
+    // Safety: never hold the gate for more than 6s
+    setTimeout(() => {
+      if (awaitingNextClipReadyRef.current === nextQueued) {
+        awaitingNextClipReadyRef.current = null;
+        setTransitionHold(false);
+      }
+    }, 6000);
+  }, [handleSelectVideo]);
+
   // YouTube IFrame API: sync volume
   const ytPostMessage = useCallback((command: string, args: any[] = []) => {
     if (ytIframeRef.current?.contentWindow) {
@@ -2219,6 +2247,13 @@ export default function PlayerPage() {
         if (data?.event === "infoDelivery" && data?.info) {
           if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
+          // Readiness gate: if we are awaiting the next clip's media to load,
+          // lift the hold overlay only when a real duration (>0) is reported.
+          const reportedDuration = typeof data.info.duration === "number" ? data.info.duration : 0;
+          if (awaitingNextClipReadyRef.current && reportedDuration > 0) {
+            awaitingNextClipReadyRef.current = null;
+            setTransitionHold(false);
+          }
           // playerState 0 = ENDED — but YouTube sometimes fires it spuriously
           // (e.g. while the source is still loading or during quality switch),
           // which would skip clips at ~7 s. Validate against current/duration.
@@ -2471,11 +2506,7 @@ export default function PlayerPage() {
       setTimeout(() => {
         setTop10InterPreroll(false);
         setTop10Fading(null);
-        const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
-        if (nextQueued) {
-          handleSelectVideo(nextQueued);
-          top10PendingNextRef.current = null;
-        }
+        drainTop10QueueWithGate();
       }, 1200);
     };
 
@@ -2512,7 +2543,7 @@ export default function PlayerPage() {
       }
       advanceFallback();
     })();
-  }, [ytPostMessage, youtubeVideos, selectedVideoId, top10OwnerUserId, effectiveUserId, isPublicMode, userSlug, handleSelectVideo]);
+  }, [ytPostMessage, youtubeVideos, selectedVideoId, top10OwnerUserId, effectiveUserId, isPublicMode, userSlug, drainTop10QueueWithGate]);
 
   // Keep ref in sync so playerState=0 fallback can call latest advance
   useEffect(() => { top10AdvanceRef.current = runTop10InterClip; }, [runTop10InterClip]);
@@ -2808,11 +2839,7 @@ export default function PlayerPage() {
             setTop10InterPreroll(false);
             if (wasTop10Inter) {
               setTop10Fading(null);
-              const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
-              if (nextQueued) {
-                handleSelectVideo(nextQueued);
-                top10PendingNextRef.current = null;
-              }
+              drainTop10QueueWithGate();
             }
           }}
           onEnded={() => {
@@ -2821,13 +2848,19 @@ export default function PlayerPage() {
             setTop10InterPreroll(false);
             if (wasTop10Inter) {
               setTop10Fading(null);
-              const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
-              if (nextQueued) {
-                handleSelectVideo(nextQueued);
-                top10PendingNextRef.current = null;
-              }
+              drainTop10QueueWithGate();
             }
           }}
+        />
+      )}
+
+      {/* Readiness gate hold: black overlay shown while the next clip's iframe
+          is still loading. Lifted automatically when YouTube reports duration > 0
+          (or after a 6s safety timeout). */}
+      {transitionHold && (
+        <div
+          className="absolute inset-0 z-[60] pointer-events-none"
+          style={{ backgroundColor: "#000", opacity: 1, transition: "opacity 300ms ease" }}
         />
       )}
 
