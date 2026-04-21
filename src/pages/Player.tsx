@@ -3612,26 +3612,72 @@ export default function PlayerPage() {
                   <button
                     onClick={async () => {
                       const v = videoRef.current as any;
-                      console.info("[cast] click", { hasVideo: !!v, src: v?.currentSrc, hasRemote: !!v?.remote, state: v?.remote?.state });
-                      if (!v) {
+                      const a = audioRef.current as any;
+                      const media = v || a;
+                      const tag = media?.tagName?.toLowerCase();
+                      const meta = {
+                        isVideo,
+                        isAudio: !!a && !v,
+                        mediaTag: tag,
+                        hasMedia: !!media,
+                        currentSrc: media?.currentSrc,
+                        readyState: media?.readyState,
+                        networkState: media?.networkState,
+                        paused: media?.paused,
+                        hasRemote: !!media?.remote,
+                        remoteState: media?.remote?.state,
+                        disableRemote: media?.disableRemotePlayback,
+                        secure: window.isSecureContext,
+                        ua: navigator.userAgent,
+                      };
+                      console.info("[cast] click", meta);
+
+                      if (!media) {
+                        console.warn("[cast] aborted: no media element");
                         toast.info("Inicie a reprodução antes de transmitir.");
                         return;
                       }
-                      if (!v.currentSrc && !v.src) {
+                      if (!media.currentSrc && !media.src) {
+                        console.warn("[cast] aborted: no media source");
                         toast.info("Inicie a reprodução antes de transmitir.");
                         return;
                       }
-                      // Ensure remote playback is enabled on this element
-                      try { v.disableRemotePlayback = false; } catch {}
-                      v.removeAttribute?.("disableRemotePlayback");
+
+                      // Ensure remote playback is enabled
+                      try { media.disableRemotePlayback = false; } catch {}
+                      media.removeAttribute?.("disableRemotePlayback");
+
+                      // Wait for media readiness (HAVE_FUTURE_DATA = 3) — important for HLS/MSE
+                      if (media.readyState < 3) {
+                        console.info("[cast] media not ready, waiting for canplay…", { readyState: media.readyState });
+                        try { media.play?.().catch(() => {}); } catch {}
+                        await new Promise<void>((resolve) => {
+                          let done = false;
+                          const finish = () => { if (done) return; done = true; cleanup(); resolve(); };
+                          const cleanup = () => {
+                            media.removeEventListener("canplay", finish);
+                            media.removeEventListener("loadeddata", finish);
+                            clearTimeout(timer);
+                          };
+                          const timer = setTimeout(() => {
+                            console.warn("[cast] readiness wait timed out (3s) — proceeding anyway", { readyState: media.readyState });
+                            finish();
+                          }, 3000);
+                          media.addEventListener("canplay", finish, { once: true });
+                          media.addEventListener("loadeddata", finish, { once: true });
+                        });
+                        console.info("[cast] media now ready", { readyState: media.readyState });
+                      }
 
                       // 1) Standard Remote Playback API (Chrome/Edge)
-                      if (v.remote && typeof v.remote.prompt === "function") {
+                      if (media.remote && typeof media.remote.prompt === "function") {
+                        console.info("[cast] strategy=remote.prompt");
                         try {
-                          await v.remote.prompt();
+                          await media.remote.prompt();
+                          console.info("[cast] remote.prompt resolved");
                           return;
                         } catch (err: any) {
-                          console.warn("[cast] remote.prompt failed", err?.name, err?.message);
+                          console.warn("[cast] remote.prompt failed", { name: err?.name, message: err?.message });
                           if (err?.name === "NotFoundError") {
                             toast.info("Nenhum dispositivo de transmissão encontrado nesta rede.");
                             return;
@@ -3639,8 +3685,10 @@ export default function PlayerPage() {
                           if (err?.name === "NotAllowedError" || err?.name === "AbortError") {
                             return;
                           }
-                          // fall through to other strategies
+                          // fall through
                         }
+                      } else {
+                        console.warn("[cast] remote API unavailable on element");
                       }
 
                       // 2) Safari / AirPlay
