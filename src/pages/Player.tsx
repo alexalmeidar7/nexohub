@@ -2761,9 +2761,21 @@ export default function PlayerPage() {
         />
       )}
 
+      {/* Mid-Roll Black Backdrop — fades in BEFORE the ad mounts so the program bg never bleeds through */}
+      {(midrollFading || midrollActive) && (
+        <div
+          className="absolute inset-0 z-[55] pointer-events-none"
+          style={{
+            backgroundColor: "#000",
+            opacity: midrollFading === "out" || midrollActive ? 1 : 0,
+            transition: "opacity 0.4s ease-out",
+          }}
+        />
+      )}
+
       {/* Mid-Roll Overlay — fullscreen centered */}
       {midrollActive && midrollPreroll && (
-        <div className="absolute inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: "#000" }}>
+        <div className="absolute inset-0 z-[60] flex items-center justify-center animate-fade-in" style={{ backgroundColor: "#000" }}>
           {/* Counter badge */}
           {midrollTotal > 1 && (
             <div className="absolute top-4 right-4 z-[70] flex items-center gap-2">
