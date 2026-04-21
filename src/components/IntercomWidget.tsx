@@ -473,8 +473,8 @@ export default function IntercomWidget() {
     return (
       <button onClick={() => setOpen(true)}
         className="fixed z-[100] rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
-        style={{ ...glassStyle, width: 32, height: 32, top: 18, right: 130 }} title="Intercomunicador">
-        <Radio size={15} className="text-white/80" />
+        style={{ ...glassStyle, width: 40, height: 40, padding: 10, top: 14, right: 120 }} title="Intercomunicador">
+        <Radio size={18} className="text-white/85" />
       </button>
     );
   }
