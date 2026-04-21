@@ -359,6 +359,7 @@ export default function PlayerPage() {
 
   // Top 10 playlist from navigation state
   const top10Playlist = (location.state as any)?.top10Playlist as { videoId: string; title: string; thumbnail: string; artist: string }[] | undefined;
+  const top10OwnerUserId = (location.state as any)?.ownerUserId as string | undefined;
 
   // Diagnostic logs — disabled in production
   // useEffect(() => { console.log("[PLAYER-DIAG] Auth/user state changed", { userId, authLoading }); }, [userId, authLoading]);
@@ -624,11 +625,12 @@ export default function PlayerPage() {
   const [midrollIndex, setMidrollIndex] = useState(0);
   const [midrollTotal, setMidrollTotal] = useState(0);
 
-  // Top 10 inter-clip transitions: fade-out 10s before end, pre-roll between clips, fade-in 1.5s
+  // Top 10 inter-clip transitions: play the full clip, then show mid-roll between clips with fade-in/out
   const [top10Fading, setTop10Fading] = useState<"out" | "in" | null>(null);
   const [top10InterPreroll, setTop10InterPreroll] = useState(false); // showing inter-clip preroll
   const top10PendingNextRef = useRef<string | null>(null);
   const top10FadeTriggeredRef = useRef(false);
+  const top10AdvanceStartedRef = useRef(false);
   const top10AdvanceRef = useRef<(() => void) | null>(null);
 
   // Unified buffering detection
