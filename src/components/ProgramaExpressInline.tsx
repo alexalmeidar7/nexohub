@@ -758,6 +758,18 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </div>
         </div>
 
+        {/* Atualizar Notícias por Links (apenas em edição) */}
+        {editingId && !isPodcast && (
+          <UpdateNewsLinksSection
+            blocos={blocos}
+            inputStyle={inputStyle}
+            onUpdateBloco={(bi, items) => {
+              setBlocos(prev => prev.map((b, i) => i === bi ? { noticias: items } : b));
+            }}
+            fetchFromLink={fetchFromLink}
+          />
+        )}
+
         {/* New Contact */}
         {showNewContact && (
           <div className="rounded-xl p-3 space-y-2" style={{ border: "2px solid var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
