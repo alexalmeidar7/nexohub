@@ -401,6 +401,22 @@ export default function CortesVideoPage() {
           </div>
         )}
 
+        {/* Premiere-style Timeline (local only — needs CORS access to frames/audio) */}
+        {mode === "local" && localUrl && localDuration > 0 && (
+          <div className="mb-5">
+            <PremiereTimeline
+              videoUrl={localUrl}
+              duration={localDuration}
+              startSec={Math.min(startSeconds, localDuration)}
+              endSec={endSeconds > 0 ? Math.min(endSeconds, localDuration) : Math.min(localDuration, 10)}
+              onChange={(s, e) => { setStartTime(toHMS(s)); setEndTime(toHMS(e)); }}
+              audioFile={localFile}
+              videoTitle={localFile?.name}
+            />
+          </div>
+        )}
+
+
         {/* Time inputs */}
         <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
           <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
