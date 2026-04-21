@@ -629,6 +629,7 @@ export default function PlayerPage() {
   const [top10InterPreroll, setTop10InterPreroll] = useState(false); // showing inter-clip preroll
   const top10PendingNextRef = useRef<string | null>(null);
   const top10FadeTriggeredRef = useRef(false);
+  const top10AdvanceRef = useRef<(() => void) | null>(null);
 
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
