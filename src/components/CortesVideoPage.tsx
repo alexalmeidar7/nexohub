@@ -130,11 +130,27 @@ export default function CortesVideoPage() {
     ffmpeg.on("progress", ({ progress: p }) => {
       setProgress(Math.min(99, Math.round(p * 100)));
     });
-    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
-    await ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
-    });
+    // Use single-thread build (no SharedArrayBuffer / COOP-COEP required).
+    // Try jsDelivr first, fallback to unpkg if it fails.
+    const cdns = [
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd",
+      "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
+    ];
+    let lastErr: any = null;
+    for (const baseURL of cdns) {
+      try {
+        await ffmpeg.load({
+          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+        });
+        lastErr = null;
+        break;
+      } catch (e) {
+        console.warn("[ffmpeg] CDN load failed:", baseURL, e);
+        lastErr = e;
+      }
+    }
+    if (lastErr) throw new Error("Não foi possível carregar o motor de vídeo. Verifique sua conexão e tente novamente.");
     ffmpegRef.current = ffmpeg;
     setFfmpegReady(true);
     return ffmpeg;
