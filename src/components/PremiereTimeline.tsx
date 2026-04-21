@@ -232,7 +232,8 @@ export default function PremiereTimeline({
     setViewEnd(Math.min(duration, endSec + pad));
   };
   const zoomPct = duration > 0 ? Math.round((duration / viewSpan) * 10) / 10 : 1;
-    if (!dragging) return;
+
+  const handleMove = useCallback((e: PointerEvent) => {
     const t = xToTime(e.clientX);
     if (dragging === "start") {
       onChange(Math.min(t, endSec - 0.5), endSec);
