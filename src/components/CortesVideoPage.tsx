@@ -8,12 +8,14 @@ import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import PremiereTimeline from "./PremiereTimeline";
 
 function toHMS(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
+  const total = Math.max(0, seconds);
+  const whole = Math.floor(total);
+  const ms = Math.round((total - whole) * 1000);
+  const h = Math.floor(whole / 3600);
+  const m = Math.floor((whole % 3600) / 60);
+  const sec = whole % 60;
   const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(h)}:${p(m)}:${p(sec)}`;
+  return `${p(h)}:${p(m)}:${p(sec)}.${String(ms).padStart(3, "0")}`;
 }
 
 function extractYoutubeId(url: string): string | null {
@@ -26,26 +28,33 @@ function pad(n: number) {
 }
 
 function parseHMS(value: string): number {
-  const parts = value.split(":").map((p) => parseInt(p || "0", 10));
+  const [hms, msStr] = value.split(".");
+  const parts = (hms || "").split(":").map((p) => parseInt(p || "0", 10));
   const h = parts[0] || 0;
   const m = parts[1] || 0;
   const s = parts[2] || 0;
-  return h * 3600 + m * 60 + s;
+  const ms = msStr ? parseInt(msStr.padEnd(3, "0").slice(0, 3), 10) || 0 : 0;
+  return h * 3600 + m * 60 + s + ms / 1000;
 }
 
 function formatDuration(seconds: number): string {
-  if (seconds <= 0) return "00:00:00";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+  if (seconds <= 0) return "00:00:00.000";
+  return toHMS(seconds);
 }
 
 function maskHMS(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 6);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return digits.slice(0, 2) + ":" + digits.slice(2);
-  return digits.slice(0, 2) + ":" + digits.slice(2, 4) + ":" + digits.slice(4);
+  // Accept digits + optional "." for ms; produce HH:MM:SS.mmm
+  const cleaned = raw.replace(/[^\d.]/g, "");
+  const [intPart, msPart = ""] = cleaned.split(".");
+  const digits = intPart.replace(/\D/g, "").slice(0, 6);
+  let base = digits;
+  if (digits.length > 2) base = digits.slice(0, 2) + ":" + digits.slice(2);
+  if (digits.length > 4) base = digits.slice(0, 2) + ":" + digits.slice(2, 4) + ":" + digits.slice(4);
+  if (cleaned.includes(".") || msPart) {
+    const ms = msPart.replace(/\D/g, "").slice(0, 3);
+    return base + "." + ms;
+  }
+  return base;
 }
 
 type Mode = "youtube" | "local";
@@ -427,8 +436,8 @@ export default function CortesVideoPage() {
               <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                 <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Inicial</label>
                 <input type="text" value={startTime} onChange={(e) => setStartTime(maskHMS(e.target.value))}
-                  placeholder="HH:MM:SS" maxLength={8}
-                  className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none"
+                  placeholder="HH:MM:SS.mmm" maxLength={12}
+                  className="w-36 text-center py-2 rounded-lg text-sm font-mono outline-none"
                   style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
               </div>
 
@@ -445,8 +454,8 @@ export default function CortesVideoPage() {
               <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                 <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Final</label>
                 <input type="text" value={endTime} onChange={(e) => setEndTime(maskHMS(e.target.value))}
-                  placeholder="HH:MM:SS" maxLength={8}
-                  className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none"
+                  placeholder="HH:MM:SS.mmm" maxLength={12}
+                  className="w-36 text-center py-2 rounded-lg text-sm font-mono outline-none"
                   style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
               </div>
             </div>

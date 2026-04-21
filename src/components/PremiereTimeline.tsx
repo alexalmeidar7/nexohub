@@ -12,13 +12,16 @@ interface Props {
   videoTitle?: string;
 }
 
-function fmt(sec: number) {
+function fmt(sec: number, ms = false) {
   if (!isFinite(sec) || sec < 0) sec = 0;
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
   const s = Math.floor(sec % 60);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  const base = h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  if (!ms) return base;
+  const mss = Math.floor((sec - Math.floor(sec)) * 1000);
+  return `${base}.${String(mss).padStart(3, "0")}`;
 }
 
 export default function PremiereTimeline({
@@ -28,7 +31,7 @@ export default function PremiereTimeline({
   const trackRef = useRef<HTMLDivElement>(null);
   const audioCanvasRef = useRef<HTMLCanvasElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
-  const [thumbs, setThumbs] = useState<string[]>([]);
+  const [thumbs, setThumbs] = useState<{ t: number; url: string }[]>([]);
   const [waveform, setWaveform] = useState<number[] | null>(null);
   const [dragging, setDragging] = useState<"start" | "end" | "range" | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -47,7 +50,7 @@ export default function PremiereTimeline({
 
   const viewSpan = Math.max(0.5, viewEnd - viewStart);
 
-  // Generate thumbnails from the video element
+  // Generate thumbnails covering the current viewport, density adapts to track width
   useEffect(() => {
     if (!videoUrl || duration <= 0) { setThumbs([]); return; }
     let cancelled = false;
@@ -57,7 +60,11 @@ export default function PremiereTimeline({
     v.muted = true;
     v.preload = "metadata";
 
-    const out: string[] = [];
+    const span = Math.max(0.001, viewEnd - viewStart);
+    const trackW = trackRef.current?.clientWidth || 800;
+    const tileW = 80; // px per thumb
+    const count = Math.max(8, Math.min(60, Math.ceil(trackW / tileW)));
+
     const captureAt = (t: number) => new Promise<string>((resolve) => {
       const onSeeked = () => {
         const c = document.createElement("canvas");
@@ -73,20 +80,21 @@ export default function PremiereTimeline({
     });
 
     v.addEventListener("loadedmetadata", async () => {
-      for (let i = 0; i < thumbCount; i++) {
+      const out: { t: number; url: string }[] = [];
+      for (let i = 0; i < count; i++) {
         if (cancelled) return;
-        const t = (duration / thumbCount) * i;
+        const t = viewStart + (span / count) * (i + 0.5);
         try {
           const url = await captureAt(t);
           if (cancelled) return;
-          out.push(url);
+          out.push({ t, url });
           setThumbs([...out]);
         } catch { /* ignore frame errors */ }
       }
     });
 
     return () => { cancelled = true; v.src = ""; };
-  }, [videoUrl, duration, thumbCount]);
+  }, [videoUrl, duration, viewStart, viewEnd]);
 
   // Decode audio waveform from local file
   useEffect(() => {
@@ -368,7 +376,7 @@ export default function PremiereTimeline({
           <span className="font-bold truncate">{videoTitle || "Timeline"}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="opacity-90">{fmt(startSec)} → {fmt(endSec)} • {fmt(endSec - startSec)}</span>
+          <span className="opacity-90">{fmt(startSec, true)} → {fmt(endSec, true)} • {fmt(endSec - startSec, true)}</span>
           <div className="flex items-center gap-1 ml-2">
             <button type="button" onClick={() => { const c = (viewStart+viewEnd)/2, ns = Math.max(0.5, viewSpan*0.6); setViewStart(Math.max(0, c-ns/2)); setViewEnd(Math.min(duration, c+ns/2)); }} className="w-5 h-5 rounded text-[11px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Zoom +">＋</button>
             <span className="text-[9px] opacity-80 w-10 text-center">{zoomPct}x</span>
@@ -380,15 +388,19 @@ export default function PremiereTimeline({
       </div>
 
       <div ref={trackRef} onWheel={onWheel} onPointerDown={onPointerDownPan} className="relative select-none overflow-hidden" style={{ touchAction: "none" }}>
-        {/* Video layer */}
+        {/* Video layer — frames positioned at exact timestamps within viewport */}
         <div className="relative h-16 overflow-hidden" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 90%, black)` }}>
-          <div className="absolute top-0 bottom-0 flex" style={{ left: `${-(viewStart/Math.max(0.001,duration))*100*(duration/viewSpan)}%`, width: `${(duration/viewSpan)*100}%` }}>
-            {Array.from({ length: thumbCount }).map((_, i) => (
-              <div key={i} className="flex-1 overflow-hidden" style={{ borderRight: `1px solid color-mix(in srgb, ${border} 30%, transparent)`, backgroundColor: `color-mix(in srgb, ${headerBg} 70%, black)` }}>
-                {thumbs[i] && <img src={thumbs[i]} alt="" className="w-full h-full object-cover" draggable={false} />}
+          {thumbs.map((th, i) => {
+            const left = ((th.t - viewStart) / viewSpan) * 100;
+            const next = thumbs[i + 1]?.t ?? (th.t + viewSpan / Math.max(1, thumbs.length));
+            const width = ((next - th.t) / viewSpan) * 100;
+            if (left + width < 0 || left > 100) return null;
+            return (
+              <div key={i} className="absolute top-0 bottom-0 overflow-hidden" style={{ left: `${left}%`, width: `${Math.max(0.5, width)}%`, borderRight: `1px solid color-mix(in srgb, ${border} 30%, transparent)` }} title={fmt(th.t, true)}>
+                <img src={th.url} alt="" className="w-full h-full object-cover" draggable={false} />
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
         {/* Audio layer */}
@@ -400,7 +412,7 @@ export default function PremiereTimeline({
         <div className="h-5 flex items-center text-[8px] font-mono" style={{ background: `linear-gradient(135deg, ${headerBg}, color-mix(in srgb, ${headerBg} 80%, white 20%))`, color: `color-mix(in srgb, ${headerText} 70%, transparent)` }}>
           {Array.from({ length: 11 }).map((_, i) => (
             <div key={i} className="flex-1 pl-1" style={{ borderLeft: `1px solid color-mix(in srgb, ${headerText} 15%, transparent)` }}>
-              {fmt(viewStart + (viewSpan / 10) * i)}
+              {fmt(viewStart + (viewSpan / 10) * i, viewSpan < 5)}
             </div>
           ))}
         </div>
@@ -438,7 +450,7 @@ export default function PremiereTimeline({
               <div style={{ width: 4, height: "100%", backgroundColor: accent, borderRadius: 2, boxShadow: `0 0 4px ${accent}` }} />
               <div className="absolute -top-5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold whitespace-nowrap"
                 style={{ backgroundColor: accent, color: accentText }}>
-                {fmt(startSec)}
+                {fmt(startSec, true)}
               </div>
             </div>
 
@@ -451,7 +463,7 @@ export default function PremiereTimeline({
               <div style={{ width: 4, height: "100%", backgroundColor: accent, borderRadius: 2, boxShadow: `0 0 4px ${accent}` }} />
               <div className="absolute -top-5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold whitespace-nowrap"
                 style={{ backgroundColor: accent, color: accentText }}>
-                {fmt(endSec)}
+                {fmt(endSec, true)}
               </div>
             </div>
           </>
