@@ -152,17 +152,6 @@ export default function PremiereTimeline({
     ctx.globalAlpha = 1;
   }, [waveform]);
 
-  const pctStart = duration > 0 ? (startSec / duration) * 100 : 0;
-  const pctEnd = duration > 0 ? (endSec / duration) * 100 : 0;
-  const pctPlay = duration > 0 ? (playhead / duration) * 100 : 0;
-
-  const xToTime = useCallback((clientX: number) => {
-    const rect = trackRef.current?.getBoundingClientRect();
-    if (!rect) return 0;
-    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    return ratio * duration;
-  }, [duration]);
-
   const tToPct = useCallback((t: number) => ((t - viewStart) / viewSpan) * 100, [viewStart, viewSpan]);
   const pctStart = tToPct(startSec);
   const pctEnd = tToPct(endSec);
