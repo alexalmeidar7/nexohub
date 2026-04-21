@@ -5,6 +5,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
+import PremiereTimeline from "./PremiereTimeline";
+
+function toHMS(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(h)}:${p(m)}:${p(sec)}`;
+}
 
 function extractYoutubeId(url: string): string | null {
   const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
@@ -390,6 +400,22 @@ export default function CortesVideoPage() {
             </div>
           </div>
         )}
+
+        {/* Premiere-style Timeline (local only — needs CORS access to frames/audio) */}
+        {mode === "local" && localUrl && localDuration > 0 && (
+          <div className="mb-5">
+            <PremiereTimeline
+              videoUrl={localUrl}
+              duration={localDuration}
+              startSec={Math.min(startSeconds, localDuration)}
+              endSec={endSeconds > 0 ? Math.min(endSeconds, localDuration) : Math.min(localDuration, 10)}
+              onChange={(s, e) => { setStartTime(toHMS(s)); setEndTime(toHMS(e)); }}
+              audioFile={localFile}
+              videoTitle={localFile?.name}
+            />
+          </div>
+        )}
+
 
         {/* Time inputs */}
         <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
