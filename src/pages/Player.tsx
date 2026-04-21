@@ -2212,11 +2212,9 @@ export default function PlayerPage() {
           // playerState 0 = ENDED
           if (typeof data.info.playerState === "number" && data.info.playerState === 0) {
             if (isTop10Mode) {
-              // Top 10: if fade-out logic didn't trigger in time, force the inter-clip transition now
-              if (!top10FadeTriggeredRef.current) {
-                top10FadeTriggeredRef.current = true;
-                top10AdvanceRef.current?.();
-              }
+              // Top 10: advance only after the natural YouTube ended event.
+              top10FadeTriggeredRef.current = true;
+              top10AdvanceRef.current?.();
             } else {
               ytNextVideoRef.current();
             }
@@ -2496,7 +2494,7 @@ export default function PlayerPage() {
       setTop10Fading("out");
       ytPostMessage("setVolume", [0]);
     }
-  }, [ytCurrentTime, ytDuration, isTop10Mode, isYoutube, selectedVideoId, volume, ytPostMessage, runTop10InterClip]);
+  }, [ytCurrentTime, ytDuration, isTop10Mode, isYoutube, selectedVideoId, ytPostMessage]);
 
   // Monitor currentTime and trigger mid-roll at break points
   useEffect(() => {
