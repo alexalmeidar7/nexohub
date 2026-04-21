@@ -1061,8 +1061,12 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
       ) : (
         <div className="space-y-1">
           {events.map(ev => {
-            const todayStr = new Date().toISOString().split("T")[0];
+            const _now = new Date();
+            const todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}-${String(_now.getDate()).padStart(2, "0")}`;
+            const _tomorrow = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate() + 1);
+            const tomorrowStr = `${_tomorrow.getFullYear()}-${String(_tomorrow.getMonth() + 1).padStart(2, "0")}-${String(_tomorrow.getDate()).padStart(2, "0")}`;
             const isToday = ev.data === todayStr;
+            const isTomorrow = ev.data === tomorrowStr;
             const evDate = new Date(ev.data + "T12:00:00");
             const day = evDate.toLocaleDateString("pt-BR", { day: "2-digit" });
             const month = evDate.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
@@ -1140,7 +1144,7 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                         {ev.local}
                       </span>
                     )}
-                    {isToday && (
+                    {(isToday || isTomorrow) && (
                       <span
                         className="text-[8px] font-bold ml-auto shrink-0 px-1.5 py-px rounded-full"
                         style={{
@@ -1148,7 +1152,7 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                           color: "#000",
                         }}
                       >
-                        HOJE
+                        {isToday ? "HOJE" : "AMANHÃ"}
                       </span>
                     )}
                   </div>
