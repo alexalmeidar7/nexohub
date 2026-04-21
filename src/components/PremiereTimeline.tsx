@@ -412,7 +412,7 @@ export default function PremiereTimeline({
         <div className="h-5 flex items-center text-[8px] font-mono" style={{ background: `linear-gradient(135deg, ${headerBg}, color-mix(in srgb, ${headerBg} 80%, white 20%))`, color: `color-mix(in srgb, ${headerText} 70%, transparent)` }}>
           {Array.from({ length: 11 }).map((_, i) => (
             <div key={i} className="flex-1 pl-1" style={{ borderLeft: `1px solid color-mix(in srgb, ${headerText} 15%, transparent)` }}>
-              {fmt(viewStart + (viewSpan / 10) * i)}
+              {fmt(viewStart + (viewSpan / 10) * i, viewSpan < 5)}
             </div>
           ))}
         </div>
