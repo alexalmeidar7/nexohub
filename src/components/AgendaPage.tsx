@@ -516,6 +516,7 @@ export default function AgendaPage() {
     setFormRecorrencia("unico");
     setFormTipoEvento("live");
     setFormPrioridade("normal");
+    setFormStatus("ativo");
     setFormParticipantes([{ nome: "", instagram: "" }]);
     setFormYoutubeUrl("");
     setFormArtesUrls([]);
@@ -537,6 +538,7 @@ export default function AgendaPage() {
     setFormRecorrencia(evt.recorrencia);
     setFormTipoEvento(evt.tipo_evento || "live");
     setFormPrioridade(evt.prioridade || "normal");
+    setFormStatus(evt.status || "ativo");
     setFormYoutubeUrl(evt.youtube_url || "");
     setFormArtesUrls(evt.artes_urls || []);
     setFormParticipantes(
@@ -558,6 +560,7 @@ export default function AgendaPage() {
       descricao: formDescricao,
       recorrencia: formRecorrencia,
       prioridade: formPrioridade,
+      status: formStatus,
       tipo_evento: formTipoEvento,
       youtube_url: formTipoEvento === "live" ? formYoutubeUrl : "",
       artes_urls: formTipoEvento === "live" ? formArtesUrls : [],
