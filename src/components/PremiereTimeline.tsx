@@ -34,6 +34,7 @@ export default function PremiereTimeline({
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
   const dragOffsetRef = useRef(0);
+  const reverseRef = useRef<number | null>(null);
 
   // Generate thumbnails from the video element
   useEffect(() => {
