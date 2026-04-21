@@ -541,7 +541,7 @@ export default function CortesVideoPage() {
             className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
             {cutting ? <><Loader2 size={16} className="animate-spin" /> Processando...</> : <><Scissors size={16} /> Gerar Corte</>}
           </button>
-          {cutting && mode === "local" && (
+          {cutting && (
             <div className="w-full max-w-md flex flex-col items-center gap-1">
               <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
                 <div className="h-full transition-all" style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color, #2563eb)" }} />
