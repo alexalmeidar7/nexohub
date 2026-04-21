@@ -2475,16 +2475,14 @@ export default function PlayerPage() {
       if (Math.abs(ytCurrentTime - bp) < 2) {
         midrollTriggeredRef.current.add(bpIdx);
         setMidrollResumeTime(ytCurrentTime);
-        // Start fade-out, then pause and show mid-roll after 2s
+        // Fast fade-out (~500ms) — black overlay also fades in via midrollFading
         setMidrollFading("out");
-        // Gradually lower YouTube volume during fade-out
-        ytPostMessage("setVolume", [50]);
-        setTimeout(() => ytPostMessage("setVolume", [20]), 800);
-        setTimeout(() => ytPostMessage("setVolume", [0]), 1500);
+        ytPostMessage("setVolume", [30]);
+        setTimeout(() => ytPostMessage("setVolume", [0]), 250);
         setTimeout(() => {
           ytPostMessage("pauseVideo");
-          setMidrollFading(null);
           setMidrollActive(true);
+          // Keep fading="out" so the black overlay stays opaque until the ad mounts
           // Fetch mid-rolls to show (prefer is_midroll=true, up to 3)
           (async () => {
             if (!user) return;
@@ -2506,15 +2504,18 @@ export default function PlayerPage() {
                 setMidrollTotal(queue.length);
                 setMidrollIndex(0);
                 setMidrollPreroll(queue[0]);
+                // Clear fading state once the ad is mounted
+                setTimeout(() => setMidrollFading(null), 50);
                 return;
               }
             }
             // No preroll found, resume immediately
             setMidrollActive(false);
+            setMidrollFading(null);
             ytPostMessage("setVolume", [volume]);
             ytPostMessage("playVideo");
           })();
-        }, 2000);
+        }, 550);
         break;
       }
     }
@@ -2548,14 +2549,14 @@ export default function PlayerPage() {
     setTimeout(() => {
       setMidrollActive(false);
       setMidrollFading("in");
-    }, 700);
-    // Fade-in volume over 2s
-    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.3)]), 1100);
-    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.6)]), 1700);
+    }, 500);
+    // Fade-in volume (~1s)
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.4)]), 700);
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.7)]), 1100);
     setTimeout(() => {
       ytPostMessage("setVolume", [volume]);
       setMidrollFading(null);
-    }, 2700);
+    }, 1500);
   }, [ytPostMessage, midrollResumeTime, volume, midrollIndex, midrollQueue]);
 
   const handleYtHome = useCallback(() => {
@@ -2760,9 +2761,21 @@ export default function PlayerPage() {
         />
       )}
 
+      {/* Mid-Roll Black Backdrop — fades in BEFORE the ad mounts so the program bg never bleeds through */}
+      {(midrollFading || midrollActive) && (
+        <div
+          className="absolute inset-0 z-[55] pointer-events-none"
+          style={{
+            backgroundColor: "#000",
+            opacity: midrollFading === "out" || midrollActive ? 1 : 0,
+            transition: "opacity 0.4s ease-out",
+          }}
+        />
+      )}
+
       {/* Mid-Roll Overlay — fullscreen centered */}
       {midrollActive && midrollPreroll && (
-        <div className="absolute inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: "#000" }}>
+        <div className="absolute inset-0 z-[60] flex items-center justify-center animate-fade-in" style={{ backgroundColor: "#000" }}>
           {/* Counter badge */}
           {midrollTotal > 1 && (
             <div className="absolute top-4 right-4 z-[70] flex items-center gap-2">
@@ -2811,7 +2824,9 @@ export default function PlayerPage() {
             className="absolute pointer-events-none"
             style={{
               width: "100%", height: "100%", top: "0", left: "0", border: "none",
-              transition: top10Fading === "in" ? "opacity 1.5s ease-in" : top10Fading === "out" ? "opacity 3s ease-out" : "opacity 2s ease-in-out",
+              transition: midrollFading || midrollActive
+                ? "opacity 0.4s ease-out"
+                : top10Fading === "in" ? "opacity 1.5s ease-in" : top10Fading === "out" ? "opacity 3s ease-out" : "opacity 2s ease-in-out",
               opacity: midrollFading === "out" || midrollActive || top10Fading === "out" ? 0 : 1,
             }}
             src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd1080&origin=${window.location.origin}`}
