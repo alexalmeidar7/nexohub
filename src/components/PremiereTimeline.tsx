@@ -364,8 +364,8 @@ export default function PremiereTimeline({
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: bg, border: `1px solid color-mix(in srgb, ${border} 40%, transparent)`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-      {/* Hidden controllable video for spacebar playback */}
-      <video ref={previewVideoRef} src={videoUrl} className="hidden" preload="metadata" />
+      {/* Hidden controllable video — only when no external player is provided */}
+      {!externalVideoRef && <video ref={internalVideoRef} src={videoUrl} className="hidden" preload="metadata" />}
 
       {/* Header bar */}
       <div className="px-3 py-2 flex items-center justify-between text-[10px] font-mono" style={{ background: `linear-gradient(135deg, ${headerBg}, color-mix(in srgb, ${headerBg} 80%, white 20%))`, color: headerText }}>
