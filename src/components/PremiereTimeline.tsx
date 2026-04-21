@@ -50,7 +50,7 @@ export default function PremiereTimeline({
 
   const viewSpan = Math.max(0.5, viewEnd - viewStart);
 
-  // Generate thumbnails from the video element
+  // Generate thumbnails covering the current viewport, density adapts to track width
   useEffect(() => {
     if (!videoUrl || duration <= 0) { setThumbs([]); return; }
     let cancelled = false;
@@ -60,7 +60,11 @@ export default function PremiereTimeline({
     v.muted = true;
     v.preload = "metadata";
 
-    const out: string[] = [];
+    const span = Math.max(0.001, viewEnd - viewStart);
+    const trackW = trackRef.current?.clientWidth || 800;
+    const tileW = 80; // px per thumb
+    const count = Math.max(8, Math.min(60, Math.ceil(trackW / tileW)));
+
     const captureAt = (t: number) => new Promise<string>((resolve) => {
       const onSeeked = () => {
         const c = document.createElement("canvas");
@@ -76,20 +80,21 @@ export default function PremiereTimeline({
     });
 
     v.addEventListener("loadedmetadata", async () => {
-      for (let i = 0; i < thumbCount; i++) {
+      const out: { t: number; url: string }[] = [];
+      for (let i = 0; i < count; i++) {
         if (cancelled) return;
-        const t = (duration / thumbCount) * i;
+        const t = viewStart + (span / count) * (i + 0.5);
         try {
           const url = await captureAt(t);
           if (cancelled) return;
-          out.push(url);
+          out.push({ t, url });
           setThumbs([...out]);
         } catch { /* ignore frame errors */ }
       }
     });
 
     return () => { cancelled = true; v.src = ""; };
-  }, [videoUrl, duration, thumbCount]);
+  }, [videoUrl, duration, viewStart, viewEnd]);
 
   // Decode audio waveform from local file
   useEffect(() => {
