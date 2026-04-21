@@ -58,6 +58,7 @@ export type Database = {
           prioridade: string
           programa_id: string | null
           recorrencia: string
+          status: string
           tipo_evento: string
           user_id: string
           youtube_url: string | null
@@ -72,6 +73,7 @@ export type Database = {
           prioridade?: string
           programa_id?: string | null
           recorrencia?: string
+          status?: string
           tipo_evento?: string
           user_id: string
           youtube_url?: string | null
@@ -86,6 +88,7 @@ export type Database = {
           prioridade?: string
           programa_id?: string | null
           recorrencia?: string
+          status?: string
           tipo_evento?: string
           user_id?: string
           youtube_url?: string | null
