@@ -2011,6 +2011,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       state: {
                         fromPath: location.pathname,
                         top10Playlist: playlist,
+                        ownerUserId,
                       },
                     });
                   }, 400);
