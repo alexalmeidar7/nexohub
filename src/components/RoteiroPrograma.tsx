@@ -542,13 +542,6 @@ export default function RoteiroPrograma() {
                     {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
                   </p>
                   <div className="flex items-center gap-1 mt-auto">
-                    {r.subtitulo?.startsWith("express_xml::") && (
-                      <button onClick={() => { const xmlUrl = r.subtitulo.replace("express_xml::", ""); navigator.clipboard.writeText(xmlUrl).then(() => toast.success("URL do XML copiada!")).catch(() => toast.error("Erro ao copiar")); }}
-                        className="h-6 px-1.5 flex items-center justify-center gap-1 rounded-md hover:opacity-70 transition text-[8px] font-bold"
-                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }} title="Copiar URL do XML">
-                        <Code2 size={10} /> XML
-                      </button>
-                    )}
                     <button onClick={async () => {
                       let parts: any = null;
                       try { let raw = r.participantes; if (typeof raw === "string") raw = JSON.parse(raw); if (typeof raw === "string") raw = JSON.parse(raw); parts = raw; } catch { parts = []; }
