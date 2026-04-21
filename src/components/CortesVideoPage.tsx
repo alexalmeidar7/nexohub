@@ -422,6 +422,7 @@ export default function CortesVideoPage() {
               onChange={(s, e) => { setStartTime(toHMS(s)); setEndTime(toHMS(e)); }}
               audioFile={localFile}
               videoTitle={localFile?.name}
+              externalVideoRef={localVideoRef}
             />
           </div>
         )}
