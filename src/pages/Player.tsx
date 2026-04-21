@@ -635,6 +635,11 @@ export default function PlayerPage() {
   const top10FadeTriggeredRef = useRef(false);
   const top10AdvanceStartedRef = useRef(false);
   const top10AdvanceRef = useRef<(() => void) | null>(null);
+  // Readiness gate: while a transition is awaiting the next clip's media to load,
+  // we keep a black hold overlay up so the previous clip never cuts to a blank
+  // or unbuffered new clip. Cleared when the iframe reports duration > 0.
+  const awaitingNextClipReadyRef = useRef<string | null>(null);
+  const [transitionHold, setTransitionHold] = useState(false);
 
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
