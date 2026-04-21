@@ -100,6 +100,12 @@ export default function KaraokeOverlay({
     hideTimerRef.current = setTimeout(() => setControlsVisible(false), 1500);
   };
 
+  // Stable refs for callbacks so the fetch effect doesn't rerun on every parent render
+  const onLyricsFoundRef = useRef(onLyricsFound);
+  const onLyricsNotFoundRef = useRef(onLyricsNotFound);
+  useEffect(() => { onLyricsFoundRef.current = onLyricsFound; }, [onLyricsFound]);
+  useEffect(() => { onLyricsNotFoundRef.current = onLyricsNotFound; }, [onLyricsNotFound]);
+
   // Fetch lyrics when song changes
   useEffect(() => {
     const key = `${artist}||${title}`;
@@ -119,28 +125,27 @@ export default function KaraokeOverlay({
     supabase.functions.invoke("fetch-lyrics", {
       body: { artist, title, duration: duration ? Math.round(duration) : undefined },
     }).then(({ data, error: err }) => {
-      // Discard stale response if the song changed while fetching
       if (cancelled || lastFetchRef.current !== key) return;
       setLoading(false);
       if (err || !data?.success || !data?.syncedLyrics) {
         setError(true);
         setTimeout(() => { if (lastFetchRef.current === key) setExitAnim(true); }, 1500);
-        onLyricsNotFound?.();
+        onLyricsNotFoundRef.current?.();
         return;
       }
       const parsed = parseLrc(data.syncedLyrics);
       if (parsed.length === 0) {
         setError(true);
         setTimeout(() => { if (lastFetchRef.current === key) setExitAnim(true); }, 1500);
-        onLyricsNotFound?.();
+        onLyricsNotFoundRef.current?.();
         return;
       }
       setLines(parsed);
-      onLyricsFound?.();
+      onLyricsFoundRef.current?.();
     });
 
     return () => { cancelled = true; };
-  }, [artist, title, duration, onLyricsNotFound, onLyricsFound]);
+  }, [artist, title, duration]);
 
   // Animation loop
   useEffect(() => {
