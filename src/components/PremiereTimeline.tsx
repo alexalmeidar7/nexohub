@@ -28,11 +28,12 @@ function fmt(sec: number, ms = false) {
 
 export default function PremiereTimeline({
   videoUrl, duration, startSec, endSec, onChange,
-  thumbCount = 12, audioFile, videoTitle,
+  thumbCount = 12, audioFile, videoTitle, externalVideoRef,
 }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const audioCanvasRef = useRef<HTMLCanvasElement>(null);
-  const previewVideoRef = useRef<HTMLVideoElement>(null);
+  const internalVideoRef = useRef<HTMLVideoElement>(null);
+  const previewVideoRef = (externalVideoRef ?? internalVideoRef) as React.RefObject<HTMLVideoElement>;
   const [thumbs, setThumbs] = useState<{ t: number; url: string }[]>([]);
   const [waveform, setWaveform] = useState<number[] | null>(null);
   const [dragging, setDragging] = useState<"start" | "end" | "range" | null>(null);
