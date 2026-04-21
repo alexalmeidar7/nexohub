@@ -2206,9 +2206,17 @@ export default function PlayerPage() {
         if (data?.event === "infoDelivery" && data?.info) {
           if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
-          // playerState 0 = ENDED → auto-advance to next video (skip for Top 10 — handled by fade-out logic)
-          if (typeof data.info.playerState === "number" && data.info.playerState === 0 && !isTop10Mode) {
-            ytNextVideoRef.current();
+          // playerState 0 = ENDED
+          if (typeof data.info.playerState === "number" && data.info.playerState === 0) {
+            if (isTop10Mode) {
+              // Top 10: if fade-out logic didn't trigger in time, force the inter-clip transition now
+              if (!top10FadeTriggeredRef.current) {
+                top10FadeTriggeredRef.current = true;
+                top10AdvanceRef.current?.();
+              }
+            } else {
+              ytNextVideoRef.current();
+            }
           }
         }
         // When iframe is ready, start listening and force HD quality
