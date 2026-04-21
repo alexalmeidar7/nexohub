@@ -147,7 +147,32 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <ChunkErrorBoundary>
-          <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center" style={{ backgroundColor: "#0f1058" }}><Loader2 className="animate-spin" size={32} style={{ color: "#268ffa" }} /></div>}>
+          <Suspense fallback={
+            <div
+              aria-label="Carregando"
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 3,
+                background: "transparent",
+                zIndex: 9999,
+                overflow: "hidden",
+                pointerEvents: "none",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: "40%",
+                  background: "linear-gradient(90deg, transparent, hsl(var(--primary)), transparent)",
+                  animation: "lov-route-progress 1.1s ease-in-out infinite",
+                }}
+              />
+              <style>{`@keyframes lov-route-progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }`}</style>
+            </div>
+          }>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
