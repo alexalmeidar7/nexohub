@@ -2839,11 +2839,7 @@ export default function PlayerPage() {
             setTop10InterPreroll(false);
             if (wasTop10Inter) {
               setTop10Fading(null);
-              const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
-              if (nextQueued) {
-                handleSelectVideo(nextQueued);
-                top10PendingNextRef.current = null;
-              }
+              drainTop10QueueWithGate();
             }
           }}
           onEnded={() => {
@@ -2852,13 +2848,19 @@ export default function PlayerPage() {
             setTop10InterPreroll(false);
             if (wasTop10Inter) {
               setTop10Fading(null);
-              const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
-              if (nextQueued) {
-                handleSelectVideo(nextQueued);
-                top10PendingNextRef.current = null;
-              }
+              drainTop10QueueWithGate();
             }
           }}
+        />
+      )}
+
+      {/* Readiness gate hold: black overlay shown while the next clip's iframe
+          is still loading. Lifted automatically when YouTube reports duration > 0
+          (or after a 6s safety timeout). */}
+      {transitionHold && (
+        <div
+          className="absolute inset-0 z-[60] pointer-events-none"
+          style={{ backgroundColor: "#000", opacity: 1, transition: "opacity 300ms ease" }}
         />
       )}
 
