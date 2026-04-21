@@ -629,6 +629,9 @@ export default function PlayerPage() {
   const [top10Fading, setTop10Fading] = useState<"out" | "in" | null>(null);
   const [top10InterPreroll, setTop10InterPreroll] = useState(false); // showing inter-clip preroll
   const top10PendingNextRef = useRef<string | null>(null);
+  // Queue of next clip ids — only drained AFTER the current mid-roll finishes
+  // so we never cut from one song to the next without the ad fully playing.
+  const top10QueueRef = useRef<string[]>([]);
   const top10FadeTriggeredRef = useRef(false);
   const top10AdvanceStartedRef = useRef(false);
   const top10AdvanceRef = useRef<(() => void) | null>(null);
