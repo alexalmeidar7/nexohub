@@ -2475,16 +2475,14 @@ export default function PlayerPage() {
       if (Math.abs(ytCurrentTime - bp) < 2) {
         midrollTriggeredRef.current.add(bpIdx);
         setMidrollResumeTime(ytCurrentTime);
-        // Start fade-out, then pause and show mid-roll after 2s
+        // Fast fade-out (~500ms) — black overlay also fades in via midrollFading
         setMidrollFading("out");
-        // Gradually lower YouTube volume during fade-out
-        ytPostMessage("setVolume", [50]);
-        setTimeout(() => ytPostMessage("setVolume", [20]), 800);
-        setTimeout(() => ytPostMessage("setVolume", [0]), 1500);
+        ytPostMessage("setVolume", [30]);
+        setTimeout(() => ytPostMessage("setVolume", [0]), 250);
         setTimeout(() => {
           ytPostMessage("pauseVideo");
-          setMidrollFading(null);
           setMidrollActive(true);
+          // Keep fading="out" so the black overlay stays opaque until the ad mounts
           // Fetch mid-rolls to show (prefer is_midroll=true, up to 3)
           (async () => {
             if (!user) return;
@@ -2506,15 +2504,18 @@ export default function PlayerPage() {
                 setMidrollTotal(queue.length);
                 setMidrollIndex(0);
                 setMidrollPreroll(queue[0]);
+                // Clear fading state once the ad is mounted
+                setTimeout(() => setMidrollFading(null), 50);
                 return;
               }
             }
             // No preroll found, resume immediately
             setMidrollActive(false);
+            setMidrollFading(null);
             ytPostMessage("setVolume", [volume]);
             ytPostMessage("playVideo");
           })();
-        }, 2000);
+        }, 550);
         break;
       }
     }
