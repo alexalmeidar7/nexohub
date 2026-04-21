@@ -116,6 +116,86 @@ function EditedCheck() {
   return <CheckCircle2 size={11} className="shrink-0" style={{ color: "#22c55e" }} />;
 }
 
+/* Section to refresh all news using new links per block */
+function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLink }: {
+  blocos: Bloco[];
+  inputStyle: React.CSSProperties;
+  onUpdateBloco: (bi: number, items: NewsItem[]) => void;
+  fetchFromLink: (bi: number, ni: number, url: string) => Promise<void> | void;
+}) {
+  const [linksText, setLinksText] = useState<string[]>(() => blocos.map(() => ""));
+  const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    setLinksText(prev => {
+      const next = blocos.map((_, i) => prev[i] ?? "");
+      return next;
+    });
+  }, [blocos.length]);
+
+  const handleUpdate = async () => {
+    setUpdating(true);
+    try {
+      let totalLinks = 0;
+      for (let bi = 0; bi < blocos.length; bi++) {
+        const links = linksText[bi]?.split(/\r?\n/).map(l => l.trim()).filter(l => l.startsWith("http")) || [];
+        if (links.length === 0) continue;
+        const newItems: NewsItem[] = links.map(l => ({ titulo: "", imagemUrl: "", escalada: false, link: l }));
+        onUpdateBloco(bi, newItems);
+        totalLinks += links.length;
+        // sequentially fetch metadata for each new item
+        for (let ni = 0; ni < links.length; ni++) {
+          await fetchFromLink(bi, ni, links[ni]);
+        }
+      }
+      if (totalLinks === 0) toast.warning("Nenhum link válido informado");
+      else toast.success(`${totalLinks} notícia(s) atualizadas!`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao atualizar notícias");
+    }
+    setUpdating(false);
+  };
+
+  return (
+    <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)", backgroundColor: "color-mix(in srgb, #8b5cf6 5%, transparent)" }}>
+      <p className="text-xs font-bold flex items-center gap-1.5 mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+        <Link2 size={14} style={{ color: "#8b5cf6" }} />
+        Atualizar Notícias por Links
+      </p>
+      <p className="text-[10px] mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+        Cole um link por linha em cada bloco. Ao clicar em "Atualizar notícias", as notícias serão substituídas e o XML será atualizado.
+      </p>
+      <div className="space-y-2">
+        {blocos.map((_, bi) => (
+          <div key={bi}>
+            <label className="text-[10px] font-bold mb-1 block" style={{ color: BLOCK_COLORS[bi % BLOCK_COLORS.length] }}>
+              BLOCO {bi + 1} — links
+            </label>
+            <textarea
+              value={linksText[bi] || ""}
+              onChange={e => setLinksText(prev => { const c = [...prev]; c[bi] = e.target.value; return c; })}
+              placeholder="https://...&#10;https://..."
+              rows={3}
+              className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none resize-y"
+              style={inputStyle}
+            />
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={handleUpdate}
+        disabled={updating}
+        className="w-full mt-3 py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40"
+        style={{ backgroundColor: "#8b5cf6", color: "#fff" }}
+      >
+        {updating ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+        Atualizar notícias
+      </button>
+    </div>
+  );
+}
+
 export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader, externalPasteText, onExternalPasteConsumed }: Props) {
   const { user } = useAuth();
   const [estudio, setEstudio] = useState("");
@@ -757,6 +837,18 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             )}
           </div>
         </div>
+
+        {/* Atualizar Notícias por Links (apenas em edição) */}
+        {editingId && !isPodcast && (
+          <UpdateNewsLinksSection
+            blocos={blocos}
+            inputStyle={inputStyle}
+            onUpdateBloco={(bi, items) => {
+              setBlocos(prev => prev.map((b, i) => i === bi ? { noticias: items } : b));
+            }}
+            fetchFromLink={fetchFromLink}
+          />
+        )}
 
         {/* New Contact */}
         {showNewContact && (
