@@ -816,10 +816,16 @@ export default function PromocoesKiosk() {
             {/* Oferecimento dentro do scroll, após o texto */}
             {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
               <div className="mt-6 pt-4 border-t border-white/10 text-center">
-              <span className="text-white/50 text-sm uppercase tracking-wider">Oferecimento</span>
-                <p className="text-white text-xl font-bold mt-2">{selectedPromo.oferecimento.replace(/\/\//g, "\n").split("\n").map((line, i) => (
-                  <span key={i}>{line}{i < selectedPromo.oferecimento.replace(/\/\//g, "\n").split("\n").length - 1 && <br />}</span>
-                ))}</p>
+                <span className="text-white/50 text-sm uppercase tracking-wider">Oferecimento</span>
+                <div
+                  className="text-white text-xl font-bold mt-2 promo-html-content"
+                  dangerouslySetInnerHTML={{
+                    __html: selectedPromo.oferecimento
+                      .replace(/\/\//g, "<br/>")
+                      .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
+                      .replace(/color:\s*#000(?:000)?/gi, "color: white"),
+                  }}
+                />
               </div>
             )}
           </div>
