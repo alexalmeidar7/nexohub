@@ -1296,6 +1296,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [profileAvatar, setProfileAvatar] = useState<string | null>(() => cached?.profileAvatar ?? null);
   const [profileEmail, setProfileEmail] = useState(() => cached?.profileEmail ?? "");
   const [profileCity, setProfileCity] = useState(() => cached?.profileCity ?? "");
+  const [ownerUserId, setOwnerUserId] = useState<string | null>(() => cached?.ownerUserId ?? user?.id ?? null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [programas, setProgramas] = useState<Programa[]>(() => cached?.programas ?? []);
   const [dataLoaded, setDataLoaded] = useState(() => !!cached);
@@ -1428,6 +1429,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if ((hasCriticalError || possibleAuthRace) && scheduleRetry(() => fetchAuthenticatedData(attempt + 1), attempt)) return;
 
       setChannels(channelsData as any);
+      setOwnerUserId(userId);
       if (empRes.data) { setLogoUrl(empRes.data.logo); setChannelName(empRes.data.nome || ""); }
       setProgramas(programasData as any);
       setApresentadores((apresRes.data ?? []) as Apresentador[]);
@@ -1452,6 +1454,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         profileAvatar: profileRes.data?.avatar_url || null,
         profileEmail: profileRes.data?.email || "",
         profileCity: [profileRes.data?.cidade, profileRes.data?.estado].filter(Boolean).join(", "),
+        ownerUserId: userId,
       });
     };
 
@@ -1461,6 +1464,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (cancelled) return;
       if (Boolean(error || data?.error) && scheduleRetry(() => fetchPublicData(slug, attempt + 1), attempt)) return;
       setChannels((data?.channels ?? []) as any);
+      setOwnerUserId(data?.userId || null);
       if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
       if (data?.empresa?.nome) setChannelName(data.empresa.nome);
       setProgramas((data?.programas ?? []) as any);
@@ -1474,6 +1478,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         logoUrl: data?.empresa?.logo || null,
         channelName: data?.empresa?.nome || "",
         programas: data?.programas ?? [],
+        ownerUserId: data?.userId || null,
       });
     };
 
@@ -2006,6 +2011,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       state: {
                         fromPath: location.pathname,
                         top10Playlist: playlist,
+                        ownerUserId,
                       },
                     });
                   }, 400);
