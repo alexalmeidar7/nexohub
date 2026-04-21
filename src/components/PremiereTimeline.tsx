@@ -12,13 +12,16 @@ interface Props {
   videoTitle?: string;
 }
 
-function fmt(sec: number) {
+function fmt(sec: number, ms = false) {
   if (!isFinite(sec) || sec < 0) sec = 0;
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
   const s = Math.floor(sec % 60);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  const base = h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  if (!ms) return base;
+  const mss = Math.floor((sec - Math.floor(sec)) * 1000);
+  return `${base}.${String(mss).padStart(3, "0")}`;
 }
 
 export default function PremiereTimeline({
