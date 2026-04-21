@@ -1,8 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
-import { Scissors, Download, Clock, Link2, Loader2, Play, Copy, ExternalLink } from "lucide-react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { Scissors, Download, Clock, Link2, Loader2, Play, Copy, ExternalLink, Upload, Youtube, FileVideo } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile, toBlobURL } from "@ffmpeg/util";
 
 function extractYoutubeId(url: string): string | null {
   const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
@@ -25,7 +27,7 @@ function formatDuration(seconds: number): string {
   if (seconds <= 0) return "00:00:00";
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
+  const s = Math.floor(seconds % 60);
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
@@ -36,21 +38,38 @@ function maskHMS(raw: string): string {
   return digits.slice(0, 2) + ":" + digits.slice(2, 4) + ":" + digits.slice(4);
 }
 
+type Mode = "youtube" | "local";
+
 export default function CortesVideoPage() {
   const { user } = useAuth();
+  const [mode, setMode] = useState<Mode>("youtube");
+
+  // YouTube state
   const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [videoTitle, setVideoTitle] = useState("");
+
+  // Local file state
+  const [localFile, setLocalFile] = useState<File | null>(null);
+  const [localUrl, setLocalUrl] = useState<string>("");
+  const [localDuration, setLocalDuration] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [statusMsg, setStatusMsg] = useState("");
+  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const [ffmpegReady, setFfmpegReady] = useState(false);
+
+  // Shared
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [cutting, setCutting] = useState(false);
-  const [videoTitle, setVideoTitle] = useState("");
-  const [videoDurationText, setVideoDurationText] = useState("");
   const [result, setResult] = useState<{
-    clip_embed_url: string;
-    share_url: string;
-    thumbnail_url: string;
-    download_url: string;
-    download_quality: string;
+    blob_url?: string;
+    file_name?: string;
+    clip_embed_url?: string;
+    share_url?: string;
+    thumbnail_url?: string;
+    download_url?: string;
     duration: number;
+    is_local: boolean;
   } | null>(null);
 
   const videoId = useMemo(() => extractYoutubeId(youtubeUrl), [youtubeUrl]);
@@ -59,38 +78,124 @@ export default function CortesVideoPage() {
   const endSeconds = parseHMS(endTime);
   const duration = endSeconds - startSeconds;
 
-  const canCut = videoId && duration > 0 && duration <= 600;
+  const sourceReady = mode === "youtube" ? !!videoId : !!localFile;
+  const canCut = sourceReady && duration > 0 && duration <= 600;
 
-  // Fetch video title via oEmbed
+  // Fetch YouTube title
   useEffect(() => {
-    if (!videoId) {
+    if (mode !== "youtube" || !videoId) {
       setVideoTitle("");
-      setVideoDurationText("");
       return;
     }
     fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
       .then((r) => r.json())
-      .then((data) => {
-        setVideoTitle(data.title || "");
-      })
+      .then((data) => setVideoTitle(data.title || ""))
       .catch(() => setVideoTitle(""));
-  }, [videoId]);
+  }, [videoId, mode]);
 
-  const handleCut = async () => {
-    if (!canCut || !user) return;
+  // Cleanup local URL
+  useEffect(() => {
+    return () => {
+      if (localUrl) URL.revokeObjectURL(localUrl);
+      if (result?.blob_url) URL.revokeObjectURL(result.blob_url);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  const loadFfmpeg = async () => {
+    if (ffmpegRef.current && ffmpegReady) return ffmpegRef.current;
+    setStatusMsg("Carregando motor de vídeo (primeira vez ~25MB)...");
+    const ffmpeg = new FFmpeg();
+    ffmpeg.on("progress", ({ progress: p }) => {
+      setProgress(Math.min(99, Math.round(p * 100)));
+    });
+    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+    await ffmpeg.load({
+      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+    });
+    ffmpegRef.current = ffmpeg;
+    setFfmpegReady(true);
+    return ffmpeg;
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("video/")) {
+      toast({ title: "Arquivo inválido", description: "Selecione um arquivo de vídeo.", variant: "destructive" });
+      return;
+    }
+    if (localUrl) URL.revokeObjectURL(localUrl);
+    setLocalFile(file);
+    setLocalUrl(URL.createObjectURL(file));
+    setResult(null);
+  };
+
+  const handleCutLocal = async () => {
+    if (!localFile || !canCut) return;
     setCutting(true);
+    setProgress(0);
     setResult(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("cut-youtube-video", {
-        body: {
-          youtube_url: youtubeUrl,
-          start_seconds: startSeconds,
-          end_seconds: endSeconds,
-        },
-      });
+      const ffmpeg = await loadFfmpeg();
+      setStatusMsg("Carregando arquivo...");
+      const ext = localFile.name.split(".").pop() || "mp4";
+      const inputName = `input.${ext}`;
+      const outputName = `corte_${Date.now()}.mp4`;
 
+      await ffmpeg.writeFile(inputName, await fetchFile(localFile));
+
+      setStatusMsg("Processando corte...");
+      // Use stream copy when possible for speed; fallback to re-encode if needed
+      await ffmpeg.exec([
+        "-ss", String(startSeconds),
+        "-i", inputName,
+        "-t", String(duration),
+        "-c:v", "libx264",
+        "-preset", "ultrafast",
+        "-c:a", "aac",
+        "-movflags", "+faststart",
+        outputName,
+      ]);
+
+      setStatusMsg("Finalizando...");
+      const data = await ffmpeg.readFile(outputName);
+      const u8 = data as Uint8Array;
+      const buf = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
+      const blob = new Blob([buf], { type: "video/mp4" });
+      const blobUrl = URL.createObjectURL(blob);
+
+      await ffmpeg.deleteFile(inputName).catch(() => {});
+      await ffmpeg.deleteFile(outputName).catch(() => {});
+
+      setResult({
+        blob_url: blobUrl,
+        file_name: outputName,
+        duration,
+        is_local: true,
+      });
+      setProgress(100);
+      setStatusMsg("");
+      toast({ title: "Corte gerado!", description: "O vídeo está pronto para download." });
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Erro ao processar", description: err?.message || "Falha no processamento.", variant: "destructive" });
+      setStatusMsg("");
+    } finally {
+      setCutting(false);
+    }
+  };
+
+  const handleCutYoutube = async () => {
+    if (!canCut || !user) return;
+    setCutting(true);
+    setResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("cut-youtube-video", {
+        body: { youtube_url: youtubeUrl, start_seconds: startSeconds, end_seconds: endSeconds },
+      });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
@@ -99,47 +204,48 @@ export default function CortesVideoPage() {
         share_url: data.share_url,
         thumbnail_url: data.thumbnail_url,
         download_url: data.download_url || "",
-        download_quality: data.download_quality || "",
         duration: data.duration,
+        is_local: false,
       });
-
-      toast({
-        title: "Corte gerado!",
-        description: "O trecho do vídeo está pronto para visualização e compartilhamento.",
-      });
+      toast({ title: "Trecho gerado!", description: "Use o player abaixo ou baixe via link externo." });
     } catch (err: any) {
-      toast({
-        title: "Erro ao processar vídeo",
-        description: err.message || "Tente novamente mais tarde.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: err.message || "Tente novamente.", variant: "destructive" });
     } finally {
       setCutting(false);
     }
   };
 
+  const handleCut = () => (mode === "local" ? handleCutLocal() : handleCutYoutube());
+
   const handleDownload = () => {
-    if (!result?.download_url) {
-      window.open(
-        `https://www.ssyoutube.com/watch?v=${videoId}&t=${startSeconds}`,
-        "_blank"
-      );
+    if (result?.is_local && result.blob_url) {
+      const a = document.createElement("a");
+      a.href = result.blob_url;
+      a.download = result.file_name || "corte.mp4";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       return;
     }
-
-    const a = document.createElement("a");
-    a.href = result.download_url;
-    a.download = `corte_${startTime.replace(/:/g, "-")}_${endTime.replace(/:/g, "-")}.mp4`;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    if (result?.download_url) {
+      const a = document.createElement("a");
+      a.href = result.download_url;
+      a.download = `corte_${startTime.replace(/:/g, "-")}_${endTime.replace(/:/g, "-")}.mp4`;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return;
+    }
+    if (videoId) {
+      window.open(`https://www.ssyoutube.com/watch?v=${videoId}&t=${startSeconds}`, "_blank");
+    }
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast({ title: "Link copiado!", description: "O link foi copiado para a área de transferência." });
+    toast({ title: "Link copiado!" });
   };
 
   const now = new Date();
@@ -155,54 +261,93 @@ export default function CortesVideoPage() {
           </div>
           <div>
             <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cortes de Vídeo</h3>
-            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Crie clipes de vídeos do YouTube com até 10 minutos</p>
+            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>YouTube ou arquivo local — até 10 minutos</p>
           </div>
         </div>
 
-        {/* URL Input */}
-        <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>🔗 Link do Vídeo</h3>
-          </div>
-          <div className="p-5">
-            <div className="relative flex items-center">
-              <Link2 size={16} className="absolute left-3 pointer-events-none flex-shrink-0" style={{ color: "var(--layout-icon-color, #888888)" }} />
-              <input
-                type="url"
-                value={youtubeUrl}
-                onChange={(e) => { setYoutubeUrl(e.target.value); setResult(null); }}
-                placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
-                style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-              />
+        {/* Mode tabs */}
+        <div className="flex gap-2 mb-5">
+          {([
+            { k: "youtube", label: "YouTube", icon: Youtube },
+            { k: "local", label: "Arquivo Local", icon: FileVideo },
+          ] as const).map(({ k, label, icon: Icon }) => (
+            <button
+              key={k}
+              onClick={() => { setMode(k); setResult(null); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all"
+              style={{
+                backgroundColor: mode === k ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
+                color: mode === k ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+              }}
+            >
+              <Icon size={14} /> {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Source input */}
+        {mode === "youtube" ? (
+          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+              <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>🔗 Link do Vídeo</h3>
             </div>
-            {youtubeUrl && !videoId && (
-              <p className="text-[10px] mt-1" style={{ color: "#ef4444" }}>URL inválida. Cole um link válido do YouTube.</p>
-            )}
+            <div className="p-5">
+              <div className="relative flex items-center">
+                <Link2 size={16} className="absolute left-3 pointer-events-none flex-shrink-0" style={{ color: "var(--layout-icon-color, #888888)" }} />
+                <input
+                  type="url"
+                  value={youtubeUrl}
+                  onChange={(e) => { setYoutubeUrl(e.target.value); setResult(null); }}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className="w-full pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
+                  style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
+                />
+              </div>
+              {youtubeUrl && !videoId && (
+                <p className="text-[10px] mt-1" style={{ color: "#ef4444" }}>URL inválida.</p>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+              <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>📁 Arquivo de Vídeo</h3>
+            </div>
+            <div className="p-5">
+              <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl cursor-pointer transition-colors text-sm font-bold"
+                style={{ border: "2px dashed var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                <Upload size={16} />
+                {localFile ? localFile.name : "Selecionar vídeo (.mp4, .mov, .webm...)"}
+                <input type="file" accept="video/*" onChange={handleFileSelect} className="hidden" />
+              </label>
+              {localFile && (
+                <p className="text-[10px] mt-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+                  {(localFile.size / 1024 / 1024).toFixed(1)} MB
+                  {localDuration > 0 && ` • Duração: ${formatDuration(localDuration)}`}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
-        {/* Video preview */}
-        {videoId && (
+        {/* Preview */}
+        {(mode === "youtube" && videoId) && (
           <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div className="p-4 flex flex-col items-center gap-2">
               <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 480 }}>
-                <iframe
-                  src={`https://www.youtube.com/embed/${videoId}`}
-                  title="Preview"
-                  className="w-full aspect-video"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                <iframe src={`https://www.youtube.com/embed/${videoId}`} title="Preview" className="w-full aspect-video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
               </div>
-              {videoTitle && (
-                <p className="text-xs font-bold text-center max-w-[480px] leading-snug" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  {videoTitle}
-                </p>
-              )}
+              {videoTitle && <p className="text-xs font-bold text-center max-w-[480px] leading-snug" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{videoTitle}</p>}
               <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{currentTimeStr}</p>
+            </div>
+          </div>
+        )}
+        {(mode === "local" && localUrl) && (
+          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="p-4 flex justify-center">
+              <video src={localUrl} controls className="w-full rounded-xl" style={{ maxWidth: 480 }}
+                onLoadedMetadata={(e) => setLocalDuration((e.target as HTMLVideoElement).duration)} />
             </div>
           </div>
         )}
@@ -216,17 +361,10 @@ export default function CortesVideoPage() {
             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
               <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                 <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Inicial</label>
-                <input
-                  type="text" value={startTime} onChange={(e) => setStartTime(maskHMS(e.target.value))}
+                <input type="text" value={startTime} onChange={(e) => setStartTime(maskHMS(e.target.value))}
                   placeholder="HH:MM:SS" maxLength={8}
-                  className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none transition-colors"
-                  style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                />
-                {videoId && startSeconds > 0 && (
-                  <img src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`} alt="Frame" className="w-full max-w-[140px] h-auto rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
-                )}
+                  className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none"
+                  style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
               </div>
 
               <div className="flex flex-col items-center justify-center gap-1">
@@ -241,29 +379,31 @@ export default function CortesVideoPage() {
 
               <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                 <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Final</label>
-                <input
-                  type="text" value={endTime} onChange={(e) => setEndTime(maskHMS(e.target.value))}
+                <input type="text" value={endTime} onChange={(e) => setEndTime(maskHMS(e.target.value))}
                   placeholder="HH:MM:SS" maxLength={8}
-                  className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none transition-colors"
-                  style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                />
-                {videoId && endSeconds > 0 && (
-                  <img src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`} alt="Frame" className="w-full max-w-[140px] h-auto rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
-                )}
+                  className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none"
+                  style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
               </div>
             </div>
           </div>
         </div>
 
         {/* Cut button */}
-        <div className="flex justify-center mb-5">
+        <div className="flex flex-col items-center gap-2 mb-5">
           <button onClick={handleCut} disabled={!canCut || cutting}
-            className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+            className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
             {cutting ? <><Loader2 size={16} className="animate-spin" /> Processando...</> : <><Scissors size={16} /> Gerar Corte</>}
           </button>
+          {cutting && mode === "local" && (
+            <div className="w-full max-w-md flex flex-col items-center gap-1">
+              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
+                <div className="h-full transition-all" style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color, #2563eb)" }} />
+              </div>
+              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+                {statusMsg || `${progress}%`}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Result */}
@@ -272,8 +412,12 @@ export default function CortesVideoPage() {
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
               <div className="p-4 flex justify-center">
                 <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 640 }}>
-                  <iframe src={result.clip_embed_url} title="Clip preview" className="w-full aspect-video"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                  {result.is_local && result.blob_url ? (
+                    <video src={result.blob_url} controls autoPlay className="w-full aspect-video bg-black" />
+                  ) : (
+                    <iframe src={result.clip_embed_url} title="Clip preview" className="w-full aspect-video"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                  )}
                 </div>
               </div>
             </div>
@@ -284,10 +428,7 @@ export default function CortesVideoPage() {
                   <Play size={14} />
                   <span className="text-sm font-bold">Trecho gerado com sucesso!</span>
                 </div>
-                <p className="text-[10px] mt-0.5" style={{ opacity: 0.7 }}>
-                  Duração: {formatDuration(result.duration)}
-                  {result.download_quality && ` • Qualidade: ${result.download_quality}`}
-                </p>
+                <p className="text-[10px] mt-0.5" style={{ opacity: 0.7 }}>Duração: {formatDuration(result.duration)}</p>
               </div>
               <div className="p-4 flex flex-wrap gap-2">
                 <button onClick={handleDownload}
@@ -295,21 +436,25 @@ export default function CortesVideoPage() {
                   style={{ backgroundColor: "#dc2626", color: "#fff" }}>
                   <Download size={12} /> Baixar Vídeo (.mp4)
                 </button>
-                <button onClick={() => copyToClipboard(result.share_url)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}>
-                  <Copy size={12} /> Copiar Link com Tempo
-                </button>
-                <button onClick={() => copyToClipboard(result.clip_embed_url)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "#fff" }}>
-                  <Copy size={12} /> Copiar Embed
-                </button>
-                <a href={result.share_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "#16a34a", color: "#fff" }}>
-                  <ExternalLink size={12} /> Abrir no YouTube
-                </a>
+                {!result.is_local && result.share_url && (
+                  <>
+                    <button onClick={() => copyToClipboard(result.share_url!)}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
+                      style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}>
+                      <Copy size={12} /> Copiar Link com Tempo
+                    </button>
+                    <button onClick={() => copyToClipboard(result.clip_embed_url!)}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
+                      style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "#fff" }}>
+                      <Copy size={12} /> Copiar Embed
+                    </button>
+                    <a href={result.share_url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
+                      style={{ backgroundColor: "#16a34a", color: "#fff" }}>
+                      <ExternalLink size={12} /> Abrir no YouTube
+                    </a>
+                  </>
+                )}
               </div>
             </div>
           </div>
