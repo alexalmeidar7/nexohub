@@ -75,6 +75,7 @@ export default function CortesVideoPage() {
   const [statusMsg, setStatusMsg] = useState("");
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const [ffmpegReady, setFfmpegReady] = useState(false);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Shared
   const [startTime, setStartTime] = useState("");
@@ -404,7 +405,7 @@ export default function CortesVideoPage() {
         {(mode === "local" && localUrl) && (
           <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div className="p-4 flex justify-center">
-              <video src={localUrl} controls className="w-full rounded-xl" style={{ maxWidth: 480 }}
+              <video ref={localVideoRef} src={localUrl} controls className="w-full rounded-xl" style={{ maxWidth: 480 }}
                 onLoadedMetadata={(e) => setLocalDuration((e.target as HTMLVideoElement).duration)} />
             </div>
           </div>
