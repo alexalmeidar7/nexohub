@@ -131,18 +131,20 @@ export default function PremiereTimeline({
     const h = canvas.height = canvas.clientHeight * window.devicePixelRatio;
     ctx.clearRect(0, 0, w, h);
 
-    const peaks = waveform || (() => {
+    const fullPeaks = waveform || (() => {
       const arr: number[] = [];
       for (let i = 0; i < 400; i++) arr.push(0.2 + Math.abs(Math.sin(i * 0.3) * Math.cos(i * 0.07)) * 0.7);
       return arr;
     })();
+    // Slice peaks to current viewport
+    const total = fullPeaks.length;
+    const dur = duration > 0 ? duration : viewSpan;
+    const i0 = Math.max(0, Math.floor((viewStart / dur) * total));
+    const i1 = Math.max(i0 + 1, Math.ceil((viewEnd / dur) * total));
+    const peaks = fullPeaks.slice(i0, i1);
 
     const accent = getComputedStyle(document.documentElement).getPropertyValue("--layout-accent-hex").trim() || "#888888";
-    const barW = w / peaks.length;
-    ctx.fillStyle = waveform
-      ? `color-mix(in srgb, ${accent} 85%, transparent)` as string
-      : `color-mix(in srgb, ${accent} 35%, transparent)` as string;
-    // canvas fillStyle does not support color-mix in all browsers — fallback to accent w/ alpha
+    const barW = w / Math.max(1, peaks.length);
     ctx.fillStyle = accent;
     ctx.globalAlpha = waveform ? 0.85 : 0.35;
     peaks.forEach((p, i) => {
@@ -150,7 +152,7 @@ export default function PremiereTimeline({
       ctx.fillRect(i * barW, (h - bh) / 2, Math.max(1, barW - 1), bh);
     });
     ctx.globalAlpha = 1;
-  }, [waveform]);
+  }, [waveform, viewStart, viewEnd, viewSpan, duration]);
 
   const tToPct = useCallback((t: number) => ((t - viewStart) / viewSpan) * 100, [viewStart, viewSpan]);
   const pctStart = tToPct(startSec);
