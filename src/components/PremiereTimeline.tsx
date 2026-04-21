@@ -381,12 +381,14 @@ export default function PremiereTimeline({
 
       <div ref={trackRef} onWheel={onWheel} onPointerDown={onPointerDownPan} className="relative select-none overflow-hidden" style={{ touchAction: "none" }}>
         {/* Video layer */}
-        <div className="flex h-16" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 90%, black)` }}>
-          {Array.from({ length: thumbCount }).map((_, i) => (
-            <div key={i} className="flex-1 overflow-hidden" style={{ borderRight: `1px solid color-mix(in srgb, ${border} 30%, transparent)`, backgroundColor: `color-mix(in srgb, ${headerBg} 70%, black)` }}>
-              {thumbs[i] && <img src={thumbs[i]} alt="" className="w-full h-full object-cover" draggable={false} />}
-            </div>
-          ))}
+        <div className="relative h-16 overflow-hidden" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 90%, black)` }}>
+          <div className="absolute top-0 bottom-0 flex" style={{ left: `${-(viewStart/Math.max(0.001,duration))*100*(duration/viewSpan)}%`, width: `${(duration/viewSpan)*100}%` }}>
+            {Array.from({ length: thumbCount }).map((_, i) => (
+              <div key={i} className="flex-1 overflow-hidden" style={{ borderRight: `1px solid color-mix(in srgb, ${border} 30%, transparent)`, backgroundColor: `color-mix(in srgb, ${headerBg} 70%, black)` }}>
+                {thumbs[i] && <img src={thumbs[i]} alt="" className="w-full h-full object-cover" draggable={false} />}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Audio layer */}
