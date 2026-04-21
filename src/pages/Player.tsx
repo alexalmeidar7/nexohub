@@ -2453,12 +2453,15 @@ export default function PlayerPage() {
     (async () => {
       try {
         const ownerId = top10OwnerUserId || effectiveUserId;
-        if (ownerId) {
+        if (ownerId || (isPublicMode && userSlug)) {
           const now = new Date();
           const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-          const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", ownerId).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
-          if (data && data.length > 0) {
-            const pool = filterCampaignsByType(data, now, true);
+          const { data } = isPublicMode && userSlug
+            ? await supabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "active_midrolls" } })
+            : await supabase.from("comercial_preroll").select("*").eq("user_id", ownerId).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
+          const campaigns = isPublicMode && userSlug ? (data?.prerolls || []) : data;
+          if (campaigns && campaigns.length > 0) {
+            const pool = filterCampaignsByType(campaigns, now, true);
             if (pool.length > 0) {
               const selected = pool[Math.floor(Math.random() * pool.length)];
               setPrerollUrl(selected.video_url);
@@ -2479,7 +2482,7 @@ export default function PlayerPage() {
       }
       advanceFallback();
     })();
-  }, [ytPostMessage, youtubeVideos, selectedVideoId, top10OwnerUserId, effectiveUserId, handleSelectVideo]);
+  }, [ytPostMessage, youtubeVideos, selectedVideoId, top10OwnerUserId, effectiveUserId, isPublicMode, userSlug, handleSelectVideo]);
 
   // Keep ref in sync so playerState=0 fallback can call latest advance
   useEffect(() => { top10AdvanceRef.current = runTop10InterClip; }, [runTop10InterClip]);
