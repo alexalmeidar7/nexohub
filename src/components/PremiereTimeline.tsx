@@ -367,10 +367,19 @@ export default function PremiereTimeline({
           </button>
           <span className="font-bold truncate">{videoTitle || "Timeline"}</span>
         </div>
-        <span className="opacity-90">{fmt(startSec)} → {fmt(endSec)} • {fmt(endSec - startSec)}</span>
+        <div className="flex items-center gap-2">
+          <span className="opacity-90">{fmt(startSec)} → {fmt(endSec)} • {fmt(endSec - startSec)}</span>
+          <div className="flex items-center gap-1 ml-2">
+            <button type="button" onClick={() => { const c = (viewStart+viewEnd)/2, ns = Math.max(0.5, viewSpan*0.6); setViewStart(Math.max(0, c-ns/2)); setViewEnd(Math.min(duration, c+ns/2)); }} className="w-5 h-5 rounded text-[11px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Zoom +">＋</button>
+            <span className="text-[9px] opacity-80 w-10 text-center">{zoomPct}x</span>
+            <button type="button" onClick={() => { const c = (viewStart+viewEnd)/2, ns = Math.min(duration, viewSpan/0.6); setViewStart(Math.max(0, c-ns/2)); setViewEnd(Math.min(duration, c+ns/2)); }} className="w-5 h-5 rounded text-[11px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Zoom −">−</button>
+            <button type="button" onClick={zoomToSelection} className="px-1.5 h-5 rounded text-[9px] font-bold" style={{ backgroundColor: accent, color: accentText }} title="Zoom no trecho">⛶</button>
+            <button type="button" onClick={resetZoom} className="px-1.5 h-5 rounded text-[9px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Reset zoom">⟲</button>
+          </div>
+        </div>
       </div>
 
-      <div ref={trackRef} className="relative select-none" style={{ touchAction: "none" }}>
+      <div ref={trackRef} onWheel={onWheel} onPointerDown={onPointerDownPan} className="relative select-none overflow-hidden" style={{ touchAction: "none" }}>
         {/* Video layer */}
         <div className="flex h-16" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 90%, black)` }}>
           {Array.from({ length: thumbCount }).map((_, i) => (
