@@ -31,7 +31,7 @@ export default function PremiereTimeline({
   const trackRef = useRef<HTMLDivElement>(null);
   const audioCanvasRef = useRef<HTMLCanvasElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
-  const [thumbs, setThumbs] = useState<string[]>([]);
+  const [thumbs, setThumbs] = useState<{ t: number; url: string }[]>([]);
   const [waveform, setWaveform] = useState<number[] | null>(null);
   const [dragging, setDragging] = useState<"start" | "end" | "range" | null>(null);
   const [playing, setPlaying] = useState(false);
