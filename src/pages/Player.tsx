@@ -2806,20 +2806,26 @@ export default function PlayerPage() {
             const wasTop10Inter = top10InterPreroll;
             setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center");
             setTop10InterPreroll(false);
-            if (wasTop10Inter && top10PendingNextRef.current) {
+            if (wasTop10Inter) {
               setTop10Fading(null);
-              handleSelectVideo(top10PendingNextRef.current);
-              top10PendingNextRef.current = null;
+              const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
+              if (nextQueued) {
+                handleSelectVideo(nextQueued);
+                top10PendingNextRef.current = null;
+              }
             }
           }}
           onEnded={() => {
             const wasTop10Inter = top10InterPreroll;
             setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center");
             setTop10InterPreroll(false);
-            if (wasTop10Inter && top10PendingNextRef.current) {
+            if (wasTop10Inter) {
               setTop10Fading(null);
-              handleSelectVideo(top10PendingNextRef.current);
-              top10PendingNextRef.current = null;
+              const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
+              if (nextQueued) {
+                handleSelectVideo(nextQueued);
+                top10PendingNextRef.current = null;
+              }
             }
           }}
         />
