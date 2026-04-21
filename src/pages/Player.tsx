@@ -2247,6 +2247,13 @@ export default function PlayerPage() {
         if (data?.event === "infoDelivery" && data?.info) {
           if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
+          // Readiness gate: if we are awaiting the next clip's media to load,
+          // lift the hold overlay only when a real duration (>0) is reported.
+          const reportedDuration = typeof data.info.duration === "number" ? data.info.duration : 0;
+          if (awaitingNextClipReadyRef.current && reportedDuration > 0) {
+            awaitingNextClipReadyRef.current = null;
+            setTransitionHold(false);
+          }
           // playerState 0 = ENDED — but YouTube sometimes fires it spuriously
           // (e.g. while the source is still loading or during quality switch),
           // which would skip clips at ~7 s. Validate against current/duration.
