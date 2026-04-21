@@ -2506,11 +2506,7 @@ export default function PlayerPage() {
       setTimeout(() => {
         setTop10InterPreroll(false);
         setTop10Fading(null);
-        const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
-        if (nextQueued) {
-          handleSelectVideo(nextQueued);
-          top10PendingNextRef.current = null;
-        }
+        drainTop10QueueWithGate();
       }, 1200);
     };
 
