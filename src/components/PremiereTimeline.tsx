@@ -10,6 +10,8 @@ interface Props {
   /** When provided, real audio waveform is drawn from this file. Otherwise placeholder. */
   audioFile?: File | null;
   videoTitle?: string;
+  /** Optional external video element to control (so playback shows in the visible player). */
+  externalVideoRef?: React.RefObject<HTMLVideoElement | null>;
 }
 
 function fmt(sec: number, ms = false) {
