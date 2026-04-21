@@ -436,8 +436,8 @@ export default function CortesVideoPage() {
               <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                 <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Inicial</label>
                 <input type="text" value={startTime} onChange={(e) => setStartTime(maskHMS(e.target.value))}
-                  placeholder="HH:MM:SS" maxLength={8}
-                  className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none"
+                  placeholder="HH:MM:SS.mmm" maxLength={12}
+                  className="w-36 text-center py-2 rounded-lg text-sm font-mono outline-none"
                   style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
               </div>
 
@@ -454,8 +454,8 @@ export default function CortesVideoPage() {
               <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                 <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Final</label>
                 <input type="text" value={endTime} onChange={(e) => setEndTime(maskHMS(e.target.value))}
-                  placeholder="HH:MM:SS" maxLength={8}
-                  className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none"
+                  placeholder="HH:MM:SS.mmm" maxLength={12}
+                  className="w-36 text-center py-2 rounded-lg text-sm font-mono outline-none"
                   style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
               </div>
             </div>
