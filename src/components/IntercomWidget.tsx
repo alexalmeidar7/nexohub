@@ -472,7 +472,7 @@ export default function IntercomWidget() {
   if (!open) {
     return (
       <button onClick={() => setOpen(true)}
-        className="fixed bottom-20 right-5 z-[100] rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
+        className="fixed top-3 right-5 z-[100] rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
         style={{ ...glassStyle, width: 44, height: 44 }} title="Intercomunicador">
         <Radio size={20} className="text-white/80" />
       </button>
@@ -482,7 +482,7 @@ export default function IntercomWidget() {
   // ─── Role Selection ───
   if (role === "none" && !listenerName) {
     return (
-      <div className="fixed bottom-20 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}>
+      <div className="fixed top-3 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <Radio size={16} className="text-white/70" />
@@ -523,7 +523,7 @@ export default function IntercomWidget() {
   // ─── Listener: name input (before joining channel) ───
   if (role === "listener" && !listenerName) {
     return (
-      <div className="fixed bottom-20 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}>
+      <div className="fixed top-3 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}>
         <div className="flex items-center gap-2 px-4 py-3">
           <button onClick={handleBack} className="text-white/40 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-all">
             <ArrowLeft size={14} />
@@ -558,7 +558,7 @@ export default function IntercomWidget() {
   // ─── Listener mode (active) ───
   if (role === "listener" && listenerName) {
     return (
-      <div className="fixed bottom-20 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}
+      <div className="fixed top-3 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}
         onClick={handleUnlockAudio}>
         <audio ref={audioRef} autoPlay playsInline />
         <div className="flex items-center gap-2 px-3 py-2.5">
@@ -647,7 +647,7 @@ export default function IntercomWidget() {
 
   // ─── Speaker mode ───
   return (
-    <div className="fixed bottom-20 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 300 }}>
+    <div className="fixed top-3 right-5 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 300 }}>
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2.5">
         <button
