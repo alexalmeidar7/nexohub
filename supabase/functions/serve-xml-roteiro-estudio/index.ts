@@ -121,7 +121,7 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=10",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
       },
     });
   } catch (err) {
