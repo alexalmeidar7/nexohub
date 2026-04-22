@@ -76,6 +76,22 @@ serve(async (req) => {
         });
         xml += `    </perguntas>\n`;
         xml += `    <concluindo>${esc(podcastData.concluindo || "")}</concluindo>\n`;
+
+        const imagens: string[] = (podcastData.apoioImagens || []).filter((u: string) => u && u.trim());
+        const videos: string[] = (podcastData.apoioVideos || []).filter((u: string) => u && u.trim());
+        if (imagens.length > 0) {
+          // Rotate active image every 5 seconds
+          const idx = Math.floor(Date.now() / 5000) % imagens.length;
+          xml += `    <imagemAtual>${esc(imagens[idx])}</imagemAtual>\n`;
+          xml += `    <apoioImagens>\n`;
+          imagens.forEach((u) => { xml += `      <imagem>${esc(u)}</imagem>\n`; });
+          xml += `    </apoioImagens>\n`;
+        }
+        if (videos.length > 0) {
+          xml += `    <apoioVideos>\n`;
+          videos.forEach((u) => { xml += `      <video>${esc(u)}</video>\n`; });
+          xml += `    </apoioVideos>\n`;
+        }
         xml += `  </roteiro>\n`;
       } else {
         if (escaladaItems.length > 0) {
