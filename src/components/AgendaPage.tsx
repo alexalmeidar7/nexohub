@@ -273,6 +273,10 @@ interface Evento {
   tipo_evento?: string;
   youtube_url?: string;
   artes_urls?: string[];
+  youtube_titulo?: string;
+  youtube_descricao?: string;
+  edicao_notas?: string;
+  edicao_concluida?: boolean;
   programa?: Programa;
   participantes?: Participante[];
 }
