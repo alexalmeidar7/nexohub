@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Swords, Loader2, CalendarPlus, Save } from "lucide-react";
+import { Swords, Loader2, CalendarPlus, Save, RefreshCw, Link as LinkIcon, ImageOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,13 +69,13 @@ function normalizeBattleState(value: unknown): BattleState {
 }
 
 
-async function fetchArtistImage(artistName: string): Promise<string> {
+async function fetchArtistImage(artistName: string, skip = 0): Promise<string> {
   const artist = artistName.trim();
   if (!artist) return "";
 
   try {
     const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
-      body: { artist },
+      body: { artist, skip },
     });
 
     if (error || !data?.ok || !data?.url) {
@@ -102,6 +102,42 @@ export default function BatalhaMusicalPage() {
   const request1Ref = useRef(0);
   const request2Ref = useRef(0);
   const imageCacheRef = useRef<Record<string, string>>({});
+  const skip1Ref = useRef(0);
+  const skip2Ref = useRef(0);
+
+  const handleSearchAnother = async (which: 1 | 2) => {
+    const name = (which === 1 ? artista1.nome : artista2.nome).trim();
+    if (!name) {
+      toast.error("Digite o nome do artista primeiro");
+      return;
+    }
+    if (which === 1) { setLoading1(true); skip1Ref.current += 1; }
+    else { setLoading2(true); skip2Ref.current += 1; }
+    const url = await fetchArtistImage(name, which === 1 ? skip1Ref.current : skip2Ref.current);
+    if (which === 1) setLoading1(false); else setLoading2(false);
+    if (!url) {
+      toast.error("Nenhuma outra imagem encontrada");
+      return;
+    }
+    const cacheKey = name.toLowerCase();
+    imageCacheRef.current[cacheKey] = url;
+    if (which === 1) setArtista1(prev => ({ ...prev, imagemUrl: url }));
+    else setArtista2(prev => ({ ...prev, imagemUrl: url }));
+  };
+
+  const handleSetCustomUrl = (which: 1 | 2) => {
+    const current = which === 1 ? artista1.imagemUrl : artista2.imagemUrl;
+    const url = window.prompt("Cole a URL da imagem do artista:", current || "");
+    if (url === null) return;
+    const trimmed = url.trim();
+    if (which === 1) setArtista1(prev => ({ ...prev, imagemUrl: trimmed }));
+    else setArtista2(prev => ({ ...prev, imagemUrl: trimmed }));
+  };
+
+  const handleClearImage = (which: 1 | 2) => {
+    if (which === 1) setArtista1(prev => ({ ...prev, imagemUrl: "" }));
+    else setArtista2(prev => ({ ...prev, imagemUrl: "" }));
+  };
 
   // Form always starts empty — no state restoration
   useEffect(() => {
@@ -114,6 +150,7 @@ export default function BatalhaMusicalPage() {
   useEffect(() => {
     clearTimeout(debounce1.current);
     const artistName = artista1.nome.trim();
+    skip1Ref.current = 0;
     const requestId = ++request1Ref.current;
 
     if (!artistName) {
@@ -156,6 +193,7 @@ export default function BatalhaMusicalPage() {
   useEffect(() => {
     clearTimeout(debounce2.current);
     const artistName = artista2.nome.trim();
+    skip2Ref.current = 0;
     const requestId = ++request2Ref.current;
 
     if (!artistName) {
@@ -398,11 +436,34 @@ export default function BatalhaMusicalPage() {
                 <h4 className="font-bold text-sm uppercase tracking-wider" style={labelStyle}>Artista 1</h4>
                 {loading1 && <Loader2 className="h-3 w-3 animate-spin opacity-40" style={labelStyle} />}
               </div>
-              {artista1.imagemUrl && (
-                <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-2">
+                {artista1.imagemUrl ? (
                   <img src={artista1.imagemUrl} alt={artista1.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: accentColor }} />
+                ) : (
+                  <div className="w-24 h-24 rounded-full flex items-center justify-center border-2 border-dashed" style={{ borderColor: accentColor, opacity: 0.4 }}>
+                    <ImageOff size={24} style={{ color: accentColor }} />
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                  <button type="button" onClick={() => handleSearchAnother(1)} disabled={loading1}
+                    className="text-[10px] px-2 py-1 rounded-md inline-flex items-center gap-1 transition-opacity hover:opacity-80 disabled:opacity-50"
+                    style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <RefreshCw size={11} /> Outra foto
+                  </button>
+                  <button type="button" onClick={() => handleSetCustomUrl(1)}
+                    className="text-[10px] px-2 py-1 rounded-md inline-flex items-center gap-1 transition-opacity hover:opacity-80"
+                    style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <LinkIcon size={11} /> URL
+                  </button>
+                  {artista1.imagemUrl && (
+                    <button type="button" onClick={() => handleClearImage(1)}
+                      className="text-[10px] px-2 py-1 rounded-md inline-flex items-center gap-1 transition-opacity hover:opacity-80"
+                      style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                      Remover
+                    </button>
+                  )}
                 </div>
-              )}
+              </div>
               <div>
                 <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Nome do Artista</label>
                 <input value={artista1.nome} onChange={e => updateArtista1("nome", e.target.value)} placeholder="Ex: Bruno Mars"
@@ -430,11 +491,34 @@ export default function BatalhaMusicalPage() {
                 <h4 className="font-bold text-sm uppercase tracking-wider" style={labelStyle}>Artista 2</h4>
                 {loading2 && <Loader2 className="h-3 w-3 animate-spin opacity-40" style={labelStyle} />}
               </div>
-              {artista2.imagemUrl && (
-                <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-2">
+                {artista2.imagemUrl ? (
                   <img src={artista2.imagemUrl} alt={artista2.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: "var(--layout-header-bg)" }} />
+                ) : (
+                  <div className="w-24 h-24 rounded-full flex items-center justify-center border-2 border-dashed" style={{ borderColor: "var(--layout-header-bg)", opacity: 0.4 }}>
+                    <ImageOff size={24} style={{ color: "var(--layout-header-bg)" }} />
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                  <button type="button" onClick={() => handleSearchAnother(2)} disabled={loading2}
+                    className="text-[10px] px-2 py-1 rounded-md inline-flex items-center gap-1 transition-opacity hover:opacity-80 disabled:opacity-50"
+                    style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <RefreshCw size={11} /> Outra foto
+                  </button>
+                  <button type="button" onClick={() => handleSetCustomUrl(2)}
+                    className="text-[10px] px-2 py-1 rounded-md inline-flex items-center gap-1 transition-opacity hover:opacity-80"
+                    style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <LinkIcon size={11} /> URL
+                  </button>
+                  {artista2.imagemUrl && (
+                    <button type="button" onClick={() => handleClearImage(2)}
+                      className="text-[10px] px-2 py-1 rounded-md inline-flex items-center gap-1 transition-opacity hover:opacity-80"
+                      style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                      Remover
+                    </button>
+                  )}
                 </div>
-              )}
+              </div>
               <div>
                 <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Nome do Artista</label>
                 <input value={artista2.nome} onChange={e => updateArtista2("nome", e.target.value)} placeholder="Ex: The Weeknd"
