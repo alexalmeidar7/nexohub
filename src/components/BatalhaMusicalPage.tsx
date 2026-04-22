@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Swords, Loader2, CalendarPlus, Save } from "lucide-react";
+import { Swords, Loader2, CalendarPlus, Save, RefreshCw, Link as LinkIcon, ImageOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
