@@ -1638,6 +1638,7 @@ export default function AgendaPage() {
                         onChange={(e) => setFormYoutubeDescricao(e.target.value)}
                         placeholder="Descrição do vídeo no YouTube"
                         className="min-h-[80px] text-xs"
+                        style={{ color: "var(--layout-page-text, #1a1a1a)" }}
                       />
                     </div>
                   </div>
