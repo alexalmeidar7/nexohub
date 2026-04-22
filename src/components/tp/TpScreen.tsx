@@ -50,6 +50,33 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>();
   const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const editableRef = useRef<HTMLDivElement>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [showFormatBar, setShowFormatBar] = useState(false);
+
+  const FONT_COLORS = ["#ffffff", "#fde047", "#f87171", "#4ade80", "#60a5fa", "#c084fc", "#fb923c"];
+  const HIGHLIGHT_COLORS = ["transparent", "#fde047", "#f87171", "#4ade80", "#60a5fa", "#c084fc", "#fb923c"];
+
+  function execFormat(cmd: string, value?: string) {
+    editableRef.current?.focus();
+    document.execCommand(cmd, false, value);
+    persistEditableContent();
+  }
+
+  function persistEditableContent() {
+    if (!editableRef.current) return;
+    const html = editableRef.current.innerHTML;
+    setDisplayText(html);
+    setIsHtmlContent(true);
+    if (activeTpIdRef.current) {
+      (supabase as any)
+        .from("teleprompters")
+        .update({ texto_atual: html, is_html: true })
+        .eq("id", activeTpIdRef.current)
+        .then(() => {});
+      dbTextRef.current = html;
+    }
+  }
 
   function processQueue() {
     if (isShowingRef.current || msgQueueRef.current.length === 0) return;
@@ -758,8 +785,51 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
           textShadow: "0 2px 20px rgba(0,0,0,0.5)",
           transform: `${flipH ? "scaleX(-1)" : ""} ${flipV ? "scaleY(-1)" : ""}`.trim() || "none",
         }}>
-          {isHtmlContent ? <span dangerouslySetInnerHTML={{ __html: displayText }} /> : displayText}
+          {editMode ? (
+            <div
+              ref={editableRef}
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={persistEditableContent}
+              onMouseUp={() => setShowFormatBar(true)}
+              onKeyUp={() => setShowFormatBar(true)}
+              dangerouslySetInnerHTML={{ __html: isHtmlContent ? displayText : displayText.replace(/\n/g, "<br>") }}
+              className="outline-none focus:outline-none caret-tp-accent"
+              style={{ minHeight: "1em", cursor: "text" }}
+            />
+          ) : (
+            isHtmlContent ? <span dangerouslySetInnerHTML={{ __html: displayText }} /> : displayText
+          )}
         </div>
+
+        {/* Floating Format Toolbar */}
+        {editMode && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] bg-tp-control backdrop-blur-[20px] px-3 py-2 rounded-xl flex items-center gap-2 border border-tp-accent/30 shadow-[0_8px_32px_hsl(var(--tp-shadow))] flex-wrap max-w-[90%] justify-center">
+            <button onMouseDown={(e) => e.preventDefault()} onClick={() => execFormat("bold")} className={`${tpControlBtnClasses} px-2 py-1 text-xs font-bold`} title="Negrito">B</button>
+            <button onMouseDown={(e) => e.preventDefault()} onClick={() => execFormat("italic")} className={`${tpControlBtnClasses} px-2 py-1 text-xs italic`} title="Itálico">I</button>
+            <button onMouseDown={(e) => e.preventDefault()} onClick={() => execFormat("underline")} className={`${tpControlBtnClasses} px-2 py-1 text-xs underline`} title="Sublinhar">U</button>
+            <button onMouseDown={(e) => e.preventDefault()} onClick={() => execFormat("insertHTML", "<br><br>")} className={`${tpControlBtnClasses} px-2 py-1 text-[10px]`} title="Linha em branco">↵↵</button>
+            <div className="w-px h-5 bg-tp-border-subtle" />
+            <span className="text-[9px] text-tp-muted uppercase">Cor</span>
+            {FONT_COLORS.map((c) => (
+              <button key={`fc-${c}`} onMouseDown={(e) => e.preventDefault()} onClick={() => execFormat("foreColor", c)} className="w-5 h-5 rounded-full border border-tp-border-subtle" style={{ background: c }} title={`Texto ${c}`} />
+            ))}
+            <div className="w-px h-5 bg-tp-border-subtle" />
+            <span className="text-[9px] text-tp-muted uppercase">Marca</span>
+            {HIGHLIGHT_COLORS.map((c) => (
+              <button
+                key={`hl-${c}`}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => execFormat("hiliteColor", c)}
+                className="w-5 h-5 rounded border border-tp-border-subtle flex items-center justify-center text-[10px] font-bold"
+                style={{ background: c === "transparent" ? "rgba(255,255,255,0.05)" : c, color: c === "transparent" ? "#fff" : "#000" }}
+                title={c === "transparent" ? "Remover" : `Marca ${c}`}
+              >
+                {c === "transparent" ? "✕" : "A"}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Controls bar */}
         <div className="tp-controls-bar absolute bottom-6 left-1/2 -translate-x-1/2 bg-tp-control backdrop-blur-[20px] px-6 py-2.5 rounded-[20px] flex items-center gap-3 border border-tp-accent/20 shadow-[0_8px_32px_hsl(var(--tp-shadow))] z-20">
@@ -798,6 +868,13 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
           </button>
           <button onClick={toggleFullscreen} title="Tela cheia" className={tpControlBtnClasses}>
             <Maximize size={14} className="text-tp-muted-strong" />
+          </button>
+          <button
+            onClick={() => { setEditMode((v) => !v); setShowFormatBar(false); setScrolling(false); }}
+            title={editMode ? "Salvar edição" : "Editar texto"}
+            className={`${tpControlBtnClasses} ${editMode ? tpControlBtnActiveClasses : ""} px-2.5 py-1.5 text-[11px] font-bold`}
+          >
+            {editMode ? "✓ Salvar" : "✎ Editar"}
           </button>
         </div>
 
