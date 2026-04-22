@@ -724,44 +724,6 @@ export default function EnquetePage() {
         </p>
       </div>
 
-      {/* Máscara (Arte) Section */}
-      <div className="rounded-xl p-4 space-y-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-accent-color, #268ffa))", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #268ffa) 20%, transparent)" }}>
-        <div className="flex items-center gap-2">
-          <ImageIcon size={16} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
-          <span className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cadastro de Máscara (Arte)</span>
-        </div>
-        <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-          Faça upload de uma imagem de fundo (9:16). O botão "Baixar Arte" aparecerá em cada enquete agendada abaixo.
-        </p>
-
-        <div>
-          <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Imagem de Fundo (9:16)</label>
-          <input
-            ref={arteBgInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleBgUpload}
-          />
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              onClick={() => arteBgInputRef.current?.click()}
-              className="flex items-center gap-2 text-xs rounded-xl"
-            >
-              <Upload size={14} />
-              {arteBgImage ? "Trocar Imagem" : "Upload Fundo"}
-            </Button>
-            {arteBgImage && (
-              <div className="flex items-center gap-2">
-                <img src={arteBgImage} alt="preview" className="h-16 rounded-lg border object-cover" style={{ aspectRatio: "9/16" }} />
-                <button onClick={() => setArteBgImage(null)} className="p-1 rounded hover:bg-black/5"><X size={14} className="text-red-500" /></button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
       {enquetes.length > 0 && (
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
           <div className="px-4 py-2.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-border-color, #333))" }}>
