@@ -1429,7 +1429,9 @@ export default function AgendaPage() {
                                 return;
                               }
 
-                              const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}`;
+                              const horarioLive = (selectedPrograma?.horario_inicio || "").slice(0, 5);
+                              const linhaHoje = horarioLive ? `\n\nHoje ${horarioLive}` : "";
+                              const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}${linhaHoje}`;
 
                               setSendingWhatsAppFor(participantKey);
                               try {
