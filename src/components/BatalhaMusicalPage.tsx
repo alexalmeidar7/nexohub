@@ -144,10 +144,7 @@ export default function BatalhaMusicalPage() {
     await persistImage(which, url);
   };
 
-  const handleSetCustomUrl = async (which: 1 | 2) => {
-    const current = which === 1 ? artista1.imagemUrl : artista2.imagemUrl;
-    const url = window.prompt("Cole a URL da imagem do artista:", current || "");
-    if (url === null) return;
+  const applyImageUrl = async (which: 1 | 2, url: string) => {
     const trimmed = url.trim();
     if (which === 1) setArtista1(prev => ({ ...prev, imagemUrl: trimmed }));
     else setArtista2(prev => ({ ...prev, imagemUrl: trimmed }));
@@ -466,6 +463,15 @@ export default function BatalhaMusicalPage() {
                 {loading1 && <Loader2 className="h-3 w-3 animate-spin opacity-40" style={labelStyle} />}
               </div>
               <div className="flex flex-col items-center gap-2">
+                <input
+                  type="url"
+                  value={artista1.imagemUrl}
+                  onChange={e => setArtista1(prev => ({ ...prev, imagemUrl: e.target.value }))}
+                  onBlur={e => applyImageUrl(1, e.target.value)}
+                  placeholder="Cole a URL da imagem aqui"
+                  className="w-full px-3 py-1.5 outline-none transition-all text-xs"
+                  style={inputStyle}
+                />
                 {artista1.imagemUrl ? (
                   <img src={artista1.imagemUrl} alt={artista1.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: accentColor }} />
                 ) : (
@@ -478,11 +484,6 @@ export default function BatalhaMusicalPage() {
                     className="text-[10px] px-2 py-1 rounded-md inline-flex items-center gap-1 transition-opacity hover:opacity-80 disabled:opacity-50"
                     style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
                     <RefreshCw size={11} /> Outra foto
-                  </button>
-                  <button type="button" onClick={() => handleSetCustomUrl(1)}
-                    className="text-[10px] px-2 py-1 rounded-md inline-flex items-center gap-1 transition-opacity hover:opacity-80"
-                    style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <LinkIcon size={11} /> URL
                   </button>
                   {artista1.imagemUrl && (
                     <button type="button" onClick={() => handleClearImage(1)}
@@ -521,6 +522,15 @@ export default function BatalhaMusicalPage() {
                 {loading2 && <Loader2 className="h-3 w-3 animate-spin opacity-40" style={labelStyle} />}
               </div>
               <div className="flex flex-col items-center gap-2">
+                <input
+                  type="url"
+                  value={artista2.imagemUrl}
+                  onChange={e => setArtista2(prev => ({ ...prev, imagemUrl: e.target.value }))}
+                  onBlur={e => applyImageUrl(2, e.target.value)}
+                  placeholder="Cole a URL da imagem aqui"
+                  className="w-full px-3 py-1.5 outline-none transition-all text-xs"
+                  style={inputStyle}
+                />
                 {artista2.imagemUrl ? (
                   <img src={artista2.imagemUrl} alt={artista2.nome} className="w-24 h-24 rounded-full object-cover border-2" style={{ borderColor: "var(--layout-header-bg)" }} />
                 ) : (
@@ -533,11 +543,6 @@ export default function BatalhaMusicalPage() {
                     className="text-[10px] px-2 py-1 rounded-md inline-flex items-center gap-1 transition-opacity hover:opacity-80 disabled:opacity-50"
                     style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
                     <RefreshCw size={11} /> Outra foto
-                  </button>
-                  <button type="button" onClick={() => handleSetCustomUrl(2)}
-                    className="text-[10px] px-2 py-1 rounded-md inline-flex items-center gap-1 transition-opacity hover:opacity-80"
-                    style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <LinkIcon size={11} /> URL
                   </button>
                   {artista2.imagemUrl && (
                     <button type="button" onClick={() => handleClearImage(2)}
