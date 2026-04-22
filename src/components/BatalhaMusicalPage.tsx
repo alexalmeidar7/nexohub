@@ -314,6 +314,14 @@ export default function BatalhaMusicalPage() {
   };
 
   useEffect(() => {
+    editingIdRef.current = editingId;
+  }, [editingId]);
+
+  useEffect(() => {
+    loadBatalhasRef.current = loadBatalhas;
+  });
+
+  useEffect(() => {
     if (user) loadBatalhas();
   }, [user]);
 
