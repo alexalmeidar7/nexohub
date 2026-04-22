@@ -1608,6 +1608,64 @@ export default function AgendaPage() {
                       })}
                     </div>
                   </div>
+
+                  {/* Dados do YouTube */}
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                      <Youtube size={12} /> Dados do YouTube
+                    </Label>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>Título</span>
+                        <span className="text-[10px] font-mono" style={{ color: formYoutubeTitulo.length >= 100 ? "#ef4444" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                          {formYoutubeTitulo.length}/100
+                        </span>
+                      </div>
+                      <Input
+                        value={formYoutubeTitulo}
+                        onChange={(e) => setFormYoutubeTitulo(e.target.value.slice(0, 100))}
+                        maxLength={100}
+                        placeholder="Título do vídeo no YouTube"
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold block mb-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>Descrição</span>
+                      <Textarea
+                        value={formYoutubeDescricao}
+                        onChange={(e) => setFormYoutubeDescricao(e.target.value)}
+                        placeholder="Descrição do vídeo no YouTube"
+                        className="min-h-[80px] text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Anotações de Edição */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                        ✂️ Anotações da Edição
+                      </Label>
+                      <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={formEdicaoConcluida}
+                          onChange={(e) => setFormEdicaoConcluida(e.target.checked)}
+                          className="w-4 h-4 rounded cursor-pointer"
+                          style={{ accentColor: "var(--layout-accent-color, #2563eb)" }}
+                        />
+                        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: formEdicaoConcluida ? "#10b981" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
+                          {formEdicaoConcluida ? "✓ Edição concluída" : "Edição pendente"}
+                        </span>
+                      </label>
+                    </div>
+                    <Textarea
+                      value={formEdicaoNotas}
+                      onChange={(e) => setFormEdicaoNotas(e.target.value)}
+                      placeholder="Anotações sobre a edição do programa (cortes, destaques, observações...)"
+                      className="min-h-[80px] text-xs"
+                    />
+                  </div>
                 </div>
               )}
 
