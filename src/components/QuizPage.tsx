@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { HelpCircle, Loader2, CalendarPlus, Save, Trash2, Pencil, Sparkles, Plus, X } from "lucide-react";
+import { HelpCircle, Loader2, CalendarPlus, Save, Trash2, Pencil, Sparkles, Plus, X, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -135,6 +135,49 @@ export default function QuizPage() {
   const [loadingCategory, setLoadingCategory] = useState(false);
   const [explicacao, setExplicacao] = useState("");
   const [imagemResposta, setImagemResposta] = useState("");
+  const [imagemSkip, setImagemSkip] = useState(0);
+  const [loadingImage, setLoadingImage] = useState(false);
+
+  const fetchAnotherImage = async () => {
+    const respostaCorretaTexto = respostas[correta - 1]?.trim();
+    if (!respostaCorretaTexto) {
+      toast.error("Preencha a resposta correta primeiro.");
+      return;
+    }
+    setLoadingImage(true);
+    try {
+      const nextSkip = imagemSkip + 1;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz-explanation`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            resposta_correta_texto: respostaCorretaTexto,
+            only_image: true,
+            skip: nextSkip,
+          }),
+        }
+      );
+      const data = await res.json();
+      if (data.imagem_url) {
+        setImagemResposta(data.imagem_url);
+        setImagemSkip(nextSkip);
+        toast.success("Outra imagem carregada.");
+      } else {
+        toast.error("Nenhuma imagem alternativa encontrada.");
+      }
+    } catch {
+      toast.error("Falha ao buscar outra imagem.");
+    } finally {
+      setLoadingImage(false);
+    }
+  };
+
+  const clearImage = () => {
+    setImagemResposta("");
+    setImagemSkip(0);
+  };
 
   const CATEGORIES = [...DEFAULT_CATEGORIES, ...Object.keys(customCategories)];
 
