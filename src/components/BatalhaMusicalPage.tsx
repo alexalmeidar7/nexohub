@@ -244,12 +244,17 @@ export default function BatalhaMusicalPage() {
       if (url) {
         imageCacheRef.current[cacheKey] = url;
       }
+      let persistedUrl: string | null = null;
       setArtista2(prev => {
         if (prev.nome.trim() !== artistName) return prev;
         if (!url && prev.imagemUrl) return prev;
+        if (prev.imagemUrl !== url) persistedUrl = url;
         return { ...prev, imagemUrl: url };
       });
       setLoading2(false);
+      if (persistedUrl !== null && editingIdRef.current) {
+        await persistImage(2, persistedUrl);
+      }
     }, 500);
     return () => clearTimeout(debounce2.current);
   }, [artista2.nome]);
