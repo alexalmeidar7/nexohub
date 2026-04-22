@@ -869,6 +869,13 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
           <button onClick={toggleFullscreen} title="Tela cheia" className={tpControlBtnClasses}>
             <Maximize size={14} className="text-tp-muted-strong" />
           </button>
+          <button
+            onClick={() => { setEditMode((v) => !v); setShowFormatBar(false); setScrolling(false); }}
+            title={editMode ? "Salvar edição" : "Editar texto"}
+            className={`${tpControlBtnClasses} ${editMode ? tpControlBtnActiveClasses : ""} px-2.5 py-1.5 text-[11px] font-bold`}
+          >
+            {editMode ? "✓ Salvar" : "✎ Editar"}
+          </button>
         </div>
 
         {/* Setup Modal */}
