@@ -351,6 +351,10 @@ export default function AgendaPage() {
   ]);
   const [formYoutubeUrl, setFormYoutubeUrl] = useState("");
   const [formArtesUrls, setFormArtesUrls] = useState<string[]>([]);
+  const [formYoutubeTitulo, setFormYoutubeTitulo] = useState("");
+  const [formYoutubeDescricao, setFormYoutubeDescricao] = useState("");
+  const [formEdicaoNotas, setFormEdicaoNotas] = useState("");
+  const [formEdicaoConcluida, setFormEdicaoConcluida] = useState(false);
   const [uploadingArte, setUploadingArte] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
 
