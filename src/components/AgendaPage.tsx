@@ -1483,7 +1483,7 @@ export default function AgendaPage() {
                                       toast({ title: "WhatsApp não cadastrado", description: `Cadastre o WhatsApp de ${p.nome}.`, variant: "destructive" });
                                       return;
                                     }
-                                    const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}${feedUrl ? `\n\nArte do FEED: ${feedUrl}` : ""}`;
+                                    const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}`;
                                     window.open(`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(text)}`, "_blank");
                                   }}
                                   className="h-7 px-2.5 text-[10px] font-bold gap-1 shrink-0 hover:opacity-90"
