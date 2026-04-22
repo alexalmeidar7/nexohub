@@ -534,6 +534,10 @@ export default function AgendaPage() {
     setFormParticipantes([{ nome: "", instagram: "" }]);
     setFormYoutubeUrl("");
     setFormArtesUrls([]);
+    setFormYoutubeTitulo("");
+    setFormYoutubeDescricao("");
+    setFormEdicaoNotas("");
+    setFormEdicaoConcluida(false);
     setEditingId(null);
   };
 
