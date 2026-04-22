@@ -69,13 +69,13 @@ function normalizeBattleState(value: unknown): BattleState {
 }
 
 
-async function fetchArtistImage(artistName: string): Promise<string> {
+async function fetchArtistImage(artistName: string, skip = 0): Promise<string> {
   const artist = artistName.trim();
   if (!artist) return "";
 
   try {
     const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
-      body: { artist },
+      body: { artist, skip },
     });
 
     if (error || !data?.ok || !data?.url) {
