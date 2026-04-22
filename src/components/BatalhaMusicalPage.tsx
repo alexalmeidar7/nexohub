@@ -105,6 +105,22 @@ export default function BatalhaMusicalPage() {
   const skip1Ref = useRef(0);
   const skip2Ref = useRef(0);
 
+  const persistImage = async (which: 1 | 2, url: string) => {
+    if (!editingIdRef.current) return;
+    const field = which === 1 ? "artista1_imagem" : "artista2_imagem";
+    const { error } = await supabase
+      .from("batalhas_agendadas")
+      .update({ [field]: url })
+      .eq("id", editingIdRef.current);
+    if (error) {
+      toast.error("Erro ao salvar imagem");
+      console.error(error);
+    } else {
+      toast.success("Imagem atualizada");
+      loadBatalhasRef.current?.();
+    }
+  };
+
   const handleSearchAnother = async (which: 1 | 2) => {
     const name = (which === 1 ? artista1.nome : artista2.nome).trim();
     if (!name) {
@@ -123,20 +139,23 @@ export default function BatalhaMusicalPage() {
     imageCacheRef.current[cacheKey] = url;
     if (which === 1) setArtista1(prev => ({ ...prev, imagemUrl: url }));
     else setArtista2(prev => ({ ...prev, imagemUrl: url }));
+    await persistImage(which, url);
   };
 
-  const handleSetCustomUrl = (which: 1 | 2) => {
+  const handleSetCustomUrl = async (which: 1 | 2) => {
     const current = which === 1 ? artista1.imagemUrl : artista2.imagemUrl;
     const url = window.prompt("Cole a URL da imagem do artista:", current || "");
     if (url === null) return;
     const trimmed = url.trim();
     if (which === 1) setArtista1(prev => ({ ...prev, imagemUrl: trimmed }));
     else setArtista2(prev => ({ ...prev, imagemUrl: trimmed }));
+    await persistImage(which, trimmed);
   };
 
-  const handleClearImage = (which: 1 | 2) => {
+  const handleClearImage = async (which: 1 | 2) => {
     if (which === 1) setArtista1(prev => ({ ...prev, imagemUrl: "" }));
     else setArtista2(prev => ({ ...prev, imagemUrl: "" }));
+    await persistImage(which, "");
   };
 
   // Form always starts empty — no state restoration
