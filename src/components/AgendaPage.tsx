@@ -1628,6 +1628,7 @@ export default function AgendaPage() {
                         maxLength={100}
                         placeholder="Título do vídeo no YouTube"
                         className="h-9 text-xs"
+                        style={{ color: "var(--layout-page-text, #1a1a1a)" }}
                       />
                     </div>
                     <div>
