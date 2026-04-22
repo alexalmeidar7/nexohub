@@ -1666,7 +1666,7 @@ export default function AgendaPage() {
                       value={formEdicaoNotas}
                       onChange={(e) => setFormEdicaoNotas(e.target.value)}
                       placeholder="Anotações sobre a edição do programa (cortes, destaques, observações...)"
-                      className="min-h-[80px] text-xs"
+                       className="min-h-[180px] text-xs"
                       style={{ color: "var(--layout-page-text, #1a1a1a)" }}
                     />
                   </div>
