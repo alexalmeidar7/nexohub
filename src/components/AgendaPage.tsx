@@ -586,6 +586,10 @@ export default function AgendaPage() {
       tipo_evento: formTipoEvento,
       youtube_url: formTipoEvento === "live" ? formYoutubeUrl : "",
       artes_urls: formTipoEvento === "live" ? formArtesUrls : [],
+      youtube_titulo: formTipoEvento === "live" ? formYoutubeTitulo.slice(0, 100) : "",
+      youtube_descricao: formTipoEvento === "live" ? formYoutubeDescricao : "",
+      edicao_notas: formTipoEvento === "live" ? formEdicaoNotas : "",
+      edicao_concluida: formTipoEvento === "live" ? formEdicaoConcluida : false,
     } as any;
 
     if (editingId) {
