@@ -53,6 +53,8 @@ export type Database = {
           created_at: string
           data: string
           descricao: string | null
+          edicao_concluida: boolean
+          edicao_notas: string
           id: string
           local: string
           prioridade: string
@@ -61,6 +63,8 @@ export type Database = {
           status: string
           tipo_evento: string
           user_id: string
+          youtube_descricao: string
+          youtube_titulo: string
           youtube_url: string | null
         }
         Insert: {
@@ -68,6 +72,8 @@ export type Database = {
           created_at?: string
           data: string
           descricao?: string | null
+          edicao_concluida?: boolean
+          edicao_notas?: string
           id?: string
           local?: string
           prioridade?: string
@@ -76,6 +82,8 @@ export type Database = {
           status?: string
           tipo_evento?: string
           user_id: string
+          youtube_descricao?: string
+          youtube_titulo?: string
           youtube_url?: string | null
         }
         Update: {
@@ -83,6 +91,8 @@ export type Database = {
           created_at?: string
           data?: string
           descricao?: string | null
+          edicao_concluida?: boolean
+          edicao_notas?: string
           id?: string
           local?: string
           prioridade?: string
@@ -91,6 +101,8 @@ export type Database = {
           status?: string
           tipo_evento?: string
           user_id?: string
+          youtube_descricao?: string
+          youtube_titulo?: string
           youtube_url?: string | null
         }
         Relationships: [

@@ -8,6 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -273,6 +274,10 @@ interface Evento {
   tipo_evento?: string;
   youtube_url?: string;
   artes_urls?: string[];
+  youtube_titulo?: string;
+  youtube_descricao?: string;
+  edicao_notas?: string;
+  edicao_concluida?: boolean;
   programa?: Programa;
   participantes?: Participante[];
 }
@@ -347,6 +352,10 @@ export default function AgendaPage() {
   ]);
   const [formYoutubeUrl, setFormYoutubeUrl] = useState("");
   const [formArtesUrls, setFormArtesUrls] = useState<string[]>([]);
+  const [formYoutubeTitulo, setFormYoutubeTitulo] = useState("");
+  const [formYoutubeDescricao, setFormYoutubeDescricao] = useState("");
+  const [formEdicaoNotas, setFormEdicaoNotas] = useState("");
+  const [formEdicaoConcluida, setFormEdicaoConcluida] = useState(false);
   const [uploadingArte, setUploadingArte] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
 
@@ -526,6 +535,10 @@ export default function AgendaPage() {
     setFormParticipantes([{ nome: "", instagram: "" }]);
     setFormYoutubeUrl("");
     setFormArtesUrls([]);
+    setFormYoutubeTitulo("");
+    setFormYoutubeDescricao("");
+    setFormEdicaoNotas("");
+    setFormEdicaoConcluida(false);
     setEditingId(null);
   };
 
@@ -547,6 +560,10 @@ export default function AgendaPage() {
     setFormStatus(evt.status || "ativo");
     setFormYoutubeUrl(evt.youtube_url || "");
     setFormArtesUrls(evt.artes_urls || []);
+    setFormYoutubeTitulo(evt.youtube_titulo || "");
+    setFormYoutubeDescricao(evt.youtube_descricao || "");
+    setFormEdicaoNotas(evt.edicao_notas || "");
+    setFormEdicaoConcluida(!!evt.edicao_concluida);
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
         ? evt.participantes.map(p => ({ id: p.id, nome: p.nome, instagram: p.instagram }))
@@ -570,6 +587,10 @@ export default function AgendaPage() {
       tipo_evento: formTipoEvento,
       youtube_url: formTipoEvento === "live" ? formYoutubeUrl : "",
       artes_urls: formTipoEvento === "live" ? formArtesUrls : [],
+      youtube_titulo: formTipoEvento === "live" ? formYoutubeTitulo.slice(0, 100) : "",
+      youtube_descricao: formTipoEvento === "live" ? formYoutubeDescricao : "",
+      edicao_notas: formTipoEvento === "live" ? formEdicaoNotas : "",
+      edicao_concluida: formTipoEvento === "live" ? formEdicaoConcluida : false,
     } as any;
 
     if (editingId) {
@@ -1587,6 +1608,64 @@ export default function AgendaPage() {
                         );
                       })}
                     </div>
+                  </div>
+
+                  {/* Dados do YouTube */}
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                      <Youtube size={12} /> Dados do YouTube
+                    </Label>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>Título</span>
+                        <span className="text-[10px] font-mono" style={{ color: formYoutubeTitulo.length >= 100 ? "#ef4444" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                          {formYoutubeTitulo.length}/100
+                        </span>
+                      </div>
+                      <Input
+                        value={formYoutubeTitulo}
+                        onChange={(e) => setFormYoutubeTitulo(e.target.value.slice(0, 100))}
+                        maxLength={100}
+                        placeholder="Título do vídeo no YouTube"
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold block mb-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>Descrição</span>
+                      <Textarea
+                        value={formYoutubeDescricao}
+                        onChange={(e) => setFormYoutubeDescricao(e.target.value)}
+                        placeholder="Descrição do vídeo no YouTube"
+                        className="min-h-[80px] text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Anotações de Edição */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                        ✂️ Anotações da Edição
+                      </Label>
+                      <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={formEdicaoConcluida}
+                          onChange={(e) => setFormEdicaoConcluida(e.target.checked)}
+                          className="w-4 h-4 rounded cursor-pointer"
+                          style={{ accentColor: "var(--layout-accent-color, #2563eb)" }}
+                        />
+                        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: formEdicaoConcluida ? "#10b981" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
+                          {formEdicaoConcluida ? "✓ Edição concluída" : "Edição pendente"}
+                        </span>
+                      </label>
+                    </div>
+                    <Textarea
+                      value={formEdicaoNotas}
+                      onChange={(e) => setFormEdicaoNotas(e.target.value)}
+                      placeholder="Anotações sobre a edição do programa (cortes, destaques, observações...)"
+                      className="min-h-[80px] text-xs"
+                    />
                   </div>
                 </div>
               )}
