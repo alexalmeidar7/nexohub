@@ -144,10 +144,7 @@ export default function BatalhaMusicalPage() {
     await persistImage(which, url);
   };
 
-  const handleSetCustomUrl = async (which: 1 | 2) => {
-    const current = which === 1 ? artista1.imagemUrl : artista2.imagemUrl;
-    const url = window.prompt("Cole a URL da imagem do artista:", current || "");
-    if (url === null) return;
+  const applyImageUrl = async (which: 1 | 2, url: string) => {
     const trimmed = url.trim();
     if (which === 1) setArtista1(prev => ({ ...prev, imagemUrl: trimmed }));
     else setArtista2(prev => ({ ...prev, imagemUrl: trimmed }));
