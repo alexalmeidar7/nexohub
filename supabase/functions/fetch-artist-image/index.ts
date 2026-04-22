@@ -33,7 +33,34 @@ async function findArtist(artist: string): Promise<{ id: number; name: string; p
   return exact ?? list[0];
 }
 
-/** Get alternate images of the SAME artist from their albums (cover art). */
+/** Verify an album's main artist matches the expected id (rejects compilations/feats). */
+async function albumBelongsToArtist(albumId: number, expectedArtistId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`https://api.deezer.com/album/${albumId}`, {
+      signal: AbortSignal.timeout(3500),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    // Reject if album type is "compile" (compilation) — often multi-artist
+    if (typeof data?.record_type === "string" && data.record_type.toLowerCase() === "compile") {
+      return false;
+    }
+    const mainArtistId = Number(data?.artist?.id);
+    if (mainArtistId !== expectedArtistId) return false;
+    // Extra safety: if "contributors" exists and includes others as "Main", reject
+    const contributors = Array.isArray(data?.contributors) ? data.contributors : [];
+    const otherMain = contributors.some(
+      (c: { id?: number; role?: string }) =>
+        c?.role?.toLowerCase() === "main" && Number(c?.id) !== expectedArtistId
+    );
+    if (otherMain) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Get alternate images of the SAME artist from their albums (cover art), validated. */
 async function getArtistAlbumCovers(artistId: number): Promise<string[]> {
   try {
     const res = await fetch(`https://api.deezer.com/artist/${artistId}/albums?limit=25`, {
@@ -41,10 +68,41 @@ async function getArtistAlbumCovers(artistId: number): Promise<string[]> {
     });
     if (!res.ok) return [];
     const data = await res.json();
-    const albums = (data?.data ?? []) as Array<{ cover_xl?: string; cover_big?: string }>;
-    return albums
-      .map(a => a.cover_xl || a.cover_big)
-      .filter(isValidImage) as string[];
+    const albums = (data?.data ?? []) as Array<{
+      id: number;
+      cover_xl?: string;
+      cover_big?: string;
+      artist?: { id?: number };
+      record_type?: string;
+    }>;
+
+    // Pre-filter: drop compilations and any album whose listed artist isn't the matched one
+    const prefiltered = albums.filter(a => {
+      if (!isValidImage(a.cover_xl || a.cover_big)) return false;
+      if (typeof a.record_type === "string" && a.record_type.toLowerCase() === "compile") return false;
+      // /artist/{id}/albums sometimes includes the artist obj — if present, must match
+      if (a.artist?.id !== undefined && Number(a.artist.id) !== artistId) return false;
+      return true;
+    });
+
+    // Validate each album in parallel against /album/{id} for definitive ownership check
+    const validated = await Promise.all(
+      prefiltered.slice(0, 15).map(async (a) => {
+        const ok = await albumBelongsToArtist(a.id, artistId);
+        return ok ? (a.cover_xl || a.cover_big) as string : null;
+      })
+    );
+
+    // Dedupe while preserving order
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const url of validated) {
+      if (url && !seen.has(url)) {
+        seen.add(url);
+        result.push(url);
+      }
+    }
+    return result;
   } catch {
     return [];
   }
