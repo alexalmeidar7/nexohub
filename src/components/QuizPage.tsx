@@ -528,13 +528,35 @@ export default function QuizPage() {
           <Input
             value={imagemResposta}
             onChange={e => setImagemResposta(e.target.value)}
-            placeholder="Será gerado automaticamente ao agendar..."
+            placeholder="Cole a URL da imagem aqui ou use 'Outra imagem'"
             className="text-sm"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
           />
           {imagemResposta && (
             <img src={imagemResposta} alt="Preview" className="mt-2 rounded-lg max-h-32 object-contain" onError={e => (e.currentTarget.style.display = 'none')} />
           )}
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              type="button"
+              onClick={fetchAnotherImage}
+              disabled={loadingImage}
+              className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-md transition disabled:opacity-50"
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #268ffa) 15%, transparent)", color: "var(--layout-accent-color, #268ffa)" }}
+            >
+              {loadingImage ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+              Outra imagem
+            </button>
+            {imagemResposta && (
+              <button
+                type="button"
+                onClick={clearImage}
+                className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-md transition"
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
+              >
+                <X size={11} /> Remover
+              </button>
+            )}
+          </div>
         </div>
         {/* Schedule */}
         <div className="grid grid-cols-3 gap-3">
