@@ -50,6 +50,33 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>();
   const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const editableRef = useRef<HTMLDivElement>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [showFormatBar, setShowFormatBar] = useState(false);
+
+  const FONT_COLORS = ["#ffffff", "#fde047", "#f87171", "#4ade80", "#60a5fa", "#c084fc", "#fb923c"];
+  const HIGHLIGHT_COLORS = ["transparent", "#fde047", "#f87171", "#4ade80", "#60a5fa", "#c084fc", "#fb923c"];
+
+  function execFormat(cmd: string, value?: string) {
+    editableRef.current?.focus();
+    document.execCommand(cmd, false, value);
+    persistEditableContent();
+  }
+
+  function persistEditableContent() {
+    if (!editableRef.current) return;
+    const html = editableRef.current.innerHTML;
+    setDisplayText(html);
+    setIsHtmlContent(true);
+    if (activeTpIdRef.current) {
+      (supabase as any)
+        .from("teleprompters")
+        .update({ texto_atual: html, is_html: true })
+        .eq("id", activeTpIdRef.current)
+        .then(() => {});
+      dbTextRef.current = html;
+    }
+  }
 
   function processQueue() {
     if (isShowingRef.current || msgQueueRef.current.length === 0) return;
