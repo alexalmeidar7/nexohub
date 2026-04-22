@@ -150,6 +150,7 @@ export default function BatalhaMusicalPage() {
   useEffect(() => {
     clearTimeout(debounce1.current);
     const artistName = artista1.nome.trim();
+    skip1Ref.current = 0;
     const requestId = ++request1Ref.current;
 
     if (!artistName) {
