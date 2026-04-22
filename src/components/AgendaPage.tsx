@@ -1628,6 +1628,7 @@ export default function AgendaPage() {
                         maxLength={100}
                         placeholder="Título do vídeo no YouTube"
                         className="h-9 text-xs"
+                        style={{ color: "var(--layout-page-text, #1a1a1a)" }}
                       />
                     </div>
                     <div>
@@ -1637,6 +1638,7 @@ export default function AgendaPage() {
                         onChange={(e) => setFormYoutubeDescricao(e.target.value)}
                         placeholder="Descrição do vídeo no YouTube"
                         className="min-h-[80px] text-xs"
+                        style={{ color: "var(--layout-page-text, #1a1a1a)" }}
                       />
                     </div>
                   </div>
@@ -1665,6 +1667,7 @@ export default function AgendaPage() {
                       onChange={(e) => setFormEdicaoNotas(e.target.value)}
                       placeholder="Anotações sobre a edição do programa (cortes, destaques, observações...)"
                       className="min-h-[80px] text-xs"
+                      style={{ color: "var(--layout-page-text, #1a1a1a)" }}
                     />
                   </div>
                 </div>
