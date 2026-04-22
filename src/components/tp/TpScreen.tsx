@@ -872,7 +872,11 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
           <button
             onClick={() => { setEditMode((v) => !v); setShowFormatBar(false); setScrolling(false); }}
             title={editMode ? "Salvar edição" : "Editar texto"}
-            className={`${tpControlBtnClasses} ${editMode ? tpControlBtnActiveClasses : ""} px-2.5 py-1.5 text-[11px] font-bold`}
+            className={`px-3 py-1.5 text-[11px] font-bold rounded-lg border transition-all ${
+              editMode
+                ? "bg-tp-accent text-white border-tp-accent shadow-[0_0_12px_hsl(var(--tp-accent)/0.6)]"
+                : "bg-tp-accent/20 text-tp-accent border-tp-accent/50 hover:bg-tp-accent/30"
+            }`}
           >
             {editMode ? "✓ Salvar" : "✎ Editar"}
           </button>
