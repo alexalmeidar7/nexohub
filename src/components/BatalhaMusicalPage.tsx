@@ -104,6 +104,8 @@ export default function BatalhaMusicalPage() {
   const imageCacheRef = useRef<Record<string, string>>({});
   const skip1Ref = useRef(0);
   const skip2Ref = useRef(0);
+  const editingIdRef = useRef<string | null>(null);
+  const loadBatalhasRef = useRef<(() => void) | null>(null);
 
   const persistImage = async (which: 1 | 2, url: string) => {
     if (!editingIdRef.current) return;
