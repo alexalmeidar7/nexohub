@@ -804,7 +804,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
 
         {/* Floating Format Toolbar */}
         {editMode && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] bg-tp-control backdrop-blur-[20px] px-3 py-2 rounded-xl flex items-center gap-2 border border-tp-accent/30 shadow-[0_8px_32px_hsl(var(--tp-shadow))] flex-wrap max-w-[90%] justify-center">
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[60] bg-tp-control backdrop-blur-[20px] px-3 py-2 rounded-xl flex items-center gap-2 border-2 border-tp-accent shadow-[0_8px_32px_hsl(var(--tp-accent)/0.4)] flex-wrap max-w-[90%] justify-center">
             <button onMouseDown={(e) => e.preventDefault()} onClick={() => execFormat("bold")} className={`${tpControlBtnClasses} px-2 py-1 text-xs font-bold`} title="Negrito">B</button>
             <button onMouseDown={(e) => e.preventDefault()} onClick={() => execFormat("italic")} className={`${tpControlBtnClasses} px-2 py-1 text-xs italic`} title="Itálico">I</button>
             <button onMouseDown={(e) => e.preventDefault()} onClick={() => execFormat("underline")} className={`${tpControlBtnClasses} px-2 py-1 text-xs underline`} title="Sublinhar">U</button>
