@@ -102,6 +102,42 @@ export default function BatalhaMusicalPage() {
   const request1Ref = useRef(0);
   const request2Ref = useRef(0);
   const imageCacheRef = useRef<Record<string, string>>({});
+  const skip1Ref = useRef(0);
+  const skip2Ref = useRef(0);
+
+  const handleSearchAnother = async (which: 1 | 2) => {
+    const name = (which === 1 ? artista1.nome : artista2.nome).trim();
+    if (!name) {
+      toast.error("Digite o nome do artista primeiro");
+      return;
+    }
+    if (which === 1) { setLoading1(true); skip1Ref.current += 1; }
+    else { setLoading2(true); skip2Ref.current += 1; }
+    const url = await fetchArtistImage(name, which === 1 ? skip1Ref.current : skip2Ref.current);
+    if (which === 1) setLoading1(false); else setLoading2(false);
+    if (!url) {
+      toast.error("Nenhuma outra imagem encontrada");
+      return;
+    }
+    const cacheKey = name.toLowerCase();
+    imageCacheRef.current[cacheKey] = url;
+    if (which === 1) setArtista1(prev => ({ ...prev, imagemUrl: url }));
+    else setArtista2(prev => ({ ...prev, imagemUrl: url }));
+  };
+
+  const handleSetCustomUrl = (which: 1 | 2) => {
+    const current = which === 1 ? artista1.imagemUrl : artista2.imagemUrl;
+    const url = window.prompt("Cole a URL da imagem do artista:", current || "");
+    if (url === null) return;
+    const trimmed = url.trim();
+    if (which === 1) setArtista1(prev => ({ ...prev, imagemUrl: trimmed }));
+    else setArtista2(prev => ({ ...prev, imagemUrl: trimmed }));
+  };
+
+  const handleClearImage = (which: 1 | 2) => {
+    if (which === 1) setArtista1(prev => ({ ...prev, imagemUrl: "" }));
+    else setArtista2(prev => ({ ...prev, imagemUrl: "" }));
+  };
 
   // Form always starts empty — no state restoration
   useEffect(() => {
