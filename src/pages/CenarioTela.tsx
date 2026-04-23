@@ -207,7 +207,8 @@ export default function CenarioTela() {
     return new URLSearchParams(window.location.search).get("weatherSubTab") || "today";
   });
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; tipo_programa?: string | null } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null } | null>(null);
+  const [presenterIdx, setPresenterIdx] = useState(0);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
@@ -785,13 +786,15 @@ export default function CenarioTela() {
       if (onAir) {
         let apresentadorNome = "";
         let apresentadorFoto = "";
+        let apresentadoresFotos: string[] = [];
         const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
         if (apIds.length) {
           const { data: aps } = await supabase.from("apresentadores").select("nome, foto").in("id", apIds);
           apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
-          apresentadorFoto = aps?.[0]?.foto || "";
+          apresentadoresFotos = (aps || []).map(a => a.foto).filter((f): f is string => !!f);
+          apresentadorFoto = apresentadoresFotos[0] || "";
         }
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, tipo_programa: onAir.tipo_programa });
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, apresentadoresFotos, tipo_programa: onAir.tipo_programa });
         const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", effectiveUserId).eq("ativo", true).eq("excluido", false);
         setSponsorLogos(logos || []);
         // Find next program
