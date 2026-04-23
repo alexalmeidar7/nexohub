@@ -89,7 +89,11 @@ export default function ApresentadorForm() {
     if (!nome.trim() || !user || !categoria) return;
     setSaving(true);
 
-    const cargoValue = categoria === "Convidado" ? categoria : categoria;
+    // Para "Convidado" com cargo livre (Médico, Advogado...), grava o cargo digitado.
+    // Caso contrário, grava a própria categoria (Apresentador/Jornalista/Convidado).
+    const cargoValue = categoria === "Convidado" && cargoConvidado.trim()
+      ? cargoConvidado.trim()
+      : categoria;
 
     // Upload photo to storage if it's base64
     let fotoUrl = showFoto ? foto : "";
@@ -99,26 +103,36 @@ export default function ApresentadorForm() {
       fotoUrl = await uploadImageToStorage(fotoUrl, "empresa-assets", path);
     }
 
+    const payload = {
+      nome: nome.trim(),
+      cargo: cargoValue,
+      instagram: instagram.trim(),
+      whatsapp: whatsapp.replace(/\D/g, "").length > 2 ? whatsapp.trim() : "",
+      foto: fotoUrl,
+      ativo,
+    };
+
+    let error: any = null;
     if (editingId) {
-      await supabase.from("apresentadores").update({
-        nome: nome.trim(),
-        cargo: cargoValue,
-        instagram: instagram.trim(),
-        whatsapp: whatsapp.replace(/\D/g, "").length > 2 ? whatsapp.trim() : "",
-        foto: fotoUrl,
-        ativo,
-      } as any).eq("id", editingId);
+      const res = await supabase.from("apresentadores").update(payload as any).eq("id", editingId);
+      error = res.error;
     } else {
-      await supabase.from("apresentadores").insert({
-        user_id: user.id,
-        nome: nome.trim(),
-        cargo: cargoValue,
-        instagram: instagram.trim(),
-        whatsapp: whatsapp.replace(/\D/g, "").length > 2 ? whatsapp.trim() : "",
-        foto: fotoUrl,
-        ativo,
-      } as any);
+      const res = await supabase.from("apresentadores").insert({ user_id: user.id, ...payload } as any);
+      error = res.error;
     }
+
+    if (error) {
+      console.error("Erro ao salvar apresentador:", error);
+      alert("Erro ao salvar: " + error.message);
+      setSaving(false);
+      return;
+    }
+
+    // Dispara atualização imediata dos XMLs que dependem de apresentadores
+    try {
+      window.dispatchEvent(new CustomEvent("apresentadores-updated"));
+    } catch {}
+
     await load();
     resetForm();
     setSaving(false);
@@ -129,11 +143,21 @@ export default function ApresentadorForm() {
   const startEdit = (a: Apresentador) => {
     setEditingId(a.id);
     setNome(a.nome);
-    setCategoria(a.cargo);
+    // Se o cargo gravado é uma das categorias padrão, é a categoria.
+    // Caso contrário, trata-se de um Convidado com cargo livre.
+    if (CATEGORIA_OPTIONS.includes(a.cargo)) {
+      setCategoria(a.cargo);
+      setCargoConvidado("");
+    } else {
+      setCategoria("Convidado");
+      setCargoConvidado(a.cargo || "");
+    }
     setInstagram(a.instagram);
     setWhatsapp(a.whatsapp || "+55");
     setFoto(a.foto);
     setAtivo(a.ativo);
+    // Scroll suave até o formulário no topo
+    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
   };
 
   const formatWhatsapp = (value: string) => {
