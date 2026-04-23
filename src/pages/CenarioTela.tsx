@@ -1455,29 +1455,34 @@ export default function CenarioTela() {
                          flexShrink: 0,
                        }}>
                         {/* Presenter photo anchored at bottom, overflows top */}
-                        {currentProgram?.apresentadorFoto && (
-                          <>
-                            <img
-                              key={currentProgram.apresentadorFoto}
-                              src={currentProgram.apresentadorFoto}
-                              alt=""
-                              style={{
-                                position: "absolute",
-                                bottom: 0,
-                                left: "50%",
-                                transform: "translateX(-50%)",
-                                height: "140%",
-                                width: "auto",
-                                objectFit: "contain",
-                                filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
-                                pointerEvents: "none",
-                                animation: "presenter-enter 0.8s cubic-bezier(0.16,1,0.3,1) both",
-                              }}
-                            />
-                            {/* Gradient fade at bottom — CEF 86 compatible */}
-                            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "25%", background: `linear-gradient(to top, ${accentRgba(0.7)} 0%, transparent 100%)`, pointerEvents: "none", borderRadius: `0 0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu}` }} />
-                          </>
-                        )}
+                        {(() => {
+                          const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
+                          const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
+                          if (!activeFoto) return null;
+                          return (
+                            <>
+                              <img
+                                key={activeFoto}
+                                src={activeFoto}
+                                alt=""
+                                style={{
+                                  position: "absolute",
+                                  bottom: 0,
+                                  left: "50%",
+                                  transform: "translateX(-50%)",
+                                  height: "140%",
+                                  width: "auto",
+                                  objectFit: "contain",
+                                  filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
+                                  pointerEvents: "none",
+                                  animation: "presenter-enter 0.8s cubic-bezier(0.16,1,0.3,1) both",
+                                }}
+                              />
+                              {/* Gradient fade at bottom — CEF 86 compatible */}
+                              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "25%", background: `linear-gradient(to top, ${accentRgba(0.7)} 0%, transparent 100%)`, pointerEvents: "none", borderRadius: `0 0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu}` }} />
+                            </>
+                          );
+                        })()}
                         {/* Selo top-right */}
                         {currentProgram?.selo && (
                           <img src={currentProgram.selo} alt="" style={{ position: "absolute", top: `${vhToPx(0.8)}${vu}`, right: `${vhToPx(0.8)}${vu}`, maxHeight: `${vhToPx(5.82)}${vu}`, maxWidth: `${vhToPx(8.74)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))", zIndex: 3 }} />
