@@ -770,7 +770,8 @@ export default function CenarioInterativoPage() {
   const [savedFlash, setSavedFlash] = useState(false);
   const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; tipo_programa?: string | null } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null } | null>(null);
+  const [presenterIdx, setPresenterIdx] = useState(0);
   const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const prevMusicRef = useRef("");
@@ -909,13 +910,15 @@ export default function CenarioInterativoPage() {
       if (onAir) {
         let apresentadorNome = "";
         let apresentadorFoto = "";
+        let apresentadoresFotos: string[] = [];
         const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
         if (apIds.length) {
           const { data: aps } = await supabase.from("apresentadores").select("nome, foto").in("id", apIds);
           apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
-          apresentadorFoto = aps?.[0]?.foto || "";
+          apresentadoresFotos = (aps || []).map(a => a.foto).filter((f): f is string => !!f);
+          apresentadorFoto = apresentadoresFotos[0] || "";
         }
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, tipo_programa: onAir.tipo_programa });
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, apresentadoresFotos, tipo_programa: onAir.tipo_programa });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
           .select("id, nome, logo_url")
@@ -942,6 +945,17 @@ export default function CenarioInterativoPage() {
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
   }, [user?.id]);
+
+  /* Rotate presenter photo every 10s when program has multiple presenters */
+  useEffect(() => {
+    const fotos = currentProgram?.apresentadoresFotos || [];
+    setPresenterIdx(0);
+    if (fotos.length <= 1) return;
+    const id = setInterval(() => {
+      setPresenterIdx(i => (i + 1) % fotos.length);
+    }, 10000);
+    return () => clearInterval(id);
+  }, [currentProgram?.id, currentProgram?.apresentadoresFotos?.join("|")]);
 
   /* ─── Load from DB (with local cache fallback) ─── */
   useEffect(() => {
@@ -1940,9 +1954,14 @@ export default function CenarioInterativoPage() {
                                  </div>
 
                                  <div className="flex-1 flex items-center justify-center" style={{ minHeight: 0 }}>
-                                   {currentProgram?.apresentadorFoto && (
-                                     <img src={currentProgram.apresentadorFoto} alt="" style={{ maxHeight: `${pvh(8.6)}px`, maxWidth: "100%", objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))", WebkitMaskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)", maskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)" }} />
-                                   )}
+                                   {(() => {
+                                     const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
+                                     const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
+                                     if (!activeFoto) return null;
+                                     return (
+                                       <img key={activeFoto} src={activeFoto} alt="" style={{ maxHeight: `${pvh(8.6)}px`, maxWidth: "100%", objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))", WebkitMaskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)", maskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)" }} />
+                                     );
+                                   })()}
                                  </div>
 
                                  <div style={{ minHeight: 0 }}>
