@@ -812,6 +812,17 @@ export default function CenarioTela() {
     return () => clearInterval(interval);
   }, [effectiveUserId, isAuthenticated]);
 
+  /* Rotate presenter photo every 10s when program has multiple presenters */
+  useEffect(() => {
+    const fotos = currentProgram?.apresentadoresFotos || [];
+    setPresenterIdx(0);
+    if (fotos.length <= 1) return;
+    const id = setInterval(() => {
+      setPresenterIdx(i => (i + 1) % fotos.length);
+    }, 10000);
+    return () => clearInterval(id);
+  }, [currentProgram?.id, currentProgram?.apresentadoresFotos?.join("|")]);
+
   /* Fetch weather — initial + every 5 min to stay in sync with XML */
   const weatherCity = config.weather.city || config.city;
   const weatherCoordsRef = useRef<{ lat: number; lon: number } | null>(null);
