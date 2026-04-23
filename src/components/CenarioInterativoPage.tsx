@@ -946,6 +946,17 @@ export default function CenarioInterativoPage() {
     return () => clearInterval(interval);
   }, [user?.id]);
 
+  /* Rotate presenter photo every 10s when program has multiple presenters */
+  useEffect(() => {
+    const fotos = currentProgram?.apresentadoresFotos || [];
+    setPresenterIdx(0);
+    if (fotos.length <= 1) return;
+    const id = setInterval(() => {
+      setPresenterIdx(i => (i + 1) % fotos.length);
+    }, 10000);
+    return () => clearInterval(id);
+  }, [currentProgram?.id, currentProgram?.apresentadoresFotos?.join("|")]);
+
   /* ─── Load from DB (with local cache fallback) ─── */
   useEffect(() => {
     const applyCachedConfig = () => {
@@ -1943,9 +1954,14 @@ export default function CenarioInterativoPage() {
                                  </div>
 
                                  <div className="flex-1 flex items-center justify-center" style={{ minHeight: 0 }}>
-                                   {currentProgram?.apresentadorFoto && (
-                                     <img src={currentProgram.apresentadorFoto} alt="" style={{ maxHeight: `${pvh(8.6)}px`, maxWidth: "100%", objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))", WebkitMaskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)", maskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)" }} />
-                                   )}
+                                   {(() => {
+                                     const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
+                                     const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
+                                     if (!activeFoto) return null;
+                                     return (
+                                       <img key={activeFoto} src={activeFoto} alt="" style={{ maxHeight: `${pvh(8.6)}px`, maxWidth: "100%", objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))", WebkitMaskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)", maskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)" }} />
+                                     );
+                                   })()}
                                  </div>
 
                                  <div style={{ minHeight: 0 }}>
