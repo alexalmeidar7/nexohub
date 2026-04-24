@@ -45,6 +45,25 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+/* ─── Layout-token styles (respect user theme) ─── */
+const layoutCardStyle: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 4%, var(--layout-page-bg, #ffffff))",
+  color: "var(--layout-page-text, #0d0446)",
+  border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
+};
+const layoutInnerStyle: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 5%, var(--layout-page-bg, #ffffff))",
+  border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
+};
+const layoutTextMuted: React.CSSProperties = {
+  color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)",
+};
+const layoutText: React.CSSProperties = { color: "var(--layout-page-text, #0d0446)" };
+const layoutAccentSoft: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)",
+};
+const layoutAccent: React.CSSProperties = { color: "var(--layout-accent-color, #2563eb)" };
+
 export default function CenariosEstudioPage() {
   const { user } = useAuth();
   const [grupos, setGrupos] = useState<Grupo[]>([]);
@@ -275,15 +294,15 @@ export default function CenariosEstudioPage() {
   return (
     <div className="space-y-5">
       {/* Header info + XML */}
-      <Card className="p-5 border-border">
+      <Card className="p-5" style={layoutCardStyle}>
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="h-11 w-11 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-              <Tv className="h-5 w-5 text-primary" />
+            <div className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0" style={layoutAccentSoft}>
+              <Tv className="h-5 w-5" style={layoutAccent} />
             </div>
             <div>
-              <h3 className="font-semibold text-lg leading-tight text-foreground">Cenários Estúdio</h3>
-              <p className="text-sm text-muted-foreground mt-1 max-w-xl leading-relaxed">
+              <h3 className="font-semibold text-lg leading-tight" style={layoutText}>Cenários Estúdio</h3>
+              <p className="text-sm mt-1 max-w-xl leading-relaxed" style={layoutTextMuted}>
                 Monte grupos de TVs e vincule a programas. O vMix consome o XML e troca automaticamente conforme o programa no ar.
               </p>
             </div>
@@ -292,12 +311,14 @@ export default function CenariosEstudioPage() {
             <Plus className="h-4 w-4 mr-1" /> Novo grupo
           </Button>
         </div>
-        <div className="mt-4 pt-4 border-t border-border">
-          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Link XML para o vMix</Label>
-          <div className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-md bg-muted/60 border border-border">
-            <LinkIcon className="h-4 w-4 text-foreground/60 shrink-0" />
-            <code className="text-sm text-foreground truncate flex-1 font-mono">{xmlUrl}</code>
-            <Button size="sm" variant="ghost" className="h-8 px-2 shrink-0" onClick={copyXmlUrl}>
+        <div className="mt-4 pt-4" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}>
+          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>
+            Link XML para o vMix
+          </Label>
+          <div className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-md" style={layoutInnerStyle}>
+            <LinkIcon className="h-4 w-4 shrink-0" style={layoutTextMuted} />
+            <code className="text-sm truncate flex-1 font-mono" style={layoutText}>{xmlUrl}</code>
+            <Button size="sm" variant="ghost" className="h-8 px-2 shrink-0" onClick={copyXmlUrl} style={layoutText}>
               <Copy className="h-4 w-4 mr-1" /> Copiar
             </Button>
           </div>
@@ -306,12 +327,12 @@ export default function CenariosEstudioPage() {
 
       {/* Empty state: no programas registered (priority over "no grupos") */}
       {noProgramas && (
-        <Card className="p-10 text-center border-dashed border-border">
-          <div className="mx-auto h-14 w-14 rounded-full bg-primary/15 flex items-center justify-center mb-4">
-            <Radio className="h-7 w-7 text-primary" />
+        <Card className="p-10 text-center border-dashed" style={layoutCardStyle}>
+          <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-4" style={layoutAccentSoft}>
+            <Radio className="h-7 w-7" style={layoutAccent} />
           </div>
-          <h4 className="font-semibold text-base text-foreground mb-2">Cadastre programas primeiro</h4>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5 leading-relaxed">
+          <h4 className="font-semibold text-base mb-2" style={layoutText}>Cadastre programas primeiro</h4>
+          <p className="text-sm max-w-md mx-auto mb-5 leading-relaxed" style={layoutTextMuted}>
             Para criar grupos de TVs e vincular ao programa no ar, você precisa ter ao menos um programa ativo cadastrado.
           </p>
           <Button asChild size="sm">
@@ -324,13 +345,13 @@ export default function CenariosEstudioPage() {
 
       {/* Empty state: programas exist, no grupos */}
       {!noProgramas && grupos.length === 0 && (
-        <Card className="p-10 text-center border-dashed border-border">
-          <div className="mx-auto h-14 w-14 rounded-full bg-primary/15 flex items-center justify-center mb-4">
-            <LayoutGrid className="h-7 w-7 text-primary" />
+        <Card className="p-10 text-center border-dashed" style={layoutCardStyle}>
+          <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-4" style={layoutAccentSoft}>
+            <LayoutGrid className="h-7 w-7" style={layoutAccent} />
           </div>
-          <h4 className="font-semibold text-base text-foreground mb-2">Nenhum grupo criado</h4>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5 leading-relaxed">
-            Crie um grupo para definir o layout das TVs do cenário (ex: <span className="font-medium text-foreground">"TVs atrás da âncora"</span>),
+          <h4 className="font-semibold text-base mb-2" style={layoutText}>Nenhum grupo criado</h4>
+          <p className="text-sm max-w-md mx-auto mb-5 leading-relaxed" style={layoutTextMuted}>
+            Crie um grupo para definir o layout das TVs do cenário (ex: <span className="font-medium" style={layoutText}>"TVs atrás da âncora"</span>),
             envie as imagens e vincule aos programas que devem usar esse cenário.
           </p>
           <Button onClick={addGrupo} size="sm">
@@ -375,15 +396,15 @@ function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgr
   const cells = Array.from({ length: total }, (_, i) => i);
 
   return (
-    <Card className="p-5 space-y-6 border-border">
+    <Card className="p-5 space-y-6" style={layoutCardStyle}>
       {/* Top: nome + grid + ações */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 md:items-end">
         <div>
-          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Nome do grupo</Label>
+          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Nome do grupo</Label>
           <Input value={grupo.nome} onChange={(e) => onChange({ nome: e.target.value })} className="mt-1.5 text-sm" />
         </div>
         <div>
-          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Linhas</Label>
+          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Linhas</Label>
           <Input
             type="number"
             min={1}
@@ -394,7 +415,7 @@ function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgr
           />
         </div>
         <div>
-          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Colunas</Label>
+          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Colunas</Label>
           <Input
             type="number"
             min={1}
@@ -416,13 +437,13 @@ function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgr
       </div>
 
       {/* Programas vinculados */}
-      <div className="rounded-lg border border-border bg-muted/40 p-4">
+      <div className="rounded-lg p-4" style={layoutInnerStyle}>
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Programas vinculados</Label>
+          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Programas vinculados</Label>
           <Badge variant="secondary" className="text-xs">{grupo.programa_ids.length} selecionado(s)</Badge>
         </div>
         <div className="flex flex-wrap gap-2">
-          {programas.length === 0 && <p className="text-sm text-muted-foreground">Nenhum programa cadastrado.</p>}
+          {programas.length === 0 && <p className="text-sm" style={layoutTextMuted}>Nenhum programa cadastrado.</p>}
           {programas.map((p) => {
             const sel = grupo.programa_ids.includes(p.id);
             return (
@@ -442,12 +463,12 @@ function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgr
       {/* Mockup do grid */}
       <div>
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Mockup do cenário</Label>
+          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Mockup do cenário</Label>
           <Badge variant="outline" className="text-xs font-mono">
             {grupo.rows} × {grupo.cols} = {total} TV{total !== 1 ? "s" : ""}
           </Badge>
         </div>
-        <div className="rounded-lg bg-muted/40 border border-border p-6">
+        <div className="rounded-lg p-6" style={layoutInnerStyle}>
           <div
             className="mx-auto grid gap-3"
             style={{
