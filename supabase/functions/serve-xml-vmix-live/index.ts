@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
 
     const { data: progs } = await supabase
       .from("programas")
-      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, apresentador_id, apresentadores_ids")
+      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, apresentador_id, apresentadores_ids, capa, thumb")
       .eq("user_id", userId)
       .eq("ativo", true);
 
@@ -159,6 +159,7 @@ Deno.serve(async (req) => {
     <nome>${esc(onAir?.nome || "")}</nome>
     <horario_inicio>${esc(onAir?.horario_inicio || "")}</horario_inicio>
     <horario_fim>${esc(onAir?.horario_fim || "")}</horario_fim>
+    <capa>${esc(stripQuery((onAir as any)?.capa || (onAir as any)?.thumb || ""))}</capa>
   </programa>
   <apresentador>
     <nome>${esc(apresentadorNome)}</nome>
