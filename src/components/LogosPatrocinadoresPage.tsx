@@ -456,15 +456,17 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           <div className="p-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-4">
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Nome *</label>
-                  <input type="text" value={nomeLogo} onChange={(e) => setNomeLogo(e.target.value)} placeholder="Ex: Patrocinador X"
-                    className="w-full px-4 py-1.5 text-sm outline-none uppercase font-bold"
-                    style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                  />
-                </div>
+                {editingFullId && (
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Nome *</label>
+                    <input type="text" value={nomeLogo} onChange={(e) => setNomeLogo(e.target.value)} placeholder="Ex: Patrocinador X"
+                      className="w-full px-4 py-1.5 text-sm outline-none uppercase font-bold"
+                      style={inputStyle}
+                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
+                      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>
                     Programa(s) * {!editingFullId && programaIds.length > 0 && <span className="font-normal opacity-60">({programaIds.length} selecionado{programaIds.length > 1 ? "s" : ""})</span>}
