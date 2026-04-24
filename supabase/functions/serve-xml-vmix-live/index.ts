@@ -36,15 +36,12 @@ Deno.serve(async (req) => {
   const xmlHeaders = {
     ...corsHeaders,
     "Content-Type": "application/xml; charset=utf-8",
-    "Cache-Control": "public, max-age=110",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
   };
 
   try {
     const url = new URL(req.url);
     const userId = url.searchParams.get("uid") || url.searchParams.get("user_id");
-    const titulo = url.searchParams.get("titulo") || "";
-    const artista = url.searchParams.get("artista") || "";
-    const capa = url.searchParams.get("capa") || "";
 
     if (!userId) {
       return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>uid required</error>`, {
