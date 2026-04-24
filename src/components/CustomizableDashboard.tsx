@@ -574,7 +574,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     boxShadow: isDragOver ? "0 0 0 2px var(--layout-accent-color), 0 4px 20px rgba(0,0,0,0.12)" : "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
                     borderRadius: "24px",
                     height: item.widgetType === "player" ? "auto" : "280px",
-                    minHeight: item.widgetType === "player" ? "160px" : undefined,
+                    minHeight: item.widgetType === "player" ? "220px" : undefined,
                     maxHeight: item.widgetType === "player" ? "none" : "280px",
                     overflow: "hidden",
                   }}
@@ -1602,7 +1602,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
       import("hls.js").then(({ default: Hls }) => {
         if (!Hls.isSupported()) {
           el.src = url;
-          el.play().catch(() => {});
+          el.muted = true; // Required for autoplay
+          el.play().then(() => {
+            // Try to unmute if user hasn't muted explicitly
+            if (!isMuted) { el.muted = false; }
+          }).catch((err) => console.warn("[Player video] play failed:", err));
           return;
         }
         const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
@@ -1611,15 +1615,24 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
         hls.attachMedia(el);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           el.volume = volume;
-          el.muted = isMuted;
-          el.play().catch(() => {});
+          el.muted = true; // Required for autoplay
+          el.play().then(() => {
+            if (!isMuted) {
+              setTimeout(() => { try { el.muted = false; } catch {} }, 150);
+            }
+          }).catch((err) => console.warn("[Player video] play failed:", err));
+        });
+        hls.on(Hls.Events.ERROR, (_e: any, errData: any) => {
+          console.error("[Player video] HLS error:", errData?.type, errData?.details, errData?.fatal);
         });
       });
     } else {
       el.src = url;
       el.volume = volume;
-      el.muted = isMuted;
-      el.play().catch(() => {});
+      el.muted = true; // Required for autoplay
+      el.play().then(() => {
+        if (!isMuted) { el.muted = false; }
+      }).catch((err) => console.warn("[Player video] play failed:", err));
     }
 
     return () => { hlsInitUrlRef.current = ""; el.removeEventListener("playing", onPlaying); };
