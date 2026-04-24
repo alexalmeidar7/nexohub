@@ -13,6 +13,23 @@ const xmlEscape = (s: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
+const toSeconds = (time: string) => {
+  const [hour = "0", minute = "0", second = "0"] = String(time ?? "").split(":");
+  return Number(hour) * 3600 + Number(minute) * 60 + Number(second);
+};
+
+const isTimeInRange = (start: string, end: string, current: string) => {
+  const startSeconds = toSeconds(start);
+  const endSeconds = toSeconds(end);
+  const currentSeconds = toSeconds(current);
+
+  if (endSeconds <= startSeconds) {
+    return currentSeconds >= startSeconds || currentSeconds < endSeconds;
+  }
+
+  return currentSeconds >= startSeconds && currentSeconds < endSeconds;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -32,23 +49,36 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const now = new Date();
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-    const today = dayNames[now.getDay()];
-    const nowTime = now.toTimeString().slice(0, 5);
+    const tzParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).formatToParts(new Date());
+    const wkShort = tzParts.find((p) => p.type === "weekday")?.value || "Sun";
+    const hh = tzParts.find((p) => p.type === "hour")?.value || "00";
+    const mm = tzParts.find((p) => p.type === "minute")?.value || "00";
+    const ss = tzParts.find((p) => p.type === "second")?.value || "00";
+    const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const today = dayNames[dayMap[wkShort] ?? 0];
+    const nowTime = `${hh}:${mm}:${ss}`;
 
     // Programa atualmente no ar (de acordo com a grade)
     const { data: progs } = await supabase
       .from("programas")
-      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo")
+      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, estudio")
       .eq("user_id", userId)
-      .eq("ativo", true);
+      .eq("ativo", true)
+      .ilike("estudio", "%fm%")
+      .order("horario_inicio", { ascending: false });
 
     const onAir = (progs || []).find(
       (p: any) =>
         (p.dias_semana || []).includes(today) &&
-        p.horario_inicio <= nowTime &&
-        p.horario_fim > nowTime,
+        isTimeInRange(p.horario_inicio, p.horario_fim, nowTime),
     );
 
     // Carrega TODOS os templates do usuário
