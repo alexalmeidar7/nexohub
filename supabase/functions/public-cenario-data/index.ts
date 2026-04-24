@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
           .maybeSingle(),
         supabase
           .from("programas")
-          .select("id, nome, selo, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, tipo_programa")
+          .select("id, nome, selo, thumb, capa, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, tipo_programa")
           .eq("user_id", userId)
           .eq("ativo", true),
       ]),
