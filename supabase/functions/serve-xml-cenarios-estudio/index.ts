@@ -87,16 +87,33 @@ Deno.serve(async (req) => {
     xml += `  <grupos>\n`;
     for (const g of grupos || []) {
       const tvs = tvsByGrupo[g.id] || [];
+      const arte = tvs.find((t: any) => t.posicao === 0)?.imagem_url || tvs[0]?.imagem_url || "";
+      const rows = Number(g.rows) || 1;
+      const cols = Number(g.cols) || 1;
+      const total = rows * cols;
       xml += `    <grupo>\n`;
       xml += `      <id>${xmlEscape(g.id)}</id>\n`;
       xml += `      <nome>${xmlEscape(g.nome)}</nome>\n`;
-      xml += `      <rows>${g.rows}</rows>\n`;
-      xml += `      <cols>${g.cols}</cols>\n`;
+      xml += `      <rows>${rows}</rows>\n`;
+      xml += `      <cols>${cols}</cols>\n`;
+      xml += `      <arte>${xmlEscape(arte)}</arte>\n`;
       xml += `      <tvs>\n`;
-      for (const tv of tvs) {
+      for (let pos = 0; pos < total; pos++) {
+        const row = Math.floor(pos / cols);
+        const col = pos % cols;
+        const bgSizeX = cols * 100;
+        const bgSizeY = rows * 100;
+        const posX = cols > 1 ? (col / (cols - 1)) * 100 : 50;
+        const posY = rows > 1 ? (row / (rows - 1)) * 100 : 50;
         xml += `        <tv>\n`;
-        xml += `          <posicao>${tv.posicao}</posicao>\n`;
-        xml += `          <imagem>${xmlEscape(tv.imagem_url)}</imagem>\n`;
+        xml += `          <posicao>${pos}</posicao>\n`;
+        xml += `          <row>${row}</row>\n`;
+        xml += `          <col>${col}</col>\n`;
+        xml += `          <imagem>${xmlEscape(arte)}</imagem>\n`;
+        xml += `          <slice_size_x>${bgSizeX}</slice_size_x>\n`;
+        xml += `          <slice_size_y>${bgSizeY}</slice_size_y>\n`;
+        xml += `          <slice_pos_x>${posX}</slice_pos_x>\n`;
+        xml += `          <slice_pos_y>${posY}</slice_pos_y>\n`;
         xml += `        </tv>\n`;
       }
       xml += `      </tvs>\n`;
