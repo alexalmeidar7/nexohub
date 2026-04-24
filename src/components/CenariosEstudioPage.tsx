@@ -121,7 +121,8 @@ export default function CenariosEstudioPage() {
       return;
     }
     setGrupos((prev) => [...prev, { ...(data as any), tvs: [], programa_ids: [] }]);
-    toast.success("Grupo criado");
+    setEditingIds((prev) => new Set(prev).add((data as any).id));
+    toast.success("Template criado");
   };
 
   const updateGrupo = (id: string, patch: Partial<Grupo>) => {
