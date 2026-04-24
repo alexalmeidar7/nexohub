@@ -55,9 +55,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const programaPortalRef = useRef<HTMLDivElement>(null);
   const programaTriggerRef = useRef<HTMLButtonElement>(null);
   const [programaPickerPos, setProgramaPickerPos] = useState<{ top: number; left: number; width: number } | null>(null);
-  const [dataFinal, setDataFinal] = useState("");
+  // Default expiration: last day of December of current year
+  const defaultExpiration = useMemo(() => {
+    const y = new Date().getFullYear();
+    return `${y}-12-31`;
+  }, []);
+  const [dataFinal, setDataFinal] = useState(defaultExpiration);
   const [nomeLogo, setNomeLogo] = useState("");
-  const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string }[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string; nome: string }[]>([]);
   const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
 
   const [editingLogoId, setEditingLogoId] = useState<string | null>(null);
@@ -150,10 +155,19 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   }, [programaPickerOpen]);
 
   const handleAddFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPendingFiles((prev) => [...prev, { file, preview: URL.createObjectURL(file) }]);
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const items = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      nome: file.name.replace(/\.[^.]+$/, "").trim().toUpperCase(),
+    }));
+    setPendingFiles((prev) => [...prev, ...items]);
     e.target.value = "";
+  };
+
+  const updatePendingName = (idx: number, nome: string) => {
+    setPendingFiles((prev) => prev.map((p, i) => (i === idx ? { ...p, nome } : p)));
   };
 
   const removePendingFile = (idx: number) => {
@@ -210,13 +224,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       let count = 0;
       for (const pf of pendingFiles) {
         const logo_url = await uploadLogo(pf.file);
+        const nomeFinal = (pf.nome || pf.file.name.replace(/\.[^.]+$/, "")).trim().toUpperCase();
         for (const pid of targets) {
           const { error } = await supabase.from("logos_patrocinadores").insert({
             user_id: dataUserId!,
             programa_id: pid,
             logo_url,
             data_final: dataFinal,
-            nome: nomeLogo,
+            nome: nomeFinal,
           });
           if (error) throw error;
           count++;
@@ -236,7 +251,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const resetForm = () => {
     setProgramaId("");
     setProgramaIds([]);
-    setDataFinal("");
+    setDataFinal(defaultExpiration);
     setNomeLogo("");
     setPendingFiles([]);
     setExistingLogoUrl(null);
@@ -441,15 +456,17 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           <div className="p-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-4">
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Nome *</label>
-                  <input type="text" value={nomeLogo} onChange={(e) => setNomeLogo(e.target.value)} placeholder="Ex: Patrocinador X"
-                    className="w-full px-4 py-1.5 text-sm outline-none uppercase font-bold"
-                    style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                  />
-                </div>
+                {editingFullId && (
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Nome *</label>
+                    <input type="text" value={nomeLogo} onChange={(e) => setNomeLogo(e.target.value)} placeholder="Ex: Patrocinador X"
+                      className="w-full px-4 py-1.5 text-sm outline-none uppercase font-bold"
+                      style={inputStyle}
+                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
+                      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>
                     Programa(s) * {!editingFullId && programaIds.length > 0 && <span className="font-normal opacity-60">({programaIds.length} selecionado{programaIds.length > 1 ? "s" : ""})</span>}
@@ -591,10 +608,20 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                     </div>
                   )}
                   {pendingFiles.map((pf, idx) => (
-                    <div key={idx} className="relative group">
+                    <div key={idx} className="relative group flex flex-col items-center w-24">
                       <img src={pf.preview} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", backgroundColor: "repeating-conic-gradient(#ddd 0% 25%,transparent 0% 50%) 0 0/20px 20px" }} />
                       <button type="button" onClick={() => removePendingFile(idx)}
                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                      {!editingFullId && (
+                        <input
+                          type="text"
+                          value={pf.nome}
+                          onChange={(e) => updatePendingName(idx, e.target.value)}
+                          placeholder="Nome"
+                          className="w-full mt-1 px-1.5 py-0.5 text-[10px] uppercase font-bold rounded outline-none text-center"
+                          style={{ ...inputStyle, borderRadius: "6px" }}
+                        />
+                      )}
                     </div>
                   ))}
                   <label className="w-20 h-20 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors"
@@ -604,9 +631,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                   >
                     <Plus size={18} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }} />
                     <span className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Adicionar</span>
-                    <input type="file" accept="image/png" className="hidden" onChange={handleAddFile} />
+                    <input type="file" accept="image/png" multiple={!editingFullId} className="hidden" onChange={handleAddFile} />
                   </label>
                 </div>
+                {!editingFullId && pendingFiles.length > 0 && (
+                  <p className="text-[10px] mt-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                    O nome de cada logo foi extraído do arquivo. Você pode editar individualmente acima.
+                  </p>
+                )}
               </div>
             </div>
           </div>
