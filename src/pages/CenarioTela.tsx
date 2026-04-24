@@ -1273,6 +1273,12 @@ export default function CenarioTela() {
               {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {!!config.useProgramThumbAsBg && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (currentProgram?.thumb || currentProgram?.capa) && (
+                <>
+                  <img src={(currentProgram?.thumb || currentProgram?.capa) as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(22px) brightness(0.55)", transform: "scale(1.1)" }} />
+                  <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
+                </>
+              )}
             </div>
           )}
 
