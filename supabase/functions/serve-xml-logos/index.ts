@@ -105,7 +105,7 @@ ${items}
     });
   } catch (err) {
     return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?><error>${err.message}</error>`,
+      `<?xml version="1.0" encoding="UTF-8"?><error>${(err as Error).message}</error>`,
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" } }
     );
   }
