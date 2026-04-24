@@ -59,11 +59,23 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Programa no ar conforme grade
-    const now = new Date();
+    // Programa no ar conforme grade (fuso America/Sao_Paulo)
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-    const today = dayNames[now.getDay()];
-    const nowTime = now.toTimeString().slice(0, 5);
+    const tzParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).formatToParts(new Date());
+    const wkShort = tzParts.find((p) => p.type === "weekday")?.value || "Sun";
+    const hh = tzParts.find((p) => p.type === "hour")?.value || "00";
+    const mm = tzParts.find((p) => p.type === "minute")?.value || "00";
+    const ss = tzParts.find((p) => p.type === "second")?.value || "00";
+    const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const today = dayNames[dayMap[wkShort] ?? 0];
+    const nowTime = `${hh}:${mm}:${ss}`;
 
     const { data: progs } = await supabase
       .from("programas")
