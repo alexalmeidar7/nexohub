@@ -576,7 +576,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     height: item.widgetType === "player" ? "auto" : "280px",
                     minHeight: item.widgetType === "player" ? "180px" : undefined,
                     maxHeight: item.widgetType === "player" ? "none" : "280px",
-                    overflow: "hidden",
+                    overflow: item.widgetType === "player" && playerVideoActive === item.id ? "visible" : "hidden",
                   }}
                   onDragOver={(e) => handleDragOver(e, item.id)}
                   onDrop={() => handleDrop(item.id)}
