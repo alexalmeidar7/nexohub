@@ -110,6 +110,37 @@ Deno.serve(async (req) => {
         .join("\n");
     }
 
+    // Música atual: último registro em musicas_tocadas
+    let titulo = "";
+    let artista = "";
+    let capa = "";
+    const { data: ultimaMusica } = await supabase
+      .from("musicas_tocadas")
+      .select("musica, artista")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (ultimaMusica) {
+      titulo = ultimaMusica.musica || "";
+      artista = ultimaMusica.artista || "";
+    }
+
+    // Capa via iTunes
+    if (titulo && artista) {
+      try {
+        const q = encodeURIComponent(`${artista} ${titulo}`);
+        const r = await fetch(`https://itunes.apple.com/search?term=${q}&limit=1&media=music`);
+        if (r.ok) {
+          const j = await r.json();
+          const art = j?.results?.[0]?.artworkUrl100 || "";
+          if (art) capa = art.replace("100x100", "600x600");
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     // Imagem do artista no Deezer
     const artistaImg = await fetchDeezerArtistImage(artista);
 
