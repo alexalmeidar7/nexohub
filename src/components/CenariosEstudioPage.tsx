@@ -422,8 +422,17 @@ function GrupoCard({ grupo, programas, templates, onChange, onRemove, onSave, on
           />
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={onRemove}>
-            <Trash2 className="h-4 w-4 mr-1" /> Excluir
+          <Button
+            size="sm"
+            onClick={onRemove}
+            title="Excluir template"
+            className="border-0"
+            style={{
+              background: "color-mix(in srgb, #ef4444 18%, transparent)",
+              color: "#ef4444",
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-1" /> Excluir template
           </Button>
           <Button size="sm" onClick={onSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
