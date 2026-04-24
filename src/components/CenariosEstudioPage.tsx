@@ -346,38 +346,147 @@ export default function CenariosEstudioPage() {
         </Card>
       )}
 
-      {/* Empty state: programas exist, no grupos */}
+      {/* Empty state: programas exist, no template being edited and none saved */}
       {!noProgramas && grupos.length === 0 && (
         <Card className="p-10 text-center border-dashed" style={layoutCardStyle}>
           <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-4" style={layoutAccentSoft}>
             <LayoutGrid className="h-7 w-7" style={layoutAccent} />
           </div>
-          <h4 className="font-semibold text-base mb-2" style={layoutText}>Nenhum grupo criado</h4>
+          <h4 className="font-semibold text-base mb-2" style={layoutText}>Nenhum template criado</h4>
           <p className="text-sm max-w-md mx-auto mb-5 leading-relaxed" style={layoutTextMuted}>
-            Crie um grupo para definir o layout das TVs do cenário (ex: <span className="font-medium" style={layoutText}>"TVs atrás da âncora"</span>),
-            envie as imagens e vincule aos programas que devem usar esse cenário.
+            Crie um template para definir o layout das TVs do cenário (ex: <span className="font-medium" style={layoutText}>"TVs atrás da âncora"</span>),
+            envie a arte e vincule aos programas que devem usar esse cenário.
           </p>
           <Button onClick={addGrupo} size="sm">
-            <Plus className="h-4 w-4 mr-1" /> Criar primeiro grupo
+            <Plus className="h-4 w-4 mr-1" /> Criar primeiro template
           </Button>
         </Card>
       )}
 
-      {grupos.map((grupo) => (
-        <GrupoCard
-          key={grupo.id}
-          grupo={grupo}
-          programas={programas}
-          templates={grupos}
-          onChange={(patch) => updateGrupo(grupo.id, patch)}
-          onRemove={() => removeGrupo(grupo.id)}
-          onSave={() => saveGrupo(grupo)}
-          onToggleProgram={(pid) => toggleProgramaInGrupo(grupo.id, pid)}
-          onSetArte={(file) => setGrupoArte(grupo.id, file)}
-          onRemoveArte={() => removeGrupoArte(grupo.id)}
-          saving={savingId === grupo.id}
-        />
-      ))}
+      {/* Editor: only render groups currently being edited */}
+      {grupos
+        .filter((g) => editingIds.has(g.id))
+        .map((grupo) => (
+          <GrupoCard
+            key={grupo.id}
+            grupo={grupo}
+            programas={programas}
+            onChange={(patch) => updateGrupo(grupo.id, patch)}
+            onSave={() => saveGrupo(grupo)}
+            onToggleProgram={(pid) => toggleProgramaInGrupo(grupo.id, pid)}
+            onSetArte={(file) => setGrupoArte(grupo.id, file)}
+            onRemoveArte={() => removeGrupoArte(grupo.id)}
+            saving={savingId === grupo.id}
+          />
+        ))}
+
+      {/* Saved templates gallery (always visible when there are saved templates) */}
+      {(() => {
+        const savedTemplates = grupos.filter((t) => {
+          const a = t.tvs.find((tv) => tv.posicao === 0);
+          return !!a?.imagem_url;
+        });
+        if (savedTemplates.length === 0) return null;
+        return (
+          <Card className="p-5" style={layoutCardStyle}>
+            <div className="mb-3 flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>
+                  Templates criados
+                </Label>
+                <p className="text-[11px] mt-0.5" style={layoutTextMuted}>
+                  Passe o mouse para editar ou excluir.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {savedTemplates.map((t) => {
+                const a = t.tvs.find((tv) => tv.posicao === 0);
+                const url = a?.imagem_url || "";
+                const linkedNames = t.programa_ids
+                  .map((pid) => programas.find((p) => p.id === pid)?.nome)
+                  .filter(Boolean) as string[];
+                return (
+                  <div
+                    key={t.id}
+                    className="group relative rounded-md overflow-hidden flex flex-col"
+                    style={{
+                      border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)",
+                      background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, var(--layout-page-bg, #ffffff))",
+                    }}
+                  >
+                    <div
+                      className="w-full relative"
+                      style={{
+                        aspectRatio: `${t.cols * 16} / ${t.rows * 9}`,
+                        backgroundImage: `url(${url})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundColor: "#000",
+                      }}
+                    >
+                      {/* Hover overlay with edit/delete */}
+                      <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: "rgba(0,0,0,0.55)" }}>
+                        <Button
+                          size="sm"
+                          onClick={() => setEditingIds((prev) => new Set(prev).add(t.id))}
+                          className="border-0"
+                          style={{
+                            background: "var(--layout-accent-color, #2563eb)",
+                            color: "var(--layout-page-bg, #ffffff)",
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => removeGrupo(t.id)}
+                          className="border-0"
+                          style={{
+                            background: "color-mix(in srgb, #ef4444 90%, transparent)",
+                            color: "#ffffff",
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="px-2.5 py-2 flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium truncate" style={layoutText} title={t.nome}>
+                          {t.nome}
+                        </span>
+                        <span className="text-[10px] font-mono shrink-0" style={layoutTextMuted}>
+                          {t.rows}×{t.cols}
+                        </span>
+                      </div>
+                      {linkedNames.length === 0 ? (
+                        <span className="text-[10px] italic" style={layoutTextMuted}>
+                          Nenhum programa vinculado
+                        </span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {linkedNames.map((nome, i) => (
+                            <span
+                              key={i}
+                              className="text-[10px] px-1.5 py-0.5 rounded-full font-medium truncate max-w-full"
+                              style={{ ...layoutAccentSoft, color: "var(--layout-accent-color, #2563eb)" }}
+                              title={nome}
+                            >
+                              {nome}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        );
+      })()}
     </div>
   );
 }
