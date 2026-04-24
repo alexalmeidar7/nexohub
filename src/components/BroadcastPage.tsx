@@ -295,6 +295,46 @@ export default function BroadcastPage() {
     })();
   }, [user]);
 
+  // Detect program change every 60s — refresh locutor + reset override on switch
+  useEffect(() => {
+    if (!user) return;
+    const refreshActiveProgram = async () => {
+      const now = new Date();
+      const nowTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:00`;
+      const todayName = ["domingo","segunda","terca","quarta","quinta","sexta","sabado"][now.getDay()];
+      const { data: progs } = await supabase
+        .from("programas")
+        .select("id, nome, selo, apresentadores_ids, apresentador_id, dias_semana")
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+        .lte("horario_inicio", nowTime)
+        .gte("horario_fim", nowTime)
+        .contains("dias_semana", [todayName]);
+      const prog = progs?.find(() => true);
+      if (!prog) return;
+      // Program changed → reset override and reload presenter
+      if (prog.id !== activeProgramaId) {
+        setActiveProgramaId(prog.id);
+        setProgramaNome(prog.nome);
+        if (prog.selo) setProgramaLogo(prog.selo);
+        // Reset locutor override so new program's presenter takes over
+        setData(prev => ({ ...prev, locutor_override: "" }));
+        const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
+        if (apIds.length > 0) {
+          const { data: ap } = await supabase.from("apresentadores").select("nome, foto, instagram, cargo").in("id", apIds).limit(1).maybeSingle();
+          if (ap) {
+            setLocutorNome(ap.nome);
+            setLocutorFoto(ap.foto || null);
+            setLocutorInstagram(ap.instagram ? (ap.instagram.startsWith("@") ? ap.instagram : `@${ap.instagram}`) : "");
+            setLocutorCargo(ap.cargo || "");
+          }
+        }
+      }
+    };
+    const interval = setInterval(refreshActiveProgram, 60000);
+    return () => clearInterval(interval);
+  }, [user, activeProgramaId]);
+
   // Compose ticker from sources
   const composedTicker = useMemo(() => {
     const parts: string[] = [];
