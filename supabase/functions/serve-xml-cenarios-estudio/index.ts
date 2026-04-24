@@ -84,11 +84,12 @@ Deno.serve(async (req) => {
       // Templates não vinculados ao programa atual ficam com <url/> vazia.
       const vinculado = !!onAir && (g.programa_ids || []).includes(onAir.id);
       let url = vinculado ? (arteByGrupo[g.id] || "") : "";
-      // Força extensão .png na URL da arte (compatibilidade vMix)
+      // Força extensão .png na URL da arte (sem querystring) para compatibilidade vMix
       if (url) {
-        url = url.replace(/\.(jpe?g|webp|gif|bmp|avif)(\?.*)?$/i, ".png$2");
-        if (!/\.png(\?.*)?$/i.test(url)) {
-          url = url.includes("?") ? url.replace(/\?/, ".png?") : `${url}.png`;
+        url = url.split("?")[0];
+        url = url.replace(/\.(jpe?g|webp|gif|bmp|avif)$/i, ".png");
+        if (!/\.png$/i.test(url)) {
+          url = `${url}.png`;
         }
       }
       xml += `    <template>\n`;
