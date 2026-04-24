@@ -298,33 +298,35 @@ export default function CenariosEstudioPage() {
     <div className="space-y-5">
       {/* Header info + XML */}
       <Card className="p-5" style={layoutCardStyle}>
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-start gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+          <div className="flex items-start gap-3 shrink-0">
             <div className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0" style={layoutAccentSoft}>
               <Tv className="h-5 w-5" style={layoutAccent} />
             </div>
             <div>
               <h3 className="font-semibold text-lg leading-tight" style={layoutText}>Cenários Estúdio</h3>
-              <p className="text-sm mt-1 max-w-xl leading-relaxed" style={layoutTextMuted}>
+              <p className="text-sm mt-1 max-w-md leading-relaxed" style={layoutTextMuted}>
                 Monte grupos de TVs e vincule a programas. O vMix consome o XML e troca automaticamente conforme o programa no ar.
               </p>
             </div>
           </div>
-          <Button onClick={addGrupo} size="sm" className="shrink-0 self-start lg:self-auto" disabled={noProgramas}>
+          <div className="flex-1 min-w-0 lg:pl-4 lg:border-l" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}>
+            <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>
+              Link XML para o vMix
+            </Label>
+            <div className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-md" style={layoutInnerStyle}>
+              <LinkIcon className="h-4 w-4 shrink-0" style={layoutTextMuted} />
+              <code className="text-sm truncate flex-1 font-mono" style={layoutText}>{xmlUrl}</code>
+              <Button size="sm" variant="ghost" className="h-8 px-2 shrink-0" onClick={copyXmlUrl} style={layoutText}>
+                <Copy className="h-4 w-4 mr-1" /> Copiar
+              </Button>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 pt-4 flex justify-end" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}>
+          <Button onClick={addGrupo} size="sm" disabled={noProgramas}>
             <Plus className="h-4 w-4 mr-1" /> Criar novo template
           </Button>
-        </div>
-        <div className="mt-4 pt-4" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}>
-          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>
-            Link XML para o vMix
-          </Label>
-          <div className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-md" style={layoutInnerStyle}>
-            <LinkIcon className="h-4 w-4 shrink-0" style={layoutTextMuted} />
-            <code className="text-sm truncate flex-1 font-mono" style={layoutText}>{xmlUrl}</code>
-            <Button size="sm" variant="ghost" className="h-8 px-2 shrink-0" onClick={copyXmlUrl} style={layoutText}>
-              <Copy className="h-4 w-4 mr-1" /> Copiar
-            </Button>
-          </div>
         </div>
       </Card>
 
