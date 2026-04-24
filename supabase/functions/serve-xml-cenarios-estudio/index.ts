@@ -83,7 +83,14 @@ Deno.serve(async (req) => {
       // Apenas templates vinculados ao programa no ar enviam a URL da arte.
       // Templates não vinculados ao programa atual ficam com <url/> vazia.
       const vinculado = !!onAir && (g.programa_ids || []).includes(onAir.id);
-      const url = vinculado ? (arteByGrupo[g.id] || "") : "";
+      let url = vinculado ? (arteByGrupo[g.id] || "") : "";
+      // Força extensão .png na URL da arte (compatibilidade vMix)
+      if (url) {
+        url = url.replace(/\.(jpe?g|webp|gif|bmp|avif)(\?.*)?$/i, ".png$2");
+        if (!/\.png(\?.*)?$/i.test(url)) {
+          url = url.includes("?") ? url.replace(/\?/, ".png?") : `${url}.png`;
+        }
+      }
       xml += `    <template>\n`;
       xml += `      <nome>${xmlEscape(g.nome)}</nome>\n`;
       xml += `      <url>${xmlEscape(url)}</url>\n`;
