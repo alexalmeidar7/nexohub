@@ -213,7 +213,12 @@ export default function CenariosEstudioPage() {
         if (tErr) throw tErr;
       }
 
-      toast.success("Grupo salvo");
+      toast.success("Template salvo");
+      setEditingIds((prev) => {
+        const n = new Set(prev);
+        n.delete(grupo.id);
+        return n;
+      });
       await loadAll();
     } catch (e) {
       console.error(e);
