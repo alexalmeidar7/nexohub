@@ -527,7 +527,7 @@ function TvCell({
             </Button>
           </div>
         )}
-        <span className="absolute top-1 left-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/60 text-white/70">
+        <span className="absolute top-1 left-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-foreground/70 text-background">
           #{posicao + 1}
         </span>
       </div>
