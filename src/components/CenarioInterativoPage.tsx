@@ -922,7 +922,7 @@ export default function CenarioInterativoPage() {
           apresentadoresFotos = (aps || []).map(a => a.foto).filter((f): f is string => !!f);
           apresentadorFoto = apresentadoresFotos[0] || "";
         }
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, apresentadoresFotos, tipo_programa: onAir.tipo_programa });
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, thumb: (onAir as any).thumb || null, capa: (onAir as any).capa || null, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, apresentadoresFotos, tipo_programa: onAir.tipo_programa });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
           .select("id, nome, logo_url")
