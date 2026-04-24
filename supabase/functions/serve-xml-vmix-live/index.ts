@@ -97,8 +97,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Logos do programa no ar
-    let logosXml = "";
+    // Logo do patrocinador (1 por vez, rotação a cada 10s)
+    let patrocinadorNome = "";
+    let patrocinadorUrl = "";
     if (onAir) {
       const { data: logos } = await supabase
         .from("logos_patrocinadores")
@@ -106,13 +107,15 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .eq("programa_id", onAir.id)
         .eq("ativo", true)
-        .eq("excluido", false);
-      logosXml = (logos || [])
-        .map(
-          (l: any) =>
-            `    <logo><nome>${esc(l.nome)}</nome><url>${esc(stripQuery(l.logo_url))}</url></logo>`,
-        )
-        .join("\n");
+        .eq("excluido", false)
+        .order("created_at", { ascending: true });
+      const list = logos || [];
+      if (list.length > 0) {
+        const slot = Math.floor(Date.now() / 10000) % list.length;
+        const escolhida = list[slot];
+        patrocinadorNome = escolhida.nome || "";
+        patrocinadorUrl = stripQuery(escolhida.logo_url || "");
+      }
     }
 
     // Música atual: último registro em musicas_tocadas
