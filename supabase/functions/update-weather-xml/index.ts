@@ -173,13 +173,13 @@ serve(async (req) => {
         const isNight = nowTime < sunrise || nowTime > sunset;
 
         // Upload flat SVG icon and get public URL
-        const iconUrl = await ensureIconUploaded(supabase, d.current.weather_code, isNight);
+        const iconUrl = await ensureIconUploaded(supabase as any, d.current.weather_code, isNight);
         const condLabel = getLabel(d.current.weather_code);
 
         let amanhaXml = "";
         if (d.daily.temperature_2m_min[1] != null) {
           const twCode = d.daily.weather_code[1] ?? 0;
-          const twIconUrl = await ensureIconUploaded(supabase, twCode, false);
+          const twIconUrl = await ensureIconUploaded(supabase as any, twCode, false);
           const twLabel = getLabel(twCode);
           amanhaXml = `
     <amanha>
@@ -223,7 +223,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("update-weather-xml error:", err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: (err as Error).message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
