@@ -275,15 +275,15 @@ export default function CenariosEstudioPage() {
   return (
     <div className="space-y-5">
       {/* Header info + XML */}
-      <Card className="p-5">
+      <Card className="p-5 border-border">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <div className="h-11 w-11 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
               <Tv className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-base leading-tight text-foreground">Cenários Estúdio</h3>
-              <p className="text-xs text-muted-foreground mt-1 max-w-xl">
+              <h3 className="font-semibold text-lg leading-tight text-foreground">Cenários Estúdio</h3>
+              <p className="text-sm text-muted-foreground mt-1 max-w-xl leading-relaxed">
                 Monte grupos de TVs e vincule a programas. O vMix consome o XML e troca automaticamente conforme o programa no ar.
               </p>
             </div>
@@ -292,13 +292,13 @@ export default function CenariosEstudioPage() {
             <Plus className="h-4 w-4 mr-1" /> Novo grupo
           </Button>
         </div>
-        <div className="mt-4 pt-4 border-t border-border/60">
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Link XML para o vMix</Label>
-          <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border border-border/60">
-            <LinkIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <code className="text-xs text-foreground/80 truncate flex-1 font-mono">{xmlUrl}</code>
-            <Button size="sm" variant="ghost" className="h-7 px-2 shrink-0" onClick={copyXmlUrl}>
-              <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
+        <div className="mt-4 pt-4 border-t border-border">
+          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Link XML para o vMix</Label>
+          <div className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-md bg-muted/60 border border-border">
+            <LinkIcon className="h-4 w-4 text-foreground/60 shrink-0" />
+            <code className="text-sm text-foreground truncate flex-1 font-mono">{xmlUrl}</code>
+            <Button size="sm" variant="ghost" className="h-8 px-2 shrink-0" onClick={copyXmlUrl}>
+              <Copy className="h-4 w-4 mr-1" /> Copiar
             </Button>
           </div>
         </div>
@@ -306,12 +306,12 @@ export default function CenariosEstudioPage() {
 
       {/* Empty state: no programas registered (priority over "no grupos") */}
       {noProgramas && (
-        <Card className="p-10 text-center border-dashed">
-          <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+        <Card className="p-10 text-center border-dashed border-border">
+          <div className="mx-auto h-14 w-14 rounded-full bg-primary/15 flex items-center justify-center mb-4">
             <Radio className="h-7 w-7 text-primary" />
           </div>
-          <h4 className="font-semibold text-foreground mb-1">Cadastre programas primeiro</h4>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
+          <h4 className="font-semibold text-base text-foreground mb-2">Cadastre programas primeiro</h4>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5 leading-relaxed">
             Para criar grupos de TVs e vincular ao programa no ar, você precisa ter ao menos um programa ativo cadastrado.
           </p>
           <Button asChild size="sm">
@@ -324,12 +324,12 @@ export default function CenariosEstudioPage() {
 
       {/* Empty state: programas exist, no grupos */}
       {!noProgramas && grupos.length === 0 && (
-        <Card className="p-10 text-center border-dashed">
-          <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+        <Card className="p-10 text-center border-dashed border-border">
+          <div className="mx-auto h-14 w-14 rounded-full bg-primary/15 flex items-center justify-center mb-4">
             <LayoutGrid className="h-7 w-7 text-primary" />
           </div>
-          <h4 className="font-semibold text-foreground mb-1">Nenhum grupo criado</h4>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
+          <h4 className="font-semibold text-base text-foreground mb-2">Nenhum grupo criado</h4>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5 leading-relaxed">
             Crie um grupo para definir o layout das TVs do cenário (ex: <span className="font-medium text-foreground">"TVs atrás da âncora"</span>),
             envie as imagens e vincule aos programas que devem usar esse cenário.
           </p>
@@ -375,33 +375,33 @@ function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgr
   const cells = Array.from({ length: total }, (_, i) => i);
 
   return (
-    <Card className="p-5 space-y-6">
+    <Card className="p-5 space-y-6 border-border">
       {/* Top: nome + grid + ações */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 md:items-end">
         <div>
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Nome do grupo</Label>
-          <Input value={grupo.nome} onChange={(e) => onChange({ nome: e.target.value })} className="mt-1.5" />
+          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Nome do grupo</Label>
+          <Input value={grupo.nome} onChange={(e) => onChange({ nome: e.target.value })} className="mt-1.5 text-sm" />
         </div>
         <div>
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Linhas</Label>
+          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Linhas</Label>
           <Input
             type="number"
             min={1}
             max={20}
             value={grupo.rows}
             onChange={(e) => onChange({ rows: Math.max(1, Math.min(20, parseInt(e.target.value || "1"))) })}
-            className="mt-1.5 w-24"
+            className="mt-1.5 w-24 text-sm"
           />
         </div>
         <div>
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Colunas</Label>
+          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Colunas</Label>
           <Input
             type="number"
             min={1}
             max={20}
             value={grupo.cols}
             onChange={(e) => onChange({ cols: Math.max(1, Math.min(20, parseInt(e.target.value || "1"))) })}
-            className="mt-1.5 w-24"
+            className="mt-1.5 w-24 text-sm"
           />
         </div>
         <div className="flex gap-2">
@@ -416,20 +416,20 @@ function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgr
       </div>
 
       {/* Programas vinculados */}
-      <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Programas vinculados</Label>
-          <Badge variant="secondary" className="text-[10px]">{grupo.programa_ids.length} selecionado(s)</Badge>
+      <div className="rounded-lg border border-border bg-muted/40 p-4">
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Programas vinculados</Label>
+          <Badge variant="secondary" className="text-xs">{grupo.programa_ids.length} selecionado(s)</Badge>
         </div>
         <div className="flex flex-wrap gap-2">
-          {programas.length === 0 && <p className="text-xs text-muted-foreground">Nenhum programa cadastrado.</p>}
+          {programas.length === 0 && <p className="text-sm text-muted-foreground">Nenhum programa cadastrado.</p>}
           {programas.map((p) => {
             const sel = grupo.programa_ids.includes(p.id);
             return (
               <Badge
                 key={p.id}
                 variant={sel ? "default" : "outline"}
-                className="cursor-pointer select-none px-2.5 py-1 text-[11px] hover:opacity-80 transition-opacity"
+                className="cursor-pointer select-none px-3 py-1 text-xs hover:opacity-80 transition-opacity"
                 onClick={() => onToggleProgram(p.id)}
               >
                 {p.nome}
@@ -441,9 +441,9 @@ function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgr
 
       {/* Mockup do grid */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Mockup do cenário</Label>
-          <Badge variant="outline" className="text-[10px] font-mono">
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Mockup do cenário</Label>
+          <Badge variant="outline" className="text-xs font-mono">
             {grupo.rows} × {grupo.cols} = {total} TV{total !== 1 ? "s" : ""}
           </Badge>
         </div>
