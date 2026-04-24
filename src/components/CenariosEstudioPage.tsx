@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Plus, Trash2, Image as ImageIcon, Upload, Save, Tv, Link as LinkIcon, Copy, Loader2, LayoutGrid, Radio, ArrowRight } from "lucide-react";
+import { Plus, Trash2, Image as ImageIcon, Upload, Save, Tv, Link as LinkIcon, Copy, Loader2, LayoutGrid, Radio, ArrowRight, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +70,7 @@ export default function CenariosEstudioPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [editingIds, setEditingIds] = useState<Set<string>>(new Set());
 
   const xmlUrl = useMemo(() => {
     if (!user?.id) return "";
@@ -120,7 +121,8 @@ export default function CenariosEstudioPage() {
       return;
     }
     setGrupos((prev) => [...prev, { ...(data as any), tvs: [], programa_ids: [] }]);
-    toast.success("Grupo criado");
+    setEditingIds((prev) => new Set(prev).add((data as any).id));
+    toast.success("Template criado");
   };
 
   const updateGrupo = (id: string, patch: Partial<Grupo>) => {
@@ -135,6 +137,11 @@ export default function CenariosEstudioPage() {
       return;
     }
     setGrupos((prev) => prev.filter((g) => g.id !== id));
+    setEditingIds((prev) => {
+      const n = new Set(prev);
+      n.delete(id);
+      return n;
+    });
     toast.success("Template excluído");
   };
 
@@ -206,7 +213,12 @@ export default function CenariosEstudioPage() {
         if (tErr) throw tErr;
       }
 
-      toast.success("Grupo salvo");
+      toast.success("Template salvo");
+      setEditingIds((prev) => {
+        const n = new Set(prev);
+        n.delete(grupo.id);
+        return n;
+      });
       await loadAll();
     } catch (e) {
       console.error(e);
@@ -334,38 +346,147 @@ export default function CenariosEstudioPage() {
         </Card>
       )}
 
-      {/* Empty state: programas exist, no grupos */}
+      {/* Empty state: programas exist, no template being edited and none saved */}
       {!noProgramas && grupos.length === 0 && (
         <Card className="p-10 text-center border-dashed" style={layoutCardStyle}>
           <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-4" style={layoutAccentSoft}>
             <LayoutGrid className="h-7 w-7" style={layoutAccent} />
           </div>
-          <h4 className="font-semibold text-base mb-2" style={layoutText}>Nenhum grupo criado</h4>
+          <h4 className="font-semibold text-base mb-2" style={layoutText}>Nenhum template criado</h4>
           <p className="text-sm max-w-md mx-auto mb-5 leading-relaxed" style={layoutTextMuted}>
-            Crie um grupo para definir o layout das TVs do cenário (ex: <span className="font-medium" style={layoutText}>"TVs atrás da âncora"</span>),
-            envie as imagens e vincule aos programas que devem usar esse cenário.
+            Crie um template para definir o layout das TVs do cenário (ex: <span className="font-medium" style={layoutText}>"TVs atrás da âncora"</span>),
+            envie a arte e vincule aos programas que devem usar esse cenário.
           </p>
           <Button onClick={addGrupo} size="sm">
-            <Plus className="h-4 w-4 mr-1" /> Criar primeiro grupo
+            <Plus className="h-4 w-4 mr-1" /> Criar primeiro template
           </Button>
         </Card>
       )}
 
-      {grupos.map((grupo) => (
-        <GrupoCard
-          key={grupo.id}
-          grupo={grupo}
-          programas={programas}
-          templates={grupos}
-          onChange={(patch) => updateGrupo(grupo.id, patch)}
-          onRemove={() => removeGrupo(grupo.id)}
-          onSave={() => saveGrupo(grupo)}
-          onToggleProgram={(pid) => toggleProgramaInGrupo(grupo.id, pid)}
-          onSetArte={(file) => setGrupoArte(grupo.id, file)}
-          onRemoveArte={() => removeGrupoArte(grupo.id)}
-          saving={savingId === grupo.id}
-        />
-      ))}
+      {/* Editor: only render groups currently being edited */}
+      {grupos
+        .filter((g) => editingIds.has(g.id))
+        .map((grupo) => (
+          <GrupoCard
+            key={grupo.id}
+            grupo={grupo}
+            programas={programas}
+            onChange={(patch) => updateGrupo(grupo.id, patch)}
+            onSave={() => saveGrupo(grupo)}
+            onToggleProgram={(pid) => toggleProgramaInGrupo(grupo.id, pid)}
+            onSetArte={(file) => setGrupoArte(grupo.id, file)}
+            onRemoveArte={() => removeGrupoArte(grupo.id)}
+            saving={savingId === grupo.id}
+          />
+        ))}
+
+      {/* Saved templates gallery (always visible when there are saved templates) */}
+      {(() => {
+        const savedTemplates = grupos.filter((t) => {
+          const a = t.tvs.find((tv) => tv.posicao === 0);
+          return !!a?.imagem_url;
+        });
+        if (savedTemplates.length === 0) return null;
+        return (
+          <Card className="p-5" style={layoutCardStyle}>
+            <div className="mb-3 flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>
+                  Templates criados
+                </Label>
+                <p className="text-[11px] mt-0.5" style={layoutTextMuted}>
+                  Passe o mouse para editar ou excluir.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {savedTemplates.map((t) => {
+                const a = t.tvs.find((tv) => tv.posicao === 0);
+                const url = a?.imagem_url || "";
+                const linkedNames = t.programa_ids
+                  .map((pid) => programas.find((p) => p.id === pid)?.nome)
+                  .filter(Boolean) as string[];
+                return (
+                  <div
+                    key={t.id}
+                    className="group relative rounded-md overflow-hidden flex flex-col"
+                    style={{
+                      border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)",
+                      background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, var(--layout-page-bg, #ffffff))",
+                    }}
+                  >
+                    <div
+                      className="w-full relative"
+                      style={{
+                        aspectRatio: `${t.cols * 16} / ${t.rows * 9}`,
+                        backgroundImage: `url(${url})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundColor: "#000",
+                      }}
+                    >
+                      {/* Hover overlay with edit/delete */}
+                      <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: "rgba(0,0,0,0.55)" }}>
+                        <Button
+                          size="sm"
+                          onClick={() => setEditingIds((prev) => new Set(prev).add(t.id))}
+                          className="border-0"
+                          style={{
+                            background: "var(--layout-accent-color, #2563eb)",
+                            color: "var(--layout-page-bg, #ffffff)",
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => removeGrupo(t.id)}
+                          className="border-0"
+                          style={{
+                            background: "color-mix(in srgb, #ef4444 90%, transparent)",
+                            color: "#ffffff",
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="px-2.5 py-2 flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium truncate" style={layoutText} title={t.nome}>
+                          {t.nome}
+                        </span>
+                        <span className="text-[10px] font-mono shrink-0" style={layoutTextMuted}>
+                          {t.rows}×{t.cols}
+                        </span>
+                      </div>
+                      {linkedNames.length === 0 ? (
+                        <span className="text-[10px] italic" style={layoutTextMuted}>
+                          Nenhum programa vinculado
+                        </span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {linkedNames.map((nome, i) => (
+                            <span
+                              key={i}
+                              className="text-[10px] px-1.5 py-0.5 rounded-full font-medium truncate max-w-full"
+                              style={{ ...layoutAccentSoft, color: "var(--layout-accent-color, #2563eb)" }}
+                              title={nome}
+                            >
+                              {nome}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        );
+      })()}
     </div>
   );
 }
@@ -374,9 +495,7 @@ export default function CenariosEstudioPage() {
 interface GrupoCardProps {
   grupo: Grupo;
   programas: Programa[];
-  templates: Grupo[];
   onChange: (patch: Partial<Grupo>) => void;
-  onRemove: () => void;
   onSave: () => void;
   onToggleProgram: (programaId: string) => void;
   onSetArte: (file: File) => void;
@@ -384,7 +503,7 @@ interface GrupoCardProps {
   saving: boolean;
 }
 
-function GrupoCard({ grupo, programas, templates, onChange, onRemove, onSave, onToggleProgram, onSetArte, onRemoveArte, saving }: GrupoCardProps) {
+function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetArte, onRemoveArte, saving }: GrupoCardProps) {
   const total = grupo.rows * grupo.cols;
   const cells = Array.from({ length: total }, (_, i) => i);
   const arte = grupo.tvs.find((t) => t.posicao === 0);
@@ -420,24 +539,6 @@ function GrupoCard({ grupo, programas, templates, onChange, onRemove, onSave, on
             onChange={(e) => onChange({ cols: Math.max(1, Math.min(20, parseInt(e.target.value || "1"))) })}
             className="mt-1.5 w-24 text-sm"
           />
-        </div>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            onClick={onRemove}
-            title="Excluir template"
-            className="border-0"
-            style={{
-              background: "color-mix(in srgb, #ef4444 18%, transparent)",
-              color: "#ef4444",
-            }}
-          >
-            <Trash2 className="h-4 w-4 mr-1" /> Excluir template
-          </Button>
-          <Button size="sm" onClick={onSave} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-            Salvar
-          </Button>
         </div>
       </div>
 
@@ -565,95 +666,13 @@ function GrupoCard({ grupo, programas, templates, onChange, onRemove, onSave, on
         </div>
       </div>
 
-      {/* Templates criados (galeria de grupos salvos) */}
-      {(() => {
-        const savedTemplates = templates.filter((t) => {
-          const a = t.tvs.find((tv) => tv.posicao === 0);
-          return !!(a?.imagem_url);
-        });
-        if (savedTemplates.length === 0) return null;
-        return (
-          <div>
-            <div className="mb-3">
-              <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>
-                Templates criados
-              </Label>
-              <p className="text-[11px] mt-0.5" style={layoutTextMuted}>
-                Artes salvas dos grupos. O nome do template corresponde ao nome do grupo.
-              </p>
-            </div>
-            <div className="rounded-lg p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" style={layoutInnerStyle}>
-              {savedTemplates.map((t) => {
-                const a = t.tvs.find((tv) => tv.posicao === 0);
-                const url = a?.imagem_url || "";
-                const isCurrent = t.id === grupo.id;
-                return (
-                  <div
-                    key={t.id}
-                    className="rounded-md overflow-hidden flex flex-col"
-                    style={{
-                      border: isCurrent
-                        ? "2px solid var(--layout-accent-color, #2563eb)"
-                        : "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)",
-                      background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, var(--layout-page-bg, #ffffff))",
-                    }}
-                  >
-                    <div
-                      className="w-full"
-                      style={{
-                        aspectRatio: `${t.cols * 16} / ${t.rows * 9}`,
-                        backgroundImage: `url(${url})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        backgroundColor: "#000",
-                      }}
-                    />
-                    <div className="px-2.5 py-2 flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium truncate" style={layoutText} title={t.nome}>
-                          {t.nome}
-                        </span>
-                        <span className="text-[10px] font-mono shrink-0" style={layoutTextMuted}>
-                          {t.rows}×{t.cols}
-                        </span>
-                      </div>
-                      {(() => {
-                        const linkedNames = t.programa_ids
-                          .map((pid) => programas.find((p) => p.id === pid)?.nome)
-                          .filter(Boolean) as string[];
-                        if (linkedNames.length === 0) {
-                          return (
-                            <span className="text-[10px] italic" style={layoutTextMuted}>
-                              Nenhum programa vinculado
-                            </span>
-                          );
-                        }
-                        return (
-                          <div className="flex flex-wrap gap-1">
-                            {linkedNames.map((nome, i) => (
-                              <span
-                                key={i}
-                                className="text-[10px] px-1.5 py-0.5 rounded-full font-medium truncate max-w-full"
-                                style={{
-                                  ...layoutAccentSoft,
-                                  color: "var(--layout-accent-color, #2563eb)",
-                                }}
-                                title={nome}
-                              >
-                                {nome}
-                              </span>
-                            ))}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })()}
+      {/* Save action — placed below the artwork section */}
+      <div className="flex justify-end">
+        <Button size="sm" onClick={onSave} disabled={saving}>
+          {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+          Salvar template
+        </Button>
+      </div>
     </Card>
   );
 }
