@@ -45,6 +45,25 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+/* ─── Layout-token styles (respect user theme) ─── */
+const layoutCardStyle: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 4%, var(--layout-page-bg, #ffffff))",
+  color: "var(--layout-page-text, #0d0446)",
+  border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
+};
+const layoutInnerStyle: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 5%, var(--layout-page-bg, #ffffff))",
+  border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
+};
+const layoutTextMuted: React.CSSProperties = {
+  color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)",
+};
+const layoutText: React.CSSProperties = { color: "var(--layout-page-text, #0d0446)" };
+const layoutAccentSoft: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)",
+};
+const layoutAccent: React.CSSProperties = { color: "var(--layout-accent-color, #2563eb)" };
+
 export default function CenariosEstudioPage() {
   const { user } = useAuth();
   const [grupos, setGrupos] = useState<Grupo[]>([]);
