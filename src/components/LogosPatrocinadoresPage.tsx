@@ -55,9 +55,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const programaPortalRef = useRef<HTMLDivElement>(null);
   const programaTriggerRef = useRef<HTMLButtonElement>(null);
   const [programaPickerPos, setProgramaPickerPos] = useState<{ top: number; left: number; width: number } | null>(null);
-  const [dataFinal, setDataFinal] = useState("");
+  // Default expiration: last day of December of current year
+  const defaultExpiration = useMemo(() => {
+    const y = new Date().getFullYear();
+    return `${y}-12-31`;
+  }, []);
+  const [dataFinal, setDataFinal] = useState(defaultExpiration);
   const [nomeLogo, setNomeLogo] = useState("");
-  const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string }[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string; nome: string }[]>([]);
   const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
 
   const [editingLogoId, setEditingLogoId] = useState<string | null>(null);
