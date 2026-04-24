@@ -1311,6 +1311,22 @@ export default function CenarioInterativoPage() {
                     </div>
                    )}
 
+                  {/* ── Thumb do programa como fundo (global) ── */}
+                  <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                    <div className="flex flex-col pr-3">
+                      <Label className="text-xs font-medium flex items-center gap-1.5">
+                        <Palette size={12} /> Thumb do programa de fundo
+                      </Label>
+                      <span className="text-[10px]" style={{ color: mutedText }}>
+                        Aplica nas páginas Home, Tempo, Cotação e Chat.
+                      </span>
+                    </div>
+                    <Switch
+                      checked={!!config.useProgramThumbAsBg}
+                      onCheckedChange={v => setConfig(c => ({ ...c, useProgramThumbAsBg: v }))}
+                    />
+                  </div>
+
                   {/* ── Palavras de exceção ── */}
                   <div className="space-y-1.5 pt-2 border-t border-white/10">
                     <Label className="text-xs font-medium flex items-center gap-1.5">
