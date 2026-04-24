@@ -43,7 +43,7 @@ const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
 const PropostasPage = lazy(() => import("./PropostasPage"));
 const ConfigTelaPromoPage = lazy(() => import("./ConfigTelaPromoPage"));
-const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
+const CenariosPage = lazy(() => import("./CenariosPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 const FansPage = lazy(() => import("./FansPage"));
 const BroadcastPage = lazy(() => import("./BroadcastPage"));
@@ -108,7 +108,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
       { icon: Radio, label: "broadcast", page: "broadcast" },
       { icon: Image, label: "logos", page: "logos" },
-      { icon: MonitorPlay, label: "cenário interativo", page: "cenario" },
+      { icon: MonitorPlay, label: "cenários", page: "cenario" },
       { icon: Swords, label: "batalha musical", page: "batalha" },
       { icon: HelpCircle, label: "enquete", page: "enquete" },
       { icon: HelpCircle, label: "quiz", page: "quiz" },
@@ -155,7 +155,7 @@ const pageTitle: Record<Page, string> = {
   tp: "Ferramentas — TP",
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
-  cenario: "vMix — Cenário Interativo",
+  cenario: "vMix — Cenários",
   broadcast: "vMix — Broadcast",
   fans: "Player — Fãs",
   configtelapromo: "Comercial — Config Tela Promo",
@@ -869,7 +869,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "vmix" && <VmixPage />}
               {currentPage === "propostas" && <PropostasPage />}
               {currentPage === "tp" && <TeleprompterPage />}
-              {currentPage === "cenario" && <CenarioInterativoPage />}
+              {currentPage === "cenario" && <CenariosPage />}
               {currentPage === "broadcast" && <BroadcastPage />}
               {currentPage === "batalha" && <BatalhaMusicalPage />}
               {currentPage === "enquete" && <EnquetePage />}
