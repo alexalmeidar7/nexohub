@@ -377,14 +377,17 @@ interface GrupoCardProps {
   onRemove: () => void;
   onSave: () => void;
   onToggleProgram: (programaId: string) => void;
-  onSetImage: (posicao: number, file: File) => void;
-  onRemoveImage: (posicao: number) => void;
+  onSetArte: (file: File) => void;
+  onRemoveArte: () => void;
   saving: boolean;
 }
 
-function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgram, onSetImage, onRemoveImage, saving }: GrupoCardProps) {
+function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgram, onSetArte, onRemoveArte, saving }: GrupoCardProps) {
   const total = grupo.rows * grupo.cols;
   const cells = Array.from({ length: total }, (_, i) => i);
+  const arte = grupo.tvs.find((t) => t.posicao === 0);
+  const arteUrl = arte?._localPreview || arte?.imagem_url || "";
+  const inputId = `arte-upload-${grupo.id}`;
 
   return (
     <Card className="p-5 space-y-6" style={layoutCardStyle}>
@@ -431,115 +434,166 @@ function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgr
       <div className="rounded-lg p-4" style={layoutInnerStyle}>
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Programas vinculados</Label>
-          <Badge variant="secondary" className="text-xs">{grupo.programa_ids.length} selecionado(s)</Badge>
+          <span
+            className="text-xs px-2 py-0.5 rounded-full font-medium"
+            style={{ ...layoutAccentSoft, color: "var(--layout-accent-color, #2563eb)" }}
+          >
+            {grupo.programa_ids.length} selecionado(s)
+          </span>
         </div>
         <div className="flex flex-wrap gap-2">
           {programas.length === 0 && <p className="text-sm" style={layoutTextMuted}>Nenhum programa cadastrado.</p>}
           {programas.map((p) => {
             const sel = grupo.programa_ids.includes(p.id);
+            const selStyle: React.CSSProperties = sel
+              ? {
+                  background: "var(--layout-accent-color, #2563eb)",
+                  color: "var(--layout-page-bg, #ffffff)",
+                  border: "1px solid var(--layout-accent-color, #2563eb)",
+                }
+              : {
+                  background: "transparent",
+                  color: "var(--layout-page-text, #0d0446)",
+                  border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 25%, transparent)",
+                };
             return (
-              <Badge
+              <button
                 key={p.id}
-                variant={sel ? "default" : "outline"}
-                className="cursor-pointer select-none px-3 py-1 text-xs hover:opacity-80 transition-opacity"
+                type="button"
                 onClick={() => onToggleProgram(p.id)}
+                className="cursor-pointer select-none px-3 py-1 text-xs rounded-full hover:opacity-80 transition-opacity font-medium"
+                style={selStyle}
               >
                 {p.nome}
-              </Badge>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* Mockup do grid */}
+      {/* Arte única + mockup do grid */}
       <div>
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Mockup do cenário</Label>
-          <Badge variant="outline" className="text-xs font-mono">
-            {grupo.rows} × {grupo.cols} = {total} TV{total !== 1 ? "s" : ""}
-          </Badge>
+          <div>
+            <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Arte do cenário</Label>
+            <p className="text-[11px] mt-0.5" style={layoutTextMuted}>
+              Envie uma única arte — ela é dividida proporcionalmente entre as TVs.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ ...layoutInnerStyle }}>
+              {grupo.rows} × {grupo.cols} = {total} TV{total !== 1 ? "s" : ""}
+            </span>
+            <input
+              id={inputId}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onSetArte(f);
+                e.target.value = "";
+              }}
+            />
+            <label htmlFor={inputId}>
+              <Button size="sm" variant="outline" asChild>
+                <span className="cursor-pointer">
+                  <Upload className="h-3.5 w-3.5 mr-1" /> {arteUrl ? "Trocar arte" : "Enviar arte"}
+                </span>
+              </Button>
+            </label>
+            {arteUrl && (
+              <Button size="sm" variant="outline" onClick={onRemoveArte}>
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
         </div>
         <div className="rounded-lg p-6" style={layoutInnerStyle}>
-          <div
-            className="mx-auto grid gap-3"
-            style={{
-              gridTemplateColumns: `repeat(${grupo.cols}, minmax(0, 1fr))`,
-              gridTemplateRows: `repeat(${grupo.rows}, minmax(0, 1fr))`,
-              maxWidth: `${Math.min(900, grupo.cols * 220)}px`,
-              aspectRatio: `${grupo.cols * 16} / ${grupo.rows * 9}`,
-            }}
-          >
-            {cells.map((pos) => {
-              const tv = grupo.tvs.find((t) => t.posicao === pos);
-              const preview = tv?._localPreview || tv?.imagem_url || "";
-              return (
-                <TvCell
-                  key={pos}
-                  posicao={pos}
-                  imageUrl={preview}
-                  onUpload={(file) => onSetImage(pos, file)}
-                  onClear={() => onRemoveImage(pos)}
-                />
-              );
-            })}
-          </div>
+          {!arteUrl ? (
+            <label
+              htmlFor={inputId}
+              className="mx-auto flex flex-col items-center justify-center cursor-pointer rounded-md border-2 border-dashed transition-colors"
+              style={{
+                borderColor: "color-mix(in srgb, var(--layout-page-text, #0d0446) 20%, transparent)",
+                maxWidth: `${Math.min(900, grupo.cols * 220)}px`,
+                aspectRatio: `${grupo.cols * 16} / ${grupo.rows * 9}`,
+                width: "100%",
+              }}
+            >
+              <Upload className="h-6 w-6 mb-2" style={layoutTextMuted} />
+              <span className="text-xs uppercase tracking-wider" style={layoutTextMuted}>Clique para enviar a arte</span>
+            </label>
+          ) : (
+            <div
+              className="mx-auto grid gap-3"
+              style={{
+                gridTemplateColumns: `repeat(${grupo.cols}, minmax(0, 1fr))`,
+                gridTemplateRows: `repeat(${grupo.rows}, minmax(0, 1fr))`,
+                maxWidth: `${Math.min(900, grupo.cols * 220)}px`,
+                aspectRatio: `${grupo.cols * 16} / ${grupo.rows * 9}`,
+              }}
+            >
+              {cells.map((pos) => {
+                const row = Math.floor(pos / grupo.cols);
+                const col = pos % grupo.cols;
+                return (
+                  <TvSlice
+                    key={pos}
+                    posicao={pos}
+                    row={row}
+                    col={col}
+                    rows={grupo.rows}
+                    cols={grupo.cols}
+                    imageUrl={arteUrl}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </Card>
   );
 }
 
-/* ─── TV Cell ─── */
-function TvCell({
+/* ─── TV Slice (single artwork divided proportionally) ─── */
+function TvSlice({
   posicao,
+  row,
+  col,
+  rows,
+  cols,
   imageUrl,
-  onUpload,
-  onClear,
 }: {
   posicao: number;
+  row: number;
+  col: number;
+  rows: number;
+  cols: number;
   imageUrl: string;
-  onUpload: (file: File) => void;
-  onClear: () => void;
 }) {
-  const inputId = `tv-upload-${posicao}-${Math.random().toString(36).slice(2, 7)}`;
+  // Use background-size = (cols*100%) x (rows*100%) and background-position so each cell shows its slice.
+  const bgSizeX = cols * 100;
+  const bgSizeY = rows * 100;
+  const posX = cols > 1 ? (col / (cols - 1)) * 100 : 50;
+  const posY = rows > 1 ? (row / (rows - 1)) * 100 : 50;
   return (
-    <div className="relative group">
-      <div className="absolute inset-0 rounded-md border-2 border-border bg-background/80 overflow-hidden shadow-inner">
-        {imageUrl ? (
-          <img src={imageUrl} alt={`TV ${posicao + 1}`} className="w-full h-full object-cover" />
-        ) : (
-          <label
-            htmlFor={inputId}
-            className="w-full h-full flex flex-col items-center justify-center cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent/40 transition-colors"
-          >
-            <Upload className="h-5 w-5 mb-1" />
-            <span className="text-[10px] uppercase tracking-wider">TV {posicao + 1}</span>
-          </label>
-        )}
-        <input
-          id={inputId}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) onUpload(f);
-            e.target.value = "";
-          }}
-        />
-        {imageUrl && (
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 flex items-center justify-center gap-2">
-            <label htmlFor={inputId} className="cursor-pointer">
-              <Button size="sm" variant="secondary" asChild>
-                <span><ImageIcon className="h-3.5 w-3.5 mr-1" /> Trocar</span>
-              </Button>
-            </label>
-            <Button size="sm" variant="destructive" onClick={onClear}>
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        )}
-        <span className="absolute top-1 left-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-foreground/70 text-background">
+    <div className="relative">
+      <div
+        className="absolute inset-0 rounded-md overflow-hidden shadow-inner"
+        style={{
+          backgroundImage: `url(${imageUrl})`,
+          backgroundSize: `${bgSizeX}% ${bgSizeY}%`,
+          backgroundPosition: `${posX}% ${posY}%`,
+          backgroundRepeat: "no-repeat",
+          border: "2px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 25%, transparent)",
+        }}
+      >
+        <span
+          className="absolute top-1 left-1 text-[9px] font-mono px-1.5 py-0.5 rounded"
+          style={{ background: "rgba(0,0,0,0.7)", color: "#fff" }}
+        >
           #{posicao + 1}
         </span>
       </div>
