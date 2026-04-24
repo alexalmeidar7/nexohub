@@ -138,28 +138,30 @@ export default function CenariosEstudioPage() {
     toast.success("Grupo excluído");
   };
 
-  const setTvImage = async (grupoId: string, posicao: number, file: File) => {
-    const compressed = await compressImage(file, 1920, 1920, 0.85);
+  // Single artwork per group: stored at posicao=0
+  const setGrupoArte = async (grupoId: string, file: File) => {
+    const compressed = await compressImage(file, 3840, 3840, 0.9);
     const dataUrl = await fileToDataUrl(compressed);
     setGrupos((prev) =>
       prev.map((g) => {
         if (g.id !== grupoId) return g;
-        const tvs = [...g.tvs];
-        const idx = tvs.findIndex((t) => t.posicao === posicao);
-        if (idx >= 0) tvs[idx] = { ...tvs[idx], _localPreview: dataUrl, _file: compressed };
-        else tvs.push({ posicao, imagem_url: "", _localPreview: dataUrl, _file: compressed });
-        return { ...g, tvs };
+        const others = g.tvs.filter((t) => t.posicao !== 0);
+        const existing = g.tvs.find((t) => t.posicao === 0);
+        const next: TV = { ...(existing || { posicao: 0, imagem_url: "" }), _localPreview: dataUrl, _file: compressed };
+        return { ...g, tvs: [next, ...others] };
       }),
     );
   };
 
-  const removeTvImage = (grupoId: string, posicao: number) => {
+  const removeGrupoArte = (grupoId: string) => {
     setGrupos((prev) =>
       prev.map((g) => {
         if (g.id !== grupoId) return g;
         return {
           ...g,
-          tvs: g.tvs.map((t) => (t.posicao === posicao ? { ...t, imagem_url: "", _localPreview: undefined, _file: undefined } : t)),
+          tvs: g.tvs
+            .filter((t) => t.posicao !== 0)
+            .concat([{ posicao: 0, imagem_url: "", _localPreview: undefined, _file: undefined }]),
         };
       }),
     );
