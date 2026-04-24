@@ -69,6 +69,7 @@ interface HomeConfig {
 
 interface CenarioConfig {
   city: string;
+  useProgramThumbAsBg?: boolean;
   home: HomeConfig;
   weather: WeatherConfig;
   traffic: TrafficConfig;
@@ -86,6 +87,7 @@ function buildHomeGradient(h: HomeConfig): string {
 
 const defaultConfig: CenarioConfig = {
   city: "",
+  useProgramThumbAsBg: false,
   home: { bgImage: "" },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
