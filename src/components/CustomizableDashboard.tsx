@@ -213,7 +213,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
       setOnAirProgram({
         nome: current.nome,
-        selo: current.selo || current.thumb || "",
+        selo: current.selo || "",
         horario_inicio: current.horario_inicio,
         horario_fim: current.horario_fim,
         classificacao_etaria: current.classificacao_etaria || "L",
