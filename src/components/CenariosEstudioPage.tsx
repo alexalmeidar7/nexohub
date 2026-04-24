@@ -299,7 +299,7 @@ export default function CenariosEstudioPage() {
             </div>
           </div>
           <Button onClick={addGrupo} size="sm" className="shrink-0 self-start lg:self-auto" disabled={noProgramas}>
-            <Plus className="h-4 w-4 mr-1" /> Novo grupo
+            <Plus className="h-4 w-4 mr-1" /> Criar novo template
           </Button>
         </div>
         <div className="mt-4 pt-4" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}>
