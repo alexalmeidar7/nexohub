@@ -167,6 +167,8 @@ Deno.serve(async (req) => {
         nome: onAir.nome,
         id: onAir.id,
         selo: onAir.selo,
+        thumb: onAir.thumb || null,
+        capa: onAir.capa || null,
         horario_inicio: onAir.horario_inicio,
         horario_fim: onAir.horario_fim,
         apresentador: apresentadorNome,
