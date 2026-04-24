@@ -1754,24 +1754,29 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.92) 100%)" }} />
       </div>
 
-      {/* Video area — grows upward with animation */}
+      {/* Video area — grows UPWARD as an overlay, anchored to top of widget */}
       <div
-        className="relative -mx-4 -mt-4 overflow-hidden flex-shrink-0 rounded-t-2xl"
+        className="absolute left-0 right-0 overflow-hidden rounded-2xl pointer-events-none"
         style={{
-          boxShadow: showVideo && isVideo ? "0 8px 32px rgba(0,0,0,0.6)" : "none",
-          maxHeight: showVideo && isVideo ? "260px" : "0px",
+          bottom: "100%",
+          marginBottom: showVideo && isVideo ? "8px" : "0px",
+          height: showVideo && isVideo ? "auto" : "0px",
           opacity: showVideo && isVideo ? 1 : 0,
-          transition: "max-height 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease, margin-bottom 0.45s ease",
-          marginBottom: showVideo && isVideo ? "10px" : "0px",
+          transform: showVideo && isVideo ? "translateY(0)" : "translateY(20px)",
+          transition: "opacity 0.35s ease, transform 0.4s cubic-bezier(0.4,0,0.2,1)",
+          boxShadow: showVideo && isVideo ? "0 12px 40px rgba(0,0,0,0.7)" : "none",
+          zIndex: 20,
         }}
       >
-        <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain bg-black" style={{ aspectRatio: "16/9", maxHeight: "260px" }} />
-        {videoLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.8)" }}>
-            <Loader2 size={20} className="text-white/70 animate-spin" />
-            <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
-          </div>
-        )}
+        <div className="relative w-full pointer-events-auto" style={{ background: "#000" }}>
+          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full block" style={{ aspectRatio: "16/9" }} />
+          {videoLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.8)" }}>
+              <Loader2 size={20} className="text-white/70 animate-spin" />
+              <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Controls */}
