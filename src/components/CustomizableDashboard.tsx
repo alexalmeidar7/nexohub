@@ -609,7 +609,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       <X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} />
                     </button>
                   </div>
-                  <div className="p-4 flex-1 overflow-y-auto overflow-x-hidden widget-scroll">
+                  <div className={`p-4 flex-1 ${item.widgetType === "player" && playerVideoActive === item.id ? "overflow-visible" : "overflow-y-auto overflow-x-hidden"} widget-scroll`}>
                     <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
                       {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
                       {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
