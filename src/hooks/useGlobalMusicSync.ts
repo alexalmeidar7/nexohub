@@ -3,10 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
+import { musicDataKey, musicStartKey, botXmlLastRunKey } from "@/lib/musicStorageKeys";
 
-const MUSIC_DATA_KEY = "masterview_music_data";
-const MUSIC_START_KEY = "masterview_music_start";
-const BOT_XML_LAST_RUN_KEY = "bot_xml_last_run";
 const LOCAL_SOURCE_GRACE_MS = 15000;
 
 function isPlaceholderTrack(data: { titulo?: string; artista?: string }) {
@@ -99,6 +97,9 @@ export function useGlobalMusicSync(enabled: boolean = true) {
 
   useEffect(() => {
     if (!user || !enabled) return;
+    const MUSIC_DATA_KEY = musicDataKey(user.id)!;
+    const MUSIC_START_KEY = musicStartKey(user.id)!;
+    const BOT_XML_LAST_RUN_KEY = botXmlLastRunKey(user.id)!;
 
     const recordToHistory = async (titulo: string, artista: string) => {
       const now = new Date();

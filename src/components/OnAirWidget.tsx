@@ -128,11 +128,13 @@ export default function OnAirWidget() {
     return () => clearInterval(interval);
   }, []);
 
-  // Poll music data from localStorage
+  // Poll music data from per-user localStorage (scoped per user)
   useEffect(() => {
+    if (!user?.id) return;
+    const key = `masterview_music_data::${user.id}`;
     const readMusic = () => {
       try {
-        const raw = localStorage.getItem("masterview_music_data");
+        const raw = localStorage.getItem(key);
         if (raw) {
           const parsed = JSON.parse(raw);
           setMusicData({ titulo: parsed.titulo || parsed.title, artista: parsed.artista || parsed.artist });
@@ -142,7 +144,7 @@ export default function OnAirWidget() {
     readMusic();
     const mi = setInterval(readMusic, 3000);
     return () => clearInterval(mi);
-  }, []);
+  }, [user?.id]);
 
   const firstNext = nextPrograms[0] || null;
   const firstNextAp = firstNext ? nextApresentadores[firstNext.id] : null;

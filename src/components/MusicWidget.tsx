@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
 import { Disc3 } from "lucide-react";
 import { getMusicData } from "@/lib/musicData";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function MusicWidget() {
+  const { user } = useAuth();
   const [music, setMusic] = useState<ReturnType<typeof getMusicData>>(null);
 
   useEffect(() => {
-    const update = () => setMusic(getMusicData());
+    const update = () => setMusic(getMusicData(user?.id));
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.id]);
 
   if (!music) {
     return (

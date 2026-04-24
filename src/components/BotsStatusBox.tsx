@@ -3,9 +3,8 @@ import { Bot, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from "lucide-r
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-const BOT_XML_LAST_RUN_KEY = "bot_xml_last_run";
 const BOT_BOX_MINIMIZED_KEY = "bot_box_minimized";
-const MUSIC_DATA_KEY = "masterview_music_data";
+// Per-user scoped keys — declared inside component using user.id
 
 interface BotStatus {
   name: string;
@@ -17,6 +16,8 @@ interface BotStatus {
 
 export default function BotsStatusBox() {
   const { user } = useAuth();
+  const BOT_XML_LAST_RUN_KEY = user ? `bot_xml_last_run::${user.id}` : "bot_xml_last_run::__none__";
+  const MUSIC_DATA_KEY = user ? `masterview_music_data::${user.id}` : "masterview_music_data::__none__";
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [minimized, setMinimized] = useState(() => localStorage.getItem(BOT_BOX_MINIMIZED_KEY) === "true");
   const [bots, setBots] = useState<BotStatus[]>([

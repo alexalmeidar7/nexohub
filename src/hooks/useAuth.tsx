@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, createContext, useContext, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import { ensureMusicScopeForUser } from "@/lib/musicStorageKeys";
 
 type AppRole = "admin" | "user";
 
@@ -73,6 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (newId !== prevUserIdRef.current) {
         prevUserIdRef.current = newId;
+        // CRITICAL: scope music localStorage by user to prevent cross-tenant leaks
+        ensureMusicScopeForUser(newId);
         setUser(newUser);
       }
       setSession(newSession);

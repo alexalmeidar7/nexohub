@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
+import { readMusicData } from "@/lib/musicStorageKeys";
 
 /* Typewriter text component — animates character-by-character on text change */
 function TypewriterText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -229,17 +230,14 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     return () => { cancelled = true; clearInterval(interval); };
   }, [user]);
 
-  // Poll music from localStorage (masterview_music_data is the canonical key)
+  // Poll music from per-user localStorage (scoped to prevent cross-tenant leak)
   useEffect(() => {
     const pollMusic = () => {
       try {
-        const raw = localStorage.getItem("masterview_music_data");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed.titulo) {
-            setCurrentMusic({ titulo: parsed.titulo, artista: parsed.artista || "" });
-            return;
-          }
+        const parsed = readMusicData(dataUserId);
+        if (parsed && parsed.titulo) {
+          setCurrentMusic({ titulo: parsed.titulo, artista: parsed.artista || "" });
+          return;
         }
       } catch {}
       setCurrentMusic(null);
@@ -247,7 +245,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     pollMusic();
     const interval = setInterval(pollMusic, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [dataUserId]);
 
   // Load dashboard items from DB (fallback to localStorage for migration)
   useEffect(() => {
@@ -840,7 +838,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 function LinkPreview({ page, external }: { page?: Page; external?: string }) {
   switch (page) {
     case "agenda": return <AgendaPreview />;
-    case "musica": return <MusicaPreview />;
+    case "musica": return <MusicaPreview dataUserId={undefined} />;
     case "noticias": return <NoticiasPreview />;
     case "apresentadores": return <ApresentadoresPreview />;
     case "programas": return <ProgramasPreview />;
@@ -902,15 +900,16 @@ function AgendaPreview() {
   );
 }
 
-function MusicaPreview() {
+function MusicaPreview({ dataUserId: dataUserIdProp }: { dataUserId?: string } = {}) {
+  const { user: previewUser } = useAuth();
+  const dataUserId = dataUserIdProp || previewUser?.id;
   const [music, setMusic] = useState<any>(null);
   const [programa, setPrograma] = useState("");
   useEffect(() => {
     const update = () => {
       try {
-        const raw = localStorage.getItem("masterview_music_data");
-        if (raw) {
-          const d = JSON.parse(raw);
+        const d = readMusicData(dataUserId) as any;
+        if (d) {
           if (d.titulo) setMusic(d);
           if (d.programa) setPrograma(d.programa);
         }
@@ -919,7 +918,7 @@ function MusicaPreview() {
     update();
     const iv = setInterval(update, 3000);
     return () => clearInterval(iv);
-  }, []);
+  }, [dataUserId]);
   return music ? (
     <div className="flex items-center gap-2.5">
       {music.capa ? (
@@ -1198,9 +1197,8 @@ function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
     let prevTitle = "";
     const update = () => {
       try {
-        const raw = localStorage.getItem("masterview_music_data");
-        if (raw) {
-          const d = JSON.parse(raw);
+        const d = readMusicData(dataUserId) as any;
+        if (d) {
           if (d.titulo && d.titulo !== prevTitle) {
             prevTitle = d.titulo;
             setMusic(d);
@@ -1213,7 +1211,7 @@ function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
     update();
     const interval = setInterval(update, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [dataUserId]);
 
   // Fetch current program from DB
   useEffect(() => {
@@ -1553,16 +1551,13 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
   useEffect(() => {
     const poll = () => {
       try {
-        const raw = localStorage.getItem("masterview_music_data");
-        if (raw) {
-          const d = JSON.parse(raw);
-          if (d.titulo) {
-            setCurrentMusic(prev => {
-              if (prev?.titulo === d.titulo && prev?.artista === (d.artista || "") && prev?.capa === (d.capa || "")) return prev;
-              return { titulo: d.titulo, artista: d.artista || "", capa: d.capa || "" };
-            });
-            return;
-          }
+        const d = readMusicData(dataUserId) as any;
+        if (d && d.titulo) {
+          setCurrentMusic(prev => {
+            if (prev?.titulo === d.titulo && prev?.artista === (d.artista || "") && prev?.capa === (d.capa || "")) return prev;
+            return { titulo: d.titulo, artista: d.artista || "", capa: d.capa || "" };
+          });
+          return;
         }
       } catch {}
       setCurrentMusic(null);
@@ -1570,7 +1565,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
     poll();
     const iv = setInterval(poll, 1500);
     return () => clearInterval(iv);
-  }, []);
+  }, [dataUserId]);
 
   useEffect(() => {
     if (!audioRef.current) {
