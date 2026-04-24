@@ -555,6 +555,65 @@ function GrupoCard({ grupo, programas, templates, onChange, onRemove, onSave, on
           )}
         </div>
       </div>
+
+      {/* Templates criados (galeria de grupos salvos) */}
+      {(() => {
+        const savedTemplates = templates.filter((t) => {
+          const a = t.tvs.find((tv) => tv.posicao === 0);
+          return !!(a?.imagem_url);
+        });
+        if (savedTemplates.length === 0) return null;
+        return (
+          <div>
+            <div className="mb-3">
+              <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>
+                Templates criados
+              </Label>
+              <p className="text-[11px] mt-0.5" style={layoutTextMuted}>
+                Artes salvas dos grupos. O nome do template corresponde ao nome do grupo.
+              </p>
+            </div>
+            <div className="rounded-lg p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" style={layoutInnerStyle}>
+              {savedTemplates.map((t) => {
+                const a = t.tvs.find((tv) => tv.posicao === 0);
+                const url = a?.imagem_url || "";
+                const isCurrent = t.id === grupo.id;
+                return (
+                  <div
+                    key={t.id}
+                    className="rounded-md overflow-hidden flex flex-col"
+                    style={{
+                      border: isCurrent
+                        ? "2px solid var(--layout-accent-color, #2563eb)"
+                        : "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)",
+                      background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, var(--layout-page-bg, #ffffff))",
+                    }}
+                  >
+                    <div
+                      className="w-full"
+                      style={{
+                        aspectRatio: `${t.cols * 16} / ${t.rows * 9}`,
+                        backgroundImage: `url(${url})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundColor: "#000",
+                      }}
+                    />
+                    <div className="px-2.5 py-2 flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium truncate" style={layoutText} title={t.nome}>
+                        {t.nome}
+                      </span>
+                      <span className="text-[10px] font-mono shrink-0" style={layoutTextMuted}>
+                        {t.rows}×{t.cols}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </Card>
   );
 }
