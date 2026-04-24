@@ -137,6 +137,11 @@ export default function CenariosEstudioPage() {
       return;
     }
     setGrupos((prev) => prev.filter((g) => g.id !== id));
+    setEditingIds((prev) => {
+      const n = new Set(prev);
+      n.delete(id);
+      return n;
+    });
     toast.success("Template excluído");
   };
 
