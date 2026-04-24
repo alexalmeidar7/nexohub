@@ -669,7 +669,9 @@ export default function VmixPage() {
       let path = `/api/?Function=${encodeURIComponent(fn)}`;
       if (input) path += `&Input=${encodeURIComponent(input)}`;
       if (value) path += `&Value=${encodeURIComponent(value)}`;
-      await vmixFetch(path);
+      // Force direct mode for private IPs — proxy can't reach LAN
+      const forceMode: "direct" | "proxy" | undefined = isPrivateIp(savedUrl) ? "direct" : undefined;
+      await vmixFetch(path, forceMode);
       addLog(cmdLabel, "ok", "Enviado com sucesso", "local");
       setTimeout(() => connectToVmix(), 300);
     } catch (err: any) {
@@ -696,6 +698,19 @@ export default function VmixPage() {
     if (!normalized.length) return;
 
     const batchLabel = `[${label}] ${normalized.length} cmd(s)`;
+
+    // For private/local IPs, skip server attempt — the cloud cannot reach LAN.
+    // Send directly from the browser to vMix.
+    if (savedUrl && isPrivateIp(savedUrl)) {
+      addLog(batchLabel, "pending", "Enviando direto (LAN)...", "local");
+      for (const cmd of normalized) {
+        await sendCommand(cmd.fn, cmd.input, cmd.value);
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      toast({ title: label, description: `${normalized.length} ação(ões) enviada(s) ao vMix.` });
+      return;
+    }
+
     addLog(batchLabel, "pending", "Enviando via servidor...", "server");
 
     try {
@@ -722,7 +737,7 @@ export default function VmixPage() {
       }
       toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
     }
-  }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog]);
+  }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog, savedUrl]);
 
   const runScene = async (scene: VmixScene) => {
     setRunningScene(scene.id);
