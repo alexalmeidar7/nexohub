@@ -492,13 +492,13 @@ function TvCell({
   const inputId = `tv-upload-${posicao}-${Math.random().toString(36).slice(2, 7)}`;
   return (
     <div className="relative group">
-      <div className="absolute inset-0 rounded-md border-[3px] border-zinc-700 bg-black overflow-hidden shadow-inner">
+      <div className="absolute inset-0 rounded-md border-2 border-border bg-background/80 overflow-hidden shadow-inner">
         {imageUrl ? (
           <img src={imageUrl} alt={`TV ${posicao + 1}`} className="w-full h-full object-cover" />
         ) : (
           <label
             htmlFor={inputId}
-            className="w-full h-full flex flex-col items-center justify-center cursor-pointer text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors"
+            className="w-full h-full flex flex-col items-center justify-center cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent/40 transition-colors"
           >
             <Upload className="h-5 w-5 mb-1" />
             <span className="text-[10px] uppercase tracking-wider">TV {posicao + 1}</span>
