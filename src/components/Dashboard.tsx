@@ -43,7 +43,7 @@ const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
 const PropostasPage = lazy(() => import("./PropostasPage"));
 const ConfigTelaPromoPage = lazy(() => import("./ConfigTelaPromoPage"));
-const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
+const CenariosPage = lazy(() => import("./CenariosPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 const FansPage = lazy(() => import("./FansPage"));
 const BroadcastPage = lazy(() => import("./BroadcastPage"));
