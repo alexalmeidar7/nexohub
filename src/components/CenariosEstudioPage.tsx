@@ -356,6 +356,7 @@ export default function CenariosEstudioPage() {
           key={grupo.id}
           grupo={grupo}
           programas={programas}
+          templates={grupos}
           onChange={(patch) => updateGrupo(grupo.id, patch)}
           onRemove={() => removeGrupo(grupo.id)}
           onSave={() => saveGrupo(grupo)}
