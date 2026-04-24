@@ -447,7 +447,7 @@ function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgr
             {grupo.rows} × {grupo.cols} = {total} TV{total !== 1 ? "s" : ""}
           </Badge>
         </div>
-        <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-6">
+        <div className="rounded-lg bg-muted/40 border border-border p-6">
           <div
             className="mx-auto grid gap-3"
             style={{
@@ -492,13 +492,13 @@ function TvCell({
   const inputId = `tv-upload-${posicao}-${Math.random().toString(36).slice(2, 7)}`;
   return (
     <div className="relative group">
-      <div className="absolute inset-0 rounded-md border-[3px] border-zinc-700 bg-black overflow-hidden shadow-inner">
+      <div className="absolute inset-0 rounded-md border-2 border-border bg-background/80 overflow-hidden shadow-inner">
         {imageUrl ? (
           <img src={imageUrl} alt={`TV ${posicao + 1}`} className="w-full h-full object-cover" />
         ) : (
           <label
             htmlFor={inputId}
-            className="w-full h-full flex flex-col items-center justify-center cursor-pointer text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors"
+            className="w-full h-full flex flex-col items-center justify-center cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent/40 transition-colors"
           >
             <Upload className="h-5 w-5 mb-1" />
             <span className="text-[10px] uppercase tracking-wider">TV {posicao + 1}</span>
@@ -527,7 +527,7 @@ function TvCell({
             </Button>
           </div>
         )}
-        <span className="absolute top-1 left-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/60 text-white/70">
+        <span className="absolute top-1 left-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-foreground/70 text-background">
           #{posicao + 1}
         </span>
       </div>
