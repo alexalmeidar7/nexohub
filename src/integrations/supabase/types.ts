@@ -267,6 +267,77 @@ export type Database = {
         }
         Relationships: []
       }
+      cenario_estudio_grupos: {
+        Row: {
+          cols: number
+          created_at: string
+          id: string
+          nome: string
+          programa_ids: string[]
+          rows: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cols?: number
+          created_at?: string
+          id?: string
+          nome?: string
+          programa_ids?: string[]
+          rows?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cols?: number
+          created_at?: string
+          id?: string
+          nome?: string
+          programa_ids?: string[]
+          rows?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cenario_estudio_tvs: {
+        Row: {
+          created_at: string
+          grupo_id: string
+          id: string
+          imagem_url: string
+          posicao: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grupo_id: string
+          id?: string
+          imagem_url?: string
+          posicao?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grupo_id?: string
+          id?: string
+          imagem_url?: string
+          posicao?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cenario_estudio_tvs_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "cenario_estudio_grupos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_modules: {
         Row: {
           created_at: string
