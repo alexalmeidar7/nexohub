@@ -183,37 +183,26 @@ export default function CenariosEstudioPage() {
         .eq("id", grupo.id);
       if (gErr) throw gErr;
 
-      // 2) upload pending files + collect upserts
-      const total = grupo.rows * grupo.cols;
-      const finalTvs: { posicao: number; imagem_url: string }[] = [];
-      for (let i = 0; i < total; i++) {
-        const tv = grupo.tvs.find((t) => t.posicao === i);
-        if (!tv) continue;
-        let url = tv.imagem_url;
-        if (tv._file) {
-          const dataUrl = await fileToDataUrl(tv._file);
-          url = await uploadImageToStorage(
-            dataUrl,
-            "cenario-estudio",
-            `${user.id}/${grupo.id}/tv-${i}-${Date.now()}.webp`,
-            1920,
-            0.85,
-          );
-        }
-        if (url) finalTvs.push({ posicao: i, imagem_url: url });
+      // 2) upload single artwork (posicao=0) if pending
+      const arte = grupo.tvs.find((t) => t.posicao === 0);
+      let arteUrl = arte?.imagem_url || "";
+      if (arte?._file) {
+        const dataUrl = await fileToDataUrl(arte._file);
+        arteUrl = await uploadImageToStorage(
+          dataUrl,
+          "cenario-estudio",
+          `${user.id}/${grupo.id}/arte-${Date.now()}.webp`,
+          3840,
+          0.9,
+        );
       }
 
-      // 3) replace TVs (delete + insert) — simpler than upsert with constraint
+      // 3) replace TVs (single record holding the artwork)
       await (supabase as any).from("cenario_estudio_tvs").delete().eq("grupo_id", grupo.id);
-      if (finalTvs.length > 0) {
-        const { error: tErr } = await (supabase as any).from("cenario_estudio_tvs").insert(
-          finalTvs.map((t) => ({
-            grupo_id: grupo.id,
-            user_id: user.id,
-            posicao: t.posicao,
-            imagem_url: t.imagem_url,
-          })),
-        );
+      if (arteUrl) {
+        const { error: tErr } = await (supabase as any).from("cenario_estudio_tvs").insert([
+          { grupo_id: grupo.id, user_id: user.id, posicao: 0, imagem_url: arteUrl },
+        ]);
         if (tErr) throw tErr;
       }
 
