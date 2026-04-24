@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
   <musica>
     <titulo>${esc(titulo)}</titulo>
     <artista>${esc(artista)}</artista>
-    <capa>${esc(stripQuery(capa))}</capa>
+    <capa>${esc(capa)}</capa>
     <artista_imagem>${esc(artistaImg)}</artista_imagem>
   </musica>
   <patrocinadores>
