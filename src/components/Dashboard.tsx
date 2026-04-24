@@ -155,7 +155,7 @@ const pageTitle: Record<Page, string> = {
   tp: "Ferramentas — TP",
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
-  cenario: "vMix — Cenário Interativo",
+  cenario: "vMix — Cenários",
   broadcast: "vMix — Broadcast",
   fans: "Player — Fãs",
   configtelapromo: "Comercial — Config Tela Promo",
