@@ -160,7 +160,8 @@ Deno.serve(async (req) => {
       );
 
       const apresentadorNome = apsResult.data?.map((a: any) => a.nome).join(", ") || "";
-      const apresentadorFoto = apsResult.data?.[0]?.foto || "";
+      const apresentadoresFotos = (apsResult.data || []).map((a: any) => a.foto).filter((f: any) => !!f);
+      const apresentadorFoto = apresentadoresFotos[0] || "";
 
       currentProgram = {
         nome: onAir.nome,
@@ -170,6 +171,7 @@ Deno.serve(async (req) => {
         horario_fim: onAir.horario_fim,
         apresentador: apresentadorNome,
         apresentadorFoto,
+        apresentadoresFotos,
         tipo_programa: onAir.tipo_programa || null,
       };
 
