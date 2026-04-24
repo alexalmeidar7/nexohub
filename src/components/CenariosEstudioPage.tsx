@@ -194,14 +194,14 @@ export default function CenariosEstudioPage() {
       const arte = grupo.tvs.find((t) => t.posicao === 0);
       let arteUrl = arte?.imagem_url || "";
       if (arte?._file) {
-        const dataUrl = await fileToDataUrl(arte._file);
-        arteUrl = await uploadImageToStorage(
-          dataUrl,
-          "cenario-estudio",
-          `${user.id}/${grupo.id}/arte-${Date.now()}.webp`,
-          3840,
-          0.9,
-        );
+        // Upload as PNG directly (vMix compatibility - URL must end in .png)
+        const pngPath = `${user.id}/${grupo.id}/arte-${Date.now()}.png`;
+        const { error: upErr } = await (supabase as any).storage
+          .from("cenario-estudio")
+          .upload(pngPath, arte._file, { upsert: true, contentType: "image/png", cacheControl: "3600" });
+        if (upErr) throw upErr;
+        const { data: urlData } = (supabase as any).storage.from("cenario-estudio").getPublicUrl(pngPath);
+        arteUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       }
 
       // 3) replace TVs (single record holding the artwork)
