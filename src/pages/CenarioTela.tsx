@@ -1467,14 +1467,16 @@ export default function CenarioTela() {
                                 alt=""
                                 style={{
                                   position: "absolute",
-                                  bottom: 0,
+                                  bottom: `-${vhToPx(0.3)}${vu}`,
                                   left: "50%",
                                   transform: "translateX(-50%)",
-                                  height: "140%",
+                                  height: "150%",
                                   width: "auto",
                                   objectFit: "contain",
+                                  objectPosition: "bottom center",
                                   filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
                                   pointerEvents: "none",
+                                  zIndex: 1,
                                   animation: "presenter-enter 0.8s cubic-bezier(0.16,1,0.3,1) both",
                                 }}
                               />
