@@ -854,7 +854,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
               {currentPage === "programas" && <ProgramaForm />}
-              {currentPage === "musica" && <MusicaNoAr />}
+              {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
+              <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
+                <MusicaNoAr />
+              </div>
               {currentPage === "agenda" && <AgendaPage />}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
               {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" />}
