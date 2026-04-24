@@ -447,7 +447,7 @@ function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgr
             {grupo.rows} × {grupo.cols} = {total} TV{total !== 1 ? "s" : ""}
           </Badge>
         </div>
-        <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-6">
+        <div className="rounded-lg bg-muted/40 border border-border p-6">
           <div
             className="mx-auto grid gap-3"
             style={{
