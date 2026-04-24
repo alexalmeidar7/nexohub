@@ -294,27 +294,15 @@ export default function CenariosEstudioPage() {
   return (
     <div className="space-y-5">
       {/* Header info + XML */}
-      <Card
-        className="p-5"
-        style={{
-          background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 4%, var(--layout-page-bg, #ffffff))",
-          color: "var(--layout-page-text, #0d0446)",
-          border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
-        }}
-      >
+      <Card className="p-5" style={layoutCardStyle}>
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div
-              className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)" }}
-            >
-              <Tv className="h-5 w-5" style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+            <div className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0" style={layoutAccentSoft}>
+              <Tv className="h-5 w-5" style={layoutAccent} />
             </div>
             <div>
-              <h3 className="font-semibold text-lg leading-tight" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                Cenários Estúdio
-              </h3>
-              <p className="text-sm mt-1 max-w-xl leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>
+              <h3 className="font-semibold text-lg leading-tight" style={layoutText}>Cenários Estúdio</h3>
+              <p className="text-sm mt-1 max-w-xl leading-relaxed" style={layoutTextMuted}>
                 Monte grupos de TVs e vincule a programas. O vMix consome o XML e troca automaticamente conforme o programa no ar.
               </p>
             </div>
@@ -323,23 +311,14 @@ export default function CenariosEstudioPage() {
             <Plus className="h-4 w-4 mr-1" /> Novo grupo
           </Button>
         </div>
-        <div
-          className="mt-4 pt-4"
-          style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}
-        >
-          <Label className="text-xs uppercase tracking-wider font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>
+        <div className="mt-4 pt-4" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}>
+          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>
             Link XML para o vMix
           </Label>
-          <div
-            className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-md"
-            style={{
-              background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 5%, var(--layout-page-bg, #ffffff))",
-              border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
-            }}
-          >
-            <LinkIcon className="h-4 w-4 shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 60%, transparent)" }} />
-            <code className="text-sm truncate flex-1 font-mono" style={{ color: "var(--layout-page-text, #0d0446)" }}>{xmlUrl}</code>
-            <Button size="sm" variant="ghost" className="h-8 px-2 shrink-0" onClick={copyXmlUrl}>
+          <div className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-md" style={layoutInnerStyle}>
+            <LinkIcon className="h-4 w-4 shrink-0" style={layoutTextMuted} />
+            <code className="text-sm truncate flex-1 font-mono" style={layoutText}>{xmlUrl}</code>
+            <Button size="sm" variant="ghost" className="h-8 px-2 shrink-0" onClick={copyXmlUrl} style={layoutText}>
               <Copy className="h-4 w-4 mr-1" /> Copiar
             </Button>
           </div>
@@ -348,12 +327,12 @@ export default function CenariosEstudioPage() {
 
       {/* Empty state: no programas registered (priority over "no grupos") */}
       {noProgramas && (
-        <Card className="p-10 text-center border-dashed border-border">
-          <div className="mx-auto h-14 w-14 rounded-full bg-primary/15 flex items-center justify-center mb-4">
-            <Radio className="h-7 w-7 text-primary" />
+        <Card className="p-10 text-center border-dashed" style={layoutCardStyle}>
+          <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-4" style={layoutAccentSoft}>
+            <Radio className="h-7 w-7" style={layoutAccent} />
           </div>
-          <h4 className="font-semibold text-base text-foreground mb-2">Cadastre programas primeiro</h4>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5 leading-relaxed">
+          <h4 className="font-semibold text-base mb-2" style={layoutText}>Cadastre programas primeiro</h4>
+          <p className="text-sm max-w-md mx-auto mb-5 leading-relaxed" style={layoutTextMuted}>
             Para criar grupos de TVs e vincular ao programa no ar, você precisa ter ao menos um programa ativo cadastrado.
           </p>
           <Button asChild size="sm">
@@ -366,13 +345,13 @@ export default function CenariosEstudioPage() {
 
       {/* Empty state: programas exist, no grupos */}
       {!noProgramas && grupos.length === 0 && (
-        <Card className="p-10 text-center border-dashed border-border">
-          <div className="mx-auto h-14 w-14 rounded-full bg-primary/15 flex items-center justify-center mb-4">
-            <LayoutGrid className="h-7 w-7 text-primary" />
+        <Card className="p-10 text-center border-dashed" style={layoutCardStyle}>
+          <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-4" style={layoutAccentSoft}>
+            <LayoutGrid className="h-7 w-7" style={layoutAccent} />
           </div>
-          <h4 className="font-semibold text-base text-foreground mb-2">Nenhum grupo criado</h4>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5 leading-relaxed">
-            Crie um grupo para definir o layout das TVs do cenário (ex: <span className="font-medium text-foreground">"TVs atrás da âncora"</span>),
+          <h4 className="font-semibold text-base mb-2" style={layoutText}>Nenhum grupo criado</h4>
+          <p className="text-sm max-w-md mx-auto mb-5 leading-relaxed" style={layoutTextMuted}>
+            Crie um grupo para definir o layout das TVs do cenário (ex: <span className="font-medium" style={layoutText}>"TVs atrás da âncora"</span>),
             envie as imagens e vincule aos programas que devem usar esse cenário.
           </p>
           <Button onClick={addGrupo} size="sm">
