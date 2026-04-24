@@ -869,7 +869,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "vmix" && <VmixPage />}
               {currentPage === "propostas" && <PropostasPage />}
               {currentPage === "tp" && <TeleprompterPage />}
-              {currentPage === "cenario" && <CenarioInterativoPage />}
+              {currentPage === "cenario" && <CenariosPage />}
               {currentPage === "broadcast" && <BroadcastPage />}
               {currentPage === "batalha" && <BatalhaMusicalPage />}
               {currentPage === "enquete" && <EnquetePage />}
