@@ -36,15 +36,12 @@ Deno.serve(async (req) => {
   const xmlHeaders = {
     ...corsHeaders,
     "Content-Type": "application/xml; charset=utf-8",
-    "Cache-Control": "public, max-age=110",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
   };
 
   try {
     const url = new URL(req.url);
     const userId = url.searchParams.get("uid") || url.searchParams.get("user_id");
-    const titulo = url.searchParams.get("titulo") || "";
-    const artista = url.searchParams.get("artista") || "";
-    const capa = url.searchParams.get("capa") || "";
 
     if (!userId) {
       return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>uid required</error>`, {
@@ -113,6 +110,37 @@ Deno.serve(async (req) => {
         .join("\n");
     }
 
+    // Música atual: último registro em musicas_tocadas
+    let titulo = "";
+    let artista = "";
+    let capa = "";
+    const { data: ultimaMusica } = await supabase
+      .from("musicas_tocadas")
+      .select("musica, artista")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (ultimaMusica) {
+      titulo = ultimaMusica.musica || "";
+      artista = ultimaMusica.artista || "";
+    }
+
+    // Capa via iTunes
+    if (titulo && artista) {
+      try {
+        const q = encodeURIComponent(`${artista} ${titulo}`);
+        const r = await fetch(`https://itunes.apple.com/search?term=${q}&limit=1&media=music`);
+        if (r.ok) {
+          const j = await r.json();
+          const art = j?.results?.[0]?.artworkUrl100 || "";
+          if (art) capa = art.replace("100x100", "600x600");
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     // Imagem do artista no Deezer
     const artistaImg = await fetchDeezerArtistImage(artista);
 
@@ -131,7 +159,7 @@ Deno.serve(async (req) => {
   <musica>
     <titulo>${esc(titulo)}</titulo>
     <artista>${esc(artista)}</artista>
-    <capa>${esc(stripQuery(capa))}</capa>
+    <capa>${esc(capa)}</capa>
     <artista_imagem>${esc(artistaImg)}</artista_imagem>
   </musica>
   <patrocinadores>
