@@ -542,8 +542,6 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
         </div>
       </div>
 
-      </div>
-
       {/* Programas vinculados */}
       <div className="rounded-lg p-4" style={layoutInnerStyle}>
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
