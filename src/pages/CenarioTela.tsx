@@ -1254,8 +1254,8 @@ export default function CenarioTela() {
                   <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
                 </>
               )}
-              {/* Home/Chat: artist bg from Deezer → crossfade */}
-              {(activeTab === "home" || activeTab === "chat") && prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+              {/* Home/Chat: artist bg from Deezer → crossfade (only when there's an active artist) */}
+              {(activeTab === "home" || activeTab === "chat") && !!musicData?.artista && !isBreakTrack && !isJornalistico && prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
                 <img
                   src={prevArtistBgUrl}
                   alt=""
