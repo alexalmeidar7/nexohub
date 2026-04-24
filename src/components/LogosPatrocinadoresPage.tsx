@@ -224,13 +224,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       let count = 0;
       for (const pf of pendingFiles) {
         const logo_url = await uploadLogo(pf.file);
+        const nomeFinal = (pf.nome || pf.file.name.replace(/\.[^.]+$/, "")).trim().toUpperCase();
         for (const pid of targets) {
           const { error } = await supabase.from("logos_patrocinadores").insert({
             user_id: dataUserId!,
             programa_id: pid,
             logo_url,
             data_final: dataFinal,
-            nome: nomeLogo,
+            nome: nomeFinal,
           });
           if (error) throw error;
           count++;
