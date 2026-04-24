@@ -231,29 +231,34 @@ export default function CenariosEstudioPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header info + XML */}
-      <Card className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Tv className="h-5 w-5 text-primary" />
-          <div>
-            <h3 className="font-semibold leading-tight">Cenários Estúdio</h3>
-            <p className="text-xs text-muted-foreground">
-              Monte grupos de TVs e vincule a programas. O vMix consome o XML e troca automaticamente conforme o programa no ar.
-            </p>
+      <Card className="p-5">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Tv className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-base leading-tight text-foreground">Cenários Estúdio</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-xl">
+                Monte grupos de TVs e vincule a programas. O vMix consome o XML e troca automaticamente conforme o programa no ar.
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/40 border max-w-md">
-            <LinkIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <code className="text-[11px] truncate">{xmlUrl}</code>
-            <Button size="sm" variant="ghost" className="h-7 px-2" onClick={copyXmlUrl}>
-              <Copy className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-          <Button onClick={addGrupo} size="sm">
+          <Button onClick={addGrupo} size="sm" className="shrink-0 self-start lg:self-auto">
             <Plus className="h-4 w-4 mr-1" /> Novo grupo
           </Button>
+        </div>
+        <div className="mt-4 pt-4 border-t border-border/60">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Link XML para o vMix</Label>
+          <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border border-border/60">
+            <LinkIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <code className="text-xs text-foreground/80 truncate flex-1 font-mono">{xmlUrl}</code>
+            <Button size="sm" variant="ghost" className="h-7 px-2 shrink-0" onClick={copyXmlUrl}>
+              <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
+            </Button>
+          </div>
         </div>
       </Card>
 
