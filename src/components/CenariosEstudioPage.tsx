@@ -70,6 +70,7 @@ export default function CenariosEstudioPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [editingIds, setEditingIds] = useState<Set<string>>(new Set());
 
   const xmlUrl = useMemo(() => {
     if (!user?.id) return "";
