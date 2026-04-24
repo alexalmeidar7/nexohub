@@ -128,14 +128,14 @@ export default function CenariosEstudioPage() {
   };
 
   const removeGrupo = async (id: string) => {
-    if (!confirm("Excluir este grupo e todas as suas TVs?")) return;
+    if (!confirm("Excluir este template e todas as suas TVs?")) return;
     const { error } = await (supabase as any).from("cenario_estudio_grupos").delete().eq("id", id);
     if (error) {
       toast.error("Erro ao excluir");
       return;
     }
     setGrupos((prev) => prev.filter((g) => g.id !== id));
-    toast.success("Grupo excluído");
+    toast.success("Template excluído");
   };
 
   // Single artwork per group: stored at posicao=0
