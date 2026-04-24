@@ -360,8 +360,8 @@ export default function CenariosEstudioPage() {
           onRemove={() => removeGrupo(grupo.id)}
           onSave={() => saveGrupo(grupo)}
           onToggleProgram={(pid) => toggleProgramaInGrupo(grupo.id, pid)}
-          onSetImage={(pos, file) => setTvImage(grupo.id, pos, file)}
-          onRemoveImage={(pos) => removeTvImage(grupo.id, pos)}
+          onSetArte={(file) => setGrupoArte(grupo.id, file)}
+          onRemoveArte={() => removeGrupoArte(grupo.id)}
           saving={savingId === grupo.id}
         />
       ))}
