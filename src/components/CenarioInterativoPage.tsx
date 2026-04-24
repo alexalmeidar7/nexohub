@@ -839,23 +839,25 @@ export default function CenarioInterativoPage() {
     return () => clearInterval(t);
   }, [sponsorLogos.length]);
 
-  /* ─── Music data sync from localStorage ─── */
+  /* ─── Music data sync from per-user localStorage ─── */
   useEffect(() => {
+    if (!user?.id) return;
+    const key = `masterview_music_data::${user.id}`;
     const poll = setInterval(() => {
       try {
-        const raw = localStorage.getItem("masterview_music_data");
+        const raw = localStorage.getItem(key);
         if (!raw) return;
         const d = JSON.parse(raw);
-        const key = `${d.titulo}|${d.artista}`;
-        if (key !== prevMusicRef.current) {
-          prevMusicRef.current = key;
+        const sig = `${d.titulo}|${d.artista}`;
+        if (sig !== prevMusicRef.current) {
+          prevMusicRef.current = sig;
           setMusicData({ titulo: d.titulo || "", artista: d.artista || "", capa: d.capa || "" });
           setMusicKey(k => k + 1);
         }
       } catch {}
     }, 2000);
     return () => clearInterval(poll);
-  }, []);
+  }, [user?.id]);
   /* ─── Fetch live currencies ─── */
   useEffect(() => {
     if (!config.currency.enabled || !config.currency.currencies.length) return;

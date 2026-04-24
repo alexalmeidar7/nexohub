@@ -24,8 +24,7 @@ interface UploadLogEntry {
 
 type SourceMode = "online" | "pasta" | "both" | "none";
 
-const MUSIC_DATA_KEY = "masterview_music_data";
-const MUSIC_START_KEY = "masterview_music_start";
+// MUSIC_DATA_KEY / MUSIC_START_KEY are now per-user — see musicStorageKeys.ts
 const UPLOAD_HISTORY_KEY = "masterview_xml_upload_history";
 const SOURCE_MODE_KEY = "masterview_source_mode";
 const DEVICE_NAME_KEY = "masterview_device_name";
@@ -221,6 +220,9 @@ export { getMusicData } from "@/lib/musicData";
 
 export default function MusicaNoAr() {
   const { user } = useAuth();
+  // Per-user scoped localStorage keys (prevents cross-tenant music leak)
+  const MUSIC_DATA_KEY = user ? `masterview_music_data::${user.id}` : "masterview_music_data::__none__";
+  const MUSIC_START_KEY = user ? `masterview_music_start::${user.id}` : "masterview_music_start::__none__";
   const [xmlUrl, setXmlUrl] = useState(DEFAULT_XML_URL);
   const [music, setMusic] = useState<MusicData | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -812,7 +814,7 @@ export default function MusicaNoAr() {
 
   // Load music data from localStorage first, then try DB for start time persistence
   useEffect(() => {
-    const stored = getMusicData();
+    const stored = getMusicData(user?.id);
     if (stored) {
       setMusic(stored.music);
       const st = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);

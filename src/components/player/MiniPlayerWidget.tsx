@@ -87,25 +87,11 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
 
   const isVideo = data.type === "video_live" || data.type === "video";
 
-  // Poll live music data from localStorage every 2s
-  useEffect(() => {
-    const sync = () => {
-      try {
-        const raw = localStorage.getItem("masterview_music_data");
-        if (!raw) return;
-        const m = JSON.parse(raw);
-        const t = (m.titulo || "").trim();
-        const a = (m.artista || "").trim();
-        if (t && t.toLowerCase() !== "sem título" && t.toLowerCase() !== "sem titulo") {
-          setLiveTitle(t);
-          setLiveArtist(a || "Desconhecido");
-        }
-      } catch {}
-    };
-    sync();
-    const iv = setInterval(sync, 2000);
-    return () => clearInterval(iv);
-  }, []);
+  // Live music for the public player should come from the channel owner's
+  // public data (public-player-data edge function), NOT from the host browser's
+  // localStorage — reading localStorage here would leak whoever last logged in.
+  // The parent component is responsible for setting liveTitle/liveArtist via
+  // a public, owner-scoped fetch.
 
   // Audio streaming — uses the global pre-unlocked audio element
   useEffect(() => {

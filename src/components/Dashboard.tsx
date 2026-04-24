@@ -1148,6 +1148,7 @@ function weatherCodeToWbIcon(code: number): string {
 }
 
 function UnifiedXmlField() {
+  const { user } = useAuth();
   const [xmlContent, setXmlContent] = useState("");
 
   useEffect(() => {
@@ -1196,7 +1197,7 @@ function UnifiedXmlField() {
         }
       } catch {}
 
-      const m = getMusicData();
+      const m = getMusicData(user?.id);
       if (m) {
         musicXml = `  <musica_agora>\n    <titulo>${m.music.titulo}</titulo>\n    <interprete>${m.music.artista}</interprete>\n    <capa>${m.music.capa || ""}</capa>\n  </musica_agora>`;
       }
@@ -1240,7 +1241,7 @@ function useGlobalMusicXmlUpload() {
       if (!settings?.music_xml_url) return;
 
       try {
-        const m = getMusicData();
+        const m = getMusicData(user.id);
         const titulo = m?.music?.titulo || "Sem titulo";
         const interprete = m?.music?.artista || "Desconhecido";
         let capa = m?.music?.capa || "";

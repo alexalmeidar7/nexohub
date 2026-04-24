@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Mic, Minus, Plus, Settings, Type } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { musicStartKey } from "@/lib/musicStorageKeys";
 
-const MUSIC_START_KEY = "masterview_music_start";
 const SPEED_OFFSET_KEY = "karaoke_speed_offset";
 
 interface LrcLine {
@@ -55,6 +56,8 @@ export default function KaraokeOverlay({
   onLyricsNotFound,
   onLyricsFound,
 }: KaraokeOverlayProps) {
+  const { user } = useAuth();
+  const MUSIC_START_KEY = musicStartKey(user?.id) || "masterview_music_start::__none__";
   const accentHsl = useMemo(() => getAccentHsl(), []);
   const accent = `hsl(${accentHsl})`;
   const accentA = (a: number) => `hsl(${accentHsl} / ${a})`;
