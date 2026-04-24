@@ -69,6 +69,7 @@ interface HomeConfig {
 
 interface CenarioConfig {
   city: string;
+  useProgramThumbAsBg?: boolean;
   home: HomeConfig;
   weather: WeatherConfig;
   traffic: TrafficConfig;
@@ -86,6 +87,7 @@ function buildHomeGradient(h: HomeConfig): string {
 
 const defaultConfig: CenarioConfig = {
   city: "",
+  useProgramThumbAsBg: false,
   home: { bgImage: "" },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
@@ -770,7 +772,7 @@ export default function CenarioInterativoPage() {
   const [savedFlash, setSavedFlash] = useState(false);
   const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
   const [presenterIdx, setPresenterIdx] = useState(0);
   const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
@@ -899,7 +901,7 @@ export default function CenarioInterativoPage() {
 
       const { data: progs } = await supabase
         .from("programas")
-        .select("id, nome, horario_inicio, horario_fim, dias_semana, selo, apresentador_id, apresentadores_ids, tipo_programa")
+        .select("id, nome, horario_inicio, horario_fim, dias_semana, selo, thumb, capa, apresentador_id, apresentadores_ids, tipo_programa")
         .eq("user_id", user.id)
         .eq("ativo", true)
         .ilike("estudio", "%fm%");
@@ -920,7 +922,7 @@ export default function CenarioInterativoPage() {
           apresentadoresFotos = (aps || []).map(a => a.foto).filter((f): f is string => !!f);
           apresentadorFoto = apresentadoresFotos[0] || "";
         }
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, apresentadoresFotos, tipo_programa: onAir.tipo_programa });
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, thumb: (onAir as any).thumb || null, capa: (onAir as any).capa || null, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, apresentadoresFotos, tipo_programa: onAir.tipo_programa });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
           .select("id, nome, logo_url")
@@ -1308,6 +1310,22 @@ export default function CenarioInterativoPage() {
                       />
                     </div>
                    )}
+
+                  {/* ── Thumb do programa como fundo (global) ── */}
+                  <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                    <div className="flex flex-col pr-3">
+                      <Label className="text-xs font-medium flex items-center gap-1.5">
+                        <Palette size={12} /> Thumb do programa de fundo
+                      </Label>
+                      <span className="text-[10px]" style={{ color: mutedText }}>
+                        Aplica nas páginas Home, Tempo, Cotação e Chat.
+                      </span>
+                    </div>
+                    <Switch
+                      checked={!!config.useProgramThumbAsBg}
+                      onCheckedChange={v => setConfig(c => ({ ...c, useProgramThumbAsBg: v }))}
+                    />
+                  </div>
 
                   {/* ── Palavras de exceção ── */}
                   <div className="space-y-1.5 pt-2 border-t border-white/10">
@@ -1773,15 +1791,25 @@ export default function CenarioInterativoPage() {
                         <TrafficMap lat={config.traffic.lat ?? trafficCoords.lat} lon={config.traffic.lon ?? trafficCoords.lon} zoom={config.traffic.zoom} interactive onMove={(lat, lon, zoom) => updateTraffic({ lat, lon, zoom })} />
                       </div>
                     )}
-                    {!((activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled)) && (
-                      <div className="absolute inset-0" style={{ background: activeTab === "home" ? (config.home.bgGradient ? buildHomeGradient(config.home) : (config.home.bgImage ? "#e8e8e8" : "#000")) : "#e8e8e8", zIndex: 0 }}>
-                        {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                        {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                        {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                        {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                        {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                      </div>
-                    )}
+                    {!((activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled)) && (() => {
+                      const useThumb = !!config.useProgramThumbAsBg && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat");
+                      const thumbSrc = currentProgram?.thumb || currentProgram?.capa || "";
+                      return (
+                        <div className="absolute inset-0" style={{ background: activeTab === "home" ? (config.home.bgGradient ? buildHomeGradient(config.home) : (config.home.bgImage ? "#e8e8e8" : "#000")) : "#e8e8e8", zIndex: 0 }}>
+                          {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                          {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                          {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                          {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                          {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                          {useThumb && thumbSrc && (
+                            <>
+                              <img src={thumbSrc} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(18px) brightness(0.55)", transform: "scale(1.1)" }} />
+                              <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Sidebar — matches CenarioTela exactly */}
                     {(() => {

@@ -14,7 +14,7 @@ interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage
 interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
 interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; exceptionWords?: string; elementPositions?: Record<string, { x: number; y: number; scale: number }>; }
-interface CenarioConfig { city: string; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
+interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
 
 function buildHomeGradient(h: HomeConfig): string {
   const a = h.bgGradientColorA || "#1a1a2e";
@@ -207,7 +207,7 @@ export default function CenarioTela() {
     return new URLSearchParams(window.location.search).get("weatherSubTab") || "today";
   });
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
   const [presenterIdx, setPresenterIdx] = useState(0);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
@@ -1273,6 +1273,12 @@ export default function CenarioTela() {
               {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {!!config.useProgramThumbAsBg && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (currentProgram?.thumb || currentProgram?.capa) && (
+                <>
+                  <img src={(currentProgram?.thumb || currentProgram?.capa) as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(22px) brightness(0.55)", transform: "scale(1.1)" }} />
+                  <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
+                </>
+              )}
             </div>
           )}
 

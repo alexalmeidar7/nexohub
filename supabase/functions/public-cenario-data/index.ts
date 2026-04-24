@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
           .maybeSingle(),
         supabase
           .from("programas")
-          .select("id, nome, selo, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, tipo_programa")
+          .select("id, nome, selo, thumb, capa, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, tipo_programa")
           .eq("user_id", userId)
           .eq("ativo", true),
       ]),
@@ -167,6 +167,8 @@ Deno.serve(async (req) => {
         nome: onAir.nome,
         id: onAir.id,
         selo: onAir.selo,
+        thumb: onAir.thumb || null,
+        capa: onAir.capa || null,
         horario_inicio: onAir.horario_inicio,
         horario_fim: onAir.horario_fim,
         apresentador: apresentadorNome,
