@@ -256,7 +256,7 @@ export default function CenarioTela() {
   useEffect(() => {
     if (isBreakTrack || isJornalistico) { setArtistBgUrl(null); setPrevArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
-    if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); setArtistBgReady(false); return; }
+    if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); setPrevArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
     if (artistBgCacheRef.current[cacheKey]) {
       setArtistBgReady(false);
