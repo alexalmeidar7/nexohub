@@ -155,10 +155,19 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   }, [programaPickerOpen]);
 
   const handleAddFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPendingFiles((prev) => [...prev, { file, preview: URL.createObjectURL(file) }]);
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const items = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      nome: file.name.replace(/\.[^.]+$/, "").trim().toUpperCase(),
+    }));
+    setPendingFiles((prev) => [...prev, ...items]);
     e.target.value = "";
+  };
+
+  const updatePendingName = (idx: number, nome: string) => {
+    setPendingFiles((prev) => prev.map((p, i) => (i === idx ? { ...p, nome } : p)));
   };
 
   const removePendingFile = (idx: number) => {
