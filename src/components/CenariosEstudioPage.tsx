@@ -275,15 +275,27 @@ export default function CenariosEstudioPage() {
   return (
     <div className="space-y-5">
       {/* Header info + XML */}
-      <Card className="p-5 border-border">
+      <Card
+        className="p-5"
+        style={{
+          background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 4%, var(--layout-page-bg, #ffffff))",
+          color: "var(--layout-page-text, #0d0446)",
+          border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
+        }}
+      >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="h-11 w-11 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-              <Tv className="h-5 w-5 text-primary" />
+            <div
+              className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)" }}
+            >
+              <Tv className="h-5 w-5" style={{ color: "var(--layout-accent-color, #2563eb)" }} />
             </div>
             <div>
-              <h3 className="font-semibold text-lg leading-tight text-foreground">Cenários Estúdio</h3>
-              <p className="text-sm text-muted-foreground mt-1 max-w-xl leading-relaxed">
+              <h3 className="font-semibold text-lg leading-tight" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                Cenários Estúdio
+              </h3>
+              <p className="text-sm mt-1 max-w-xl leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>
                 Monte grupos de TVs e vincule a programas. O vMix consome o XML e troca automaticamente conforme o programa no ar.
               </p>
             </div>
@@ -292,11 +304,22 @@ export default function CenariosEstudioPage() {
             <Plus className="h-4 w-4 mr-1" /> Novo grupo
           </Button>
         </div>
-        <div className="mt-4 pt-4 border-t border-border">
-          <Label className="text-xs uppercase tracking-wider text-foreground/70 font-semibold">Link XML para o vMix</Label>
-          <div className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-md bg-muted/60 border border-border">
-            <LinkIcon className="h-4 w-4 text-foreground/60 shrink-0" />
-            <code className="text-sm text-foreground truncate flex-1 font-mono">{xmlUrl}</code>
+        <div
+          className="mt-4 pt-4"
+          style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}
+        >
+          <Label className="text-xs uppercase tracking-wider font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>
+            Link XML para o vMix
+          </Label>
+          <div
+            className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-md"
+            style={{
+              background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 5%, var(--layout-page-bg, #ffffff))",
+              border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
+            }}
+          >
+            <LinkIcon className="h-4 w-4 shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 60%, transparent)" }} />
+            <code className="text-sm truncate flex-1 font-mono" style={{ color: "var(--layout-page-text, #0d0446)" }}>{xmlUrl}</code>
             <Button size="sm" variant="ghost" className="h-8 px-2 shrink-0" onClick={copyXmlUrl}>
               <Copy className="h-4 w-4 mr-1" /> Copiar
             </Button>
