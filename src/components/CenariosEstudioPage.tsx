@@ -226,11 +226,51 @@ export default function CenariosEstudioPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando...
+      <div className="space-y-5">
+        {/* Header skeleton */}
+        <Card className="p-5">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex items-start gap-3 flex-1">
+              <Skeleton className="h-10 w-10 rounded-lg" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-full max-w-md" />
+              </div>
+            </div>
+            <Skeleton className="h-9 w-32" />
+          </div>
+          <div className="mt-4 pt-4 border-t border-border/60">
+            <Skeleton className="h-3 w-32 mb-2" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </Card>
+
+        {/* Group skeletons */}
+        {[0, 1].map((i) => (
+          <Card key={i} className="p-5 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3">
+              <div className="space-y-2"><Skeleton className="h-3 w-24" /><Skeleton className="h-9 w-full" /></div>
+              <div className="space-y-2"><Skeleton className="h-3 w-12" /><Skeleton className="h-9 w-24" /></div>
+              <div className="space-y-2"><Skeleton className="h-3 w-16" /><Skeleton className="h-9 w-24" /></div>
+              <div className="flex gap-2 items-end"><Skeleton className="h-9 w-20" /><Skeleton className="h-9 w-20" /></div>
+            </div>
+            <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+              <Skeleton className="h-3 w-40 mb-3" />
+              <div className="flex flex-wrap gap-2">
+                {[60, 80, 70, 90, 65].map((w, idx) => <Skeleton key={idx} className="h-6 rounded-full" style={{ width: `${w}px` }} />)}
+              </div>
+            </div>
+            <div>
+              <Skeleton className="h-3 w-32 mb-3" />
+              <Skeleton className="h-48 w-full rounded-lg" />
+            </div>
+          </Card>
+        ))}
       </div>
     );
   }
+
+  const noProgramas = programas.length === 0;
 
   return (
     <div className="space-y-5">
@@ -248,7 +288,7 @@ export default function CenariosEstudioPage() {
               </p>
             </div>
           </div>
-          <Button onClick={addGrupo} size="sm" className="shrink-0 self-start lg:self-auto">
+          <Button onClick={addGrupo} size="sm" className="shrink-0 self-start lg:self-auto" disabled={noProgramas}>
             <Plus className="h-4 w-4 mr-1" /> Novo grupo
           </Button>
         </div>
@@ -264,11 +304,36 @@ export default function CenariosEstudioPage() {
         </div>
       </Card>
 
-      {grupos.length === 0 && (
-        <Card className="p-10 text-center text-muted-foreground">
-          <Tv className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p>Nenhum grupo criado ainda.</p>
-          <Button onClick={addGrupo} variant="outline" size="sm" className="mt-4">
+      {/* Empty state: no programas registered (priority over "no grupos") */}
+      {noProgramas && (
+        <Card className="p-10 text-center border-dashed">
+          <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <Radio className="h-7 w-7 text-primary" />
+          </div>
+          <h4 className="font-semibold text-foreground mb-1">Cadastre programas primeiro</h4>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
+            Para criar grupos de TVs e vincular ao programa no ar, você precisa ter ao menos um programa ativo cadastrado.
+          </p>
+          <Button asChild size="sm">
+            <Link to="/user/nexohub/programas">
+              Cadastrar programa <ArrowRight className="h-4 w-4 ml-1" />
+            </Link>
+          </Button>
+        </Card>
+      )}
+
+      {/* Empty state: programas exist, no grupos */}
+      {!noProgramas && grupos.length === 0 && (
+        <Card className="p-10 text-center border-dashed">
+          <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <LayoutGrid className="h-7 w-7 text-primary" />
+          </div>
+          <h4 className="font-semibold text-foreground mb-1">Nenhum grupo criado</h4>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
+            Crie um grupo para definir o layout das TVs do cenário (ex: <span className="font-medium text-foreground">"TVs atrás da âncora"</span>),
+            envie as imagens e vincule aos programas que devem usar esse cenário.
+          </p>
+          <Button onClick={addGrupo} size="sm">
             <Plus className="h-4 w-4 mr-1" /> Criar primeiro grupo
           </Button>
         </Card>
