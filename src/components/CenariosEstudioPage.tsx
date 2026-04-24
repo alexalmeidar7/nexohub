@@ -495,9 +495,7 @@ export default function CenariosEstudioPage() {
 interface GrupoCardProps {
   grupo: Grupo;
   programas: Programa[];
-  templates: Grupo[];
   onChange: (patch: Partial<Grupo>) => void;
-  onRemove: () => void;
   onSave: () => void;
   onToggleProgram: (programaId: string) => void;
   onSetArte: (file: File) => void;
@@ -505,7 +503,7 @@ interface GrupoCardProps {
   saving: boolean;
 }
 
-function GrupoCard({ grupo, programas, templates, onChange, onRemove, onSave, onToggleProgram, onSetArte, onRemoveArte, saving }: GrupoCardProps) {
+function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetArte, onRemoveArte, saving }: GrupoCardProps) {
   const total = grupo.rows * grupo.cols;
   const cells = Array.from({ length: total }, (_, i) => i);
   const arte = grupo.tvs.find((t) => t.posicao === 0);
