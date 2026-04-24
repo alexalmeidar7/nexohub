@@ -94,6 +94,27 @@ export default function BroadcastPage() {
     latestDataRef.current = data;
   }, [data]);
 
+  // Auto-sync foto/instagram/cargo whenever locutor_override matches a registered apresentador
+  useEffect(() => {
+    const nome = (data.locutor_override || "").trim();
+    if (!user || nome.length < 2) return;
+    const t = setTimeout(async () => {
+      const { data: ap } = await supabase
+        .from("apresentadores")
+        .select("nome, foto, instagram, cargo")
+        .eq("user_id", user.id)
+        .ilike("nome", nome)
+        .limit(1)
+        .maybeSingle();
+      if (ap) {
+        if (ap.foto) setLocutorFoto(ap.foto);
+        if (ap.instagram) setLocutorInstagram(ap.instagram.startsWith("@") ? ap.instagram : `@${ap.instagram}`);
+        if (ap.cargo) setLocutorCargo(ap.cargo);
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [data.locutor_override, user]);
+
   // Load data
   useEffect(() => {
     if (!user) return;
