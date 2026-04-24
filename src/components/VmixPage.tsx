@@ -669,7 +669,9 @@ export default function VmixPage() {
       let path = `/api/?Function=${encodeURIComponent(fn)}`;
       if (input) path += `&Input=${encodeURIComponent(input)}`;
       if (value) path += `&Value=${encodeURIComponent(value)}`;
-      await vmixFetch(path);
+      // Force direct mode for private IPs — proxy can't reach LAN
+      const forceMode: "direct" | "proxy" | undefined = isPrivateIp(savedUrl) ? "direct" : undefined;
+      await vmixFetch(path, forceMode);
       addLog(cmdLabel, "ok", "Enviado com sucesso", "local");
       setTimeout(() => connectToVmix(), 300);
     } catch (err: any) {
