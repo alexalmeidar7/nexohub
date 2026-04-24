@@ -112,7 +112,7 @@ export default function CenariosEstudioPage() {
     if (!user?.id) return;
     const { data, error } = await (supabase as any)
       .from("cenario_estudio_grupos")
-      .insert({ user_id: user.id, nome: "Novo grupo", rows: 1, cols: 2, programa_ids: [] })
+      .insert({ user_id: user.id, nome: "Novo template", rows: 1, cols: 2, programa_ids: [] })
       .select()
       .single();
     if (error) {
