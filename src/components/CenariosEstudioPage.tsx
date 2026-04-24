@@ -112,7 +112,7 @@ export default function CenariosEstudioPage() {
     if (!user?.id) return;
     const { data, error } = await (supabase as any)
       .from("cenario_estudio_grupos")
-      .insert({ user_id: user.id, nome: "Novo grupo", rows: 1, cols: 2, programa_ids: [] })
+      .insert({ user_id: user.id, nome: "Novo template", rows: 1, cols: 2, programa_ids: [] })
       .select()
       .single();
     if (error) {
@@ -128,14 +128,14 @@ export default function CenariosEstudioPage() {
   };
 
   const removeGrupo = async (id: string) => {
-    if (!confirm("Excluir este grupo e todas as suas TVs?")) return;
+    if (!confirm("Excluir este template e todas as suas TVs?")) return;
     const { error } = await (supabase as any).from("cenario_estudio_grupos").delete().eq("id", id);
     if (error) {
       toast.error("Erro ao excluir");
       return;
     }
     setGrupos((prev) => prev.filter((g) => g.id !== id));
-    toast.success("Grupo excluído");
+    toast.success("Template excluído");
   };
 
   // Single artwork per group: stored at posicao=0
@@ -299,7 +299,7 @@ export default function CenariosEstudioPage() {
             </div>
           </div>
           <Button onClick={addGrupo} size="sm" className="shrink-0 self-start lg:self-auto" disabled={noProgramas}>
-            <Plus className="h-4 w-4 mr-1" /> Novo grupo
+            <Plus className="h-4 w-4 mr-1" /> Criar novo template
           </Button>
         </div>
         <div className="mt-4 pt-4" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}>
@@ -422,8 +422,17 @@ function GrupoCard({ grupo, programas, templates, onChange, onRemove, onSave, on
           />
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={onRemove}>
-            <Trash2 className="h-4 w-4 mr-1" /> Excluir
+          <Button
+            size="sm"
+            onClick={onRemove}
+            title="Excluir template"
+            className="border-0"
+            style={{
+              background: "color-mix(in srgb, #ef4444 18%, transparent)",
+              color: "#ef4444",
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-1" /> Excluir template
           </Button>
           <Button size="sm" onClick={onSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
