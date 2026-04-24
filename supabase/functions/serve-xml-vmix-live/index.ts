@@ -15,6 +15,23 @@ const esc = (s: string) =>
 
 const stripQuery = (u: string) => (u ? u.split("?")[0] : "");
 
+const toSeconds = (time: string) => {
+  const [hour = "0", minute = "0", second = "0"] = String(time ?? "").split(":");
+  return Number(hour) * 3600 + Number(minute) * 60 + Number(second);
+};
+
+const isTimeInRange = (start: string, end: string, current: string) => {
+  const startSeconds = toSeconds(start);
+  const endSeconds = toSeconds(end);
+  const currentSeconds = toSeconds(current);
+
+  if (endSeconds <= startSeconds) {
+    return currentSeconds >= startSeconds || currentSeconds < endSeconds;
+  }
+
+  return currentSeconds >= startSeconds && currentSeconds < endSeconds;
+};
+
 async function fetchDeezerArtistImage(artist: string): Promise<string> {
   if (!artist) return "";
   // Pega apenas o primeiro artista (antes de /, &, feat, ,)
@@ -79,15 +96,16 @@ Deno.serve(async (req) => {
 
     const { data: progs } = await supabase
       .from("programas")
-      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, apresentador_id, apresentadores_ids, capa, thumb")
+      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, apresentador_id, apresentadores_ids, capa, thumb, estudio")
       .eq("user_id", userId)
-      .eq("ativo", true);
+      .eq("ativo", true)
+      .ilike("estudio", "%fm%")
+      .order("horario_inicio", { ascending: false });
 
     const onAir = (progs || []).find(
       (p: any) =>
         (p.dias_semana || []).includes(today) &&
-        p.horario_inicio <= nowTime &&
-        p.horario_fim > nowTime,
+        isTimeInRange(p.horario_inicio, p.horario_fim, nowTime),
     );
 
     // Apresentador (foto)
