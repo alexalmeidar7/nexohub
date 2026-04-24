@@ -17,9 +17,14 @@ const stripQuery = (u: string) => (u ? u.split("?")[0] : "");
 
 async function fetchDeezerArtistImage(artist: string): Promise<string> {
   if (!artist) return "";
+  // Pega apenas o primeiro artista (antes de /, &, feat, ,)
+  const primary = artist
+    .split(/[\/&,]| feat\.?| ft\.?| with /i)[0]
+    .trim();
+  const query = primary || artist;
   try {
     const res = await fetch(
-      `https://api.deezer.com/search/artist?q=${encodeURIComponent(artist)}&limit=1`,
+      `https://api.deezer.com/search/artist?q=${encodeURIComponent(query)}&limit=1`,
     );
     if (!res.ok) return "";
     const json = await res.json();
