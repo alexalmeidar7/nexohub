@@ -599,13 +599,44 @@ function GrupoCard({ grupo, programas, templates, onChange, onRemove, onSave, on
                         backgroundColor: "#000",
                       }}
                     />
-                    <div className="px-2.5 py-2 flex items-center justify-between gap-2">
-                      <span className="text-xs font-medium truncate" style={layoutText} title={t.nome}>
-                        {t.nome}
-                      </span>
-                      <span className="text-[10px] font-mono shrink-0" style={layoutTextMuted}>
-                        {t.rows}×{t.cols}
-                      </span>
+                    <div className="px-2.5 py-2 flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium truncate" style={layoutText} title={t.nome}>
+                          {t.nome}
+                        </span>
+                        <span className="text-[10px] font-mono shrink-0" style={layoutTextMuted}>
+                          {t.rows}×{t.cols}
+                        </span>
+                      </div>
+                      {(() => {
+                        const linkedNames = t.programa_ids
+                          .map((pid) => programas.find((p) => p.id === pid)?.nome)
+                          .filter(Boolean) as string[];
+                        if (linkedNames.length === 0) {
+                          return (
+                            <span className="text-[10px] italic" style={layoutTextMuted}>
+                              Nenhum programa vinculado
+                            </span>
+                          );
+                        }
+                        return (
+                          <div className="flex flex-wrap gap-1">
+                            {linkedNames.map((nome, i) => (
+                              <span
+                                key={i}
+                                className="text-[10px] px-1.5 py-0.5 rounded-full font-medium truncate max-w-full"
+                                style={{
+                                  ...layoutAccentSoft,
+                                  color: "var(--layout-accent-color, #2563eb)",
+                                }}
+                                title={nome}
+                              >
+                                {nome}
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 );
