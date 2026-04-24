@@ -170,9 +170,10 @@ Deno.serve(async (req) => {
     <capa>${esc(capa)}</capa>
     <artista_imagem>${esc(artistaImg)}</artista_imagem>
   </musica>
-  <patrocinadores>
-${logosXml}
-  </patrocinadores>
+  <patrocinador>
+    <nome>${esc(patrocinadorNome)}</nome>
+    <url>${esc(patrocinadorUrl)}</url>
+  </patrocinador>
 </vmix_live>`;
 
     return new Response(xml, { headers: xmlHeaders });
