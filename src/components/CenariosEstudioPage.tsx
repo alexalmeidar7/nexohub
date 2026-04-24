@@ -394,7 +394,7 @@ function GrupoCard({ grupo, programas, onChange, onRemove, onSave, onToggleProgr
       {/* Top: nome + grid + ações */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 md:items-end">
         <div>
-          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Nome do grupo</Label>
+          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Nome do template</Label>
           <Input value={grupo.nome} onChange={(e) => onChange({ nome: e.target.value })} className="mt-1.5 text-sm" />
         </div>
         <div>
