@@ -30,6 +30,17 @@ const isTimeInRange = (start: string, end: string, current: string) => {
   return currentSeconds >= startSeconds && currentSeconds < endSeconds;
 };
 
+// Strip query string so URL ends in .png/.webp/.jpg (vMix compatibility),
+// then append a stable cache-buster derived from updated_at so vMix reloads on change.
+const withCacheBuster = (rawUrl: string, version?: string | null) => {
+  if (!rawUrl) return "";
+  const clean = rawUrl.split("?")[0];
+  if (!version) return clean;
+  // Use a short hash of the timestamp to keep URL tidy
+  const v = String(new Date(version).getTime() || version).slice(-10);
+  return `${clean}?v=${v}`;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -66,10 +77,10 @@ Deno.serve(async (req) => {
     const today = dayNames[dayMap[wkShort] ?? 0];
     const nowTime = `${hh}:${mm}:${ss}`;
 
-    // Programa atualmente no ar (de acordo com a grade)
+    // Programa atualmente no ar (de acordo com a grade) — inclui capa, thumb, apresentadores
     const { data: progs } = await supabase
       .from("programas")
-      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, estudio")
+      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, estudio, capa, thumb, apresentador_id, apresentadores_ids, created_at")
       .eq("user_id", userId)
       .eq("ativo", true)
       .ilike("estudio", "%fm%")
@@ -81,25 +92,57 @@ Deno.serve(async (req) => {
         isTimeInRange(p.horario_inicio, p.horario_fim, nowTime),
     );
 
+    // Buscar apresentador no ar (primeiro de apresentadores_ids, fallback para apresentador_id)
+    let locutorNome = "";
+    let locutorFoto = "";
+    let locutorInstagram = "";
+    let locutorCargo = "";
+    if (onAir) {
+      const apresentadorId =
+        (onAir.apresentadores_ids && onAir.apresentadores_ids[0]) || onAir.apresentador_id;
+      if (apresentadorId) {
+        const { data: ap } = await supabase
+          .from("apresentadores")
+          .select("nome, foto, instagram, cargo")
+          .eq("id", apresentadorId)
+          .maybeSingle();
+        if (ap) {
+          locutorNome = ap.nome || "";
+          locutorFoto = ap.foto || "";
+          locutorInstagram = ap.instagram || "";
+          locutorCargo = ap.cargo || "";
+          if (locutorInstagram && !locutorInstagram.startsWith("@")) {
+            locutorInstagram = `@${locutorInstagram}`;
+          }
+        }
+      }
+    }
+
     // Carrega TODOS os templates do usuário
     const { data: grupos } = await supabase
       .from("cenario_estudio_grupos")
-      .select("id, nome, programa_ids")
+      .select("id, nome, programa_ids, updated_at")
       .eq("user_id", userId)
       .order("created_at");
 
     const grupoIds = (grupos || []).map((g: any) => g.id);
-    const arteByGrupo: Record<string, string> = {};
+    const arteByGrupo: Record<string, { url: string; updatedAt: string }> = {};
     if (grupoIds.length > 0) {
       const { data: tvs } = await supabase
         .from("cenario_estudio_tvs")
-        .select("grupo_id, posicao, imagem_url")
+        .select("grupo_id, posicao, imagem_url, updated_at")
         .in("grupo_id", grupoIds)
         .eq("posicao", 0);
       (tvs || []).forEach((t: any) => {
-        arteByGrupo[t.grupo_id] = t.imagem_url || "";
+        arteByGrupo[t.grupo_id] = { url: t.imagem_url || "", updatedAt: t.updated_at };
       });
     }
+
+    // Cache-buster para capa/thumb do programa: usa created_at (não temos updated_at em programas)
+    const programaVersion = (onAir as any)?.created_at || "";
+    const capaUrl = withCacheBuster((onAir as any)?.capa || "", programaVersion);
+    const thumbUrl = withCacheBuster((onAir as any)?.thumb || "", programaVersion);
+    const fotoLocutorUrl = withCacheBuster(locutorFoto, programaVersion);
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<cenarios_estudio>\n`;
     xml += `  <programa>\n`;
@@ -107,20 +150,27 @@ Deno.serve(async (req) => {
     xml += `    <nome>${xmlEscape(onAir?.nome || "")}</nome>\n`;
     xml += `    <horario_inicio>${xmlEscape(onAir?.horario_inicio || "")}</horario_inicio>\n`;
     xml += `    <horario_fim>${xmlEscape(onAir?.horario_fim || "")}</horario_fim>\n`;
+    xml += `    <capa>${xmlEscape(capaUrl)}</capa>\n`;
+    xml += `    <thumb>${xmlEscape(thumbUrl)}</thumb>\n`;
     xml += `  </programa>\n`;
+    xml += `  <locutor>\n`;
+    xml += `    <nome>${xmlEscape(locutorNome)}</nome>\n`;
+    xml += `    <foto>${xmlEscape(fotoLocutorUrl)}</foto>\n`;
+    xml += `    <instagram>${xmlEscape(locutorInstagram)}</instagram>\n`;
+    xml += `    <cargo>${xmlEscape(locutorCargo)}</cargo>\n`;
+    xml += `  </locutor>\n`;
     xml += `  <templates>\n`;
     for (const g of grupos || []) {
       // Apenas templates vinculados ao programa no ar enviam a URL da arte.
       // Templates não vinculados ao programa atual ficam com <url/> vazia.
       const vinculado = !!onAir && (g.programa_ids || []).includes(onAir.id);
-      let url = vinculado ? (arteByGrupo[g.id] || "") : "";
-      // Strip query string so URL ends in .png (vMix compatibility)
-      if (url) {
-        url = url.split("?")[0];
-      }
+      const arte = arteByGrupo[g.id];
+      const urlOut = vinculado && arte
+        ? withCacheBuster(arte.url, arte.updatedAt || g.updated_at)
+        : "";
       xml += `    <template>\n`;
       xml += `      <nome>${xmlEscape(g.nome)}</nome>\n`;
-      xml += `      <url>${xmlEscape(url)}</url>\n`;
+      xml += `      <url>${xmlEscape(urlOut)}</url>\n`;
       xml += `    </template>\n`;
     }
     xml += `  </templates>\n`;
