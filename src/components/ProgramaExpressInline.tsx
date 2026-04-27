@@ -664,22 +664,35 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       const { error: updErr } = await supabase.from("roteiros").update({ programa_nome: programaNome, estudio, titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, conteudo_html: html, participantes: blocosJson, tickertitulos } as any).eq("id", roteiroId);
       if (updErr) throw updErr;
 
-      // Create agenda event when podcast is scheduled
+      // Create or update agenda event when podcast is scheduled
       if (isPodcast && podcastData.agendamentoData) {
         try {
           const horario = podcastData.agendamentoHorario || "00:00";
           const descricao = `Roteiro: ${programaNome}${horario ? ` às ${horario}` : ""}${podcastData.tituloTarja ? ` — ${podcastData.tituloTarja}` : ""}`;
-          await supabase.from("agenda_eventos").insert({
-            user_id: user.id,
-            data: podcastData.agendamentoData,
-            local: estudio || "Podcast",
-            descricao,
-            prioridade: "alta",
-            programa_id: programaId,
-            recorrencia: "unico",
-          } as any);
-          toast.success("Evento adicionado à agenda 📅", { duration: 2500 });
-        } catch (e) { console.warn("Falha ao criar evento na agenda:", e); }
+          const existingEventoId = editData?.agendaEventoId;
+          if (existingEventoId) {
+            // Update existing event (e.g. when editing a "gravacao" event from Agenda)
+            await supabase.from("agenda_eventos").update({
+              data: podcastData.agendamentoData,
+              descricao,
+              horario_gravacao: horario,
+            } as any).eq("id", existingEventoId);
+            toast.success("Evento da agenda atualizado 📅", { duration: 2500 });
+          } else {
+            await supabase.from("agenda_eventos").insert({
+              user_id: user.id,
+              data: podcastData.agendamentoData,
+              local: estudio || "Podcast",
+              descricao,
+              prioridade: "alta",
+              programa_id: programaId,
+              recorrencia: "unico",
+              tipo_evento: "gravacao",
+              horario_gravacao: horario,
+            } as any);
+            toast.success("Evento adicionado à agenda 📅", { duration: 2500 });
+          }
+        } catch (e) { console.warn("Falha ao salvar evento na agenda:", e); }
       }
 
       try { sessionStorage.removeItem("roteiro_auto_generated"); } catch {}
