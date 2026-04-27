@@ -589,14 +589,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   // Keep stable refs to avoid interval restarts
   const processMusicRef = useRef(processMusic);
   processMusicRef.current = processMusic;
-  const userRef = useRef(user);
-  userRef.current = user;
+  const dataUserIdRef = useRef<string | null>(dataUserId);
+  dataUserIdRef.current = dataUserId;
   const deviceNameRef = useRef(currentDeviceName);
   deviceNameRef.current = currentDeviceName;
 
   const syncToStorage = useCallback(async (text: string) => {
-    const u = userRef.current;
-    if (!u) return;
+    const uid = dataUserIdRef.current;
+    if (!uid) return;
     if (syncingRef.current) {
       pendingSyncRef.current = text;
       return;
@@ -604,10 +604,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     syncingRef.current = true;
     try {
       const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
-      const filePath = `local-xml-${u.id}.xml`;
+      const filePath = `local-xml-${uid}.xml`;
       await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
       // Do NOT overwrite music_xml_url — the online URL is independent from local sync
-      setUploadHistory(await addUploadLogToDb(u.id, "pasta", deviceNameRef.current));
+      setUploadHistory(await addUploadLogToDb(uid, "pasta", deviceNameRef.current));
     } catch { }
     syncingRef.current = false;
     const queued = pendingSyncRef.current;
