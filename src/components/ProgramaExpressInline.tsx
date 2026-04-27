@@ -669,14 +669,33 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         try {
           const horario = podcastData.agendamentoHorario || "00:00";
           const descricao = `Roteiro: ${programaNome}${horario ? ` às ${horario}` : ""}${podcastData.tituloTarja ? ` — ${podcastData.tituloTarja}` : ""}`;
-          const existingEventoId = editData?.agendaEventoId;
-          if (existingEventoId) {
+          let targetEventoId = editData?.agendaEventoId;
+
+          if (!targetEventoId) {
+            const { data: eventosExistentes } = await supabase
+              .from("agenda_eventos")
+              .select("id, horario_gravacao")
+              .eq("user_id", user.id)
+              .eq("programa_id", programaId)
+              .eq("data", podcastData.agendamentoData)
+              .eq("tipo_evento", "gravacao")
+              .limit(10);
+
+            const horarioCurto = horario.slice(0, 5);
+            targetEventoId = eventosExistentes?.find((evt: any) => (evt.horario_gravacao || "").slice(0, 5) === horarioCurto)?.id
+              || eventosExistentes?.[0]?.id;
+          }
+
+          if (targetEventoId) {
             // Update existing event (e.g. when editing a "gravacao" event from Agenda)
             await supabase.from("agenda_eventos").update({
               data: podcastData.agendamentoData,
+              local: estudio || "Podcast",
               descricao,
+              programa_id: programaId,
+              tipo_evento: "gravacao",
               horario_gravacao: horario,
-            } as any).eq("id", existingEventoId);
+            } as any).eq("id", targetEventoId);
             toast.success("Evento da agenda atualizado 📅", { duration: 2500 });
           } else {
             await supabase.from("agenda_eventos").insert({
