@@ -929,8 +929,27 @@ export default function MusicaNoAr() {
     return () => { cancelled = true; };
   }, [music?.titulo, music?.artista, isBreak]);
 
-  // Curiosity is only exposed in the XML between 10s and 25s of the song
-  const showCuriosidade = !!curiosidade && elapsed >= 10 && elapsed < 40;
+  // Curiosity window: starts 10s after the song begins, stays available for 30s in the XML.
+  // Uses a wall-clock timestamp so the 30s window is always honored even if `elapsed` jumps.
+  const curiosityShownAtRef = useRef<number | null>(null);
+  const curiosityKeyRef = useRef<string>("");
+  const [, forceCuriosityTick] = useState(0);
+  const curiosityKey = curiosidade ? `${music?.artista || ""}::${music?.titulo || ""}`.toLowerCase() : "";
+  if (curiosityKey !== curiosityKeyRef.current) {
+    curiosityKeyRef.current = curiosityKey;
+    curiosityShownAtRef.current = null;
+  }
+  if (curiosidade && curiosityShownAtRef.current === null && elapsed >= 10) {
+    curiosityShownAtRef.current = Date.now();
+  }
+  useEffect(() => {
+    if (curiosityShownAtRef.current === null) return;
+    const t = setTimeout(() => forceCuriosityTick((n) => n + 1), 30_000);
+    return () => clearTimeout(t);
+  }, [curiosityShownAtRef.current, curiosidade]);
+  const showCuriosidade = !!curiosidade
+    && curiosityShownAtRef.current !== null
+    && (Date.now() - curiosityShownAtRef.current) < 30_000;
   const escapeXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const xmlCuriosidade = showCuriosidade ? escapeXml(curiosidade) : "";
 
