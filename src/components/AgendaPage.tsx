@@ -365,6 +365,7 @@ export default function AgendaPage() {
   const [expressOpen, setExpressOpen] = useState(false);
   const [expressEditData, setExpressEditData] = useState<ExpressEditData | null>(null);
   const [creatingRoteiro, setCreatingRoteiro] = useState(false);
+  const [roteiroJaExiste, setRoteiroJaExiste] = useState(false);
   const [sendingWhatsAppFor, setSendingWhatsAppFor] = useState<string | null>(null);
   const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
