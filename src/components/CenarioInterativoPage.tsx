@@ -786,6 +786,14 @@ export default function CenarioInterativoPage() {
   useEffect(() => {
     if (artistBgUrl) setPrevArtistBgUrl(artistBgUrl);
   }, [artistBgUrl]);
+
+  /* ─── Alternate background mode (preview): 10s artist / 10s thumb ─── */
+  const [altBgPhase, setAltBgPhase] = useState<"artist" | "thumb">("artist");
+  useEffect(() => {
+    if (!config.bgAlternateMode) { setAltBgPhase("artist"); return; }
+    const t = setInterval(() => setAltBgPhase(p => (p === "artist" ? "thumb" : "artist")), 10000);
+    return () => clearInterval(t);
+  }, [config.bgAlternateMode]);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
@@ -1343,6 +1351,20 @@ export default function CenarioInterativoPage() {
                       onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))}
                     />
                   </div>
+                  {config.bgAlternateMode && (
+                    <div className="flex items-center justify-between rounded-md px-2.5 py-1.5 bg-white/5 border border-white/10 animate-fade-in">
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: "var(--layout-accent-color, #888)" }} />
+                          <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "var(--layout-accent-color, #888)" }} />
+                        </span>
+                        <span className="text-[10px] uppercase tracking-wider" style={{ color: mutedText }}>Preview ao vivo</span>
+                      </div>
+                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-accent-color, #888)" }}>
+                        {altBgPhase === "artist" ? "🎤 Artista" : "📺 Thumb"}
+                      </span>
+                    </div>
+                  )}
 
                   {/* ── Palavras de exceção ── */}
                   <div className="space-y-1.5 pt-2 border-t border-white/10">
@@ -1923,18 +1945,42 @@ export default function CenarioInterativoPage() {
                         }
                         return (
                           <div ref={homeContentRef} className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
-                            {/* Artist bg image — crossfade */}
-                            {prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
-                              <img src={prevArtistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistBgReady ? 0 : 0.35, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
-                            )}
-                            {artistBgUrl && (
-                              <>
-                                <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
-                                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
-                              </>
-                            )}
-                            {config.home.bgGradient && !artistBgUrl && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
-                            {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                            {(() => {
+                              const altMode = !!config.bgAlternateMode;
+                              const thumbSrc = currentProgram?.thumb || currentProgram?.capa || "";
+                              const hasThumb = !!thumbSrc;
+                              const hasArtist = !!artistBgUrl;
+                              let thumbVisible: boolean;
+                              let artistVisible: boolean;
+                              if (altMode) {
+                                if (altBgPhase === "thumb") { thumbVisible = hasThumb; artistVisible = !hasThumb && hasArtist; }
+                                else { artistVisible = hasArtist; thumbVisible = !hasArtist && hasThumb; }
+                              } else {
+                                thumbVisible = !!config.useProgramThumbAsBg && hasThumb;
+                                artistVisible = hasArtist;
+                              }
+                              return (
+                                <>
+                                  {/* Thumb layer (always mounted for fade) */}
+                                  {hasThumb && (
+                                    <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
+                                      <img src={thumbSrc} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(18px) brightness(0.55)", transform: "scale(1.1)" }} />
+                                      <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
+                                    </div>
+                                  )}
+                                  {/* Artist crossfade (previous) */}
+                                  {prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+                                    <img src={prevArtistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible && !artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
+                                  )}
+                                  {artistBgUrl && (
+                                    <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible ? (artistBgReady ? 0.35 : 0) : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
+                                  )}
+                                  <div className="absolute inset-0" style={{ opacity: artistVisible ? 1 : 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)", transition: "opacity 1.2s ease-in-out" }} />
+                                  {config.home.bgGradient && !artistVisible && !thumbVisible && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
+                                  {!artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                                </>
+                              );
+                            })()}
                             
 
                              {/* ── TOP-LEFT: Big neon clock + date + SYNC ── */}

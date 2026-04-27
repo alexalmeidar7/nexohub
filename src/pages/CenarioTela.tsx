@@ -1255,46 +1255,58 @@ export default function CenarioTela() {
 
           {!isMapTab && (() => {
             const altMode = !!config.bgAlternateMode;
-            const hasThumb = !!(currentProgram?.thumb || currentProgram?.capa);
-            const hasArtist = !!artistBgUrl;
-            // In alternate mode: phase decides which to show; if the chosen one is missing, fallback to the other
-            const showThumbBg = altMode
-              ? (altBgPhase === "thumb" ? hasThumb : !hasArtist && hasThumb)
-              : !!config.useProgramThumbAsBg;
-            const showArtistBg = altMode
-              ? (altBgPhase === "artist" ? hasArtist : !hasThumb && hasArtist)
-              : true;
+            const isHomeOrChat = activeTab === "home" || activeTab === "chat";
+            const thumbUrl = (currentProgram?.thumb || currentProgram?.capa) as string | undefined;
+            const hasThumb = !!thumbUrl;
+            const hasArtist = !!artistBgUrl && !!musicData?.artista && !isBreakTrack && !isJornalistico;
+
+            // Decide visibility (opacity) per layer for smooth crossfades
+            let thumbVisible = false;
+            let artistVisible = false;
+            if (altMode && isHomeOrChat) {
+              if (altBgPhase === "thumb") {
+                thumbVisible = hasThumb;
+                artistVisible = !hasThumb && hasArtist; // fallback if no thumb
+              } else {
+                artistVisible = hasArtist;
+                thumbVisible = !hasArtist && hasThumb; // fallback if no artist
+              }
+            } else {
+              thumbVisible = !!config.useProgramThumbAsBg && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && hasThumb;
+              artistVisible = isHomeOrChat && hasArtist;
+            }
+
             return (
             <div className="absolute inset-0" style={{ background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : activeTab === "home" || activeTab === "chat" ? "#e8e8e8" : "#e8e8e8", zIndex: 0 }}>
-              {/* Program thumb as bg — rendered first so artist images overlay it */}
-              {showThumbBg && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && hasThumb && (
-                <>
-                  <img src={(currentProgram?.thumb || currentProgram?.capa) as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(22px) brightness(0.55)", transform: "scale(1.1)", transition: "opacity 1.2s ease-in-out" }} />
+              {/* Program thumb as bg — always mounted on home/weather/currency/chat for smooth fade */}
+              {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
+                <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
+                  <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(22px) brightness(0.55)", transform: "scale(1.1)" }} />
                   <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
-                </>
+                </div>
               )}
-              {/* Home/Chat: artist bg from Deezer → crossfade (only when there's an active artist) */}
-              {showArtistBg && (activeTab === "home" || activeTab === "chat") && !!musicData?.artista && !isBreakTrack && !isJornalistico && prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+              {/* Artist bg crossfade between previous and current url */}
+              {isHomeOrChat && hasArtist && prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
                 <img
                   src={prevArtistBgUrl}
                   alt=""
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{ opacity: artistBgReady ? 0 : 0.35, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                  style={{ opacity: artistVisible && !artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
                 />
               )}
-              {showArtistBg && (activeTab === "home" || activeTab === "chat") && artistBgUrl && (
+              {isHomeOrChat && artistBgUrl && (
                 <img
                   src={artistBgUrl}
                   alt=""
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{ opacity: artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                  style={{ opacity: artistVisible ? (artistBgReady ? 0.35 : 0) : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
                   onLoad={() => setArtistBgReady(true)}
                 />
               )}
-              {showArtistBg && (activeTab === "home" || activeTab === "chat") && artistBgUrl && (
-                <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
+              {isHomeOrChat && (
+                <div className="absolute inset-0 pointer-events-none" style={{ opacity: artistVisible ? 1 : 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)", transition: "opacity 1.2s ease-in-out" }} />
               )}
-              {(activeTab === "home" || activeTab === "chat") && !artistBgUrl && !showThumbBg && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
