@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Loader2, Trash2, RefreshCw } from "lucide-react";
+import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 interface InfoMusicRow {
@@ -13,11 +14,43 @@ interface InfoMusicRow {
 }
 
 export default function InfoMusicSection() {
+  const { user } = useAuth();
   const [rows, setRows] = useState<InfoMusicRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [testArtista, setTestArtista] = useState("");
   const [testMusica, setTestMusica] = useState("");
   const [testing, setTesting] = useState(false);
+  const [excecoes, setExcecoes] = useState("");
+  const [excecoesInitial, setExcecoesInitial] = useState("");
+  const [savingExcecoes, setSavingExcecoes] = useState(false);
+
+  const loadExcecoes = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("user_settings")
+      .select("infomusic_excecoes")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const v = (data?.infomusic_excecoes || "") as string;
+    setExcecoes(v);
+    setExcecoesInitial(v);
+  };
+
+  const saveExcecoes = async () => {
+    if (!user) return;
+    setSavingExcecoes(true);
+    try {
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({ user_id: user.id, infomusic_excecoes: excecoes }, { onConflict: "user_id" });
+      if (error) throw error;
+      setExcecoesInitial(excecoes);
+      toast.success("Exceções salvas");
+    } catch (e) {
+      toast.error("Erro ao salvar exceções");
+    }
+    setSavingExcecoes(false);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -31,6 +64,7 @@ export default function InfoMusicSection() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { loadExcecoes(); }, [user]);
 
   const handleTest = async () => {
     if (!testArtista.trim() || !testMusica.trim()) {
@@ -79,6 +113,44 @@ export default function InfoMusicSection() {
           A curiosidade é exibida no XML <code className="px-1 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>&lt;curiosidade&gt;</code> entre os <strong>10s e 25s</strong> da música. 
           Cada curiosidade fica salva por <strong>30 dias</strong> e depois é excluída automaticamente.
         </p>
+      </div>
+
+      <div className="rounded-xl p-4 space-y-3" style={{
+        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
+        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
+      }}>
+        <div className="flex items-center gap-2">
+          <Ban size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+          <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+            Exceções (não gerar curiosidade)
+          </h4>
+        </div>
+        <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
+          Liste palavras separadas por vírgula. Quando o <strong>artista</strong> ou a <strong>música</strong> contiver alguma dessas palavras, nenhuma curiosidade será gerada e a tag <code>&lt;curiosidade&gt;</code> ficará vazia no XML. Ex.: <em>TRILHAS PROMO, JINGLE, VINHETA</em>.
+        </p>
+        <div className="flex flex-col md:flex-row gap-2">
+          <input
+            type="text"
+            placeholder="trilhas promo, jingle, vinheta..."
+            value={excecoes}
+            onChange={e => setExcecoes(e.target.value)}
+            className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
+            style={{
+              backgroundColor: "var(--layout-page-bg, #fff)",
+              color: "var(--layout-page-text, #1a1a1a)",
+              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
+            }}
+          />
+          <button
+            onClick={saveExcecoes}
+            disabled={savingExcecoes || excecoes === excecoesInitial}
+            className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 inline-flex items-center justify-center gap-2"
+            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+          >
+            {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+            Salvar
+          </button>
+        </div>
       </div>
 
       <div className="rounded-xl p-4 space-y-3" style={{

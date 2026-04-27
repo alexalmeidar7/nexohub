@@ -59,6 +59,33 @@ Deno.serve(async (req) => {
     const artistaTrim = artista.trim();
     const musicaTrim = musica.trim();
 
+    // 0) Verifica exceções configuradas pelo usuário
+    const { data: settings } = await supabase
+      .from("user_settings")
+      .select("infomusic_excecoes")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const excecoesRaw = (settings?.infomusic_excecoes || "") as string;
+    const excecoes = excecoesRaw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter((s) => s.length > 0);
+
+    if (excecoes.length > 0) {
+      const artistaLower = artistaTrim.toLowerCase();
+      const musicaLower = musicaTrim.toLowerCase();
+      const matched = excecoes.some(
+        (palavra) => artistaLower.includes(palavra) || musicaLower.includes(palavra),
+      );
+      if (matched) {
+        return new Response(
+          JSON.stringify({ curiosidade: "", skipped: true, reason: "excecao" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     // 1) Cache lookup scoped to this user (cleanup expired first, also scoped)
     await supabase
       .from("infomusic")

@@ -1621,6 +1621,7 @@ export type Database = {
           cenario_config: Json | null
           dashboard_items: Json | null
           id: string
+          infomusic_excecoes: string | null
           music_source_mode: string
           music_xml_url: string | null
           shopping_active: boolean
@@ -1638,6 +1639,7 @@ export type Database = {
           cenario_config?: Json | null
           dashboard_items?: Json | null
           id?: string
+          infomusic_excecoes?: string | null
           music_source_mode?: string
           music_xml_url?: string | null
           shopping_active?: boolean
@@ -1655,6 +1657,7 @@ export type Database = {
           cenario_config?: Json | null
           dashboard_items?: Json | null
           id?: string
+          infomusic_excecoes?: string | null
           music_source_mode?: string
           music_xml_url?: string | null
           shopping_active?: boolean
