@@ -541,6 +541,7 @@ export default function AgendaPage() {
     setFormYoutubeDescricao("");
     setFormEdicaoNotas("");
     setFormEdicaoConcluida(false);
+    setFormHorarioGravacao("");
     setEditingId(null);
   };
 
