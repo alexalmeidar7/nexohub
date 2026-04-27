@@ -167,8 +167,9 @@ export default function PrevisaoTempo() {
         humidity: wxData.daily.relative_humidity_2m_max[i + 1] ?? 0, rainChance: wxData.daily.precipitation_probability_max[i + 1] ?? 0,
         weatherCode: wxData.daily.weather_code[i + 1],
       }));
+      const isNight = wxData.current?.is_day === 0;
       localStorage.setItem(STORAGE_KEY, name);
-      setWeather({ city: name, lat, lon, current, forecast });
+      setWeather({ city: name, lat, lon, current, forecast, isNight });
       // AI disabled – skip weather description
     } catch { if (!silent) setError("Erro ao buscar dados meteorológicos."); }
     finally { setLoading(false); }
