@@ -477,16 +477,18 @@ serve(async (req) => {
     if (broadcastConfig.ticker) tickerParts.push(broadcastConfig.ticker);
     const ticker = tickerParts.join("  •  ");
 
-    let logoPatrocinador = "";
+    const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
+    let logoPatrocinador = BLANK_LOGO_URL;
     if (sponsorLogos.length > 0) {
       const idx = rotationSlot % sponsorLogos.length;
       const sponsor = sponsorLogos[idx];
-      logoPatrocinador = await ensurePngImageUrl(
+      const generated = await ensurePngImageUrl(
         supabase,
         sponsor.logo_url,
         `broadcast/${dataOwnerId}/sponsor-${idx}-${(sponsor.nome || "logo").replace(/[^a-z0-9]/gi, "_").toLowerCase()}.png`,
         512,
       );
+      logoPatrocinador = generated || BLANK_LOGO_URL;
     }
 
     const empresaLogo = emp?.logo
