@@ -139,24 +139,62 @@ const uploadPublicPng = async (
   return (urlData?.publicUrl || "").split("?")[0];
 };
 
+// Sidecar marker to detect when the source URL changed and we must re-upload the PNG.
+const sourceMarkerPath = (storagePath: string) => `${storagePath}.src.txt`;
+
+const readSourceMarker = async (
+  supabase: ReturnType<typeof createClient>,
+  storagePath: string,
+): Promise<string> => {
+  try {
+    const { data } = await supabase.storage.from("xml-files").download(sourceMarkerPath(storagePath));
+    if (!data) return "";
+    return (await data.text()).trim();
+  } catch {
+    return "";
+  }
+};
+
+const writeSourceMarker = async (
+  supabase: ReturnType<typeof createClient>,
+  storagePath: string,
+  source: string,
+) => {
+  try {
+    await supabase.storage.from("xml-files").upload(
+      sourceMarkerPath(storagePath),
+      new Blob([source], { type: "text/plain" }),
+      { upsert: true, contentType: "text/plain", cacheControl: "60" },
+    );
+  } catch {
+    // ignore
+  }
+};
+
+const withVersion = (url: string, version?: string | null) => {
+  if (!url) return "";
+  const clean = url.split("?")[0].split("#")[0];
+  if (!version) return clean;
+  const v = String(new Date(version).getTime() || version).slice(-10);
+  return `${clean}?v=${v}`;
+};
+
 const ensurePngImageUrl = async (
   supabase: ReturnType<typeof createClient>,
   value: string | null | undefined,
   storagePath: string,
   size = 512,
+  version?: string | null,
 ): Promise<string> => {
   const trimmed = (value || "").trim();
   if (!trimmed) return "";
 
   if (trimmed.startsWith("data:image/") && trimmed.includes(";base64,")) {
     try {
-      if (trimmed.startsWith("data:image/png;base64,")) {
-        const { data } = base64ToUint8Array(trimmed);
-        return await uploadPublicPng(supabase, storagePath, data);
-      }
-      // Convert other data: images to PNG via wsrv? Not possible directly. Upload as-is then convert through wsrv proxy.
       const { data } = base64ToUint8Array(trimmed);
-      return await uploadPublicPng(supabase, storagePath, data);
+      const url = await uploadPublicPng(supabase, storagePath, data);
+      await writeSourceMarker(supabase, storagePath, trimmed.slice(0, 200));
+      return withVersion(url, version);
     } catch {
       return "";
     }
@@ -165,15 +203,25 @@ const ensurePngImageUrl = async (
   if (!/^https?:\/\//i.test(trimmed)) return "";
 
   const cleanUrl = trimmed.split("?")[0].split("#")[0];
-  if (/\.png$/i.test(cleanUrl)) return cleanUrl;
+  if (/\.png$/i.test(cleanUrl)) return withVersion(cleanUrl, version);
 
   try {
+    // Re-upload only if source URL changed (or marker missing).
+    const previousSource = await readSourceMarker(supabase, storagePath);
+    const sourceKey = trimmed.split("#")[0];
+    if (previousSource && previousSource === sourceKey) {
+      const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(storagePath);
+      const existing = (urlData?.publicUrl || "").split("?")[0];
+      if (existing) return withVersion(existing, version);
+    }
     const source = trimmed.replace(/^https?:\/\//i, "");
     const fetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=${size}&h=${size}&fit=contain`;
     const response = await fetch(fetchUrl);
     if (!response.ok) return "";
     const bytes = new Uint8Array(await response.arrayBuffer());
-    return await uploadPublicPng(supabase, storagePath, bytes);
+    const url = await uploadPublicPng(supabase, storagePath, bytes);
+    await writeSourceMarker(supabase, storagePath, sourceKey);
+    return withVersion(url, version);
   } catch {
     return "";
   }
