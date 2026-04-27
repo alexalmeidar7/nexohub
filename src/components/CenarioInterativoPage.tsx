@@ -787,13 +787,8 @@ export default function CenarioInterativoPage() {
     if (artistBgUrl) setPrevArtistBgUrl(artistBgUrl);
   }, [artistBgUrl]);
 
-  /* ─── Alternate background mode (preview): 10s artist / 10s thumb ─── */
-  const [altBgPhase, setAltBgPhase] = useState<"artist" | "thumb">("artist");
-  useEffect(() => {
-    if (!config.bgAlternateMode) { setAltBgPhase("artist"); return; }
-    const t = setInterval(() => setAltBgPhase(p => (p === "artist" ? "thumb" : "artist")), 10000);
-    return () => clearInterval(t);
-  }, [config.bgAlternateMode]);
+  /* ─── Alternate background mode (preview): absolute 10s slots, matching vMix ─── */
+  const altBgPhase: "artist" | "thumb" = config.bgAlternateMode && Math.floor(currentTime.getTime() / 10000) % 2 === 1 ? "thumb" : "artist";
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
