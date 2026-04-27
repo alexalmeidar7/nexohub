@@ -237,13 +237,8 @@ export default function CenarioTela() {
     if (artistBgUrl) setPrevArtistBgUrl(artistBgUrl);
   }, [artistBgUrl]);
 
-  /* ─── Alternate background mode: 10s artist / 10s thumb ─── */
-  const [altBgPhase, setAltBgPhase] = useState<"artist" | "thumb">("artist");
-  useEffect(() => {
-    if (!config.bgAlternateMode) { setAltBgPhase("artist"); return; }
-    const t = setInterval(() => setAltBgPhase(p => (p === "artist" ? "thumb" : "artist")), 10000);
-    return () => clearInterval(t);
-  }, [config.bgAlternateMode]);
+  /* ─── Alternate background mode: absolute 10s slots, stable in vMix/CEF ─── */
+  const altBgPhase: "artist" | "thumb" = config.bgAlternateMode && Math.floor(currentTime.getTime() / 10000) % 2 === 1 ? "thumb" : "artist";
 
   /* ─── User accent color (from layout settings) ─── */
   const [accentColor, setAccentColor] = useState("#444444");
