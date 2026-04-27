@@ -135,6 +135,31 @@ serve(async (req) => {
       .select("user_id, weather_city, weather_lat, weather_lon")
       .not("weather_city", "is", null);
 
+    // Helper: build <previsao> XML format (used by xml-tempo.xml client export)
+    const buildPrevisaoXml = (
+      cityName: string,
+      d: any,
+      currentIconUrl: string,
+      currentLabel: string,
+      isNight: boolean,
+    ): string => {
+      const dailyIcons: string[] = [];
+      const dailyLabels: string[] = [];
+      const len = d.daily?.time?.length || 0;
+      for (let i = 0; i < len; i++) {
+        const code = d.daily.weather_code[i] ?? 0;
+        // For daily forecast, use day icon (forecast represents the whole day)
+        const k = `${code}-d`;
+        if (!uploadedIcons[`weather-icon-${k}`]) {
+          // ensureIconUploaded is async; skip cache priming here, fallback below
+        }
+        dailyIcons.push("");
+        dailyLabels.push(getLabel(code));
+      }
+      // Build inline – we'll await uploads below
+      return "";
+    };
+
     if (settingsErr || !settings?.length) {
       return new Response(
         JSON.stringify({ message: "No users with weather configured", count: 0 }),
