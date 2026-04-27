@@ -70,6 +70,7 @@ interface HomeConfig {
 interface CenarioConfig {
   city: string;
   useProgramThumbAsBg?: boolean;
+  bgAlternateMode?: boolean;
   home: HomeConfig;
   weather: WeatherConfig;
   traffic: TrafficConfig;
