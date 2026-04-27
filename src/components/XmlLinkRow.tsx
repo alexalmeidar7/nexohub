@@ -8,16 +8,27 @@ interface XmlLinkRowProps {
   permanentUrl?: string;
   dark?: boolean;
   compact?: boolean;
+  /**
+   * Optional per-user scope key. When provided, the uploaded XML filename is
+   * suffixed with this value so that one tenant cannot overwrite another
+   * tenant's public XML in shared storage. Always pass the authenticated
+   * user's id for any XML that contains tenant-specific data.
+   */
+  scopeKey?: string;
 }
 
-function sanitizeFileName(label: string): string {
-  return label
+function sanitizeFileName(label: string, scopeKey?: string): string {
+  const base = label
     .toLowerCase()
     .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9\-]/g, "") + ".xml";
+    .replace(/[^a-z0-9\-]/g, "");
+  const scope = scopeKey
+    ? "--" + scopeKey.toLowerCase().replace(/[^a-z0-9\-]/g, "")
+    : "";
+  return `${base}${scope}.xml`;
 }
 
-export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUrl, dark, compact }: XmlLinkRowProps) {
+export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUrl, dark, compact, scopeKey }: XmlLinkRowProps) {
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState<string>(externalUrl || "");
   const [uploading, setUploading] = useState(false);
