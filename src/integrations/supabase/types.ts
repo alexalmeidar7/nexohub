@@ -55,6 +55,7 @@ export type Database = {
           descricao: string | null
           edicao_concluida: boolean
           edicao_notas: string
+          horario_gravacao: string | null
           id: string
           local: string
           prioridade: string
@@ -74,6 +75,7 @@ export type Database = {
           descricao?: string | null
           edicao_concluida?: boolean
           edicao_notas?: string
+          horario_gravacao?: string | null
           id?: string
           local?: string
           prioridade?: string
@@ -93,6 +95,7 @@ export type Database = {
           descricao?: string | null
           edicao_concluida?: boolean
           edicao_notas?: string
+          horario_gravacao?: string | null
           id?: string
           local?: string
           prioridade?: string
