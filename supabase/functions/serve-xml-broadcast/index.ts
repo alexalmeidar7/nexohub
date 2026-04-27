@@ -490,7 +490,7 @@ serve(async (req) => {
     }
 
     const empresaLogo = emp?.logo
-      ? await ensurePngImageUrl(supabase, emp.logo, `broadcast/${dataOwnerId}/empresa-logo.png`, 512)
+      ? await ensurePngImageUrl(supabase, emp.logo, `broadcast/${dataOwnerId}/empresa-logo.png`, 512, (emp as any)?.updated_at)
       : "";
 
     // ── INSERT LIVE scheduling ──
