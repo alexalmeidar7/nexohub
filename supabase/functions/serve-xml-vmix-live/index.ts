@@ -128,8 +128,9 @@ Deno.serve(async (req) => {
     }
 
     // Logo do patrocinador (1 por vez, rotação a cada 10s)
+    const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
     let patrocinadorNome = "";
-    let patrocinadorUrl = "";
+    let patrocinadorUrl = BLANK_LOGO_URL;
     if (onAir) {
       const { data: logos } = await supabase
         .from("logos_patrocinadores")
@@ -144,7 +145,7 @@ Deno.serve(async (req) => {
         const slot = Math.floor(Date.now() / 10000) % list.length;
         const escolhida = list[slot];
         patrocinadorNome = escolhida.nome || "";
-        patrocinadorUrl = stripQuery(escolhida.logo_url || "");
+        patrocinadorUrl = stripQuery(escolhida.logo_url || "") || BLANK_LOGO_URL;
       }
     }
 
