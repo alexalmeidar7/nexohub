@@ -729,6 +729,7 @@ export type Database = {
           expires_at: string
           id: string
           musica: string
+          user_id: string
         }
         Insert: {
           artista: string
@@ -737,6 +738,7 @@ export type Database = {
           expires_at?: string
           id?: string
           musica: string
+          user_id: string
         }
         Update: {
           artista?: string
@@ -745,6 +747,7 @@ export type Database = {
           expires_at?: string
           id?: string
           musica?: string
+          user_id?: string
         }
         Relationships: []
       }
