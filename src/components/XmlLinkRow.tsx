@@ -76,7 +76,7 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
     };
 
     upload();
-  }, [xmlContent, label, externalUrl]);
+  }, [xmlContent, label, externalUrl, scopeKey]);
 
   const ready = !!externalUrl || (!uploading && !!url);
 
