@@ -1351,6 +1351,20 @@ export default function CenarioInterativoPage() {
                       onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))}
                     />
                   </div>
+                  {config.bgAlternateMode && (
+                    <div className="flex items-center justify-between rounded-md px-2.5 py-1.5 bg-white/5 border border-white/10 animate-fade-in">
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: "var(--layout-accent-color, #888)" }} />
+                          <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "var(--layout-accent-color, #888)" }} />
+                        </span>
+                        <span className="text-[10px] uppercase tracking-wider" style={{ color: mutedText }}>Preview ao vivo</span>
+                      </div>
+                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-accent-color, #888)" }}>
+                        {altBgPhase === "artist" ? "🎤 Artista" : "📺 Thumb"}
+                      </span>
+                    </div>
+                  )}
 
                   {/* ── Palavras de exceção ── */}
                   <div className="space-y-1.5 pt-2 border-t border-white/10">
