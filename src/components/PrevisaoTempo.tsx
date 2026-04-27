@@ -538,7 +538,7 @@ export default function PrevisaoTempo() {
 
           <XmlLinkRow label="XML TEMPO" dark xmlContent={(() => {
             if (!weather) return "";
-            const iconUrl = (code: number) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code)}.png`;
+            const iconUrl = (code: number, night = false) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code, night)}.png`;
             const dayToXml = (d: DayWeather, tag: string) =>
               `  <${tag} date="${d.date}">\n    <cidade>${weather.city}</cidade>\n    <temperatura>${d.temp}Cº</temperatura>\n    <descricao>${getWeatherLabel(d.weatherCode)}</descricao>\n    <icone_url>${iconUrl(d.weatherCode)}</icone_url>\n    <minima>${d.tempMin}Cº</minima>\n    <maxima>${d.tempMax}Cº</maxima>\n    <humidade>${d.humidity}%</humidade>\n    <precipitacao>${d.rainChance}%</precipitacao>\n  </${tag}>`;
             const tomorrow = weather.forecast[0];
