@@ -120,6 +120,44 @@ export default function InfoMusicSection() {
         border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
       }}>
         <div className="flex items-center gap-2">
+          <Ban size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+          <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+            Exceções (não gerar curiosidade)
+          </h4>
+        </div>
+        <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
+          Liste palavras separadas por vírgula. Quando o <strong>artista</strong> ou a <strong>música</strong> contiver alguma dessas palavras, nenhuma curiosidade será gerada e a tag <code>&lt;curiosidade&gt;</code> ficará vazia no XML. Ex.: <em>TRILHAS PROMO, JINGLE, VINHETA</em>.
+        </p>
+        <div className="flex flex-col md:flex-row gap-2">
+          <input
+            type="text"
+            placeholder="trilhas promo, jingle, vinheta..."
+            value={excecoes}
+            onChange={e => setExcecoes(e.target.value)}
+            className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
+            style={{
+              backgroundColor: "var(--layout-page-bg, #fff)",
+              color: "var(--layout-page-text, #1a1a1a)",
+              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
+            }}
+          />
+          <button
+            onClick={saveExcecoes}
+            disabled={savingExcecoes || excecoes === excecoesInitial}
+            className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 inline-flex items-center justify-center gap-2"
+            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+          >
+            {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+            Salvar
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-xl p-4 space-y-3" style={{
+        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
+        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
+      }}>
+        <div className="flex items-center gap-2">
           <RefreshCw size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
           <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             Testar / Pré-gerar curiosidade
