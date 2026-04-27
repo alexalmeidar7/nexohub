@@ -278,6 +278,7 @@ interface Evento {
   youtube_descricao?: string;
   edicao_notas?: string;
   edicao_concluida?: boolean;
+  horario_gravacao?: string;
   programa?: Programa;
   participantes?: Participante[];
 }
