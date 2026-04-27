@@ -1161,6 +1161,8 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                       </span>
                     )}
                   </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
