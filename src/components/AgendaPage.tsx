@@ -1731,14 +1731,21 @@ export default function AgendaPage() {
           </DialogContent>
         </Dialog>
 
-        <ProgramaExpressPopup
-          open={expressOpen}
-          onOpenChange={(o) => { setExpressOpen(o); if (!o) setExpressEditData(null); }}
-          programas={programas.map(p => ({ id: p.id, nome: p.nome, estudio: p.estudio }))}
-          estudios={estudios}
-          onFinish={() => { setExpressOpen(false); setExpressEditData(null); }}
-          editData={expressEditData}
-        />
+        <Dialog open={expressOpen} onOpenChange={(o) => { setExpressOpen(o); if (!o) setExpressEditData(null); }}>
+          <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto p-0">
+            <DialogHeader className="px-6 pt-5 pb-3 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+              <DialogTitle className="text-base font-bold">📝 Roteiro do Programa</DialogTitle>
+            </DialogHeader>
+            <div className="p-4">
+              <ProgramaExpressInline
+                programas={programas.map(p => ({ id: p.id, nome: p.nome, estudio: p.estudio, tipo_programa: (p as any).tipo_programa }))}
+                estudios={estudios}
+                onFinish={() => { setExpressOpen(false); setExpressEditData(null); }}
+                editData={expressEditData}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Calendar + Events Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
