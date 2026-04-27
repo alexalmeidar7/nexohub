@@ -234,6 +234,8 @@ export default function MusicaNoAr() {
   const prevProgressRef = useRef(0);
   const [loadingCover, setLoadingCover] = useState(false);
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
+  const [curiosidade, setCuriosidade] = useState<string>("");
+  const curiosidadeFetchedKeyRef = useRef<string>("");
 
   const [sourceMode, setSourceModeState] = useState<SourceMode>("online");
   const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
