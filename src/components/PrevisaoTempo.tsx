@@ -545,7 +545,7 @@ export default function PrevisaoTempo() {
             const amanhaXml = tomorrow
               ? `  <amanha date="${tomorrow.date}">\n    <temperatura_minima>${tomorrow.tempMin}Cº</temperatura_minima>\n    <temperatura_maxima>${tomorrow.tempMax}Cº</temperatura_maxima>\n    <url_imagem_icone>${iconUrl(tomorrow.weatherCode)}</url_imagem_icone>\n    <descricao_tempo>${getWeatherLabel(tomorrow.weatherCode)}</descricao_tempo>\n  </amanha>`
               : "";
-            return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual").replace(`${weather.current.weatherCode})}.png`, `${weather.current.weatherCode}, ${!!weather.isNight})}.png`)}\n${amanhaXml}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
+            return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual", !!weather.isNight)}\n${amanhaXml}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
           })()} />
         </>
       )}
