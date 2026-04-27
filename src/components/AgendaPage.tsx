@@ -1861,7 +1861,11 @@ export default function AgendaPage() {
                               {evt.programa?.nome || "Programa removido"}
                             </p>
                             <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                              {evt.programa ? `${evt.programa.horario_inicio} - ${evt.programa.horario_fim}` : ""}
+                              {evt.programa ? (
+                                evt.tipo_evento === "gravacao" && evt.horario_gravacao
+                                  ? `🎬 ${evt.horario_gravacao} (gravação)`
+                                  : `${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
+                              ) : ""}
                               {evt.local ? ` • ${evt.local}` : ""}
                             </p>
                             {evt.recorrencia !== "unico" && (
