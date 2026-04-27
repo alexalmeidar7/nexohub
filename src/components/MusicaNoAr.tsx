@@ -406,7 +406,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   }, []);
 
   const saveUrl = async (url: string) => {
-    if (!user) return;
+    if (!dataUserId) return;
     const trimmed = url.trim();
     if (trimmed && !isValidXmlUrl(trimmed)) {
       setOnlineError("Informe uma URL válida terminando em .xml");
@@ -415,7 +415,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     setOnlineError(null);
     setXmlUrl(trimmed);
     await supabase.from("user_settings").upsert({
-      user_id: user.id,
+      user_id: dataUserId,
       music_xml_url: trimmed,
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id" });
@@ -475,10 +475,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setStartTime(now);
       setElapsed(0);
       // Persist to DB
-      if (user) {
+      if (dataUserId) {
         (async () => {
           try {
-            await mergeUserDashboardItems(user.id, {
+            await mergeUserDashboardItems(dataUserId, {
               music_start_time: now,
               music_current_title: data.titulo,
               music_current_artist: data.artista,
@@ -499,7 +499,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       }
       setMusic(prev.capa && !data.capa ? { ...data, capa: prev.capa } : data);
     }
-  }, []);
+  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, dataUserId]);
 
   // Online fetch — always active when URL exists (unified mode)
   const fetchXml = useCallback(async () => {
