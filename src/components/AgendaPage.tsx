@@ -1984,7 +1984,7 @@ export default function AgendaPage() {
                               </div>
                               {evt.programa && (
                                 <p className="text-[9px] leading-tight" style={{ color: `${sc.text}99` }}>
-                                  {evt.programa.horario_inicio.slice(0, 5)}
+                                  {(!isLive && evt.horario_gravacao ? evt.horario_gravacao : evt.programa.horario_inicio).slice(0, 5)}
                                   {evt.programa.estudio && ` • ${evt.programa.estudio}`}
                                 </p>
                               )}
