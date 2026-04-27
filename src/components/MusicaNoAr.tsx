@@ -218,11 +218,12 @@ async function addUploadLogToDb(userId: string, source: "pasta" | "online", devi
 import { getMusicData } from "@/lib/musicData";
 export { getMusicData } from "@/lib/musicData";
 
-export default function MusicaNoAr() {
+export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: string | null }) {
   const { user } = useAuth();
+  const dataUserId = effectiveUserId || user?.id || null;
   // Per-user scoped localStorage keys (prevents cross-tenant music leak)
-  const MUSIC_DATA_KEY = user ? `masterview_music_data::${user.id}` : "masterview_music_data::__none__";
-  const MUSIC_START_KEY = user ? `masterview_music_start::${user.id}` : "masterview_music_start::__none__";
+  const MUSIC_DATA_KEY = dataUserId ? `masterview_music_data::${dataUserId}` : "masterview_music_data::__none__";
+  const MUSIC_START_KEY = dataUserId ? `masterview_music_start::${dataUserId}` : "masterview_music_start::__none__";
   const [xmlUrl, setXmlUrl] = useState(DEFAULT_XML_URL);
   const [music, setMusic] = useState<MusicData | null>(null);
   const [elapsed, setElapsed] = useState(0);
