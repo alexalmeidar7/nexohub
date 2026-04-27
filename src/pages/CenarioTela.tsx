@@ -14,7 +14,7 @@ interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage
 interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
 interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; exceptionWords?: string; elementPositions?: Record<string, { x: number; y: number; scale: number }>; }
-interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
+interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; bgAlternateMode?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
 
 function buildHomeGradient(h: HomeConfig): string {
   const a = h.bgGradientColorA || "#1a1a2e";
@@ -236,6 +236,14 @@ export default function CenarioTela() {
   useEffect(() => {
     if (artistBgUrl) setPrevArtistBgUrl(artistBgUrl);
   }, [artistBgUrl]);
+
+  /* ─── Alternate background mode: 10s artist / 10s thumb ─── */
+  const [altBgPhase, setAltBgPhase] = useState<"artist" | "thumb">("artist");
+  useEffect(() => {
+    if (!config.bgAlternateMode) { setAltBgPhase("artist"); return; }
+    const t = setInterval(() => setAltBgPhase(p => (p === "artist" ? "thumb" : "artist")), 10000);
+    return () => clearInterval(t);
+  }, [config.bgAlternateMode]);
 
   /* ─── User accent color (from layout settings) ─── */
   const [accentColor, setAccentColor] = useState("#444444");
@@ -1245,17 +1253,28 @@ export default function CenarioTela() {
             </div>
           )}
 
-          {!isMapTab && (
+          {!isMapTab && (() => {
+            const altMode = !!config.bgAlternateMode;
+            const hasThumb = !!(currentProgram?.thumb || currentProgram?.capa);
+            const hasArtist = !!artistBgUrl;
+            // In alternate mode: phase decides which to show; if the chosen one is missing, fallback to the other
+            const showThumbBg = altMode
+              ? (altBgPhase === "thumb" ? hasThumb : !hasArtist && hasThumb)
+              : !!config.useProgramThumbAsBg;
+            const showArtistBg = altMode
+              ? (altBgPhase === "artist" ? hasArtist : !hasThumb && hasArtist)
+              : true;
+            return (
             <div className="absolute inset-0" style={{ background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : activeTab === "home" || activeTab === "chat" ? "#e8e8e8" : "#e8e8e8", zIndex: 0 }}>
               {/* Program thumb as bg — rendered first so artist images overlay it */}
-              {!!config.useProgramThumbAsBg && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (currentProgram?.thumb || currentProgram?.capa) && (
+              {showThumbBg && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && hasThumb && (
                 <>
-                  <img src={(currentProgram?.thumb || currentProgram?.capa) as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(22px) brightness(0.55)", transform: "scale(1.1)" }} />
+                  <img src={(currentProgram?.thumb || currentProgram?.capa) as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(22px) brightness(0.55)", transform: "scale(1.1)", transition: "opacity 1.2s ease-in-out" }} />
                   <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
                 </>
               )}
               {/* Home/Chat: artist bg from Deezer → crossfade (only when there's an active artist) */}
-              {(activeTab === "home" || activeTab === "chat") && !!musicData?.artista && !isBreakTrack && !isJornalistico && prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+              {showArtistBg && (activeTab === "home" || activeTab === "chat") && !!musicData?.artista && !isBreakTrack && !isJornalistico && prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
                 <img
                   src={prevArtistBgUrl}
                   alt=""
@@ -1263,7 +1282,7 @@ export default function CenarioTela() {
                   style={{ opacity: artistBgReady ? 0 : 0.35, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
                 />
               )}
-              {(activeTab === "home" || activeTab === "chat") && artistBgUrl && (
+              {showArtistBg && (activeTab === "home" || activeTab === "chat") && artistBgUrl && (
                 <img
                   src={artistBgUrl}
                   alt=""
@@ -1272,16 +1291,17 @@ export default function CenarioTela() {
                   onLoad={() => setArtistBgReady(true)}
                 />
               )}
-              {(activeTab === "home" || activeTab === "chat") && artistBgUrl && (
+              {showArtistBg && (activeTab === "home" || activeTab === "chat") && artistBgUrl && (
                 <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
               )}
-              {(activeTab === "home" || activeTab === "chat") && !artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {(activeTab === "home" || activeTab === "chat") && !artistBgUrl && !showThumbBg && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
             </div>
-          )}
+            );
+          })()}
 
           {/* Sidebar — always on top */}
           <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>

@@ -70,6 +70,7 @@ interface HomeConfig {
 interface CenarioConfig {
   city: string;
   useProgramThumbAsBg?: boolean;
+  bgAlternateMode?: boolean;
   home: HomeConfig;
   weather: WeatherConfig;
   traffic: TrafficConfig;
@@ -1324,6 +1325,22 @@ export default function CenarioInterativoPage() {
                     <Switch
                       checked={!!config.useProgramThumbAsBg}
                       onCheckedChange={v => setConfig(c => ({ ...c, useProgramThumbAsBg: v }))}
+                    />
+                  </div>
+
+                  {/* ── Alternar fundo: artista (Deezer) ↔ thumb do programa ── */}
+                  <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                    <div className="flex flex-col pr-3">
+                      <Label className="text-xs font-medium flex items-center gap-1.5">
+                        <Palette size={12} /> Alternar fundo (10s artista / 10s thumb)
+                      </Label>
+                      <span className="text-[10px]" style={{ color: mutedText }}>
+                        Quando ativo, alterna automaticamente entre a imagem do artista (Deezer) e a thumb do programa a cada 10 segundos.
+                      </span>
+                    </div>
+                    <Switch
+                      checked={!!config.bgAlternateMode}
+                      onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))}
                     />
                   </div>
 
