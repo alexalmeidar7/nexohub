@@ -236,6 +236,9 @@ export default function MusicaNoAr() {
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
   const [curiosidade, setCuriosidade] = useState<string>("");
   const curiosidadeFetchedKeyRef = useRef<string>("");
+  const curiosityShownAtRef = useRef<number | null>(null);
+  const curiosityKeyRef = useRef<string>("");
+  const [, forceCuriosityTick] = useState(0);
 
   const [sourceMode, setSourceModeState] = useState<SourceMode>("online");
   const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
@@ -929,8 +932,23 @@ export default function MusicaNoAr() {
     return () => { cancelled = true; };
   }, [music?.titulo, music?.artista, isBreak]);
 
-  // Curiosity is only exposed in the XML between 10s and 25s of the song
-  const showCuriosidade = !!curiosidade && elapsed >= 10 && elapsed < 40;
+  // Curiosity window: starts 10s after the song begins, stays available for 30s in the XML.
+  const curiosityKey = curiosidade ? `${music?.artista || ""}::${music?.titulo || ""}`.toLowerCase() : "";
+  if (curiosityKey !== curiosityKeyRef.current) {
+    curiosityKeyRef.current = curiosityKey;
+    curiosityShownAtRef.current = null;
+  }
+  if (curiosidade && curiosityShownAtRef.current === null && elapsed >= 10) {
+    curiosityShownAtRef.current = Date.now();
+  }
+  useEffect(() => {
+    if (curiosityShownAtRef.current === null) return;
+    const t = setTimeout(() => forceCuriosityTick((n) => n + 1), 30_000);
+    return () => clearTimeout(t);
+  }, [curiosidade, elapsed >= 10]);
+  const showCuriosidade = !!curiosidade
+    && curiosityShownAtRef.current !== null
+    && (Date.now() - curiosityShownAtRef.current) < 30_000;
   const escapeXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const xmlCuriosidade = showCuriosidade ? escapeXml(curiosidade) : "";
 
