@@ -1373,7 +1373,7 @@ export default function MusicaNoAr() {
       {/* XML Output Link */}
       {/* XML Output Link */}
       {music && (
-        <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} dark />
+        <XmlLinkRow label="XML MUSICA AGORA" scopeKey={user?.id} xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} dark />
       )}
     </div>
   );
