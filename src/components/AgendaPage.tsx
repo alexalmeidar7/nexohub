@@ -695,6 +695,7 @@ export default function AgendaPage() {
         roteiroId = novo.id;
       }
 
+      const isPodcastEstudio = (prog.estudio || "").toLowerCase() === "podcast";
       setExpressEditData({
         roteiroId: roteiroId!,
         estudio: prog.estudio || "",
@@ -703,6 +704,16 @@ export default function AgendaPage() {
         participantes: formParticipantes
           .filter(p => p.nome.trim())
           .map(p => ({ nome: p.nome, cargo: "", instagram: p.instagram || "" })),
+        podcastData: isPodcastEstudio ? {
+          tituloTarja: "",
+          introducao: "",
+          agendamentoData: dataPrograma,
+          agendamentoHorario: formHorarioGravacao || "",
+          perguntas: [""],
+          concluindo: "",
+          apoioImagens: [""],
+          apoioVideos: [""],
+        } : undefined,
       });
       setExpressOpen(true);
     } finally {
