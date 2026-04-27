@@ -613,7 +613,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         toast.error("Preencha ao menos o título da tarja ou uma pergunta"); return;
       }
     } else {
-      const totalNews = blocos.reduce((s, b) => s + b.noticias.filter(n => n.titulo).length, 0);
+      const totalNews = (blocos || []).reduce((s, b) => s + ((b?.noticias || []).filter(n => n?.titulo).length), 0);
       if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia"); return; }
     }
     setSaving(true);
