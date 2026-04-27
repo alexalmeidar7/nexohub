@@ -278,7 +278,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     if (editData && !initialized) {
       setEstudio(editData.estudio);
       setProgramaId(editData.programaId);
-      setBlocos(editData.blocos.length > 0 ? editData.blocos : [{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
+      setBlocos(Array.isArray(editData.blocos) && editData.blocos.length > 0 ? editData.blocos.map(b => ({ ...b, noticias: Array.isArray(b?.noticias) ? b.noticias : [{ titulo: "", imagemUrl: "", escalada: false }] })) : [{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
       setParticipantes(editData.participantes || []);
       setEscaladaList(editData.escaladaList || []);
       setEditingId(editData.roteiroId);
@@ -600,7 +600,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       xml += `  </roteiro>\n`;
     } else {
       if (escaladaList.length > 0) { xml += `  <escalada>\n`; escaladaList.forEach((e, i) => { xml += `    <item ordem="${i + 1}">\n      <titulo>${escXml(e.titulo)}</titulo>\n      <imagem>${escXml(e.imagemUrl)}</imagem>\n    </item>\n`; }); xml += `  </escalada>\n`; }
-      blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
+      blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; (b?.noticias || []).forEach((n, ni) => { if (!n?.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
     }
     xml += `</programaExpress>`;
     return xml;
@@ -613,7 +613,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         toast.error("Preencha ao menos o título da tarja ou uma pergunta"); return;
       }
     } else {
-      const totalNews = blocos.reduce((s, b) => s + b.noticias.filter(n => n.titulo).length, 0);
+      const totalNews = (blocos || []).reduce((s, b) => s + ((b?.noticias || []).filter(n => n?.titulo).length), 0);
       if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia"); return; }
     }
     setSaving(true);
@@ -638,7 +638,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         : JSON.stringify({ blocos, participantes, escaladaList });
 
       // Generate ticker titles from all news titles
-      const allTitles = blocos.flatMap(b => b.noticias.filter(n => n.titulo.trim()).map(n => n.titulo.trim()));
+      const allTitles = (blocos || []).flatMap(b => (b?.noticias || []).filter(n => n?.titulo?.trim()).map(n => n.titulo.trim()));
       const tickertitulos = allTitles.join("  •  ");
 
       const selectedProg = programas.find(p => p.id === programaId);
