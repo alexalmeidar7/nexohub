@@ -1428,18 +1428,7 @@ export default function CenarioTela() {
 
               return (
                 <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: config.home.bgGradient ? buildHomeGradient(config.home) : "#000", color: "#fff", overflow: "hidden" }}>
-                  {/* Artist background image from Deezer — crossfade */}
-                  {prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
-                    <img src={prevArtistBgUrl} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", opacity: artistBgReady ? 0 : 0.35, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
-                  )}
-                  {artistBgUrl && (
-                    <>
-                      <img src={artistBgUrl} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", opacity: artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
-                      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
-                    </>
-                  )}
-                  {/* Fallback: user background image (no artist image) */}
-                  {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
+                  {/* Background already rendered as a full-canvas layer behind sidebar */}
 
                    {/* ── TOP-LEFT: Big neon clock + date + SYNC ── */}
                    <div style={{ position: "absolute", top: `${vhToPx(3)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
