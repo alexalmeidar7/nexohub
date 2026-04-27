@@ -1959,18 +1959,20 @@ export default function CenarioInterativoPage() {
                                   {/* Thumb layer (always mounted for fade) */}
                                   {hasThumb && (
                                     <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
-                                      <img src={thumbSrc} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(18px) brightness(0.55)", transform: "scale(1.1)" }} />
-                                      <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
+                                      <img src={thumbSrc} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? undefined : { filter: "blur(18px) brightness(0.55)", transform: "scale(1.1)" }} />
+                                      {!altMode && (
+                                        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
+                                      )}
                                     </div>
                                   )}
                                   {/* Artist crossfade (previous) */}
                                   {prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
-                                    <img src={prevArtistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible && !artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
+                                    <img src={prevArtistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
                                   )}
                                   {artistBgUrl && (
-                                    <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible ? (artistBgReady ? 0.35 : 0) : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
+                                    <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
                                   )}
-                                  <div className="absolute inset-0" style={{ opacity: artistVisible ? 1 : 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)", transition: "opacity 1.2s ease-in-out" }} />
+                                  {!altMode && <div className="absolute inset-0" style={{ opacity: artistVisible ? 1 : 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)", transition: "opacity 1.2s ease-in-out" }} />}
                                   {config.home.bgGradient && !artistVisible && !thumbVisible && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
                                   {!artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                                 </>
