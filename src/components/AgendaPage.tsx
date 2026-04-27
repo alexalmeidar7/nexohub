@@ -567,6 +567,7 @@ export default function AgendaPage() {
     setFormYoutubeDescricao(evt.youtube_descricao || "");
     setFormEdicaoNotas(evt.edicao_notas || "");
     setFormEdicaoConcluida(!!evt.edicao_concluida);
+    setFormHorarioGravacao(evt.horario_gravacao || "");
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
         ? evt.participantes.map(p => ({ id: p.id, nome: p.nome, instagram: p.instagram }))
