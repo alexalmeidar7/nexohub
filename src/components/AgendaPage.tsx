@@ -365,6 +365,7 @@ export default function AgendaPage() {
   const [expressOpen, setExpressOpen] = useState(false);
   const [expressEditData, setExpressEditData] = useState<ExpressEditData | null>(null);
   const [creatingRoteiro, setCreatingRoteiro] = useState(false);
+  const [roteiroJaExiste, setRoteiroJaExiste] = useState(false);
   const [sendingWhatsAppFor, setSendingWhatsAppFor] = useState<string | null>(null);
   const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
@@ -468,6 +469,30 @@ export default function AgendaPage() {
       return merged.length ? merged : [{ nome: "", instagram: "" }];
     });
   }, [formProgramaId, formTipoEvento, programas, apresentadores]);
+
+  // Detecta se já existe roteiro para o programa+data selecionado
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      if (!user || !formProgramaId || !formData) {
+        setRoteiroJaExiste(false);
+        return;
+      }
+      const prog = programas.find(p => p.id === formProgramaId);
+      if (!prog) { setRoteiroJaExiste(false); return; }
+      const dataPrograma = format(formData, "yyyy-MM-dd");
+      const { data } = await supabase
+        .from("roteiros")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("programa_nome", prog.nome)
+        .eq("data_programa", dataPrograma)
+        .maybeSingle();
+      if (!cancelled) setRoteiroJaExiste(!!data?.id);
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [user, formProgramaId, formData, programas, dialogOpen]);
 
   const addParticipante = () => {
     setFormParticipantes([...formParticipantes, { nome: "", instagram: "" }]);
@@ -1718,7 +1743,7 @@ export default function AgendaPage() {
                     backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 6%, transparent)",
                   }}
                 >
-                  {creatingRoteiro ? "Criando…" : "📝 Deseja criar/agendar o roteiro desse programa?"}
+                  {creatingRoteiro ? "Criando…" : (roteiroJaExiste ? "📝 Abrir/editar roteiro já existente" : "📝 Deseja criar/agendar o roteiro desse programa?")}
                 </button>
               )}
 
