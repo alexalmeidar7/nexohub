@@ -688,8 +688,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     setLocalFileName(file.name);
 
     // Persist local filename to DB so it survives across computers/sessions
-    if (user) {
-      await mergeUserDashboardItems(user.id, {
+    if (dataUserId) {
+      await mergeUserDashboardItems(dataUserId, {
         local_xml_filename: file.name,
       });
     }
@@ -754,12 +754,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   // Remote storage polling via Worker
   useEffect(() => {
     const worker = workerRef.current;
-    if (!worker || !user || !isLocalSelected || !localFileName) return;
+    if (!worker || !dataUserId || !isLocalSelected || !localFileName) return;
     if (fileHandleRef.current || localFileRef.current) return;
 
     const pollStorage = async () => {
       try {
-        const filePath = `local-xml-${user.id}.xml`;
+        const filePath = `local-xml-${dataUserId}.xml`;
         const { data } = supabase.storage.from("xml-files").getPublicUrl(filePath);
         if (!data?.publicUrl) return;
         const res = await fetch(data.publicUrl + `?t=${Date.now()}`);
@@ -786,7 +786,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       worker.removeEventListener("message", handler);
       worker.postMessage({ cmd: "stop", id: "storagePoll" });
     };
-  }, [user, isLocalSelected, localFileName]);
+  }, [dataUserId, isLocalSelected, localFileName]);
 
   // Staleness check via Worker
   useEffect(() => {
@@ -820,7 +820,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   // Load music data from localStorage first, then try DB for start time persistence
   useEffect(() => {
-    const stored = getMusicData(user?.id);
+    const stored = getMusicData(dataUserId || undefined);
     if (stored) {
       setMusic(stored.music);
       const st = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
@@ -828,12 +828,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setElapsed(stored.elapsed);
     }
     // Also try to restore from DB if localStorage has no start time
-    if (!user) return;
+    if (!dataUserId) return;
     const restoreFromDb = async () => {
       const { data: settings } = await supabase
         .from("user_settings")
         .select("dashboard_items")
-        .eq("user_id", user.id)
+        .eq("user_id", dataUserId)
         .maybeSingle();
       const items = settings?.dashboard_items as Record<string, any> | null;
       if (!items?.music_start_time) return;
@@ -857,7 +857,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       }
     };
     restoreFromDb();
-  }, [user]);
+  }, [dataUserId, MUSIC_DATA_KEY, MUSIC_START_KEY]);
 
   const rawProgress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
 
