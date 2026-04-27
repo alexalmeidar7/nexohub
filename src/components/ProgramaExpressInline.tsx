@@ -55,6 +55,7 @@ export interface ExpressEditData {
   escaladaList?: {titulo: string; imagemUrl: string}[];
   existingXmlPath?: string;
   podcastData?: PodcastData;
+  agendaEventoId?: string;
 }
 
 interface Props {
