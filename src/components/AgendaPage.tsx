@@ -1743,7 +1743,7 @@ export default function AgendaPage() {
                     backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 6%, transparent)",
                   }}
                 >
-                  {creatingRoteiro ? "Criando…" : "📝 Deseja criar/agendar o roteiro desse programa?"}
+                  {creatingRoteiro ? "Criando…" : (roteiroJaExiste ? "📝 Abrir/editar roteiro já existente" : "📝 Deseja criar/agendar o roteiro desse programa?")}
                 </button>
               )}
 
