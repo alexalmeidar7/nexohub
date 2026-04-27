@@ -704,6 +704,7 @@ export default function AgendaPage() {
         participantes: formParticipantes
           .filter(p => p.nome.trim())
           .map(p => ({ nome: p.nome, cargo: "", instagram: p.instagram || "" })),
+        agendaEventoId: editingId || undefined,
         podcastData: isPodcastEstudio ? {
           tituloTarja: "",
           introducao: "",
