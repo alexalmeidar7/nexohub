@@ -237,13 +237,8 @@ export default function CenarioTela() {
     if (artistBgUrl) setPrevArtistBgUrl(artistBgUrl);
   }, [artistBgUrl]);
 
-  /* ─── Alternate background mode: 10s artist / 10s thumb ─── */
-  const [altBgPhase, setAltBgPhase] = useState<"artist" | "thumb">("artist");
-  useEffect(() => {
-    if (!config.bgAlternateMode) { setAltBgPhase("artist"); return; }
-    const t = setInterval(() => setAltBgPhase(p => (p === "artist" ? "thumb" : "artist")), 10000);
-    return () => clearInterval(t);
-  }, [config.bgAlternateMode]);
+  /* ─── Alternate background mode: absolute 10s slots, stable in vMix/CEF ─── */
+  const altBgPhase: "artist" | "thumb" = config.bgAlternateMode && Math.floor(currentTime.getTime() / 10000) % 2 === 1 ? "thumb" : "artist";
 
   /* ─── User accent color (from layout settings) ─── */
   const [accentColor, setAccentColor] = useState("#444444");
@@ -1277,7 +1272,7 @@ export default function CenarioTela() {
             }
 
             return (
-            <div className="absolute inset-0" style={{ background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : activeTab === "home" || activeTab === "chat" ? "#e8e8e8" : "#e8e8e8", zIndex: 0 }}>
+            <div className="absolute inset-0" style={{ background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : "#000", zIndex: 0 }}>
               {/* Program thumb as bg — always mounted on home/weather/currency/chat for smooth fade */}
               {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
                 <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
@@ -1293,7 +1288,7 @@ export default function CenarioTela() {
                   src={prevArtistBgUrl}
                   alt=""
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{ opacity: artistVisible && !artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                  style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
                 />
               )}
               {isHomeOrChat && artistBgUrl && (
@@ -1301,11 +1296,11 @@ export default function CenarioTela() {
                   src={artistBgUrl}
                   alt=""
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{ opacity: artistVisible ? (artistBgReady ? 0.35 : 0) : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                  style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
                   onLoad={() => setArtistBgReady(true)}
                 />
               )}
-              {isHomeOrChat && (
+              {isHomeOrChat && !altMode && (
                 <div className="absolute inset-0 pointer-events-none" style={{ opacity: artistVisible ? 1 : 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)", transition: "opacity 1.2s ease-in-out" }} />
               )}
               {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
@@ -1433,18 +1428,7 @@ export default function CenarioTela() {
 
               return (
                 <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: config.home.bgGradient ? buildHomeGradient(config.home) : "#000", color: "#fff", overflow: "hidden" }}>
-                  {/* Artist background image from Deezer — crossfade */}
-                  {prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
-                    <img src={prevArtistBgUrl} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", opacity: artistBgReady ? 0 : 0.35, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
-                  )}
-                  {artistBgUrl && (
-                    <>
-                      <img src={artistBgUrl} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", opacity: artistBgReady ? 0.35 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
-                      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
-                    </>
-                  )}
-                  {/* Fallback: user background image (no artist image) */}
-                  {!artistBgUrl && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
+                  {/* Background already rendered as a full-canvas layer behind sidebar */}
 
                    {/* ── TOP-LEFT: Big neon clock + date + SYNC ── */}
                    <div style={{ position: "absolute", top: `${vhToPx(3)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
