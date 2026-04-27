@@ -931,7 +931,8 @@ export default function MusicaNoAr() {
 
   // Curiosity is only exposed in the XML between 10s and 25s of the song
   const showCuriosidade = !!curiosidade && elapsed >= 10 && elapsed < 25;
-  const xmlCuriosidade = showCuriosidade ? curiosidade : "";
+  const escapeXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const xmlCuriosidade = showCuriosidade ? escapeXml(curiosidade) : "";
 
   if (!music && !presenterFallback) {
     return (
