@@ -290,9 +290,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const setSourceMode = async (mode: SourceMode) => {
     setSourceModeState(mode);
     localStorage.setItem(SOURCE_MODE_KEY, mode);
-    if (user) {
+    if (dataUserId) {
       await supabase.from("user_settings").upsert({
-        user_id: user.id,
+        user_id: dataUserId,
         music_source_mode: mode,
         updated_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
@@ -301,15 +301,15 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   // Load URL, source mode, and history from DB
   useEffect(() => {
-    if (!user) return;
+    if (!dataUserId) return;
     const loadData = async () => {
       const [{ data }, history] = await Promise.all([
         supabase
           .from("user_settings")
           .select("music_xml_url, music_source_mode, dashboard_items")
-          .eq("user_id", user.id)
+          .eq("user_id", dataUserId)
           .maybeSingle(),
-        loadUploadHistoryFromDb(user.id),
+        loadUploadHistoryFromDb(dataUserId),
       ]);
       setUploadHistory(history);
       if (typeof data?.music_xml_url === "string") {
@@ -319,14 +319,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         } else {
           setXmlUrl(DEFAULT_XML_URL);
           await supabase.from("user_settings").upsert({
-            user_id: user.id,
+            user_id: dataUserId,
             music_xml_url: DEFAULT_XML_URL,
             updated_at: new Date().toISOString(),
           }, { onConflict: "user_id" });
         }
       } else {
         await supabase.from("user_settings").upsert({
-          user_id: user.id,
+          user_id: dataUserId,
           music_xml_url: DEFAULT_XML_URL,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
@@ -345,7 +345,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setSourceModeLoaded(true);
     };
     loadData();
-  }, [user]);
+  }, [dataUserId]);
 
   useEffect(() => {
     if (!sourceModeLoaded) return;
