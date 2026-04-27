@@ -638,7 +638,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         : JSON.stringify({ blocos, participantes, escaladaList });
 
       // Generate ticker titles from all news titles
-      const allTitles = blocos.flatMap(b => b.noticias.filter(n => n.titulo.trim()).map(n => n.titulo.trim()));
+      const allTitles = (blocos || []).flatMap(b => (b?.noticias || []).filter(n => n?.titulo?.trim()).map(n => n.titulo.trim()));
       const tickertitulos = allTitles.join("  •  ");
 
       const selectedProg = programas.find(p => p.id === programaId);
