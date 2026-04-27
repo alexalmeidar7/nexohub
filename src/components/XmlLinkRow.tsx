@@ -32,7 +32,7 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState<string>(externalUrl || "");
   const [uploading, setUploading] = useState(false);
-  const lastContentRef = useRef<string>("");
+  const lastUploadSignatureRef = useRef<string>("");
 
   // If permanentUrl is provided, use it directly (no upload needed)
   useEffect(() => {
@@ -43,8 +43,10 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
 
   // Legacy: upload xmlContent to storage if no permanentUrl
   useEffect(() => {
-    if (externalUrl || !xmlContent || xmlContent === lastContentRef.current) return;
-    lastContentRef.current = xmlContent;
+    if (externalUrl || !xmlContent) return;
+    const uploadSignature = `${scopeKey || "__global__"}::${xmlContent}`;
+    if (uploadSignature === lastUploadSignatureRef.current) return;
+    lastUploadSignatureRef.current = uploadSignature;
 
     const upload = async () => {
       setUploading(true);

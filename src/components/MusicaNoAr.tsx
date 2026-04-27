@@ -218,11 +218,12 @@ async function addUploadLogToDb(userId: string, source: "pasta" | "online", devi
 import { getMusicData } from "@/lib/musicData";
 export { getMusicData } from "@/lib/musicData";
 
-export default function MusicaNoAr() {
+export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: string | null }) {
   const { user } = useAuth();
+  const dataUserId = effectiveUserId || user?.id || null;
   // Per-user scoped localStorage keys (prevents cross-tenant music leak)
-  const MUSIC_DATA_KEY = user ? `masterview_music_data::${user.id}` : "masterview_music_data::__none__";
-  const MUSIC_START_KEY = user ? `masterview_music_start::${user.id}` : "masterview_music_start::__none__";
+  const MUSIC_DATA_KEY = dataUserId ? `masterview_music_data::${dataUserId}` : "masterview_music_data::__none__";
+  const MUSIC_START_KEY = dataUserId ? `masterview_music_start::${dataUserId}` : "masterview_music_start::__none__";
   const [xmlUrl, setXmlUrl] = useState(DEFAULT_XML_URL);
   const [music, setMusic] = useState<MusicData | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -289,9 +290,9 @@ export default function MusicaNoAr() {
   const setSourceMode = async (mode: SourceMode) => {
     setSourceModeState(mode);
     localStorage.setItem(SOURCE_MODE_KEY, mode);
-    if (user) {
+    if (dataUserId) {
       await supabase.from("user_settings").upsert({
-        user_id: user.id,
+        user_id: dataUserId,
         music_source_mode: mode,
         updated_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
@@ -300,15 +301,15 @@ export default function MusicaNoAr() {
 
   // Load URL, source mode, and history from DB
   useEffect(() => {
-    if (!user) return;
+    if (!dataUserId) return;
     const loadData = async () => {
       const [{ data }, history] = await Promise.all([
         supabase
           .from("user_settings")
           .select("music_xml_url, music_source_mode, dashboard_items")
-          .eq("user_id", user.id)
+          .eq("user_id", dataUserId)
           .maybeSingle(),
-        loadUploadHistoryFromDb(user.id),
+        loadUploadHistoryFromDb(dataUserId),
       ]);
       setUploadHistory(history);
       if (typeof data?.music_xml_url === "string") {
@@ -318,14 +319,14 @@ export default function MusicaNoAr() {
         } else {
           setXmlUrl(DEFAULT_XML_URL);
           await supabase.from("user_settings").upsert({
-            user_id: user.id,
+            user_id: dataUserId,
             music_xml_url: DEFAULT_XML_URL,
             updated_at: new Date().toISOString(),
           }, { onConflict: "user_id" });
         }
       } else {
         await supabase.from("user_settings").upsert({
-          user_id: user.id,
+          user_id: dataUserId,
           music_xml_url: DEFAULT_XML_URL,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
@@ -344,7 +345,7 @@ export default function MusicaNoAr() {
       setSourceModeLoaded(true);
     };
     loadData();
-  }, [user]);
+  }, [dataUserId]);
 
   useEffect(() => {
     if (!sourceModeLoaded) return;
@@ -405,7 +406,7 @@ export default function MusicaNoAr() {
   }, []);
 
   const saveUrl = async (url: string) => {
-    if (!user) return;
+    if (!dataUserId) return;
     const trimmed = url.trim();
     if (trimmed && !isValidXmlUrl(trimmed)) {
       setOnlineError("Informe uma URL válida terminando em .xml");
@@ -414,7 +415,7 @@ export default function MusicaNoAr() {
     setOnlineError(null);
     setXmlUrl(trimmed);
     await supabase.from("user_settings").upsert({
-      user_id: user.id,
+      user_id: dataUserId,
       music_xml_url: trimmed,
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id" });
@@ -474,10 +475,10 @@ export default function MusicaNoAr() {
       setStartTime(now);
       setElapsed(0);
       // Persist to DB
-      if (user) {
+      if (dataUserId) {
         (async () => {
           try {
-            await mergeUserDashboardItems(user.id, {
+            await mergeUserDashboardItems(dataUserId, {
               music_start_time: now,
               music_current_title: data.titulo,
               music_current_artist: data.artista,
@@ -498,7 +499,7 @@ export default function MusicaNoAr() {
       }
       setMusic(prev.capa && !data.capa ? { ...data, capa: prev.capa } : data);
     }
-  }, []);
+  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, dataUserId]);
 
   // Online fetch — always active when URL exists (unified mode)
   const fetchXml = useCallback(async () => {
@@ -588,14 +589,14 @@ export default function MusicaNoAr() {
   // Keep stable refs to avoid interval restarts
   const processMusicRef = useRef(processMusic);
   processMusicRef.current = processMusic;
-  const userRef = useRef(user);
-  userRef.current = user;
+  const dataUserIdRef = useRef<string | null>(dataUserId);
+  dataUserIdRef.current = dataUserId;
   const deviceNameRef = useRef(currentDeviceName);
   deviceNameRef.current = currentDeviceName;
 
   const syncToStorage = useCallback(async (text: string) => {
-    const u = userRef.current;
-    if (!u) return;
+    const uid = dataUserIdRef.current;
+    if (!uid) return;
     if (syncingRef.current) {
       pendingSyncRef.current = text;
       return;
@@ -603,10 +604,10 @@ export default function MusicaNoAr() {
     syncingRef.current = true;
     try {
       const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
-      const filePath = `local-xml-${u.id}.xml`;
+      const filePath = `local-xml-${uid}.xml`;
       await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
       // Do NOT overwrite music_xml_url — the online URL is independent from local sync
-      setUploadHistory(await addUploadLogToDb(u.id, "pasta", deviceNameRef.current));
+      setUploadHistory(await addUploadLogToDb(uid, "pasta", deviceNameRef.current));
     } catch { }
     syncingRef.current = false;
     const queued = pendingSyncRef.current;
@@ -687,8 +688,8 @@ export default function MusicaNoAr() {
     setLocalFileName(file.name);
 
     // Persist local filename to DB so it survives across computers/sessions
-    if (user) {
-      await mergeUserDashboardItems(user.id, {
+    if (dataUserId) {
+      await mergeUserDashboardItems(dataUserId, {
         local_xml_filename: file.name,
       });
     }
@@ -753,12 +754,12 @@ export default function MusicaNoAr() {
   // Remote storage polling via Worker
   useEffect(() => {
     const worker = workerRef.current;
-    if (!worker || !user || !isLocalSelected || !localFileName) return;
+    if (!worker || !dataUserId || !isLocalSelected || !localFileName) return;
     if (fileHandleRef.current || localFileRef.current) return;
 
     const pollStorage = async () => {
       try {
-        const filePath = `local-xml-${user.id}.xml`;
+        const filePath = `local-xml-${dataUserId}.xml`;
         const { data } = supabase.storage.from("xml-files").getPublicUrl(filePath);
         if (!data?.publicUrl) return;
         const res = await fetch(data.publicUrl + `?t=${Date.now()}`);
@@ -785,7 +786,7 @@ export default function MusicaNoAr() {
       worker.removeEventListener("message", handler);
       worker.postMessage({ cmd: "stop", id: "storagePoll" });
     };
-  }, [user, isLocalSelected, localFileName]);
+  }, [dataUserId, isLocalSelected, localFileName]);
 
   // Staleness check via Worker
   useEffect(() => {
@@ -819,7 +820,7 @@ export default function MusicaNoAr() {
 
   // Load music data from localStorage first, then try DB for start time persistence
   useEffect(() => {
-    const stored = getMusicData(user?.id);
+    const stored = getMusicData(dataUserId || undefined);
     if (stored) {
       setMusic(stored.music);
       const st = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
@@ -827,12 +828,12 @@ export default function MusicaNoAr() {
       setElapsed(stored.elapsed);
     }
     // Also try to restore from DB if localStorage has no start time
-    if (!user) return;
+    if (!dataUserId) return;
     const restoreFromDb = async () => {
       const { data: settings } = await supabase
         .from("user_settings")
         .select("dashboard_items")
-        .eq("user_id", user.id)
+        .eq("user_id", dataUserId)
         .maybeSingle();
       const items = settings?.dashboard_items as Record<string, any> | null;
       if (!items?.music_start_time) return;
@@ -856,7 +857,7 @@ export default function MusicaNoAr() {
       }
     };
     restoreFromDb();
-  }, [user]);
+  }, [dataUserId, MUSIC_DATA_KEY, MUSIC_START_KEY]);
 
   const rawProgress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
 
@@ -906,12 +907,12 @@ export default function MusicaNoAr() {
 
   // ===== Info Music: fetch IA-generated curiosity when song changes =====
   useEffect(() => {
-    if (isBreak || !music?.titulo || !music?.artista) {
+    if (isBreak || !music?.titulo || !music?.artista || !dataUserId) {
       setCuriosidade("");
       curiosidadeFetchedKeyRef.current = "";
       return;
     }
-    const key = `${music.artista}::${music.titulo}`.toLowerCase();
+    const key = `${dataUserId}::${music.artista}::${music.titulo}`.toLowerCase();
     if (curiosidadeFetchedKeyRef.current === key) return;
     curiosidadeFetchedKeyRef.current = key;
     setCuriosidade("");
@@ -919,7 +920,7 @@ export default function MusicaNoAr() {
     (async () => {
       try {
         const { data, error } = await supabase.functions.invoke("get-music-curiosity", {
-          body: { artista: music.artista, musica: music.titulo },
+          body: { artista: music.artista, musica: music.titulo, userId: dataUserId },
         });
         if (cancelled) return;
         if (error) { console.warn("curiosity error", error); return; }
@@ -930,7 +931,7 @@ export default function MusicaNoAr() {
       }
     })();
     return () => { cancelled = true; };
-  }, [music?.titulo, music?.artista, isBreak]);
+  }, [music?.titulo, music?.artista, isBreak, dataUserId]);
 
   // Curiosity window: starts 10s after the song begins, stays available for 30s in the XML.
   const curiosityKey = curiosidade ? `${music?.artista || ""}::${music?.titulo || ""}`.toLowerCase() : "";
@@ -1373,7 +1374,7 @@ export default function MusicaNoAr() {
       {/* XML Output Link */}
       {/* XML Output Link */}
       {music && (
-        <XmlLinkRow label="XML MUSICA AGORA" scopeKey={user?.id} xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} dark />
+        <XmlLinkRow label="XML MUSICA AGORA" scopeKey={dataUserId || undefined} xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} dark />
       )}
     </div>
   );
