@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette, Link2, ShieldCheck } from "lucide-react";
+import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette, Link2, ShieldCheck, Sparkles } from "lucide-react";
 import { lazy, Suspense } from "react";
 const LayoutCustomizer = lazy(() => import("./LayoutCustomizer"));
 const PlayerLayoutCustomizer = lazy(() => import("./PlayerLayoutCustomizer"));
+const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
 const PermissoesSection = lazy(() => import("./PermissoesSection"));
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
