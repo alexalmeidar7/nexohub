@@ -1115,8 +1115,14 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                   <p className="text-xs font-semibold truncate leading-tight" style={{ color: "var(--layout-widget-text)" }}>
                     {titulo}
                   </p>
+                  {(() => {
+                    const isGravacao = (ev.tipo_evento || "").toString().toLowerCase() === "gravacao";
+                    const horarioExibido = isGravacao
+                      ? (ev.horario_gravacao || ev.programa?.horario_inicio)
+                      : ev.programa?.horario_inicio;
+                    return (
                   <div className="flex items-center gap-1.5 mt-1">
-                    {ev.programa?.horario_inicio && (
+                    {horarioExibido && (
                       <span
                         className="text-[9px] font-bold px-1.5 py-px rounded tabular-nums"
                         style={{
@@ -1124,7 +1130,7 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                           color: "var(--layout-widget-text)",
                         }}
                       >
-                        {ev.programa.horario_inicio.slice(0, 5)}
+                        {String(horarioExibido).slice(0, 5)}
                       </span>
                     )}
                     {tipo && (
@@ -1155,6 +1161,8 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                       </span>
                     )}
                   </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
