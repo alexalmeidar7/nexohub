@@ -18,19 +18,40 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Identify the calling user from JWT
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const authHeader = req.headers.get("Authorization") || "";
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = userData.user.id;
+
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const artistaTrim = artista.trim();
     const musicaTrim = musica.trim();
 
-    // 1) Cache lookup (cleanup expired first)
-    await supabase.from("infomusic").delete().lt("expires_at", new Date().toISOString());
+    // 1) Cache lookup scoped to this user (cleanup expired first, also scoped)
+    await supabase
+      .from("infomusic")
+      .delete()
+      .eq("user_id", userId)
+      .lt("expires_at", new Date().toISOString());
 
     const { data: cached } = await supabase
       .from("infomusic")
       .select("curiosidade")
+      .eq("user_id", userId)
       .ilike("artista", artistaTrim)
       .ilike("musica", musicaTrim)
       .maybeSingle();
@@ -98,10 +119,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3) Save to cache (ignore conflict)
+    // 3) Save to cache scoped to this user
     await supabase
       .from("infomusic")
-      .insert({ artista: artistaTrim, musica: musicaTrim, curiosidade })
+      .insert({ user_id: userId, artista: artistaTrim, musica: musicaTrim, curiosidade })
       .select()
       .maybeSingle();
 
