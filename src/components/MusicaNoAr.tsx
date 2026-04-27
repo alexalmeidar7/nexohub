@@ -234,6 +234,8 @@ export default function MusicaNoAr() {
   const prevProgressRef = useRef(0);
   const [loadingCover, setLoadingCover] = useState(false);
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
+  const [curiosidade, setCuriosidade] = useState<string>("");
+  const curiosidadeFetchedKeyRef = useRef<string>("");
 
   const [sourceMode, setSourceModeState] = useState<SourceMode>("online");
   const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
@@ -899,6 +901,39 @@ export default function MusicaNoAr() {
   const displayArtista = isBreak ? "" : (useFallback ? "no ar agora" : (music?.artista || "Interprete"));
   const displayCover = isBreak ? null : (useFallback ? presenterFallback!.foto : (music?.capa || ""));
 
+  // ===== Info Music: fetch IA-generated curiosity when song changes =====
+  useEffect(() => {
+    if (isBreak || !music?.titulo || !music?.artista) {
+      setCuriosidade("");
+      curiosidadeFetchedKeyRef.current = "";
+      return;
+    }
+    const key = `${music.artista}::${music.titulo}`.toLowerCase();
+    if (curiosidadeFetchedKeyRef.current === key) return;
+    curiosidadeFetchedKeyRef.current = key;
+    setCuriosidade("");
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("get-music-curiosity", {
+          body: { artista: music.artista, musica: music.titulo },
+        });
+        if (cancelled) return;
+        if (error) { console.warn("curiosity error", error); return; }
+        const txt = (data as { curiosidade?: string })?.curiosidade;
+        if (txt) setCuriosidade(txt);
+      } catch (e) {
+        console.warn("curiosity fetch failed", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [music?.titulo, music?.artista, isBreak]);
+
+  // Curiosity is only exposed in the XML between 10s and 25s of the song
+  const showCuriosidade = !!curiosidade && elapsed >= 10 && elapsed < 25;
+  const escapeXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const xmlCuriosidade = showCuriosidade ? escapeXml(curiosidade) : "";
+
   if (!music && !presenterFallback) {
     return (
       <div className="animate-pulse">
@@ -1318,8 +1353,9 @@ export default function MusicaNoAr() {
       </div>
 
       {/* XML Output Link */}
+      {/* XML Output Link */}
       {music && (
-        <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n</musica_agora>`} dark />
+        <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} dark />
       )}
     </div>
   );

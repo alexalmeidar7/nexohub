@@ -721,6 +721,33 @@ export type Database = {
         }
         Relationships: []
       }
+      infomusic: {
+        Row: {
+          artista: string
+          created_at: string
+          curiosidade: string
+          expires_at: string
+          id: string
+          musica: string
+        }
+        Insert: {
+          artista: string
+          created_at?: string
+          curiosidade: string
+          expires_at?: string
+          id?: string
+          musica: string
+        }
+        Update: {
+          artista?: string
+          created_at?: string
+          curiosidade?: string
+          expires_at?: string
+          id?: string
+          musica?: string
+        }
+        Relationships: []
+      }
       logos_patrocinadores: {
         Row: {
           ativo: boolean
@@ -1705,6 +1732,7 @@ export type Database = {
     }
     Functions: {
       cleanup_comercial: { Args: never; Returns: undefined }
+      cleanup_infomusic: { Args: never; Returns: undefined }
       cleanup_musicas_tocadas: { Args: never; Returns: undefined }
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
       has_role: {

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette, Link2, ShieldCheck } from "lucide-react";
+import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette, Link2, ShieldCheck, Sparkles } from "lucide-react";
 import { lazy, Suspense } from "react";
 const LayoutCustomizer = lazy(() => import("./LayoutCustomizer"));
 const PlayerLayoutCustomizer = lazy(() => import("./PlayerLayoutCustomizer"));
+const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
 const PermissoesSection = lazy(() => import("./PermissoesSection"));
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -934,6 +935,13 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       {(section === "all" || section === "player" || section === "empresa") && <CollapsibleBox title="Layout do Player — Cores e Personalização" icon={<Tv size={16} style={{ opacity: 0.8 }} />}>
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
           <PlayerLayoutCustomizer />
+        </Suspense>
+      </CollapsibleBox>}
+
+      {/* Box 4b: Info Music (curiosidades de IA por música) */}
+      {(section === "all" || section === "player" || section === "empresa") && <CollapsibleBox title="Info Music — Curiosidades por IA" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
+        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
+          <InfoMusicSection />
         </Suspense>
       </CollapsibleBox>}
 
