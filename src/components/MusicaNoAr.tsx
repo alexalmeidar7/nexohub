@@ -933,10 +933,6 @@ export default function MusicaNoAr() {
   }, [music?.titulo, music?.artista, isBreak]);
 
   // Curiosity window: starts 10s after the song begins, stays available for 30s in the XML.
-  // Uses a wall-clock timestamp so the 30s window is always honored even if `elapsed` jumps.
-  const curiosityShownAtRef = useRef<number | null>(null);
-  const curiosityKeyRef = useRef<string>("");
-  const [, forceCuriosityTick] = useState(0);
   const curiosityKey = curiosidade ? `${music?.artista || ""}::${music?.titulo || ""}`.toLowerCase() : "";
   if (curiosityKey !== curiosityKeyRef.current) {
     curiosityKeyRef.current = curiosityKey;
@@ -949,7 +945,7 @@ export default function MusicaNoAr() {
     if (curiosityShownAtRef.current === null) return;
     const t = setTimeout(() => forceCuriosityTick((n) => n + 1), 30_000);
     return () => clearTimeout(t);
-  }, [curiosityShownAtRef.current, curiosidade]);
+  }, [curiosidade, elapsed >= 10]);
   const showCuriosidade = !!curiosidade
     && curiosityShownAtRef.current !== null
     && (Date.now() - curiosityShownAtRef.current) < 30_000;
