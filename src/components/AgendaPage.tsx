@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import ProgramaExpressPopup, { type ExpressEditData } from "@/components/ProgramaExpressPopup";
+import ProgramaExpressInline, { type ExpressEditData } from "@/components/ProgramaExpressInline";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2 } from "lucide-react";
 
