@@ -687,7 +687,11 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       reset();
       onFinish();
       setTimeout(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, 200);
-    } catch (e) { console.error(e); toast.error("Erro ao salvar Programa Express"); }
+    } catch (e: any) {
+      console.error("[ProgramaExpress] Erro ao salvar:", e);
+      const detalhe = e?.message || e?.error_description || e?.error || (typeof e === "string" ? e : JSON.stringify(e));
+      toast.error(`Erro ao salvar: ${detalhe}`, { duration: 8000 });
+    }
     setSaving(false);
   };
 
