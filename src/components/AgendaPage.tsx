@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import ProgramaExpressPopup, { type ExpressEditData } from "@/components/ProgramaExpressPopup";
+import ProgramaExpressInline, { type ExpressEditData } from "@/components/ProgramaExpressInline";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2 } from "lucide-react";
 
@@ -278,6 +278,7 @@ interface Evento {
   youtube_descricao?: string;
   edicao_notas?: string;
   edicao_concluida?: boolean;
+  horario_gravacao?: string;
   programa?: Programa;
   participantes?: Participante[];
 }
@@ -356,6 +357,7 @@ export default function AgendaPage() {
   const [formYoutubeDescricao, setFormYoutubeDescricao] = useState("");
   const [formEdicaoNotas, setFormEdicaoNotas] = useState("");
   const [formEdicaoConcluida, setFormEdicaoConcluida] = useState(false);
+  const [formHorarioGravacao, setFormHorarioGravacao] = useState("");
   const [uploadingArte, setUploadingArte] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
 
@@ -539,6 +541,7 @@ export default function AgendaPage() {
     setFormYoutubeDescricao("");
     setFormEdicaoNotas("");
     setFormEdicaoConcluida(false);
+    setFormHorarioGravacao("");
     setEditingId(null);
   };
 
@@ -564,6 +567,7 @@ export default function AgendaPage() {
     setFormYoutubeDescricao(evt.youtube_descricao || "");
     setFormEdicaoNotas(evt.edicao_notas || "");
     setFormEdicaoConcluida(!!evt.edicao_concluida);
+    setFormHorarioGravacao(evt.horario_gravacao || "");
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
         ? evt.participantes.map(p => ({ id: p.id, nome: p.nome, instagram: p.instagram }))
@@ -591,6 +595,7 @@ export default function AgendaPage() {
       youtube_descricao: formTipoEvento === "live" ? formYoutubeDescricao : "",
       edicao_notas: formTipoEvento === "live" ? formEdicaoNotas : "",
       edicao_concluida: formTipoEvento === "live" ? formEdicaoConcluida : false,
+      horario_gravacao: formTipoEvento === "gravacao" ? formHorarioGravacao : null,
     } as any;
 
     if (editingId) {
@@ -690,6 +695,7 @@ export default function AgendaPage() {
         roteiroId = novo.id;
       }
 
+      const isPodcastEstudio = (prog.estudio || "").toLowerCase() === "podcast";
       setExpressEditData({
         roteiroId: roteiroId!,
         estudio: prog.estudio || "",
@@ -698,6 +704,16 @@ export default function AgendaPage() {
         participantes: formParticipantes
           .filter(p => p.nome.trim())
           .map(p => ({ nome: p.nome, cargo: "", instagram: p.instagram || "" })),
+        podcastData: isPodcastEstudio ? {
+          tituloTarja: "",
+          introducao: "",
+          agendamentoData: dataPrograma,
+          agendamentoHorario: formHorarioGravacao || "",
+          perguntas: [""],
+          concluindo: "",
+          apoioImagens: [""],
+          apoioVideos: [""],
+        } : undefined,
       });
       setExpressOpen(true);
     } finally {
@@ -1196,7 +1212,20 @@ export default function AgendaPage() {
                 </div>
               </div>
 
-              {/* Prioridade */}
+              {/* Horário da Gravação (apenas quando tipo = gravação) */}
+              {formTipoEvento === "gravacao" && (
+                <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>🎬 Horário da Gravação</Label>
+                  <input
+                    type="time"
+                    value={formHorarioGravacao}
+                    onChange={(e) => setFormHorarioGravacao(e.target.value)}
+                    className="agenda-form-input h-10 w-full px-3 text-sm"
+                    style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+                  />
+                </div>
+              )}
+
               <div>
                 <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Prioridade</Label>
                 <div className="flex gap-2">
@@ -1715,14 +1744,21 @@ export default function AgendaPage() {
           </DialogContent>
         </Dialog>
 
-        <ProgramaExpressPopup
-          open={expressOpen}
-          onOpenChange={(o) => { setExpressOpen(o); if (!o) setExpressEditData(null); }}
-          programas={programas.map(p => ({ id: p.id, nome: p.nome, estudio: p.estudio }))}
-          estudios={estudios}
-          onFinish={() => { setExpressOpen(false); setExpressEditData(null); }}
-          editData={expressEditData}
-        />
+        <Dialog open={expressOpen} onOpenChange={(o) => { setExpressOpen(o); if (!o) setExpressEditData(null); }}>
+          <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto p-0">
+            <DialogHeader className="px-6 pt-5 pb-3 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+              <DialogTitle className="text-base font-bold">📝 Roteiro do Programa</DialogTitle>
+            </DialogHeader>
+            <div className="p-4">
+              <ProgramaExpressInline
+                programas={programas.map(p => ({ id: p.id, nome: p.nome, estudio: p.estudio, tipo_programa: (p as any).tipo_programa }))}
+                estudios={estudios}
+                onFinish={() => { setExpressOpen(false); setExpressEditData(null); }}
+                editData={expressEditData}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Calendar + Events Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
