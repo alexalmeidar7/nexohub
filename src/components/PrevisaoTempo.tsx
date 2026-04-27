@@ -10,6 +10,7 @@ interface WeatherData {
   lon: number;
   current: DayWeather;
   forecast: DayWeather[];
+  isNight?: boolean;
 }
 
 interface DayWeather {
