@@ -236,6 +236,9 @@ export default function MusicaNoAr() {
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
   const [curiosidade, setCuriosidade] = useState<string>("");
   const curiosidadeFetchedKeyRef = useRef<string>("");
+  const curiosityShownAtRef = useRef<number | null>(null);
+  const curiosityKeyRef = useRef<string>("");
+  const [, forceCuriosityTick] = useState(0);
 
   const [sourceMode, setSourceModeState] = useState<SourceMode>("online");
   const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
