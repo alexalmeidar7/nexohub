@@ -443,6 +443,28 @@ serve(async (req) => {
     const qrLink = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
     const broadcastConfig = (settingsRes.data?.cenario_config as any)?.broadcast || {};
     const assunto = broadcastConfig.assunto || "";
+
+    // Locutor override: if user defined a custom presenter name in Broadcast,
+    // override locutorNome and try to enrich foto/instagram from registered apresentadores.
+    const locutorOverride = (broadcastConfig.locutor_override || "").toString().trim();
+    if (locutorOverride) {
+      locutorNome = locutorOverride;
+      const { data: apMatches } = await supabase
+        .from("apresentadores")
+        .select("nome, instagram, foto")
+        .eq("user_id", dataOwnerId)
+        .ilike("nome", locutorOverride);
+      const ap = (apMatches || [])[0];
+      if (ap) {
+        locutorInstagram = ap.instagram ? extractHandle(ap.instagram) : "";
+        locutorFoto = normalizeImageUrl(ap.foto, 1080);
+      } else {
+        // No matching presenter — clear instagram/foto so XML doesn't show stale data
+        locutorInstagram = "";
+        locutorFoto = "";
+      }
+    }
+
     const linkedProgIds: string[] = Array.isArray(broadcastConfig.assuntoBgProgramaIds) ? broadcastConfig.assuntoBgProgramaIds : [];
     const bgAppliesToCurrent = linkedProgIds.length === 0 || (programaId && linkedProgIds.includes(programaId));
     const fundoAssunto = broadcastConfig.useCustomAssuntoBg && broadcastConfig.assuntoBgUrl && bgAppliesToCurrent ? broadcastConfig.assuntoBgUrl : "";
