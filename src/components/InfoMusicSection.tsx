@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Loader2, Trash2, RefreshCw } from "lucide-react";
+import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 interface InfoMusicRow {
@@ -13,11 +14,43 @@ interface InfoMusicRow {
 }
 
 export default function InfoMusicSection() {
+  const { user } = useAuth();
   const [rows, setRows] = useState<InfoMusicRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [testArtista, setTestArtista] = useState("");
   const [testMusica, setTestMusica] = useState("");
   const [testing, setTesting] = useState(false);
+  const [excecoes, setExcecoes] = useState("");
+  const [excecoesInitial, setExcecoesInitial] = useState("");
+  const [savingExcecoes, setSavingExcecoes] = useState(false);
+
+  const loadExcecoes = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("user_settings")
+      .select("infomusic_excecoes")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const v = (data?.infomusic_excecoes || "") as string;
+    setExcecoes(v);
+    setExcecoesInitial(v);
+  };
+
+  const saveExcecoes = async () => {
+    if (!user) return;
+    setSavingExcecoes(true);
+    try {
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({ user_id: user.id, infomusic_excecoes: excecoes }, { onConflict: "user_id" });
+      if (error) throw error;
+      setExcecoesInitial(excecoes);
+      toast.success("Exceções salvas");
+    } catch (e) {
+      toast.error("Erro ao salvar exceções");
+    }
+    setSavingExcecoes(false);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -31,6 +64,7 @@ export default function InfoMusicSection() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { loadExcecoes(); }, [user]);
 
   const handleTest = async () => {
     if (!testArtista.trim() || !testMusica.trim()) {
