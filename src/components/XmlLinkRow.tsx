@@ -49,7 +49,7 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
     const upload = async () => {
       setUploading(true);
       try {
-        const fileName = sanitizeFileName(label);
+        const fileName = sanitizeFileName(label, scopeKey);
         const file = new Blob([xmlContent], { type: "application/xml" });
 
         const { error } = await supabase.storage
