@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { artista, musica } = await req.json();
+    const { artista, musica, userId: requestedUserId } = await req.json();
     if (!artista || !musica || typeof artista !== "string" || typeof musica !== "string") {
       return new Response(JSON.stringify({ error: "artista e musica são obrigatórios" }), {
         status: 400,
@@ -34,9 +34,27 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const userId = userData.user.id;
+    const authUserId = userData.user.id;
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
+    let userId = authUserId;
+    if (typeof requestedUserId === "string" && requestedUserId && requestedUserId !== authUserId) {
+      const { data: subUser } = await supabase
+        .from("sub_users")
+        .select("id")
+        .eq("auth_user_id", authUserId)
+        .eq("parent_user_id", requestedUserId)
+        .eq("ativo", true)
+        .maybeSingle();
+
+      if (!subUser) {
+        return new Response(JSON.stringify({ error: "Usuário sem permissão para estas curiosidades" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userId = requestedUserId;
+    }
 
     const artistaTrim = artista.trim();
     const musicaTrim = musica.trim();
