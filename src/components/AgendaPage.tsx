@@ -595,6 +595,7 @@ export default function AgendaPage() {
       youtube_descricao: formTipoEvento === "live" ? formYoutubeDescricao : "",
       edicao_notas: formTipoEvento === "live" ? formEdicaoNotas : "",
       edicao_concluida: formTipoEvento === "live" ? formEdicaoConcluida : false,
+      horario_gravacao: formTipoEvento === "gravacao" ? formHorarioGravacao : null,
     } as any;
 
     if (editingId) {
