@@ -901,6 +901,38 @@ export default function MusicaNoAr() {
   const displayArtista = isBreak ? "" : (useFallback ? "no ar agora" : (music?.artista || "Interprete"));
   const displayCover = isBreak ? null : (useFallback ? presenterFallback!.foto : (music?.capa || ""));
 
+  // ===== Info Music: fetch IA-generated curiosity when song changes =====
+  useEffect(() => {
+    if (isBreak || !music?.titulo || !music?.artista) {
+      setCuriosidade("");
+      curiosidadeFetchedKeyRef.current = "";
+      return;
+    }
+    const key = `${music.artista}::${music.titulo}`.toLowerCase();
+    if (curiosidadeFetchedKeyRef.current === key) return;
+    curiosidadeFetchedKeyRef.current = key;
+    setCuriosidade("");
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("get-music-curiosity", {
+          body: { artista: music.artista, musica: music.titulo },
+        });
+        if (cancelled) return;
+        if (error) { console.warn("curiosity error", error); return; }
+        const txt = (data as { curiosidade?: string })?.curiosidade;
+        if (txt) setCuriosidade(txt);
+      } catch (e) {
+        console.warn("curiosity fetch failed", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [music?.titulo, music?.artista, isBreak]);
+
+  // Curiosity is only exposed in the XML between 10s and 25s of the song
+  const showCuriosidade = !!curiosidade && elapsed >= 10 && elapsed < 25;
+  const xmlCuriosidade = showCuriosidade ? curiosidade : "";
+
   if (!music && !presenterFallback) {
     return (
       <div className="animate-pulse">
