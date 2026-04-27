@@ -907,12 +907,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   // ===== Info Music: fetch IA-generated curiosity when song changes =====
   useEffect(() => {
-    if (isBreak || !music?.titulo || !music?.artista) {
+    if (isBreak || !music?.titulo || !music?.artista || !dataUserId) {
       setCuriosidade("");
       curiosidadeFetchedKeyRef.current = "";
       return;
     }
-    const key = `${music.artista}::${music.titulo}`.toLowerCase();
+    const key = `${dataUserId}::${music.artista}::${music.titulo}`.toLowerCase();
     if (curiosidadeFetchedKeyRef.current === key) return;
     curiosidadeFetchedKeyRef.current = key;
     setCuriosidade("");
@@ -920,7 +920,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     (async () => {
       try {
         const { data, error } = await supabase.functions.invoke("get-music-curiosity", {
-          body: { artista: music.artista, musica: music.titulo },
+          body: { artista: music.artista, musica: music.titulo, userId: dataUserId },
         });
         if (cancelled) return;
         if (error) { console.warn("curiosity error", error); return; }
@@ -931,7 +931,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       }
     })();
     return () => { cancelled = true; };
-  }, [music?.titulo, music?.artista, isBreak]);
+  }, [music?.titulo, music?.artista, isBreak, dataUserId]);
 
   // Curiosity window: starts 10s after the song begins, stays available for 30s in the XML.
   const curiosityKey = curiosidade ? `${music?.artista || ""}::${music?.titulo || ""}`.toLowerCase() : "";
@@ -1374,7 +1374,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       {/* XML Output Link */}
       {/* XML Output Link */}
       {music && (
-        <XmlLinkRow label="XML MUSICA AGORA" scopeKey={user?.id} xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} dark />
+        <XmlLinkRow label="XML MUSICA AGORA" scopeKey={dataUserId || undefined} xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} dark />
       )}
     </div>
   );
