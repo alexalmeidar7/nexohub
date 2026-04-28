@@ -1618,7 +1618,7 @@ export default function CenarioTela() {
                         {/* City name + label */}
                         <div className="flex items-start justify-between" style={{ marginBottom: `${vhToPx(3)}${vu}` }}>
                           <div>
-                            <div className="font-black leading-none" style={{ fontSize: `${vhToPx(4.5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.6)" }}>{weatherCity || config.city || "Cidade"}</div>
+                            <div className="font-black leading-none" style={{ fontSize: `${vhToPx(4.5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,1)" }}>{weatherCity || config.city || "Cidade"}</div>
                             <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.6)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.6)}${vu}`, letterSpacing: "0.2em" }}>agora</div>
                           </div>
                         </div>
