@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import * as XLSX from "xlsx";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -180,6 +181,15 @@ export default function ApresentadorForm() {
   const toggleAtivo = async (id: string, current: boolean) => {
     await supabase.from("apresentadores").update({ ativo: !current }).eq("id", id);
     await load();
+  };
+
+  const updateFieldInline = async (id: string, field: string, value: any) => {
+    const { error } = await supabase.from("apresentadores").update({ [field]: value }).eq("id", id);
+    if (error) {
+      toast.error("Erro ao atualizar campo: " + error.message);
+    } else {
+      setApresentadores(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+    }
   };
 
   const removeApresentador = async (id: string) => {
@@ -508,6 +518,7 @@ export default function ApresentadorForm() {
                   <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Categoria</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Nome</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Redes / Contato</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Cargo</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Foto</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Status</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Ações</th>
@@ -526,17 +537,50 @@ export default function ApresentadorForm() {
                         {a.cargo || "—"}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 font-semibold">{a.nome}</td>
+                    <td className="px-4 py-2.5 font-semibold">
+                      <input 
+                        defaultValue={a.nome} 
+                        onBlur={(e) => {
+                          if (e.target.value !== a.nome) updateFieldInline(a.id, "nome", e.target.value);
+                        }}
+                        className="bg-transparent border-none focus:ring-1 focus:ring-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full"
+                      />
+                    </td>
                     <td className="px-4 py-2.5">
-                      <div className="flex flex-col gap-0.5">
-                        {a.instagram ? (
-                          <span className="flex items-center gap-1.5 text-[11px]"><Instagram size={12} style={{ color: "#e1306c" }} /> {a.instagram}</span>
-                        ) : null}
-                        {a.whatsapp ? (
-                          <span className="flex items-center gap-1.5 text-[11px]"><Phone size={12} style={{ color: "#25D366" }} /> {a.whatsapp}</span>
-                        ) : null}
-                        {!a.instagram && !a.whatsapp && <span className="text-[var(--layout-page-text)]/25">—</span>}
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <Instagram size={11} style={{ color: "#e1306c" }} className="shrink-0" />
+                          <input 
+                            defaultValue={a.instagram} 
+                            onBlur={(e) => {
+                              if (e.target.value !== a.instagram) updateFieldInline(a.id, "instagram", e.target.value);
+                            }}
+                            placeholder="@usuario"
+                            className="bg-transparent border-none text-[10px] focus:ring-1 focus:ring-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Phone size={11} style={{ color: "#25D366" }} className="shrink-0" />
+                          <input 
+                            defaultValue={a.whatsapp} 
+                            onBlur={(e) => {
+                              if (e.target.value !== a.whatsapp) updateFieldInline(a.id, "whatsapp", e.target.value);
+                            }}
+                            placeholder="+55..."
+                            className="bg-transparent border-none text-[10px] focus:ring-1 focus:ring-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full"
+                          />
+                        </div>
                       </div>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <input 
+                        defaultValue={a.cargo} 
+                        onBlur={(e) => {
+                          if (e.target.value !== a.cargo) updateFieldInline(a.id, "cargo", e.target.value);
+                        }}
+                        placeholder="Cargo/Função"
+                        className="bg-transparent border-none focus:ring-1 focus:ring-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full"
+                      />
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       {a.foto ? <CheckCircle size={15} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[var(--layout-page-text)]/20">—</span>}
