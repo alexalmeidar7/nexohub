@@ -117,6 +117,12 @@ interface Props { onNavigate: (page: Page) => void; }
 export default function CustomizableDashboard({ onNavigate }: Props) {
   const { user } = useAuth();
   const [items, setItems] = useState<DashboardItem[]>([]);
+  const [hiddenLinks, setHiddenLinks] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("nexohub_hidden_dashboard_links");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [addStep, setAddStep] = useState<"choose" | "link" | "widget">("choose");
   const [editMode, setEditMode] = useState(false);
