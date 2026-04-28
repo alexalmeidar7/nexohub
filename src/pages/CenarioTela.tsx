@@ -1629,7 +1629,7 @@ export default function CenarioTela() {
                               <WeatherIcon code={liveWeather.current.code} size={200} forceDay />
                             </div>
                             <div className="flex flex-col">
-                              <div className="font-black" style={{ fontSize: `${vhToPx(8)}${vu}`, lineHeight: 0.9, textShadow: "0 3px 16px rgba(0,0,0,0.4)" }}>{liveWeather.current.temp}°</div>
+                              <div className="font-black" style={{ fontSize: `${vhToPx(8)}${vu}`, lineHeight: 0.9, textShadow: "0 3px 16px rgba(0,0,0,1)" }}>{liveWeather.current.temp}°</div>
                               <div className="font-medium" style={{ fontSize: `${vhToPx(2)}${vu}`, opacity: 0.85, marginTop: `${vhToPx(0.5)}${vu}` }}>{getWLabel(liveWeather.current.code)}</div>
                             </div>
                           </div>
