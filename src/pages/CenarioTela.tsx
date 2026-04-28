@@ -248,6 +248,8 @@ export default function CenarioTela() {
     return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${alpha})`;
   };
   const [debugMode, setDebugMode] = useState(false);
+  const [showArtistLayer, setShowArtistLayer] = useState(true);
+  const [showThumbLayer, setShowThumbLayer] = useState(false);
 
   /* ─── Fetch artist background from Deezer (like Player audio) ─── */
   const exceptionWordsList = (config.home.exceptionWords || "break,vinhetas,hora certa").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
@@ -1256,55 +1258,68 @@ export default function CenarioTela() {
             const hasThumb = !!thumbUrl;
             const hasArtist = !!artistBgUrl && !!musicData?.artista && !isBreakTrack && !isJornalistico;
 
-            // Decide visibility (opacity) per layer for smooth crossfades
-            let thumbVisible = false;
-            let artistVisible = false;
+            // Decide visibility (opacity) per layer
+            let thumbVisible = showThumbLayer && hasThumb;
+            let artistVisible = showArtistLayer && hasArtist;
+            
+            // If in alternate mode, override with timed logic
             if (altMode && isHomeOrChat) {
               if (altBgPhase === "thumb") {
                 thumbVisible = hasThumb;
-                artistVisible = !hasThumb && hasArtist; // fallback if no thumb
+                artistVisible = !hasThumb && hasArtist;
               } else {
                 artistVisible = hasArtist;
-                thumbVisible = !hasArtist && hasThumb; // fallback if no artist
+                thumbVisible = !hasArtist && hasThumb;
               }
-            } else {
-              thumbVisible = !!config.useProgramThumbAsBg && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && hasThumb;
-              artistVisible = isHomeOrChat && hasArtist;
             }
 
             return (
-            <div className="absolute inset-0" style={{ background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : "#000", zIndex: 0 }}>
-              {/* Program thumb as bg — always mounted on home/weather/currency/chat for smooth fade */}
-              {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
-                <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
-                  <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(1.2)" } : { filter: "blur(22px) brightness(1.2)", transform: "scale(1.1)" }} />
+              <div className="absolute inset-0" style={{ background: "#000", zIndex: 0 }}>
+                {/* Camada 1: Fundo degrade (fica em baixo de tudo) */}
+                <div className="absolute inset-0" style={{ 
+                  background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : "#000",
+                  zIndex: 1 
+                }} />
+
+                {/* Camada 2: Imagem do artista (fica por cima da camada 1) */}
+                <div className="absolute inset-0" style={{ zIndex: 2 }}>
+                  {isHomeOrChat && hasArtist && prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+                    <img
+                      src={prevArtistBgUrl}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                    />
+                  )}
+                  {isHomeOrChat && artistBgUrl && (
+                    <img
+                      src={artistBgUrl}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                      onLoad={() => setArtistBgReady(true)}
+                    />
+                  )}
                 </div>
-              )}
-              {/* Artist bg crossfade between previous and current url */}
-              {isHomeOrChat && hasArtist && prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
-                <img
-                  src={prevArtistBgUrl}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
-                />
-              )}
-              {isHomeOrChat && artistBgUrl && (
-                <img
-                  src={artistBgUrl}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
-                  onLoad={() => setArtistBgReady(true)}
-                />
-              )}
-              {/* Removed black overlay per user request */}
-              {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-              {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-              {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-              {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-              {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-            </div>
+
+                {/* Camada 3: Thumb do programa (fica por cima da camada 1 e 2) */}
+                <div className="absolute inset-0" style={{ zIndex: 3 }}>
+                  {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
+                    <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
+                      <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(1.2)" } : { filter: "blur(22px) brightness(1.2)", transform: "scale(1.1)" }} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Fundo de imagem padrão se nada estiver ativo */}
+                <div className="absolute inset-0" style={{ zIndex: 0 }}>
+                  {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                </div>
+              </div>
             );
           })()}
 
@@ -1364,9 +1379,42 @@ export default function CenarioTela() {
           <button onClick={() => setDebugMode(p => !p)} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: debugMode ? "#ef4444" : "rgba(255,255,255,0.1)", border: debugMode ? `2px solid #ef4444` : "2px solid transparent", transition: "all 0.25s ease" }}>
             <span style={{ fontSize: `${vhToPx(1.2)}${vu}`, fontWeight: "bold", color: "#fff" }}>BUG</span>
           </button>
+            <div className="flex flex-col gap-1 mt-auto">
+              <button 
+                onClick={() => setShowArtistLayer(p => !p)} 
+                className="rounded-lg flex flex-col items-center justify-center cursor-pointer p-1" 
+                style={{ 
+                  width: btnSize, 
+                  background: showArtistLayer ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.3)", 
+                  border: "1px solid rgba(255,255,255,0.1)"
+                }}
+              >
+                <Music style={{ width: iconSize, height: iconSize }} className={showArtistLayer ? "text-white" : "text-white/40"} />
+                <span style={{ fontSize: `${vhToPx(0.8)}${vu}`, color: "white" }}>ARTISTA</span>
+              </button>
+              <button 
+                onClick={() => setShowThumbLayer(p => !p)} 
+                className="rounded-lg flex flex-col items-center justify-center cursor-pointer p-1" 
+                style={{ 
+                  width: btnSize, 
+                  background: showThumbLayer ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.3)", 
+                  border: "1px solid rgba(255,255,255,0.1)"
+                }}
+              >
+                <Play style={{ width: iconSize, height: iconSize }} className={showThumbLayer ? "text-white" : "text-white/40"} />
+                <span style={{ fontSize: `${vhToPx(0.8)}${vu}`, color: "white" }}>THUMB</span>
+              </button>
+              {config.home.exceptionWords && (
+                <div className="mt-2 text-center" style={{ width: btnSize }}>
+                  <span style={{ fontSize: `${vhToPx(0.7)}${vu}`, color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Exceções:</span>
+                  <div style={{ fontSize: `${vhToPx(0.6)}${vu}`, color: "rgba(255,255,255,0.3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {config.home.exceptionWords}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           </div>
-
           {/* Drawing options panel */}
           {drawingActive && showDrawOptions && (
             <div className="absolute flex flex-col items-center rounded-2xl" style={{ gap: "0.8vh", left: "9.5%", top: "50%", transform: "translateY(-50%)", zIndex: 45, padding: "1.2vh 0.8vh", background: "rgba(20,20,20,0.85)", WebkitBackdropFilter: "blur(12px)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
