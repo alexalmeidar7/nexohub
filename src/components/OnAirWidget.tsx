@@ -202,20 +202,20 @@ export default function OnAirWidget() {
   return (
     <div className="h-full relative overflow-hidden flex flex-col no-scrollbar">
       {/* Tab Switcher - Minimalist Pill Style */}
-      <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl mb-4 self-center w-full max-w-[200px] flex-shrink-0">
+      <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl mb-6 self-center w-full max-w-[180px] flex-shrink-0 border border-white/5">
         <button 
           onClick={() => setActiveTab("info")}
-          className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "info" ? "text-white shadow-sm" : "text-white/20 hover:text-white/40"}`}
+          className={`flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === "info" ? "text-white shadow-xl" : "text-white/20 hover:text-white/40"}`}
           style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
         >
-          Informações
+          Resumo
         </button>
         <button 
           onClick={() => setActiveTab("video")}
-          className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "video" ? "text-white shadow-sm" : "text-white/20 hover:text-white/40"}`}
+          className={`flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === "video" ? "text-white shadow-xl" : "text-white/20 hover:text-white/40"}`}
           style={activeTab === "video" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
         >
-          Vídeo
+          Ao Vivo
         </button>
       </div>
 
@@ -253,12 +253,12 @@ export default function OnAirWidget() {
                 </button>
               </div>
 
-              <h3 className="text-2xl font-black text-white leading-[0.9] tracking-tighter mb-4 line-clamp-2 drop-shadow-sm uppercase italic" style={{ "--accent": "var(--layout-accent-color)" } as React.CSSProperties}>
+              <h3 className="text-2xl font-black text-white leading-[0.85] tracking-tighter mb-6 line-clamp-2 drop-shadow-sm uppercase italic">
                 {programa.nome}
               </h3>
               
               {/* Music info - Very Clean Card */}
-              <div className="z-10 bg-white/[0.02] border border-white/[0.05] rounded-3xl p-4 mb-auto group/music-card hover:bg-white/[0.04] transition-all duration-500">
+              <div className="z-10 bg-white/[0.03] border border-white/[0.05] rounded-3xl p-4 mb-auto group/music-card hover:bg-white/[0.05] transition-all duration-500 shadow-xl">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/5 flex-shrink-0 relative">
                     {musicData?.capa ? (
