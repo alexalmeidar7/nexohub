@@ -23,17 +23,37 @@ export default function InfoMusicSection() {
   const [excecoes, setExcecoes] = useState("");
   const [excecoesInitial, setExcecoesInitial] = useState("");
   const [savingExcecoes, setSavingExcecoes] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [togglingAi, setTogglingAi] = useState(false);
 
   const loadExcecoes = async () => {
     if (!user) return;
     const { data } = await supabase
       .from("user_settings")
-      .select("infomusic_excecoes")
+      .select("infomusic_excecoes, infomusic_ai_enabled")
       .eq("user_id", user.id)
       .maybeSingle();
     const v = (data?.infomusic_excecoes || "") as string;
     setExcecoes(v);
     setExcecoesInitial(v);
+    setAiEnabled((data as { infomusic_ai_enabled?: boolean })?.infomusic_ai_enabled !== false);
+  };
+
+  const toggleAi = async () => {
+    if (!user) return;
+    setTogglingAi(true);
+    const next = !aiEnabled;
+    try {
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({ user_id: user.id, infomusic_ai_enabled: next }, { onConflict: "user_id" });
+      if (error) throw error;
+      setAiEnabled(next);
+      toast.success(next ? "Geração por IA habilitada" : "Geração por IA desabilitada");
+    } catch (e) {
+      toast.error("Erro ao atualizar");
+    }
+    setTogglingAi(false);
   };
 
   const saveExcecoes = async () => {
@@ -111,8 +131,44 @@ export default function InfoMusicSection() {
           Toda vez que uma nova música começar a tocar, o sistema consulta a tabela <strong>InfoMusic</strong>. 
           Se não houver curiosidade salva, a IA (Gemini Pro) gera um texto de até 5 linhas com uma curiosidade real sobre a música ou o artista. 
           A curiosidade é exibida no XML <code className="px-1 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>&lt;curiosidade&gt;</code> entre os <strong>10s e 25s</strong> da música. 
-          Cada curiosidade fica salva por <strong>30 dias</strong> e depois é excluída automaticamente.
+          Cada curiosidade fica salva por <strong>90 dias</strong> e depois é excluída automaticamente.
         </p>
+      </div>
+
+      <div className="rounded-xl p-4 flex items-center justify-between gap-4" style={{
+        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
+        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
+      }}>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+            <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Geração de novas curiosidades por IA
+            </h4>
+          </div>
+          <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
+            {aiEnabled
+              ? "Habilitado: novas músicas geram curiosidade pela IA e são salvas no banco por 90 dias."
+              : "Desabilitado: o sistema apenas consulta o banco de curiosidades já cadastradas (90 dias). Nada novo será gerado pela IA."}
+          </p>
+        </div>
+        <button
+          onClick={toggleAi}
+          disabled={togglingAi}
+          role="switch"
+          aria-checked={aiEnabled}
+          className="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50"
+          style={{
+            backgroundColor: aiEnabled
+              ? "var(--layout-accent-color, #2563eb)"
+              : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)",
+          }}
+        >
+          <span
+            className="inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow"
+            style={{ transform: aiEnabled ? "translateX(24px)" : "translateX(4px)" }}
+          />
+        </button>
       </div>
 
       <div className="rounded-xl p-4 space-y-3" style={{
