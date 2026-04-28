@@ -1693,7 +1693,7 @@ export default function CenarioTela() {
                     )}
                     {weatherSubTab === "satellite" && null}
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>
+                    <div className="flex-1 flex items-center justify-center opacity-100" style={{ fontSize: `${vhToPx(1.8)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>
                       <CloudSun size={24} className="mr-1" /> {weatherCity ? "Carregando..." : "Configure uma cidade"}
                     </div>
                   )}
