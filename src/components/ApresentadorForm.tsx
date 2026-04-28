@@ -588,10 +588,11 @@ export default function ApresentadorForm() {
                             />
                           ) : (
                             <span 
-                              className="cursor-pointer text-[11px] hover:text-[#e1306c] transition-colors min-h-[1em] min-w-[50px]" 
+                              className="cursor-pointer text-[11px] hover:text-[#e1306c] transition-colors min-h-[1em] min-w-[50px] flex items-center gap-1.5" 
                               onClick={() => setEditingCell({ id: a.id, field: "instagram" })}
                             >
                               {a.instagram || <span className="opacity-30">@vazio</span>}
+                              {savingCell?.id === a.id && savingCell?.field === "instagram" && <Loader2 size={9} className="animate-spin text-[#e1306c]" />}
                             </span>
                           )}
                         </div>
