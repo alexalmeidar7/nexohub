@@ -462,13 +462,14 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <Plus size={20} className="mb-1.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }} />
               <span className="text-[10px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }}>Adicionar</span>
             </div>
-          </div>
         </div>
+      </div>
       )}
 
-      {/* On-Air Program Info */}
-      {onAirProgram && (
-        <div className="mb-4 animate-fade-in">
+      {/* Widgets Grid Section */}
+      <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
+        {onAirProgram && (
+          <div className="mb-8 animate-fade-in">
           <div className="flex items-start gap-5">
             {/* Selo / Logo do programa */}
             {onAirProgram.selo && (
@@ -550,15 +551,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             )}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-
-      {/* Spacer to push widgets to bottom */}
-      <div className="flex-1" />
-
-      {items.filter(i => i.type === "widget").length > 0 && (
-        <div className="mb-2">
+        {items.filter(i => i.type === "widget").length > 0 && (
+          <div className="mb-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Widgets</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" style={{ gridAutoRows: "auto" }}>
 
