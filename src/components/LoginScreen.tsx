@@ -5,6 +5,7 @@ import logoNexo from "@/assets/logo-nexo.png";
 
 const AUTH_TIMEOUT_MS = 12000;
 const MAX_RETRIES = 3;
+const KEEP_CONNECTED_KEY = "nexohub_keep_connected";
 
 const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -66,6 +67,7 @@ const getFriendlyAuthMessage = (message: string) => {
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [keepConnected, setKeepConnected] = useState(() => localStorage.getItem(KEEP_CONNECTED_KEY) !== "false");
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -123,6 +125,7 @@ export default function LoginScreen() {
     if (loading) return;
     setLoading(true);
     setError("");
+    localStorage.setItem(KEEP_CONNECTED_KEY, keepConnected ? "true" : "false");
 
     const request = () => supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
 
@@ -212,6 +215,20 @@ export default function LoginScreen() {
             />
 
             {error && <p className="text-center font-medium" style={{ fontSize: "12px", color: "#dc2626" }}>{error}</p>}
+
+            <label className="flex items-center gap-2 cursor-pointer select-none pt-1">
+              <input
+                type="checkbox"
+                checked={keepConnected}
+                onChange={(e) => {
+                  setKeepConnected(e.target.checked);
+                  localStorage.setItem(KEEP_CONNECTED_KEY, e.target.checked ? "true" : "false");
+                }}
+                className="w-4 h-4 rounded"
+                style={{ accentColor: "#268ffa" }}
+              />
+              <span style={{ fontSize: "12px", color: "#0f1058" }}>mantenha-me conectado</span>
+            </label>
 
             <div className="flex justify-between items-center pt-2">
               <button

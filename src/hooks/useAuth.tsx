@@ -4,6 +4,7 @@ import type { User, Session } from "@supabase/supabase-js";
 import { ensureMusicScopeForUser } from "@/lib/musicStorageKeys";
 
 type AppRole = "admin" | "user";
+const KEEP_CONNECTED_KEY = "nexohub_keep_connected";
 
 interface AuthContextType {
   user: User | null;
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const prevUserIdRef = useRef<string | null>(null);
   const manualSignOutRef = useRef(false);
   const loadingRef = useRef(true); // mirror of loading state to avoid stale closures
+  const lastGoodSessionRef = useRef<Session | null>(null);
 
   const finishLoading = useCallback(() => {
     loadingRef.current = false;
@@ -69,6 +71,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const updateAuth = async (newSession: Session | null) => {
       if (!mounted) return;
 
+      if (newSession) {
+        lastGoodSessionRef.current = newSession;
+      }
+
       const newUser = newSession?.user ?? null;
       const newId = newUser?.id ?? null;
 
@@ -81,6 +87,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(newSession);
 
       if (!newUser) {
+        if (localStorage.getItem(KEEP_CONNECTED_KEY) !== "false" && lastGoodSessionRef.current?.user) {
+          if (prevUserIdRef.current !== lastGoodSessionRef.current.user.id) {
+            prevUserIdRef.current = lastGoodSessionRef.current.user.id;
+            ensureMusicScopeForUser(lastGoodSessionRef.current.user.id);
+          }
+          setUser(lastGoodSessionRef.current.user);
+          setSession(lastGoodSessionRef.current);
+          finishLoading();
+          return;
+        }
         setRole(null);
         if (mounted) finishLoading();
         return;
@@ -121,6 +137,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return;
             }
           } catch { /* keep current state */ }
+          if (localStorage.getItem(KEEP_CONNECTED_KEY) !== "false" && lastGoodSessionRef.current) {
+            void updateAuth(lastGoodSessionRef.current);
+            return;
+          }
           if (mounted) finishLoading();
         });
         return;
