@@ -1775,7 +1775,7 @@ export default function CenarioTela() {
                       })()}
                     </div>
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>Chat desativado</div>
+                    <div className="flex-1 flex items-center justify-center opacity-100" style={{ fontSize: `${vhToPx(1.8)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>Chat desativado</div>
                   )}
                 </div>
               </div>
