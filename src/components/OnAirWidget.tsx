@@ -278,11 +278,11 @@ export default function OnAirWidget() {
 
               {/* Bottom Info - Presenter */}
               <div className="mt-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center">
-                    <User size={10} className="text-white/40" />
+                <div className="flex items-center gap-3 group/presenter">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center border transition-all duration-300" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 10%, transparent)", borderColor: "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)" }}>
+                    <Mic size={14} style={{ color: "var(--layout-accent-color)" }} />
                   </div>
-                  <span className="text-[10px] font-black text-white/50 uppercase tracking-widest">{apresentadorNome}</span>
+                  <span className="text-[10px] font-black text-white/50 uppercase tracking-widest group-hover/presenter:text-white transition-colors">{apresentadorNome}</span>
                 </div>
                 
                 <span className="text-[9px] font-bold text-white/20 tracking-tighter font-mono">
