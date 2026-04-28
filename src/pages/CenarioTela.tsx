@@ -1277,7 +1277,7 @@ export default function CenarioTela() {
               <div className="absolute inset-0" style={{ background: "#000", zIndex: 0 }}>
                 {/* Camada 1: Fundo degrade (fica em baixo de tudo) */}
                 <div className="absolute inset-0" style={{ 
-                  background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : "#000",
+                  background: config.home.bgGradient ? buildHomeGradient(config.home) : "transparent",
                   zIndex: 1 
                 }} />
 
@@ -1325,7 +1325,7 @@ export default function CenarioTela() {
 
           {/* Sidebar — always on top */}
           <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
-          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} ${sidebarPad}`, borderRadius: `0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu} 0`, background: "rgba(0,0,0,0.5)", border: "none", borderLeft: "none", marginLeft: "-1px", boxShadow: "none" }}>
+          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} ${sidebarPad}`, borderRadius: `0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu} 0`, background: "rgba(255,255,255,0.05)", border: "none", borderLeft: "none", marginLeft: "-1px", boxShadow: "none" }}>
             <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "home" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "home" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Home style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
@@ -1474,7 +1474,7 @@ export default function CenarioTela() {
               };
 
               return (
-                <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: config.home.bgGradient ? buildHomeGradient(config.home) : "#000", color: "#fff", overflow: "hidden" }}>
+                <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: "transparent", color: "#fff", overflow: "hidden" }}>
                   {/* Background already rendered as a full-canvas layer behind sidebar */}
 
                    {/* ── TOP-LEFT: Big neon clock + date + SYNC ── */}
@@ -1660,7 +1660,7 @@ export default function CenarioTela() {
             {/* ═══ WEATHER ═══ */}
             {activeTab === "weather" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d2847 30%, #134e7a 60%, #1a6fad 85%, #4a9fd4 100%)" }} />}
+                {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "transparent" }} />}
                 <div className="absolute inset-0" style={{ background: "transparent" }} />
                 <div className="absolute bottom-0 left-0 right-0" style={{ height: "40%", background: "transparent" }} />
                 <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(4)}${vu}`, paddingLeft: `calc(${vhToPx(4)}${vu} + 50px)` }}>
@@ -1771,7 +1771,7 @@ export default function CenarioTela() {
             {activeTab === "currency" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "transparent" }} />}
-                {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #080c14 0%, #0f1923 30%, #141e2e 60%, #0d1520 100%)" }} />}
+                {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "transparent" }} />}
                 <div className="absolute inset-0" style={{ background: "transparent" }} />
                 <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(4)}${vu}`, paddingLeft: `calc(${vhToPx(4)}${vu} + 50px)` }}>
                     {config.currency.enabled ? (
