@@ -1517,14 +1517,15 @@ export default function CenarioTela() {
                           width: `${vhToPx(20)}${vu}`,
                           height: `${vhToPx(20)}${vu}`,
                           borderRadius: `${vhToPx(2)}${vu}`,
-                          background: "rgba(255, 255, 255, 0.05)",
-                          backdropFilter: "blur(20px)",
-                          WebkitBackdropFilter: "blur(20px)",
-                          boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-                          border: "1px solid rgba(255,255,255,0.1)",
+                          background: "rgba(255, 255, 255, 0.15)",
+                          backdropFilter: "blur(30px)",
+                          WebkitBackdropFilter: "blur(30px)",
+                          boxShadow: "0 12px 48px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.2)",
+                          border: "1px solid rgba(255,255,255,0.3)",
                           zIndex: 2,
                           position: "relative",
                           flexShrink: 0,
+                          overflow: "hidden"
                         }}>
                         {/* Presenter photo anchored at bottom, overflows top */}
                         {(() => {
@@ -1539,7 +1540,7 @@ export default function CenarioTela() {
                                 alt=""
                                 style={{
                                   position: "absolute",
-                                  bottom: `-${vhToPx(0.3)}${vu}`,
+                                  bottom: "0",
                                   left: "50%",
                                   transform: "translateX(-50%)",
                                   height: "150%",
