@@ -221,83 +221,104 @@ export default function OnAirWidget() {
 
       <div className="flex-1 relative min-h-0">
         {activeTab === "info" ? (
-          <div className="h-full relative flex flex-col">
+          <div className="h-full relative flex flex-col justify-center">
             {/* Background Accent Gradient - Subtle */}
-            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at top left, color-mix(in srgb, var(--layout-accent-color) 8%, transparent), transparent 70%)" }} />
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at center, color-mix(in srgb, var(--layout-accent-color) 8%, transparent), transparent 70%)" }} />
 
-            {/* Presenter photo - Minimalist ghost effect */}
-            {apresentadorFoto && (
-              <img
-                src={apresentadorFoto}
-                alt={apresentadorNome}
-                className="absolute object-contain pointer-events-none opacity-10 mix-blend-overlay grayscale transition-opacity duration-700"
-                style={{ right: -10, bottom: -10, width: "60%", height: "80%", objectPosition: "right bottom" }}
-              />
-            )}
-
-            {/* Content Top - Program Info */}
-            <div className="relative z-10 flex-1 flex flex-col pt-2">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color) 25%, transparent)" }}>
-                  <div className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: "var(--layout-accent-color)" }} />
-                  <span className="text-[8px] font-black uppercase tracking-[0.2em]" style={{ color: "var(--layout-accent-color)" }}>No Ar</span>
+            {/* Content Center - Clean Music Info */}
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className="w-28 h-28 rounded-[32px] overflow-hidden bg-white/5 border border-white/10 shadow-2xl mb-4 group/music-card relative">
+                {musicData?.capa ? (
+                  <img src={musicData.capa} alt="Capa" className="w-full h-full object-cover transition-transform duration-700 group-hover/music-card:scale-110" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center opacity-20 bg-gradient-to-br from-white/10 to-transparent">
+                    <Music size={40} style={{ color: "var(--layout-accent-color)" }} />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/music-card:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                   <button 
+                    onClick={() => setIsMuted(!isMuted)}
+                    className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/20 hover:bg-white/30 transition-all"
+                  >
+                    {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                  </button>
                 </div>
-                
-                <button
-                  onClick={() => setGradeOpen(true)}
-                  className="p-2 text-white/20 hover:text-white transition-colors"
-                  style={{ "--hover-color": "var(--layout-accent-color)" } as React.CSSProperties}
-                  title="Ver Grade"
+              </div>
+
+              <div className="px-4 max-w-full">
+                <h3 className="text-lg font-black text-white leading-tight truncate mb-1 drop-shadow-sm uppercase tracking-tight">
+                  {musicData?.titulo || "Programação Musical"}
+                </h3>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: "var(--layout-accent-color)", opacity: 0.8 }}>
+                  {musicData?.artista || "Positiva FM"}
+                </p>
+              </div>
+
+              {/* Minimal Player Controls */}
+              <div className="flex items-center gap-6 mt-2">
+                <button className="text-white/20 hover:text-white transition-colors">
+                  <ChevronRight size={18} className="rotate-180" />
+                </button>
+                <button className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-white/5 hover:bg-white/10 transition-all">
+                  <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent ml-1" />
+                </button>
+                <button className="text-white/20 hover:text-white transition-colors">
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Volume Control Fixed at Bottom */}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white/[0.03] px-4 py-2 rounded-2xl border border-white/5 backdrop-blur-sm">
+              <button onClick={() => setIsMuted(!isMuted)}>
+                {isMuted ? <VolumeX size={12} className="text-white/40" /> : <Volume2 size={12} className="text-white/40" />}
+              </button>
+              <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-white/40 w-2/3" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="absolute inset-0 -top-16 bottom-0 z-50 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/10 animate-scale-in">
+            <div className="relative flex-1 min-h-0 overflow-hidden">
+              <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-accent" /></div>}>
+                <video 
+                  className="w-full h-full object-cover"
+                  src="https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8"
+                  autoPlay
+                  playsInline
+                  muted={isMuted}
+                />
+              </Suspense>
+              
+              {/* Video Overlay Controls */}
+              <div className="absolute top-4 right-4 flex gap-2">
+                <button 
+                  onClick={() => setActiveTab("info")}
+                  className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/10 hover:bg-black/80 transition-all"
                 >
-                  <Clock size={14} className="hover:text-[var(--hover-color)]" />
+                  <X size={14} />
                 </button>
               </div>
 
-              <h3 className="text-lg font-bold text-white leading-tight tracking-tight mb-4 line-clamp-2 drop-shadow-sm">
-                {programa.nome}
-              </h3>
-              
-              {/* Music info - Very Clean Card */}
-              <div className="z-10 bg-white/[0.03] border border-white/[0.05] rounded-3xl p-4 mb-auto group/music-card hover:bg-white/[0.05] transition-all duration-500 shadow-xl">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/5 flex-shrink-0 relative">
-                    {musicData?.capa ? (
-                      <img src={musicData.capa} alt="Capa" className="w-full h-full object-cover group-hover/music-card:scale-110 transition-transform duration-700" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center opacity-20">
-                        <Music size={18} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-black text-white leading-tight truncate mb-0.5" style={{ color: "color-mix(in srgb, var(--layout-accent-color) 80%, white)" }}>{musicData?.titulo || "Programação Musical"}</p>
-                    <p className="text-[9px] font-bold text-white/30 truncate tracking-wide">{musicData?.artista || "Positiva FM"}</p>
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                  <span className="text-[8px] font-black text-white uppercase tracking-widest">Canal de Vídeo Ao Vivo</span>
+                </div>
+
+                <div className="flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+                   <button onClick={() => setIsMuted(!isMuted)} className="text-white hover:text-accent transition-colors">
+                    {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                  </button>
+                  <div className="w-16 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-accent w-2/3" />
                   </div>
                 </div>
               </div>
-
-              {/* Bottom Info - Presenter */}
-              <div className="mt-4 flex items-center justify-between">
-                <div className="flex items-center gap-3 group/presenter">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center border transition-all duration-300" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 10%, transparent)", borderColor: "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)" }}>
-                    <Mic size={14} style={{ color: "var(--layout-accent-color)" }} />
-                  </div>
-                  <span className="text-[10px] font-black text-white/50 uppercase tracking-widest group-hover/presenter:text-white transition-colors">{apresentadorNome}</span>
-                </div>
-                
-                <span className="text-[9px] font-bold text-white/20 tracking-tighter font-mono">
-                  {programa.horarioInicio} — {programa.horarioFim}
-                </span>
-              </div>
             </div>
-
-            {/* Progress Bar - Minimal line */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/[0.02] overflow-hidden">
-              <div
-                className="h-full transition-all duration-1000"
-                style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color)" }}
-              />
-            </div>
+          </div>
+        )}
           </div>
         ) : (
           <div className="h-full flex flex-col rounded-2xl overflow-hidden bg-black/60 border border-white/10">
