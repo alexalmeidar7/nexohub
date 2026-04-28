@@ -316,7 +316,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
       {/* Horizontal Menu Section - Shortcuts/Navigation */}
       <div className="mb-6 px-6 flex-shrink-0">
-        <div className="flex items-center gap-3 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
+        <div className="flex flex-wrap items-center gap-3 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
           {[
             { id: "apresentadores", label: "Apresentadores", icon: Users },
             { id: "testemunhais", label: "Testemunhais", icon: MessageSquareQuote },
@@ -326,13 +326,13 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           ].map((nav) => (
             <button 
               key={nav.id}
-              className="flex flex-col items-center justify-center gap-2 min-w-[90px] h-[90px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
+              className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
               onClick={() => onNavigate(nav.id as any)}
             >
-              <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
-                <nav.icon size={18} className="text-accent" />
+              <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
+                <nav.icon size={16} className="text-accent" />
               </div>
-              <span className="text-[9px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
+              <span className="text-[8px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
                 {nav.label}
               </span>
             </button>
@@ -340,10 +340,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           
           <button 
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }} 
-            className="flex flex-col items-center justify-center gap-2 min-w-[90px] h-[90px] rounded-[24px] transition-all border-2 border-dashed border-white/10 hover:border-accent/40 hover:bg-accent/5 cursor-pointer bg-transparent group"
+            className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all border-2 border-dashed border-white/10 hover:border-accent/40 hover:bg-accent/5 cursor-pointer bg-transparent group"
           >
-            <Plus size={20} className="text-white/20 group-hover:text-accent transition-colors" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-white/20 group-hover:text-accent">Adicionar</span>
+            <Plus size={18} className="text-white/20 group-hover:text-accent transition-colors" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-white/20 group-hover:text-accent">Adicionar</span>
           </button>
         </div>
       </div>
