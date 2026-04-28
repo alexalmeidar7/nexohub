@@ -144,27 +144,26 @@ export default function OnAirWidget() {
 
   return (
     <div className="h-full relative overflow-hidden flex flex-col no-scrollbar">
-      {/* Tab Switcher - Minimalist Pill Style */}
-      <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl mb-4 self-center w-full max-w-[180px] flex-shrink-0 border border-white/5 shadow-inner relative z-30">
-        <button 
-          onClick={() => setActiveTab("info")}
-          className={`flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === "info" ? "text-white shadow-xl" : "text-white/20 hover:text-white/40"}`}
-          style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
-        >
-          Ouvir
-        </button>
-        <button 
-          onClick={() => setActiveTab("video")}
-          className={`flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === "video" ? "text-white shadow-xl" : "text-white/20 hover:text-white/40"}`}
-          style={activeTab === "video" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
-        >
-          Assistir
-        </button>
-      </div>
-
       <div className="flex-1 relative min-h-0">
         {activeTab === "info" ? (
           <div className="h-full relative flex flex-col justify-center">
+            <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl mb-4 self-center w-full max-w-[180px] flex-shrink-0 border border-white/5 shadow-inner relative z-30">
+              <button 
+                onClick={() => setActiveTab("info")}
+                className={`flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === "info" ? "text-white shadow-xl" : "text-white/20 hover:text-white/40"}`}
+                style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
+              >
+                Ouvir
+              </button>
+              <button 
+                onClick={() => setActiveTab("video")}
+                className={`flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === "video" ? "text-white shadow-xl" : "text-white/20 hover:text-white/40"}`}
+                style={activeTab === "video" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
+              >
+                Assistir
+              </button>
+            </div>
+
             <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at center, color-mix(in srgb, var(--layout-accent-color) 8%, transparent), transparent 70%)" }} />
 
             <div className="relative z-10 flex flex-col items-center text-center">
@@ -225,8 +224,23 @@ export default function OnAirWidget() {
             </div>
           </div>
         ) : (
-          <div className="absolute inset-0 -top-16 bottom-0 z-50 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/10 animate-scale-in">
-            <div className="relative flex-1 min-h-0 overflow-hidden">
+          <div className="absolute inset-0 z-50 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/10 animate-scale-in">
+            <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
+              {/* Internal Tab Switcher for Video View */}
+              <div className="flex items-center p-1 bg-black/40 backdrop-blur-md rounded-2xl mt-4 self-center w-full max-w-[180px] flex-shrink-0 border border-white/10 shadow-xl z-50">
+                <button 
+                  onClick={() => setActiveTab("info")}
+                  className="flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all"
+                >
+                  Ouvir
+                </button>
+                <button 
+                  className="flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] text-white shadow-xl"
+                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" }}
+                >
+                  Assistir
+                </button>
+              </div>
               <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-accent" size={24} /></div>}>
                 <video 
                   className="w-full h-full object-cover"
