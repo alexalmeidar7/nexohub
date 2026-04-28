@@ -1474,7 +1474,7 @@ export default function CenarioTela() {
               };
 
               return (
-                <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: config.home.bgGradient ? buildHomeGradient(config.home) : "#000", color: "#fff", overflow: "hidden" }}>
+                <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: "transparent", color: "#fff", overflow: "hidden" }}>
                   {/* Background already rendered as a full-canvas layer behind sidebar */}
 
                    {/* ── TOP-LEFT: Big neon clock + date + SYNC ── */}
