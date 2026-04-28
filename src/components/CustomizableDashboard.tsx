@@ -121,7 +121,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [addStep, setAddStep] = useState<"choose" | "link" | "widget">("choose");
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -237,19 +237,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     setAddStep("choose");
   };
 
-  const handleLinkClick = (item: DashboardItem) => {
-    if (editMode) return;
-    if (item.linkExternal === "player") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/player`, "_blank");
-    } else if (item.linkExternal === "telapromo") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
-    } else if (item.linkPage) {
-      onNavigate(item.linkPage);
-    }
-  };
-
   const handleDragStart = (id: string) => setDraggedId(id);
   const handleDragOver = (e: React.DragEvent, targetId: string) => { e.preventDefault(); setDragOverId(targetId); };
   const handleDrop = (targetId: string) => {
@@ -264,179 +251,147 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   };
   const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
 
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [showScrollHint, setShowScrollHint] = useState(false);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const check = () => {
-      const canScroll = el.scrollHeight > el.clientHeight + 20;
-      const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
-      setShowScrollHint(canScroll && !atBottom);
-    };
-    check();
-    el.addEventListener("scroll", check);
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    return () => { el.removeEventListener("scroll", check); ro.disconnect(); };
-  }, [items]);
 
   return (
     <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1">
-      {/* Atalhos */}
-      {items.filter(i => i.type === "link").length > 0 && (
-        <div className="mb-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Atalhos rápidos</p>
-          <div className="flex flex-wrap gap-3 sm:gap-4">
-            {items.filter(i => i.type === "link").map(item => {
-              const Icon = getIcon(item.linkIcon || "Link2");
-              const isDragging = draggedId === item.id;
-              const isDragOver = dragOverId === item.id && draggedId !== item.id;
-              return (
-                <div key={item.id} className={`relative group cursor-pointer animate-scale-in ${isDragging ? "opacity-40 scale-95" : ""}`} draggable onDragStart={() => handleDragStart(item.id)} onDragOver={(e) => handleDragOver(e, item.id)} onDrop={() => handleDrop(item.id)} onDragEnd={handleDragEnd} onClick={() => handleLinkClick(item)}>
-                  <div className="w-[130px] h-[120px] sm:w-[150px] sm:h-[130px] rounded-[22px] flex flex-col items-start justify-between p-5 transition-all duration-300 hover:scale-[1.05] hover:-translate-y-1 overflow-hidden relative isolate" style={{ background: isDragOver ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-accent-color, #c8ff00) 22%, var(--layout-button-bg, #8b0000)) 0%, color-mix(in srgb, var(--layout-accent-color, #c8ff00) 12%, var(--layout-button-bg, #8b0000)) 100%)` : `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #8b0000) 88%, black 12%) 0%, color-mix(in srgb, var(--layout-button-bg, #8b0000) 76%, black 24%) 100%)`, boxShadow: isDragOver ? `0 14px 36px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)` : `0 2px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)`, backgroundClip: "padding-box" }}>
-                    <div className="absolute inset-px rounded-[21px] pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 38%, transparent 65%)" }} />
-                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center relative z-[1]" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 12%, transparent)" }}>
-                      <Icon size={20} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-                    </div>
-                    <div className="w-full relative z-[1]">
-                      <span className="text-[12px] font-semibold leading-tight block truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>{item.linkLabel}</span>
-                      {item.linkExternal && <ExternalLink size={9} className="mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }} />}
-                    </div>
-                  </div>
-                  <button onClick={(e) => { e.stopPropagation(); removeItem(item.id); }} className="absolute top-2.5 right-2.5 w-5 h-5 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10" style={{ background: "rgba(0,0,0,0.6)" }}>
-                    <X size={9} style={{ color: "#fff", opacity: 0.7 }} />
-                  </button>
+      {/* On Air Section - Primary Focus */}
+      <div className="mb-6">
+        {onAirProgram ? (
+          <div className="animate-fade-in bg-white/5 rounded-3xl p-6 relative overflow-hidden group border border-white/5">
+            <div className="absolute top-0 right-0 w-1/2 h-full pointer-events-none opacity-40 mix-blend-screen">
+              {onAirProgram.selo && (
+                <img src={onAirProgram.selo} alt={onAirProgram.nome} className="w-full h-full object-contain object-right-bottom" />
+              )}
+            </div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20">
+                  <Circle size={8} fill="#ef4444" color="#ef4444" className="animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-500">Ao Vivo</span>
                 </div>
-              );
-            })}
-            <div onClick={() => { setShowAddDialog(true); setAddStep("choose"); }} className="w-[130px] h-[120px] sm:w-[150px] sm:h-[130px] rounded-[22px] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:scale-[1.05] hover:-translate-y-1" style={{ background: "color-mix(in srgb, var(--layout-nav-text, #fff) 4%, transparent)", border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)" }}>
-              <Plus size={20} className="mb-1.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }} />
-              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }}>Adicionar</span>
+                {onAirProgram.is_hd && <span className="px-1.5 py-0.5 rounded bg-white/5 text-[8px] font-black tracking-wider text-white/40 border border-white/10 uppercase">Full HD</span>}
+                {onAirProgram.is_stereo && <span className="px-1.5 py-0.5 rounded bg-white/5 text-[8px] font-black tracking-wider text-white/40 border border-white/10 uppercase">Stereo</span>}
+              </div>
+
+              <h2 className="text-3xl font-black text-white tracking-tight leading-none mb-2">{onAirProgram.nome}</h2>
+              
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-1.5">
+                  <Clock size={14} className="text-white/40" />
+                  <span className="text-sm font-medium text-white/60">{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
+                </div>
+                {onAirProgram.apresentador_nome && (
+                  <div className="flex items-center gap-1.5">
+                    <User size={14} className="text-white/40" />
+                    <span className="text-sm font-semibold text-white">{onAirProgram.apresentador_nome}</span>
+                  </div>
+                )}
+              </div>
+
+              {currentMusic && (
+                <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                    <Music size={14} className="text-accent animate-spin-slow" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white leading-tight">{currentMusic.titulo}</p>
+                    <p className="text-[10px] text-white/40">{currentMusic.artista}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="p-12 rounded-3xl bg-white/5 border border-dashed border-white/10 flex flex-col items-center justify-center text-center">
+            <Radio size={32} className="text-white/10 mb-3" />
+            <p className="text-white/30 text-sm font-medium">Nenhum programa no ar no momento</p>
+          </div>
+        )}
+      </div>
 
-      {/* Widgets Grid Section */}
+      {/* Horizontal Menu Section - Shortcuts/Navigation */}
+      <div className="mb-8 overflow-hidden">
+        <div className="flex items-center gap-3 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
+          <button className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => onNavigate("apresentadores")}>
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Users size={20} className="text-accent" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover:text-white transition-colors">Apresentadores</span>
+          </button>
+          
+          <button className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => onNavigate("testemunhais")}>
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <MessageSquareQuote size={20} className="text-accent" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover:text-white transition-colors">Testemunhais</span>
+          </button>
+
+          <button className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => onNavigate("promocoes")}>
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Tag size={20} className="text-accent" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover:text-white transition-colors">Promoções</span>
+          </button>
+
+          <button className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => onNavigate("shopping")}>
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <ShoppingBag size={20} className="text-accent" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover:text-white transition-colors">Shopping</span>
+          </button>
+
+          <button className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => onNavigate("logos")}>
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Image size={20} className="text-accent" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover:text-white transition-colors">Logos</span>
+          </button>
+
+          <div onClick={() => { setShowAddDialog(true); setAddStep("choose"); }} className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 border-2 border-dashed border-white/10 hover:border-white/20 cursor-pointer bg-transparent group">
+            <Plus size={24} className="text-white/20 group-hover:text-white/40 transition-colors" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/20 group-hover:text-white/40 transition-colors">Adicionar</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Widgets & Secondary Content Area */}
       <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
         <div className="flex flex-col gap-6">
-          {onAirProgram && (
-            <div className="animate-fade-in">
-              <div className="flex items-start gap-5">
-                {onAirProgram.selo && (
-                  <img src={onAirProgram.selo} alt={onAirProgram.nome} className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-xl object-contain flex-shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Circle size={8} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Clock size={11} style={{ color: "var(--layout-icon-color, #888)" }} />
-                    <span className="text-[10px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
-                  </div>
-                  {onAirProgram.apresentador_nome && (
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <User size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
-                      <span className="text-[11px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)" }}>{onAirProgram.apresentador_nome}</span>
-                    </div>
-                  )}
-                  {(onAirProgram.descricao || onAirProgram.tipo_programa) && (
-                    <p className="text-[10px] leading-relaxed line-clamp-2 mb-1.5" style={{ maxWidth: 360, color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>
-                      {onAirProgram.tipo_programa && <span className="capitalize">{onAirProgram.tipo_programa.replace(/_/g, " ")}</span>}
-                      {onAirProgram.tipo_programa && onAirProgram.descricao && " — "}
-                      {onAirProgram.descricao}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    {onAirProgram.is_hd && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>FULL HD</span>}
-                    {onAirProgram.is_stereo && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>STEREO</span>}
-                    {onAirProgram.classificacao_etaria && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>{onAirProgram.classificacao_etaria}</span>}
-                  </div>
-                  {currentMusic && (
-                    <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                      <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>{currentMusic.titulo}</p>
-                        {currentMusic.artista && <p className="text-[9px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>{currentMusic.artista}</p>}
+          {items.filter(i => i.type === "widget").length > 0 && (
+            <div className="mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Widgets</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {items.filter(i => i.type === "widget").map(item => (
+                  <div key={item.id} className={`relative group rounded-3xl animate-fade-in flex flex-col ${draggedId === item.id ? "opacity-40 scale-95" : ""}`} style={{ background: "var(--layout-widget-bg, #1a1a1a)", boxShadow: "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)", borderRadius: "24px", height: "280px", overflow: "hidden" }} onDragOver={(e) => handleDragOver(e, item.id)} onDrop={() => handleDrop(item.id)} onDragEnd={handleDragEnd}>
+                    <div className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }} draggable onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}>
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
+                        {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
                       </div>
+                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
+                        {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Widget"}
+                      </span>
+                      <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
                     </div>
-                  )}
-                </div>
+                    <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
+                      <button onClick={() => removeItem(item.id)} className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}><X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} /></button>
+                    </div>
+                    <div className="p-4 flex-1 overflow-y-auto widget-scroll">
+                      <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
+                        {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
+                        {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
+                        {item.widgetType === "weather" && <DashboardWeatherWidget />}
+                      </Suspense>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
-
-          {/* New Horizontal Menu Section */}
-          <div className="flex items-center gap-6 py-2 overflow-x-auto no-scrollbar" style={{ borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("apresentadores")}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
-                <Users size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Apresentadores</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("testemunhais")}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
-                <MessageSquareQuote size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Testemunhais</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("promocoes")}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
-                <Tag size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Promoções</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("shopping")}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
-                <ShoppingBag size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Shopping</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("logos")}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
-                <Image size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Logos</span>
-            </button>
-          </div>
         </div>
-
-        {items.filter(i => i.type === "widget").length > 0 && (
-          <div className="mb-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Widgets</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {items.filter(i => i.type === "widget").map(item => (
-                <div key={item.id} className={`relative group rounded-3xl animate-fade-in flex flex-col ${draggedId === item.id ? "opacity-40 scale-95" : ""}`} style={{ background: "var(--layout-widget-bg, #1a1a1a)", boxShadow: "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)", borderRadius: "24px", height: "280px", overflow: "hidden" }} onDragOver={(e) => handleDragOver(e, item.id)} onDrop={() => handleDrop(item.id)} onDragEnd={handleDragEnd}>
-                  <div className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }} draggable onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}>
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
-                      {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                    </div>
-                    <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
-                      {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Widget"}
-                    </span>
-                    <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
-                  </div>
-                  <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
-                    <button onClick={() => removeItem(item.id)} className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}><X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} /></button>
-                  </div>
-                  <div className="p-4 flex-1 overflow-y-auto widget-scroll">
-                    <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
-                      {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
-                      {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
-                      {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                    </Suspense>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Add Dialog */}
@@ -491,7 +446,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 }
 
 function MusicProgramWidget({ dataUserId }: { dataUserId?: string }) {
-  const [currentProgram, setCurrentProgram] = useState<any>(null);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; } | null>(null);
 
   useEffect(() => {
