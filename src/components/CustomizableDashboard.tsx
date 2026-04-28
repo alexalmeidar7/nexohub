@@ -359,7 +359,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+              <div className="grid grid-cols-1 gap-4 flex-1 min-h-0">
                 {items.filter(i => i.type === "widget").map(item => (
                   <div 
                     key={item.id} 
