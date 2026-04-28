@@ -44,7 +44,13 @@ const withCacheBuster = (rawUrl: string, version?: string | null) => {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const xmlHeaders = { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-cache" };
+  const xmlHeaders = {
+    ...corsHeaders,
+    "Content-Type": "application/xml; charset=utf-8",
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0",
+  };
 
   try {
     const url = new URL(req.url);
