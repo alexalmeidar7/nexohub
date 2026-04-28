@@ -49,8 +49,8 @@ const COUNTRY_FLAG_MAP: Record<string, string> = {
   DE: "🇩🇪",
 };
 
-const SURFACE_BG = "hsl(0 0% 100% / 0.05)";
-const SURFACE_BORDER = "1px solid hsl(0 0% 100% / 0.08)";
+const SURFACE_BG = "rgba(0, 0, 0, 0.15)";
+const SURFACE_BORDER = "none";
 const POSITIVE = "hsl(142 70% 55%)";
 const NEGATIVE = "hsl(0 85% 68%)";
 const MUTED = "hsl(0 0% 100% / 0.5)";
@@ -113,8 +113,8 @@ function QuoteCard({
         background: SURFACE_BG,
         borderRadius: `${size(2)}px`,
         border: SURFACE_BORDER,
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
       }}
     >
       <div className="flex items-center justify-between">

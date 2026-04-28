@@ -1309,11 +1309,11 @@ export default function CenarioTela() {
 
           {/* Sidebar — always on top */}
           <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
-          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} ${sidebarPad}`, borderRadius: `0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu} 0`, background: isMapTab ? "rgba(18,18,18,0.65)" : "rgba(18,18,18,0.8)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)", borderLeft: "none", marginLeft: "-1px", boxShadow: "4px 0 20px rgba(0,0,0,0.3)" }}>
+          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} ${sidebarPad}`, borderRadius: `0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu} 0`, background: "rgba(0,0,0,0.5)", border: "none", borderLeft: "none", marginLeft: "-1px", boxShadow: "none" }}>
             <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "home" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "home" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Home style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
-            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `${vhToPx(0.4)}${vu}`, background: "rgba(255,255,255,0.06)", opacity: config.weather.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
+            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `${vhToPx(0.4)}${vu}`, background: "rgba(0,0,0,0.1)", opacity: config.weather.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
               <button onClick={() => { if (activeTab === "weather") { setActiveTab("home"); } else { setActiveTab("weather"); setWeatherSubTab("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "weather" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "weather" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
                 <CloudSun style={{ width: iconSize, height: iconSize }} className="text-white" />
               </button>
@@ -1334,7 +1334,7 @@ export default function CenarioTela() {
             <button onClick={() => setActiveTab("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: activeTab === "traffic" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Car style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
-            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `${vhToPx(0.4)}${vu}`, background: "rgba(255,255,255,0.06)", opacity: config.currency.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
+            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `${vhToPx(0.4)}${vu}`, background: "rgba(0,0,0,0.1)", opacity: config.currency.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
               <button onClick={() => { if (activeTab === "currency") { setActiveTab("home"); } else { setActiveTab("currency"); setCurrencySubTab("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "currency" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "currency" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
                 <DollarSign style={{ width: iconSize, height: iconSize }} className="text-white" />
               </button>
@@ -1609,8 +1609,8 @@ export default function CenarioTela() {
             {activeTab === "weather" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d2847 30%, #134e7a 60%, #1a6fad 85%, #4a9fd4 100%)" }} />}
-                <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 75% 15%, rgba(255,255,255,0.12) 0%, transparent 55%)" }} />
-                <div className="absolute bottom-0 left-0 right-0" style={{ height: "40%", background: "linear-gradient(to top, rgba(0,0,0,0.45), transparent)" }} />
+                <div className="absolute inset-0" style={{ background: "transparent" }} />
+                <div className="absolute bottom-0 left-0 right-0" style={{ height: "40%", background: "transparent" }} />
                 <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(4)}${vu}`, paddingLeft: `calc(${vhToPx(4)}${vu} + 50px)` }}>
                   {liveWeather ? (<>
                     {weatherSubTab === "today" && (
@@ -1618,23 +1618,23 @@ export default function CenarioTela() {
                         {/* City name + label */}
                         <div className="flex items-start justify-between" style={{ marginBottom: `${vhToPx(3)}${vu}` }}>
                           <div>
-                            <div className="font-black leading-none" style={{ fontSize: `${vhToPx(4.5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.6)" }}>{weatherCity || config.city || "Cidade"}</div>
+                            <div className="font-black leading-none" style={{ fontSize: `${vhToPx(4.5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,1)" }}>{weatherCity || config.city || "Cidade"}</div>
                             <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.6)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.6)}${vu}`, letterSpacing: "0.2em" }}>agora</div>
                           </div>
                         </div>
                         {/* Main weather card */}
-                        <div className="rounded-3xl" style={{ padding: `${vhToPx(3)}${vu}`, background: "rgba(255,255,255,0.08)", WebkitBackdropFilter: "blur(24px)", backdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 12px 48px rgba(0,0,0,0.2)" }}>
+                        <div className="rounded-3xl" style={{ padding: `${vhToPx(3)}${vu}`, background: "rgba(0,0,0,0.15)", border: "none", boxShadow: "none" }}>
                           <div className="flex items-center" style={{ gap: `${vhToPx(3)}${vu}`, marginBottom: `${vhToPx(2.5)}${vu}` }}>
                             <div style={{ width: `${vhToPx(14)}${vu}`, height: `${vhToPx(14)}${vu}`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
                               <WeatherIcon code={liveWeather.current.code} size={200} forceDay />
                             </div>
                             <div className="flex flex-col">
-                              <div className="font-black" style={{ fontSize: `${vhToPx(8)}${vu}`, lineHeight: 0.9, textShadow: "0 3px 16px rgba(0,0,0,0.4)" }}>{liveWeather.current.temp}°</div>
+                              <div className="font-black" style={{ fontSize: `${vhToPx(8)}${vu}`, lineHeight: 0.9, textShadow: "0 3px 16px rgba(0,0,0,1)" }}>{liveWeather.current.temp}°</div>
                               <div className="font-medium" style={{ fontSize: `${vhToPx(2)}${vu}`, opacity: 0.85, marginTop: `${vhToPx(0.5)}${vu}` }}>{getWLabel(liveWeather.current.code)}</div>
                             </div>
                           </div>
                           {/* Stats row */}
-                          <div className="flex items-center justify-between rounded-2xl" style={{ padding: `${vhToPx(1.8)}${vu} ${vhToPx(2.5)}${vu}`, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center justify-between rounded-2xl" style={{ padding: `${vhToPx(1.8)}${vu} ${vhToPx(2.5)}${vu}`, background: "rgba(0,0,0,0.1)", border: "none" }}>
                             <div className="flex items-center" style={{ gap: `${vhToPx(1)}${vu}` }}>
                               <Thermometer style={{ width: `${vhToPx(2.2)}${vu}`, height: `${vhToPx(2.2)}${vu}`, opacity: 0.7 }} />
                               <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(2.2)}${vu}` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
@@ -1651,7 +1651,7 @@ export default function CenarioTela() {
                       <div className="flex flex-col items-center justify-center" style={{ width: "92%", maxWidth: `${vhToPx(55)}${vu}`, height: "100%" }}>
                         {/* Header */}
                         <div className="text-center" style={{ marginBottom: `${vhToPx(4)}${vu}` }}>
-                          <div className="font-extrabold leading-none" style={{ fontSize: `${vhToPx(5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.5)" }}>{weatherCity || config.city || "Cidade"}</div>
+                          <div className="font-extrabold leading-none" style={{ fontSize: `${vhToPx(5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,1)" }}>{weatherCity || config.city || "Cidade"}</div>
                           <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.8)}${vu}`, letterSpacing: "0.2em" }}>próximos dias</div>
                         </div>
                         {/* Forecast cards - vertical stack for 9:16 */}
@@ -1659,11 +1659,10 @@ export default function CenarioTela() {
                           {liveWeather.daily.slice(1, 5).map((d, i) => (
                             <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
                               padding: `${vhToPx(2)}${vu} ${vhToPx(2.5)}${vu}`,
-                              background: "rgba(255,255,255,0.06)",
+                              background: "rgba(0,0,0,0.1)",
                               borderRadius: `${vhToPx(2)}${vu}`,
-                              WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)",
-                              border: "1px solid rgba(255,255,255,0.1)",
-                              boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                              border: "none",
+                              boxShadow: "none",
                               gap: `${vhToPx(2)}${vu}`,
                             }}>
                               {/* Day name */}
@@ -1684,7 +1683,7 @@ export default function CenarioTela() {
                               </div>
                               {/* Temps */}
                               <div className="flex items-baseline" style={{ flexShrink: 0, gap: `${vhToPx(0.6)}${vu}` }}>
-                                <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(2.8)}${vu}`, lineHeight: 1, textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>{d.max}°</span>
+                                <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(2.8)}${vu}`, lineHeight: 1, textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{d.max}°</span>
                                 <span className="font-medium tabular-nums" style={{ fontSize: `${vhToPx(1.7)}${vu}`, opacity: 0.55, lineHeight: 1 }}>{d.min}°</span>
                               </div>
                             </div>
@@ -1694,7 +1693,7 @@ export default function CenarioTela() {
                     )}
                     {weatherSubTab === "satellite" && null}
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>
+                    <div className="flex-1 flex items-center justify-center opacity-100" style={{ fontSize: `${vhToPx(1.8)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>
                       <CloudSun size={24} className="mr-1" /> {weatherCity ? "Carregando..." : "Configure uma cidade"}
                     </div>
                   )}
@@ -1706,12 +1705,12 @@ export default function CenarioTela() {
             {activeTab === "traffic" && (
               <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ padding: `${vhToPx(3)}${vu}`, pointerEvents: "none" }}>
                 {config.traffic.enabled && trafficCoords ? (
-                  <div className="flex items-center rounded-2xl" style={{ padding: `${vhToPx(1.2)}${vu} ${vhToPx(3)}${vu}`, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.12)", marginBottom: `${vhToPx(4)}${vu}`, boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
+                  <div className="flex items-center rounded-2xl" style={{ padding: `${vhToPx(1.2)}${vu} ${vhToPx(3)}${vu}`, background: "rgba(0,0,0,0.3)", border: "none", marginBottom: `${vhToPx(4)}${vu}`, boxShadow: "none" }}>
                     <Car style={{ width: `${vhToPx(2.5)}${vu}`, height: `${vhToPx(2.5)}${vu}`, color: accentColor, marginRight: `${vhToPx(1)}${vu}` }} />
                     <span className="font-black" style={{ fontSize: `${vhToPx(2.4)}${vu}`, color: "#fff", letterSpacing: "-0.01em" }}>{config.traffic.city || config.city || "Trânsito"}</span>
                   </div>
                 ) : (
-                  <div className="opacity-50" style={{ color: "#333", fontSize: `${vhToPx(1.8)}${vu}` }}>Trânsito desativado</div>
+                  <div className="opacity-100" style={{ color: "#fff", fontSize: `${vhToPx(1.8)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>Trânsito desativado</div>
                 )}
               </div>
             )}
@@ -1719,9 +1718,9 @@ export default function CenarioTela() {
             {/* ═══ CURRENCY ═══ */}
             {activeTab === "currency" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.5)" }} />}
+                {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "transparent" }} />}
                 {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #080c14 0%, #0f1923 30%, #141e2e 60%, #0d1520 100%)" }} />}
-                <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 60%)" }} />
+                <div className="absolute inset-0" style={{ background: "transparent" }} />
                 <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(4)}${vu}`, paddingLeft: `calc(${vhToPx(4)}${vu} + 50px)` }}>
                     {config.currency.enabled ? (
                       <CenarioQuotesPanel
@@ -1734,7 +1733,7 @@ export default function CenarioTela() {
                         size={vhToPx}
                       />
                     ) : (
-                    <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: `${vhToPx(1.9)}${vu}` }}>Cotação desativada</div>
+                    <div className="flex-1 flex items-center justify-center opacity-100" style={{ fontSize: `${vhToPx(1.9)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>Cotação desativada</div>
                     )}
                 </div>
               </div>
@@ -1748,10 +1747,10 @@ export default function CenarioTela() {
                   {config.chat.enabled ? (<>
                     <div className="flex justify-end mb-1"><MessageCircle size={48} className="drop-shadow-lg" style={{ color: accentColor }} /></div>
                     <div style={{ marginBottom: `${vhToPx(2)}${vu}` }}>
-                      <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: `${vhToPx(4)}${vu}` }}>mensagens</div>
+                      <div className="font-extrabold leading-tight" style={{ fontSize: `${vhToPx(4)}${vu}`, textShadow: "0 2px 10px rgba(0,0,0,1)" }}>mensagens</div>
                       <div className="font-bold" style={{ fontSize: `${vhToPx(2.5)}${vu}`, color: accentColor }}>chat</div>
                     </div>
-                    <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(12px)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                    <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "transparent", border: "none" }}>
                       {(() => {
                         const ytUrl = config.chat.youtubeVideoUrl || "";
                         let videoId = "";
@@ -1769,14 +1768,14 @@ export default function CenarioTela() {
                           );
                         }
                         return (
-                          <div className="flex-1 flex items-center justify-center opacity-50 h-full" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>
+                          <div className="flex-1 flex items-center justify-center h-full" style={{ fontSize: `${vhToPx(1.8)}${vu}`, opacity: 1, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>
                             Insira a URL da live para carregar o chat
                           </div>
                         );
                       })()}
                     </div>
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>Chat desativado</div>
+                    <div className="flex-1 flex items-center justify-center opacity-100" style={{ fontSize: `${vhToPx(1.8)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>Chat desativado</div>
                   )}
                 </div>
               </div>
