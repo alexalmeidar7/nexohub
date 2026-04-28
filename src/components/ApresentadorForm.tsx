@@ -60,6 +60,7 @@ export default function ApresentadorForm() {
   const [catOpen, setCatOpen] = useState(false);
   const [importRows, setImportRows] = useState<any[] | null>(null);
   const [importing, setImporting] = useState(false);
+  const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const excelInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -538,49 +539,109 @@ export default function ApresentadorForm() {
                       </span>
                     </td>
                     <td className="px-4 py-2.5 font-semibold">
-                      <input 
-                        defaultValue={a.nome} 
-                        onBlur={(e) => {
-                          if (e.target.value !== a.nome) updateFieldInline(a.id, "nome", e.target.value);
-                        }}
-                        className="bg-transparent border-none focus:ring-1 focus:ring-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full"
-                      />
+                      {editingCell?.id === a.id && editingCell?.field === "nome" ? (
+                        <input 
+                          autoFocus
+                          defaultValue={a.nome} 
+                          onBlur={(e) => {
+                            if (e.target.value !== a.nome) updateFieldInline(a.id, "nome", e.target.value);
+                            setEditingCell(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") e.currentTarget.blur();
+                            if (e.key === "Escape") setEditingCell(null);
+                          }}
+                          className="bg-white border border-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full outline-none"
+                        />
+                      ) : (
+                        <div 
+                          className="cursor-pointer hover:text-[var(--layout-accent-color)] transition-colors min-h-[1.5em]" 
+                          onClick={() => setEditingCell({ id: a.id, field: "nome" })}
+                        >
+                          {a.nome}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 group/insta">
                           <Instagram size={11} style={{ color: "#e1306c" }} className="shrink-0" />
-                          <input 
-                            defaultValue={a.instagram} 
-                            onBlur={(e) => {
-                              if (e.target.value !== a.instagram) updateFieldInline(a.id, "instagram", e.target.value);
-                            }}
-                            placeholder="@usuario"
-                            className="bg-transparent border-none text-[10px] focus:ring-1 focus:ring-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full"
-                          />
+                          {editingCell?.id === a.id && editingCell?.field === "instagram" ? (
+                            <input 
+                              autoFocus
+                              defaultValue={a.instagram} 
+                              onBlur={(e) => {
+                                if (e.target.value !== a.instagram) updateFieldInline(a.id, "instagram", e.target.value);
+                                setEditingCell(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") e.currentTarget.blur();
+                                if (e.key === "Escape") setEditingCell(null);
+                              }}
+                              placeholder="@usuario"
+                              className="bg-white border border-[var(--layout-accent-color)] text-[10px] rounded px-1 -ml-1 w-full outline-none"
+                            />
+                          ) : (
+                            <span 
+                              className="cursor-pointer text-[11px] hover:text-[#e1306c] transition-colors min-h-[1em] min-w-[50px]" 
+                              onClick={() => setEditingCell({ id: a.id, field: "instagram" })}
+                            >
+                              {a.instagram || <span className="opacity-30">@vazio</span>}
+                            </span>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 group/whats">
                           <Phone size={11} style={{ color: "#25D366" }} className="shrink-0" />
-                          <input 
-                            defaultValue={a.whatsapp} 
-                            onBlur={(e) => {
-                              if (e.target.value !== a.whatsapp) updateFieldInline(a.id, "whatsapp", e.target.value);
-                            }}
-                            placeholder="+55..."
-                            className="bg-transparent border-none text-[10px] focus:ring-1 focus:ring-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full"
-                          />
+                          {editingCell?.id === a.id && editingCell?.field === "whatsapp" ? (
+                            <input 
+                              autoFocus
+                              defaultValue={a.whatsapp} 
+                              onBlur={(e) => {
+                                if (e.target.value !== a.whatsapp) updateFieldInline(a.id, "whatsapp", e.target.value);
+                                setEditingCell(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") e.currentTarget.blur();
+                                if (e.key === "Escape") setEditingCell(null);
+                              }}
+                              placeholder="+55..."
+                              className="bg-white border border-[var(--layout-accent-color)] text-[10px] rounded px-1 -ml-1 w-full outline-none"
+                            />
+                          ) : (
+                            <span 
+                              className="cursor-pointer text-[11px] hover:text-[#25D366] transition-colors min-h-[1em] min-w-[50px]" 
+                              onClick={() => setEditingCell({ id: a.id, field: "whatsapp" })}
+                            >
+                              {a.whatsapp || <span className="opacity-30">+55...</span>}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-2.5">
-                      <input 
-                        defaultValue={a.cargo} 
-                        onBlur={(e) => {
-                          if (e.target.value !== a.cargo) updateFieldInline(a.id, "cargo", e.target.value);
-                        }}
-                        placeholder="Cargo/Função"
-                        className="bg-transparent border-none focus:ring-1 focus:ring-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full"
-                      />
+                      {editingCell?.id === a.id && editingCell?.field === "cargo" ? (
+                        <input 
+                          autoFocus
+                          defaultValue={a.cargo} 
+                          onBlur={(e) => {
+                            if (e.target.value !== a.cargo) updateFieldInline(a.id, "cargo", e.target.value);
+                            setEditingCell(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") e.currentTarget.blur();
+                            if (e.key === "Escape") setEditingCell(null);
+                          }}
+                          placeholder="Cargo/Função"
+                          className="bg-white border border-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full outline-none"
+                        />
+                      ) : (
+                        <div 
+                          className="cursor-pointer hover:text-[var(--layout-accent-color)] transition-colors min-h-[1.5em]" 
+                          onClick={() => setEditingCell({ id: a.id, field: "cargo" })}
+                        >
+                          {a.cargo || <span className="opacity-30">Definir cargo</span>}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       {a.foto ? <CheckCircle size={15} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[var(--layout-page-text)]/20">—</span>}
