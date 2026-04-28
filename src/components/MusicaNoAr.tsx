@@ -919,6 +919,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     let cancelled = false;
     (async () => {
       try {
+        // Skip silently when there is no valid session — the function requires auth
+        const { data: sess } = await supabase.auth.getSession();
+        if (!sess?.session?.access_token) return;
+        if (cancelled) return;
         const { data, error } = await supabase.functions.invoke("get-music-curiosity", {
           body: { artista: music.artista, musica: music.titulo, userId: dataUserId },
         });
