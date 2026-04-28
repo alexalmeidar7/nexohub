@@ -206,7 +206,7 @@ export default function OnAirWidget() {
         <button 
           onClick={() => setActiveTab("info")}
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "info" ? "bg-accent/15 text-accent shadow-[0_0_15px_rgba(var(--layout-accent-color-rgb),0.1)]" : "bg-white/[0.03] text-white/30 hover:bg-white/[0.08]"}`}
-          style={activeTab === "info" ? { border: "1px solid color-mix(in srgb, var(--layout-accent-color, #c8ff00) 40%, transparent)" } : {}}
+          style={activeTab === "info" ? { border: "1px solid color-mix(in srgb, var(--layout-accent-color) 40%, transparent)" } : {}}
         >
           <Radio size={12} />
           No Ar
@@ -214,7 +214,7 @@ export default function OnAirWidget() {
         <button 
           onClick={() => setActiveTab("video")}
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "video" ? "bg-accent/15 text-accent shadow-[0_0_15px_rgba(var(--layout-accent-color-rgb),0.1)]" : "bg-white/[0.03] text-white/30 hover:bg-white/[0.08]"}`}
-          style={activeTab === "video" ? { border: "1px solid color-mix(in srgb, var(--layout-accent-color, #c8ff00) 40%, transparent)" } : {}}
+          style={activeTab === "video" ? { border: "1px solid color-mix(in srgb, var(--layout-accent-color) 40%, transparent)" } : {}}
         >
           <MonitorPlay size={12} />
           Vídeo
@@ -245,8 +245,8 @@ export default function OnAirWidget() {
             </div>
 
             <div className="flex items-center gap-2 mb-2">
-              <Radio size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} className="animate-pulse" />
-              <span className="font-black text-[9px] uppercase tracking-[0.25em] animate-pulse" style={{ color: "var(--layout-accent-color, #c8ff00)" }}>Ao Vivo</span>
+              <Radio size={12} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
+              <span className="font-black text-[9px] uppercase tracking-[0.25em] animate-pulse" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
             </div>
 
             <div className="flex-1 flex flex-col justify-center z-10">
@@ -254,7 +254,7 @@ export default function OnAirWidget() {
                 <p className="font-black text-white text-2xl leading-none tracking-tighter drop-shadow-2xl line-clamp-2">{programa.nome}</p>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/5">
-                    <Clock size={10} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
+                    <Clock size={10} style={{ color: "var(--layout-accent-color)" }} />
                     <span className="text-[10px] font-bold text-white/60 tracking-wider">{programa.horarioInicio} — {programa.horarioFim}</span>
                   </div>
                   {programa.classificacaoEtaria && (
@@ -310,7 +310,7 @@ export default function OnAirWidget() {
               <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
                 <div
                   className="h-full transition-all duration-1000 shadow-[0_0_10px_rgba(var(--layout-accent-color-rgb),0.3)]"
-                  style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color, #c8ff00)" }}
+                  style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color)" }}
                 />
               </div>
             </div>
