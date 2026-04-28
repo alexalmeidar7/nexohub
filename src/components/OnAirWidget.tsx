@@ -258,7 +258,7 @@ export default function OnAirWidget() {
               </h3>
               
               {/* Music info - Very Clean Card */}
-              <div className="z-10 bg-white/[0.02] border border-white/[0.05] rounded-3xl p-4 mb-auto group/music-card hover:bg-white/[0.04] transition-all duration-500">
+              <div className="z-10 bg-white/[0.03] border border-white/[0.05] rounded-3xl p-4 mb-auto group/music-card hover:bg-white/[0.05] transition-all duration-500 shadow-xl">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/5 flex-shrink-0 relative">
                     {musicData?.capa ? (
