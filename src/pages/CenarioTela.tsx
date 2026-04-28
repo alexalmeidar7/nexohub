@@ -1513,19 +1513,19 @@ export default function CenarioTela() {
                      zIndex: 15,
                    }}>
                       {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
-                       <div style={{
-                         width: `${vhToPx(20)}${vu}`,
-                         height: `${vhToPx(20)}${vu}`,
-                         borderRadius: `${vhToPx(2)}${vu}`,
-                         background: "transparent",
-                          backdropFilter: "none",
-                          WebkitBackdropFilter: "none",
-                          boxShadow: "none",
-                          border: "none",
-                         zIndex: 2,
-                         position: "relative",
-                         flexShrink: 0,
-                       }}>
+                        <div style={{
+                          width: `${vhToPx(20)}${vu}`,
+                          height: `${vhToPx(20)}${vu}`,
+                          borderRadius: `${vhToPx(2)}${vu}`,
+                          background: "rgba(255, 255, 255, 0.05)",
+                          backdropFilter: "blur(20px)",
+                          WebkitBackdropFilter: "blur(20px)",
+                          boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          zIndex: 2,
+                          position: "relative",
+                          flexShrink: 0,
+                        }}>
                         {/* Presenter photo anchored at bottom, overflows top */}
                         {(() => {
                           const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
