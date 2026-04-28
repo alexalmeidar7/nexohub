@@ -1529,7 +1529,7 @@ export default function CenarioTela() {
                             overflow: "hidden",
                             flexShrink: 0,
                             zIndex: 1,
-                            marginLeft: `-${vhToPx(1)}${vu}`,
+                            marginLeft: `0`,
                             animation: "cenario-capa-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both",
                             position: "relative",
                             padding: `0`,
