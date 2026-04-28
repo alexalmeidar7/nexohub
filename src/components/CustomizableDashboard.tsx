@@ -389,65 +389,40 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Widgets & Secondary Content Area */}
       <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
         <div className="flex flex-col gap-6">
-          {/* Removing the old duplicate onAirProgram section from lines 326-371 */}
-          <div className="hidden">
-
-
-      {/* Widgets Grid Section */}
-      <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
-        <div className="flex flex-col gap-6">
-          {onAirProgram && (
-            <div className="animate-fade-in">
-              <div className="flex items-start gap-5">
-                {onAirProgram.selo && (
-                  <img src={onAirProgram.selo} alt={onAirProgram.nome} className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-xl object-contain flex-shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Circle size={8} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Clock size={11} style={{ color: "var(--layout-icon-color, #888)" }} />
-                    <span className="text-[10px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
-                  </div>
-                  {onAirProgram.apresentador_nome && (
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <User size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
-                      <span className="text-[11px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)" }}>{onAirProgram.apresentador_nome}</span>
-                    </div>
-                  )}
-                  {(onAirProgram.descricao || onAirProgram.tipo_programa) && (
-                    <p className="text-[10px] leading-relaxed line-clamp-2 mb-1.5" style={{ maxWidth: 360, color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>
-                      {onAirProgram.tipo_programa && <span className="capitalize">{onAirProgram.tipo_programa.replace(/_/g, " ")}</span>}
-                      {onAirProgram.tipo_programa && onAirProgram.descricao && " — "}
-                      {onAirProgram.descricao}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    {onAirProgram.is_hd && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>FULL HD</span>}
-                    {onAirProgram.is_stereo && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>STEREO</span>}
-                    {onAirProgram.classificacao_etaria && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>{onAirProgram.classificacao_etaria}</span>}
-                  </div>
-                  {currentMusic && (
-                    <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                      <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>{currentMusic.titulo}</p>
-                        {currentMusic.artista && <p className="text-[9px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>{currentMusic.artista}</p>}
+          {items.filter(i => i.type === "widget").length > 0 && (
+            <div className="mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Widgets</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {items.filter(i => i.type === "widget").map(item => (
+                  <div key={item.id} className={`relative group rounded-3xl animate-fade-in flex flex-col ${draggedId === item.id ? "opacity-40 scale-95" : ""}`} style={{ background: "var(--layout-widget-bg, #1a1a1a)", boxShadow: "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)", borderRadius: "24px", height: "280px", overflow: "hidden" }} onDragOver={(e) => handleDragOver(e, item.id)} onDrop={() => handleDrop(item.id)} onDragEnd={handleDragEnd}>
+                    <div className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }} draggable onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}>
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
+                        {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
                       </div>
+                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
+                        {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Widget"}
+                      </span>
+                      <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
                     </div>
-                  )}
-                </div>
+                    <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
+                      <button onClick={() => removeItem(item.id)} className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}><X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} /></button>
+                    </div>
+                    <div className="p-4 flex-1 overflow-y-auto widget-scroll">
+                      <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
+                        {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
+                        {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
+                        {item.widgetType === "weather" && <DashboardWeatherWidget />}
+                      </Suspense>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
-
-          {/* New Horizontal Menu Section */}
-          <div className="flex items-center gap-6 py-2 overflow-x-auto no-scrollbar" style={{ borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("apresentadores")}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
-                <Users size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
+        </div>
+      </div>
               </div>
               <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Apresentadores</span>
             </button>
