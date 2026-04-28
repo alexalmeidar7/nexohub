@@ -603,11 +603,22 @@ export default function CenarioTela() {
       
       setConfig(prev => {
         const merged = { ...prev, ...rest };
+        
+        // Cache current state including navigation, but don't force navigation state on active sessions
+        try {
+          localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify({ 
+            ...merged, 
+            _activeTab: activeTab, 
+            _weatherSubTab: weatherSubTab, 
+            _currencySubTab: currencySubTab, 
+            _screenRotation: screenRotation 
+          }));
+        } catch { /* silent */ }
+        
         return merged;
       });
 
       // Only apply tab/rotation from initial load IF not already set by user interaction
-      // This prevents the page from jumping back to home when a background sync happens
       if (!fromRealtime && !initialTabLoaded.current) {
         if (_activeTab) setActiveTab(_activeTab);
         if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
@@ -616,9 +627,6 @@ export default function CenarioTela() {
         initialTabLoaded.current = true;
       }
       if (fromRealtime) setLastSyncTime(new Date());
-      try {
-        localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify({ ...merged, _activeTab, _weatherSubTab, _currencySubTab, _screenRotation }));
-      } catch { /* silent */ }
     };
 
     const load = async () => {
