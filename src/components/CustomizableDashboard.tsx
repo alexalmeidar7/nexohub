@@ -34,6 +34,7 @@ function TypewriterText({ text, className, style }: { text: string; className?: 
 
 const AgendaPage = lazy(() => import("./AgendaPage"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
+const VideoPlayer = lazy(() => import("./VideoPlayer"));
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix";
 
@@ -78,23 +79,23 @@ function normalizeDashboardSettings(raw: unknown): DashboardSettingsPayload {
   return { items: [] };
 }
 
-const linkOptions: { label: string; page?: Page; external?: string; icon: string }[] = [
-  { label: "Apresentadores", page: "apresentadores", icon: "Mic2" },
-  { label: "Programas", page: "programas", icon: "PlaySquare" },
-  { label: "Notícias", page: "noticias", icon: "Newspaper" },
-  { label: "Música no Ar", page: "musica", icon: "Music" },
-  { label: "Agenda", page: "agenda", icon: "CalendarDays" },
-  { label: "Player Config", page: "playerconfig", icon: "Settings" },
-  { label: "Player Externo", external: "player", icon: "MonitorPlay" },
-  { label: "Testemunhais", page: "testemunhais", icon: "MessageSquareQuote" },
-  { label: "Promoções", page: "promocoes", icon: "Tag" },
-  { label: "Logos", page: "logos", icon: "Image" },
-  { label: "Roll", page: "preroll", icon: "Film" },
-  { label: "Shopping", page: "shopping", icon: "ShoppingCart" },
-  { label: "vMix", page: "vmix", icon: "Monitor" },
-  { label: "Corte de Vídeo", page: "cortevideo", icon: "Scissors" },
-  { label: "Tela Promo", external: "telapromo", icon: "Tag" },
-  { label: "Configurações", page: "configuracoes", icon: "Settings" },
+const linkOptions: { label: string; page?: Page; external?: string; icon: string; defaultHidden?: boolean }[] = [
+  { label: "Apresentadores", page: "apresentadores", icon: "Mic2", defaultHidden: false },
+  { label: "Programas", page: "programas", icon: "PlaySquare", defaultHidden: false },
+  { label: "Notícias", page: "noticias", icon: "Newspaper", defaultHidden: false },
+  { label: "Música no Ar", page: "musica", icon: "Music", defaultHidden: false },
+  { label: "Agenda", page: "agenda", icon: "CalendarDays", defaultHidden: false },
+  { label: "Player Config", page: "playerconfig", icon: "Settings", defaultHidden: true },
+  { label: "Player Externo", external: "player", icon: "MonitorPlay", defaultHidden: true },
+  { label: "Testemunhais", page: "testemunhais", icon: "MessageSquareQuote", defaultHidden: false },
+  { label: "Promoções", page: "promocoes", icon: "Tag", defaultHidden: false },
+  { label: "Logos", page: "logos", icon: "Image", defaultHidden: false },
+  { label: "Roll", page: "preroll", icon: "Film", defaultHidden: true },
+  { label: "Shopping", page: "shopping", icon: "ShoppingCart", defaultHidden: false },
+  { label: "vMix", page: "vmix", icon: "Monitor", defaultHidden: true },
+  { label: "Corte de Vídeo", page: "cortevideo", icon: "Scissors", defaultHidden: true },
+  { label: "Tela Promo", external: "telapromo", icon: "Tag", defaultHidden: true },
+  { label: "Configurações", page: "configuracoes", icon: "Settings", defaultHidden: true },
 ];
 
 const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "weather" | "player"; description: string }[] = [
@@ -117,6 +118,12 @@ interface Props { onNavigate: (page: Page) => void; }
 export default function CustomizableDashboard({ onNavigate }: Props) {
   const { user } = useAuth();
   const [items, setItems] = useState<DashboardItem[]>([]);
+  const [hiddenLinks, setHiddenLinks] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("nexohub_hidden_dashboard_links");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [addStep, setAddStep] = useState<"choose" | "link" | "widget">("choose");
   const [editMode, setEditMode] = useState(false);
@@ -251,6 +258,12 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   };
   const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
 
+  const hideLink = (id: string) => {
+    const newHidden = [...hiddenLinks, id];
+    setHiddenLinks(newHidden);
+    localStorage.setItem("nexohub_hidden_dashboard_links", JSON.stringify(newHidden));
+  };
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -323,19 +336,26 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             { id: "promocoes", label: "Promoções", icon: Tag },
             { id: "shopping", label: "Shopping", icon: ShoppingBag },
             { id: "logos", label: "Logos", icon: Image }
-          ].map((nav) => (
-            <button 
-              key={nav.id}
-              className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
-              onClick={() => onNavigate(nav.id as any)}
-            >
-              <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
-                <nav.icon size={16} className="text-accent" />
-              </div>
-              <span className="text-[8px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
-                {nav.label}
-              </span>
-            </button>
+          ].filter(nav => !hiddenLinks.includes(nav.id)).map((nav) => (
+            <div key={nav.id} className="relative group/nav-item">
+              <button 
+                className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
+                onClick={() => onNavigate(nav.id as any)}
+              >
+                <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
+                  <nav.icon size={16} className="text-accent" />
+                </div>
+                <span className="text-[8px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
+                  {nav.label}
+                </span>
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); hideLink(nav.id); }}
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-500 opacity-0 group-hover/nav-item:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"
+              >
+                <X size={10} />
+              </button>
+            </div>
           ))}
           
           <button 
@@ -397,7 +417,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
                         {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
                         {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                        {item.widgetType === "player" && <OnAirWidget />}
+                        {item.widgetType === "player" && <VideoPlayer />}
                       </Suspense>
                     </div>
                   </div>
@@ -431,12 +451,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             )}
             {addStep === "link" && (
               <div className="grid grid-cols-2 gap-2">
-                {linkOptions.map(opt => (
-                  <button key={opt.label} onClick={() => addLink(opt)} className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/10" style={{ background: "rgba(255,255,255,0.05)" }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5"><Mic2 size={14} style={{ color: "var(--layout-accent-color)" }} /></div>
-                    <span className="text-xs font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>{opt.label}</span>
-                  </button>
-                ))}
+                {linkOptions.map(opt => {
+                  const Icon = getIcon(opt.icon);
+                  return (
+                    <button key={opt.label} onClick={() => { addLink(opt); setHiddenLinks(prev => prev.filter(id => id !== opt.page)); localStorage.setItem("nexohub_hidden_dashboard_links", JSON.stringify(hiddenLinks.filter(id => id !== opt.page))); }} className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/10" style={{ background: "rgba(255,255,255,0.05)" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5"><Icon size={14} style={{ color: "var(--layout-accent-color)" }} /></div>
+                      <span className="text-xs font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>{opt.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
             {addStep === "widget" && (
