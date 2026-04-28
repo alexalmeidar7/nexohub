@@ -1313,7 +1313,7 @@ export default function CenarioTela() {
             <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "home" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "home" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Home style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
-            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `${vhToPx(0.4)}${vu}`, background: "rgba(255,255,255,0.06)", opacity: config.weather.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
+            <div className="rounded-2xl flex flex-col items-center" style={{ padding: `${vhToPx(0.4)}${vu}`, background: "rgba(0,0,0,0.1)", opacity: config.weather.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
               <button onClick={() => { if (activeTab === "weather") { setActiveTab("home"); } else { setActiveTab("weather"); setWeatherSubTab("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "weather" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "weather" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
                 <CloudSun style={{ width: iconSize, height: iconSize }} className="text-white" />
               </button>
