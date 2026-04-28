@@ -1718,9 +1718,9 @@ export default function CenarioTela() {
             {/* ═══ CURRENCY ═══ */}
             {activeTab === "currency" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.5)" }} />}
+                {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "transparent" }} />}
                 {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #080c14 0%, #0f1923 30%, #141e2e 60%, #0d1520 100%)" }} />}
-                <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 60%)" }} />
+                <div className="absolute inset-0" style={{ background: "transparent" }} />
                 <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(4)}${vu}`, paddingLeft: `calc(${vhToPx(4)}${vu} + 50px)` }}>
                     {config.currency.enabled ? (
                       <CenarioQuotesPanel
