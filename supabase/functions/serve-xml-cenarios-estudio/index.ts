@@ -183,19 +183,14 @@ Deno.serve(async (req) => {
     xml += `    <cargo>${xmlEscape(locutorCargo)}</cargo>\n`;
     xml += `  </locutor>\n`;
     xml += `  <templates>\n`;
-    for (const g of grupos || []) {
-      // Apenas templates vinculados ao programa no ar enviam a URL da arte.
-      // Templates não vinculados ao programa atual ficam com <url/> vazia.
-      const vinculado = !!onAir && (g.programa_ids || []).includes(onAir.id);
-      const arte = arteByGrupo[g.id];
-      const urlOut = vinculado && arte
-        ? withCacheBuster(arte.url, arte.updatedAt || g.updated_at)
-        : "";
-      xml += `    <template>\n`;
-      xml += `      <nome>${xmlEscape(g.nome)}</nome>\n`;
-      xml += `      <url>${xmlEscape(urlOut)}</url>\n`;
-      xml += `    </template>\n`;
-    }
+    xml += `    <template>\n`;
+    xml += `      <nome>TVS ATRAS CONVIDADOS</nome>\n`;
+    xml += `      <url>${xmlEscape(urlConvidados)}</url>\n`;
+    xml += `    </template>\n`;
+    xml += `    <template>\n`;
+    xml += `      <nome>TVS ATRAS ANCORA</nome>\n`;
+    xml += `      <url>${xmlEscape(urlAncora)}</url>\n`;
+    xml += `    </template>\n`;
     xml += `  </templates>\n`;
     xml += `</cenarios_estudio>`;
 
