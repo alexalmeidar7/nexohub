@@ -158,9 +158,14 @@ export default function IntercomWidget() {
             const stream = ev.streams[0] || new MediaStream([ev.track]);
             if (audioRef.current) {
               audioRef.current.srcObject = stream;
-              audioRef.current.play().catch((e) => {
-                console.warn("[Intercom Listener] Autoplay blocked:", e.message);
-              });
+              audioRef.current.muted = false;
+              audioRef.current.volume = listenerVolume;
+              audioRef.current.play()
+                .then(() => setAudioBlocked(false))
+                .catch((e) => {
+                  console.warn("[Intercom Listener] Autoplay blocked:", e.message);
+                  setAudioBlocked(true);
+                });
             }
           };
 
