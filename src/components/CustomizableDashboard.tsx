@@ -285,40 +285,113 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
   return (
     <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1">
-      {/* Atalhos */}
-      {items.filter(i => i.type === "link").length > 0 && (
-        <div className="mb-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Atalhos rápidos</p>
-          <div className="flex flex-wrap gap-3 sm:gap-4">
-            {items.filter(i => i.type === "link").map(item => {
-              const Icon = getIcon(item.linkIcon || "Link2");
-              const isDragging = draggedId === item.id;
-              const isDragOver = dragOverId === item.id && draggedId !== item.id;
-              return (
-                <div key={item.id} className={`relative group cursor-pointer animate-scale-in ${isDragging ? "opacity-40 scale-95" : ""}`} draggable onDragStart={() => handleDragStart(item.id)} onDragOver={(e) => handleDragOver(e, item.id)} onDrop={() => handleDrop(item.id)} onDragEnd={handleDragEnd} onClick={() => handleLinkClick(item)}>
-                  <div className="w-[130px] h-[120px] sm:w-[150px] sm:h-[130px] rounded-[22px] flex flex-col items-start justify-between p-5 transition-all duration-300 hover:scale-[1.05] hover:-translate-y-1 overflow-hidden relative isolate" style={{ background: isDragOver ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-accent-color, #c8ff00) 22%, var(--layout-button-bg, #8b0000)) 0%, color-mix(in srgb, var(--layout-accent-color, #c8ff00) 12%, var(--layout-button-bg, #8b0000)) 100%)` : `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #8b0000) 88%, black 12%) 0%, color-mix(in srgb, var(--layout-button-bg, #8b0000) 76%, black 24%) 100%)`, boxShadow: isDragOver ? `0 14px 36px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)` : `0 2px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)`, backgroundClip: "padding-box" }}>
-                    <div className="absolute inset-px rounded-[21px] pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 38%, transparent 65%)" }} />
-                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center relative z-[1]" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 12%, transparent)" }}>
-                      <Icon size={20} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-                    </div>
-                    <div className="w-full relative z-[1]">
-                      <span className="text-[12px] font-semibold leading-tight block truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>{item.linkLabel}</span>
-                      {item.linkExternal && <ExternalLink size={9} className="mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }} />}
-                    </div>
-                  </div>
-                  <button onClick={(e) => { e.stopPropagation(); removeItem(item.id); }} className="absolute top-2.5 right-2.5 w-5 h-5 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10" style={{ background: "rgba(0,0,0,0.6)" }}>
-                    <X size={9} style={{ color: "#fff", opacity: 0.7 }} />
-                  </button>
+      {/* On Air Section - Primary Focus */}
+      <div className="mb-6">
+        {onAirProgram ? (
+          <div className="animate-fade-in bg-white/5 rounded-3xl p-6 relative overflow-hidden group border border-white/5">
+            <div className="absolute top-0 right-0 w-1/2 h-full pointer-events-none opacity-40 mix-blend-screen">
+              {onAirProgram.selo && (
+                <img src={onAirProgram.selo} alt={onAirProgram.nome} className="w-full h-full object-contain object-right-bottom" />
+              )}
+            </div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20">
+                  <Circle size={8} fill="#ef4444" color="#ef4444" className="animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-500">Ao Vivo</span>
                 </div>
-              );
-            })}
-            <div onClick={() => { setShowAddDialog(true); setAddStep("choose"); }} className="w-[130px] h-[120px] sm:w-[150px] sm:h-[130px] rounded-[22px] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:scale-[1.05] hover:-translate-y-1" style={{ background: "color-mix(in srgb, var(--layout-nav-text, #fff) 4%, transparent)", border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)" }}>
-              <Plus size={20} className="mb-1.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }} />
-              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }}>Adicionar</span>
+                {onAirProgram.is_hd && <span className="px-1.5 py-0.5 rounded bg-white/5 text-[8px] font-black tracking-wider text-white/40 border border-white/10 uppercase">Full HD</span>}
+                {onAirProgram.is_stereo && <span className="px-1.5 py-0.5 rounded bg-white/5 text-[8px] font-black tracking-wider text-white/40 border border-white/10 uppercase">Stereo</span>}
+              </div>
+
+              <h2 className="text-3xl font-black text-white tracking-tight leading-none mb-2">{onAirProgram.nome}</h2>
+              
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-1.5">
+                  <Clock size={14} className="text-white/40" />
+                  <span className="text-sm font-medium text-white/60">{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
+                </div>
+                {onAirProgram.apresentador_nome && (
+                  <div className="flex items-center gap-1.5">
+                    <User size={14} className="text-white/40" />
+                    <span className="text-sm font-semibold text-white">{onAirProgram.apresentador_nome}</span>
+                  </div>
+                )}
+              </div>
+
+              {currentMusic && (
+                <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                    <Music size={14} className="text-accent animate-spin-slow" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white leading-tight">{currentMusic.titulo}</p>
+                    <p className="text-[10px] text-white/40">{currentMusic.artista}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+        ) : (
+          <div className="p-12 rounded-3xl bg-white/5 border border-dashed border-white/10 flex flex-col items-center justify-center text-center">
+            <Radio size={32} className="text-white/10 mb-3" />
+            <p className="text-white/30 text-sm font-medium">Nenhum programa no ar no momento</p>
+          </div>
+        )}
+      </div>
+
+      {/* Horizontal Menu Section - Layout requested */}
+      <div className="mb-8 overflow-hidden">
+        <div className="flex items-center gap-3 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
+          <button className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => onNavigate("apresentadores")}>
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Users size={20} className="text-accent" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover:text-white transition-colors">Apresentadores</span>
+          </button>
+          
+          <button className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => onNavigate("testemunhais")}>
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <MessageSquareQuote size={20} className="text-accent" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover:text-white transition-colors">Testemunhais</span>
+          </button>
+
+          <button className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => onNavigate("promocoes")}>
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Tag size={20} className="text-accent" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover:text-white transition-colors">Promoções</span>
+          </button>
+
+          <button className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => onNavigate("shopping")}>
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <ShoppingBag size={20} className="text-accent" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover:text-white transition-colors">Shopping</span>
+          </button>
+
+          <button className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => onNavigate("logos")}>
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Image size={20} className="text-accent" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover:text-white transition-colors">Logos</span>
+          </button>
+
+          <div onClick={() => { setShowAddDialog(true); setAddStep("choose"); }} className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 border-2 border-dashed border-white/10 hover:border-white/20 cursor-pointer bg-transparent group">
+            <Plus size={24} className="text-white/20 group-hover:text-white/40 transition-colors" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/20 group-hover:text-white/40 transition-colors">Adicionar</span>
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* Widgets & Secondary Content Area */}
+      <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
+        <div className="flex flex-col gap-6">
+          {/* Removing the old duplicate onAirProgram section from lines 326-371 */}
+          <div className="hidden">
+
 
       {/* Widgets Grid Section */}
       <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
