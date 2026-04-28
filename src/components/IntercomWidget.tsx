@@ -488,6 +488,7 @@ export default function IntercomWidget() {
 
   // Keep audio element volume in sync
   useEffect(() => {
+    listenerVolumeRef.current = listenerVolume;
     if (audioRef.current) {
       audioRef.current.volume = listenerVolume;
       audioRef.current.muted = false;
