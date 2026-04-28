@@ -361,10 +361,13 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           
           <button 
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }} 
-            className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all border-2 border-dashed border-white/10 hover:border-accent/40 hover:bg-accent/5 cursor-pointer bg-transparent group"
+            className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all border border-dashed border-white/10 hover:bg-white/5 cursor-pointer bg-transparent group"
+            style={{ "--accent": "var(--layout-accent-color)" } as React.CSSProperties}
           >
-            <Plus size={18} className="text-white/20 group-hover:text-accent transition-colors" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-white/20 group-hover:text-accent">Adicionar</span>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-white/5 group-hover:bg-[var(--accent)] group-hover:text-black transition-all duration-300">
+              <Plus size={18} className="text-white/20 group-hover:text-inherit" />
+            </div>
+            <span className="text-[8px] font-black uppercase tracking-widest text-white/20 group-hover:text-white transition-colors">Adicionar</span>
           </button>
         </div>
       </div>
