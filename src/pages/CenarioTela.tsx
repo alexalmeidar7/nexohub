@@ -1750,7 +1750,7 @@ export default function CenarioTela() {
                       <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: `${vhToPx(4)}${vu}` }}>mensagens</div>
                       <div className="font-bold" style={{ fontSize: `${vhToPx(2.5)}${vu}`, color: accentColor }}>chat</div>
                     </div>
-                    <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.12)", WebkitBackdropFilter: "blur(12px)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                    <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "transparent", border: "none" }}>
                       {(() => {
                         const ytUrl = config.chat.youtubeVideoUrl || "";
                         let videoId = "";
