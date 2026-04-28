@@ -124,10 +124,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Carrega TODOS os templates do usuário
+    // Carrega TODOS os templates do usuário (para encontrar 2TVs e 4TVs vinculados ao programa no ar)
     const { data: grupos } = await supabase
       .from("cenario_estudio_grupos")
-      .select("id, nome, programa_ids, updated_at")
+      .select("id, nome, programa_ids, rows, cols, updated_at")
       .eq("user_id", userId)
       .order("created_at");
 
@@ -143,6 +143,23 @@ Deno.serve(async (req) => {
         arteByGrupo[t.grupo_id] = { url: t.imagem_url || "", updatedAt: t.updated_at };
       });
     }
+
+    // Encontrar grupos vinculados ao programa no ar, separados por tamanho (2TVs / 4TVs)
+    const findArte = (totalTvs: number): string => {
+      if (!onAir) return "";
+      const grupo = (grupos || []).find(
+        (g: any) =>
+          (g.rows || 1) * (g.cols || 1) === totalTvs &&
+          (g.programa_ids || []).includes(onAir.id),
+      );
+      if (!grupo) return "";
+      const arte = arteByGrupo[grupo.id];
+      if (!arte || !arte.url) return "";
+      return withCacheBuster(arte.url, arte.updatedAt || grupo.updated_at);
+    };
+
+    const urlConvidados = findArte(4); // 4TVs ATRAS CONVIDADOS
+    const urlAncora = findArte(2);     // 2TVs ATRAS ANCORA
 
     // Cache-buster para capa/thumb do programa: usa created_at (não temos updated_at em programas)
     const programaVersion = (onAir as any)?.created_at || "";
