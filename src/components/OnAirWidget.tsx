@@ -254,7 +254,7 @@ export default function OnAirWidget() {
                 <p className="font-black text-white text-2xl leading-none tracking-tighter drop-shadow-2xl line-clamp-2">{programa.nome}</p>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/5">
-                    <Clock size={10} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
+                    <Clock size={10} style={{ color: "var(--layout-accent-color)" }} />
                     <span className="text-[10px] font-bold text-white/60 tracking-wider">{programa.horarioInicio} — {programa.horarioFim}</span>
                   </div>
                   {programa.classificacaoEtaria && (
