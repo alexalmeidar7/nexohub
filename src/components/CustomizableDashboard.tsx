@@ -212,6 +212,31 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
   const removeItem = (id: string) => { saveItems(items.filter(i => i.id !== id)); };
 
+  const addLink = (opt: typeof linkOptions[number]) => {
+    const newItem: DashboardItem = {
+      id: `link-${Date.now()}`,
+      type: "link",
+      linkPage: opt.page,
+      linkExternal: opt.external,
+      linkLabel: opt.label,
+      linkIcon: opt.icon,
+    };
+    saveItems([...items, newItem]);
+    setShowAddDialog(false);
+    setAddStep("choose");
+  };
+
+  const addWidget = (opt: typeof widgetOptions[number]) => {
+    const newItem: DashboardItem = {
+      id: `widget-${Date.now()}`,
+      type: "widget",
+      widgetType: opt.type,
+    };
+    saveItems([...items, newItem]);
+    setShowAddDialog(false);
+    setAddStep("choose");
+  };
+
   const handleLinkClick = (item: DashboardItem) => {
     if (editMode) return;
     if (item.linkExternal === "player") {
