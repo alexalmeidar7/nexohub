@@ -186,12 +186,15 @@ export default function ApresentadorForm() {
   };
 
   const updateFieldInline = async (id: string, field: string, value: any) => {
+    setSavingCell({ id, field });
     const { error } = await supabase.from("apresentadores").update({ [field]: value }).eq("id", id);
     if (error) {
       toast.error("Erro ao atualizar campo: " + error.message);
     } else {
       setApresentadores(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+      toast.success("Campo atualizado com sucesso!");
     }
+    setSavingCell(null);
   };
 
   const removeApresentador = async (id: string) => {
