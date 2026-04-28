@@ -267,70 +267,74 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1 bg-black/40 backdrop-blur-3xl rounded-[40px] border border-white/5 w-[40%]">
-      {/* On Air Section - Primary Focus */}
-      <div className="mb-6 px-6 pt-4 flex-shrink-0">
+    <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-2 bg-[#050505]/60 backdrop-blur-3xl rounded-[40px] border border-white/5 w-[40%] shadow-2xl">
+      {/* Header Info - Minimalist & Standardized */}
+      <div className="px-8 pt-6 mb-8 flex-shrink-0">
         {onAirProgram ? (
-          <div className="animate-fade-in bg-gradient-to-br from-white/10 to-transparent rounded-[32px] p-6 relative overflow-hidden border border-white/10 shadow-2xl h-[220px]">
-            <div className="absolute top-0 right-0 w-[40%] h-full pointer-events-none opacity-60 mix-blend-screen py-4 pr-4">
+          <div className="animate-fade-in relative flex flex-col">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full border" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 10%, transparent)", borderColor: "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)" }}>
+                <div className="w-1.5 h-1.5 rounded-full animate-pulse shadow-[0_0_8px_var(--layout-accent-color)]" style={{ backgroundColor: "var(--layout-accent-color)" }} />
+                <span className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
+              </div>
+              {onAirProgram.is_hd && <span className="text-[8px] font-black tracking-widest text-white/20 uppercase border border-white/5 px-2 py-0.5 rounded">Full HD</span>}
+            </div>
+
+            <div className="flex gap-6 items-start">
+              <div className="flex-1">
+                <h2 className="text-4xl font-black text-white tracking-tighter leading-[0.85] mb-6 uppercase italic drop-shadow-2xl">
+                  {onAirProgram.nome}
+                </h2>
+                
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3 text-white/40">
+                    <Clock size={14} style={{ color: "var(--layout-accent-color)" }} />
+                    <span className="text-[11px] font-bold tracking-wider uppercase">{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
+                  </div>
+                  {onAirProgram.apresentador_nome && (
+                    <div className="flex items-center gap-3 text-white/60">
+                      <User size={14} style={{ color: "var(--layout-accent-color)" }} />
+                      <span className="text-[11px] font-black tracking-widest uppercase">{onAirProgram.apresentador_nome}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {onAirProgram.selo && (
-                <img 
-                  src={onAirProgram.selo} 
-                  alt={onAirProgram.nome} 
-                  className="w-full h-full object-contain object-right" 
-                />
-              )}
-            </div>
-            
-            <div className="relative z-10 flex flex-col h-full max-w-[60%]">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full border backdrop-blur-md" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 15%, transparent)", borderColor: "color-mix(in srgb, var(--layout-accent-color) 30%, transparent)" }}>
-                  <div className="w-2 h-2 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" style={{ backgroundColor: "var(--layout-accent-color)" }} />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
-                </div>
-                {onAirProgram.is_hd && <span className="px-2 py-0.5 rounded-lg bg-white/5 text-[8px] font-black tracking-widest text-white/50 border border-white/10 uppercase backdrop-blur-sm">Full HD</span>}
-              </div>
-
-              <h2 className="text-3xl font-black text-white tracking-tighter leading-tight mb-3 drop-shadow-lg line-clamp-2">{onAirProgram.nome}</h2>
-              
-              <div className="flex flex-wrap items-center gap-4 mb-4">
-                <div className="flex items-center gap-2.5">
-                  <Clock size={16} className="text-white/60" />
-                  <span className="text-sm font-semibold text-white/80 tracking-wide">{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
-                </div>
-                {onAirProgram.apresentador_nome && (
-                  <div className="flex items-center gap-2">
-                    <User size={14} className="text-white/40" />
-                    <span className="text-xs font-bold text-white">{onAirProgram.apresentador_nome}</span>
-                  </div>
-                )}
-              </div>
-
-              {currentMusic && (
-                <div className="inline-flex items-center gap-4 px-5 py-4 rounded-[24px] bg-black/40 border border-white/10 backdrop-blur-2xl shadow-xl mt-auto transform hover:scale-[1.02] transition-all duration-300">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 15%, transparent)", borderColor: "color-mix(in srgb, var(--layout-accent-color) 25%, transparent)" }}>
-                    <Music size={18} className="animate-spin-slow" style={{ color: "var(--layout-accent-color)" }} />
-                  </div>
-                  <div className="pr-4">
-                    <p className="text-[10px] uppercase font-black tracking-[0.2em] mb-1" style={{ color: "color-mix(in srgb, var(--layout-accent-color) 60%, white)" }}>Tocando Agora</p>
-                    <p className="text-sm font-black text-white leading-tight tracking-tight">{currentMusic.titulo}</p>
-                    <p className="text-xs font-bold text-white/40 tracking-wide">{currentMusic.artista}</p>
-                  </div>
+                <div className="w-32 h-32 flex-shrink-0 relative group">
+                  <img 
+                    src={onAirProgram.selo} 
+                    alt={onAirProgram.nome} 
+                    className="w-full h-full object-contain drop-shadow-2xl" 
+                  />
                 </div>
               )}
             </div>
+
+            {currentMusic && (
+              <div className="mt-10 inline-flex items-center gap-4 p-1 pr-6 rounded-2xl bg-white/[0.03] border border-white/[0.05] backdrop-blur-xl max-w-fit shadow-xl hover:bg-white/[0.06] transition-all duration-500 group/music">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center border border-white/5 transition-all duration-500" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 10%, transparent)" }}>
+                  <Music size={18} className="animate-spin-slow" style={{ color: "var(--layout-accent-color)" }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[8px] uppercase font-black tracking-[0.25em] mb-1" style={{ color: "var(--layout-accent-color)", opacity: 0.6 }}>No Ar</p>
+                  <p className="text-xs font-black text-white leading-none truncate mb-1">{currentMusic.titulo}</p>
+                  <p className="text-[10px] font-bold text-white/30 truncate uppercase tracking-tighter">{currentMusic.artista}</p>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="p-10 rounded-[32px] bg-white/5 border border-dashed border-white/10 flex flex-col items-center justify-center text-center backdrop-blur-sm">
-            <Radio size={24} className="text-white/20 mb-2" />
-            <p className="text-white/40 text-[10px] font-bold tracking-widest uppercase">Programação Offline</p>
+          <div className="p-16 rounded-[40px] bg-white/[0.02] border border-dashed border-white/5 flex flex-col items-center justify-center text-center">
+            <Radio size={32} className="text-white/10 mb-4" />
+            <p className="text-white/20 text-[10px] font-black tracking-[0.3em] uppercase italic">Estação Offline</p>
           </div>
         )}
       </div>
 
-      {/* Horizontal Menu Section - Shortcuts/Navigation */}
-      <div className="mb-6 px-6 flex-shrink-0">
-        <div className="flex flex-wrap items-center gap-3 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
+      {/* Navigation - Ultra Clean Layout */}
+      <div className="px-8 mb-10 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-3">
           {[
             { id: "apresentadores", label: "Apresentadores", icon: Users },
             { id: "testemunhais", label: "Testemunhais", icon: MessageSquareQuote },
