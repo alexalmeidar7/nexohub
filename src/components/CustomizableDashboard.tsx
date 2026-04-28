@@ -256,87 +256,83 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   return (
     <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1 bg-black/40 backdrop-blur-3xl rounded-[40px] border border-white/5">
       {/* On Air Section - Primary Focus */}
-      <div className="mb-8 px-6 pt-6">
+      <div className="mb-6 px-6 pt-4 flex-shrink-0">
         {onAirProgram ? (
-          <div className="animate-fade-in bg-gradient-to-br from-white/10 to-transparent rounded-[32px] p-8 relative overflow-hidden group border border-white/10 shadow-2xl">
-            <div className="absolute top-0 right-0 w-[45%] h-full pointer-events-none opacity-50 mix-blend-screen scale-110 group-hover:scale-125 transition-transform duration-1000">
+          <div className="animate-fade-in bg-gradient-to-br from-white/10 to-transparent rounded-[32px] p-6 relative overflow-hidden border border-white/10 shadow-2xl h-[220px]">
+            <div className="absolute top-0 right-0 w-[40%] h-full pointer-events-none opacity-60 mix-blend-screen py-4 pr-4">
               {onAirProgram.selo && (
-                <img src={onAirProgram.selo} alt={onAirProgram.nome} className="w-full h-full object-contain object-right-bottom" />
+                <img 
+                  src={onAirProgram.selo} 
+                  alt={onAirProgram.nome} 
+                  className="w-full h-full object-contain object-right" 
+                />
               )}
             </div>
             
-            <div className="relative z-10 flex flex-col h-full">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 backdrop-blur-md">
+            <div className="relative z-10 flex flex-col h-full max-w-[60%]">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 backdrop-blur-md">
                   <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-red-500">Ao Vivo</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">Ao Vivo</span>
                 </div>
-                {onAirProgram.is_hd && <span className="px-2 py-1 rounded-lg bg-white/5 text-[9px] font-black tracking-widest text-white/50 border border-white/10 uppercase backdrop-blur-sm">Full HD</span>}
-                {onAirProgram.is_stereo && <span className="px-2 py-1 rounded-lg bg-white/5 text-[9px] font-black tracking-widest text-white/50 border border-white/10 uppercase backdrop-blur-sm">Stereo</span>}
+                {onAirProgram.is_hd && <span className="px-2 py-0.5 rounded-lg bg-white/5 text-[8px] font-black tracking-widest text-white/50 border border-white/10 uppercase backdrop-blur-sm">Full HD</span>}
               </div>
 
-              <h2 className="text-4xl font-black text-white tracking-tighter leading-none mb-4 group-hover:translate-x-1 transition-transform duration-500 drop-shadow-lg">{onAirProgram.nome}</h2>
+              <h2 className="text-3xl font-black text-white tracking-tighter leading-tight mb-3 drop-shadow-lg line-clamp-2">{onAirProgram.nome}</h2>
               
-              <div className="flex flex-wrap items-center gap-6 mb-8">
-                <div className="flex items-center gap-2.5 group/info">
-                  <div className="p-1.5 rounded-lg bg-white/5 border border-white/5 group-hover/info:bg-white/10 transition-colors">
-                    <Clock size={16} className="text-white/60" />
-                  </div>
-                  <span className="text-sm font-semibold text-white/80 tracking-wide">{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <Clock size={14} className="text-white/40" />
+                  <span className="text-xs font-semibold text-white/80">{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
                 </div>
                 {onAirProgram.apresentador_nome && (
-                  <div className="flex items-center gap-2.5 group/info">
-                    <div className="p-1.5 rounded-lg bg-white/5 border border-white/5 group-hover/info:bg-white/10 transition-colors">
-                      <User size={16} className="text-white/60" />
-                    </div>
-                    <span className="text-sm font-bold text-white tracking-wide">{onAirProgram.apresentador_nome}</span>
+                  <div className="flex items-center gap-2">
+                    <User size={14} className="text-white/40" />
+                    <span className="text-xs font-bold text-white">{onAirProgram.apresentador_nome}</span>
                   </div>
                 )}
               </div>
 
               {currentMusic && (
-                <div className="inline-flex items-center gap-4 px-5 py-4 rounded-[24px] bg-black/40 border border-white/10 backdrop-blur-2xl shadow-xl max-w-fit mt-auto transform hover:scale-[1.02] transition-all duration-300">
-                  <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center border border-accent/20">
-                    <Music size={18} className="text-accent animate-spin-slow" />
+                <div className="inline-flex items-center gap-3 px-4 py-3 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-2xl shadow-xl mt-auto">
+                  <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center border border-accent/20">
+                    <Music size={14} className="text-accent animate-spin-slow" />
                   </div>
-                  <div className="pr-4">
-                    <p className="text-[10px] uppercase font-black tracking-[0.2em] text-accent/60 mb-1">Tocando Agora</p>
-                    <p className="text-sm font-black text-white leading-tight tracking-tight">{currentMusic.titulo}</p>
-                    <p className="text-xs font-bold text-white/40 tracking-wide">{currentMusic.artista}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black text-white leading-tight truncate">{currentMusic.titulo}</p>
+                    <p className="text-[9px] font-bold text-white/40 truncate">{currentMusic.artista}</p>
                   </div>
                 </div>
               )}
             </div>
           </div>
         ) : (
-          <div className="p-16 rounded-[32px] bg-white/5 border border-dashed border-white/10 flex flex-col items-center justify-center text-center backdrop-blur-sm">
-            <div className="p-4 rounded-full bg-white/5 mb-4">
-              <Radio size={32} className="text-white/20" />
-            </div>
-            <p className="text-white/40 text-sm font-bold tracking-widest uppercase">Programação Offline</p>
+          <div className="p-10 rounded-[32px] bg-white/5 border border-dashed border-white/10 flex flex-col items-center justify-center text-center backdrop-blur-sm">
+            <Radio size={24} className="text-white/20 mb-2" />
+            <p className="text-white/40 text-[10px] font-bold tracking-widest uppercase">Programação Offline</p>
           </div>
         )}
       </div>
 
       {/* Horizontal Menu Section - Shortcuts/Navigation */}
-      <div className="mb-10 px-6">
-        <div className="flex items-center gap-4 pb-4 overflow-x-auto no-scrollbar scroll-smooth">
+      <div className="mb-6 px-6 flex-shrink-0">
+        <div className="flex items-center gap-3 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
           {[
-            { id: "apresentadores", label: "Apresentadores", icon: Users, color: "accent" },
-            { id: "testemunhais", label: "Testemunhais", icon: MessageSquareQuote, color: "accent" },
-            { id: "promocoes", label: "Promoções", icon: Tag, color: "accent" },
-            { id: "shopping", label: "Shopping", icon: ShoppingBag, color: "accent" },
-            { id: "logos", label: "Logos", icon: Image, color: "accent" }
+            { id: "apresentadores", label: "Apresentadores", icon: Users },
+            { id: "testemunhais", label: "Testemunhais", icon: MessageSquareQuote },
+            { id: "promocoes", label: "Promoções", icon: Tag },
+            { id: "shopping", label: "Shopping", icon: ShoppingBag },
+            { id: "logos", label: "Logos", icon: Image }
           ].map((nav) => (
             <button 
               key={nav.id}
-              className="flex flex-col items-center justify-center gap-3 min-w-[110px] h-[110px] rounded-[28px] transition-all duration-300 hover:translate-y-[-4px] active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10 hover:shadow-2xl hover:shadow-accent/5" 
+              className="flex flex-col items-center justify-center gap-2 min-w-[90px] h-[90px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
               onClick={() => onNavigate(nav.id as any)}
             >
-              <div className="w-11 h-11 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-accent/20 transition-all duration-300">
-                <nav.icon size={22} className="text-accent" />
+              <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
+                <nav.icon size={18} className="text-accent" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40 group-hover:text-white group-hover:tracking-[0.15em] transition-all duration-300">
+              <span className="text-[9px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
                 {nav.label}
               </span>
             </button>
@@ -344,57 +340,58 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           
           <button 
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }} 
-            className="flex flex-col items-center justify-center gap-3 min-w-[110px] h-[110px] rounded-[28px] transition-all duration-300 hover:translate-y-[-4px] border-2 border-dashed border-white/10 hover:border-accent/40 hover:bg-accent/5 cursor-pointer bg-transparent group"
+            className="flex flex-col items-center justify-center gap-2 min-w-[90px] h-[90px] rounded-[24px] transition-all border-2 border-dashed border-white/10 hover:border-accent/40 hover:bg-accent/5 cursor-pointer bg-transparent group"
           >
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-white/5 group-hover:bg-accent/20 transition-all duration-300">
-              <Plus size={24} className="text-white/20 group-hover:text-accent transition-colors" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/20 group-hover:text-accent transition-all duration-300">Adicionar</span>
+            <Plus size={20} className="text-white/20 group-hover:text-accent transition-colors" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/20 group-hover:text-accent">Adicionar</span>
           </button>
         </div>
       </div>
 
       {/* Widgets & Secondary Content Area */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6 scrollbar-thin">
-        <div className="flex flex-col gap-8">
+      <div className="flex-1 overflow-hidden px-6 pb-4">
+        <div className="flex flex-col h-full gap-4">
           {items.filter(i => i.type === "widget").length > 0 && (
-            <div className="mb-4">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-                <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/30">Módulos Inteligentes</p>
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <div className="flex flex-col h-full">
+              <div className="flex items-center gap-3 mb-3 flex-shrink-0">
+                <div className="h-px w-8 bg-gradient-to-r from-transparent to-white/10" />
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30 whitespace-nowrap">Módulos Inteligentes</p>
+                <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 min-h-0">
                 {items.filter(i => i.type === "widget").map(item => (
                   <div 
                     key={item.id} 
-                    className={`relative group rounded-[32px] animate-fade-in flex flex-col transition-all duration-500 hover:translate-y-[-4px] ${draggedId === item.id ? "opacity-40 scale-95" : "hover:shadow-2xl hover:shadow-black/40"}`} 
-                    style={{ background: "rgba(26, 26, 26, 0.4)", backdropFilter: "blur(20px)", boxShadow: "0 10px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", height: "300px", overflow: "hidden" }} 
+                    className={`relative group rounded-[28px] animate-fade-in flex flex-col transition-all duration-300 ${draggedId === item.id ? "opacity-40 scale-95" : "hover:bg-white/[0.02]"}`} 
+                    style={{ background: "rgba(26, 26, 26, 0.4)", backdropFilter: "blur(20px)", boxShadow: "0 4px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", minHeight: 0 }} 
                     onDragOver={(e) => handleDragOver(e, item.id)} 
                     onDrop={() => handleDrop(item.id)} 
                     onDragEnd={handleDragEnd}
                   >
-                    <div className="flex items-center gap-3 px-6 py-4 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: `1px solid rgba(255,255,255,0.05)` }} draggable onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}>
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-accent/10">
-                        {item.widgetType === "agenda" && <CalendarDays size={16} className="text-accent" />}
-                        {item.widgetType === "musica" && <Music size={16} className="text-accent" />}
-                        {item.widgetType === "weather" && <CloudSun size={16} className="text-accent" />}
-                        {item.widgetType === "stats" && <BarChart3 size={16} className="text-accent" />}
-                        {item.widgetType === "player" && <MonitorPlay size={16} className="text-accent" />}
+                    <div className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: `1px solid rgba(255,255,255,0.05)` }} draggable onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}>
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-accent/10">
+                        {item.widgetType === "agenda" && <CalendarDays size={14} className="text-accent" />}
+                        {item.widgetType === "musica" && <Music size={14} className="text-accent" />}
+                        {item.widgetType === "weather" && <CloudSun size={14} className="text-accent" />}
+                        {item.widgetType === "stats" && <BarChart3 size={14} className="text-accent" />}
+                        {item.widgetType === "player" && <MonitorPlay size={14} className="text-accent" />}
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 group-hover:text-white transition-colors">
+                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50 group-hover:text-white transition-colors">
                         {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : item.widgetType === "stats" ? "Métricas" : "Player"}
                       </span>
-                      <GripVertical size={14} className="ml-auto text-white/10 group-hover:text-white/30 transition-colors" />
+                      <GripVertical size={12} className="ml-auto text-white/10 group-hover:text-white/30 transition-colors" />
                     </div>
                     
-                    <div className="absolute top-4 right-12 z-10 opacity-0 group-hover:opacity-100 transition-all">
-                      <button onClick={() => removeItem(item.id)} className="w-8 h-8 rounded-xl flex items-center justify-center bg-red-500/10 border border-red-500/20 hover:bg-red-500 transition-all group/btn"><Trash2 size={12} className="text-red-500 group-hover/btn:text-white" /></button>
-                    </div>
+                    <button 
+                      onClick={() => removeItem(item.id)} 
+                      className="absolute top-3 right-8 z-10 opacity-0 group-hover:opacity-100 transition-all w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/10 border border-red-500/20 hover:bg-red-500 group/btn"
+                    >
+                      <Trash2 size={10} className="text-red-500 group-hover/btn:text-white" />
+                    </button>
                     
-                    <div className="p-6 flex-1 overflow-y-auto widget-scroll">
-                      <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-accent" size={24} /></div>}>
+                    <div className="p-4 flex-1 overflow-y-auto widget-scroll min-h-0">
+                      <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-accent" size={20} /></div>}>
                         {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
                         {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
                         {item.widgetType === "weather" && <DashboardWeatherWidget />}
