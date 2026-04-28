@@ -247,6 +247,7 @@ export default function CenarioTela() {
     if (!m) return `rgba(68,68,68,${alpha})`;
     return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${alpha})`;
   };
+  const [debugMode, setDebugMode] = useState(false);
 
   /* ─── Fetch artist background from Deezer (like Player audio) ─── */
   const exceptionWordsList = (config.home.exceptionWords || "break,vinhetas,hora certa").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
@@ -1360,6 +1361,9 @@ export default function CenarioTela() {
                 <div style={{ width: `${vhToPx(1.2)}${vu}`, height: `${vhToPx(1.2)}${vu}`, borderRadius: "50%", background: drawColor }} />
               </button>
             )}
+          <button onClick={() => setDebugMode(p => !p)} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: debugMode ? "#ef4444" : "rgba(255,255,255,0.1)", border: debugMode ? `2px solid #ef4444` : "2px solid transparent", transition: "all 0.25s ease" }}>
+            <span style={{ fontSize: `${vhToPx(1.2)}${vu}`, fontWeight: "bold", color: "#fff" }}>BUG</span>
+          </button>
           </div>
           </div>
 
@@ -1864,6 +1868,23 @@ export default function CenarioTela() {
             </div>
           )}
 
+          {debugMode && (
+            <style>{`
+              * { border: 1px solid rgba(255, 0, 0, 0.4) !important; background-color: rgba(255, 0, 0, 0.05) !important; }
+              img { border: 2px solid #0f0 !important; }
+              /* Highlight anything that might be an overlay or filter */
+              [style*="background: linear-gradient"], [style*="background-image: linear-gradient"],
+              [style*="background: radial-gradient"], [style*="background-image: radial-gradient"],
+              [style*="filter"], [style*="backdrop-filter"], [style*="opacity"],
+              .absolute.inset-0 { 
+                outline: 4px dashed #ff00ff !important;
+                outline-offset: -4px;
+              }
+              [style*="rgba(0,0,0"], [style*="rgba(0, 0, 0"], [style*="#000"] {
+                outline: 4px solid #00ffff !important;
+              }
+            `}</style>
+          )}
           </div>
         </div>
       </div>
