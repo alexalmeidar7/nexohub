@@ -450,12 +450,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             )}
             {addStep === "link" && (
               <div className="grid grid-cols-2 gap-2">
-                {linkOptions.map(opt => (
-                  <button key={opt.label} onClick={() => { addLink(opt); setHiddenLinks(prev => prev.filter(id => id !== opt.page)); localStorage.setItem("nexohub_hidden_dashboard_links", JSON.stringify(hiddenLinks.filter(id => id !== opt.page))); }} className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/10" style={{ background: "rgba(255,255,255,0.05)" }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5">{getIcon(opt.icon) && <opt.icon size={14} style={{ color: "var(--layout-accent-color)" }} />}</div>
-                    <span className="text-xs font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>{opt.label}</span>
-                  </button>
-                ))}
+                {linkOptions.map(opt => {
+                  const Icon = getIcon(opt.icon);
+                  return (
+                    <button key={opt.label} onClick={() => { addLink(opt); setHiddenLinks(prev => prev.filter(id => id !== opt.page)); localStorage.setItem("nexohub_hidden_dashboard_links", JSON.stringify(hiddenLinks.filter(id => id !== opt.page))); }} className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/10" style={{ background: "rgba(255,255,255,0.05)" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5"><Icon size={14} style={{ color: "var(--layout-accent-color)" }} /></div>
+                      <span className="text-xs font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>{opt.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
             {addStep === "widget" && (
