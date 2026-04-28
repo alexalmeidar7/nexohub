@@ -322,52 +322,88 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
       {/* Widgets Grid Section */}
       <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
-        {onAirProgram && (
-          <div className="mb-8 animate-fade-in">
-            <div className="flex items-start gap-5">
-              {onAirProgram.selo && (
-                <img src={onAirProgram.selo} alt={onAirProgram.nome} className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-xl object-contain flex-shrink-0" />
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Circle size={8} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
-                </div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Clock size={11} style={{ color: "var(--layout-icon-color, #888)" }} />
-                  <span className="text-[10px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
-                </div>
-                {onAirProgram.apresentador_nome && (
+        <div className="flex flex-col gap-6">
+          {onAirProgram && (
+            <div className="animate-fade-in">
+              <div className="flex items-start gap-5">
+                {onAirProgram.selo && (
+                  <img src={onAirProgram.selo} alt={onAirProgram.nome} className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-xl object-contain flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <User size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
-                    <span className="text-[11px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)" }}>{onAirProgram.apresentador_nome}</span>
+                    <Circle size={8} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
                   </div>
-                )}
-                {(onAirProgram.descricao || onAirProgram.tipo_programa) && (
-                  <p className="text-[10px] leading-relaxed line-clamp-2 mb-1.5" style={{ maxWidth: 360, color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>
-                    {onAirProgram.tipo_programa && <span className="capitalize">{onAirProgram.tipo_programa.replace(/_/g, " ")}</span>}
-                    {onAirProgram.tipo_programa && onAirProgram.descricao && " — "}
-                    {onAirProgram.descricao}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                  {onAirProgram.is_hd && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>FULL HD</span>}
-                  {onAirProgram.is_stereo && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>STEREO</span>}
-                  {onAirProgram.classificacao_etaria && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>{onAirProgram.classificacao_etaria}</span>}
-                </div>
-                {currentMusic && (
-                  <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                    <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>{currentMusic.titulo}</p>
-                      {currentMusic.artista && <p className="text-[9px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>{currentMusic.artista}</p>}
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Clock size={11} style={{ color: "var(--layout-icon-color, #888)" }} />
+                    <span className="text-[10px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
+                  </div>
+                  {onAirProgram.apresentador_nome && (
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <User size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
+                      <span className="text-[11px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)" }}>{onAirProgram.apresentador_nome}</span>
                     </div>
+                  )}
+                  {(onAirProgram.descricao || onAirProgram.tipo_programa) && (
+                    <p className="text-[10px] leading-relaxed line-clamp-2 mb-1.5" style={{ maxWidth: 360, color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>
+                      {onAirProgram.tipo_programa && <span className="capitalize">{onAirProgram.tipo_programa.replace(/_/g, " ")}</span>}
+                      {onAirProgram.tipo_programa && onAirProgram.descricao && " — "}
+                      {onAirProgram.descricao}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    {onAirProgram.is_hd && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>FULL HD</span>}
+                    {onAirProgram.is_stereo && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>STEREO</span>}
+                    {onAirProgram.classificacao_etaria && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>{onAirProgram.classificacao_etaria}</span>}
                   </div>
-                )}
+                  {currentMusic && (
+                    <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>{currentMusic.titulo}</p>
+                        {currentMusic.artista && <p className="text-[9px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>{currentMusic.artista}</p>}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+          )}
+
+          {/* New Horizontal Menu Section */}
+          <div className="flex items-center gap-6 py-2 overflow-x-auto no-scrollbar" style={{ borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("apresentadores")}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <Users size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
+              </div>
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Apresentadores</span>
+            </button>
+            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("testemunhais")}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <MessageSquareQuote size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
+              </div>
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Testemunhais</span>
+            </button>
+            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("promocoes")}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <Tag size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
+              </div>
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Promoções</span>
+            </button>
+            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("shopping")}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <ShoppingBag size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
+              </div>
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Shopping</span>
+            </button>
+            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("logos")}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <Image size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
+              </div>
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Logos</span>
+            </button>
           </div>
-        )}
+        </div>
 
         {items.filter(i => i.type === "widget").length > 0 && (
           <div className="mb-2">
