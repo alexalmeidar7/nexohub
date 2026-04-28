@@ -412,12 +412,12 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       </button>
                     </div>
                     
-                    <div className="p-4 flex-1 overflow-y-auto widget-scroll min-h-0">
+                    <div className="p-4 flex-1 overflow-hidden min-h-0">
                       <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-accent" size={20} /></div>}>
-                        {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
-                        {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
-                        {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                        {item.widgetType === "player" && <VideoPlayer />}
+                        {item.widgetType === "agenda" && <div className="h-full overflow-y-auto widget-scroll"><DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} /></div>}
+                        {item.widgetType === "musica" && <div className="h-full overflow-y-auto widget-scroll"><MusicProgramWidget dataUserId={dataUserId || undefined} /></div>}
+                        {item.widgetType === "weather" && <div className="h-full overflow-y-auto widget-scroll"><DashboardWeatherWidget /></div>}
+                        {item.widgetType === "player" && <OnAirWidget />}
                       </Suspense>
                     </div>
                   </div>
