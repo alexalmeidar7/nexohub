@@ -205,16 +205,24 @@ export default function OnAirWidget() {
       <div className="flex items-center gap-1 mb-4 px-1 flex-shrink-0">
         <button 
           onClick={() => setActiveTab("info")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "info" ? "bg-accent/15 text-accent shadow-[0_0_15px_rgba(var(--layout-accent-color-rgb),0.1)]" : "bg-white/[0.03] text-white/30 hover:bg-white/[0.08]"}`}
-          style={activeTab === "info" ? { border: "1px solid color-mix(in srgb, var(--layout-accent-color) 40%, transparent)" } : {}}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "info" ? "text-accent shadow-[0_0_15px_rgba(var(--layout-accent-color-rgb),0.1)]" : "bg-white/[0.03] text-white/30 hover:bg-white/[0.08]"}`}
+          style={activeTab === "info" ? { 
+            backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 15%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--layout-accent-color) 40%, transparent)",
+            color: "var(--layout-accent-color)"
+          } : {}}
         >
           <Radio size={12} />
           No Ar
         </button>
         <button 
           onClick={() => setActiveTab("video")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "video" ? "bg-accent/15 text-accent shadow-[0_0_15px_rgba(var(--layout-accent-color-rgb),0.1)]" : "bg-white/[0.03] text-white/30 hover:bg-white/[0.08]"}`}
-          style={activeTab === "video" ? { border: "1px solid color-mix(in srgb, var(--layout-accent-color) 40%, transparent)" } : {}}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "video" ? "text-accent shadow-[0_0_15px_rgba(var(--layout-accent-color-rgb),0.1)]" : "bg-white/[0.03] text-white/30 hover:bg-white/[0.08]"}`}
+          style={activeTab === "video" ? { 
+            backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 15%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--layout-accent-color) 40%, transparent)",
+            color: "var(--layout-accent-color)"
+          } : {}}
         >
           <MonitorPlay size={12} />
           Vídeo
@@ -283,12 +291,12 @@ export default function OnAirWidget() {
                       <img src={musicData.capa} alt="Capa" className="w-full h-full object-cover transition-transform duration-500 group-hover/cover:scale-110" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Music size={20} className="text-white/10" />
+                        <Music size={20} style={{ color: "var(--layout-accent-color)", opacity: 0.2 }} />
                       </div>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[8px] font-black text-accent/60 uppercase tracking-[0.2em] mb-1">No Ar agora</p>
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] mb-1" style={{ color: "var(--layout-accent-color)", opacity: 0.6 }}>No Ar agora</p>
                     <p className="text-sm font-black text-white leading-tight truncate drop-shadow-md">{musicData?.titulo || "Aguardando..."}</p>
                     <p className="text-[10px] font-bold text-white/40 truncate tracking-wide">{musicData?.artista || "Programação Musical"}</p>
                   </div>
