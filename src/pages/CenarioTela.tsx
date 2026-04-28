@@ -247,6 +247,7 @@ export default function CenarioTela() {
     if (!m) return `rgba(68,68,68,${alpha})`;
     return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${alpha})`;
   };
+  const [debugMode, setDebugMode] = useState(false);
 
   /* ─── Fetch artist background from Deezer (like Player audio) ─── */
   const exceptionWordsList = (config.home.exceptionWords || "break,vinhetas,hora certa").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
