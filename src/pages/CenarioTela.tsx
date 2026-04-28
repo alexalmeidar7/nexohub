@@ -1297,9 +1297,7 @@ export default function CenarioTela() {
                   onLoad={() => setArtistBgReady(true)}
                 />
               )}
-              {false && isHomeOrChat && !altMode && (
-                <div className="absolute inset-0 pointer-events-none" style={{ opacity: artistVisible ? 1 : 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)", transition: "opacity 1.2s ease-in-out" }} />
-              )}
+              {/* Removed black overlay per user request */}
               {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
@@ -1552,8 +1550,7 @@ export default function CenarioTela() {
                               borderRadius: `${vhToPx(1.4)}${vu}`,
                             }}
                           />
-                          {/* Gradient overlay for text readability */}
-                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "70%", background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)", pointerEvents: "none", borderRadius: `0 0 ${vhToPx(1.4)}${vu} ${vhToPx(1.4)}${vu}` }} />
+                          {/* Removed black overlay per user request */}
                           {/* Music title + artist — centered */}
                           <div key={musicKey} style={{ position: "absolute", top: "50%", left: `${vhToPx(1.2)}${vu}`, right: `${vhToPx(1.2)}${vu}`, transform: "translateY(-30%)", zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", textAlign: "center" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.4)}${vu}` }}>
