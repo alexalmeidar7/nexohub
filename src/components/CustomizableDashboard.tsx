@@ -462,8 +462,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <Plus size={20} className="mb-1.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }} />
               <span className="text-[10px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }}>Adicionar</span>
             </div>
+          </div>
         </div>
-      </div>
       )}
 
       {/* Widgets Grid Section */}
@@ -605,7 +605,13 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       <X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} />
                     </button>
                   </div>
-                  <div className={`p-4 flex-1 ${item.widgetType === "player" && playerVideoActive === item.id ? "overflow-visible" : "overflow-y-auto overflow-x-hidden"} widget-scroll`}>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      </div>
                     <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
                       {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
                       {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
