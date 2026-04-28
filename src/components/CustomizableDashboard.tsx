@@ -349,46 +349,49 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       </div>
 
       {/* Widgets & Secondary Content Area */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6 scrollbar-thin">
-        <div className="flex flex-col gap-8">
+      <div className="flex-1 overflow-hidden px-6 pb-4">
+        <div className="flex flex-col h-full gap-4">
           {items.filter(i => i.type === "widget").length > 0 && (
-            <div className="mb-4">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-                <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/30">Módulos Inteligentes</p>
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <div className="flex flex-col h-full">
+              <div className="flex items-center gap-3 mb-3 flex-shrink-0">
+                <div className="h-px w-8 bg-gradient-to-r from-transparent to-white/10" />
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30 whitespace-nowrap">Módulos Inteligentes</p>
+                <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 min-h-0">
                 {items.filter(i => i.type === "widget").map(item => (
                   <div 
                     key={item.id} 
-                    className={`relative group rounded-[32px] animate-fade-in flex flex-col transition-all duration-500 hover:translate-y-[-4px] ${draggedId === item.id ? "opacity-40 scale-95" : "hover:shadow-2xl hover:shadow-black/40"}`} 
-                    style={{ background: "rgba(26, 26, 26, 0.4)", backdropFilter: "blur(20px)", boxShadow: "0 10px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", height: "300px", overflow: "hidden" }} 
+                    className={`relative group rounded-[28px] animate-fade-in flex flex-col transition-all duration-300 ${draggedId === item.id ? "opacity-40 scale-95" : "hover:bg-white/[0.02]"}`} 
+                    style={{ background: "rgba(26, 26, 26, 0.4)", backdropFilter: "blur(20px)", boxShadow: "0 4px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", minHeight: 0 }} 
                     onDragOver={(e) => handleDragOver(e, item.id)} 
                     onDrop={() => handleDrop(item.id)} 
                     onDragEnd={handleDragEnd}
                   >
-                    <div className="flex items-center gap-3 px-6 py-4 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: `1px solid rgba(255,255,255,0.05)` }} draggable onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}>
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-accent/10">
-                        {item.widgetType === "agenda" && <CalendarDays size={16} className="text-accent" />}
-                        {item.widgetType === "musica" && <Music size={16} className="text-accent" />}
-                        {item.widgetType === "weather" && <CloudSun size={16} className="text-accent" />}
-                        {item.widgetType === "stats" && <BarChart3 size={16} className="text-accent" />}
-                        {item.widgetType === "player" && <MonitorPlay size={16} className="text-accent" />}
+                    <div className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: `1px solid rgba(255,255,255,0.05)` }} draggable onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}>
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-accent/10">
+                        {item.widgetType === "agenda" && <CalendarDays size={14} className="text-accent" />}
+                        {item.widgetType === "musica" && <Music size={14} className="text-accent" />}
+                        {item.widgetType === "weather" && <CloudSun size={14} className="text-accent" />}
+                        {item.widgetType === "stats" && <BarChart3 size={14} className="text-accent" />}
+                        {item.widgetType === "player" && <MonitorPlay size={14} className="text-accent" />}
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 group-hover:text-white transition-colors">
+                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50 group-hover:text-white transition-colors">
                         {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : item.widgetType === "stats" ? "Métricas" : "Player"}
                       </span>
-                      <GripVertical size={14} className="ml-auto text-white/10 group-hover:text-white/30 transition-colors" />
+                      <GripVertical size={12} className="ml-auto text-white/10 group-hover:text-white/30 transition-colors" />
                     </div>
                     
-                    <div className="absolute top-4 right-12 z-10 opacity-0 group-hover:opacity-100 transition-all">
-                      <button onClick={() => removeItem(item.id)} className="w-8 h-8 rounded-xl flex items-center justify-center bg-red-500/10 border border-red-500/20 hover:bg-red-500 transition-all group/btn"><Trash2 size={12} className="text-red-500 group-hover/btn:text-white" /></button>
-                    </div>
+                    <button 
+                      onClick={() => removeItem(item.id)} 
+                      className="absolute top-3 right-8 z-10 opacity-0 group-hover:opacity-100 transition-all w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/10 border border-red-500/20 hover:bg-red-500 group/btn"
+                    >
+                      <Trash2 size={10} className="text-red-500 group-hover/btn:text-white" />
+                    </button>
                     
-                    <div className="p-6 flex-1 overflow-y-auto widget-scroll">
-                      <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-accent" size={24} /></div>}>
+                    <div className="p-4 flex-1 overflow-y-auto widget-scroll min-h-0">
+                      <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-accent" size={20} /></div>}>
                         {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
                         {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
                         {item.widgetType === "weather" && <DashboardWeatherWidget />}
