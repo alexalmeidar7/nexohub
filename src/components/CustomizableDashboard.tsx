@@ -307,13 +307,14 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               </div>
 
               {currentMusic && (
-                <div className="inline-flex items-center gap-3 px-4 py-3 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-2xl shadow-xl mt-auto">
-                  <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center border border-accent/20">
-                    <Music size={14} className="text-accent animate-spin-slow" />
+                <div className="inline-flex items-center gap-4 px-5 py-4 rounded-[24px] bg-black/40 border border-white/10 backdrop-blur-2xl shadow-xl mt-auto transform hover:scale-[1.02] transition-all duration-300">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 15%, transparent)", borderColor: "color-mix(in srgb, var(--layout-accent-color) 25%, transparent)" }}>
+                    <Music size={18} className="animate-spin-slow" style={{ color: "var(--layout-accent-color)" }} />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-black text-white leading-tight truncate">{currentMusic.titulo}</p>
-                    <p className="text-[9px] font-bold text-white/40 truncate">{currentMusic.artista}</p>
+                  <div className="pr-4">
+                    <p className="text-[10px] uppercase font-black tracking-[0.2em] mb-1" style={{ color: "color-mix(in srgb, var(--layout-accent-color) 60%, white)" }}>Tocando Agora</p>
+                    <p className="text-sm font-black text-white leading-tight tracking-tight">{currentMusic.titulo}</p>
+                    <p className="text-xs font-bold text-white/40 tracking-wide">{currentMusic.artista}</p>
                   </div>
                 </div>
               )}
