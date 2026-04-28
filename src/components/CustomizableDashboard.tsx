@@ -381,10 +381,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         <div className="flex flex-col h-full gap-4">
           {items.filter(i => i.type === "widget").length > 0 && (
             <div className="flex flex-col h-full">
-              <div className="flex items-center gap-3 mb-3 flex-shrink-0">
-                <div className="h-px w-8 bg-gradient-to-r from-transparent to-white/10" />
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30 whitespace-nowrap">Módulos Inteligentes</p>
-                <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+              <div className="flex items-center gap-3 mb-6 flex-shrink-0">
+                <div className="h-px w-6 bg-accent/20" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)" }} />
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 whitespace-nowrap">Módulos Inteligentes</p>
+                <div className="h-px flex-1 bg-gradient-to-r from-accent/20 to-transparent" style={{ backgroundImage: `linear-gradient(to right, color-mix(in srgb, var(--layout-accent-color) 20%, transparent), transparent)` }} />
               </div>
               
               <div className="grid grid-cols-1 gap-4 flex-1 min-h-0">
