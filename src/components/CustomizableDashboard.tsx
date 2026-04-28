@@ -284,9 +284,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             
             <div className="relative z-10 flex flex-col h-full max-w-[60%]">
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 backdrop-blur-md">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">Ao Vivo</span>
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full border backdrop-blur-md" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 15%, transparent)", borderColor: "color-mix(in srgb, var(--layout-accent-color) 30%, transparent)" }}>
+                  <div className="w-2 h-2 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" style={{ backgroundColor: "var(--layout-accent-color)" }} />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
                 </div>
                 {onAirProgram.is_hd && <span className="px-2 py-0.5 rounded-lg bg-white/5 text-[8px] font-black tracking-widest text-white/50 border border-white/10 uppercase backdrop-blur-sm">Full HD</span>}
               </div>
