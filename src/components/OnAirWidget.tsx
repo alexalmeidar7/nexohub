@@ -205,13 +205,15 @@ export default function OnAirWidget() {
       <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl mb-4 self-center w-full max-w-[200px] flex-shrink-0">
         <button 
           onClick={() => setActiveTab("info")}
-          className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "info" ? "bg-white/10 text-white shadow-sm" : "text-white/20 hover:text-white/40"}`}
+          className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "info" ? "text-white shadow-sm" : "text-white/20 hover:text-white/40"}`}
+          style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
         >
           Informações
         </button>
         <button 
           onClick={() => setActiveTab("video")}
-          className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "video" ? "bg-white/10 text-white shadow-sm" : "text-white/20 hover:text-white/40"}`}
+          className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "video" ? "text-white shadow-sm" : "text-white/20 hover:text-white/40"}`}
+          style={activeTab === "video" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
         >
           Vídeo
         </button>
@@ -221,7 +223,7 @@ export default function OnAirWidget() {
         {activeTab === "info" ? (
           <div className="h-full relative flex flex-col">
             {/* Background Accent Gradient - Subtle */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-accent/5 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at top left, color-mix(in srgb, var(--layout-accent-color) 8%, transparent), transparent 70%)" }} />
 
             {/* Presenter photo - Minimalist ghost effect */}
             {apresentadorFoto && (
@@ -236,21 +238,24 @@ export default function OnAirWidget() {
             {/* Content Top - Program Info */}
             <div className="relative z-10 flex-1 flex flex-col pt-2">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-accent/10 border border-accent/20">
-                  <div className="w-1 h-1 rounded-full bg-accent animate-pulse" />
-                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-accent">No Ar</span>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color) 25%, transparent)" }}>
+                  <div className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: "var(--layout-accent-color)" }} />
+                  <span className="text-[8px] font-black uppercase tracking-[0.2em]" style={{ color: "var(--layout-accent-color)" }}>No Ar</span>
                 </div>
                 
                 <button
                   onClick={() => setGradeOpen(true)}
-                  className="p-2 text-white/20 hover:text-accent transition-colors"
+                  className="p-2 text-white/20 hover:text-white transition-colors"
+                  style={{ "--hover-color": "var(--layout-accent-color)" } as React.CSSProperties}
                   title="Ver Grade"
                 >
-                  <Clock size={14} />
+                  <Clock size={14} className="hover:text-[var(--hover-color)]" />
                 </button>
               </div>
 
-              <h3 className="text-2xl font-black text-white leading-[0.9] tracking-tighter mb-4 line-clamp-2 drop-shadow-sm uppercase italic italic-accent">{programa.nome}</h3>
+              <h3 className="text-2xl font-black text-white leading-[0.9] tracking-tighter mb-4 line-clamp-2 drop-shadow-sm uppercase italic" style={{ "--accent": "var(--layout-accent-color)" } as React.CSSProperties}>
+                {programa.nome}
+              </h3>
               
               {/* Music info - Very Clean Card */}
               <div className="z-10 bg-white/[0.02] border border-white/[0.05] rounded-3xl p-4 mb-auto group/music-card hover:bg-white/[0.04] transition-all duration-500">
@@ -265,7 +270,7 @@ export default function OnAirWidget() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-black text-white leading-tight truncate mb-0.5">{musicData?.titulo || "Programação Musical"}</p>
+                    <p className="text-[11px] font-black text-white leading-tight truncate mb-0.5" style={{ color: "color-mix(in srgb, var(--layout-accent-color) 80%, white)" }}>{musicData?.titulo || "Programação Musical"}</p>
                     <p className="text-[9px] font-bold text-white/30 truncate tracking-wide">{musicData?.artista || "Positiva FM"}</p>
                   </div>
                 </div>
@@ -273,11 +278,11 @@ export default function OnAirWidget() {
 
               {/* Bottom Info - Presenter */}
               <div className="mt-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center">
-                    <User size={10} className="text-white/40" />
+                <div className="flex items-center gap-3 group/presenter">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center border transition-all duration-300" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 10%, transparent)", borderColor: "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)" }}>
+                    <Mic size={14} style={{ color: "var(--layout-accent-color)" }} />
                   </div>
-                  <span className="text-[10px] font-black text-white/50 uppercase tracking-widest">{apresentadorNome}</span>
+                  <span className="text-[10px] font-black text-white/50 uppercase tracking-widest group-hover/presenter:text-white transition-colors">{apresentadorNome}</span>
                 </div>
                 
                 <span className="text-[9px] font-bold text-white/20 tracking-tighter font-mono">
