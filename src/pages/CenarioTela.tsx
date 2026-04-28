@@ -1660,7 +1660,7 @@ export default function CenarioTela() {
             {/* ═══ WEATHER ═══ */}
             {activeTab === "weather" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d2847 30%, #134e7a 60%, #1a6fad 85%, #4a9fd4 100%)" }} />}
+                {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "transparent" }} />}
                 <div className="absolute inset-0" style={{ background: "transparent" }} />
                 <div className="absolute bottom-0 left-0 right-0" style={{ height: "40%", background: "transparent" }} />
                 <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(4)}${vu}`, paddingLeft: `calc(${vhToPx(4)}${vu} + 50px)` }}>
