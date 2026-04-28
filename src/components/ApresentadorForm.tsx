@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import * as XLSX from "xlsx";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
