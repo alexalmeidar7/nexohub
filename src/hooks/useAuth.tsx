@@ -76,29 +76,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const newUser = newSession?.user ?? null;
-      const newId = newUser?.id ?? null;
 
+      // CRITICAL: never log the user out unless they explicitly clicked "Sair".
+      // If we receive a null session event but we have a known good session,
+      // keep the user logged in and try to refresh in the background.
+      if (!newUser && !manualSignOutRef.current) {
+        if (lastGoodSessionRef.current?.user) {
+          const restored = lastGoodSessionRef.current;
+          if (prevUserIdRef.current !== restored.user.id) {
+            prevUserIdRef.current = restored.user.id;
+            ensureMusicScopeForUser(restored.user.id);
+            setUser(restored.user);
+          }
+          setSession(restored);
+          finishLoading();
+          // Try to refresh silently
+          supabase.auth.refreshSession().then(({ data: refreshed }) => {
+            if (refreshed.session && mounted) {
+              lastGoodSessionRef.current = refreshed.session;
+              setSession(refreshed.session);
+            }
+          }).catch(() => { /* keep current state */ });
+          return;
+        }
+        // No prior session at all -> treat as logged out
+        prevUserIdRef.current = null;
+        setUser(null);
+        setSession(null);
+        setRole(null);
+        finishLoading();
+        return;
+      }
+
+      const newId = newUser?.id ?? null;
       if (newId !== prevUserIdRef.current) {
         prevUserIdRef.current = newId;
-        // CRITICAL: scope music localStorage by user to prevent cross-tenant leaks
         ensureMusicScopeForUser(newId);
         setUser(newUser);
       }
       setSession(newSession);
 
       if (!newUser) {
-        if (localStorage.getItem(KEEP_CONNECTED_KEY) !== "false" && lastGoodSessionRef.current?.user) {
-          if (prevUserIdRef.current !== lastGoodSessionRef.current.user.id) {
-            prevUserIdRef.current = lastGoodSessionRef.current.user.id;
-            ensureMusicScopeForUser(lastGoodSessionRef.current.user.id);
-          }
-          setUser(lastGoodSessionRef.current.user);
-          setSession(lastGoodSessionRef.current);
-          finishLoading();
-          return;
-        }
         setRole(null);
-        if (mounted) finishLoading();
+        finishLoading();
         return;
       }
 
@@ -123,26 +143,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           void updateAuth(null);
           return;
         }
-
-        // Try to recover silently before logging out
-        supabase.auth.getSession().then(async ({ data }) => {
-          if (data.session) {
-            void updateAuth(data.session);
-            return;
-          }
-          try {
-            const { data: refreshed } = await supabase.auth.refreshSession();
-            if (refreshed.session) {
-              void updateAuth(refreshed.session);
-              return;
-            }
-          } catch { /* keep current state */ }
-          if (localStorage.getItem(KEEP_CONNECTED_KEY) !== "false" && lastGoodSessionRef.current) {
-            void updateAuth(lastGoodSessionRef.current);
-            return;
-          }
-          if (mounted) finishLoading();
-        });
+        // Ignore involuntary SIGNED_OUT — keep the user logged in.
+        // updateAuth handles silent refresh when called with null.
+        void updateAuth(null);
         return;
       }
       void updateAuth(session);
