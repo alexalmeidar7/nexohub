@@ -139,7 +139,11 @@ export default function OnAirWidget() {
         const raw = localStorage.getItem(key);
         if (raw) {
           const parsed = JSON.parse(raw);
-          setMusicData({ titulo: parsed.titulo || parsed.title, artista: parsed.artista || parsed.artist });
+          setMusicData({ 
+            titulo: parsed.titulo || parsed.title, 
+            artista: parsed.artista || parsed.artist,
+            capa: parsed.capa || parsed.cover || parsed.art
+          });
         }
       } catch {}
     };
