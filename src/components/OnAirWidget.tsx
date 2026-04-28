@@ -206,7 +206,7 @@ export default function OnAirWidget() {
         <button 
           onClick={() => setActiveTab("info")}
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "info" ? "bg-accent/15 text-accent shadow-[0_0_15px_rgba(var(--layout-accent-color-rgb),0.1)]" : "bg-white/[0.03] text-white/30 hover:bg-white/[0.08]"}`}
-          style={activeTab === "info" ? { border: "1px solid color-mix(in srgb, var(--layout-accent-color, #c8ff00) 40%, transparent)" } : {}}
+          style={activeTab === "info" ? { border: "1px solid color-mix(in srgb, var(--layout-accent-color) 40%, transparent)" } : {}}
         >
           <Radio size={12} />
           No Ar
