@@ -157,16 +157,22 @@ export default function IntercomWidget() {
             console.log("[Intercom Listener] Got audio track!");
             setReceiving(true);
             const stream = ev.streams[0] || new MediaStream([ev.track]);
-            if (audioRef.current) {
-              audioRef.current.srcObject = stream;
-              audioRef.current.muted = false;
-              audioRef.current.volume = listenerVolume;
-              audioRef.current.play()
+            const el = audioRef.current;
+            if (el) {
+              try { el.pause(); } catch {}
+              try { (el as any).srcObject = null; } catch {}
+              el.srcObject = stream;
+              el.muted = false;
+              el.volume = listenerVolumeRef.current;
+              const tryPlay = () => el.play()
                 .then(() => setAudioBlocked(false))
                 .catch((e) => {
-                  console.warn("[Intercom Listener] Autoplay blocked:", e.message);
+                  console.warn("[Intercom Listener] Autoplay blocked:", e?.message);
                   setAudioBlocked(true);
                 });
+              tryPlay();
+              // Re-attempt after a tick — some browsers need a microtask after srcObject swap
+              setTimeout(tryPlay, 100);
             }
           };
 
