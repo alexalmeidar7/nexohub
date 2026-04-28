@@ -645,6 +645,37 @@ export default function IntercomWidget() {
           </button>
         </div>
 
+        {/* Volume control */}
+        <div className="px-3 pb-2.5 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex items-center gap-2">
+            <Volume2 size={12} className="text-white/50 flex-shrink-0" />
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={listenerVolume}
+              onChange={(e) => setListenerVolume(parseFloat(e.target.value))}
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 h-1 rounded-full appearance-none cursor-pointer intercom-volume-slider"
+              style={{
+                background: `linear-gradient(to right, #268ffa 0%, #268ffa ${listenerVolume * 100}%, rgba(255,255,255,0.1) ${listenerVolume * 100}%, rgba(255,255,255,0.1) 100%)`,
+              }}
+            />
+            <span className="text-[10px] text-white/50 font-mono tabular-nums w-7 text-right">
+              {Math.round(listenerVolume * 100)}
+            </span>
+          </div>
+          {audioBlocked && (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleUnlockAudio(); }}
+              className="w-full mt-2 px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-all"
+              style={{ backgroundColor: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)" }}>
+              ▶ Clique para liberar o áudio
+            </button>
+          )}
+        </div>
+
         {/* Receiving glow bar at bottom */}
         {receiving && (
           <div className="h-[2px] w-full" style={{
