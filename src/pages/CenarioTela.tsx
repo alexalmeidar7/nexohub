@@ -1651,7 +1651,7 @@ export default function CenarioTela() {
                       <div className="flex flex-col items-center justify-center" style={{ width: "92%", maxWidth: `${vhToPx(55)}${vu}`, height: "100%" }}>
                         {/* Header */}
                         <div className="text-center" style={{ marginBottom: `${vhToPx(4)}${vu}` }}>
-                          <div className="font-extrabold leading-none" style={{ fontSize: `${vhToPx(5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.5)" }}>{weatherCity || config.city || "Cidade"}</div>
+                          <div className="font-extrabold leading-none" style={{ fontSize: `${vhToPx(5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,1)" }}>{weatherCity || config.city || "Cidade"}</div>
                           <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.8)}${vu}`, letterSpacing: "0.2em" }}>próximos dias</div>
                         </div>
                         {/* Forecast cards - vertical stack for 9:16 */}
