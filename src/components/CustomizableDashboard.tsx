@@ -254,7 +254,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1 bg-black/40 backdrop-blur-3xl rounded-[40px] border border-white/5">
+    <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1 bg-black/40 backdrop-blur-3xl rounded-[40px] border border-white/5 w-[40%]">
       {/* On Air Section - Primary Focus */}
       <div className="mb-6 px-6 pt-4 flex-shrink-0">
         {onAirProgram ? (
@@ -316,7 +316,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
       {/* Horizontal Menu Section - Shortcuts/Navigation */}
       <div className="mb-6 px-6 flex-shrink-0">
-        <div className="flex items-center gap-3 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
+        <div className="flex flex-wrap items-center gap-3 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
           {[
             { id: "apresentadores", label: "Apresentadores", icon: Users },
             { id: "testemunhais", label: "Testemunhais", icon: MessageSquareQuote },
@@ -326,13 +326,13 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           ].map((nav) => (
             <button 
               key={nav.id}
-              className="flex flex-col items-center justify-center gap-2 min-w-[90px] h-[90px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
+              className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
               onClick={() => onNavigate(nav.id as any)}
             >
-              <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
-                <nav.icon size={18} className="text-accent" />
+              <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
+                <nav.icon size={16} className="text-accent" />
               </div>
-              <span className="text-[9px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
+              <span className="text-[8px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
                 {nav.label}
               </span>
             </button>
@@ -340,10 +340,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           
           <button 
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }} 
-            className="flex flex-col items-center justify-center gap-2 min-w-[90px] h-[90px] rounded-[24px] transition-all border-2 border-dashed border-white/10 hover:border-accent/40 hover:bg-accent/5 cursor-pointer bg-transparent group"
+            className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all border-2 border-dashed border-white/10 hover:border-accent/40 hover:bg-accent/5 cursor-pointer bg-transparent group"
           >
-            <Plus size={20} className="text-white/20 group-hover:text-accent transition-colors" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-white/20 group-hover:text-accent">Adicionar</span>
+            <Plus size={18} className="text-white/20 group-hover:text-accent transition-colors" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-white/20 group-hover:text-accent">Adicionar</span>
           </button>
         </div>
       </div>
@@ -359,11 +359,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+              <div className="grid grid-cols-1 gap-4 flex-1 min-h-0">
                 {items.filter(i => i.type === "widget").map(item => (
                   <div 
                     key={item.id} 
-                    className={`relative group rounded-[28px] animate-fade-in flex flex-col transition-all duration-300 ${draggedId === item.id ? "opacity-40 scale-95" : "hover:bg-white/[0.02]"}`} 
+                    className={`relative group rounded-[28px] animate-fade-in flex flex-col transition-all duration-300 ${draggedId === item.id ? "opacity-40" : "hover:bg-white/[0.02]"}`} 
                     style={{ background: "rgba(26, 26, 26, 0.4)", backdropFilter: "blur(20px)", boxShadow: "0 4px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", minHeight: 0 }} 
                     onDragOver={(e) => handleDragOver(e, item.id)} 
                     onDrop={() => handleDrop(item.id)} 
@@ -383,18 +383,21 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       <GripVertical size={12} className="ml-auto text-white/10 group-hover:text-white/30 transition-colors" />
                     </div>
                     
-                    <button 
-                      onClick={() => removeItem(item.id)} 
-                      className="absolute top-3 right-8 z-10 opacity-0 group-hover:opacity-100 transition-all w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/10 border border-red-500/20 hover:bg-red-500 group/btn"
-                    >
-                      <Trash2 size={10} className="text-red-500 group-hover/btn:text-white" />
-                    </button>
+                    <div className="absolute top-3 right-8 z-10 opacity-0 group-hover:opacity-100 transition-all">
+                      <button 
+                        onClick={() => removeItem(item.id)} 
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/10 border border-red-500/20 hover:bg-red-500 group/btn"
+                      >
+                        <Trash2 size={10} className="text-red-500 group-hover/btn:text-white" />
+                      </button>
+                    </div>
                     
                     <div className="p-4 flex-1 overflow-y-auto widget-scroll min-h-0">
                       <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-accent" size={20} /></div>}>
                         {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
                         {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
                         {item.widgetType === "weather" && <DashboardWeatherWidget />}
+                        {item.widgetType === "player" && <OnAirWidget />}
                       </Suspense>
                     </div>
                   </div>
