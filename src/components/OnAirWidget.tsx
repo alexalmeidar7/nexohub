@@ -164,8 +164,7 @@ export default function OnAirWidget() {
                 Assistir
               </button>
             </div>
-        {activeTab === "info" ? (
-          <div className="h-full relative flex flex-col justify-center">
+
             <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at center, color-mix(in srgb, var(--layout-accent-color) 8%, transparent), transparent 70%)" }} />
 
             <div className="relative z-10 flex flex-col items-center text-center">
