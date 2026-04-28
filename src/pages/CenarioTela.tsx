@@ -1501,7 +1501,7 @@ export default function CenarioTela() {
                                 }}
                               />
                               {/* Gradient fade at bottom — CEF 86 compatible */}
-                              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "25%", background: `linear-gradient(to top, ${accentRgba(0.7)} 0%, transparent 100%)`, pointerEvents: "none", borderRadius: `0 0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu}` }} />
+                              {/* Removido overlay escuro */}
                             </>
                           );
                         })()}
