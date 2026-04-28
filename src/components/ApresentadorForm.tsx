@@ -61,6 +61,7 @@ export default function ApresentadorForm() {
   const [importRows, setImportRows] = useState<any[] | null>(null);
   const [importing, setImporting] = useState(false);
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
+  const [savingCell, setSavingCell] = useState<{ id: string; field: string } | null>(null);
   const excelInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -185,12 +186,15 @@ export default function ApresentadorForm() {
   };
 
   const updateFieldInline = async (id: string, field: string, value: any) => {
+    setSavingCell({ id, field });
     const { error } = await supabase.from("apresentadores").update({ [field]: value }).eq("id", id);
     if (error) {
       toast.error("Erro ao atualizar campo: " + error.message);
     } else {
       setApresentadores(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+      toast.success("Campo atualizado com sucesso!");
     }
+    setSavingCell(null);
   };
 
   const removeApresentador = async (id: string) => {
@@ -555,10 +559,11 @@ export default function ApresentadorForm() {
                         />
                       ) : (
                         <div 
-                          className="cursor-pointer hover:text-[var(--layout-accent-color)] transition-colors min-h-[1.5em]" 
+                          className="cursor-pointer hover:text-[var(--layout-accent-color)] transition-colors min-h-[1.5em] flex items-center gap-2" 
                           onClick={() => setEditingCell({ id: a.id, field: "nome" })}
                         >
                           {a.nome}
+                          {savingCell?.id === a.id && savingCell?.field === "nome" && <Loader2 size={10} className="animate-spin text-[var(--layout-accent-color)]" />}
                         </div>
                       )}
                     </td>
@@ -583,10 +588,11 @@ export default function ApresentadorForm() {
                             />
                           ) : (
                             <span 
-                              className="cursor-pointer text-[11px] hover:text-[#e1306c] transition-colors min-h-[1em] min-w-[50px]" 
+                              className="cursor-pointer text-[11px] hover:text-[#e1306c] transition-colors min-h-[1em] min-w-[50px] flex items-center gap-1.5" 
                               onClick={() => setEditingCell({ id: a.id, field: "instagram" })}
                             >
                               {a.instagram || <span className="opacity-30">@vazio</span>}
+                              {savingCell?.id === a.id && savingCell?.field === "instagram" && <Loader2 size={9} className="animate-spin text-[#e1306c]" />}
                             </span>
                           )}
                         </div>
@@ -609,10 +615,11 @@ export default function ApresentadorForm() {
                             />
                           ) : (
                             <span 
-                              className="cursor-pointer text-[11px] hover:text-[#25D366] transition-colors min-h-[1em] min-w-[50px]" 
+                              className="cursor-pointer text-[11px] hover:text-[#25D366] transition-colors min-h-[1em] min-w-[50px] flex items-center gap-1.5" 
                               onClick={() => setEditingCell({ id: a.id, field: "whatsapp" })}
                             >
                               {a.whatsapp || <span className="opacity-30">+55...</span>}
+                              {savingCell?.id === a.id && savingCell?.field === "whatsapp" && <Loader2 size={9} className="animate-spin text-[#25D366]" />}
                             </span>
                           )}
                         </div>
@@ -636,10 +643,11 @@ export default function ApresentadorForm() {
                         />
                       ) : (
                         <div 
-                          className="cursor-pointer hover:text-[var(--layout-accent-color)] transition-colors min-h-[1.5em]" 
+                          className="cursor-pointer hover:text-[var(--layout-accent-color)] transition-colors min-h-[1.5em] flex items-center gap-2" 
                           onClick={() => setEditingCell({ id: a.id, field: "cargo" })}
                         >
                           {a.cargo || <span className="opacity-30">Definir cargo</span>}
+                          {savingCell?.id === a.id && savingCell?.field === "cargo" && <Loader2 size={10} className="animate-spin text-[var(--layout-accent-color)]" />}
                         </div>
                       )}
                     </td>
