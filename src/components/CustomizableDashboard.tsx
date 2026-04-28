@@ -418,7 +418,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         {item.widgetType === "agenda" && <div className="h-full overflow-y-auto widget-scroll"><DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} /></div>}
                         {item.widgetType === "musica" && <div className="h-full overflow-y-auto widget-scroll"><MusicProgramWidget dataUserId={dataUserId || undefined} /></div>}
                         {item.widgetType === "weather" && <div className="h-full overflow-y-auto widget-scroll"><DashboardWeatherWidget /></div>}
-                        {item.widgetType === "player" && <OnAirWidget />}
+                        {item.widgetType === "player" && <div className="h-full overflow-hidden"><OnAirWidget /></div>}
                       </Suspense>
                     </div>
                   </div>
