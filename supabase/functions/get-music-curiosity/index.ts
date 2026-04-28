@@ -108,6 +108,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // 1.5) Se IA está desabilitada, retorna vazio sem gerar
+    if (!aiEnabled) {
+      return new Response(
+        JSON.stringify({ curiosidade: "", skipped: true, reason: "ai_disabled" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // 2) Generate via Lovable AI
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
