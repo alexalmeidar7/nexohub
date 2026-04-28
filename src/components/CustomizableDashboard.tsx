@@ -335,19 +335,26 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             { id: "promocoes", label: "Promoções", icon: Tag },
             { id: "shopping", label: "Shopping", icon: ShoppingBag },
             { id: "logos", label: "Logos", icon: Image }
-          ].map((nav) => (
-            <button 
-              key={nav.id}
-              className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
-              onClick={() => onNavigate(nav.id as any)}
-            >
-              <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
-                <nav.icon size={16} className="text-accent" />
-              </div>
-              <span className="text-[8px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
-                {nav.label}
-              </span>
-            </button>
+          ].filter(nav => !hiddenLinks.includes(nav.id)).map((nav) => (
+            <div key={nav.id} className="relative group/nav-item">
+              <button 
+                className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
+                onClick={() => onNavigate(nav.id as any)}
+              >
+                <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
+                  <nav.icon size={16} className="text-accent" />
+                </div>
+                <span className="text-[8px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
+                  {nav.label}
+                </span>
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); hideLink(nav.id); }}
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-500 opacity-0 group-hover/nav-item:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"
+              >
+                <X size={10} />
+              </button>
+            </div>
           ))}
           
           <button 
