@@ -1276,7 +1276,7 @@ export default function CenarioTela() {
               {/* Program thumb as bg — always mounted on home/weather/currency/chat for smooth fade */}
               {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
                 <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
-                  <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? undefined : { filter: "blur(22px)", transform: "scale(1.1)" }} />
+                  <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(1.2)" } : { filter: "blur(22px) brightness(1.2)", transform: "scale(1.1)" }} />
                 </div>
               )}
               {/* Artist bg crossfade between previous and current url */}
