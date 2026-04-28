@@ -1517,11 +1517,11 @@ export default function CenarioTela() {
                           width: `${vhToPx(20)}${vu}`,
                           height: `${vhToPx(20)}${vu}`,
                           borderRadius: `${vhToPx(2)}${vu}`,
-                          background: "rgba(255, 255, 255, 0.15)",
-                          backdropFilter: "blur(30px)",
-                          WebkitBackdropFilter: "blur(30px)",
-                          boxShadow: "0 12px 48px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.2)",
-                          border: "1px solid rgba(255,255,255,0.3)",
+                          background: "rgba(255, 255, 255, 0.25)", // Increased visibility from 0.15
+                          backdropFilter: "blur(40px)", // Increased blur
+                          WebkitBackdropFilter: "blur(40px)",
+                          boxShadow: "0 20px 60px rgba(0,0,0,0.5), inset 0 0 0 1.5px rgba(255,255,255,0.3)", // Stronger shadow and border
+                          border: "1px solid rgba(255,255,255,0.4)", // Thicker border
                           zIndex: 2,
                           position: "relative",
                           flexShrink: 0,
@@ -1543,8 +1543,8 @@ export default function CenarioTela() {
                                   bottom: "0",
                                   left: "50%",
                                   transform: "translateX(-50%)",
-                                  height: "150%",
-                                  width: "auto",
+                                  height: "100%", // Changed from 150% to 100% to fit box
+                                  width: "100%", // Added width
                                   objectFit: "contain",
                                   objectPosition: "bottom center",
                                   filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
