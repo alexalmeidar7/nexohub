@@ -1659,11 +1659,10 @@ export default function CenarioTela() {
                           {liveWeather.daily.slice(1, 5).map((d, i) => (
                             <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
                               padding: `${vhToPx(2)}${vu} ${vhToPx(2.5)}${vu}`,
-                              background: "rgba(255,255,255,0.06)",
+                              background: "rgba(0,0,0,0.1)",
                               borderRadius: `${vhToPx(2)}${vu}`,
-                              WebkitBackdropFilter: "blur(20px)", backdropFilter: "blur(20px)",
-                              border: "1px solid rgba(255,255,255,0.1)",
-                              boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                              border: "none",
+                              boxShadow: "none",
                               gap: `${vhToPx(2)}${vu}`,
                             }}>
                               {/* Day name */}
