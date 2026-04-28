@@ -1276,7 +1276,7 @@ export default function CenarioTela() {
               {/* Program thumb as bg — always mounted on home/weather/currency/chat for smooth fade */}
               {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
                 <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
-                  <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? undefined : { filter: "blur(22px)", transform: "scale(1.1)" }} />
+                  <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(1.2)" } : { filter: "blur(22px) brightness(1.2)", transform: "scale(1.1)" }} />
                 </div>
               )}
               {/* Artist bg crossfade between previous and current url */}
@@ -1285,7 +1285,7 @@ export default function CenarioTela() {
                   src={prevArtistBgUrl}
                   alt=""
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                  style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
                 />
               )}
               {isHomeOrChat && artistBgUrl && (
@@ -1293,7 +1293,7 @@ export default function CenarioTela() {
                   src={artistBgUrl}
                   alt=""
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                  style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
                   onLoad={() => setArtistBgReady(true)}
                 />
               )}
@@ -1550,7 +1550,8 @@ export default function CenarioTela() {
                               borderRadius: `${vhToPx(1.4)}${vu}`,
                             }}
                           />
-                          {/* Removed black overlay per user request */}
+                          {/* Gradient fade at bottom — CEF 86 compatible */}
+                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "45%", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)", pointerEvents: "none", borderRadius: `0 0 ${vhToPx(1.4)}${vu} ${vhToPx(1.4)}${vu}` }} />
                           {/* Music title + artist — centered */}
                           <div key={musicKey} style={{ position: "absolute", top: "50%", left: `${vhToPx(1.2)}${vu}`, right: `${vhToPx(1.2)}${vu}`, transform: "translateY(-30%)", zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", textAlign: "center" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.4)}${vu}` }}>
