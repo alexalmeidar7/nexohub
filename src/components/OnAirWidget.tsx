@@ -253,7 +253,7 @@ export default function OnAirWidget() {
                 </button>
               </div>
 
-              <h3 className="text-2xl font-black text-white leading-[0.85] tracking-tighter mb-6 line-clamp-2 drop-shadow-sm uppercase italic">
+              <h3 className="text-lg font-bold text-white leading-tight tracking-tight mb-4 line-clamp-2 drop-shadow-sm">
                 {programa.nome}
               </h3>
               
