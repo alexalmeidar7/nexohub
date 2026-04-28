@@ -1872,5 +1872,25 @@ export default function CenarioTela() {
         </div>
       </div>
     </div>
+          {debugMode && (
+            <style>{`
+              * { border: 1px solid rgba(255, 0, 0, 0.4) !important; background-color: rgba(255, 0, 0, 0.05) !important; }
+              img { border: 2px solid #0f0 !important; }
+              div { position: relative; }
+              div::after { 
+                content: attr(style); 
+                position: absolute; 
+                top: 0; 
+                left: 0; 
+                font-size: 8px; 
+                color: #f0f; 
+                background: rgba(0,0,0,0.8); 
+                z-index: 9999; 
+                pointer-events: none;
+                display: none;
+              }
+              div:hover::after { display: block; }
+            `}</style>
+          )}
   );
 }
