@@ -1634,7 +1634,7 @@ export default function CenarioTela() {
                             </div>
                           </div>
                           {/* Stats row */}
-                          <div className="flex items-center justify-between rounded-2xl" style={{ padding: `${vhToPx(1.8)}${vu} ${vhToPx(2.5)}${vu}`, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center justify-between rounded-2xl" style={{ padding: `${vhToPx(1.8)}${vu} ${vhToPx(2.5)}${vu}`, background: "rgba(0,0,0,0.1)", border: "none" }}>
                             <div className="flex items-center" style={{ gap: `${vhToPx(1)}${vu}` }}>
                               <Thermometer style={{ width: `${vhToPx(2.2)}${vu}`, height: `${vhToPx(2.2)}${vu}`, opacity: 0.7 }} />
                               <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(2.2)}${vu}` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
