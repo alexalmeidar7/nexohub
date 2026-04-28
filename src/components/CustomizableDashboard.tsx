@@ -465,12 +465,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           </div>
         </div>
       )}
-
-      {/* Widgets Grid Section */}
-      <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
-        {onAirProgram && (
-          <div className="mb-8 animate-fade-in">
-
       {/* Widgets Grid Section */}
       <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
         {onAirProgram && (
@@ -622,8 +616,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 </div>
               );
             })}
-      </div>
-      </div>
+          </div>
+        </div>
       )}
       </div>
 
