@@ -291,7 +291,7 @@ export default function OnAirWidget() {
                       <img src={musicData.capa} alt="Capa" className="w-full h-full object-cover transition-transform duration-500 group-hover/cover:scale-110" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Music size={20} className="text-white/10" />
+                        <Music size={20} style={{ color: "var(--layout-accent-color)", opacity: 0.2 }} />
                       </div>
                     )}
                   </div>
