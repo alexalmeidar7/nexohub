@@ -200,166 +200,155 @@ export default function OnAirWidget() {
   const { programa, progress } = onAir;
 
   return (
-    <div className="h-full relative overflow-hidden">
-      {/* Next program click overlay */}
-      {firstNext && (
-        <div
-          className="absolute inset-0 z-20 flex flex-col transition-all duration-500 ease-in-out"
-          style={{
-            opacity: isHovered ? 1 : 0,
-            pointerEvents: isHovered ? "auto" : "none",
-          }}
+    <div className="h-full relative overflow-hidden flex flex-col no-scrollbar">
+      {/* Tab Switcher */}
+      <div className="flex items-center gap-1 mb-3 px-1 flex-shrink-0">
+        <button 
+          onClick={() => setActiveTab("info")}
+          className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "info" ? "bg-accent/20 text-accent border border-accent/30" : "bg-white/5 text-white/40 border border-transparent hover:bg-white/10"}`}
         >
-          {firstNextAp?.foto && (
-            <img
-              src={firstNextAp.foto}
-              alt={firstNextAp.nome}
-              className="absolute object-contain pointer-events-none"
-              style={{ right: 0, bottom: 0, width: "50%", height: "100%", objectPosition: "right bottom" }}
-            />
-          )}
-          {/* Top right buttons */}
-          <div className="absolute top-1 right-1 z-30 flex items-center gap-1">
-            <button
-              onClick={() => setIsHovered(false)}
-              className="bg-white/10 rounded-full px-2 py-1 cursor-pointer"
-            >
-              <ArrowRight size={10} className="text-white/60 rotate-180" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 mb-1 pt-1 pl-1">
-            <ArrowRight size={14} style={{ color: "var(--layout-accent-color)" }} />
-            <span className="font-bold text-[10px]" style={{ color: "var(--layout-accent-color)" }}>PRÓXIMO</span>
-          </div>
-
-          <div className="flex-1 flex flex-col justify-center z-10 pl-1">
-            <p className="font-bold text-white text-lg leading-tight line-clamp-2" style={{ maxWidth: "55%" }}>{firstNext.nome}</p>
-            <p className="text-white/50 text-[10px] whitespace-nowrap mt-1">
-              {firstNext.horarioInicio} — {firstNext.horarioFim}
-            </p>
-          </div>
-
-          <div className="z-10 mb-4 pl-1 flex items-center gap-2">
-            <p className="font-semibold text-white/80 text-xs">{firstNextAp?.nome}</p>
-            <Avatar className="h-5 w-5 border border-white/20">
-              {userAvatar ? <AvatarImage src={userAvatar} alt="Você" /> : null}
-              <AvatarFallback className="bg-white/10 text-white/60 text-[8px]">
-                <User size={10} />
-              </AvatarFallback>
-            </Avatar>
-            <button
-              onClick={() => { setIsHovered(false); setGradeOpen(true); }}
-              className="w-5 h-5 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
-              title="Grade de programação"
-            >
-              <span className="text-white/70 text-[10px] font-bold leading-none">+</span>
-            </button>
-          </div>
-
-          <div className="absolute bottom-0 left-0 right-0 z-10">
-            <div className="w-full h-1 bg-white/20 overflow-hidden" />
-          </div>
-        </div>
-      )}
-
-      {/* Current program */}
-      <div
-        className="h-full relative flex flex-col transition-all duration-500"
-        style={{ opacity: isHovered ? 0 : 1 }}
-      >
-        {/* Presenter photo - anchored to bottom, larger */}
-        {apresentadorFoto && (
-          <img
-            src={apresentadorFoto}
-            alt={apresentadorNome}
-            className="absolute object-contain pointer-events-none"
-            style={{ right: 0, bottom: 0, width: "60%", height: "100%", objectPosition: "right bottom" }}
-          />
-        )}
-
-        {/* Top right buttons */}
-        <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
-          <button
-            onClick={() => setGradeOpen(true)}
-            className="bg-white/10 rounded-full px-2 py-1 text-white/60 text-[9px] font-semibold hover:bg-white/20 transition-colors cursor-pointer"
-          >
-            grade
-          </button>
-          {firstNext && (
-            <div className="bg-white/10 rounded-full px-2 py-1 cursor-pointer" onClick={() => setIsHovered(true)}>
-              <ArrowRight size={10} className="text-white/60" />
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 mb-1">
-          <Radio size={14} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
-          <span className="font-bold text-xs animate-pulse" style={{ color: "var(--layout-accent-color)" }}>NO AR</span>
-        </div>
-
-        <div className="flex-1 flex flex-col justify-center z-10">
-          <div className="flex items-center gap-1.5" style={{ maxWidth: "55%" }}>
-            <p className="font-bold text-white text-lg leading-tight line-clamp-2">{programa.nome}</p>
-            {programa.classificacaoEtaria && (
-              <span className="shrink-0 rounded px-1 py-0.5 text-[8px] font-bold leading-none text-white"
-                style={{
-                  backgroundColor:
-                    programa.classificacaoEtaria === "L" ? "#00a651" :
-                    programa.classificacaoEtaria === "10" ? "#0095d9" :
-                    programa.classificacaoEtaria === "12" ? "#f5a623" :
-                    programa.classificacaoEtaria === "14" ? "#e67e22" :
-                    programa.classificacaoEtaria === "16" ? "#e74c3c" :
-                    programa.classificacaoEtaria === "18" ? "#1a1a1a" : "#666",
-                }}
-              >
-                {programa.classificacaoEtaria === "L" ? "L" : `${programa.classificacaoEtaria}`}
-              </span>
-            )}
-            {isStereo && (
-              <span className="shrink-0 rounded px-1 py-0.5 text-[7px] font-bold leading-none tracking-wide"
-                style={{ color: "var(--layout-accent-color)", border: "1px solid var(--layout-accent-color)", opacity: 0.7 }}
-              >
-                STEREO
-              </span>
-            )}
-          </div>
-          <p className="text-white/50 text-[10px] whitespace-nowrap mt-1">
-            {programa.horarioInicio} — {programa.horarioFim}
-          </p>
-        </div>
-
-        {/* Music info */}
-        {musicData?.titulo && (
-          <div className="z-10 flex items-center gap-1.5 mb-1" style={{ maxWidth: "55%" }}>
-            <Music size={11} style={{ color: "var(--layout-accent-color)" }} className="flex-shrink-0" />
-            <p className="text-white/70 text-[10px] truncate">
-              {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
-            </p>
-          </div>
-        )}
-
-        <div className="z-10 mb-4 flex items-center gap-1.5">
-          <Mic size={12} style={{ color: "var(--layout-accent-color)" }} />
-          <p className="font-semibold text-white/80 text-xs">{apresentadorNome}</p>
-          <button
-            onClick={() => setGradeOpen(true)}
-            className="w-5 h-5 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors cursor-pointer ml-1"
-            title="Grade de programação"
-          >
-            <span className="text-white/70 text-[10px] font-bold leading-none">+</span>
-          </button>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 z-10">
-          <div className="w-full h-1 bg-white/20 overflow-hidden">
-            <div
-              className="h-full transition-all duration-1000"
-              style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color)" }}
-            />
-          </div>
-        </div>
+          <Radio size={12} />
+          Informações
+        </button>
+        <button 
+          onClick={() => setActiveTab("video")}
+          className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "video" ? "bg-accent/20 text-accent border border-accent/30" : "bg-white/5 text-white/40 border border-transparent hover:bg-white/10"}`}
+        >
+          <MonitorPlay size={12} />
+          Canal de Vídeo
+        </button>
       </div>
+
+      <div className="flex-1 relative min-h-0">
+        {activeTab === "info" ? (
+          <div className="h-full relative flex flex-col">
+            {/* Presenter photo - anchored to bottom, larger */}
+            {apresentadorFoto && (
+              <img
+                src={apresentadorFoto}
+                alt={apresentadorNome}
+                className="absolute object-contain pointer-events-none opacity-40"
+                style={{ right: 0, bottom: 0, width: "60%", height: "90%", objectPosition: "right bottom" }}
+              />
+            )}
+
+            {/* Top right grade button */}
+            <div className="absolute top-0 right-0 z-20">
+              <button
+                onClick={() => setGradeOpen(true)}
+                className="bg-white/10 rounded-full px-3 py-1 text-white/60 text-[9px] font-black uppercase tracking-widest hover:bg-white/20 transition-colors cursor-pointer border border-white/5"
+              >
+                grade
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 mb-2">
+              <Radio size={14} style={{ color: "var(--layout-accent-color, #c8ff00)" }} className="animate-pulse" />
+              <span className="font-black text-[10px] uppercase tracking-[0.2em] animate-pulse" style={{ color: "var(--layout-accent-color, #c8ff00)" }}>NO AR</span>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center z-10">
+              <div className="flex flex-wrap items-center gap-2 mb-2" style={{ maxWidth: "65%" }}>
+                <p className="font-black text-white text-xl leading-none tracking-tighter drop-shadow-md">{programa.nome}</p>
+                {programa.classificacaoEtaria && (
+                  <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-black leading-none text-white shadow-lg"
+                    style={{
+                      backgroundColor:
+                        programa.classificacaoEtaria === "L" ? "#00a651" :
+                        programa.classificacaoEtaria === "10" ? "#0095d9" :
+                        programa.classificacaoEtaria === "12" ? "#f5a623" :
+                        programa.classificacaoEtaria === "14" ? "#e67e22" :
+                        programa.classificacaoEtaria === "16" ? "#e74c3c" :
+                        programa.classificacaoEtaria === "18" ? "#1a1a1a" : "#666",
+                    }}
+                  >
+                    {programa.classificacaoEtaria === "L" ? "L" : `${programa.classificacaoEtaria}`}
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2 text-white/50 text-[10px] font-bold uppercase tracking-widest mb-4">
+                <Clock size={12} className="text-accent" />
+                <span>{programa.horarioInicio} — {programa.horarioFim}</span>
+              </div>
+
+              {/* Music info with Cover Art */}
+              <div className="z-10 bg-black/40 backdrop-blur-md rounded-2xl p-3 border border-white/10 mb-4 max-w-[85%]">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/5 flex-shrink-0 border border-white/5 shadow-lg relative group">
+                    {musicData?.capa ? (
+                      <img src={musicData.capa} alt="Capa" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Music size={18} className="text-white/20" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Volume2 size={16} className="text-accent" />
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-black text-accent uppercase tracking-widest mb-1">Tocando Agora</p>
+                    <p className="text-sm font-black text-white leading-tight truncate">{musicData?.titulo || "Nenhuma música"}</p>
+                    <p className="text-[10px] font-bold text-white/40 truncate">{musicData?.artista || "—"}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="z-10 flex items-center gap-2 group cursor-pointer" onClick={() => setGradeOpen(true)}>
+                <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center border border-accent/20 group-hover:bg-accent/20 transition-all">
+                  <Mic size={14} className="text-accent" />
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">Apresentador</p>
+                  <p className="font-black text-white text-xs tracking-wide">{apresentadorNome}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute bottom-0 left-0 right-0 z-10 pt-2">
+              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full transition-all duration-1000 shadow-[0_0_8px_rgba(var(--layout-accent-color-rgb),0.5)]"
+                  style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color, #c8ff00)" }}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="h-full flex flex-col rounded-2xl overflow-hidden bg-black/60 border border-white/10">
+            <div className="relative flex-1 min-h-0 overflow-hidden">
+              <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-accent" /></div>}>
+                <video 
+                  className="w-full h-full object-contain"
+                  src="https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8"
+                  autoPlay
+                  playsInline
+                  muted={isMuted}
+                />
+              </Suspense>
+              
+              {/* Video Overlay Controls */}
+              <div className="absolute top-2 right-2 flex gap-2">
+                <button 
+                  onClick={() => setIsMuted(!isMuted)}
+                  className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/10 hover:bg-black/80 transition-all"
+                >
+                  {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                </button>
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-[8px] font-black text-white uppercase tracking-widest">Canal de Vídeo Ao Vivo</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      
       <Suspense fallback={null}>
         <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} />
       </Suspense>
