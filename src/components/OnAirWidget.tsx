@@ -253,7 +253,7 @@ export default function OnAirWidget() {
                 </button>
               </div>
 
-              <h3 className="text-2xl font-black text-white leading-[0.9] tracking-tighter mb-4 line-clamp-2 drop-shadow-sm uppercase italic" style={{ "--accent": "var(--layout-accent-color)" } as React.CSSProperties}>
+              <h3 className="text-2xl font-black text-white leading-[0.85] tracking-tighter mb-6 line-clamp-2 drop-shadow-sm uppercase italic">
                 {programa.nome}
               </h3>
               
