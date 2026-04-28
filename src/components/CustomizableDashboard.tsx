@@ -416,7 +416,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
                         {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
                         {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                        {item.widgetType === "player" && <OnAirWidget />}
+                        {item.widgetType === "player" && <VideoPlayer />}
                       </Suspense>
                     </div>
                   </div>
