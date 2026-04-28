@@ -87,6 +87,8 @@ export default function OnAirWidget() {
   const [gradeOpen, setGradeOpen] = useState(false);
   const [isStereo, setIsStereo] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"info" | "video">("info");
+  const [isMuted, setIsMuted] = useState(false);
 
   // Fetch user avatar
   useEffect(() => {
