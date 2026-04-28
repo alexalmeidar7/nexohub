@@ -202,20 +202,20 @@ export default function OnAirWidget() {
   return (
     <div className="h-full relative overflow-hidden flex flex-col no-scrollbar">
       {/* Tab Switcher - Minimalist Pill Style */}
-      <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl mb-6 self-center w-full max-w-[180px] flex-shrink-0 border border-white/5">
+      <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl mb-4 self-center w-full max-w-[180px] flex-shrink-0 border border-white/5 shadow-inner relative z-30">
         <button 
           onClick={() => setActiveTab("info")}
           className={`flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === "info" ? "text-white shadow-xl" : "text-white/20 hover:text-white/40"}`}
           style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
         >
-          Resumo
+          Ouvir
         </button>
         <button 
           onClick={() => setActiveTab("video")}
           className={`flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === "video" ? "text-white shadow-xl" : "text-white/20 hover:text-white/40"}`}
           style={activeTab === "video" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
         >
-          Ao Vivo
+          Assistir
         </button>
       </div>
 
