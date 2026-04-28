@@ -29,172 +29,114 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const prevUserIdRef = useRef<string | null>(null);
   const manualSignOutRef = useRef(false);
-  const loadingRef = useRef(true); // mirror of loading state to avoid stale closures
-  const lastGoodSessionRef = useRef<Session | null>(null);
+  const isRefreshingRef = useRef(false);
 
-  const finishLoading = useCallback(() => {
-    loadingRef.current = false;
-    setLoading(false);
+  const fetchRole = useCallback(async (userId: string): Promise<AppRole> => {
+    try {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
+      if (!error && data && data.length > 0) {
+        return data.some((r: any) => r.role === "admin") ? "admin" : "user";
+      }
+    } catch { /* silent */ }
+    return "user";
   }, []);
+
+  const updateAuth = useCallback(async (newSession: Session | null) => {
+    const newUser = newSession?.user ?? null;
+    const newId = newUser?.id ?? null;
+
+    if (newId !== prevUserIdRef.current) {
+      prevUserIdRef.current = newId;
+      if (newId) {
+        ensureMusicScopeForUser(newId);
+        const userRole = await fetchRole(newId);
+        setRole(userRole);
+      } else {
+        setRole(null);
+      }
+      setUser(newUser);
+    }
+    
+    setSession(newSession);
+    setLoading(false);
+  }, [fetchRole]);
 
   useEffect(() => {
     let mounted = true;
-    const timers: ReturnType<typeof setTimeout>[] = [];
 
-    const addTimer = (fn: () => void, ms: number) => {
-      const t = setTimeout(fn, ms);
-      timers.push(t);
-      return t;
-    };
-
-    // Hard safety net: if loading is still true after 15s, force it off
-    addTimer(() => {
-      if (mounted && loadingRef.current) {
-        console.warn("Auth: safety timeout reached (15s), forcing load complete");
-        finishLoading();
-      }
-    }, 15000);
-
-    const fetchRole = async (userId: string): Promise<AppRole> => {
+    // Heartbeat to keep session alive and trigger auto-refresh safely
+    const heartbeat = setInterval(async () => {
+      if (manualSignOutRef.current || isRefreshingRef.current) return;
+      
       try {
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId);
-        if (!error && data && data.length > 0) {
-          return data.some((r: any) => r.role === "admin") ? "admin" : "user";
-        }
-      } catch { /* silent */ }
-      return "user";
-    };
-
-    const updateAuth = async (newSession: Session | null) => {
-      if (!mounted) return;
-
-      if (newSession) {
-        lastGoodSessionRef.current = newSession;
-      }
-
-      const newUser = newSession?.user ?? null;
-
-      // CRITICAL: never log the user out unless they explicitly clicked "Sair".
-      // If we receive a null session event but we have a known good session,
-      // keep the user logged in and try to refresh in the background.
-      if (!newUser && !manualSignOutRef.current) {
-        if (lastGoodSessionRef.current?.user) {
-          const restored = lastGoodSessionRef.current;
-          if (prevUserIdRef.current !== restored.user.id) {
-            prevUserIdRef.current = restored.user.id;
-            ensureMusicScopeForUser(restored.user.id);
-            setUser(restored.user);
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (!currentUser && !manualSignOutRef.current) {
+          console.log("Auth heartbeat: No user found, attempting session recovery...");
+          const { data: { session: recoveredSession } } = await supabase.auth.getSession();
+          if (recoveredSession && mounted) {
+            void updateAuth(recoveredSession);
           }
-          setSession(restored);
-          finishLoading();
-          // Try to refresh silently
-          supabase.auth.refreshSession().then(({ data: refreshed }) => {
-            if (refreshed.session && mounted) {
-              lastGoodSessionRef.current = refreshed.session;
-              setSession(refreshed.session);
-            }
-          }).catch(() => { /* keep current state */ });
-          return;
         }
-        // No prior session at all -> treat as logged out
-        prevUserIdRef.current = null;
-        setUser(null);
-        setSession(null);
-        setRole(null);
-        finishLoading();
-        return;
+      } catch (err) {
+        console.error("Auth heartbeat error:", err);
       }
+    }, 1000 * 60 * 5); // Every 5 minutes
 
-      const newId = newUser?.id ?? null;
-      if (newId !== prevUserIdRef.current) {
-        prevUserIdRef.current = newId;
-        ensureMusicScopeForUser(newId);
-        setUser(newUser);
-      }
-      setSession(newSession);
-
-      if (!newUser) {
-        setRole(null);
-        finishLoading();
-        return;
-      }
-
-      // Race role fetch against a 5s timeout so we never hang
-      const roleResult = await Promise.race([
-        fetchRole(newUser.id),
-        new Promise<AppRole>((resolve) => addTimer(() => resolve("user"), 5000)),
-      ]);
-
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       if (!mounted) return;
-      setRole(roleResult);
-      finishLoading();
-    };
 
-    // Set up auth state listener FIRST
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`Auth event: ${event}`);
+
       if (event === "SIGNED_OUT") {
-        if (manualSignOutRef.current) {
-          manualSignOutRef.current = false;
-          void updateAuth(null);
-          return;
+        if (!manualSignOutRef.current) {
+          // Attempt recovery if it wasn't a manual sign out
+          const { data: { session: recovered } } = await supabase.auth.getSession();
+          if (recovered) {
+            void updateAuth(recovered);
+            return;
+          }
         }
-        // Ignore involuntary SIGNED_OUT — keep the user logged in.
-        // updateAuth handles silent refresh when called with null.
         void updateAuth(null);
-        return;
+      } else if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
+        void updateAuth(currentSession);
+      } else if (event === "USER_UPDATED") {
+        void updateAuth(currentSession);
       }
-      void updateAuth(session);
     });
 
-    // Restore initial session
-    supabase.auth
-      .getSession()
-      .then(({ data: { session }, error }) => {
-        if (error && !session) {
-          return supabase.auth.refreshSession().then(({ data: refreshed }) => {
-            if (refreshed.session) {
-              void updateAuth(refreshed.session);
-            } else {
-              prevUserIdRef.current = null;
-              setUser(null);
-              setSession(null);
-              setRole(null);
-              finishLoading();
-            }
-          });
-        }
-        void updateAuth(session);
-      })
-      .catch(() => {
-        if (mounted) finishLoading();
-      });
+    // Initial session load
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      if (mounted) {
+        void updateAuth(initialSession);
+      }
+    }).catch(() => {
+      if (mounted) setLoading(false);
+    });
 
     return () => {
       mounted = false;
-      timers.forEach(clearTimeout);
+      clearInterval(heartbeat);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [updateAuth]);
 
   const signOut = async () => {
     manualSignOutRef.current = true;
-    // Clear keep-connected flag and cached session so the user actually logs out
     localStorage.setItem(KEEP_CONNECTED_KEY, "false");
-    lastGoodSessionRef.current = null;
-    prevUserIdRef.current = null;
     try {
       await supabase.auth.signOut();
-    } catch { /* ignore */ }
-    setUser(null);
-    setSession(null);
-    setRole(null);
-    // Hard redirect to login so any cached state is cleared
-    window.location.href = "/";
+    } catch (err) {
+      console.error("Error during signOut:", err);
+    } finally {
+      prevUserIdRef.current = null;
+      setUser(null);
+      setSession(null);
+      setRole(null);
+      window.location.href = "/";
+    }
   };
 
   return (
