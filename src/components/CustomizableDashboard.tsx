@@ -284,9 +284,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             
             <div className="relative z-10 flex flex-col h-full max-w-[60%]">
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 backdrop-blur-md">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">Ao Vivo</span>
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full border backdrop-blur-md" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 15%, transparent)", borderColor: "color-mix(in srgb, var(--layout-accent-color) 30%, transparent)" }}>
+                  <div className="w-2 h-2 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" style={{ backgroundColor: "var(--layout-accent-color)" }} />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
                 </div>
                 {onAirProgram.is_hd && <span className="px-2 py-0.5 rounded-lg bg-white/5 text-[8px] font-black tracking-widest text-white/50 border border-white/10 uppercase backdrop-blur-sm">Full HD</span>}
               </div>
@@ -294,9 +294,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <h2 className="text-3xl font-black text-white tracking-tighter leading-tight mb-3 drop-shadow-lg line-clamp-2">{onAirProgram.nome}</h2>
               
               <div className="flex flex-wrap items-center gap-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-white/40" />
-                  <span className="text-xs font-semibold text-white/80">{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
+                <div className="flex items-center gap-2.5">
+                  <Clock size={16} className="text-white/60" />
+                  <span className="text-sm font-semibold text-white/80 tracking-wide">{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
                 </div>
                 {onAirProgram.apresentador_nome && (
                   <div className="flex items-center gap-2">
@@ -307,13 +307,14 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               </div>
 
               {currentMusic && (
-                <div className="inline-flex items-center gap-3 px-4 py-3 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-2xl shadow-xl mt-auto">
-                  <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center border border-accent/20">
-                    <Music size={14} className="text-accent animate-spin-slow" />
+                <div className="inline-flex items-center gap-4 px-5 py-4 rounded-[24px] bg-black/40 border border-white/10 backdrop-blur-2xl shadow-xl mt-auto transform hover:scale-[1.02] transition-all duration-300">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 15%, transparent)", borderColor: "color-mix(in srgb, var(--layout-accent-color) 25%, transparent)" }}>
+                    <Music size={18} className="animate-spin-slow" style={{ color: "var(--layout-accent-color)" }} />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-black text-white leading-tight truncate">{currentMusic.titulo}</p>
-                    <p className="text-[9px] font-bold text-white/40 truncate">{currentMusic.artista}</p>
+                  <div className="pr-4">
+                    <p className="text-[10px] uppercase font-black tracking-[0.2em] mb-1" style={{ color: "color-mix(in srgb, var(--layout-accent-color) 60%, white)" }}>Tocando Agora</p>
+                    <p className="text-sm font-black text-white leading-tight tracking-tight">{currentMusic.titulo}</p>
+                    <p className="text-xs font-bold text-white/40 tracking-wide">{currentMusic.artista}</p>
                   </div>
                 </div>
               )}
@@ -417,7 +418,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         {item.widgetType === "agenda" && <div className="h-full overflow-y-auto widget-scroll"><DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} /></div>}
                         {item.widgetType === "musica" && <div className="h-full overflow-y-auto widget-scroll"><MusicProgramWidget dataUserId={dataUserId || undefined} /></div>}
                         {item.widgetType === "weather" && <div className="h-full overflow-y-auto widget-scroll"><DashboardWeatherWidget /></div>}
-                        {item.widgetType === "player" && <OnAirWidget />}
+                        {item.widgetType === "player" && <div className="h-full overflow-hidden"><OnAirWidget /></div>}
                       </Suspense>
                     </div>
                   </div>
