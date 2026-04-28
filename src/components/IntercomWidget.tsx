@@ -50,6 +50,7 @@ export default function IntercomWidget() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const levelRafRef = useRef<number>(0);
+  const listenerVolumeRef = useRef<number>(1);
   const userId = user?.id;
 
   useEffect(() => { hotkeyRef.current = hotkey; }, [hotkey]);
@@ -156,16 +157,22 @@ export default function IntercomWidget() {
             console.log("[Intercom Listener] Got audio track!");
             setReceiving(true);
             const stream = ev.streams[0] || new MediaStream([ev.track]);
-            if (audioRef.current) {
-              audioRef.current.srcObject = stream;
-              audioRef.current.muted = false;
-              audioRef.current.volume = listenerVolume;
-              audioRef.current.play()
+            const el = audioRef.current;
+            if (el) {
+              try { el.pause(); } catch {}
+              try { (el as any).srcObject = null; } catch {}
+              el.srcObject = stream;
+              el.muted = false;
+              el.volume = listenerVolumeRef.current;
+              const tryPlay = () => el.play()
                 .then(() => setAudioBlocked(false))
                 .catch((e) => {
-                  console.warn("[Intercom Listener] Autoplay blocked:", e.message);
+                  console.warn("[Intercom Listener] Autoplay blocked:", e?.message);
                   setAudioBlocked(true);
                 });
+              tryPlay();
+              // Re-attempt after a tick — some browsers need a microtask after srcObject swap
+              setTimeout(tryPlay, 100);
             }
           };
 
@@ -228,7 +235,12 @@ export default function IntercomWidget() {
         remoteDescSetRef.current = false;
         pendingCandidatesRef.current = [];
         setReceiving(false);
-        if (audioRef.current) audioRef.current.srcObject = null;
+        const el = audioRef.current;
+        if (el) {
+          try { el.pause(); } catch {}
+          try { el.srcObject = null; } catch {}
+          el.currentTime = 0;
+        }
       });
     }
 
@@ -476,6 +488,7 @@ export default function IntercomWidget() {
 
   // Keep audio element volume in sync
   useEffect(() => {
+    listenerVolumeRef.current = listenerVolume;
     if (audioRef.current) {
       audioRef.current.volume = listenerVolume;
       audioRef.current.muted = false;
