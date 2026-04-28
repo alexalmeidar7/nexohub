@@ -147,7 +147,6 @@ export default function OnAirWidget() {
       <div className="flex-1 relative min-h-0">
         {activeTab === "info" ? (
           <div className="h-full relative flex flex-col justify-center">
-            {/* Minimalist Tab Switcher inside the card area */}
             <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl mb-4 self-center w-full max-w-[180px] flex-shrink-0 border border-white/5 shadow-inner relative z-30">
               <button 
                 onClick={() => setActiveTab("info")}
