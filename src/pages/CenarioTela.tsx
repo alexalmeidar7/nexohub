@@ -1465,11 +1465,11 @@ export default function CenarioTela() {
                          width: `${vhToPx(20)}${vu}`,
                          height: `${vhToPx(20)}${vu}`,
                          borderRadius: `${vhToPx(2)}${vu}`,
-                         background: `linear-gradient(145deg, ${accentRgba(0.7)}, ${accentRgba(0.4)})`,
-                         backdropFilter: "blur(20px)",
-                         WebkitBackdropFilter: "blur(20px)",
-                         boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 ${accentRgba(0.3)}`,
-                         border: `1px solid ${accentRgba(0.3)}`,
+                         background: "transparent",
+                          backdropFilter: "none",
+                          WebkitBackdropFilter: "none",
+                          boxShadow: "none",
+                          border: "none",
                          zIndex: 2,
                          position: "relative",
                          flexShrink: 0,
@@ -1501,7 +1501,7 @@ export default function CenarioTela() {
                                 }}
                               />
                               {/* Gradient fade at bottom — CEF 86 compatible */}
-                              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "25%", background: `linear-gradient(to top, ${accentRgba(0.7)} 0%, transparent 100%)`, pointerEvents: "none", borderRadius: `0 0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu}` }} />
+                              {/* Removido overlay escuro */}
                             </>
                           );
                         })()}
@@ -1513,7 +1513,7 @@ export default function CenarioTela() {
                         <div style={{ position: "absolute", bottom: `${vhToPx(1)}${vu}`, left: `${vhToPx(1)}${vu}`, right: `${vhToPx(1)}${vu}`, zIndex: 3 }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.4)}${vu}` }}>
                             <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
-                            <span style={{ fontWeight: 400, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
+                            <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
                           </div>
                         </div>
                       </div>
@@ -1529,15 +1529,15 @@ export default function CenarioTela() {
                             overflow: "hidden",
                             flexShrink: 0,
                             zIndex: 1,
-                            marginLeft: `-${vhToPx(1)}${vu}`,
+                            marginLeft: `0`,
                             animation: "cenario-capa-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both",
                             position: "relative",
-                            padding: `${vhToPx(0.78)}${vu}`,
-                            background: "rgba(255,255,255,0.12)",
-                            backdropFilter: "blur(20px)",
-                            WebkitBackdropFilter: "blur(20px)",
-                            border: `1px solid rgba(255,255,255,0.25)`,
-                            boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)`,
+                            padding: `0`,
+                             background: "transparent",
+                             backdropFilter: "none",
+                             WebkitBackdropFilter: "none",
+                             border: `none`,
+                             boxShadow: `none`,
                           }}
                         >
                           <img
@@ -1547,13 +1547,12 @@ export default function CenarioTela() {
                               width: "100%",
                               height: "100%",
                               objectFit: "cover",
-                              borderRadius: `${vhToPx(1.4)}${vu}`,
+                              borderRadius: `${vhToPx(2)}${vu}`,
                             }}
                           />
-                          {/* Gradient fade at bottom — CEF 86 compatible */}
-                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "45%", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)", pointerEvents: "none", borderRadius: `0 0 ${vhToPx(1.4)}${vu} ${vhToPx(1.4)}${vu}` }} />
+                          {/* Removido overlay escuro */}
                           {/* Music title + artist — centered */}
-                          <div key={musicKey} style={{ position: "absolute", top: "50%", left: `${vhToPx(1.2)}${vu}`, right: `${vhToPx(1.2)}${vu}`, transform: "translateY(-30%)", zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", textAlign: "center" }}>
+                          <div key={musicKey} style={{ position: "absolute", bottom: `${vhToPx(1)}${vu}`, left: `${vhToPx(1.2)}${vu}`, right: `${vhToPx(1.2)}${vu}`, zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", textAlign: "center" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.4)}${vu}` }}>
                               <Music size={Number(vhToPx(1.1))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
                             </div>
