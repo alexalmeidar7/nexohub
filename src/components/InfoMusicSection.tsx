@@ -23,17 +23,37 @@ export default function InfoMusicSection() {
   const [excecoes, setExcecoes] = useState("");
   const [excecoesInitial, setExcecoesInitial] = useState("");
   const [savingExcecoes, setSavingExcecoes] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [togglingAi, setTogglingAi] = useState(false);
 
   const loadExcecoes = async () => {
     if (!user) return;
     const { data } = await supabase
       .from("user_settings")
-      .select("infomusic_excecoes")
+      .select("infomusic_excecoes, infomusic_ai_enabled")
       .eq("user_id", user.id)
       .maybeSingle();
     const v = (data?.infomusic_excecoes || "") as string;
     setExcecoes(v);
     setExcecoesInitial(v);
+    setAiEnabled((data as { infomusic_ai_enabled?: boolean })?.infomusic_ai_enabled !== false);
+  };
+
+  const toggleAi = async () => {
+    if (!user) return;
+    setTogglingAi(true);
+    const next = !aiEnabled;
+    try {
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({ user_id: user.id, infomusic_ai_enabled: next }, { onConflict: "user_id" });
+      if (error) throw error;
+      setAiEnabled(next);
+      toast.success(next ? "Geração por IA habilitada" : "Geração por IA desabilitada");
+    } catch (e) {
+      toast.error("Erro ao atualizar");
+    }
+    setTogglingAi(false);
   };
 
   const saveExcecoes = async () => {
