@@ -315,24 +315,24 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       </div>
 
       {/* Horizontal Menu Section - Shortcuts/Navigation */}
-      <div className="mb-10 px-6">
-        <div className="flex items-center gap-4 pb-4 overflow-x-auto no-scrollbar scroll-smooth">
+      <div className="mb-6 px-6 flex-shrink-0">
+        <div className="flex items-center gap-3 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
           {[
-            { id: "apresentadores", label: "Apresentadores", icon: Users, color: "accent" },
-            { id: "testemunhais", label: "Testemunhais", icon: MessageSquareQuote, color: "accent" },
-            { id: "promocoes", label: "Promoções", icon: Tag, color: "accent" },
-            { id: "shopping", label: "Shopping", icon: ShoppingBag, color: "accent" },
-            { id: "logos", label: "Logos", icon: Image, color: "accent" }
+            { id: "apresentadores", label: "Apresentadores", icon: Users },
+            { id: "testemunhais", label: "Testemunhais", icon: MessageSquareQuote },
+            { id: "promocoes", label: "Promoções", icon: Tag },
+            { id: "shopping", label: "Shopping", icon: ShoppingBag },
+            { id: "logos", label: "Logos", icon: Image }
           ].map((nav) => (
             <button 
               key={nav.id}
-              className="flex flex-col items-center justify-center gap-3 min-w-[110px] h-[110px] rounded-[28px] transition-all duration-300 hover:translate-y-[-4px] active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10 hover:shadow-2xl hover:shadow-accent/5" 
+              className="flex flex-col items-center justify-center gap-2 min-w-[90px] h-[90px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
               onClick={() => onNavigate(nav.id as any)}
             >
-              <div className="w-11 h-11 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-accent/20 transition-all duration-300">
-                <nav.icon size={22} className="text-accent" />
+              <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
+                <nav.icon size={18} className="text-accent" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40 group-hover:text-white group-hover:tracking-[0.15em] transition-all duration-300">
+              <span className="text-[9px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
                 {nav.label}
               </span>
             </button>
@@ -340,12 +340,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           
           <button 
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }} 
-            className="flex flex-col items-center justify-center gap-3 min-w-[110px] h-[110px] rounded-[28px] transition-all duration-300 hover:translate-y-[-4px] border-2 border-dashed border-white/10 hover:border-accent/40 hover:bg-accent/5 cursor-pointer bg-transparent group"
+            className="flex flex-col items-center justify-center gap-2 min-w-[90px] h-[90px] rounded-[24px] transition-all border-2 border-dashed border-white/10 hover:border-accent/40 hover:bg-accent/5 cursor-pointer bg-transparent group"
           >
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-white/5 group-hover:bg-accent/20 transition-all duration-300">
-              <Plus size={24} className="text-white/20 group-hover:text-accent transition-colors" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/20 group-hover:text-accent transition-all duration-300">Adicionar</span>
+            <Plus size={20} className="text-white/20 group-hover:text-accent transition-colors" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/20 group-hover:text-accent">Adicionar</span>
           </button>
         </div>
       </div>
