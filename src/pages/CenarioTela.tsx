@@ -1710,7 +1710,7 @@ export default function CenarioTela() {
                     <span className="font-black" style={{ fontSize: `${vhToPx(2.4)}${vu}`, color: "#fff", letterSpacing: "-0.01em" }}>{config.traffic.city || config.city || "Trânsito"}</span>
                   </div>
                 ) : (
-                  <div className="opacity-50" style={{ color: "#333", fontSize: `${vhToPx(1.8)}${vu}` }}>Trânsito desativado</div>
+                  <div className="opacity-100" style={{ color: "#fff", fontSize: `${vhToPx(1.8)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>Trânsito desativado</div>
                 )}
               </div>
             )}
