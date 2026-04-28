@@ -1550,8 +1550,7 @@ export default function CenarioTela() {
                               borderRadius: `${vhToPx(1.4)}${vu}`,
                             }}
                           />
-                          {/* Gradient fade at bottom — CEF 86 compatible */}
-                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "45%", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)", pointerEvents: "none", borderRadius: `0 0 ${vhToPx(1.4)}${vu} ${vhToPx(1.4)}${vu}` }} />
+                          {/* Removido overlay escuro */}
                           {/* Music title + artist — centered */}
                           <div key={musicKey} style={{ position: "absolute", top: "50%", left: `${vhToPx(1.2)}${vu}`, right: `${vhToPx(1.2)}${vu}`, transform: "translateY(-30%)", zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", textAlign: "center" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.4)}${vu}` }}>
