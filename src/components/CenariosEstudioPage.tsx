@@ -213,6 +213,12 @@ export default function CenariosEstudioPage() {
         if (tErr) throw tErr;
       }
 
+      // Bump grupo updated_at so XML cache-buster reflects the change immediately
+      await (supabase as any)
+        .from("cenario_estudio_grupos")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", grupo.id);
+
       toast.success("Template salvo");
       setEditingIds((prev) => {
         const n = new Set(prev);
