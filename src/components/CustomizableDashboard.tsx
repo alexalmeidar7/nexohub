@@ -341,9 +341,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <button 
                 className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
                 onClick={() => onNavigate(nav.id as any)}
+                style={{ "--accent-color": "var(--layout-accent-color, #c8ff00)" } as React.CSSProperties}
               >
-                <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
-                  <nav.icon size={16} className="text-accent" />
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center group-hover:bg-accent/20 transition-all" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 10%, transparent)" }}>
+                  <nav.icon size={16} className="text-accent" style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
                 </div>
                 <span className="text-[8px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
                   {nav.label}
@@ -390,12 +391,12 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     onDragEnd={handleDragEnd}
                   >
                     <div className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: `1px solid rgba(255,255,255,0.05)` }} draggable onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}>
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-accent/10">
-                        {item.widgetType === "agenda" && <CalendarDays size={14} className="text-accent" />}
-                        {item.widgetType === "musica" && <Music size={14} className="text-accent" />}
-                        {item.widgetType === "weather" && <CloudSun size={14} className="text-accent" />}
-                        {item.widgetType === "stats" && <BarChart3 size={14} className="text-accent" />}
-                        {item.widgetType === "player" && <MonitorPlay size={14} className="text-accent" />}
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
+                        {item.widgetType === "agenda" && <CalendarDays size={14} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "musica" && <Music size={14} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "weather" && <CloudSun size={14} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "stats" && <BarChart3 size={14} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "player" && <MonitorPlay size={14} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
                       </div>
                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50 group-hover:text-white transition-colors">
                         {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : item.widgetType === "stats" ? "Métricas" : "Player"}
