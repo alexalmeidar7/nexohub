@@ -157,8 +157,7 @@ export default function OnAirWidget() {
               </button>
               <button 
                 onClick={() => setActiveTab("video")}
-                className={`flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === "video" ? "text-white shadow-xl" : "text-white/20 hover:text-white/40"}`}
-                style={activeTab === "video" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
+                className="flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 text-white/20 hover:text-white/40"
               >
                 Assistir
               </button>
