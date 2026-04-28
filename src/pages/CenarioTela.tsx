@@ -1733,7 +1733,7 @@ export default function CenarioTela() {
                         size={vhToPx}
                       />
                     ) : (
-                    <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: `${vhToPx(1.9)}${vu}` }}>Cotação desativada</div>
+                    <div className="flex-1 flex items-center justify-center opacity-100" style={{ fontSize: `${vhToPx(1.9)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>Cotação desativada</div>
                     )}
                 </div>
               </div>
