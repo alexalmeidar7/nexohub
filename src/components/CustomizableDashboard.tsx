@@ -363,7 +363,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 {items.filter(i => i.type === "widget").map(item => (
                   <div 
                     key={item.id} 
-                    className={`relative group rounded-[28px] animate-fade-in flex flex-col transition-all duration-300 ${draggedId === item.id ? "opacity-40 scale-95" : "hover:bg-white/[0.02]"}`} 
+                    className={`relative group rounded-[28px] animate-fade-in flex flex-col transition-all duration-300 ${draggedId === item.id ? "opacity-40" : "hover:bg-white/[0.02]"}`} 
                     style={{ background: "rgba(26, 26, 26, 0.4)", backdropFilter: "blur(20px)", boxShadow: "0 4px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", minHeight: 0 }} 
                     onDragOver={(e) => handleDragOver(e, item.id)} 
                     onDrop={() => handleDrop(item.id)} 
