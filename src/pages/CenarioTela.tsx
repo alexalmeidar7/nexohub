@@ -1297,7 +1297,7 @@ export default function CenarioTela() {
                   onLoad={() => setArtistBgReady(true)}
                 />
               )}
-              {isHomeOrChat && !altMode && (
+              {false && isHomeOrChat && !altMode && (
                 <div className="absolute inset-0 pointer-events-none" style={{ opacity: artistVisible ? 1 : 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)", transition: "opacity 1.2s ease-in-out" }} />
               )}
               {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
