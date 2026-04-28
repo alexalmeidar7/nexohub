@@ -600,15 +600,20 @@ export default function CenarioTela() {
     const applyConfig = (raw: any, fromRealtime = false) => {
       if (!raw || typeof raw !== "object" || Object.keys(raw).length === 0) return;
       const { _activeTab, _weatherSubTab, _currencySubTab, _screenRotation, ...rest } = raw;
-      const merged = { ...defaultConfig, ...rest };
-      setConfig(merged);
-      // Only apply tab/rotation from initial load, never from realtime updates
-      // Tab changes arrive via explicit "tab-change" broadcast events instead
-      if (!fromRealtime) {
+      
+      setConfig(prev => {
+        const merged = { ...prev, ...rest };
+        return merged;
+      });
+
+      // Only apply tab/rotation from initial load IF not already set by user interaction
+      // This prevents the page from jumping back to home when a background sync happens
+      if (!fromRealtime && !initialTabLoaded.current) {
         if (_activeTab) setActiveTab(_activeTab);
         if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
         if (_currencySubTab) setCurrencySubTab(_currencySubTab);
         if (typeof _screenRotation === "number") setScreenRotation(_screenRotation);
+        initialTabLoaded.current = true;
       }
       if (fromRealtime) setLastSyncTime(new Date());
       try {
