@@ -205,13 +205,15 @@ export default function OnAirWidget() {
       <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl mb-4 self-center w-full max-w-[200px] flex-shrink-0">
         <button 
           onClick={() => setActiveTab("info")}
-          className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "info" ? "bg-white/10 text-white shadow-sm" : "text-white/20 hover:text-white/40"}`}
+          className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "info" ? "text-white shadow-sm" : "text-white/20 hover:text-white/40"}`}
+          style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
         >
           Informações
         </button>
         <button 
           onClick={() => setActiveTab("video")}
-          className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "video" ? "bg-white/10 text-white shadow-sm" : "text-white/20 hover:text-white/40"}`}
+          className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "video" ? "text-white shadow-sm" : "text-white/20 hover:text-white/40"}`}
+          style={activeTab === "video" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
         >
           Vídeo
         </button>
