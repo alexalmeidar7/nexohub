@@ -1872,6 +1872,17 @@ export default function CenarioTela() {
             <style>{`
               * { border: 1px solid rgba(255, 0, 0, 0.4) !important; background-color: rgba(255, 0, 0, 0.05) !important; }
               img { border: 2px solid #0f0 !important; }
+              /* Highlight anything that might be an overlay or filter */
+              [style*="background: linear-gradient"], [style*="background-image: linear-gradient"],
+              [style*="background: radial-gradient"], [style*="background-image: radial-gradient"],
+              [style*="filter"], [style*="backdrop-filter"], [style*="opacity"],
+              .absolute.inset-0 { 
+                outline: 4px dashed #ff00ff !important;
+                outline-offset: -4px;
+              }
+              [style*="rgba(0,0,0"], [style*="rgba(0, 0, 0"], [style*="#000"] {
+                outline: 4px solid #00ffff !important;
+              }
             `}</style>
           )}
           </div>
