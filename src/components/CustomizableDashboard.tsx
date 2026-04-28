@@ -254,7 +254,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1 bg-black/40 backdrop-blur-3xl rounded-[40px] border border-white/5">
+    <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1 bg-black/40 backdrop-blur-3xl rounded-[40px] border border-white/5 w-[40%]">
       {/* On Air Section - Primary Focus */}
       <div className="mb-6 px-6 pt-4 flex-shrink-0">
         {onAirProgram ? (
