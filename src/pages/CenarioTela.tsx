@@ -1381,7 +1381,41 @@ export default function CenarioTela() {
           </button>
           </div>
           </div>
-
+            <div className="flex flex-col gap-1 mt-auto">
+              <button 
+                onClick={() => setShowArtistLayer(p => !p)} 
+                className="rounded-lg flex flex-col items-center justify-center cursor-pointer p-1" 
+                style={{ 
+                  width: btnSize, 
+                  background: showArtistLayer ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.3)", 
+                  border: "1px solid rgba(255,255,255,0.1)"
+                }}
+              >
+                <Music style={{ width: iconSize, height: iconSize }} className={showArtistLayer ? "text-white" : "text-white/40"} />
+                <span style={{ fontSize: `${vhToPx(0.8)}${vu}`, color: "white" }}>ARTISTA</span>
+              </button>
+              <button 
+                onClick={() => setShowThumbLayer(p => !p)} 
+                className="rounded-lg flex flex-col items-center justify-center cursor-pointer p-1" 
+                style={{ 
+                  width: btnSize, 
+                  background: showThumbLayer ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.3)", 
+                  border: "1px solid rgba(255,255,255,0.1)"
+                }}
+              >
+                <Play style={{ width: iconSize, height: iconSize }} className={showThumbLayer ? "text-white" : "text-white/40"} />
+                <span style={{ fontSize: `${vhToPx(0.8)}${vu}`, color: "white" }}>THUMB</span>
+              </button>
+              {config.home.exceptionWords && (
+                <div className="mt-2 text-center" style={{ width: btnSize }}>
+                  <span style={{ fontSize: `${vhToPx(0.7)}${vu}`, color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Exceções:</span>
+                  <div style={{ fontSize: `${vhToPx(0.6)}${vu}`, color: "rgba(255,255,255,0.3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {config.home.exceptionWords}
+                  </div>
+                </div>
+              )}
+            </div>
+            
           {/* Drawing options panel */}
           {drawingActive && showDrawOptions && (
             <div className="absolute flex flex-col items-center rounded-2xl" style={{ gap: "0.8vh", left: "9.5%", top: "50%", transform: "translateY(-50%)", zIndex: 45, padding: "1.2vh 0.8vh", background: "rgba(20,20,20,0.85)", WebkitBackdropFilter: "blur(12px)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
