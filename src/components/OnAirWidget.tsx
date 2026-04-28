@@ -147,6 +147,7 @@ export default function OnAirWidget() {
       <div className="flex-1 relative min-h-0">
         {activeTab === "info" ? (
           <div className="h-full relative flex flex-col justify-center">
+            {/* Minimalist Tab Switcher inside the card area */}
             <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl mb-4 self-center w-full max-w-[180px] flex-shrink-0 border border-white/5 shadow-inner relative z-30">
               <button 
                 onClick={() => setActiveTab("info")}
@@ -224,7 +225,7 @@ export default function OnAirWidget() {
             </div>
           </div>
         ) : (
-          <div className="absolute inset-0 z-50 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/10 animate-scale-in">
+          <div className="absolute inset-0 -top-16 bottom-0 z-50 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/10 animate-scale-in">
             <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
               {/* Internal Tab Switcher for Video View */}
               <div className="flex items-center p-1 bg-black/40 backdrop-blur-md rounded-2xl mt-4 self-center w-full max-w-[180px] flex-shrink-0 border border-white/10 shadow-xl z-50">
