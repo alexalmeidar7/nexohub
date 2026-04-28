@@ -180,8 +180,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     manualSignOutRef.current = true;
-    await supabase.auth.signOut();
+    // Clear keep-connected flag and cached session so the user actually logs out
+    localStorage.setItem(KEEP_CONNECTED_KEY, "false");
+    lastGoodSessionRef.current = null;
+    prevUserIdRef.current = null;
+    try {
+      await supabase.auth.signOut();
+    } catch { /* ignore */ }
+    setUser(null);
+    setSession(null);
     setRole(null);
+    // Hard redirect to login so any cached state is cleared
+    window.location.href = "/";
   };
 
   return (
