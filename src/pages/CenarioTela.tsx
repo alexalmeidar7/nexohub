@@ -1747,7 +1747,7 @@ export default function CenarioTela() {
                   {config.chat.enabled ? (<>
                     <div className="flex justify-end mb-1"><MessageCircle size={48} className="drop-shadow-lg" style={{ color: accentColor }} /></div>
                     <div style={{ marginBottom: `${vhToPx(2)}${vu}` }}>
-                      <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: `${vhToPx(4)}${vu}` }}>mensagens</div>
+                      <div className="font-extrabold leading-tight" style={{ fontSize: `${vhToPx(4)}${vu}`, textShadow: "0 2px 10px rgba(0,0,0,1)" }}>mensagens</div>
                       <div className="font-bold" style={{ fontSize: `${vhToPx(2.5)}${vu}`, color: accentColor }}>chat</div>
                     </div>
                     <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "transparent", border: "none" }}>
