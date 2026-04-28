@@ -294,9 +294,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <h2 className="text-3xl font-black text-white tracking-tighter leading-tight mb-3 drop-shadow-lg line-clamp-2">{onAirProgram.nome}</h2>
               
               <div className="flex flex-wrap items-center gap-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-white/40" />
-                  <span className="text-xs font-semibold text-white/80">{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
+                <div className="flex items-center gap-2.5">
+                  <Clock size={16} className="text-white/60" />
+                  <span className="text-sm font-semibold text-white/80 tracking-wide">{onAirProgram.horario_inicio} — {onAirProgram.horario_fim}</span>
                 </div>
                 {onAirProgram.apresentador_nome && (
                   <div className="flex items-center gap-2">
