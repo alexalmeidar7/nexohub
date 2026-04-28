@@ -1274,38 +1274,52 @@ export default function CenarioTela() {
             }
 
             return (
-            <div className="absolute inset-0" style={{ background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : "#000", zIndex: 0 }}>
-              {/* Program thumb as bg — always mounted on home/weather/currency/chat for smooth fade */}
-              {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
-                <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
-                  <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(1.2)" } : { filter: "blur(22px) brightness(1.2)", transform: "scale(1.1)" }} />
+              <div className="absolute inset-0" style={{ background: "#000", zIndex: 0 }}>
+                {/* Camada 1: Fundo degrade (fica em baixo de tudo) */}
+                <div className="absolute inset-0" style={{ 
+                  background: (activeTab === "home" || activeTab === "chat") && config.home.bgGradient ? buildHomeGradient(config.home) : "#000",
+                  zIndex: 1 
+                }} />
+
+                {/* Camada 2: Imagem do artista (fica por cima da camada 1) */}
+                <div className="absolute inset-0" style={{ zIndex: 2 }}>
+                  {isHomeOrChat && hasArtist && prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+                    <img
+                      src={prevArtistBgUrl}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                    />
+                  )}
+                  {isHomeOrChat && artistBgUrl && (
+                    <img
+                      src={artistBgUrl}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                      onLoad={() => setArtistBgReady(true)}
+                    />
+                  )}
                 </div>
-              )}
-              {/* Artist bg crossfade between previous and current url */}
-              {isHomeOrChat && hasArtist && prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
-                <img
-                  src={prevArtistBgUrl}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
-                />
-              )}
-              {isHomeOrChat && artistBgUrl && (
-                <img
-                  src={artistBgUrl}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
-                  onLoad={() => setArtistBgReady(true)}
-                />
-              )}
-              {/* Removed black overlay per user request */}
-              {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-              {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-              {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-              {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-              {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-            </div>
+
+                {/* Camada 3: Thumb do programa (fica por cima da camada 1 e 2) */}
+                <div className="absolute inset-0" style={{ zIndex: 3 }}>
+                  {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
+                    <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
+                      <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(1.2)" } : { filter: "blur(22px) brightness(1.2)", transform: "scale(1.1)" }} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Fundo de imagem padrão se nada estiver ativo */}
+                <div className="absolute inset-0" style={{ zIndex: 0 }}>
+                  {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                </div>
+              </div>
             );
           })()}
 
