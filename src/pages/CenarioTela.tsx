@@ -1623,7 +1623,7 @@ export default function CenarioTela() {
                           </div>
                         </div>
                         {/* Main weather card */}
-                        <div className="rounded-3xl" style={{ padding: `${vhToPx(3)}${vu}`, background: "rgba(255,255,255,0.08)", WebkitBackdropFilter: "blur(24px)", backdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 12px 48px rgba(0,0,0,0.2)" }}>
+                        <div className="rounded-3xl" style={{ padding: `${vhToPx(3)}${vu}`, background: "rgba(0,0,0,0.15)", border: "none", boxShadow: "none" }}>
                           <div className="flex items-center" style={{ gap: `${vhToPx(3)}${vu}`, marginBottom: `${vhToPx(2.5)}${vu}` }}>
                             <div style={{ width: `${vhToPx(14)}${vu}`, height: `${vhToPx(14)}${vu}`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
                               <WeatherIcon code={liveWeather.current.code} size={200} forceDay />
