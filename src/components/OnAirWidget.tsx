@@ -83,7 +83,7 @@ export default function OnAirWidget() {
   const [nextPrograms, setNextPrograms] = useState<Programa[]>([]);
   const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
   const [isHovered, setIsHovered] = useState(false);
-  const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string } | null>(null);
+  const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string; capa?: string } | null>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [isStereo, setIsStereo] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
