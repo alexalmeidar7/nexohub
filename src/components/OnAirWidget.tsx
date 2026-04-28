@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
-import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music, User, Video, Volume2, VolumeX, MonitorPlay } from "lucide-react";
+import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music, User, Video, Volume2, VolumeX, MonitorPlay, X, Play, Pause } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -82,29 +82,12 @@ export default function OnAirWidget() {
   const [apresentadorFoto, setApresentadorFoto] = useState("");
   const [nextPrograms, setNextPrograms] = useState<Programa[]>([]);
   const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
-  const [isHovered, setIsHovered] = useState(false);
   const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string; capa?: string } | null>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
-  const [isStereo, setIsStereo] = useState(false);
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"info" | "video">("info");
   const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
 
-  // Fetch user avatar
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("profiles").select("avatar_url, nome").eq("user_id", user.id).maybeSingle()
-      .then(({ data }) => {
-        if (data?.avatar_url) setUserAvatar(data.avatar_url);
-      });
-  }, [user]);
-
-  // Fetch stereo from streaming channel
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("streaming_channels").select("is_stereo").eq("user_id", user.id).eq("active", true).ilike("estudio", "%fm%").limit(1).maybeSingle()
-      .then(({ data }) => { setIsStereo(!!data?.is_stereo); });
-  }, [user]);
   useEffect(() => {
     const update = async () => {
       const [programas, apresentadores] = await Promise.all([getProgramas(), getApresentadores()]);
@@ -130,7 +113,6 @@ export default function OnAirWidget() {
     return () => clearInterval(interval);
   }, []);
 
-  // Poll music data from per-user localStorage (scoped per user)
   useEffect(() => {
     if (!user?.id) return;
     const key = `masterview_music_data::${user.id}`;
@@ -152,52 +134,13 @@ export default function OnAirWidget() {
     return () => clearInterval(mi);
   }, [user?.id]);
 
-  const firstNext = nextPrograms[0] || null;
-  const firstNextAp = firstNext ? nextApresentadores[firstNext.id] : null;
-
   if (loading) {
     return (
-      <div className="h-full flex flex-col animate-pulse">
-        {/* NO AR label skeleton */}
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-3.5 h-3.5 rounded-full bg-white/10" />
-          <div className="w-12 h-3 rounded bg-white/10" />
-        </div>
-        {/* Program name skeleton */}
-        <div className="flex-1 flex flex-col justify-center gap-2" style={{ maxWidth: "55%" }}>
-          <div className="w-full h-5 rounded bg-white/10" />
-          <div className="w-3/4 h-5 rounded bg-white/10" />
-          <div className="w-24 h-2.5 rounded bg-white/10 mt-1" />
-        </div>
-        {/* Presenter skeleton */}
-        <div className="flex items-center gap-1.5 mb-4">
-          <div className="w-3 h-3 rounded-full bg-white/10" />
-          <div className="w-28 h-3 rounded bg-white/10" />
-        </div>
-        {/* Progress bar skeleton */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <div className="w-full h-1 bg-white/10" />
-        </div>
-        {/* Fake presenter photo placeholder */}
-        <div className="absolute right-0 bottom-0 w-[50%] h-[80%] rounded-tl-2xl bg-white/5" />
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="animate-spin text-accent" />
       </div>
     );
   }
-
-  if (!onAir) {
-    return (
-      <div className="h-full flex flex-col">
-        <div className="flex items-center gap-2 mb-2">
-          <Radio size={16} className="text-white/70" />
-          <span className="font-semibold text-white text-sm">NO AR</span>
-        </div>
-        <p className="text-white/50 text-xs">Nenhum programa no ar neste momento.</p>
-        <UpcomingProgramsList programs={nextPrograms} apresentadores={nextApresentadores} />
-      </div>
-    );
-  }
-
-  const { programa, progress } = onAir;
 
   return (
     <div className="h-full relative overflow-hidden flex flex-col no-scrollbar">
@@ -222,10 +165,8 @@ export default function OnAirWidget() {
       <div className="flex-1 relative min-h-0">
         {activeTab === "info" ? (
           <div className="h-full relative flex flex-col justify-center">
-            {/* Background Accent Gradient - Subtle */}
             <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at center, color-mix(in srgb, var(--layout-accent-color) 8%, transparent), transparent 70%)" }} />
 
-            {/* Content Center - Clean Music Info */}
             <div className="relative z-10 flex flex-col items-center text-center">
               <div className="w-28 h-28 rounded-[32px] overflow-hidden bg-white/5 border border-white/10 shadow-2xl mb-4 group/music-card relative">
                 {musicData?.capa ? (
@@ -254,13 +195,19 @@ export default function OnAirWidget() {
                 </p>
               </div>
 
-              {/* Minimal Player Controls */}
               <div className="flex items-center gap-6 mt-2">
                 <button className="text-white/20 hover:text-white transition-colors">
                   <ChevronRight size={18} className="rotate-180" />
                 </button>
-                <button className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-white/5 hover:bg-white/10 transition-all">
-                  <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent ml-1" />
+                <button 
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-white/5 hover:bg-white/10 transition-all"
+                >
+                  {isPlaying ? (
+                    <Pause size={20} className="text-white fill-white" />
+                  ) : (
+                    <Play size={20} className="text-white fill-white ml-1" />
+                  )}
                 </button>
                 <button className="text-white/20 hover:text-white transition-colors">
                   <ChevronRight size={18} />
@@ -268,12 +215,11 @@ export default function OnAirWidget() {
               </div>
             </div>
 
-            {/* Volume Control Fixed at Bottom */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white/[0.03] px-4 py-2 rounded-2xl border border-white/5 backdrop-blur-sm">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white/[0.03] px-4 py-2 rounded-2xl border border-white/5 backdrop-blur-sm w-[80%]">
               <button onClick={() => setIsMuted(!isMuted)}>
                 {isMuted ? <VolumeX size={12} className="text-white/40" /> : <Volume2 size={12} className="text-white/40" />}
               </button>
-              <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
                 <div className="h-full bg-white/40 w-2/3" />
               </div>
             </div>
@@ -281,7 +227,7 @@ export default function OnAirWidget() {
         ) : (
           <div className="absolute inset-0 -top-16 bottom-0 z-50 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/10 animate-scale-in">
             <div className="relative flex-1 min-h-0 overflow-hidden">
-              <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-accent" /></div>}>
+              <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-accent" size={24} /></div>}>
                 <video 
                   className="w-full h-full object-cover"
                   src="https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8"
@@ -291,7 +237,6 @@ export default function OnAirWidget() {
                 />
               </Suspense>
               
-              {/* Video Overlay Controls */}
               <div className="absolute top-4 right-4 flex gap-2">
                 <button 
                   onClick={() => setActiveTab("info")}
@@ -304,7 +249,7 @@ export default function OnAirWidget() {
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                   <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
-                  <span className="text-[8px] font-black text-white uppercase tracking-widest">Canal de Vídeo Ao Vivo</span>
+                  <span className="text-[8px] font-black text-white uppercase tracking-widest">Ao Vivo</span>
                 </div>
 
                 <div className="flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
@@ -314,39 +259,6 @@ export default function OnAirWidget() {
                   <div className="w-16 h-1 bg-white/20 rounded-full overflow-hidden">
                     <div className="h-full bg-accent w-2/3" />
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-          </div>
-        ) : (
-          <div className="h-full flex flex-col rounded-2xl overflow-hidden bg-black/60 border border-white/10">
-            <div className="relative flex-1 min-h-0 overflow-hidden">
-              <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-accent" /></div>}>
-                <video 
-                  className="w-full h-full object-contain"
-                  src="https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8"
-                  autoPlay
-                  playsInline
-                  muted={isMuted}
-                />
-              </Suspense>
-              
-              {/* Video Overlay Controls */}
-              <div className="absolute top-2 right-2 flex gap-2">
-                <button 
-                  onClick={() => setIsMuted(!isMuted)}
-                  className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/10 hover:bg-black/80 transition-all"
-                >
-                  {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                </button>
-              </div>
-
-              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                  <span className="text-[8px] font-black text-white uppercase tracking-widest">Canal de Vídeo Ao Vivo</span>
                 </div>
               </div>
             </div>
