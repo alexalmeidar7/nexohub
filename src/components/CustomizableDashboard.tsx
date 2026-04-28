@@ -121,7 +121,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [addStep, setAddStep] = useState<"choose" | "link" | "widget">("choose");
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -237,19 +237,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     setAddStep("choose");
   };
 
-  const handleLinkClick = (item: DashboardItem) => {
-    if (editMode) return;
-    if (item.linkExternal === "player") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/player`, "_blank");
-    } else if (item.linkExternal === "telapromo") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
-    } else if (item.linkPage) {
-      onNavigate(item.linkPage);
-    }
-  };
-
   const handleDragStart = (id: string) => setDraggedId(id);
   const handleDragOver = (e: React.DragEvent, targetId: string) => { e.preventDefault(); setDragOverId(targetId); };
   const handleDrop = (targetId: string) => {
@@ -264,24 +251,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   };
   const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
 
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [showScrollHint, setShowScrollHint] = useState(false);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const check = () => {
-      const canScroll = el.scrollHeight > el.clientHeight + 20;
-      const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
-      setShowScrollHint(canScroll && !atBottom);
-    };
-    check();
-    el.addEventListener("scroll", check);
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    return () => { el.removeEventListener("scroll", check); ro.disconnect(); };
-  }, [items]);
 
   return (
     <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1">
@@ -341,7 +311,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         )}
       </div>
 
-      {/* Horizontal Menu Section - Layout requested */}
+      {/* Horizontal Menu Section - Shortcuts/Navigation */}
       <div className="mb-8 overflow-hidden">
         <div className="flex items-center gap-3 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
           <button className="flex flex-col items-center justify-center gap-2 min-w-[100px] h-[100px] rounded-3xl transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => onNavigate("apresentadores")}>
@@ -423,69 +393,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           )}
         </div>
       </div>
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Apresentadores</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("testemunhais")}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
-                <MessageSquareQuote size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Testemunhais</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("promocoes")}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
-                <Tag size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Promoções</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("shopping")}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
-                <ShoppingBag size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Shopping</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 group whitespace-nowrap" onClick={() => onNavigate("logos")}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all group-hover:scale-110" style={{ background: "rgba(255,255,255,0.05)" }}>
-                <Image size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Logos</span>
-            </button>
-          </div>
-        </div>
-
-        {items.filter(i => i.type === "widget").length > 0 && (
-          <div className="mb-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Widgets</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {items.filter(i => i.type === "widget").map(item => (
-                <div key={item.id} className={`relative group rounded-3xl animate-fade-in flex flex-col ${draggedId === item.id ? "opacity-40 scale-95" : ""}`} style={{ background: "var(--layout-widget-bg, #1a1a1a)", boxShadow: "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)", borderRadius: "24px", height: "280px", overflow: "hidden" }} onDragOver={(e) => handleDragOver(e, item.id)} onDrop={() => handleDrop(item.id)} onDragEnd={handleDragEnd}>
-                  <div className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }} draggable onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}>
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
-                      {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                    </div>
-                    <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
-                      {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Widget"}
-                    </span>
-                    <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
-                  </div>
-                  <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
-                    <button onClick={() => removeItem(item.id)} className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}><X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} /></button>
-                  </div>
-                  <div className="p-4 flex-1 overflow-y-auto widget-scroll">
-                    <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
-                      {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
-                      {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
-                      {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                    </Suspense>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Add Dialog */}
       {showAddDialog && (
@@ -539,7 +446,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 }
 
 function MusicProgramWidget({ dataUserId }: { dataUserId?: string }) {
-  const [currentProgram, setCurrentProgram] = useState<any>(null);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; } | null>(null);
 
   useEffect(() => {
