@@ -78,23 +78,23 @@ function normalizeDashboardSettings(raw: unknown): DashboardSettingsPayload {
   return { items: [] };
 }
 
-const linkOptions: { label: string; page?: Page; external?: string; icon: string }[] = [
-  { label: "Apresentadores", page: "apresentadores", icon: "Mic2" },
-  { label: "Programas", page: "programas", icon: "PlaySquare" },
-  { label: "Notícias", page: "noticias", icon: "Newspaper" },
-  { label: "Música no Ar", page: "musica", icon: "Music" },
-  { label: "Agenda", page: "agenda", icon: "CalendarDays" },
-  { label: "Player Config", page: "playerconfig", icon: "Settings" },
-  { label: "Player Externo", external: "player", icon: "MonitorPlay" },
-  { label: "Testemunhais", page: "testemunhais", icon: "MessageSquareQuote" },
-  { label: "Promoções", page: "promocoes", icon: "Tag" },
-  { label: "Logos", page: "logos", icon: "Image" },
-  { label: "Roll", page: "preroll", icon: "Film" },
-  { label: "Shopping", page: "shopping", icon: "ShoppingCart" },
-  { label: "vMix", page: "vmix", icon: "Monitor" },
-  { label: "Corte de Vídeo", page: "cortevideo", icon: "Scissors" },
-  { label: "Tela Promo", external: "telapromo", icon: "Tag" },
-  { label: "Configurações", page: "configuracoes", icon: "Settings" },
+const linkOptions: { label: string; page?: Page; external?: string; icon: string; defaultHidden?: boolean }[] = [
+  { label: "Apresentadores", page: "apresentadores", icon: "Mic2", defaultHidden: false },
+  { label: "Programas", page: "programas", icon: "PlaySquare", defaultHidden: false },
+  { label: "Notícias", page: "noticias", icon: "Newspaper", defaultHidden: false },
+  { label: "Música no Ar", page: "musica", icon: "Music", defaultHidden: false },
+  { label: "Agenda", page: "agenda", icon: "CalendarDays", defaultHidden: false },
+  { label: "Player Config", page: "playerconfig", icon: "Settings", defaultHidden: true },
+  { label: "Player Externo", external: "player", icon: "MonitorPlay", defaultHidden: true },
+  { label: "Testemunhais", page: "testemunhais", icon: "MessageSquareQuote", defaultHidden: false },
+  { label: "Promoções", page: "promocoes", icon: "Tag", defaultHidden: false },
+  { label: "Logos", page: "logos", icon: "Image", defaultHidden: false },
+  { label: "Roll", page: "preroll", icon: "Film", defaultHidden: true },
+  { label: "Shopping", page: "shopping", icon: "ShoppingCart", defaultHidden: false },
+  { label: "vMix", page: "vmix", icon: "Monitor", defaultHidden: true },
+  { label: "Corte de Vídeo", page: "cortevideo", icon: "Scissors", defaultHidden: true },
+  { label: "Tela Promo", external: "telapromo", icon: "Tag", defaultHidden: true },
+  { label: "Configurações", page: "configuracoes", icon: "Settings", defaultHidden: true },
 ];
 
 const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "weather" | "player"; description: string }[] = [
