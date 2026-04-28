@@ -310,7 +310,7 @@ export default function OnAirWidget() {
               <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
                 <div
                   className="h-full transition-all duration-1000 shadow-[0_0_10px_rgba(var(--layout-accent-color-rgb),0.3)]"
-                  style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color, #c8ff00)" }}
+                  style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color)" }}
                 />
               </div>
             </div>
