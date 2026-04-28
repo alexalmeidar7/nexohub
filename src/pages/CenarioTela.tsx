@@ -1683,7 +1683,7 @@ export default function CenarioTela() {
                               </div>
                               {/* Temps */}
                               <div className="flex items-baseline" style={{ flexShrink: 0, gap: `${vhToPx(0.6)}${vu}` }}>
-                                <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(2.8)}${vu}`, lineHeight: 1, textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>{d.max}°</span>
+                                <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(2.8)}${vu}`, lineHeight: 1, textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{d.max}°</span>
                                 <span className="font-medium tabular-nums" style={{ fontSize: `${vhToPx(1.7)}${vu}`, opacity: 0.55, lineHeight: 1 }}>{d.min}°</span>
                               </div>
                             </div>
