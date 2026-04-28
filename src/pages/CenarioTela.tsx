@@ -1258,20 +1258,19 @@ export default function CenarioTela() {
             const hasThumb = !!thumbUrl;
             const hasArtist = !!artistBgUrl && !!musicData?.artista && !isBreakTrack && !isJornalistico;
 
-            // Decide visibility (opacity) per layer for smooth crossfades
-            let thumbVisible = false;
-            let artistVisible = false;
+            // Decide visibility (opacity) per layer
+            let thumbVisible = showThumbLayer && hasThumb;
+            let artistVisible = showArtistLayer && hasArtist;
+            
+            // If in alternate mode, override with timed logic
             if (altMode && isHomeOrChat) {
               if (altBgPhase === "thumb") {
                 thumbVisible = hasThumb;
-                artistVisible = !hasThumb && hasArtist; // fallback if no thumb
+                artistVisible = !hasThumb && hasArtist;
               } else {
                 artistVisible = hasArtist;
-                thumbVisible = !hasArtist && hasThumb; // fallback if no artist
+                thumbVisible = !hasArtist && hasThumb;
               }
-            } else {
-              thumbVisible = !!config.useProgramThumbAsBg && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && hasThumb;
-              artistVisible = isHomeOrChat && hasArtist;
             }
 
             return (
