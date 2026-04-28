@@ -245,8 +245,8 @@ export default function OnAirWidget() {
             </div>
 
             <div className="flex items-center gap-2 mb-2">
-              <Radio size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} className="animate-pulse" />
-              <span className="font-black text-[9px] uppercase tracking-[0.25em] animate-pulse" style={{ color: "var(--layout-accent-color, #c8ff00)" }}>Ao Vivo</span>
+              <Radio size={12} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
+              <span className="font-black text-[9px] uppercase tracking-[0.25em] animate-pulse" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
             </div>
 
             <div className="flex-1 flex flex-col justify-center z-10">
