@@ -33,6 +33,11 @@ export default function IntercomWidget() {
   // Listener state
   const [receiving, setReceiving] = useState(false);
   const [speakerOnline, setSpeakerOnline] = useState(false);
+  const [listenerVolume, setListenerVolume] = useState<number>(() => {
+    const saved = localStorage.getItem("intercom-listener-volume");
+    return saved ? Math.max(0, Math.min(1, parseFloat(saved))) : 1;
+  });
+  const [audioBlocked, setAudioBlocked] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
