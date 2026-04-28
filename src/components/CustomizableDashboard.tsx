@@ -257,6 +257,12 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   };
   const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
 
+  const hideLink = (id: string) => {
+    const newHidden = [...hiddenLinks, id];
+    setHiddenLinks(newHidden);
+    localStorage.setItem("nexohub_hidden_dashboard_links", JSON.stringify(newHidden));
+  };
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
