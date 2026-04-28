@@ -643,10 +643,11 @@ export default function ApresentadorForm() {
                         />
                       ) : (
                         <div 
-                          className="cursor-pointer hover:text-[var(--layout-accent-color)] transition-colors min-h-[1.5em]" 
+                          className="cursor-pointer hover:text-[var(--layout-accent-color)] transition-colors min-h-[1.5em] flex items-center gap-2" 
                           onClick={() => setEditingCell({ id: a.id, field: "cargo" })}
                         >
                           {a.cargo || <span className="opacity-30">Definir cargo</span>}
+                          {savingCell?.id === a.id && savingCell?.field === "cargo" && <Loader2 size={10} className="animate-spin text-[var(--layout-accent-color)]" />}
                         </div>
                       )}
                     </td>
