@@ -60,6 +60,7 @@ export default function ApresentadorForm() {
   const [catOpen, setCatOpen] = useState(false);
   const [importRows, setImportRows] = useState<any[] | null>(null);
   const [importing, setImporting] = useState(false);
+  const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const excelInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
