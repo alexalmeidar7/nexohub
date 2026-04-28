@@ -1768,7 +1768,7 @@ export default function CenarioTela() {
                           );
                         }
                         return (
-                          <div className="flex-1 flex items-center justify-center opacity-50 h-full" style={{ fontSize: `${vhToPx(1.8)}${vu}` }}>
+                          <div className="flex-1 flex items-center justify-center h-full" style={{ fontSize: `${vhToPx(1.8)}${vu}`, opacity: 1, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>
                             Insira a URL da live para carregar o chat
                           </div>
                         );
