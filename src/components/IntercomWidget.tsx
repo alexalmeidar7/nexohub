@@ -697,6 +697,24 @@ export default function IntercomWidget() {
             0%, 100% { opacity: 0.5; }
             50% { opacity: 1; }
           }
+          .intercom-volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #268ffa;
+            cursor: pointer;
+            box-shadow: 0 0 6px rgba(38,143,250,0.4);
+          }
+          .intercom-volume-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #268ffa;
+            cursor: pointer;
+          }
         `}</style>
       </div>
     );
