@@ -235,7 +235,12 @@ export default function IntercomWidget() {
         remoteDescSetRef.current = false;
         pendingCandidatesRef.current = [];
         setReceiving(false);
-        if (audioRef.current) audioRef.current.srcObject = null;
+        const el = audioRef.current;
+        if (el) {
+          try { el.pause(); } catch {}
+          try { el.srcObject = null; } catch {}
+          el.currentTime = 0;
+        }
       });
     }
 
