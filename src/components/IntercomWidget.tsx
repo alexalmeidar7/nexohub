@@ -466,9 +466,22 @@ export default function IntercomWidget() {
   // Autoplay unlock for listener
   const handleUnlockAudio = () => {
     if (audioRef.current && audioRef.current.srcObject) {
-      audioRef.current.play().catch(console.warn);
+      audioRef.current.muted = false;
+      audioRef.current.volume = listenerVolume;
+      audioRef.current.play()
+        .then(() => setAudioBlocked(false))
+        .catch(console.warn);
     }
   };
+
+  // Keep audio element volume in sync
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = listenerVolume;
+      audioRef.current.muted = false;
+    }
+    localStorage.setItem("intercom-listener-volume", String(listenerVolume));
+  }, [listenerVolume]);
 
   const glassStyle = {
     backgroundColor: "rgba(0,0,0,0.75)",
