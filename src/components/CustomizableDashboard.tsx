@@ -341,9 +341,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <button 
                 className="flex flex-col items-center justify-center gap-2 min-w-[80px] h-[80px] rounded-[24px] transition-all duration-300 hover:translate-y-[-2px] active:scale-95 group border border-white/5 bg-white/5 hover:bg-white/10" 
                 onClick={() => onNavigate(nav.id as any)}
+                style={{ "--accent-color": "var(--layout-accent-color, #c8ff00)" } as React.CSSProperties}
               >
-                <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
-                  <nav.icon size={16} className="text-accent" />
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center group-hover:bg-accent/20 transition-all" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 10%, transparent)" }}>
+                  <nav.icon size={16} className="text-accent" style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
                 </div>
                 <span className="text-[8px] font-black uppercase tracking-wider text-white/40 group-hover:text-white transition-all">
                   {nav.label}
