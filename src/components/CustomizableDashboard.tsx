@@ -282,7 +282,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
             <div className="flex gap-6 items-start">
               <div className="flex-1">
-                <h2 className="text-4xl font-black text-white tracking-tighter leading-[0.85] mb-6 uppercase italic drop-shadow-2xl">
+                <h2 className="text-2xl font-bold text-white tracking-tight leading-tight mb-4 drop-shadow-sm">
                   {onAirProgram.nome}
                 </h2>
                 
