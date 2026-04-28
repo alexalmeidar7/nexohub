@@ -113,8 +113,8 @@ function QuoteCard({
         background: SURFACE_BG,
         borderRadius: `${size(2)}px`,
         border: SURFACE_BORDER,
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
       }}
     >
       <div className="flex items-center justify-between">
