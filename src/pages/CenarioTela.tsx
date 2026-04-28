@@ -1533,7 +1533,7 @@ export default function CenarioTela() {
                             animation: "cenario-capa-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both",
                             position: "relative",
                             padding: `${vhToPx(0.78)}${vu}`,
-                            background: "rgba(255,255,255,0.12)",
+                             background: "transparent",
                             backdropFilter: "blur(20px)",
                             WebkitBackdropFilter: "blur(20px)",
                             border: `1px solid rgba(255,255,255,0.25)`,
