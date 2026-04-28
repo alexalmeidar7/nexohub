@@ -383,12 +383,14 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       <GripVertical size={12} className="ml-auto text-white/10 group-hover:text-white/30 transition-colors" />
                     </div>
                     
-                    <button 
-                      onClick={() => removeItem(item.id)} 
-                      className="absolute top-3 right-8 z-10 opacity-0 group-hover:opacity-100 transition-all w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/10 border border-red-500/20 hover:bg-red-500 group/btn"
-                    >
-                      <Trash2 size={10} className="text-red-500 group-hover/btn:text-white" />
-                    </button>
+                    <div className="absolute top-3 right-8 z-10 opacity-0 group-hover:opacity-100 transition-all">
+                      <button 
+                        onClick={() => removeItem(item.id)} 
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/10 border border-red-500/20 hover:bg-red-500 group/btn"
+                      >
+                        <Trash2 size={10} className="text-red-500 group-hover/btn:text-white" />
+                      </button>
+                    </div>
                     
                     <div className="p-4 flex-1 overflow-y-auto widget-scroll min-h-0">
                       <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-accent" size={20} /></div>}>
