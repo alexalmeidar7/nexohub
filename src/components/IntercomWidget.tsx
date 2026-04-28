@@ -50,6 +50,7 @@ export default function IntercomWidget() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const levelRafRef = useRef<number>(0);
+  const listenerVolumeRef = useRef<number>(1);
   const userId = user?.id;
 
   useEffect(() => { hotkeyRef.current = hotkey; }, [hotkey]);
