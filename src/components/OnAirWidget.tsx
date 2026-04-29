@@ -132,8 +132,8 @@ export default function OnAirWidget() {
         setApresentadorNome(ap?.nome || "—");
       }
       
-      const { data: channels } = await supabase.from("streaming_channels").select("url, type").eq("active", true);
-      if (channels) {
+      const { data: channels } = await supabase.from("streaming_channels").select("url, type").eq("active", true).eq("user_id", user?.id);
+      if (channels && channels.length > 0) {
         const audioChannel = channels.find(c => c.type === 'audio_live');
         const videoChannel = channels.find(c => c.type === 'video_live');
         if (audioChannel?.url) setAudioUrl(audioChannel.url);
