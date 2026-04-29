@@ -1490,15 +1490,15 @@ export default function CenarioTela() {
                         gap: `${vhToPx(1)}${vu}`,
                       }}>
                          {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
-                           <div style={{
-                             width: `${vhToPx(20)}${vu}`,
-                             height: `${vhToPx(20)}${vu}`,
-                             borderRadius: `${vhToPx(2)}${vu}`,
-                             background: "rgba(255, 255, 255, 0.2)",
-                             backdropFilter: "blur(30px)",
-                             WebkitBackdropFilter: "blur(30px)",
-                             boxShadow: "0 12px 48px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.3)",
-                             border: "1px solid rgba(255,255,255,0.4)",
+                            <div style={{
+                              width: `${vhToPx(22)}${vu}`,
+                              height: `${vhToPx(22)}${vu}`,
+                              borderRadius: `${vhToPx(2.5)}${vu}`,
+                              background: "rgba(0, 0, 0, 0.3)",
+                              backdropFilter: "blur(40px)",
+                              WebkitBackdropFilter: "blur(40px)",
+                              boxShadow: "0 20px 60px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.15)",
+                              border: "1px solid rgba(255,255,255,0.2)",
                              zIndex: 2,
                              position: "relative",
                              flexShrink: 0,
