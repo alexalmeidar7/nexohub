@@ -563,7 +563,7 @@ export default function IntercomWidget() {
   // ─── Listener: name input (before joining channel) ───
   if (role === "listener" && !listenerName) {
     return (
-      <div className="fixed top-[30px] right-[130px] z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}>
+      <div className="fixed top-[30px] -translate-y-1/2 right-[130px] z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}>
         <div className="flex items-center gap-2 px-4 py-3">
           <button onClick={handleBack} className="text-white/40 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-all">
             <ArrowLeft size={14} />
