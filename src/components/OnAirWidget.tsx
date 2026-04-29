@@ -289,7 +289,7 @@ export default function OnAirWidget() {
                 <video 
                   ref={videoRef}
                   className="w-full h-full object-cover"
-                  src="https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8"
+                  src={videoUrl}
                   autoPlay={isPlaying}
                   playsInline
                   muted={isMuted}
