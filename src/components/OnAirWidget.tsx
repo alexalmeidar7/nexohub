@@ -257,14 +257,14 @@ export default function OnAirWidget() {
                       <button 
                         onClick={() => { setActiveTab("info"); }}
                         className={`px-3 py-1.5 rounded-md text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === ("info" as any) ? "text-white shadow-lg" : "text-white/20 hover:text-white/40"}`}
-                        style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
+                        style={activeTab === ("info" as any) ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
                       >
                         Ouvir
                       </button>
                       <button 
                         onClick={() => setActiveTab("video")}
-                        className={`px-3 py-1.5 rounded-md text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === "video" ? "text-white shadow-lg" : "text-white/20 hover:text-white/40"}`}
-                        style={activeTab === "video" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
+                        className={`px-3 py-1.5 rounded-md text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === ("video" as any) ? "text-white shadow-lg" : "text-white/20 hover:text-white/40"}`}
+                        style={activeTab === ("video" as any) ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
                       >
                         Assistir
                       </button>
