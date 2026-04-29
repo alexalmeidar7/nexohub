@@ -219,70 +219,65 @@ export default function OnAirWidget() {
                   <h3 className="text-sm font-black text-white leading-tight truncate mb-1 drop-shadow-sm uppercase tracking-tight">
                     {musicData?.titulo || "Programação Musical"}
                   </h3>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: "var(--layout-accent-color)", opacity: 0.8 }}>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-3" style={{ color: "var(--layout-accent-color)", opacity: 0.8 }}>
                     {musicData?.artista || "Positiva FM"}
                   </p>
-                </div>
-              </div>
-
-              {/* Controls */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <button 
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-white/5 hover:bg-white/10 transition-all shadow-lg group"
-                  >
-                    {isPlaying ? (
-                      <Pause size={20} className="text-white fill-white group-hover:scale-110 transition-transform" />
-                    ) : (
-                      <Play size={20} className="text-white fill-white ml-1 group-hover:scale-110 transition-transform" />
-                    )}
-                  </button>
                   
-                  <div className="flex flex-col">
-                    <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest mb-1">On Air</span>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                      <span className="text-[10px] font-black text-white uppercase">Live Stream</span>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setIsPlaying(!isPlaying)}
+                      className="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center bg-white/5 hover:bg-white/10 transition-all shadow-lg group"
+                    >
+                      {isPlaying ? (
+                        <Pause size={14} className="text-white fill-white group-hover:scale-110 transition-transform" />
+                      ) : (
+                        <Play size={14} className="text-white fill-white ml-0.5 group-hover:scale-110 transition-transform" />
+                      )}
+                    </button>
+
+                    {/* Volume with Popover Slider */}
+                    <div 
+                      className="relative flex items-center"
+                      onMouseEnter={() => setShowVolumeSlider(true)}
+                      onMouseLeave={() => setShowVolumeSlider(false)}
+                    >
+                      {showVolumeSlider && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 p-3 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200 z-50">
+                          <div className="h-24 w-1.5 bg-white/10 rounded-full relative cursor-pointer group">
+                            <div 
+                              className="absolute bottom-0 left-0 right-0 bg-white/40 rounded-full transition-all duration-150" 
+                              style={{ height: `${isMuted ? 0 : volume}%`, backgroundColor: "var(--layout-accent-color)" }} 
+                            />
+                            <input 
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={isMuted ? 0 : volume}
+                              onChange={(e) => {
+                                setVolume(Number(e.target.value));
+                                if (isMuted) setIsMuted(false);
+                              }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none -rotate-180 [writing-mode:bt-lr]"
+                              style={{ WebkitAppearance: 'slider-vertical' }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      <button 
+                        onClick={() => setIsMuted(!isMuted)}
+                        className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
+                      >
+                        {isMuted || volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                      </button>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Volume with Popover Slider */}
-                <div 
-                  className="relative flex items-center"
-                  onMouseEnter={() => setShowVolumeSlider(true)}
-                  onMouseLeave={() => setShowVolumeSlider(false)}
-                >
-                  {showVolumeSlider && (
-                    <div className="absolute bottom-full right-0 mb-4 p-3 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200 z-50">
-                      <div className="h-24 w-1.5 bg-white/10 rounded-full relative cursor-pointer group">
-                        <div 
-                          className="absolute bottom-0 left-0 right-0 bg-white/40 rounded-full transition-all duration-150" 
-                          style={{ height: `${isMuted ? 0 : volume}%`, backgroundColor: "var(--layout-accent-color)" }} 
-                        />
-                        <input 
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={isMuted ? 0 : volume}
-                          onChange={(e) => {
-                            setVolume(Number(e.target.value));
-                            if (isMuted) setIsMuted(false);
-                          }}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none -rotate-180 [writing-mode:bt-lr]"
-                          style={{ WebkitAppearance: 'slider-vertical' }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  <button 
-                    onClick={() => setIsMuted(!isMuted)}
-                    className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
-                  >
-                    {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                  </button>
-                </div>
+              {/* Status Indicator */}
+              <div className="flex items-center gap-1.5 opacity-50 px-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-[8px] font-black text-white uppercase tracking-[0.2em]">Live Stream</span>
               </div>
             </div>
           </div>
