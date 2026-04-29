@@ -268,11 +268,7 @@ export default function OnAirWidget() {
                 </div>
               </div>
 
-              {/* Status Indicator */}
-              <div className="flex items-center gap-1.5 opacity-50 px-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-[8px] font-black text-white uppercase tracking-[0.2em]">Live Stream</span>
-              </div>
+              {/* Status Indicator removido conforme solicitado */}
             </div>
           </div>
         ) : (
