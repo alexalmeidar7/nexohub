@@ -165,35 +165,37 @@ export default function OnAirWidget() {
 
             <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at center, color-mix(in srgb, var(--layout-accent-color) 8%, transparent), transparent 70%)" }} />
 
-            <div className="relative z-10 flex flex-col items-center text-center">
-              <div className="w-28 h-28 rounded-[32px] overflow-hidden bg-white/5 border border-white/10 shadow-2xl mb-4 group/music-card relative">
-                {musicData?.capa ? (
-                  <img src={musicData.capa} alt="Capa" className="w-full h-full object-cover transition-transform duration-700 group-hover/music-card:scale-110" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center opacity-20 bg-gradient-to-br from-white/10 to-transparent">
-                    <Music size={40} style={{ color: "var(--layout-accent-color)" }} />
+            <div className="relative z-10 px-6">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/5 border border-white/10 shadow-2xl group/music-card relative flex-shrink-0">
+                  {musicData?.capa ? (
+                    <img src={musicData.capa} alt="Capa" className="w-full h-full object-cover transition-transform duration-700 group-hover/music-card:scale-110" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center opacity-20 bg-gradient-to-br from-white/10 to-transparent">
+                      <Music size={28} style={{ color: "var(--layout-accent-color)" }} />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/music-card:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                     <button 
+                      onClick={() => setIsMuted(!isMuted)}
+                      className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/20 hover:bg-white/30 transition-all"
+                    >
+                      {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                    </button>
                   </div>
-                )}
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/music-card:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                   <button 
-                    onClick={() => setIsMuted(!isMuted)}
-                    className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/20 hover:bg-white/30 transition-all"
-                  >
-                    {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                  </button>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-black text-white leading-tight truncate mb-1 drop-shadow-sm uppercase tracking-tight">
+                    {musicData?.titulo || "Programação Musical"}
+                  </h3>
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: "var(--layout-accent-color)", opacity: 0.8 }}>
+                    {musicData?.artista || "Positiva FM"}
+                  </p>
                 </div>
               </div>
 
-              <div className="px-4 max-w-full">
-                <h3 className="text-lg font-black text-white leading-tight truncate mb-1 drop-shadow-sm uppercase tracking-tight">
-                  {musicData?.titulo || "Programação Musical"}
-                </h3>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: "var(--layout-accent-color)", opacity: 0.8 }}>
-                  {musicData?.artista || "Positiva FM"}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-6 mt-2">
+              <div className="flex items-center justify-center gap-6">
                 <button className="text-white/20 hover:text-white transition-colors">
                   <ChevronRight size={18} className="rotate-180" />
                 </button>
