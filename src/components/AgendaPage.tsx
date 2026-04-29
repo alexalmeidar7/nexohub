@@ -942,7 +942,7 @@ export default function AgendaPage() {
 
   // Week view: Monday to Sunday of the currently selected week
   const weekEvents = useMemo(() => {
-    const ref = selectedDate ? new Date(selectedDate) : new Date();
+    const ref = selectedDate ? new Date(selectedDate) : now;
     const dow = ref.getDay(); // 0=Sun..6=Sat
     const diffToMonday = dow === 0 ? -6 : 1 - dow;
     const monday = new Date(ref);
@@ -960,7 +960,7 @@ export default function AgendaPage() {
       days.push({ dateStr: ds, date: new Date(d), events: dayEvents });
     }
     return days;
-  }, [eventos, filterLocal, selectedDate, weekOffset]);
+  }, [eventos, filterLocal, selectedDate, weekOffset, now]);
 
   const renderEventCard = (evt: Evento, inactive = false) => (
     <div
