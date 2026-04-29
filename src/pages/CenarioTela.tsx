@@ -1502,7 +1502,6 @@ export default function CenarioTela() {
                              zIndex: 2,
                              position: "relative",
                              flexShrink: 0,
-                             // overflow: "visible" - removed hidden to allow artist to pop out
                            }}>
                            {/* Presenter photo anchored at bottom, overflows top */}
                         {(() => {
