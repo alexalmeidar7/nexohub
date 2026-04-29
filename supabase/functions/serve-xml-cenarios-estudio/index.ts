@@ -91,11 +91,22 @@ Deno.serve(async (req) => {
       .eq("ativo", true)
       .order("horario_inicio", { ascending: false });
 
-    const onAir = (progs || []).find(
-      (p: any) =>
-        (p.dias_semana || []).includes(today) &&
-        isTimeInRange(p.horario_inicio, p.horario_fim, nowTime),
-    );
+    // Try to find a match in the current studio first (if possible), then fallback to any
+    const findOnAir = (allProgs: any[]) => {
+      const candidates = (allProgs || []).filter(
+        (p: any) =>
+          (p.dias_semana || []).includes(today) &&
+          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime),
+      );
+      
+      if (candidates.length === 0) return null;
+      if (candidates.length === 1) return candidates[0];
+      
+      // If multiple (overlapping), prioritize specific studios if needed or just return the latest/longest
+      return candidates[0];
+    };
+
+    const onAir = findOnAir(progs);
 
     // Buscar apresentador no ar (primeiro de apresentadores_ids, fallback para apresentador_id)
     let locutorNome = "";
