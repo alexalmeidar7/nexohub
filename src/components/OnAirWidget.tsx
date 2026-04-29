@@ -146,89 +146,89 @@ export default function OnAirWidget() {
     <div className="h-full relative overflow-hidden flex flex-col no-scrollbar">
       <div className="flex-1 relative min-h-0">
         {activeTab === "info" ? (
-          <div className="h-full relative flex flex-col justify-center">
-            <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl mb-2 self-center w-full max-w-[160px] flex-shrink-0 border border-white/5 shadow-inner relative z-30">
-              <button 
-                onClick={() => setActiveTab("info")}
-                className={`flex-1 py-1 rounded-xl text-[7px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === "info" ? "text-white shadow-xl" : "text-white/20 hover:text-white/40"}`}
-                style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
-              >
-                Ouvir
-              </button>
-              <button 
-                onClick={() => setActiveTab("video")}
-                className="flex-1 py-1 rounded-xl text-[7px] font-black uppercase tracking-[0.2em] transition-all duration-500 text-white/20 hover:text-white/40"
-              >
-                Assistir
-              </button>
+          <div className="h-full relative flex flex-col justify-between py-4">
+            {/* Header com Tabs */}
+            <div className="px-6">
+              <div className="flex items-center p-1 bg-white/[0.03] rounded-2xl self-center w-full flex-shrink-0 border border-white/5 shadow-inner relative z-30">
+                <button 
+                  onClick={() => setActiveTab("info")}
+                  className={`flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === "info" ? "text-white shadow-xl" : "text-white/20 hover:text-white/40"}`}
+                  style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
+                >
+                  Ouvir
+                </button>
+                <button 
+                  onClick={() => setActiveTab("video")}
+                  className="flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 text-white/20 hover:text-white/40"
+                >
+                  Assistir
+                </button>
+              </div>
             </div>
 
             <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at center, color-mix(in srgb, var(--layout-accent-color) 8%, transparent), transparent 70%)" }} />
 
-            <div className="relative z-10 px-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/5 border border-white/10 shadow-2xl group/music-card relative flex-shrink-0">
+            {/* Main Content */}
+            <div className="relative z-10 px-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/5 border border-white/10 shadow-2xl group/music-card relative flex-shrink-0">
                   {musicData?.capa ? (
                     <img src={musicData.capa} alt="Capa" className="w-full h-full object-cover transition-transform duration-700 group-hover/music-card:scale-110" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center opacity-20 bg-gradient-to-br from-white/10 to-transparent">
-                      <Music size={24} style={{ color: "var(--layout-accent-color)" }} />
+                      <Music size={28} style={{ color: "var(--layout-accent-color)" }} />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/music-card:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                     <button 
-                      onClick={() => setIsMuted(!isMuted)}
-                      className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/20 hover:bg-white/30 transition-all"
-                    >
-                      {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                    </button>
-                  </div>
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-black text-white leading-tight truncate mb-0.5 drop-shadow-sm uppercase tracking-tight">
+                  <h3 className="text-sm font-black text-white leading-tight truncate mb-1 drop-shadow-sm uppercase tracking-tight">
                     {musicData?.titulo || "Programação Musical"}
                   </h3>
-                  <p className="text-[8px] font-black uppercase tracking-[0.2em]" style={{ color: "var(--layout-accent-color)", opacity: 0.8 }}>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: "var(--layout-accent-color)", opacity: 0.8 }}>
                     {musicData?.artista || "Positiva FM"}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-center gap-4">
-                <button className="text-white/20 hover:text-white transition-colors">
-                  <ChevronRight size={16} className="rotate-180" />
+              {/* Controls */}
+              <div className="flex items-center justify-center gap-6">
+                <button className="text-white/20 hover:text-white transition-colors p-2">
+                  <ChevronRight size={20} className="rotate-180" />
                 </button>
                 <button 
                   onClick={() => setIsPlaying(!isPlaying)}
-                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center bg-white/5 hover:bg-white/10 transition-all"
+                  className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-white/5 hover:bg-white/10 transition-all shadow-lg group"
                 >
                   {isPlaying ? (
-                    <Pause size={16} className="text-white fill-white" />
+                    <Pause size={20} className="text-white fill-white group-hover:scale-110 transition-transform" />
                   ) : (
-                    <Play size={16} className="text-white fill-white ml-0.5" />
+                    <Play size={20} className="text-white fill-white ml-1 group-hover:scale-110 transition-transform" />
                   )}
                 </button>
-                <button className="text-white/20 hover:text-white transition-colors">
-                  <ChevronRight size={16} />
+                <button className="text-white/20 hover:text-white transition-colors p-2">
+                  <ChevronRight size={20} />
                 </button>
               </div>
             </div>
 
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white/[0.03] px-4 py-2 rounded-2xl border border-white/5 backdrop-blur-sm w-[80%]">
-              <button onClick={() => setIsMuted(!isMuted)}>
-                {isMuted ? <VolumeX size={12} className="text-white/40" /> : <Volume2 size={12} className="text-white/40" />}
-              </button>
-              <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-white/40 w-2/3" />
+            {/* Volume Control - Footer area */}
+            <div className="px-6 pb-2">
+              <div className="flex items-center gap-3 bg-white/[0.03] px-4 py-2.5 rounded-2xl border border-white/5 backdrop-blur-sm">
+                <button onClick={() => setIsMuted(!isMuted)} className="flex-shrink-0">
+                  {isMuted ? <VolumeX size={14} className="text-white/40" /> : <Volume2 size={14} className="text-white/40" />}
+                </button>
+                <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden relative cursor-pointer">
+                  <div className="absolute inset-y-0 left-0 bg-white/30 rounded-full" style={{ width: isMuted ? '0%' : '66%' }} />
+                </div>
               </div>
             </div>
           </div>
         ) : (
-          <div className="absolute inset-0 z-50 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/10 animate-scale-in">
+          <div className="absolute inset-0 z-50 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-white/10 animate-scale-in">
             <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
               {/* Internal Tab Switcher for Video View */}
-              <div className="flex items-center p-1 bg-black/40 backdrop-blur-md rounded-2xl mt-4 self-center w-full max-w-[180px] flex-shrink-0 border border-white/10 shadow-xl z-50">
+              <div className="flex items-center p-1 bg-black/60 backdrop-blur-md rounded-2xl mt-4 mx-6 flex-shrink-0 border border-white/10 shadow-2xl z-50">
                 <button 
                   onClick={() => setActiveTab("info")}
                   className="flex-1 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all"
@@ -242,6 +242,7 @@ export default function OnAirWidget() {
                   Assistir
                 </button>
               </div>
+              
               <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-accent" size={24} /></div>}>
                 <video 
                   className="w-full h-full object-cover"
@@ -261,15 +262,15 @@ export default function OnAirWidget() {
                 </button>
               </div>
 
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+              <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
+                <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                   <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
                   <span className="text-[8px] font-black text-white uppercase tracking-widest">Ao Vivo</span>
                 </div>
 
-                <div className="flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+                <div className="flex items-center gap-3 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
                    <button onClick={() => setIsMuted(!isMuted)} className="text-white hover:text-accent transition-colors">
-                    {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                    {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                   </button>
                   <div className="w-16 h-1 bg-white/20 rounded-full overflow-hidden">
                     <div className="h-full bg-accent w-2/3" />
