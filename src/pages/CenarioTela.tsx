@@ -1552,9 +1552,9 @@ export default function CenarioTela() {
                         <div
                           key={musicData.capa}
                           style={{
-                            width: `${vhToPx(20)}${vu}`,
-                            height: `${vhToPx(20)}${vu}`,
-                            borderRadius: `${vhToPx(2)}${vu}`,
+                            width: `${vhToPx(22)}${vu}`,
+                            height: `${vhToPx(22)}${vu}`,
+                            borderRadius: `${vhToPx(2.5)}${vu}`,
                             overflow: "hidden",
                             flexShrink: 0,
                             zIndex: 1,
