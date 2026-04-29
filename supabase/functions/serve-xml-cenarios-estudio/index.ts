@@ -89,7 +89,6 @@ Deno.serve(async (req) => {
       .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, estudio, capa, thumb, apresentador_id, apresentadores_ids, created_at")
       .eq("user_id", userId)
       .eq("ativo", true)
-      .ilike("estudio", "%fm%")
       .order("horario_inicio", { ascending: false });
 
     const onAir = (progs || []).find(
