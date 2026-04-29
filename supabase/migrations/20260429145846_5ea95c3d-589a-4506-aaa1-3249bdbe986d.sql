@@ -1,0 +1,1 @@
+ALTER TABLE public.agenda_eventos ADD COLUMN horario_gravacao_fim TEXT;
