@@ -185,7 +185,7 @@ export default function OnAirWidget() {
           <div className="h-full relative flex flex-col justify-center py-4">
             <audio 
               ref={audioRef}
-              src="https://streaming.logicahost.com.br/8240/stream"
+              src={audioUrl}
               autoPlay={isPlaying}
               muted={isMuted}
             />
