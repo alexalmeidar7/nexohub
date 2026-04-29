@@ -123,6 +123,15 @@ export default function OnAirWidget() {
         setApresentadorNome(ap?.nome || "—");
         setApresentadorFoto(ap?.foto || "");
       }
+      
+      const { data: channels } = await supabase.from("streaming_channels").select("url, type").eq("active", true);
+      if (channels) {
+        const audioChannel = channels.find(c => c.type === 'audio_live');
+        const videoChannel = channels.find(c => c.type === 'video_live');
+        if (audioChannel?.url) setAudioUrl(audioChannel.url);
+        if (videoChannel?.url) setVideoUrl(videoChannel.url);
+      }
+
       const nexts = findNextPrograms(programas, 3);
       setNextPrograms(nexts);
       const apMap: Record<string, ApresentadorInfo> = {};
