@@ -511,7 +511,8 @@ export default function IntercomWidget() {
         className="fixed z-[100] rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95
                    top-[22px] right-[100px] w-8 h-8
                    sm:top-[24px] sm:right-[110px] sm:w-9 sm:h-9
-                   lg:top-[30px] lg:right-[130px] lg:w-10 lg:h-10"
+                   lg:top-[30px] lg:right-[130px] lg:w-10 lg:h-10
+                   translate-y-[calc(30px-50%)] sm:translate-y-[calc(30px-50%)] lg:translate-y-[calc(30px-50%)]"
         style={{ ...glassStyle }} title="Intercomunicador">
         <Radio className="text-white/85 w-[14px] h-[14px] sm:w-4 sm:h-4 lg:w-[18px] lg:h-[18px]" />
       </button>
