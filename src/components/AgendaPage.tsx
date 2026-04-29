@@ -966,10 +966,6 @@ export default function AgendaPage() {
               🔁 {recorrenciaLabels[evt.recorrencia]}
             </span>
           )}
-          <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5 ml-1 ${prioridadeColors[evt.prioridade] || prioridadeColors.normal}`}>
-            {evt.prioridade === "urgente" && <AlertTriangle size={10} className="inline mr-0.5" />}
-            {prioridadeLabels[evt.prioridade] || "Normal"}
-          </span>
           {evt.status && evt.status !== "ativo" && (
             <span
               className="inline-block text-[10px] font-bold px-2 py-0.5 rounded mt-0.5 ml-1 uppercase"
