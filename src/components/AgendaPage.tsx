@@ -319,6 +319,14 @@ export default function AgendaPage() {
   const { toast } = useToast();
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [filterLocal, setFilterLocal] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -780,14 +788,12 @@ export default function AgendaPage() {
   };
 
   const todayStr = useMemo(() => {
-    const t = new Date();
-    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
-  }, []);
+    return format(now, "yyyy-MM-dd");
+  }, [now]);
 
   const filteredEventos = useMemo(() => {
-    const now = new Date();
     const selStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
-    const isToday = selStr === format(now, "yyyy-MM-dd");
+    const isToday = selStr === todayStr;
     const currentTime = format(now, "HH:mm");
 
     return eventos.filter((e) => {
@@ -810,12 +816,10 @@ export default function AgendaPage() {
 
       return matchDate && matchLocal && programaAtivo;
     });
-  }, [eventos, selectedDate, filterLocal, todayStr, programas]);
+  }, [eventos, selectedDate, filterLocal, todayStr, now, programas]);
 
   // Past events
   const pastEventos = useMemo(() => {
-    const now = new Date();
-    const todayStr = format(now, "yyyy-MM-dd");
     const currentTime = format(now, "HH:mm");
 
     const past = eventos.filter((e) => {
@@ -840,11 +844,10 @@ export default function AgendaPage() {
     }
     
     return past.sort((a, b) => b.data.localeCompare(a.data)).slice(0, 50);
-  }, [eventos, historyDateFilter]);
+  }, [eventos, historyDateFilter, now, todayStr]);
 
   const getEventDatesForCalendar = () => {
     const dates: Date[] = [];
-    const now = new Date();
     const startMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
     for (const evt of eventos) {
@@ -868,7 +871,7 @@ export default function AgendaPage() {
 
   // Feriados nacionais obrigatórios do Brasil
   const feriadosNacionais = useMemo(() => {
-    const year = new Date().getFullYear();
+    const year = now.getFullYear();
     // Cálculo da Páscoa (algoritmo de Meeus)
     const a = year % 19;
     const b = Math.floor(year / 100);
@@ -904,7 +907,7 @@ export default function AgendaPage() {
       { date: new Date(year, 11, 25), nome: "Natal" },
     ];
     return fixos;
-  }, []);
+  }, [now]);
 
   const feriadoDates = useMemo(() => feriadosNacionais.map(f => f.date), [feriadosNacionais]);
 
@@ -920,7 +923,7 @@ export default function AgendaPage() {
 
   // Upcoming events for the next 7 days
   const upcomingEvents = useMemo(() => {
-    const today = new Date();
+    const today = now;
     const days: { dateStr: string; date: Date; events: Evento[] }[] = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(today);
@@ -935,11 +938,11 @@ export default function AgendaPage() {
       }
     }
     return days;
-  }, [eventos, filterLocal]);
+  }, [eventos, filterLocal, now]);
 
   // Week view: Monday to Sunday of the currently selected week
   const weekEvents = useMemo(() => {
-    const ref = selectedDate ? new Date(selectedDate) : new Date();
+    const ref = selectedDate ? new Date(selectedDate) : now;
     const dow = ref.getDay(); // 0=Sun..6=Sat
     const diffToMonday = dow === 0 ? -6 : 1 - dow;
     const monday = new Date(ref);
@@ -957,7 +960,7 @@ export default function AgendaPage() {
       days.push({ dateStr: ds, date: new Date(d), events: dayEvents });
     }
     return days;
-  }, [eventos, filterLocal, selectedDate, weekOffset]);
+  }, [eventos, filterLocal, selectedDate, weekOffset, now]);
 
   const renderEventCard = (evt: Evento, inactive = false) => (
     <div

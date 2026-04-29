@@ -1394,7 +1394,15 @@ function DashboardAgenda() {
   };
   const eventDates = getCalendarDates();
 
-  const now = new Date();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000); // Update every 30s to catch passed end times
+    return () => clearInterval(timer);
+  }, []);
+
   const todayStr = format(now, "yyyy-MM-dd");
   const currentTime = format(now, "HH:mm");
 

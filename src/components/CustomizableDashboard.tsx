@@ -1024,6 +1024,14 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
   const { user } = useAuth();
   const uid = dataUserId || user?.id;
   const [events, setEvents] = useState<any[]>([]);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000); // Atualiza a cada 30s para recalcular horários passados
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -1033,18 +1041,30 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
       .select("*, programa:programas(horario_inicio, horario_fim)")
       .eq("user_id", uid!)
       .gte("data", today)
-      .neq("status", "cancelado")
+      .not("status", "in", '("cancelado","concluido")')
       .order("data", { ascending: true })
-      .limit(5)
+      .limit(10) // Buscamos mais para filtrar os expirados do dia no cliente
       .then(({ data }) => { if (data) setEvents(data); });
-  }, [user]);
+  }, [user, uid]);
+
+  const todayStr = format(now, "yyyy-MM-dd");
+  const currentTime = format(now, "HH:mm");
+
+  const filteredEvents = events.filter(ev => {
+    // Filtragem adicional no cliente para horário final da gravação
+    const isToday = ev.data === todayStr;
+    if (isToday && ev.horario_gravacao_fim && ev.horario_gravacao_fim < currentTime) {
+      return false;
+    }
+    return true;
+  }).slice(0, 5); // Mantém o limite visual de 5 itens
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-3">
         <CalendarDays size={14} style={{ color: "var(--layout-accent-color)" }} />
         <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text)" }}>Agenda de Eventos</p>
-        {events.length > 0 && (
+        {filteredEvents.length > 0 && (
           <span
             className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full"
             style={{
@@ -1052,15 +1072,15 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
               color: "var(--layout-accent-color)",
             }}
           >
-            {events.length}
+            {filteredEvents.length}
           </span>
         )}
       </div>
-      {events.length === 0 ? (
+      {filteredEvents.length === 0 ? (
         <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 35%, transparent)" }}>Nenhum evento próximo</p>
       ) : (
         <div className="space-y-1">
-          {events.map(ev => {
+          {filteredEvents.map(ev => {
             const _now = new Date();
             const todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}-${String(_now.getDate()).padStart(2, "0")}`;
             const _tomorrow = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate() + 1);
