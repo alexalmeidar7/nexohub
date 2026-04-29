@@ -167,12 +167,7 @@ export default function OnAirWidget() {
 
   return (
     <div className="h-full relative overflow-hidden flex flex-col no-scrollbar">
-      {/* Header com Nome PLAYER */}
-      <div className="px-6 pt-4 flex items-center justify-between gap-4 z-30">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 flex-shrink-0">
-          Player
-        </h2>
-      </div>
+      {/* Header removido conforme solicitado */}
 
       <div className="flex-1 relative min-h-0">
         {activeTab === "info" ? (
@@ -273,11 +268,7 @@ export default function OnAirWidget() {
                 </div>
               </div>
 
-              {/* Status Indicator */}
-              <div className="flex items-center gap-1.5 opacity-50 px-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-[8px] font-black text-white uppercase tracking-[0.2em]">Live Stream</span>
-              </div>
+              {/* Status Indicator removido conforme solicitado */}
             </div>
           </div>
         ) : (
