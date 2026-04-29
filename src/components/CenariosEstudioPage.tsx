@@ -572,11 +572,7 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
           <h4 className="font-bold text-base tracking-tight" style={layoutText}>Editando Template</h4>
         </div>
         <div className="flex items-center gap-2">
-           <Button size="sm" variant="ghost" onClick={() => setEditingIds(prev => {
-             const n = new Set(prev);
-             n.delete(grupo.id);
-             return n;
-           })} style={layoutTextMuted}>
+           <Button size="sm" variant="ghost" onClick={onCancel} style={layoutTextMuted}>
              Cancelar
            </Button>
            <Button size="sm" onClick={onSave} disabled={saving} className="shadow-lg shadow-primary/20 h-9 px-5">
