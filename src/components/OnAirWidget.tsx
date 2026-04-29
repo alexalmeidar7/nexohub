@@ -260,7 +260,10 @@ export default function OnAirWidget() {
                     onMouseLeave={() => setShowVolumeSlider(false)}
                   >
                     {showVolumeSlider && (
-                      <div className="fixed bottom-[180px] ml-[20px] p-3 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200 z-[9999]">
+                      <div 
+                        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200 z-[9999]"
+                        onMouseEnter={() => setShowVolumeSlider(true)}
+                      >
                         <div className="h-24 w-1.5 bg-white/10 rounded-full relative cursor-pointer group">
                           <div 
                             className="absolute bottom-0 left-0 right-0 bg-white/40 rounded-full transition-all duration-150" 
@@ -270,10 +273,12 @@ export default function OnAirWidget() {
                             type="range"
                             min="0"
                             max="100"
+                            step="1"
                             value={isMuted ? 0 : volume}
                             onChange={(e) => {
-                              setVolume(Number(e.target.value));
-                              if (isMuted) setIsMuted(false);
+                              const val = Number(e.target.value);
+                              setVolume(val);
+                              if (isMuted && val > 0) setIsMuted(false);
                             }}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none -rotate-180 [writing-mode:bt-lr]"
                             style={{ WebkitAppearance: 'slider-vertical' }}
