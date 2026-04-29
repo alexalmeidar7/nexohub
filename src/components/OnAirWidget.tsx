@@ -185,7 +185,7 @@ export default function OnAirWidget() {
   }
 
   return (
-    <div className="h-full relative overflow-hidden flex flex-col no-scrollbar">
+    <div className="h-full relative flex flex-col no-scrollbar">
       {/* Header removido conforme solicitado */}
 
       <div className="flex-1 relative min-h-0">
