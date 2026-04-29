@@ -847,9 +847,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           )}
           <div className="relative flex-1 h-full">
-            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
+            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : "scrollbar-hide"}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
-              {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} />}
+              {currentPage === "dashboard" && <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
