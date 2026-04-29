@@ -968,7 +968,20 @@ export default function AgendaPage() {
       const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       const dayEvents = eventos.filter((e) => {
         const matchLocal = filterLocal === "todos" || e.local === filterLocal;
-        return matchLocal && eventMatchesDate(e, ds);
+        const isMatch = matchLocal && eventMatchesDate(e, ds);
+        if (!isMatch) return false;
+
+        // Hide CANCELADO or CONCLUIDO events
+        if (e.status === "cancelado" || e.status === "concluido") return false;
+
+        // Hide events where recording has ended (only for today)
+        const isToday = ds === todayStr;
+        const currentTime = format(now, "HH:mm");
+        if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) {
+          return false;
+        }
+
+        return true;
       });
       days.push({ dateStr: ds, date: new Date(d), events: dayEvents });
     }
