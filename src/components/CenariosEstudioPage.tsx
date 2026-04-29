@@ -398,6 +398,11 @@ export default function CenariosEstudioPage() {
             onToggleProgram={(pid) => toggleProgramaInGrupo(grupo.id, pid)}
             onSetArte={(file) => setGrupoArte(grupo.id, file)}
             onRemoveArte={() => removeGrupoArte(grupo.id)}
+            onCancel={() => setEditingIds(prev => {
+              const n = new Set(prev);
+              n.delete(grupo.id);
+              return n;
+            })}
             saving={savingId === grupo.id}
           />
         ))}
