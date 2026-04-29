@@ -946,7 +946,11 @@ export default function AgendaPage() {
           <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
             <CalendarIcon size={12} className="inline mr-1" />
             {format(new Date(evt.data + "T12:00:00"), "dd/MM/yyyy")}
-            {evt.programa && ` • ${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`}
+            {evt.tipo_evento === "gravacao" && (evt.horario_gravacao || evt.horario_gravacao_fim) ? (
+              ` • 🎬 Gravação: ${evt.horario_gravacao || ""} ${evt.horario_gravacao_fim ? `- ${evt.horario_gravacao_fim}` : ""}`
+            ) : (
+              evt.programa && ` • ${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
+            )}
           </p>
           {evt.recorrencia !== "unico" && (
             <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
