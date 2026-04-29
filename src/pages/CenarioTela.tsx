@@ -1576,7 +1576,8 @@ export default function CenarioTela() {
                               width: "100%",
                               height: "100%",
                               objectFit: "cover",
-                              borderRadius: `${vhToPx(2)}${vu}`,
+                              borderRadius: `${vhToPx(2.5)}${vu}`,
+                              boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
                             }}
                           />
                           {/* Removido overlay escuro */}
