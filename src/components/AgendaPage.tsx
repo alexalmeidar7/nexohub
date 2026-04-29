@@ -848,7 +848,6 @@ export default function AgendaPage() {
 
   const getEventDatesForCalendar = () => {
     const dates: Date[] = [];
-    const now = new Date();
     const startMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
     for (const evt of eventos) {
