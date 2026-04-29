@@ -319,6 +319,14 @@ export default function AgendaPage() {
   const { toast } = useToast();
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [filterLocal, setFilterLocal] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
