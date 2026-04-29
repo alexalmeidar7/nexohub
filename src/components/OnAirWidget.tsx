@@ -95,23 +95,32 @@ export default function OnAirWidget() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const media = activeTab === "info" ? audioRef.current : videoRef.current;
-    if (media) {
-      media.volume = isMuted ? 0 : volume / 100;
-      media.muted = isMuted;
-    }
-  }, [volume, isMuted, activeTab]);
+    const audio = audioRef.current;
+    const video = videoRef.current;
+    const isVideoTab = activeTab === "video";
 
-  useEffect(() => {
-    const media = activeTab === "info" ? audioRef.current : videoRef.current;
-    if (media) {
-      if (isPlaying) {
-        media.play().catch(() => setIsPlaying(false));
+    if (audio) {
+      audio.volume = isMuted ? 0 : volume / 100;
+      audio.muted = isMuted;
+      
+      if (isPlaying && !isVideoTab) {
+        audio.play().catch(() => setIsPlaying(false));
       } else {
-        media.pause();
+        audio.pause();
       }
     }
-  }, [isPlaying, activeTab]);
+
+    if (video) {
+      video.volume = isMuted ? 0 : volume / 100;
+      video.muted = isMuted;
+
+      if (isPlaying && isVideoTab) {
+        video.play().catch(() => setIsPlaying(false));
+      } else {
+        video.pause();
+      }
+    }
+  }, [volume, isMuted, activeTab, isPlaying]);
 
   useEffect(() => {
     const update = async () => {
@@ -176,7 +185,7 @@ export default function OnAirWidget() {
   }
 
   return (
-    <div className="h-full relative overflow-hidden flex flex-col no-scrollbar">
+    <div className="h-full relative flex flex-col no-scrollbar">
       {/* Header removido conforme solicitado */}
 
       <div className="flex-1 relative min-h-0">
