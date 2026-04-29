@@ -1024,6 +1024,14 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
   const { user } = useAuth();
   const uid = dataUserId || user?.id;
   const [events, setEvents] = useState<any[]>([]);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000); // Atualiza a cada 30s para recalcular horários passados
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -1033,11 +1041,23 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
       .select("*, programa:programas(horario_inicio, horario_fim)")
       .eq("user_id", uid!)
       .gte("data", today)
-      .neq("status", "cancelado")
+      .not("status", "in", '("cancelado","concluido")')
       .order("data", { ascending: true })
-      .limit(5)
+      .limit(10) // Buscamos mais para filtrar os expirados do dia no cliente
       .then(({ data }) => { if (data) setEvents(data); });
-  }, [user]);
+  }, [user, uid]);
+
+  const todayStr = format(now, "yyyy-MM-dd");
+  const currentTime = format(now, "HH:mm");
+
+  const filteredEvents = events.filter(ev => {
+    // Filtragem adicional no cliente para horário final da gravação
+    const isToday = ev.data === todayStr;
+    if (isToday && ev.horario_gravacao_fim && ev.horario_gravacao_fim < currentTime) {
+      return false;
+    }
+    return true;
+  }).slice(0, 5); // Mantém o limite visual de 5 itens
 
   return (
     <div className="flex flex-col h-full">
