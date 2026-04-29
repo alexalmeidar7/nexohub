@@ -907,7 +907,7 @@ export default function AgendaPage() {
       { date: new Date(year, 11, 25), nome: "Natal" },
     ];
     return fixos;
-  }, []);
+  }, [now]);
 
   const feriadoDates = useMemo(() => feriadosNacionais.map(f => f.date), [feriadosNacionais]);
 
