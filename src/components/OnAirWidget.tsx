@@ -323,16 +323,16 @@ export default function OnAirWidget() {
                   onMouseLeave={() => setShowVolumeSlider(false)}
                 >
                   {showVolumeSlider && (
-                    <div className="absolute bottom-full right-0 mb-4 p-3 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50">
+                    <div className="absolute bottom-full right-0 mb-4 p-3 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[100]">
                       <div className="h-20 w-1 bg-white/20 rounded-full relative">
-                        <div className="absolute bottom-0 left-0 right-0 bg-accent rounded-full" style={{ height: `${isMuted ? 0 : volume}%` }} />
+                        <div className="absolute bottom-0 left-0 right-0 bg-accent rounded-full" style={{ height: `${isMuted ? 0 : volume}%`, backgroundColor: "var(--layout-accent-color)" }} />
                         <input 
                           type="range"
                           min="0"
                           max="100"
                           value={isMuted ? 0 : volume}
                           onChange={(e) => setVolume(Number(e.target.value))}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none -rotate-180 [writing-mode:bt-lr]"
                           style={{ WebkitAppearance: 'slider-vertical' }}
                         />
                       </div>
