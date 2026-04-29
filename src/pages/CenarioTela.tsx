@@ -1539,7 +1539,7 @@ export default function CenarioTela() {
                           <img src={currentProgram.selo} alt="" style={{ position: "absolute", top: `${vhToPx(0.8)}${vu}`, right: `${vhToPx(0.8)}${vu}`, maxHeight: `${vhToPx(5.82)}${vu}`, maxWidth: `${vhToPx(8.74)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))", zIndex: 3 }} />
                         )}
                         {/* Presenter name at bottom */}
-                        <div style={{ position: "absolute", bottom: `${vhToPx(1)}${vu}`, left: `${vhToPx(1)}${vu}`, right: `${vhToPx(1)}${vu}`, zIndex: 3 }}>
+                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${vhToPx(1.5)}${vu}`, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", zIndex: 3 }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.4)}${vu}` }}>
                             <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
                             <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
