@@ -2123,10 +2123,6 @@ export default function AgendaPage() {
                     <Label className="text-xs text-muted-foreground">Tipo</Label>
                     <p className="font-semibold capitalize">{pastEventDetail.tipo_evento || "live"}</p>
                   </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Prioridade</Label>
-                    <p className="font-semibold">{prioridadeLabels[pastEventDetail.prioridade] || "Normal"}</p>
-                  </div>
                   {pastEventDetail.local && (
                     <div className="col-span-2">
                       <Label className="text-xs text-muted-foreground">Local</Label>
