@@ -167,28 +167,11 @@ export default function OnAirWidget() {
 
   return (
     <div className="h-full relative overflow-hidden flex flex-col no-scrollbar">
-      {/* Header com Nome PLAYER e Tabs ao lado */}
+      {/* Header com Nome PLAYER */}
       <div className="px-6 pt-4 flex items-center justify-between gap-4 z-30">
         <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 flex-shrink-0">
           Player
         </h2>
-        
-        <div className="flex items-center p-0.5 bg-white/[0.03] rounded-xl flex-1 border border-white/5 shadow-inner">
-          <button 
-            onClick={() => setActiveTab("info")}
-            className={`flex-1 py-1 rounded-lg text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === "info" ? "text-white shadow-lg" : "text-white/20 hover:text-white/40"}`}
-            style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
-          >
-            Ouvir
-          </button>
-          <button 
-            onClick={() => setActiveTab("video")}
-            className={`flex-1 py-1 rounded-lg text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === "video" ? "text-white shadow-lg" : "text-white/20 hover:text-white/40"}`}
-            style={activeTab === "video" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
-          >
-            Assistir
-          </button>
-        </div>
       </div>
 
       <div className="flex-1 relative min-h-0">
