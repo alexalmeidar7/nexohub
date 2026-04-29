@@ -473,6 +473,16 @@ export default function AgendaPage() {
     });
   }, [formProgramaId, formTipoEvento, programas, apresentadores]);
 
+  // Sincroniza o local com o estúdio do programa selecionado
+  useEffect(() => {
+    if (formProgramaId) {
+      const prog = programas.find(p => p.id === formProgramaId);
+      if (prog?.estudio) {
+        setFormLocal(prog.estudio);
+      }
+    }
+  }, [formProgramaId, programas]);
+
   // Detecta se já existe roteiro para o programa+data selecionado
   useEffect(() => {
     let cancelled = false;
