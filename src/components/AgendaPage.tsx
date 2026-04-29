@@ -1216,7 +1216,7 @@ export default function AgendaPage() {
               </div>
 
               {/* Recorrência + Tipo + Local (side by side) */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
                   <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
@@ -1240,19 +1240,6 @@ export default function AgendaPage() {
                     <SelectContent>
                       <SelectItem value="live">🔴 Ao vivo</SelectItem>
                       <SelectItem value="gravacao">🎬 Gravação</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Local</Label>
-                  <Select value={formLocal} onValueChange={setFormLocal}>
-                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
-                      <SelectValue placeholder="Local" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {estudios.map((e) => (
-                        <SelectItem key={e} value={e}>{e}</SelectItem>
-                      ))}
                     </SelectContent>
                   </Select>
                 </div>
