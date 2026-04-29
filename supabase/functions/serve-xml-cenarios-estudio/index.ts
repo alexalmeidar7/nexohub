@@ -89,14 +89,27 @@ Deno.serve(async (req) => {
       .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, estudio, capa, thumb, apresentador_id, apresentadores_ids, created_at")
       .eq("user_id", userId)
       .eq("ativo", true)
-      .ilike("estudio", "%fm%")
       .order("horario_inicio", { ascending: false });
 
-    const onAir = (progs || []).find(
-      (p: any) =>
-        (p.dias_semana || []).includes(today) &&
-        isTimeInRange(p.horario_inicio, p.horario_fim, nowTime),
-    );
+    // Try to find a match prioritizing Estudio FM (as it's the primary broadcast)
+    const findOnAir = (allProgs: any[]) => {
+      const candidates = (allProgs || []).filter(
+        (p: any) =>
+          (p.dias_semana || []).includes(today) &&
+          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime),
+      );
+      
+      if (candidates.length === 0) return null;
+      if (candidates.length === 1) return candidates[0];
+      
+      // If multiple (overlapping), prioritize Estudio FM
+      const fmMatch = candidates.find(p => p.estudio?.toLowerCase().includes("fm"));
+      if (fmMatch) return fmMatch;
+
+      return candidates[0];
+    };
+
+    const onAir = findOnAir(progs);
 
     // Buscar apresentador no ar (primeiro de apresentadores_ids, fallback para apresentador_id)
     let locutorNome = "";
