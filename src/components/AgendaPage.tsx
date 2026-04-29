@@ -871,7 +871,7 @@ export default function AgendaPage() {
 
   // Feriados nacionais obrigatórios do Brasil
   const feriadosNacionais = useMemo(() => {
-    const year = new Date().getFullYear();
+    const year = now.getFullYear();
     // Cálculo da Páscoa (algoritmo de Meeus)
     const a = year % 19;
     const b = Math.floor(year / 100);
