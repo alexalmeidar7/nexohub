@@ -1232,7 +1232,7 @@ export default function CenarioTela() {
           transition: "transform 0.5s ease",
         }}
       >
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${vhToPx(1.8)}px` }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${vhToPx(1.8)}px`, fontFamily: "'Inter', sans-serif" }}>
 
           {/* Fullscreen background layers behind sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
@@ -1325,7 +1325,7 @@ export default function CenarioTela() {
 
           {/* Sidebar — always on top */}
           <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
-          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} ${sidebarPad}`, borderRadius: `0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu} 0`, background: "rgba(255,255,255,0.05)", border: "none", borderLeft: "none", marginLeft: "-1px", boxShadow: "none" }}>
+          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} ${sidebarPad}`, borderRadius: `0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu} 0`, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.05)", borderLeft: "none", marginLeft: "-1px", boxShadow: "0 4px 30px rgba(0,0,0,0.5)" }}>
             <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "home" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "home" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Home style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
@@ -1490,15 +1490,15 @@ export default function CenarioTela() {
                         gap: `${vhToPx(1)}${vu}`,
                       }}>
                          {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
-                           <div style={{
-                             width: `${vhToPx(20)}${vu}`,
-                             height: `${vhToPx(20)}${vu}`,
-                             borderRadius: `${vhToPx(2)}${vu}`,
-                             background: "rgba(255, 255, 255, 0.2)",
-                             backdropFilter: "blur(30px)",
-                             WebkitBackdropFilter: "blur(30px)",
-                             boxShadow: "0 12px 48px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.3)",
-                             border: "1px solid rgba(255,255,255,0.4)",
+                            <div style={{
+                              width: `${vhToPx(22)}${vu}`,
+                              height: `${vhToPx(22)}${vu}`,
+                              borderRadius: `${vhToPx(2.5)}${vu}`,
+                              background: "rgba(0, 0, 0, 0.3)",
+                              backdropFilter: "blur(40px)",
+                              WebkitBackdropFilter: "blur(40px)",
+                              boxShadow: "0 20px 60px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.15)",
+                              border: "1px solid rgba(255,255,255,0.2)",
                              zIndex: 2,
                              position: "relative",
                              flexShrink: 0,
@@ -1539,7 +1539,7 @@ export default function CenarioTela() {
                           <img src={currentProgram.selo} alt="" style={{ position: "absolute", top: `${vhToPx(0.8)}${vu}`, right: `${vhToPx(0.8)}${vu}`, maxHeight: `${vhToPx(5.82)}${vu}`, maxWidth: `${vhToPx(8.74)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))", zIndex: 3 }} />
                         )}
                         {/* Presenter name at bottom */}
-                        <div style={{ position: "absolute", bottom: `${vhToPx(1)}${vu}`, left: `${vhToPx(1)}${vu}`, right: `${vhToPx(1)}${vu}`, zIndex: 3 }}>
+                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${vhToPx(1.5)}${vu}`, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", zIndex: 3 }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.4)}${vu}` }}>
                             <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
                             <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
@@ -1552,9 +1552,9 @@ export default function CenarioTela() {
                         <div
                           key={musicData.capa}
                           style={{
-                            width: `${vhToPx(20)}${vu}`,
-                            height: `${vhToPx(20)}${vu}`,
-                            borderRadius: `${vhToPx(2)}${vu}`,
+                            width: `${vhToPx(22)}${vu}`,
+                            height: `${vhToPx(22)}${vu}`,
+                            borderRadius: `${vhToPx(2.5)}${vu}`,
                             overflow: "hidden",
                             flexShrink: 0,
                             zIndex: 1,
@@ -1576,12 +1576,13 @@ export default function CenarioTela() {
                               width: "100%",
                               height: "100%",
                               objectFit: "cover",
-                              borderRadius: `${vhToPx(2)}${vu}`,
+                              borderRadius: `${vhToPx(2.5)}${vu}`,
+                              boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
                             }}
                           />
                           {/* Removido overlay escuro */}
                           {/* Music title + artist — centered */}
-                          <div key={musicKey} style={{ position: "absolute", bottom: `${vhToPx(1)}${vu}`, left: `${vhToPx(1.2)}${vu}`, right: `${vhToPx(1.2)}${vu}`, zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", textAlign: "center" }}>
+                          <div key={musicKey} style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${vhToPx(1.5)}${vu}`, background: "linear-gradient(transparent, rgba(0,0,0,0.9))", zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", textAlign: "center" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.4)}${vu}` }}>
                               <Music size={Number(vhToPx(1.1))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
                             </div>
@@ -1666,7 +1667,7 @@ export default function CenarioTela() {
                     )}
 
                    {/* Program progress bar — premium animated */}
-                   <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: `${vhToPx(2.6)}${vu}`, right: `${vhToPx(2.6)}${vu}`, height: `${vhToPx(0.5)}${vu}`, background: "rgba(255,255,255,0.15)", zIndex: 15, overflow: "hidden", borderRadius: `${vhToPx(0.3)}${vu}` }}>
+                   <div style={{ position: "absolute", bottom: `${vhToPx(2.5)}${vu}`, left: `${vhToPx(4)}${vu}`, right: `${vhToPx(4)}${vu}`, height: `${vhToPx(0.6)}${vu}`, background: "rgba(255,255,255,0.1)", zIndex: 15, overflow: "hidden", borderRadius: `${vhToPx(1)}${vu}`, border: "1px solid rgba(255,255,255,0.05)" }}>
                      <div style={{
                        width: `${progressPct}%`,
                        height: "100%",
@@ -1701,7 +1702,7 @@ export default function CenarioTela() {
                           </div>
                         </div>
                         {/* Main weather card */}
-                        <div className="rounded-3xl" style={{ padding: `${vhToPx(3)}${vu}`, background: "rgba(0,0,0,0.15)", border: "none", boxShadow: "none" }}>
+                        <div className="rounded-[2.5vh]" style={{ padding: `${vhToPx(3.5)}${vu}`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}>
                           <div className="flex items-center" style={{ gap: `${vhToPx(3)}${vu}`, marginBottom: `${vhToPx(2.5)}${vu}` }}>
                             <div style={{ width: `${vhToPx(14)}${vu}`, height: `${vhToPx(14)}${vu}`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
                               <WeatherIcon code={liveWeather.current.code} size={200} forceDay />
@@ -1737,10 +1738,12 @@ export default function CenarioTela() {
                           {liveWeather.daily.slice(1, 5).map((d, i) => (
                             <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
                               padding: `${vhToPx(2)}${vu} ${vhToPx(2.5)}${vu}`,
-                              background: "rgba(0,0,0,0.1)",
-                              borderRadius: `${vhToPx(2)}${vu}`,
-                              border: "none",
-                              boxShadow: "none",
+                              background: "rgba(0,0,0,0.3)",
+                              backdropFilter: "blur(10px)",
+                              WebkitBackdropFilter: "blur(10px)",
+                              borderRadius: `${vhToPx(2.5)}${vu}`,
+                              border: "1px solid rgba(255,255,255,0.05)",
+                              boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
                               gap: `${vhToPx(2)}${vu}`,
                             }}>
                               {/* Day name */}
