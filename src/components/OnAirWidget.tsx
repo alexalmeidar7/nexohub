@@ -121,7 +121,6 @@ export default function OnAirWidget() {
       if (current) {
         const ap = apresentadores.find(a => a.id === current.programa.apresentadorId);
         setApresentadorNome(ap?.nome || "—");
-        setApresentadorFoto(ap?.foto || "");
       }
       
       const { data: channels } = await supabase.from("streaming_channels").select("url, type").eq("active", true);
