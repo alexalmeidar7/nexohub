@@ -800,8 +800,9 @@ export default function AgendaPage() {
     cutoff.setDate(cutoff.getDate() - 30);
     const cutoffStr = format(cutoff, "yyyy-MM-dd");
     const past = eventos.filter((e) => {
-      if (e.recorrencia !== "unico") return false;
-      return e.data < todayStr && e.data >= cutoffStr;
+      const isPast = e.recorrencia === "unico" && e.data < todayStr;
+      const isCancelled = e.status === "cancelado";
+      return (isPast || isCancelled) && e.data >= cutoffStr;
     });
     // Apply history date filter
     if (historyDateFilter) {
