@@ -93,6 +93,7 @@ function normalizeDashboardSettings(raw: unknown): DashboardSettingsPayload {
 const linkOptions: { label: string; page?: Page; external?: string; icon: string }[] = [
   { label: "Apresentadores", page: "apresentadores", icon: "Mic2" },
   { label: "Programas", page: "programas", icon: "PlaySquare" },
+  { label: "Roteiro", page: "noticias", icon: "FileText" },
   { label: "Notícias", page: "noticias", icon: "Newspaper" },
   { label: "Música no Ar", page: "musica", icon: "Music" },
   { label: "Agenda", page: "agenda", icon: "CalendarDays" },
@@ -119,7 +120,7 @@ const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "wea
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Mic2, PlaySquare, Newspaper, Music, CalendarDays, Settings, MonitorPlay, MessageSquareQuote,
-  Tag, Image, Film, ShoppingCart, Monitor, Scissors, ExternalLink, ShoppingBag, Wrench, Users,
+  Tag, Image, Film, ShoppingCart, Monitor, Scissors, ExternalLink, ShoppingBag, Wrench, Users, FileText,
 };
 
 function getIcon(name: string) {
