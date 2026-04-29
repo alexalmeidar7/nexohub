@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Bold, Underline, Palette } from "lucide-react";
+import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Bold, Underline, Palette, Check, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
@@ -41,6 +41,53 @@ function RichTextToolbar({ editorRef, onInput }: { editorRef: React.RefObject<HT
         )}
       </div>
     </div>
+  );
+}
+
+function EditableCell({ value, onSave, className, textClassName }: { value: string; onSave: (val: string) => void; className?: string; textClassName?: string }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempValue, setTempValue] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing) inputRef.current?.focus();
+  }, [isEditing]);
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    if (tempValue !== value) onSave(tempValue);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      inputRef.current?.blur();
+    } else if (e.key === "Escape") {
+      setTempValue(value);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <td className={className}>
+        <input
+          ref={inputRef}
+          value={tempValue}
+          onChange={(e) => setTempValue(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          className="w-full px-2 py-1 text-xs outline-none bg-white rounded border border-blue-500 shadow-sm"
+          style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+        />
+      </td>
+    );
+  }
+
+  return (
+    <td className={`${className} cursor-pointer hover:bg-black/5 transition-colors group relative`} onClick={() => setIsEditing(true)}>
+      <p className={`${textClassName} pr-4`}>{value || <span className="opacity-30">—</span>}</p>
+      <Pencil size={10} className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-40 transition-opacity" />
+    </td>
   );
 }
 
@@ -197,6 +244,17 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
       toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleInlineUpdate = async (id: string, updates: Partial<Promocao>) => {
+    try {
+      const { error } = await supabase.from("promocoes").update(updates).eq("id", id);
+      if (error) throw error;
+      setItems(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+      toast({ title: "Atualizado com sucesso" });
+    } catch (err: any) {
+      toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
     }
   };
 
@@ -406,20 +464,30 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
                               <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}>—</span>
                             )}
                           </td>
-                          <td className="px-4 py-2 max-w-[150px]">
-                            <p className="truncate text-xs font-semibold">{item.botao_url || "—"}</p>
-                          </td>
-                          <td className="px-4 py-2 max-w-[200px]">
-                            <p className="truncate text-xs">{item.texto}</p>
-                          </td>
-                          <td className="px-4 py-2 text-xs">{item.oferecimento || "—"}</td>
+                          <EditableCell
+                            value={item.botao_url || ""}
+                            onSave={(val) => handleInlineUpdate(item.id, { botao_url: val })}
+                            className="px-4 py-2 max-w-[150px]"
+                            textClassName="truncate text-xs font-semibold"
+                          />
+                          <EditableCell
+                            value={item.texto}
+                            onSave={(val) => handleInlineUpdate(item.id, { texto: val })}
+                            className="px-4 py-2 max-w-[200px]"
+                            textClassName="truncate text-xs"
+                          />
+                          <EditableCell
+                            value={item.oferecimento || ""}
+                            onSave={(val) => handleInlineUpdate(item.id, { oferecimento: val })}
+                            className="px-4 py-2 text-xs"
+                          />
                           <td className="px-4 py-2 text-center">
                             <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${dias <= 3 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
                               {dias}d restante{dias !== 1 ? "s" : ""}
                             </span>
                           </td>
                           <td className="px-4 py-2 text-center">
-                            <button onClick={() => startEdit(item)} title="Editar" className="hover:opacity-70 transition-opacity">
+                            <button onClick={() => startEdit(item)} title="Editar Completo" className="hover:opacity-70 transition-opacity">
                               <Pencil size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
                             </button>
                           </td>
