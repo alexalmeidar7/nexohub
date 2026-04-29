@@ -784,36 +784,63 @@ export default function AgendaPage() {
     return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
   }, []);
 
-  const filteredEventos = eventos.filter((e) => {
+  const filteredEventos = useMemo(() => {
+    const now = new Date();
     const selStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
-    const matchDate = selectedDate ? eventMatchesDate(e, selStr) : true;
-    const matchLocal = filterLocal === "todos" || e.local === filterLocal;
-    // Only future/current events (unique with past date go to history)
-    const isFuture = e.recorrencia !== "unico" || e.data >= todayStr;
-    // Also exclude events whose linked programa is inactive (vencido)
-    const programaAtivo = !e.programa_id || programas.find(p => p.id === e.programa_id) !== undefined;
-    // Remove "CANCELADO" events from current agenda
-    const isNotCancelled = e.status !== "cancelado";
-    return matchDate && matchLocal && isFuture && programaAtivo && isNotCancelled;
-  });
+    const isToday = selStr === format(now, "yyyy-MM-dd");
+    const currentTime = format(now, "HH:mm");
 
-  // Past events (limited to last 30 days)
-  const pastEventos = useMemo(() => {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
-    const cutoffStr = format(cutoff, "yyyy-MM-dd");
-    const past = eventos.filter((e) => {
-      const isPast = e.recorrencia === "unico" && e.data < todayStr;
-      const isCancelled = e.status === "cancelado";
-      return (isPast || isCancelled) && e.data >= cutoffStr;
+    return eventos.filter((e) => {
+      const matchDate = selectedDate ? eventMatchesDate(e, selStr) : true;
+      const matchLocal = filterLocal === "todos" || e.local === filterLocal;
+      
+      // Hide CANCELADO or CONCLUIDO events from agenda
+      if (e.status === "cancelado" || e.status === "concluido") return false;
+
+      // Hide events where recording has ended (only for today)
+      if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) {
+        return false;
+      }
+
+      // Base date check for unique events (historical go to history)
+      const isHistorical = e.recorrencia === "unico" && e.data < todayStr;
+      if (isHistorical) return false;
+
+      const programaAtivo = !e.programa_id || programas.find(p => p.id === e.programa_id) !== undefined;
+
+      return matchDate && matchLocal && programaAtivo;
     });
-    // Apply history date filter
+  }, [eventos, selectedDate, filterLocal, todayStr, programas]);
+
+  // Past events
+  const pastEventos = useMemo(() => {
+    const now = new Date();
+    const todayStr = format(now, "yyyy-MM-dd");
+    const currentTime = format(now, "HH:mm");
+
+    const past = eventos.filter((e) => {
+      // Status-based historical events
+      if (e.status === "concluido" || e.status === "cancelado") return true;
+
+      // Recording ended
+      if (e.horario_gravacao_fim) {
+        if (e.data < todayStr) return true;
+        if (e.data === todayStr && e.horario_gravacao_fim < currentTime) return true;
+      } else if (e.data < todayStr) {
+        return true;
+      }
+
+      return false;
+    });
+
+    // Apply history date filter if selected
     if (historyDateFilter) {
       const filterStr = format(historyDateFilter, "yyyy-MM-dd");
       return past.filter(e => e.data === filterStr);
     }
-    return past.sort((a, b) => b.data.localeCompare(a.data));
-  }, [eventos, todayStr, historyDateFilter]);
+    
+    return past.sort((a, b) => b.data.localeCompare(a.data)).slice(0, 50);
+  }, [eventos, historyDateFilter]);
 
   const getEventDatesForCalendar = () => {
     const dates: Date[] = [];
