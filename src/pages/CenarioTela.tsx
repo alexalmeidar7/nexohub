@@ -1325,7 +1325,7 @@ export default function CenarioTela() {
 
           {/* Sidebar — always on top */}
           <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
-          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} ${sidebarPad}`, borderRadius: `0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu} 0`, background: "rgba(255,255,255,0.05)", border: "none", borderLeft: "none", marginLeft: "-1px", boxShadow: "none" }}>
+          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} ${sidebarPad}`, borderRadius: `0 ${vhToPx(2)}${vu} ${vhToPx(2)}${vu} 0`, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.05)", borderLeft: "none", marginLeft: "-1px", boxShadow: "0 4px 30px rgba(0,0,0,0.5)" }}>
             <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "home" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "home" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Home style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
