@@ -222,10 +222,7 @@ export default function OnAirWidget() {
                   </button>
                 </div>
 
-                <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
-                  <span className="text-[8px] font-black text-white uppercase tracking-widest">Ao Vivo</span>
-                </div>
+                {/* Badge "Ao Vivo" removido conforme solicitado */}
               </div>
             </div>
           )}
