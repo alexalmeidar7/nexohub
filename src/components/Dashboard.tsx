@@ -851,10 +851,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <span style={{ color: layoutColors.accentColor, opacity: 1 }}>{pageTitle[currentPage]}</span>
               </div>
             </div>
-              >
-                <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
-              </button>
-            </div>
           )}
           <div className="relative flex-1 h-full">
             <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
