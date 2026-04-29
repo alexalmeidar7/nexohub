@@ -788,14 +788,12 @@ export default function AgendaPage() {
   };
 
   const todayStr = useMemo(() => {
-    const t = new Date();
-    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
-  }, []);
+    return format(now, "yyyy-MM-dd");
+  }, [now]);
 
   const filteredEventos = useMemo(() => {
-    const now = new Date();
     const selStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
-    const isToday = selStr === format(now, "yyyy-MM-dd");
+    const isToday = selStr === todayStr;
     const currentTime = format(now, "HH:mm");
 
     return eventos.filter((e) => {
@@ -818,12 +816,10 @@ export default function AgendaPage() {
 
       return matchDate && matchLocal && programaAtivo;
     });
-  }, [eventos, selectedDate, filterLocal, todayStr, programas]);
+  }, [eventos, selectedDate, filterLocal, todayStr, now, programas]);
 
   // Past events
   const pastEventos = useMemo(() => {
-    const now = new Date();
-    const todayStr = format(now, "yyyy-MM-dd");
     const currentTime = format(now, "HH:mm");
 
     const past = eventos.filter((e) => {
@@ -848,7 +844,7 @@ export default function AgendaPage() {
     }
     
     return past.sort((a, b) => b.data.localeCompare(a.data)).slice(0, 50);
-  }, [eventos, historyDateFilter]);
+  }, [eventos, historyDateFilter, now, todayStr]);
 
   const getEventDatesForCalendar = () => {
     const dates: Date[] = [];
