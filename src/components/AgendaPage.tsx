@@ -570,6 +570,7 @@ export default function AgendaPage() {
     setFormEdicaoNotas("");
     setFormEdicaoConcluida(false);
     setFormHorarioGravacao("");
+    setFormHorarioGravacaoFim("");
     setEditingId(null);
   };
 
@@ -596,6 +597,7 @@ export default function AgendaPage() {
     setFormEdicaoNotas(evt.edicao_notas || "");
     setFormEdicaoConcluida(!!evt.edicao_concluida);
     setFormHorarioGravacao(evt.horario_gravacao || "");
+    setFormHorarioGravacaoFim(evt.horario_gravacao_fim || "");
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
         ? evt.participantes.map(p => ({ id: p.id, nome: p.nome, instagram: p.instagram }))
@@ -624,6 +626,7 @@ export default function AgendaPage() {
       edicao_notas: formTipoEvento === "live" ? formEdicaoNotas : "",
       edicao_concluida: formTipoEvento === "live" ? formEdicaoConcluida : false,
       horario_gravacao: formTipoEvento === "gravacao" ? formHorarioGravacao : null,
+      horario_gravacao_fim: formTipoEvento === "gravacao" ? formHorarioGravacaoFim : null,
     } as any;
 
     if (editingId) {
