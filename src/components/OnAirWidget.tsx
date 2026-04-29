@@ -89,8 +89,9 @@ export default function OnAirWidget() {
   const [isMuted, setIsMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-  const [audioUrl, setAudioUrl] = useState("https://streaming.logicahost.com.br/8240/stream");
-  const [videoUrl, setVideoUrl] = useState("https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8");
+  const [audioUrl, setAudioUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [isUnauthorized, setIsUnauthorized] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -132,12 +133,29 @@ export default function OnAirWidget() {
         setApresentadorNome(ap?.nome || "—");
       }
       
-      const { data: channels } = await supabase.from("streaming_channels").select("url, type").eq("active", true).eq("user_id", user?.id);
+      const { data: channels } = await supabase.from("streaming_channels").select("url, type, user_id").eq("active", true).eq("user_id", user?.id);
+      
       if (channels && channels.length > 0) {
         const audioChannel = channels.find(c => c.type === 'audio_live');
         const videoChannel = channels.find(c => c.type === 'video_live');
-        if (audioChannel?.url) setAudioUrl(audioChannel.url);
-        if (videoChannel?.url) setVideoUrl(videoChannel.url);
+        
+        // Verificação extra de segurança para garantir que o user_id dos canais corresponde ao usuário logado
+        const unauthorized = channels.some(c => c.user_id !== user?.id);
+        
+        if (unauthorized) {
+          console.error("Segurança: Tentativa de carregar streaming de outro usuário bloqueada.");
+          setIsUnauthorized(true);
+          setAudioUrl("");
+          setVideoUrl("");
+          setIsPlaying(false);
+        } else {
+          setIsUnauthorized(false);
+          if (audioChannel?.url) setAudioUrl(audioChannel.url);
+          if (videoChannel?.url) setVideoUrl(videoChannel.url);
+        }
+      } else {
+        setAudioUrl("");
+        setVideoUrl("");
       }
 
       const nexts = findNextPrograms(programas, 3);
@@ -242,10 +260,10 @@ export default function OnAirWidget() {
 
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-black text-white leading-tight truncate mb-1 drop-shadow-sm uppercase tracking-tight">
-                  {musicData?.titulo || "Programação Musical"}
+                  {isUnauthorized ? "Acesso Não Autorizado" : (musicData?.titulo || "Programação Musical")}
                 </h3>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-3" style={{ color: "var(--layout-accent-color)", opacity: 0.8 }}>
-                  {musicData?.artista || "Positiva FM"}
+                  {isUnauthorized ? "Erro de Segurança" : (musicData?.artista || "Positiva FM")}
                 </p>
                 
                 <div className="flex items-center gap-2">
