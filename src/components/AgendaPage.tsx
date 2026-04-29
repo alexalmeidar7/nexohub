@@ -789,7 +789,9 @@ export default function AgendaPage() {
     const isFuture = e.recorrencia !== "unico" || e.data >= todayStr;
     // Also exclude events whose linked programa is inactive (vencido)
     const programaAtivo = !e.programa_id || programas.find(p => p.id === e.programa_id) !== undefined;
-    return matchDate && matchLocal && isFuture && programaAtivo;
+    // Remove "CANCELADO" events from current agenda
+    const isNotCancelled = e.status !== "cancelado";
+    return matchDate && matchLocal && isFuture && programaAtivo && isNotCancelled;
   });
 
   // Past events (limited to last 30 days)
@@ -798,8 +800,9 @@ export default function AgendaPage() {
     cutoff.setDate(cutoff.getDate() - 30);
     const cutoffStr = format(cutoff, "yyyy-MM-dd");
     const past = eventos.filter((e) => {
-      if (e.recorrencia !== "unico") return false;
-      return e.data < todayStr && e.data >= cutoffStr;
+      const isPast = e.recorrencia === "unico" && e.data < todayStr;
+      const isCancelled = e.status === "cancelado";
+      return (isPast || isCancelled) && e.data >= cutoffStr;
     });
     // Apply history date filter
     if (historyDateFilter) {
