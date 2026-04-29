@@ -303,35 +303,49 @@ export default function CenariosEstudioPage() {
   return (
     <div className="space-y-5">
       {/* Header info + XML */}
-      <Card className="p-5" style={layoutCardStyle}>
-        <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-          <div className="flex items-start gap-3 shrink-0">
-            <div className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0" style={layoutAccentSoft}>
-              <Tv className="h-5 w-5" style={layoutAccent} />
+      <Card className="p-6 relative overflow-hidden" style={layoutCardStyle}>
+        {/* Abstract background elements for visual interest */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
+
+        <div className="relative flex flex-col lg:flex-row lg:items-center gap-6">
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-accent/20" style={{ ...layoutAccentSoft, border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
+              <Tv className="h-7 w-7" style={layoutAccent} />
             </div>
             <div>
-              <h3 className="font-semibold text-lg leading-tight" style={layoutText}>Cenários Estúdio</h3>
-              <p className="text-sm mt-1 max-w-md leading-relaxed" style={layoutTextMuted}>
-                Monte grupos de TVs e vincule a programas. O vMix consome o XML e troca automaticamente conforme o programa no ar.
+              <h3 className="font-bold text-2xl tracking-tight" style={layoutText}>Cenários Estúdio</h3>
+              <p className="text-sm mt-1 max-w-sm leading-relaxed" style={layoutTextMuted}>
+                Configure o layout das TVs e vincule aos seus programas para sincronização automática via vMix.
               </p>
             </div>
           </div>
-          <div className="flex-1 min-w-0 lg:pl-4 lg:border-l" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}>
-            <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>
-              Link XML para o vMix
-            </Label>
-            <div className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-md" style={layoutInnerStyle}>
-              <LinkIcon className="h-4 w-4 shrink-0" style={layoutTextMuted} />
-              <code className="text-sm truncate flex-1 font-mono" style={layoutText}>{xmlUrl}</code>
-              <Button size="sm" variant="ghost" className="h-8 px-2 shrink-0" onClick={copyXmlUrl} style={layoutText}>
-                <Copy className="h-4 w-4 mr-1" /> Copiar
+
+          <div className="flex-1 min-w-0 lg:pl-8 lg:border-l lg:border-border/40">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-[10px] uppercase tracking-[0.2em] font-bold" style={layoutTextMuted}>
+                Integração vMix (XML Link)
+              </Label>
+              <Badge variant="outline" className="text-[10px] font-mono px-2 py-0 h-5" style={{ ...layoutAccentSoft, color: "var(--layout-accent-color, #2563eb)", borderColor: "transparent" }}>
+                Active
+              </Badge>
+            </div>
+            <div className="group relative flex items-center gap-2 p-1 pl-3 rounded-xl transition-all duration-200" style={layoutInnerStyle}>
+              <LinkIcon className="h-4 w-4 shrink-0 opacity-50" style={layoutTextMuted} />
+              <code className="text-sm truncate flex-1 font-mono py-2" style={layoutText}>{xmlUrl}</code>
+              <Button size="sm" variant="secondary" className="h-9 px-4 rounded-lg shadow-sm font-medium hover:scale-[1.02] active:scale-[0.98] transition-all" onClick={copyXmlUrl}>
+                <Copy className="h-3.5 w-3.5 mr-2" /> Copiar Link
               </Button>
             </div>
           </div>
         </div>
-        <div className="mt-4 pt-4 flex justify-end" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}>
-          <Button onClick={addGrupo} size="sm" disabled={noProgramas}>
-            <Plus className="h-4 w-4 mr-1" /> Criar novo template
+
+        <div className="mt-8 pt-6 flex justify-end items-center gap-4 border-t border-border/40">
+          <p className="hidden md:block text-[11px] font-medium" style={layoutTextMuted}>
+            {grupos.length} template{grupos.length !== 1 ? "s" : ""} configurado{grupos.length !== 1 ? "s" : ""}
+          </p>
+          <Button onClick={addGrupo} className="h-10 px-6 rounded-xl shadow-md shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]" disabled={noProgramas}>
+            <Plus className="h-4 w-4 mr-2" /> Criar Novo Template
           </Button>
         </div>
       </Card>
