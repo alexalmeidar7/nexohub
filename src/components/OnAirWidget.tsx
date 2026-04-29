@@ -26,14 +26,15 @@ const DIAS_MAP: Record<number, string> = {
 async function getProgramas(userId?: string): Promise<Programa[]> {
   const query = supabase.from("programas").select("*");
   
-  // Se tivermos um userId, filtramos por rádio (estúdio)
   if (userId) {
-    const { data: userStudios } = await supabase.from("studios").select("slug").eq("user_id", userId);
-    if (userStudios && userStudios.length > 0) {
-      const slug = userStudios[0].slug.toLowerCase();
-      if (slug.includes("interativa")) {
+    const { data: userProfile } = await supabase.from("profiles").select("nome, email").eq("user_id", userId).maybeSingle();
+    if (userProfile) {
+      const nome = (userProfile.nome || "").toLowerCase();
+      const email = (userProfile.email || "").toLowerCase();
+      
+      if (nome.includes("interativa") || email.includes("interativa")) {
         query.ilike("estudio", "%interativa%");
-      } else if (slug.includes("positiva")) {
+      } else if (nome.includes("positiva") || email.includes("positiva")) {
         query.ilike("estudio", "%positiva%");
       }
     }
