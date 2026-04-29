@@ -42,15 +42,27 @@ Deno.serve(async (req) => {
     }
 
     const userId = matchedProfile.user_id;
+
+    // Check if this is a sub-user and if so, use the parent's data
+    const { data: subUserData } = await supabase
+      .from("sub_users")
+      .select("parent_user_id, ativo")
+      .eq("auth_user_id", userId)
+      .maybeSingle();
+
+    const finalUserId = (subUserData?.ativo && subUserData.parent_user_id) 
+      ? subUserData.parent_user_id 
+      : userId;
+
     const today = new Date().toISOString().split("T")[0];
 
     const [empresaRes, promoRes, progsRes, testRes, aprsRes, settingsRes] = await Promise.all([
-      supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle(),
-      supabase.from("promocoes").select("*").eq("user_id", userId).order("data_inicio"),
-      supabase.from("programas").select("*").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%"),
-      supabase.from("testemunhais").select("*").eq("user_id", userId),
-      supabase.from("apresentadores").select("*").eq("user_id", userId).eq("ativo", true),
-      supabase.from("user_settings").select("cenario_config").eq("user_id", userId).maybeSingle(),
+      supabase.from("empresa_config").select("*").eq("user_id", finalUserId).maybeSingle(),
+      supabase.from("promocoes").select("*").eq("user_id", finalUserId).order("data_inicio"),
+      supabase.from("programas").select("*").eq("user_id", finalUserId).eq("ativo", true).ilike("estudio", "%fm%"),
+      supabase.from("testemunhais").select("*").eq("user_id", finalUserId),
+      supabase.from("apresentadores").select("*").eq("user_id", finalUserId).eq("ativo", true),
+      supabase.from("user_settings").select("cenario_config").eq("user_id", finalUserId).maybeSingle(),
     ]);
 
     return new Response(
