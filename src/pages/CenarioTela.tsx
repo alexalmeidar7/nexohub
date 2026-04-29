@@ -1471,32 +1471,40 @@ export default function CenarioTela() {
                      </div>
                    )}
 
-                   {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA ── */}
-                   <div style={{
-                     position: "absolute",
-                     bottom: `${vhToPx(37.75)}${vu}`,
-                     left: "50%",
-                     transform: "translateX(-50%)",
-                     display: "flex",
-                     alignItems: "stretch",
-                     zIndex: 15,
-                   }}>
-                      {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
-                        <div style={{
-                          width: `${vhToPx(20)}${vu}`,
-                          height: `${vhToPx(20)}${vu}`,
-                          borderRadius: `${vhToPx(2)}${vu}`,
-                          background: "rgba(255, 255, 255, 0.15)",
-                          backdropFilter: "blur(30px)",
-                          WebkitBackdropFilter: "blur(30px)",
-                          boxShadow: "0 12px 48px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.2)",
-                          border: "1px solid rgba(255,255,255,0.3)",
-                          zIndex: 2,
-                          position: "relative",
-                          flexShrink: 0,
-                          overflow: "hidden"
-                        }}>
-                        {/* Presenter photo anchored at bottom, overflows top */}
+                    {/* ── WRAPPER: BOXES + CONTROLS ── */}
+                    <div style={{
+                      position: "absolute",
+                      bottom: `${vhToPx(35)}${vu}`,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: `${vhToPx(2)}${vu}`,
+                      zIndex: 15,
+                    }}>
+                      {/* ── ROW: BOX DO LOCUTOR + BOX CAPA ── */}
+                      <div style={{
+                        display: "flex",
+                        alignItems: "stretch",
+                        gap: `${vhToPx(1)}${vu}`,
+                      }}>
+                         {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
+                           <div style={{
+                             width: `${vhToPx(20)}${vu}`,
+                             height: `${vhToPx(20)}${vu}`,
+                             borderRadius: `${vhToPx(2)}${vu}`,
+                             background: "rgba(255, 255, 255, 0.2)",
+                             backdropFilter: "blur(30px)",
+                             WebkitBackdropFilter: "blur(30px)",
+                             boxShadow: "0 12px 48px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.3)",
+                             border: "1px solid rgba(255,255,255,0.4)",
+                             zIndex: 2,
+                             position: "relative",
+                             flexShrink: 0,
+                             // overflow: "visible" - removed hidden to allow artist to pop out
+                           }}>
+                           {/* Presenter photo anchored at bottom, overflows top */}
                         {(() => {
                           const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
                           const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
