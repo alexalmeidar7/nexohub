@@ -1667,7 +1667,7 @@ export default function CenarioTela() {
                     )}
 
                    {/* Program progress bar — premium animated */}
-                   <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: `${vhToPx(2.6)}${vu}`, right: `${vhToPx(2.6)}${vu}`, height: `${vhToPx(0.5)}${vu}`, background: "rgba(255,255,255,0.15)", zIndex: 15, overflow: "hidden", borderRadius: `${vhToPx(0.3)}${vu}` }}>
+                   <div style={{ position: "absolute", bottom: `${vhToPx(2.5)}${vu}`, left: `${vhToPx(4)}${vu}`, right: `${vhToPx(4)}${vu}`, height: `${vhToPx(0.6)}${vu}`, background: "rgba(255,255,255,0.1)", zIndex: 15, overflow: "hidden", borderRadius: `${vhToPx(1)}${vu}`, border: "1px solid rgba(255,255,255,0.05)" }}>
                      <div style={{
                        width: `${progressPct}%`,
                        height: "100%",
