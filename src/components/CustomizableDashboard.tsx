@@ -93,6 +93,7 @@ function normalizeDashboardSettings(raw: unknown): DashboardSettingsPayload {
 const linkOptions: { label: string; page?: Page; external?: string; icon: string }[] = [
   { label: "Apresentadores", page: "apresentadores", icon: "Mic2" },
   { label: "Programas", page: "programas", icon: "PlaySquare" },
+  { label: "Roteiro", page: "noticias", icon: "FileText" },
   { label: "Notícias", page: "noticias", icon: "Newspaper" },
   { label: "Música no Ar", page: "musica", icon: "Music" },
   { label: "Agenda", page: "agenda", icon: "CalendarDays" },
