@@ -89,6 +89,8 @@ export default function OnAirWidget() {
   const [isMuted, setIsMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [audioUrl, setAudioUrl] = useState("https://streaming.logicahost.com.br/8240/stream");
+  const [videoUrl, setVideoUrl] = useState("https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8");
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -121,6 +123,15 @@ export default function OnAirWidget() {
         setApresentadorNome(ap?.nome || "—");
         setApresentadorFoto(ap?.foto || "");
       }
+      
+      const { data: channels } = await supabase.from("streaming_channels").select("url, type").eq("active", true);
+      if (channels) {
+        const audioChannel = channels.find(c => c.type === 'audio_live');
+        const videoChannel = channels.find(c => c.type === 'video_live');
+        if (audioChannel?.url) setAudioUrl(audioChannel.url);
+        if (videoChannel?.url) setVideoUrl(videoChannel.url);
+      }
+
       const nexts = findNextPrograms(programas, 3);
       setNextPrograms(nexts);
       const apMap: Record<string, ApresentadorInfo> = {};
@@ -174,7 +185,7 @@ export default function OnAirWidget() {
           <div className="h-full relative flex flex-col justify-center py-4">
             <audio 
               ref={audioRef}
-              src="https://streaming.logicahost.com.br/8240/stream"
+              src={audioUrl}
               autoPlay={isPlaying}
               muted={isMuted}
             />
@@ -278,7 +289,7 @@ export default function OnAirWidget() {
                 <video 
                   ref={videoRef}
                   className="w-full h-full object-cover"
-                  src="https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8"
+                  src={videoUrl}
                   autoPlay={isPlaying}
                   playsInline
                   muted={isMuted}
