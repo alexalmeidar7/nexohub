@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, UserPlus, Camera, Shield, Phone, FileSpreadsheet, Search } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
@@ -60,6 +60,21 @@ export default function ApresentadorForm() {
   const [importRows, setImportRows] = useState<any[] | null>(null);
   const [importing, setImporting] = useState(false);
   const excelInputRef = useRef<HTMLInputElement>(null);
+  const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
+
+  const updateField = async (id: string, field: string, value: any) => {
+    const { error } = await supabase.from("apresentadores").update({ [field]: value }).eq("id", id);
+    if (error) {
+      console.error(`Erro ao atualizar campo ${field}:`, error);
+      alert("Erro ao salvar: " + error.message);
+    } else {
+      setApresentadores(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+      // Dispara atualização imediata dos XMLs
+      try {
+        window.dispatchEvent(new CustomEvent("apresentadores-updated"));
+      } catch {}
+    }
+  };
 
   const load = async () => {
     setLoadingList(true);
@@ -526,16 +541,78 @@ export default function ApresentadorForm() {
                         {a.cargo || "—"}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 font-semibold">{a.nome}</td>
+                    <td className="px-4 py-2.5 font-semibold cursor-pointer min-w-[150px]" onClick={() => setEditingCell({ id: a.id, field: 'nome' })}>
+                      {editingCell?.id === a.id && editingCell?.field === 'nome' ? (
+                        <input
+                          autoFocus
+                          defaultValue={a.nome}
+                          className="w-full px-2 py-1 rounded border border-blue-400 outline-none"
+                          onBlur={(e) => {
+                            if (e.target.value !== a.nome) updateField(a.id, 'nome', e.target.value);
+                            setEditingCell(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.currentTarget.blur();
+                            if (e.key === 'Escape') setEditingCell(null);
+                          }}
+                        />
+                      ) : (
+                        a.nome
+                      )}
+                    </td>
                     <td className="px-4 py-2.5">
                       <div className="flex flex-col gap-0.5">
-                        {a.instagram ? (
-                          <span className="flex items-center gap-1.5 text-[11px]"><Instagram size={12} style={{ color: "#e1306c" }} /> {a.instagram}</span>
-                        ) : null}
-                        {a.whatsapp ? (
-                          <span className="flex items-center gap-1.5 text-[11px]"><Phone size={12} style={{ color: "#25D366" }} /> {a.whatsapp}</span>
-                        ) : null}
-                        {!a.instagram && !a.whatsapp && <span className="text-[var(--layout-page-text)]/25">—</span>}
+                        <div className="cursor-pointer" onClick={() => setEditingCell({ id: a.id, field: 'instagram' })}>
+                          {editingCell?.id === a.id && editingCell?.field === 'instagram' ? (
+                            <div className="flex items-center gap-1">
+                              <Instagram size={12} style={{ color: "#e1306c" }} />
+                              <input
+                                autoFocus
+                                defaultValue={a.instagram}
+                                className="w-full px-2 py-1 rounded border border-blue-400 outline-none text-[11px]"
+                                onBlur={(e) => {
+                                  if (e.target.value !== a.instagram) updateField(a.id, 'instagram', e.target.value);
+                                  setEditingCell(null);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') e.currentTarget.blur();
+                                  if (e.key === 'Escape') setEditingCell(null);
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <span className="flex items-center gap-1.5 text-[11px]">
+                              <Instagram size={12} style={{ color: "#e1306c" }} />
+                              {a.instagram || <span className="text-gray-400 italic">@instagram</span>}
+                            </span>
+                          )}
+                        </div>
+                        <div className="cursor-pointer" onClick={() => setEditingCell({ id: a.id, field: 'whatsapp' })}>
+                          {editingCell?.id === a.id && editingCell?.field === 'whatsapp' ? (
+                            <div className="flex items-center gap-1">
+                              <Phone size={12} style={{ color: "#25D366" }} />
+                              <input
+                                autoFocus
+                                defaultValue={a.whatsapp}
+                                className="w-full px-2 py-1 rounded border border-blue-400 outline-none text-[11px]"
+                                onBlur={(e) => {
+                                  const formatted = formatWhatsapp(e.target.value);
+                                  if (formatted !== a.whatsapp) updateField(a.id, 'whatsapp', formatted);
+                                  setEditingCell(null);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') e.currentTarget.blur();
+                                  if (e.key === 'Escape') setEditingCell(null);
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <span className="flex items-center gap-1.5 text-[11px]">
+                              <Phone size={12} style={{ color: "#25D366" }} />
+                              {a.whatsapp || <span className="text-gray-400 italic">WhatsApp</span>}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-2.5 text-center">
