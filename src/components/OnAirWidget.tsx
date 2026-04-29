@@ -79,7 +79,7 @@ export default function OnAirWidget() {
   const [loading, setLoading] = useState(true);
   const [onAir, setOnAir] = useState<{ programa: Programa; progress: number } | null>(null);
   const [apresentadorNome, setApresentadorNome] = useState("");
-  const [apresentadorFoto, setApresentadorFoto] = useState("");
+
   const [nextPrograms, setNextPrograms] = useState<Programa[]>([]);
   const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
   const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string; capa?: string } | null>(null);
@@ -121,7 +121,6 @@ export default function OnAirWidget() {
       if (current) {
         const ap = apresentadores.find(a => a.id === current.programa.apresentadorId);
         setApresentadorNome(ap?.nome || "—");
-        setApresentadorFoto(ap?.foto || "");
       }
       
       const { data: channels } = await supabase.from("streaming_channels").select("url, type").eq("active", true);
