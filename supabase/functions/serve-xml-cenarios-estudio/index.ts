@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
       .eq("ativo", true)
       .order("horario_inicio", { ascending: false });
 
-    // Try to find a match in the current studio first (if possible), then fallback to any
+    // Try to find a match prioritizing Estudio FM (as it's the primary broadcast)
     const findOnAir = (allProgs: any[]) => {
       const candidates = (allProgs || []).filter(
         (p: any) =>
@@ -102,7 +102,10 @@ Deno.serve(async (req) => {
       if (candidates.length === 0) return null;
       if (candidates.length === 1) return candidates[0];
       
-      // If multiple (overlapping), prioritize specific studios if needed or just return the latest/longest
+      // If multiple (overlapping), prioritize Estudio FM
+      const fmMatch = candidates.find(p => p.estudio?.toLowerCase().includes("fm"));
+      if (fmMatch) return fmMatch;
+
       return candidates[0];
     };
 
