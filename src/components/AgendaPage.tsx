@@ -938,7 +938,7 @@ export default function AgendaPage() {
       }
     }
     return days;
-  }, [eventos, filterLocal]);
+  }, [eventos, filterLocal, now]);
 
   // Week view: Monday to Sunday of the currently selected week
   const weekEvents = useMemo(() => {
