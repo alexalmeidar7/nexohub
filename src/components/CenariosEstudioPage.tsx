@@ -545,10 +545,11 @@ interface GrupoCardProps {
   onToggleProgram: (programaId: string) => void;
   onSetArte: (file: File) => void;
   onRemoveArte: () => void;
+  onCancel: () => void;
   saving: boolean;
 }
 
-function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetArte, onRemoveArte, saving }: GrupoCardProps) {
+function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetArte, onRemoveArte, onCancel, saving }: GrupoCardProps) {
   const total = grupo.rows * grupo.cols;
   const cells = Array.from({ length: total }, (_, i) => i);
   const arte = grupo.tvs.find((t) => t.posicao === 0);
