@@ -1380,38 +1380,7 @@ export default function CenarioTela() {
             <span style={{ fontSize: `${vhToPx(1.2)}${vu}`, fontWeight: "bold", color: "#fff" }}>BUG</span>
           </button>
             <div className="flex flex-col gap-1 mt-auto">
-              <button 
-                onClick={() => setShowArtistLayer(p => !p)} 
-                className="rounded-lg flex flex-col items-center justify-center cursor-pointer p-1" 
-                style={{ 
-                  width: btnSize, 
-                  background: showArtistLayer ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.3)", 
-                  border: "1px solid rgba(255,255,255,0.1)"
-                }}
-              >
-                <Music style={{ width: iconSize, height: iconSize }} className={showArtistLayer ? "text-white" : "text-white/40"} />
-                <span style={{ fontSize: `${vhToPx(0.8)}${vu}`, color: "white" }}>ARTISTA</span>
-              </button>
-              <button 
-                onClick={() => setShowThumbLayer(p => !p)} 
-                className="rounded-lg flex flex-col items-center justify-center cursor-pointer p-1" 
-                style={{ 
-                  width: btnSize, 
-                  background: showThumbLayer ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.3)", 
-                  border: "1px solid rgba(255,255,255,0.1)"
-                }}
-              >
-                <Play style={{ width: iconSize, height: iconSize }} className={showThumbLayer ? "text-white" : "text-white/40"} />
-                <span style={{ fontSize: `${vhToPx(0.8)}${vu}`, color: "white" }}>THUMB</span>
-              </button>
-              {config.home.exceptionWords && (
-                <div className="mt-2 text-center" style={{ width: btnSize }}>
-                  <span style={{ fontSize: `${vhToPx(0.7)}${vu}`, color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Exceções:</span>
-                  <div style={{ fontSize: `${vhToPx(0.6)}${vu}`, color: "rgba(255,255,255,0.3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {config.home.exceptionWords}
-                  </div>
-                </div>
-              )}
+              {/* Botões de camada movidos para a área central da Home conforme solicitado */}
             </div>
           </div>
           </div>
@@ -1502,32 +1471,39 @@ export default function CenarioTela() {
                      </div>
                    )}
 
-                   {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA ── */}
-                   <div style={{
-                     position: "absolute",
-                     bottom: `${vhToPx(37.75)}${vu}`,
-                     left: "50%",
-                     transform: "translateX(-50%)",
-                     display: "flex",
-                     alignItems: "stretch",
-                     zIndex: 15,
-                   }}>
-                      {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
-                        <div style={{
-                          width: `${vhToPx(20)}${vu}`,
-                          height: `${vhToPx(20)}${vu}`,
-                          borderRadius: `${vhToPx(2)}${vu}`,
-                          background: "rgba(255, 255, 255, 0.15)",
-                          backdropFilter: "blur(30px)",
-                          WebkitBackdropFilter: "blur(30px)",
-                          boxShadow: "0 12px 48px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.2)",
-                          border: "1px solid rgba(255,255,255,0.3)",
-                          zIndex: 2,
-                          position: "relative",
-                          flexShrink: 0,
-                          overflow: "hidden"
-                        }}>
-                        {/* Presenter photo anchored at bottom, overflows top */}
+                    {/* ── WRAPPER: BOXES + CONTROLS ── */}
+                    <div style={{
+                      position: "absolute",
+                      bottom: `${vhToPx(35)}${vu}`,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: `${vhToPx(2)}${vu}`,
+                      zIndex: 15,
+                    }}>
+                      {/* ── ROW: BOX DO LOCUTOR + BOX CAPA ── */}
+                      <div style={{
+                        display: "flex",
+                        alignItems: "stretch",
+                        gap: `${vhToPx(1)}${vu}`,
+                      }}>
+                         {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
+                           <div style={{
+                             width: `${vhToPx(20)}${vu}`,
+                             height: `${vhToPx(20)}${vu}`,
+                             borderRadius: `${vhToPx(2)}${vu}`,
+                             background: "rgba(255, 255, 255, 0.2)",
+                             backdropFilter: "blur(30px)",
+                             WebkitBackdropFilter: "blur(30px)",
+                             boxShadow: "0 12px 48px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.3)",
+                             border: "1px solid rgba(255,255,255,0.4)",
+                             zIndex: 2,
+                             position: "relative",
+                             flexShrink: 0,
+                           }}>
+                           {/* Presenter photo anchored at bottom, overflows top */}
                         {(() => {
                           const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
                           const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
@@ -1614,8 +1590,57 @@ export default function CenarioTela() {
                           </div>
                         </div>
                       )}
-                    </div>
+                      </div>
 
+                      {/* ── CONTROLS: Toggle ARTISTA / THUMB ── */}
+                      <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(1.5)}${vu}`, marginTop: `${vhToPx(1)}${vu}` }}>
+                        <button 
+                          onClick={() => setShowArtistLayer(p => !p)} 
+                          style={{ 
+                            background: showArtistLayer ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.4)", 
+                            border: showArtistLayer ? `1.5px solid ${accentColor}` : "1.5px solid rgba(255,255,255,0.1)",
+                            borderRadius: `${vhToPx(1)}${vu}`,
+                            padding: `${vhToPx(0.6)}${vu} ${vhToPx(1.2)}${vu}`,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: `${vhToPx(0.8)}${vu}`,
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                            pointerEvents: "auto"
+                          }}
+                        >
+                          <Music size={Number(vhToPx(1.4))} color="white" style={{ opacity: showArtistLayer ? 1 : 0.5 }} />
+                          <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 700, color: "white" }}>ARTISTA</span>
+                        </button>
+                        
+                        <button 
+                          onClick={() => setShowThumbLayer(p => !p)} 
+                          style={{ 
+                            background: showThumbLayer ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.4)", 
+                            border: showThumbLayer ? `1.5px solid ${accentColor}` : "1.5px solid rgba(255,255,255,0.1)",
+                            borderRadius: `${vhToPx(1)}${vu}`,
+                            padding: `${vhToPx(0.6)}${vu} ${vhToPx(1.2)}${vu}`,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: `${vhToPx(0.8)}${vu}`,
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                            pointerEvents: "auto"
+                          }}
+                        >
+                          <Play size={Number(vhToPx(1.4))} color="white" style={{ opacity: showThumbLayer ? 1 : 0.5 }} />
+                          <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 700, color: "white" }}>THUMB</span>
+                        </button>
+                      </div>
+
+                      {/* ── EXCEPTIONS: below artist image button ── */}
+                      {config.home.exceptionWords && (
+                        <div style={{ textAlign: "center", maxWidth: `${vhToPx(40)}${vu}`, marginTop: `${vhToPx(0.5)}${vu}` }}>
+                          <span style={{ fontSize: `${vhToPx(0.8)}${vu}`, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", fontWeight: 600 }}>Exceções: </span>
+                          <span style={{ fontSize: `${vhToPx(0.8)}${vu}`, color: "rgba(255,255,255,0.3)" }}>{config.home.exceptionWords}</span>
+                        </div>
+                      )}
+                    </div>
                     {/* ── Sponsor logos (centered below locutor + capa boxes) ── */}
                     {sponsorLogos.length > 0 && (
                       <div style={{ position: "absolute", bottom: `${vhToPx(9)}${vu}`, left: "50%", transform: "translateX(-50%)", zIndex: 10 }}>
