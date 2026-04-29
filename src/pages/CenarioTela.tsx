@@ -1582,7 +1582,7 @@ export default function CenarioTela() {
                           />
                           {/* Removido overlay escuro */}
                           {/* Music title + artist — centered */}
-                          <div key={musicKey} style={{ position: "absolute", bottom: `${vhToPx(1)}${vu}`, left: `${vhToPx(1.2)}${vu}`, right: `${vhToPx(1.2)}${vu}`, zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", textAlign: "center" }}>
+                          <div key={musicKey} style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${vhToPx(1.5)}${vu}`, background: "linear-gradient(transparent, rgba(0,0,0,0.9))", zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", textAlign: "center" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.4)}${vu}` }}>
                               <Music size={Number(vhToPx(1.1))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
                             </div>
