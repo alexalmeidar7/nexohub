@@ -60,6 +60,21 @@ export default function ApresentadorForm() {
   const [importRows, setImportRows] = useState<any[] | null>(null);
   const [importing, setImporting] = useState(false);
   const excelInputRef = useRef<HTMLInputElement>(null);
+  const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
+
+  const updateField = async (id: string, field: string, value: any) => {
+    const { error } = await supabase.from("apresentadores").update({ [field]: value }).eq("id", id);
+    if (error) {
+      console.error(`Erro ao atualizar campo ${field}:`, error);
+      alert("Erro ao salvar: " + error.message);
+    } else {
+      setApresentadores(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+      // Dispara atualização imediata dos XMLs
+      try {
+        window.dispatchEvent(new CustomEvent("apresentadores-updated"));
+      } catch {}
+    }
+  };
 
   const load = async () => {
     setLoadingList(true);
