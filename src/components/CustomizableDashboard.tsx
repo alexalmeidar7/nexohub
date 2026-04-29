@@ -1033,6 +1033,7 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
       .select("*, programa:programas(horario_inicio, horario_fim)")
       .eq("user_id", uid!)
       .gte("data", today)
+      .neq("status", "cancelado")
       .order("data", { ascending: true })
       .limit(5)
       .then(({ data }) => { if (data) setEvents(data); });
