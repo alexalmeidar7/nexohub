@@ -303,35 +303,49 @@ export default function CenariosEstudioPage() {
   return (
     <div className="space-y-5">
       {/* Header info + XML */}
-      <Card className="p-5" style={layoutCardStyle}>
-        <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-          <div className="flex items-start gap-3 shrink-0">
-            <div className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0" style={layoutAccentSoft}>
-              <Tv className="h-5 w-5" style={layoutAccent} />
+      <Card className="p-6 relative overflow-hidden" style={layoutCardStyle}>
+        {/* Abstract background elements for visual interest */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
+
+        <div className="relative flex flex-col lg:flex-row lg:items-center gap-6">
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-accent/20" style={{ ...layoutAccentSoft, border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
+              <Tv className="h-7 w-7" style={layoutAccent} />
             </div>
             <div>
-              <h3 className="font-semibold text-lg leading-tight" style={layoutText}>Cenários Estúdio</h3>
-              <p className="text-sm mt-1 max-w-md leading-relaxed" style={layoutTextMuted}>
-                Monte grupos de TVs e vincule a programas. O vMix consome o XML e troca automaticamente conforme o programa no ar.
+              <h3 className="font-bold text-2xl tracking-tight" style={layoutText}>Cenários Estúdio</h3>
+              <p className="text-sm mt-1 max-w-sm leading-relaxed" style={layoutTextMuted}>
+                Configure o layout das TVs e vincule aos seus programas para sincronização automática via vMix.
               </p>
             </div>
           </div>
-          <div className="flex-1 min-w-0 lg:pl-4 lg:border-l" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}>
-            <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>
-              Link XML para o vMix
-            </Label>
-            <div className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-md" style={layoutInnerStyle}>
-              <LinkIcon className="h-4 w-4 shrink-0" style={layoutTextMuted} />
-              <code className="text-sm truncate flex-1 font-mono" style={layoutText}>{xmlUrl}</code>
-              <Button size="sm" variant="ghost" className="h-8 px-2 shrink-0" onClick={copyXmlUrl} style={layoutText}>
-                <Copy className="h-4 w-4 mr-1" /> Copiar
+
+          <div className="flex-1 min-w-0 lg:pl-8 lg:border-l lg:border-border/40">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-[10px] uppercase tracking-[0.2em] font-bold" style={layoutTextMuted}>
+                Integração vMix (XML Link)
+              </Label>
+              <Badge variant="outline" className="text-[10px] font-mono px-2 py-0 h-5" style={{ ...layoutAccentSoft, color: "var(--layout-accent-color, #2563eb)", borderColor: "transparent" }}>
+                Active
+              </Badge>
+            </div>
+            <div className="group relative flex items-center gap-2 p-1 pl-3 rounded-xl transition-all duration-200" style={layoutInnerStyle}>
+              <LinkIcon className="h-4 w-4 shrink-0 opacity-50" style={layoutTextMuted} />
+              <code className="text-sm truncate flex-1 font-mono py-2" style={layoutText}>{xmlUrl}</code>
+              <Button size="sm" variant="secondary" className="h-9 px-4 rounded-lg shadow-sm font-medium hover:scale-[1.02] active:scale-[0.98] transition-all" onClick={copyXmlUrl}>
+                <Copy className="h-3.5 w-3.5 mr-2" /> Copiar Link
               </Button>
             </div>
           </div>
         </div>
-        <div className="mt-4 pt-4 flex justify-end" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" }}>
-          <Button onClick={addGrupo} size="sm" disabled={noProgramas}>
-            <Plus className="h-4 w-4 mr-1" /> Criar novo template
+
+        <div className="mt-8 pt-6 flex justify-end items-center gap-4 border-t border-border/40">
+          <p className="hidden md:block text-[11px] font-medium" style={layoutTextMuted}>
+            {grupos.length} template{grupos.length !== 1 ? "s" : ""} configurado{grupos.length !== 1 ? "s" : ""}
+          </p>
+          <Button onClick={addGrupo} className="h-10 px-6 rounded-xl shadow-md shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]" disabled={noProgramas}>
+            <Plus className="h-4 w-4 mr-2" /> Criar Novo Template
           </Button>
         </div>
       </Card>
@@ -384,6 +398,11 @@ export default function CenariosEstudioPage() {
             onToggleProgram={(pid) => toggleProgramaInGrupo(grupo.id, pid)}
             onSetArte={(file) => setGrupoArte(grupo.id, file)}
             onRemoveArte={() => removeGrupoArte(grupo.id)}
+            onCancel={() => setEditingIds(prev => {
+              const n = new Set(prev);
+              n.delete(grupo.id);
+              return n;
+            })}
             saving={savingId === grupo.id}
           />
         ))}
@@ -396,113 +415,126 @@ export default function CenariosEstudioPage() {
         });
         if (savedTemplates.length === 0) return null;
         return (
-          <Card className="p-5" style={layoutCardStyle}>
-            <div className="mb-3 flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>
-                  Templates criados
-                </Label>
-                <p className="text-[11px] mt-0.5" style={layoutTextMuted}>
-                  Passe o mouse para editar ou excluir.
-                </p>
-              </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold uppercase tracking-widest opacity-60 flex items-center gap-2" style={layoutText}>
+                <LayoutGrid className="h-4 w-4" /> Templates Disponíveis
+              </h4>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {savedTemplates.map((t) => {
                 const a = t.tvs.find((tv) => tv.posicao === 0);
                 const url = a?.imagem_url || "";
                 const linkedNames = t.programa_ids
                   .map((pid) => programas.find((p) => p.id === pid)?.nome)
                   .filter(Boolean) as string[];
+                
                 return (
-                  <div
-                    key={t.id}
-                    className="group relative rounded-md overflow-hidden flex flex-col"
+                  <Card 
+                    key={t.id} 
+                    className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                     style={{
-                      border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)",
-                      background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, var(--layout-page-bg, #ffffff))",
+                      ...layoutCardStyle,
+                      border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent)",
                     }}
                   >
                     <div
-                      className="w-full relative"
-                      style={{
-                        aspectRatio: `${t.cols * 16} / ${t.rows * 9}`,
-                        backgroundImage: `url(${url})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        backgroundColor: "#000",
-                      }}
+                      className="w-full relative overflow-hidden bg-black"
+                      style={{ aspectRatio: "16/9" }}
                     >
-                      {/* Hover overlay with edit/delete */}
-                      <div
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      {/* Sub-grid Preview Overlay */}
+                      <div 
+                        className="absolute inset-0 grid gap-[1px] opacity-30"
                         style={{
-                          background:
-                            "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0) 100%)",
+                          gridTemplateColumns: `repeat(${t.cols}, 1fr)`,
+                          gridTemplateRows: `repeat(${t.rows}, 1fr)`,
+                        }}
+                      >
+                        {Array.from({ length: t.rows * t.cols }).map((_, i) => (
+                          <div key={i} className="border-[0.5px] border-white/20" />
+                        ))}
+                      </div>
+
+                      <div
+                        className="absolute inset-0 transition-transform duration-500 group-hover:scale-110"
+                        style={{
+                          backgroundImage: `url(${url})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
                         }}
                       />
-                      <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-[-4px] group-hover:translate-y-0">
-                        <button
-                          type="button"
+                      
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+
+                      {/* Floating Actions */}
+                      <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                        <Button
+                          size="icon"
+                          variant="secondary"
+                          className="h-9 w-9 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
                           onClick={() => setEditingIds((prev) => new Set(prev).add(t.id))}
-                          title="Editar template"
-                          className="h-8 w-8 rounded-full inline-flex items-center justify-center backdrop-blur-md shadow-md hover:scale-110 active:scale-95 transition-transform"
-                          style={{
-                            background: "rgba(255,255,255,0.92)",
-                            color: "var(--layout-accent-color, #2563eb)",
-                            border: "1px solid rgba(255,255,255,0.6)",
-                          }}
                         >
                           <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          className="h-9 w-9 rounded-full shadow-lg"
                           onClick={() => removeGrupo(t.id)}
-                          title="Excluir template"
-                          className="h-8 w-8 rounded-full inline-flex items-center justify-center backdrop-blur-md shadow-md hover:scale-110 active:scale-95 transition-transform"
-                          style={{
-                            background: "rgba(239,68,68,0.95)",
-                            color: "#ffffff",
-                            border: "1px solid rgba(255,255,255,0.4)",
-                          }}
                         >
                           <Trash2 className="h-4 w-4" />
-                        </button>
+                        </Button>
+                      </div>
+
+                      {/* Grid Badge */}
+                      <div className="absolute bottom-3 left-3">
+                        <Badge className="bg-white/10 backdrop-blur-md border-white/20 text-white text-[10px] font-mono">
+                          {t.rows}×{t.cols} GRID
+                        </Badge>
                       </div>
                     </div>
-                    <div className="px-2.5 py-2 flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium truncate" style={layoutText} title={t.nome}>
-                          {t.nome}
-                        </span>
-                        <span className="text-[10px] font-mono shrink-0" style={layoutTextMuted}>
-                          {t.rows}×{t.cols}
-                        </span>
+
+                    <div className="p-4">
+                      <div className="mb-3">
+                        <h5 className="font-bold text-sm truncate" style={layoutText}>{t.nome}</h5>
+                        <p className="text-[10px] mt-0.5 font-medium uppercase tracking-tight opacity-50" style={layoutText}>
+                          {t.rows * t.cols} TV{t.rows * t.cols !== 1 ? "s" : ""} em layout
+                        </p>
                       </div>
-                      {linkedNames.length === 0 ? (
-                        <span className="text-[10px] italic" style={layoutTextMuted}>
-                          Nenhum programa vinculado
-                        </span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {linkedNames.map((nome, i) => (
-                            <span
-                              key={i}
-                              className="text-[10px] px-1.5 py-0.5 rounded-full font-medium truncate max-w-full"
-                              style={{ ...layoutAccentSoft, color: "var(--layout-accent-color, #2563eb)" }}
-                              title={nome}
-                            >
-                              {nome}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      
+                      <div className="min-h-[24px]">
+                        {linkedNames.length === 0 ? (
+                          <span className="text-[10px] italic opacity-40 font-medium" style={layoutText}>
+                            Nenhum programa vinculado
+                          </span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {linkedNames.slice(0, 3).map((nome, i) => (
+                              <Badge 
+                                key={i} 
+                                variant="secondary" 
+                                className="text-[9px] px-1.5 py-0 rounded-md font-bold h-5"
+                                style={{ ...layoutAccentSoft, color: "var(--layout-accent-color, #2563eb)", border: "none" }}
+                              >
+                                {nome}
+                              </Badge>
+                            ))}
+                            {linkedNames.length > 3 && (
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 rounded-md h-5 opacity-50">
+                                +{linkedNames.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </Card>
                 );
               })}
             </div>
-          </Card>
+          </div>
         );
       })()}
     </div>
@@ -518,10 +550,11 @@ interface GrupoCardProps {
   onToggleProgram: (programaId: string) => void;
   onSetArte: (file: File) => void;
   onRemoveArte: () => void;
+  onCancel: () => void;
   saving: boolean;
 }
 
-function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetArte, onRemoveArte, saving }: GrupoCardProps) {
+function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetArte, onRemoveArte, onCancel, saving }: GrupoCardProps) {
   const total = grupo.rows * grupo.cols;
   const cells = Array.from({ length: total }, (_, i) => i);
   const arte = grupo.tvs.find((t) => t.posicao === 0);
@@ -529,167 +562,177 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
   const inputId = `arte-upload-${grupo.id}`;
 
   return (
-    <Card className="p-5 space-y-6" style={layoutCardStyle}>
-      {/* Top: nome + grid + ações */}
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 md:items-end">
-        <div>
-          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Nome do template</Label>
-          <Input value={grupo.nome} onChange={(e) => onChange({ nome: e.target.value })} className="mt-1.5 text-sm" />
-        </div>
-        <div>
-          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Linhas</Label>
-          <Input
-            type="number"
-            min={1}
-            max={20}
-            value={grupo.rows}
-            onChange={(e) => onChange({ rows: Math.max(1, Math.min(20, parseInt(e.target.value || "1"))) })}
-            className="mt-1.5 w-24 text-sm"
-          />
-        </div>
-        <div>
-          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Colunas</Label>
-          <Input
-            type="number"
-            min={1}
-            max={20}
-            value={grupo.cols}
-            onChange={(e) => onChange({ cols: Math.max(1, Math.min(20, parseInt(e.target.value || "1"))) })}
-            className="mt-1.5 w-24 text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Programas vinculados */}
-      <div className="rounded-lg p-4" style={layoutInnerStyle}>
-        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Programas vinculados</Label>
-          <span
-            className="text-xs px-2 py-0.5 rounded-full font-medium"
-            style={{ ...layoutAccentSoft, color: "var(--layout-accent-color, #2563eb)" }}
-          >
-            {grupo.programa_ids.length} selecionado(s)
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {programas.length === 0 && <p className="text-sm" style={layoutTextMuted}>Nenhum programa cadastrado.</p>}
-          {programas.map((p) => {
-            const sel = grupo.programa_ids.includes(p.id);
-            const selStyle: React.CSSProperties = sel
-              ? {
-                  background: "var(--layout-accent-color, #2563eb)",
-                  color: "var(--layout-page-bg, #ffffff)",
-                  border: "1px solid var(--layout-accent-color, #2563eb)",
-                }
-              : {
-                  background: "transparent",
-                  color: "var(--layout-page-text, #0d0446)",
-                  border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 25%, transparent)",
-                };
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => onToggleProgram(p.id)}
-                className="cursor-pointer select-none px-3 py-1 text-xs rounded-full hover:opacity-80 transition-opacity font-medium"
-                style={selStyle}
-              >
-                {p.nome}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Arte única + mockup do grid */}
-      <div>
-        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <div>
-            <Label className="text-xs uppercase tracking-wider font-semibold" style={layoutTextMuted}>Arte do cenário</Label>
-            <p className="text-[11px] mt-0.5" style={layoutTextMuted}>
-              Envie uma única arte — ela é dividida proporcionalmente entre as TVs.
-            </p>
+    <Card className="p-0 overflow-hidden border-2" style={{ ...layoutCardStyle, borderColor: "var(--layout-accent-color, #2563eb)" }}>
+      {/* Editor Header */}
+      <div className="px-6 py-4 flex items-center justify-between border-b border-border/40 bg-muted/20">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
+            <Pencil className="h-4 w-4" />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ ...layoutInnerStyle }}>
-              {grupo.rows} × {grupo.cols} = {total} TV{total !== 1 ? "s" : ""}
-            </span>
-            <input
-              id={inputId}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) onSetArte(f);
-                e.target.value = "";
-              }}
+          <h4 className="font-bold text-base tracking-tight" style={layoutText}>Editando Template</h4>
+        </div>
+        <div className="flex items-center gap-2">
+           <Button size="sm" variant="ghost" onClick={onCancel} style={layoutTextMuted}>
+             Cancelar
+           </Button>
+           <Button size="sm" onClick={onSave} disabled={saving} className="shadow-lg shadow-primary/20 h-9 px-5">
+            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+            Salvar Alterações
+          </Button>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-8">
+        {/* Basic Settings */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="md:col-span-2">
+            <Label className="text-[10px] uppercase tracking-widest font-bold mb-2 block" style={layoutTextMuted}>Nome do template</Label>
+            <Input 
+              value={grupo.nome} 
+              onChange={(e) => onChange({ nome: e.target.value })} 
+              className="h-11 rounded-xl bg-muted/30 focus-visible:ring-primary" 
+              placeholder="Ex: Painel Principal Fundo"
             />
-            <label htmlFor={inputId}>
-              <Button size="sm" variant="outline" asChild>
-                <span className="cursor-pointer">
-                  <Upload className="h-3.5 w-3.5 mr-1" /> {arteUrl ? "Trocar arte" : "Enviar arte"}
-                </span>
-              </Button>
-            </label>
-            {arteUrl && (
-              <Button size="sm" variant="outline" onClick={onRemoveArte}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            )}
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase tracking-widest font-bold mb-2 block" style={layoutTextMuted}>Grid (Linhas)</Label>
+            <Input
+              type="number"
+              min={1}
+              max={20}
+              value={grupo.rows}
+              onChange={(e) => onChange({ rows: Math.max(1, Math.min(20, parseInt(e.target.value || "1"))) })}
+              className="h-11 rounded-xl bg-muted/30"
+            />
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase tracking-widest font-bold mb-2 block" style={layoutTextMuted}>Grid (Colunas)</Label>
+            <Input
+              type="number"
+              min={1}
+              max={20}
+              value={grupo.cols}
+              onChange={(e) => onChange({ cols: Math.max(1, Math.min(20, parseInt(e.target.value || "1"))) })}
+              className="h-11 rounded-xl bg-muted/30"
+            />
           </div>
         </div>
-        <div className="rounded-lg p-6" style={layoutInnerStyle}>
-          {!arteUrl ? (
-            <label
-              htmlFor={inputId}
-              className="mx-auto flex flex-col items-center justify-center cursor-pointer rounded-md border-2 border-dashed transition-colors"
-              style={{
-                borderColor: "color-mix(in srgb, var(--layout-page-text, #0d0446) 20%, transparent)",
-                maxWidth: `${Math.min(900, grupo.cols * 220)}px`,
-                aspectRatio: `${grupo.cols * 16} / ${grupo.rows * 9}`,
-                width: "100%",
-              }}
-            >
-              <Upload className="h-6 w-6 mb-2" style={layoutTextMuted} />
-              <span className="text-xs uppercase tracking-wider" style={layoutTextMuted}>Clique para enviar a arte</span>
-            </label>
-          ) : (
-            <div
-              className="mx-auto grid gap-3"
-              style={{
-                gridTemplateColumns: `repeat(${grupo.cols}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${grupo.rows}, minmax(0, 1fr))`,
-                maxWidth: `${Math.min(900, grupo.cols * 220)}px`,
-                aspectRatio: `${grupo.cols * 16} / ${grupo.rows * 9}`,
-              }}
-            >
-              {cells.map((pos) => {
-                const row = Math.floor(pos / grupo.cols);
-                const col = pos % grupo.cols;
-                return (
-                  <TvSlice
-                    key={pos}
-                    posicao={pos}
-                    row={row}
-                    col={col}
-                    rows={grupo.rows}
-                    cols={grupo.cols}
-                    imageUrl={arteUrl}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Save action — placed below the artwork section */}
-      <div className="flex justify-end">
-        <Button size="sm" onClick={onSave} disabled={saving}>
-          {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-          Salvar template
-        </Button>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8">
+          {/* Programs Selection */}
+          <div className="space-y-4">
+            <div>
+              <Label className="text-[10px] uppercase tracking-widest font-bold mb-1 block" style={layoutTextMuted}>Vincular Programas</Label>
+              <p className="text-[11px] mb-3 leading-tight" style={layoutTextMuted}>Selecione quais programas ativarão este cenário automaticamente.</p>
+            </div>
+            
+            <div className="rounded-2xl p-4 border border-border/40 bg-muted/10 max-h-[400px] overflow-y-auto">
+              <div className="flex flex-col gap-2">
+                {programas.length === 0 && <p className="text-xs py-4 text-center italic" style={layoutTextMuted}>Nenhum programa ativo disponível.</p>}
+                {programas.map((p) => {
+                  const sel = grupo.programa_ids.includes(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => onToggleProgram(p.id)}
+                      className="flex items-center justify-between px-3 py-2.5 rounded-xl transition-all group"
+                      style={{
+                        background: sel ? "var(--layout-accent-color, #2563eb)" : "transparent",
+                        color: sel ? "#fff" : "inherit",
+                        border: `1px solid ${sel ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)"}`
+                      }}
+                    >
+                      <span className="text-sm font-semibold truncate pr-2">{p.nome}</span>
+                      <div className={`h-5 w-5 rounded-full flex items-center justify-center border ${sel ? 'bg-white border-white' : 'border-border'}`}>
+                        {sel && <div className="h-2 w-2 rounded-full bg-primary" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Artwork & Preview */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-[10px] uppercase tracking-widest font-bold mb-1 block" style={layoutTextMuted}>Preview do Layout</Label>
+                <p className="text-[11px]" style={layoutTextMuted}>Arraste ou envie a imagem base do cenário.</p>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <input
+                  id={inputId}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) onSetArte(f);
+                    e.target.value = "";
+                  }}
+                />
+                <Button size="sm" variant="outline" className="rounded-lg h-8 px-3 text-[11px] font-bold uppercase tracking-tight" asChild>
+                  <label htmlFor={inputId} className="cursor-pointer">
+                    <Upload className="h-3 w-3 mr-1.5" /> Enviar Arte
+                  </label>
+                </Button>
+                {arteUrl && (
+                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10" onClick={onRemoveArte}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div 
+              className="relative rounded-2xl overflow-hidden border-2 border-dashed flex items-center justify-center bg-muted/20 min-h-[300px] transition-all"
+              style={{ borderColor: arteUrl ? "transparent" : "color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}
+            >
+              {!arteUrl ? (
+                <label htmlFor={inputId} className="cursor-pointer flex flex-col items-center gap-3 p-12 text-center group">
+                  <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <ImageIcon className="h-8 w-8 opacity-20" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold block" style={layoutText}>Nenhuma imagem selecionada</span>
+                    <span className="text-xs opacity-50 block mt-1">Recomendado: 1920x1080 ou 3840x2160 (PNG/JPG)</span>
+                  </div>
+                </label>
+              ) : (
+                <div 
+                  className="w-full p-4 md:p-8"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${grupo.cols}, 1fr)`,
+                    gridTemplateRows: `repeat(${grupo.rows}, 1fr)`,
+                    gap: '8px',
+                    aspectRatio: `${grupo.cols * 16} / ${grupo.rows * 9}`,
+                    maxWidth: '100%'
+                  }}
+                >
+                  {cells.map((pos) => {
+                    const row = Math.floor(pos / grupo.cols);
+                    const col = pos % grupo.cols;
+                    return (
+                      <TvSlice
+                        key={pos}
+                        posicao={pos}
+                        row={row}
+                        col={col}
+                        rows={grupo.rows}
+                        cols={grupo.cols}
+                        imageUrl={arteUrl}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </Card>
   );
