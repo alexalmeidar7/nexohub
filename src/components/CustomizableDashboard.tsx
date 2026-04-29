@@ -1064,7 +1064,7 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
       <div className="flex items-center gap-2 mb-3">
         <CalendarDays size={14} style={{ color: "var(--layout-accent-color)" }} />
         <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text)" }}>Agenda de Eventos</p>
-        {events.length > 0 && (
+        {filteredEvents.length > 0 && (
           <span
             className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full"
             style={{
@@ -1072,15 +1072,15 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
               color: "var(--layout-accent-color)",
             }}
           >
-            {events.length}
+            {filteredEvents.length}
           </span>
         )}
       </div>
-      {events.length === 0 ? (
+      {filteredEvents.length === 0 ? (
         <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 35%, transparent)" }}>Nenhum evento próximo</p>
       ) : (
         <div className="space-y-1">
-          {events.map(ev => {
+          {filteredEvents.map(ev => {
             const _now = new Date();
             const todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}-${String(_now.getDate()).padStart(2, "0")}`;
             const _tomorrow = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate() + 1);
