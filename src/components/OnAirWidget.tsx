@@ -89,6 +89,8 @@ export default function OnAirWidget() {
   const [isMuted, setIsMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [audioUrl, setAudioUrl] = useState("https://streaming.logicahost.com.br/8240/stream");
+  const [videoUrl, setVideoUrl] = useState("https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8");
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
