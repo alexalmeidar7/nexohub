@@ -206,7 +206,7 @@ export default function OnAirWidget() {
                     {musicData?.artista || "Positiva FM"}
                   </p>
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <button 
                       onClick={() => setIsPlaying(!isPlaying)}
                       className="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center bg-white/5 hover:bg-white/10 transition-all shadow-lg group"
@@ -218,14 +218,13 @@ export default function OnAirWidget() {
                       )}
                     </button>
 
-                    {/* Volume with Popover Slider */}
                     <div 
                       className="relative flex items-center"
                       onMouseEnter={() => setShowVolumeSlider(true)}
                       onMouseLeave={() => setShowVolumeSlider(false)}
                     >
                       {showVolumeSlider && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 p-3 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200 z-50">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 p-3 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200 z-[100]">
                           <div className="h-24 w-1.5 bg-white/10 rounded-full relative cursor-pointer group">
                             <div 
                               className="absolute bottom-0 left-0 right-0 bg-white/40 rounded-full transition-all duration-150" 
@@ -251,6 +250,23 @@ export default function OnAirWidget() {
                         className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
                       >
                         {isMuted || volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                      </button>
+                    </div>
+
+                    <div className="flex items-center p-0.5 bg-white/[0.03] rounded-lg border border-white/5 shadow-inner ml-1">
+                      <button 
+                        onClick={() => setActiveTab("info")}
+                        className={`px-3 py-1.5 rounded-md text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === "info" ? "text-white shadow-lg" : "text-white/20 hover:text-white/40"}`}
+                        style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
+                      >
+                        Ouvir
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab("video")}
+                        className={`px-3 py-1.5 rounded-md text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === "video" ? "text-white shadow-lg" : "text-white/20 hover:text-white/40"}`}
+                        style={activeTab === "video" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
+                      >
+                        Assistir
                       </button>
                     </div>
                   </div>
