@@ -818,6 +818,7 @@ export default function AgendaPage() {
     const startMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
     for (const evt of eventos) {
+      if (evt.status === "cancelado") continue;
       if (evt.recorrencia === "unico") {
         dates.push(new Date(evt.data + "T12:00:00"));
       } else {
