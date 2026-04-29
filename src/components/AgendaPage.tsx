@@ -923,7 +923,7 @@ export default function AgendaPage() {
 
   // Upcoming events for the next 7 days
   const upcomingEvents = useMemo(() => {
-    const today = new Date();
+    const today = now;
     const days: { dateStr: string; date: Date; events: Evento[] }[] = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(today);
