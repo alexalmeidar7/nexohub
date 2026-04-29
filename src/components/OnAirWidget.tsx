@@ -230,7 +230,7 @@ export default function OnAirWidget() {
                       onMouseLeave={() => setShowVolumeSlider(false)}
                     >
                       {showVolumeSlider && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 p-3 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200 z-[100]">
+                        <div className="fixed bottom-[180px] ml-[20px] p-3 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200 z-[9999]">
                           <div className="h-24 w-1.5 bg-white/10 rounded-full relative cursor-pointer group">
                             <div 
                               className="absolute bottom-0 left-0 right-0 bg-white/40 rounded-full transition-all duration-150" 
@@ -283,7 +283,7 @@ export default function OnAirWidget() {
             </div>
           </div>
         ) : (
-          <div className="absolute inset-0 z-50 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-white/10 animate-scale-in">
+          <div className="absolute bottom-0 left-0 right-0 z-[100] h-[300px] flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_-20px_50px_rgba(0,0,0,0.9)] border border-white/10 animate-in slide-in-from-bottom duration-500">
             <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
               <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-accent" size={24} /></div>}>
                 <video 
@@ -299,7 +299,7 @@ export default function OnAirWidget() {
               <div className="absolute top-4 right-4">
                 <button 
                   onClick={() => setActiveTab("info")}
-                  className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/10 hover:bg-black/80 transition-all"
+                  className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/10 hover:bg-black/80 transition-all shadow-xl"
                 >
                   <X size={14} />
                 </button>
@@ -309,7 +309,7 @@ export default function OnAirWidget() {
                 <div className="flex items-center gap-4">
                   <button 
                     onClick={() => setIsPlaying(!isPlaying)}
-                    className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
+                    className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/10 shadow-lg"
                   >
                     {isPlaying ? <Pause size={16} fill="white" /> : <Play size={16} fill="white" className="ml-1" />}
                   </button>
@@ -325,7 +325,7 @@ export default function OnAirWidget() {
                   onMouseLeave={() => setShowVolumeSlider(false)}
                 >
                   {showVolumeSlider && (
-                    <div className="absolute bottom-full right-0 mb-4 p-3 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[100]">
+                    <div className="fixed bottom-[320px] mr-[24px] p-3 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-bottom-2">
                       <div className="h-20 w-1 bg-white/20 rounded-full relative">
                         <div className="absolute bottom-0 left-0 right-0 bg-accent rounded-full" style={{ height: `${isMuted ? 0 : volume}%`, backgroundColor: "var(--layout-accent-color)" }} />
                         <input 
@@ -340,7 +340,7 @@ export default function OnAirWidget() {
                       </div>
                     </div>
                   )}
-                  <button onClick={() => setIsMuted(!isMuted)} className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/10">
+                  <button onClick={() => setIsMuted(!isMuted)} className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/10 shadow-lg">
                     {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                   </button>
                 </div>
