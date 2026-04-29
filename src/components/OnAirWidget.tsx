@@ -23,8 +23,23 @@ const DIAS_MAP: Record<number, string> = {
   1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo",
 };
 
-async function getProgramas(): Promise<Programa[]> {
-  const { data } = await supabase.from("programas").select("*").ilike("estudio", "%fm%");
+async function getProgramas(userId?: string): Promise<Programa[]> {
+  const query = supabase.from("programas").select("*");
+  
+  // Se tivermos um userId, filtramos por rádio (estúdio)
+  if (userId) {
+    const { data: userStudios } = await supabase.from("studios").select("slug").eq("user_id", userId);
+    if (userStudios && userStudios.length > 0) {
+      const slug = userStudios[0].slug.toLowerCase();
+      if (slug.includes("interativa")) {
+        query.ilike("estudio", "%interativa%");
+      } else if (slug.includes("positiva")) {
+        query.ilike("estudio", "%positiva%");
+      }
+    }
+  }
+
+  const { data } = await query;
   if (!data) return [];
   return data.map(p => ({
     id: p.id,
@@ -125,7 +140,7 @@ export default function OnAirWidget() {
 
   useEffect(() => {
     const update = async () => {
-      const [programas, apresentadores] = await Promise.all([getProgramas(), getApresentadores()]);
+      const [programas, apresentadores] = await Promise.all([getProgramas(user?.id), getApresentadores()]);
       const current = findCurrentProgram(programas);
       setOnAir(current);
       if (current) {
@@ -260,10 +275,10 @@ export default function OnAirWidget() {
 
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-black text-white leading-tight truncate mb-1 drop-shadow-sm uppercase tracking-tight">
-                  {isUnauthorized ? "Acesso Não Autorizado" : (musicData?.titulo || "Programação Musical")}
+                  {isUnauthorized ? "Acesso Não Autorizado" : (loading ? "Carregando..." : (musicData?.titulo || (onAir ? onAir.programa.nome : "Estação Off-line")))}
                 </h3>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-3" style={{ color: "var(--layout-accent-color)", opacity: 0.8 }}>
-                  {isUnauthorized ? "Erro de Segurança" : (musicData?.artista || "Positiva FM")}
+                  {isUnauthorized ? "Erro de Segurança" : (musicData?.artista || apresentadorNome || "Aguarde...")}
                 </p>
                 
                 <div className="flex items-center gap-2">
