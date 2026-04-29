@@ -105,19 +105,37 @@ export default function OnAirWidget() {
   }, [user]);
   useEffect(() => {
     const update = async () => {
-      const [programas, apresentadores] = await Promise.all([getProgramas(), getApresentadores()]);
-      const current = findCurrentProgram(programas);
+      const [programasData, apresentadoresData] = await Promise.all([getProgramas(), getApresentadores()]);
+      
+      // Filter out programmes that have a cancelled event today
+      let filteredProgramas = programasData;
+      if (user) {
+        const today = new Date().toISOString().split("T")[0];
+        const { data: cancelledEvents } = await supabase
+          .from("agenda_eventos")
+          .select("programa_id")
+          .eq("user_id", user.id)
+          .eq("data", today)
+          .eq("status", "cancelado");
+        
+        if (cancelledEvents && cancelledEvents.length > 0) {
+          const cancelledIds = cancelledEvents.map(e => e.programa_id).filter(Boolean);
+          filteredProgramas = programasData.filter(p => !cancelledIds.includes(p.id));
+        }
+      }
+
+      const current = findCurrentProgram(filteredProgramas);
       setOnAir(current);
       if (current) {
-        const ap = apresentadores.find(a => a.id === current.programa.apresentadorId);
+        const ap = apresentadoresData.find(a => a.id === current.programa.apresentadorId);
         setApresentadorNome(ap?.nome || "—");
         setApresentadorFoto(ap?.foto || "");
       }
-      const nexts = findNextPrograms(programas, 3);
+      const nexts = findNextPrograms(filteredProgramas, 3);
       setNextPrograms(nexts);
       const apMap: Record<string, ApresentadorInfo> = {};
       nexts.forEach(p => {
-        const ap = apresentadores.find(a => a.id === p.apresentadorId);
+        const ap = apresentadoresData.find(a => a.id === p.apresentadorId);
         apMap[p.id] = { nome: ap?.nome || "—", foto: ap?.foto || "" };
       });
       setNextApresentadores(apMap);
