@@ -279,6 +279,7 @@ interface Evento {
   edicao_notas?: string;
   edicao_concluida?: boolean;
   horario_gravacao?: string;
+  horario_gravacao_fim?: string;
   programa?: Programa;
   participantes?: Participante[];
 }
@@ -290,22 +291,10 @@ const recorrenciaLabels: Record<string, string> = {
   programa_semanal: "Programa semanal",
 };
 
-const prioridadeLabels: Record<string, string> = {
-  baixa: "Baixa",
-  normal: "Normal",
-  alta: "Alta",
-  urgente: "Urgente",
-};
-
-const prioridadeColors: Record<string, string> = {
-  baixa: "bg-blue-100 text-blue-800",
-  normal: "bg-gray-100 text-gray-800",
-  alta: "bg-orange-100 text-orange-800",
-  urgente: "bg-red-100 text-red-800",
-};
 
 const statusOptions = [
   { value: "ativo", label: "Ativo", color: "#10b981" },
+  { value: "concluido", label: "Concluído", color: "#6366f1" },
   { value: "cancelado", label: "Cancelado", color: "#ef4444" },
   { value: "remarcado", label: "Mudou de data", color: "#f59e0b" },
 ];
@@ -358,6 +347,7 @@ export default function AgendaPage() {
   const [formEdicaoNotas, setFormEdicaoNotas] = useState("");
   const [formEdicaoConcluida, setFormEdicaoConcluida] = useState(false);
   const [formHorarioGravacao, setFormHorarioGravacao] = useState("");
+  const [formHorarioGravacaoFim, setFormHorarioGravacaoFim] = useState("");
   const [uploadingArte, setUploadingArte] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
 
@@ -470,6 +460,16 @@ export default function AgendaPage() {
     });
   }, [formProgramaId, formTipoEvento, programas, apresentadores]);
 
+  // Sincroniza o local com o estúdio do programa selecionado
+  useEffect(() => {
+    if (formProgramaId) {
+      const prog = programas.find(p => p.id === formProgramaId);
+      if (prog?.estudio) {
+        setFormLocal(prog.estudio);
+      }
+    }
+  }, [formProgramaId, programas]);
+
   // Detecta se já existe roteiro para o programa+data selecionado
   useEffect(() => {
     let cancelled = false;
@@ -567,6 +567,7 @@ export default function AgendaPage() {
     setFormEdicaoNotas("");
     setFormEdicaoConcluida(false);
     setFormHorarioGravacao("");
+    setFormHorarioGravacaoFim("");
     setEditingId(null);
   };
 
@@ -593,6 +594,7 @@ export default function AgendaPage() {
     setFormEdicaoNotas(evt.edicao_notas || "");
     setFormEdicaoConcluida(!!evt.edicao_concluida);
     setFormHorarioGravacao(evt.horario_gravacao || "");
+    setFormHorarioGravacaoFim(evt.horario_gravacao_fim || "");
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
         ? evt.participantes.map(p => ({ id: p.id, nome: p.nome, instagram: p.instagram }))
@@ -621,6 +623,7 @@ export default function AgendaPage() {
       edicao_notas: formTipoEvento === "live" ? formEdicaoNotas : "",
       edicao_concluida: formTipoEvento === "live" ? formEdicaoConcluida : false,
       horario_gravacao: formTipoEvento === "gravacao" ? formHorarioGravacao : null,
+      horario_gravacao_fim: formTipoEvento === "gravacao" ? formHorarioGravacaoFim : null,
     } as any;
 
     if (editingId) {
@@ -943,17 +946,17 @@ export default function AgendaPage() {
           <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
             <CalendarIcon size={12} className="inline mr-1" />
             {format(new Date(evt.data + "T12:00:00"), "dd/MM/yyyy")}
-            {evt.programa && ` • ${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`}
+            {evt.tipo_evento === "gravacao" && (evt.horario_gravacao || evt.horario_gravacao_fim) ? (
+              ` • 🎬 Gravação: ${evt.horario_gravacao || ""} ${evt.horario_gravacao_fim ? `- ${evt.horario_gravacao_fim}` : ""}`
+            ) : (
+              evt.programa && ` • ${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
+            )}
           </p>
           {evt.recorrencia !== "unico" && (
             <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
               🔁 {recorrenciaLabels[evt.recorrencia]}
             </span>
           )}
-          <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5 ml-1 ${prioridadeColors[evt.prioridade] || prioridadeColors.normal}`}>
-            {evt.prioridade === "urgente" && <AlertTriangle size={10} className="inline mr-0.5" />}
-            {prioridadeLabels[evt.prioridade] || "Normal"}
-          </span>
           {evt.status && evt.status !== "ativo" && (
             <span
               className="inline-block text-[10px] font-bold px-2 py-0.5 rounded mt-0.5 ml-1 uppercase"
@@ -1200,7 +1203,7 @@ export default function AgendaPage() {
               </div>
 
               {/* Recorrência + Tipo + Local (side by side) */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
                   <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
@@ -1227,81 +1230,59 @@ export default function AgendaPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Local</Label>
-                  <Select value={formLocal} onValueChange={setFormLocal}>
-                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
-                      <SelectValue placeholder="Local" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {estudios.map((e) => (
-                        <SelectItem key={e} value={e}>{e}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
               {/* Horário da Gravação (apenas quando tipo = gravação) */}
               {formTipoEvento === "gravacao" && (
-                <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
-                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>🎬 Horário da Gravação</Label>
-                  <input
-                    type="time"
-                    value={formHorarioGravacao}
-                    onChange={(e) => setFormHorarioGravacao(e.target.value)}
-                    className="agenda-form-input h-10 w-full px-3 text-sm"
-                    style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
-                  />
+                <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>🎬 Horário da Gravação</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-[9px] font-medium opacity-60 mb-1 block">Início</Label>
+                      <input
+                        type="time"
+                        value={formHorarioGravacao}
+                        onChange={(e) => setFormHorarioGravacao(e.target.value)}
+                        className="agenda-form-input h-10 w-full px-3 text-sm"
+                        style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[9px] font-medium opacity-60 mb-1 block">Fim</Label>
+                      <input
+                        type="time"
+                        value={formHorarioGravacaoFim}
+                        onChange={(e) => setFormHorarioGravacaoFim(e.target.value)}
+                        className="agenda-form-input h-10 w-full px-3 text-sm"
+                        style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Prioridade</Label>
-                <div className="flex gap-2">
-                  {[
-                    { value: "baixa", label: "Baixa", color: "var(--layout-accent-color, #2563eb)" },
-                    { value: "normal", label: "Normal", color: "var(--layout-icon-color, #888888)" },
-                    { value: "alta", label: "Alta", color: "#f59e0b" },
-                    { value: "urgente", label: "Urgente", color: "#ef4444" },
-                  ].map((p) => (
-                    <button
-                      key={p.value}
-                      type="button"
-                      onClick={() => setFormPrioridade(p.value)}
-                      className="flex-1 py-2 rounded-lg text-[10px] font-bold transition-all"
-                      style={{
-                        backgroundColor: formPrioridade === p.value ? p.color : "rgba(13,4,70,0.04)",
-                        color: formPrioridade === p.value ? "#fff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
-                        border: `1.5px solid ${formPrioridade === p.value ? p.color : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)"}`,
-                      }}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-              </div>
-
-              {/* Status do Evento */}
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Status do Evento</Label>
-                <div className="flex gap-2">
-                  {statusOptions.map((s) => (
-                    <button
-                      key={s.value}
-                      type="button"
-                      onClick={() => setFormStatus(s.value)}
-                      className="flex-1 py-2 rounded-lg text-[10px] font-bold transition-all"
-                      style={{
-                        backgroundColor: formStatus === s.value ? s.color : "rgba(13,4,70,0.04)",
-                        color: formStatus === s.value ? "#fff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
-                        border: `1.5px solid ${formStatus === s.value ? s.color : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)"}`,
-                      }}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
+              <div className="space-y-5">
+                {/* Status do Evento */}
+                <div>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Status do Evento</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {statusOptions.map((s) => (
+                      <button
+                        key={s.value}
+                        type="button"
+                        onClick={() => setFormStatus(s.value)}
+                        className="flex-1 min-w-[80px] py-2 rounded-lg text-[10px] font-bold transition-all"
+                        style={{
+                          backgroundColor: formStatus === s.value ? s.color : "rgba(13,4,70,0.04)",
+                          color: formStatus === s.value ? "#fff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
+                          border: `1.5px solid ${formStatus === s.value ? s.color : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)"}`,
+                        }}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
               </div>
 
               {/* Descrição */}
@@ -2132,10 +2113,6 @@ export default function AgendaPage() {
                   <div>
                     <Label className="text-xs text-muted-foreground">Tipo</Label>
                     <p className="font-semibold capitalize">{pastEventDetail.tipo_evento || "live"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Prioridade</Label>
-                    <p className="font-semibold">{prioridadeLabels[pastEventDetail.prioridade] || "Normal"}</p>
                   </div>
                   {pastEventDetail.local && (
                     <div className="col-span-2">
