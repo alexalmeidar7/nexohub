@@ -1393,10 +1393,29 @@ function DashboardAgenda() {
   };
   const eventDates = getCalendarDates();
 
+  const now = new Date();
+  const todayStr = format(now, "yyyy-MM-dd");
+  const currentTime = format(now, "HH:mm");
+
   const selDateStr = selectedDate
-    ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`
+    ? format(selectedDate, "yyyy-MM-dd")
     : "";
-  const dayEvents = eventos.filter((e) => eventMatchesDate(e, selDateStr));
+
+  const dayEvents = eventos.filter((e) => {
+    const matchesDate = eventMatchesDate(e, selDateStr);
+    if (!matchesDate) return false;
+
+    // Filter out completed or cancelled events
+    if (e.status === "concluido" || e.status === "cancelado") return false;
+
+    // Filter out events where recording has ended (only for today)
+    const isToday = selDateStr === todayStr;
+    if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) {
+      return false;
+    }
+
+    return true;
+  });
 
   if (loading) {
     return (
