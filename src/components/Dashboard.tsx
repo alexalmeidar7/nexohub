@@ -842,6 +842,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.accentColor}25`; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.accentColor}15`; }}
               >
+                <ChevronDown className="rotate-90" size={14} />
+                <span>Voltar</span>
+              </button>
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold opacity-30 select-none" style={{ color: layoutColors.pageText }}>
+                <span>Home</span>
+                <span className="opacity-50">/</span>
+                <span style={{ color: layoutColors.accentColor, opacity: 1 }}>{pageTitle[currentPage]}</span>
+              </div>
+            </div>
+              >
                 <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
               </button>
             </div>
