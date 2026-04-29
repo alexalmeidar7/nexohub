@@ -74,6 +74,7 @@ function AdminUsersContent() {
             description: "Faça login novamente para continuar.",
             variant: "destructive",
           });
+          await supabase.auth.signOut();
           navigate("/admin/login", { replace: true });
           return;
         }

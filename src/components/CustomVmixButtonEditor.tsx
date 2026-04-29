@@ -224,7 +224,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
     }
     setSaving(true);
     const payload = { nome: nome.trim(), color, dias_semana: diasSemana, horario, commands };
-    if (buttonId && buttonId !== "new") {
+    if (buttonId) {
       await (supabase.from("custom_vmix_buttons" as any) as any).update(payload).eq("id", buttonId);
     } else {
       await (supabase.from("custom_vmix_buttons" as any) as any).insert({ ...payload, user_id: userId });

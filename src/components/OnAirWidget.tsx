@@ -1,5 +1,5 @@
-import { useState, useEffect, lazy, Suspense, useRef } from "react";
-import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music, User, Video, Volume2, VolumeX, MonitorPlay, X, Play, Pause } from "lucide-react";
+import { useState, useEffect, lazy, Suspense } from "react";
+import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music, User } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,24 +23,8 @@ const DIAS_MAP: Record<number, string> = {
   1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo",
 };
 
-async function getProgramas(userId?: string): Promise<Programa[]> {
-  const query = supabase.from("programas").select("*");
-  
-  if (userId) {
-    const { data: userProfile } = await supabase.from("profiles").select("nome, email").eq("user_id", userId).maybeSingle();
-    if (userProfile) {
-      const nome = (userProfile.nome || "").toLowerCase();
-      const email = (userProfile.email || "").toLowerCase();
-      
-      if (nome.includes("interativa") || email.includes("interativa")) {
-        query.ilike("estudio", "%interativa%");
-      } else if (nome.includes("positiva") || email.includes("positiva")) {
-        query.ilike("estudio", "%positiva%");
-      }
-    }
-  }
-
-  const { data } = await query;
+async function getProgramas(): Promise<Programa[]> {
+  const { data } = await supabase.from("programas").select("*").ilike("estudio", "%fm%");
   if (!data) return [];
   return data.map(p => ({
     id: p.id,
@@ -95,85 +79,40 @@ export default function OnAirWidget() {
   const [loading, setLoading] = useState(true);
   const [onAir, setOnAir] = useState<{ programa: Programa; progress: number } | null>(null);
   const [apresentadorNome, setApresentadorNome] = useState("");
-
+  const [apresentadorFoto, setApresentadorFoto] = useState("");
   const [nextPrograms, setNextPrograms] = useState<Programa[]>([]);
   const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
-  const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string; capa?: string } | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string } | null>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"info" | "video">("info");
-  const [volume, setVolume] = useState(66);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-  const [audioUrl, setAudioUrl] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [isUnauthorized, setIsUnauthorized] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isStereo, setIsStereo] = useState(false);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
+  // Fetch user avatar
   useEffect(() => {
-    const audio = audioRef.current;
-    const video = videoRef.current;
-    const isVideoTab = activeTab === "video";
+    if (!user) return;
+    supabase.from("profiles").select("avatar_url, nome").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data?.avatar_url) setUserAvatar(data.avatar_url);
+      });
+  }, [user]);
 
-    if (audio) {
-      audio.volume = isMuted ? 0 : volume / 100;
-      audio.muted = isMuted;
-      
-      if (isPlaying && !isVideoTab) {
-        audio.play().catch(() => setIsPlaying(false));
-      } else {
-        audio.pause();
-      }
-    }
-
-    if (video) {
-      video.volume = isMuted ? 0 : volume / 100;
-      video.muted = isMuted;
-
-      if (isPlaying && isVideoTab) {
-        video.play().catch(() => setIsPlaying(false));
-      } else {
-        video.pause();
-      }
-    }
-  }, [volume, isMuted, activeTab, isPlaying]);
-
+  // Fetch stereo from streaming channel
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("streaming_channels").select("is_stereo").eq("user_id", user.id).eq("active", true).ilike("estudio", "%fm%").limit(1).maybeSingle()
+      .then(({ data }) => { setIsStereo(!!data?.is_stereo); });
+  }, [user]);
   useEffect(() => {
     const update = async () => {
-      const [programas, apresentadores] = await Promise.all([getProgramas(user?.id), getApresentadores()]);
+      const [programas, apresentadores] = await Promise.all([getProgramas(), getApresentadores()]);
       const current = findCurrentProgram(programas);
       setOnAir(current);
       if (current) {
         const ap = apresentadores.find(a => a.id === current.programa.apresentadorId);
         setApresentadorNome(ap?.nome || "—");
+        setApresentadorFoto(ap?.foto || "");
       }
-      
-      const { data: channels } = await supabase.from("streaming_channels").select("url, type, user_id").eq("active", true).eq("user_id", user?.id);
-      
-      if (channels && channels.length > 0) {
-        const audioChannel = channels.find(c => c.type === 'audio_live');
-        const videoChannel = channels.find(c => c.type === 'video_live');
-        
-        // Verificação extra de segurança para garantir que o user_id dos canais corresponde ao usuário logado
-        const unauthorized = channels.some(c => c.user_id !== user?.id);
-        
-        if (unauthorized) {
-          console.error("Segurança: Tentativa de carregar streaming de outro usuário bloqueada.");
-          setIsUnauthorized(true);
-          setAudioUrl("");
-          setVideoUrl("");
-          setIsPlaying(false);
-        } else {
-          setIsUnauthorized(false);
-          if (audioChannel?.url) setAudioUrl(audioChannel.url);
-          if (videoChannel?.url) setVideoUrl(videoChannel.url);
-        }
-      } else {
-        setAudioUrl("");
-        setVideoUrl("");
-      }
-
       const nexts = findNextPrograms(programas, 3);
       setNextPrograms(nexts);
       const apMap: Record<string, ApresentadorInfo> = {};
@@ -189,6 +128,7 @@ export default function OnAirWidget() {
     return () => clearInterval(interval);
   }, []);
 
+  // Poll music data from per-user localStorage (scoped per user)
   useEffect(() => {
     if (!user?.id) return;
     const key = `masterview_music_data::${user.id}`;
@@ -197,11 +137,7 @@ export default function OnAirWidget() {
         const raw = localStorage.getItem(key);
         if (raw) {
           const parsed = JSON.parse(raw);
-          setMusicData({ 
-            titulo: parsed.titulo || parsed.title, 
-            artista: parsed.artista || parsed.artist,
-            capa: parsed.capa || parsed.cover || parsed.art
-          });
+          setMusicData({ titulo: parsed.titulo || parsed.title, artista: parsed.artista || parsed.artist });
         }
       } catch {}
     };
@@ -210,153 +146,214 @@ export default function OnAirWidget() {
     return () => clearInterval(mi);
   }, [user?.id]);
 
+  const firstNext = nextPrograms[0] || null;
+  const firstNextAp = firstNext ? nextApresentadores[firstNext.id] : null;
+
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="animate-spin text-accent" />
+      <div className="h-full flex flex-col animate-pulse">
+        {/* NO AR label skeleton */}
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-3.5 h-3.5 rounded-full bg-white/10" />
+          <div className="w-12 h-3 rounded bg-white/10" />
+        </div>
+        {/* Program name skeleton */}
+        <div className="flex-1 flex flex-col justify-center gap-2" style={{ maxWidth: "55%" }}>
+          <div className="w-full h-5 rounded bg-white/10" />
+          <div className="w-3/4 h-5 rounded bg-white/10" />
+          <div className="w-24 h-2.5 rounded bg-white/10 mt-1" />
+        </div>
+        {/* Presenter skeleton */}
+        <div className="flex items-center gap-1.5 mb-4">
+          <div className="w-3 h-3 rounded-full bg-white/10" />
+          <div className="w-28 h-3 rounded bg-white/10" />
+        </div>
+        {/* Progress bar skeleton */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <div className="w-full h-1 bg-white/10" />
+        </div>
+        {/* Fake presenter photo placeholder */}
+        <div className="absolute right-0 bottom-0 w-[50%] h-[80%] rounded-tl-2xl bg-white/5" />
       </div>
     );
   }
 
+  if (!onAir) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex items-center gap-2 mb-2">
+          <Radio size={16} className="text-white/70" />
+          <span className="font-semibold text-white text-sm">NO AR</span>
+        </div>
+        <p className="text-white/50 text-xs">Nenhum programa no ar neste momento.</p>
+        <UpcomingProgramsList programs={nextPrograms} apresentadores={nextApresentadores} />
+      </div>
+    );
+  }
+
+  const { programa, progress } = onAir;
+
   return (
-    <div className="h-full relative flex flex-col no-scrollbar">
-      {/* Header removido conforme solicitado */}
+    <div className="h-full relative overflow-hidden">
+      {/* Next program click overlay */}
+      {firstNext && (
+        <div
+          className="absolute inset-0 z-20 flex flex-col transition-all duration-500 ease-in-out"
+          style={{
+            opacity: isHovered ? 1 : 0,
+            pointerEvents: isHovered ? "auto" : "none",
+          }}
+        >
+          {firstNextAp?.foto && (
+            <img
+              src={firstNextAp.foto}
+              alt={firstNextAp.nome}
+              className="absolute object-contain pointer-events-none"
+              style={{ right: 0, bottom: 0, width: "50%", height: "100%", objectPosition: "right bottom" }}
+            />
+          )}
+          {/* Top right buttons */}
+          <div className="absolute top-1 right-1 z-30 flex items-center gap-1">
+            <button
+              onClick={() => setIsHovered(false)}
+              className="bg-white/10 rounded-full px-2 py-1 cursor-pointer"
+            >
+              <ArrowRight size={10} className="text-white/60 rotate-180" />
+            </button>
+          </div>
 
-      <div className="flex-1 relative min-h-0">
-        <div className="h-full relative flex flex-col justify-center py-4">
-          <audio 
-            ref={audioRef}
-            src={audioUrl}
-            autoPlay={isPlaying && activeTab === "info"}
-            muted={isMuted}
+          <div className="flex items-center gap-2 mb-1 pt-1 pl-1">
+            <ArrowRight size={14} style={{ color: "var(--layout-accent-color)" }} />
+            <span className="font-bold text-[10px]" style={{ color: "var(--layout-accent-color)" }}>PRÓXIMO</span>
+          </div>
+
+          <div className="flex-1 flex flex-col justify-center z-10 pl-1">
+            <p className="font-bold text-white text-lg leading-tight line-clamp-2" style={{ maxWidth: "55%" }}>{firstNext.nome}</p>
+            <p className="text-white/50 text-[10px] whitespace-nowrap mt-1">
+              {firstNext.horarioInicio} — {firstNext.horarioFim}
+            </p>
+          </div>
+
+          <div className="z-10 mb-4 pl-1 flex items-center gap-2">
+            <p className="font-semibold text-white/80 text-xs">{firstNextAp?.nome}</p>
+            <Avatar className="h-5 w-5 border border-white/20">
+              {userAvatar ? <AvatarImage src={userAvatar} alt="Você" /> : null}
+              <AvatarFallback className="bg-white/10 text-white/60 text-[8px]">
+                <User size={10} />
+              </AvatarFallback>
+            </Avatar>
+            <button
+              onClick={() => { setIsHovered(false); setGradeOpen(true); }}
+              className="w-5 h-5 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+              title="Grade de programação"
+            >
+              <span className="text-white/70 text-[10px] font-bold leading-none">+</span>
+            </button>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 z-10">
+            <div className="w-full h-1 bg-white/20 overflow-hidden" />
+          </div>
+        </div>
+      )}
+
+      {/* Current program */}
+      <div
+        className="h-full relative flex flex-col transition-all duration-500"
+        style={{ opacity: isHovered ? 0 : 1 }}
+      >
+        {/* Presenter photo - anchored to bottom, larger */}
+        {apresentadorFoto && (
+          <img
+            src={apresentadorFoto}
+            alt={apresentadorNome}
+            className="absolute object-contain pointer-events-none"
+            style={{ right: 0, bottom: 0, width: "60%", height: "100%", objectPosition: "right bottom" }}
           />
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at center, color-mix(in srgb, var(--layout-accent-color) 8%, transparent), transparent 70%)" }} />
+        )}
 
-          {/* Video Overlay (Positioned exactly above the music info) */}
-          {activeTab === "video" && (
-            <div className="fixed md:absolute bottom-full left-4 right-4 md:left-0 md:right-0 z-[999999] h-[220px] mb-4 md:mx-4 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_-20px_50px_rgba(0,0,0,0.9)] border border-white/10 animate-in slide-in-from-bottom duration-500">
-              <div className="relative flex-1 min-h-0 overflow-hidden">
-                <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-accent" size={24} /></div>}>
-                  <video 
-                    ref={videoRef}
-                    className="w-full h-full object-cover"
-                    src={videoUrl}
-                    autoPlay={isPlaying}
-                    playsInline
-                    muted={isMuted}
-                  />
-                </Suspense>
-                
-                <div className="absolute top-4 right-4">
-                  <button 
-                    onClick={() => setActiveTab("info")}
-                    className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/10 hover:bg-black/80 transition-all shadow-xl"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-
-                {/* Badge "Ao Vivo" removido conforme solicitado */}
-              </div>
+        {/* Top right buttons */}
+        <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
+          <button
+            onClick={() => setGradeOpen(true)}
+            className="bg-white/10 rounded-full px-2 py-1 text-white/60 text-[9px] font-semibold hover:bg-white/20 transition-colors cursor-pointer"
+          >
+            grade
+          </button>
+          {firstNext && (
+            <div className="bg-white/10 rounded-full px-2 py-1 cursor-pointer" onClick={() => setIsHovered(true)}>
+              <ArrowRight size={10} className="text-white/60" />
             </div>
           )}
+        </div>
 
-          {/* Main Content (Always visible) */}
-          <div className="relative z-10 px-6 space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/5 border border-white/10 shadow-2xl group/music-card relative flex-shrink-0">
-                {musicData?.capa ? (
-                  <img src={musicData.capa} alt="Capa" className="w-full h-full object-cover transition-transform duration-700 group-hover/music-card:scale-110" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center opacity-20 bg-gradient-to-br from-white/10 to-transparent">
-                    <Music size={28} style={{ color: "var(--layout-accent-color)" }} />
-                  </div>
-                )}
-              </div>
+        <div className="flex items-center gap-2 mb-1">
+          <Radio size={14} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
+          <span className="font-bold text-xs animate-pulse" style={{ color: "var(--layout-accent-color)" }}>NO AR</span>
+        </div>
 
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-black text-white leading-tight truncate mb-1 drop-shadow-sm uppercase tracking-tight">
-                  {isUnauthorized ? "Acesso Não Autorizado" : (loading ? "Carregando..." : (musicData?.titulo || (onAir ? onAir.programa.nome : "Estação Off-line")))}
-                </h3>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-3" style={{ color: "var(--layout-accent-color)", opacity: 0.8 }}>
-                  {isUnauthorized ? "Erro de Segurança" : (musicData?.artista || apresentadorNome || "Aguarde...")}
-                </p>
-                
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center bg-white/5 hover:bg-white/10 transition-all shadow-lg group"
-                  >
-                    {isPlaying ? (
-                      <Pause size={14} className="text-white fill-white group-hover:scale-110 transition-transform" />
-                    ) : (
-                      <Play size={14} className="text-white fill-white ml-0.5 group-hover:scale-110 transition-transform" />
-                    )}
-                  </button>
+        <div className="flex-1 flex flex-col justify-center z-10">
+          <div className="flex items-center gap-1.5" style={{ maxWidth: "55%" }}>
+            <p className="font-bold text-white text-lg leading-tight line-clamp-2">{programa.nome}</p>
+            {programa.classificacaoEtaria && (
+              <span className="shrink-0 rounded px-1 py-0.5 text-[8px] font-bold leading-none text-white"
+                style={{
+                  backgroundColor:
+                    programa.classificacaoEtaria === "L" ? "#00a651" :
+                    programa.classificacaoEtaria === "10" ? "#0095d9" :
+                    programa.classificacaoEtaria === "12" ? "#f5a623" :
+                    programa.classificacaoEtaria === "14" ? "#e67e22" :
+                    programa.classificacaoEtaria === "16" ? "#e74c3c" :
+                    programa.classificacaoEtaria === "18" ? "#1a1a1a" : "#666",
+                }}
+              >
+                {programa.classificacaoEtaria === "L" ? "L" : `${programa.classificacaoEtaria}`}
+              </span>
+            )}
+            {isStereo && (
+              <span className="shrink-0 rounded px-1 py-0.5 text-[7px] font-bold leading-none tracking-wide"
+                style={{ color: "var(--layout-accent-color)", border: "1px solid var(--layout-accent-color)", opacity: 0.7 }}
+              >
+                STEREO
+              </span>
+            )}
+          </div>
+          <p className="text-white/50 text-[10px] whitespace-nowrap mt-1">
+            {programa.horarioInicio} — {programa.horarioFim}
+          </p>
+        </div>
 
-                  <div 
-                    className="relative flex items-center"
-                    onMouseEnter={() => setShowVolumeSlider(true)}
-                    onMouseLeave={() => setShowVolumeSlider(false)}
-                  >
-                    {showVolumeSlider && (
-                      <div 
-                        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200 z-[9999]"
-                        onMouseEnter={() => setShowVolumeSlider(true)}
-                      >
-                        <div className="h-24 w-1.5 bg-white/10 rounded-full relative cursor-pointer group">
-                          <div 
-                            className="absolute bottom-0 left-0 right-0 bg-white/40 rounded-full transition-all duration-150" 
-                            style={{ height: `${isMuted ? 0 : volume}%`, backgroundColor: "var(--layout-accent-color)" }} 
-                          />
-                          <input 
-                            type="range"
-                            min="0"
-                            max="100"
-                            step="1"
-                            value={isMuted ? 0 : volume}
-                            onChange={(e) => {
-                              const val = Number(e.target.value);
-                              setVolume(val);
-                              if (isMuted && val > 0) setIsMuted(false);
-                            }}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none -rotate-180 [writing-mode:bt-lr]"
-                            style={{ WebkitAppearance: 'slider-vertical' }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    <button 
-                      onClick={() => setIsMuted(!isMuted)}
-                      className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
-                    >
-                      {isMuted || volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                    </button>
-                  </div>
+        {/* Music info */}
+        {musicData?.titulo && (
+          <div className="z-10 flex items-center gap-1.5 mb-1" style={{ maxWidth: "55%" }}>
+            <Music size={11} style={{ color: "var(--layout-accent-color)" }} className="flex-shrink-0" />
+            <p className="text-white/70 text-[10px] truncate">
+              {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
+            </p>
+          </div>
+        )}
 
-                  <div className="flex items-center p-0.5 bg-white/[0.03] rounded-lg border border-white/5 shadow-inner ml-1">
-                    <button 
-                      onClick={() => setActiveTab("info")}
-                      className={`px-3 py-1.5 rounded-md text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === "info" ? "text-white shadow-lg" : "text-white/20 hover:text-white/40"}`}
-                      style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
-                    >
-                      Ouvir
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab("video")}
-                      className={`px-3 py-1.5 rounded-md text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === "video" ? "text-white shadow-lg" : "text-white/20 hover:text-white/40"}`}
-                      style={activeTab === "video" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
-                    >
-                      Assistir
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div className="z-10 mb-4 flex items-center gap-1.5">
+          <Mic size={12} style={{ color: "var(--layout-accent-color)" }} />
+          <p className="font-semibold text-white/80 text-xs">{apresentadorNome}</p>
+          <button
+            onClick={() => setGradeOpen(true)}
+            className="w-5 h-5 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors cursor-pointer ml-1"
+            title="Grade de programação"
+          >
+            <span className="text-white/70 text-[10px] font-bold leading-none">+</span>
+          </button>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 z-10">
+          <div className="w-full h-1 bg-white/20 overflow-hidden">
+            <div
+              className="h-full transition-all duration-1000"
+              style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color)" }}
+            />
           </div>
         </div>
       </div>
-      
       <Suspense fallback={null}>
         <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} />
       </Suspense>

@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import * as XLSX from "xlsx";
-import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -60,8 +59,6 @@ export default function ApresentadorForm() {
   const [catOpen, setCatOpen] = useState(false);
   const [importRows, setImportRows] = useState<any[] | null>(null);
   const [importing, setImporting] = useState(false);
-  const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
-  const [savingCell, setSavingCell] = useState<{ id: string; field: string } | null>(null);
   const excelInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -183,18 +180,6 @@ export default function ApresentadorForm() {
   const toggleAtivo = async (id: string, current: boolean) => {
     await supabase.from("apresentadores").update({ ativo: !current }).eq("id", id);
     await load();
-  };
-
-  const updateFieldInline = async (id: string, field: string, value: any) => {
-    setSavingCell({ id, field });
-    const { error } = await supabase.from("apresentadores").update({ [field]: value }).eq("id", id);
-    if (error) {
-      toast.error("Erro ao atualizar campo: " + error.message);
-    } else {
-      setApresentadores(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
-      toast.success("Campo atualizado com sucesso!");
-    }
-    setSavingCell(null);
   };
 
   const removeApresentador = async (id: string) => {
@@ -523,7 +508,6 @@ export default function ApresentadorForm() {
                   <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Categoria</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Nome</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Redes / Contato</th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Cargo</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Foto</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Status</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Ações</th>
@@ -542,114 +526,17 @@ export default function ApresentadorForm() {
                         {a.cargo || "—"}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 font-semibold">
-                      {editingCell?.id === a.id && editingCell?.field === "nome" ? (
-                        <input 
-                          autoFocus
-                          defaultValue={a.nome} 
-                          onBlur={(e) => {
-                            if (e.target.value !== a.nome) updateFieldInline(a.id, "nome", e.target.value);
-                            setEditingCell(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") e.currentTarget.blur();
-                            if (e.key === "Escape") setEditingCell(null);
-                          }}
-                          className="bg-white border border-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full outline-none"
-                        />
-                      ) : (
-                        <div 
-                          className="cursor-pointer hover:text-[var(--layout-accent-color)] transition-colors min-h-[1.5em] flex items-center gap-2" 
-                          onClick={() => setEditingCell({ id: a.id, field: "nome" })}
-                        >
-                          {a.nome}
-                          {savingCell?.id === a.id && savingCell?.field === "nome" && <Loader2 size={10} className="animate-spin text-[var(--layout-accent-color)]" />}
-                        </div>
-                      )}
-                    </td>
+                    <td className="px-4 py-2.5 font-semibold">{a.nome}</td>
                     <td className="px-4 py-2.5">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5 group/insta">
-                          <Instagram size={11} style={{ color: "#e1306c" }} className="shrink-0" />
-                          {editingCell?.id === a.id && editingCell?.field === "instagram" ? (
-                            <input 
-                              autoFocus
-                              defaultValue={a.instagram} 
-                              onBlur={(e) => {
-                                if (e.target.value !== a.instagram) updateFieldInline(a.id, "instagram", e.target.value);
-                                setEditingCell(null);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") e.currentTarget.blur();
-                                if (e.key === "Escape") setEditingCell(null);
-                              }}
-                              placeholder="@usuario"
-                              className="bg-white border border-[var(--layout-accent-color)] text-[10px] rounded px-1 -ml-1 w-full outline-none"
-                            />
-                          ) : (
-                            <span 
-                              className="cursor-pointer text-[11px] hover:text-[#e1306c] transition-colors min-h-[1em] min-w-[50px] flex items-center gap-1.5" 
-                              onClick={() => setEditingCell({ id: a.id, field: "instagram" })}
-                            >
-                              {a.instagram || <span className="opacity-30">@vazio</span>}
-                              {savingCell?.id === a.id && savingCell?.field === "instagram" && <Loader2 size={9} className="animate-spin text-[#e1306c]" />}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 group/whats">
-                          <Phone size={11} style={{ color: "#25D366" }} className="shrink-0" />
-                          {editingCell?.id === a.id && editingCell?.field === "whatsapp" ? (
-                            <input 
-                              autoFocus
-                              defaultValue={a.whatsapp} 
-                              onBlur={(e) => {
-                                if (e.target.value !== a.whatsapp) updateFieldInline(a.id, "whatsapp", e.target.value);
-                                setEditingCell(null);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") e.currentTarget.blur();
-                                if (e.key === "Escape") setEditingCell(null);
-                              }}
-                              placeholder="+55..."
-                              className="bg-white border border-[var(--layout-accent-color)] text-[10px] rounded px-1 -ml-1 w-full outline-none"
-                            />
-                          ) : (
-                            <span 
-                              className="cursor-pointer text-[11px] hover:text-[#25D366] transition-colors min-h-[1em] min-w-[50px] flex items-center gap-1.5" 
-                              onClick={() => setEditingCell({ id: a.id, field: "whatsapp" })}
-                            >
-                              {a.whatsapp || <span className="opacity-30">+55...</span>}
-                              {savingCell?.id === a.id && savingCell?.field === "whatsapp" && <Loader2 size={9} className="animate-spin text-[#25D366]" />}
-                            </span>
-                          )}
-                        </div>
+                      <div className="flex flex-col gap-0.5">
+                        {a.instagram ? (
+                          <span className="flex items-center gap-1.5 text-[11px]"><Instagram size={12} style={{ color: "#e1306c" }} /> {a.instagram}</span>
+                        ) : null}
+                        {a.whatsapp ? (
+                          <span className="flex items-center gap-1.5 text-[11px]"><Phone size={12} style={{ color: "#25D366" }} /> {a.whatsapp}</span>
+                        ) : null}
+                        {!a.instagram && !a.whatsapp && <span className="text-[var(--layout-page-text)]/25">—</span>}
                       </div>
-                    </td>
-                    <td className="px-4 py-2.5">
-                      {editingCell?.id === a.id && editingCell?.field === "cargo" ? (
-                        <input 
-                          autoFocus
-                          defaultValue={a.cargo} 
-                          onBlur={(e) => {
-                            if (e.target.value !== a.cargo) updateFieldInline(a.id, "cargo", e.target.value);
-                            setEditingCell(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") e.currentTarget.blur();
-                            if (e.key === "Escape") setEditingCell(null);
-                          }}
-                          placeholder="Cargo/Função"
-                          className="bg-white border border-[var(--layout-accent-color)] rounded px-1 -ml-1 w-full outline-none"
-                        />
-                      ) : (
-                        <div 
-                          className="cursor-pointer hover:text-[var(--layout-accent-color)] transition-colors min-h-[1.5em] flex items-center gap-2" 
-                          onClick={() => setEditingCell({ id: a.id, field: "cargo" })}
-                        >
-                          {a.cargo || <span className="opacity-30">Definir cargo</span>}
-                          {savingCell?.id === a.id && savingCell?.field === "cargo" && <Loader2 size={10} className="animate-spin text-[var(--layout-accent-color)]" />}
-                        </div>
-                      )}
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       {a.foto ? <CheckCircle size={15} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[var(--layout-page-text)]/20">—</span>}

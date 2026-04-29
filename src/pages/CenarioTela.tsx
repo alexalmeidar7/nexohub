@@ -600,33 +600,20 @@ export default function CenarioTela() {
     const applyConfig = (raw: any, fromRealtime = false) => {
       if (!raw || typeof raw !== "object" || Object.keys(raw).length === 0) return;
       const { _activeTab, _weatherSubTab, _currencySubTab, _screenRotation, ...rest } = raw;
-      
-      setConfig(prev => {
-        const merged = { ...prev, ...rest };
-        
-        // Cache current state including navigation, but don't force navigation state on active sessions
-        try {
-          localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify({ 
-            ...merged, 
-            _activeTab: activeTab, 
-            _weatherSubTab: weatherSubTab, 
-            _currencySubTab: currencySubTab, 
-            _screenRotation: screenRotation 
-          }));
-        } catch { /* silent */ }
-        
-        return merged;
-      });
-
-      // Only apply tab/rotation from initial load IF not already set by user interaction
-      if (!fromRealtime && !initialTabLoaded.current) {
+      const merged = { ...defaultConfig, ...rest };
+      setConfig(merged);
+      // Only apply tab/rotation from initial load, never from realtime updates
+      // Tab changes arrive via explicit "tab-change" broadcast events instead
+      if (!fromRealtime) {
         if (_activeTab) setActiveTab(_activeTab);
         if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
         if (_currencySubTab) setCurrencySubTab(_currencySubTab);
         if (typeof _screenRotation === "number") setScreenRotation(_screenRotation);
-        initialTabLoaded.current = true;
       }
       if (fromRealtime) setLastSyncTime(new Date());
+      try {
+        localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify({ ...merged, _activeTab, _weatherSubTab, _currencySubTab, _screenRotation }));
+      } catch { /* silent */ }
     };
 
     const load = async () => {
@@ -1530,11 +1517,11 @@ export default function CenarioTela() {
                           width: `${vhToPx(20)}${vu}`,
                           height: `${vhToPx(20)}${vu}`,
                           borderRadius: `${vhToPx(2)}${vu}`,
-                          background: "rgba(255, 255, 255, 0.25)", // Increased visibility from 0.15
-                          backdropFilter: "blur(40px)", // Increased blur
-                          WebkitBackdropFilter: "blur(40px)",
-                          boxShadow: "0 20px 60px rgba(0,0,0,0.5), inset 0 0 0 1.5px rgba(255,255,255,0.3)", // Stronger shadow and border
-                          border: "1px solid rgba(255,255,255,0.4)", // Thicker border
+                          background: "rgba(255, 255, 255, 0.15)",
+                          backdropFilter: "blur(30px)",
+                          WebkitBackdropFilter: "blur(30px)",
+                          boxShadow: "0 12px 48px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.2)",
+                          border: "1px solid rgba(255,255,255,0.3)",
                           zIndex: 2,
                           position: "relative",
                           flexShrink: 0,
@@ -1556,8 +1543,8 @@ export default function CenarioTela() {
                                   bottom: "0",
                                   left: "50%",
                                   transform: "translateX(-50%)",
-                                  height: "100%", // Changed from 150% to 100% to fit box
-                                  width: "100%", // Added width
+                                  height: "150%",
+                                  width: "auto",
                                   objectFit: "contain",
                                   objectPosition: "bottom center",
                                   filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
