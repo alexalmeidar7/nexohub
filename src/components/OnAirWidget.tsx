@@ -255,8 +255,8 @@ export default function OnAirWidget() {
 
                     <div className="flex items-center p-0.5 bg-white/[0.03] rounded-lg border border-white/5 shadow-inner ml-1">
                       <button 
-                        onClick={() => setActiveTab("info")}
-                        className={`px-3 py-1.5 rounded-md text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === "info" ? "text-white shadow-lg" : "text-white/20 hover:text-white/40"}`}
+                        onClick={() => { setActiveTab("info"); }}
+                        className={`px-3 py-1.5 rounded-md text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === ("info" as any) ? "text-white shadow-lg" : "text-white/20 hover:text-white/40"}`}
                         style={activeTab === "info" ? { backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 40%, #ffffff1a)" } : {}}
                       >
                         Ouvir
