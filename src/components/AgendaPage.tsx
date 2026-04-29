@@ -291,19 +291,6 @@ const recorrenciaLabels: Record<string, string> = {
   programa_semanal: "Programa semanal",
 };
 
-const prioridadeLabels: Record<string, string> = {
-  baixa: "Baixa",
-  normal: "Normal",
-  alta: "Alta",
-  urgente: "Urgente",
-};
-
-const prioridadeColors: Record<string, string> = {
-  baixa: "bg-blue-100 text-blue-800",
-  normal: "bg-gray-100 text-gray-800",
-  alta: "bg-orange-100 text-orange-800",
-  urgente: "bg-red-100 text-red-800",
-};
 
 const statusOptions = [
   { value: "ativo", label: "Ativo", color: "#10b981" },
