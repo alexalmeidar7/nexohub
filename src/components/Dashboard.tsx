@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
 import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle } from "lucide-react";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
