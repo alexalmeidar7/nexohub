@@ -736,7 +736,7 @@ export default function IntercomWidget() {
 
   // ─── Speaker mode ───
   return (
-    <div className="fixed top-[30px] right-[130px] z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 300 }}>
+    <div className="fixed top-[30px] -translate-y-1/2 right-[130px] z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 300 }}>
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2.5">
         <button
