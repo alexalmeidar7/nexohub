@@ -191,7 +191,7 @@ export default function OnAirWidget() {
 
           {/* Video Overlay (Positioned exactly above the music info) */}
           {activeTab === "video" && (
-            <div className="fixed md:absolute bottom-[115px] left-4 right-4 md:left-0 md:right-0 z-[99999] h-[220px] md:mx-4 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_-20px_50px_rgba(0,0,0,0.9)] border border-white/10 animate-in slide-in-from-bottom duration-500">
+            <div className="fixed md:absolute bottom-[115px] left-4 right-4 md:left-0 md:right-0 z-[999999] h-[220px] md:mx-4 flex flex-col rounded-3xl overflow-hidden bg-black shadow-[0_-20px_50px_rgba(0,0,0,0.9)] border border-white/10 animate-in slide-in-from-bottom duration-500">
               <div className="relative flex-1 min-h-0 overflow-hidden">
                 <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-accent" size={24} /></div>}>
                   <video 
