@@ -120,7 +120,7 @@ const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "wea
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Mic2, PlaySquare, Newspaper, Music, CalendarDays, Settings, MonitorPlay, MessageSquareQuote,
-  Tag, Image, Film, ShoppingCart, Monitor, Scissors, ExternalLink, ShoppingBag, Wrench, Users,
+  Tag, Image, Film, ShoppingCart, Monitor, Scissors, ExternalLink, ShoppingBag, Wrench, Users, FileText,
 };
 
 function getIcon(name: string) {
