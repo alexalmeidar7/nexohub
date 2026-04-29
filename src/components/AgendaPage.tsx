@@ -360,6 +360,7 @@ export default function AgendaPage() {
   const [formEdicaoNotas, setFormEdicaoNotas] = useState("");
   const [formEdicaoConcluida, setFormEdicaoConcluida] = useState(false);
   const [formHorarioGravacao, setFormHorarioGravacao] = useState("");
+  const [formHorarioGravacaoFim, setFormHorarioGravacaoFim] = useState("");
   const [uploadingArte, setUploadingArte] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
 
