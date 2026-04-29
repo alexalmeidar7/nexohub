@@ -267,9 +267,10 @@ export default function VmixPage() {
     if (!user) return;
     supabase
       .from("programas")
-      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(foto)")
+      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
       .eq("user_id", user.id)
       .eq("ativo", true)
+      .ilike("estudio", "%fm%")
       .order("horario_inicio")
       .then(({ data }) => {
         if (data) {
@@ -2262,9 +2263,22 @@ export default function VmixPage() {
                                 .eq("user_id", user?.id)
                                 .eq("programa_id", prog.id)
                                 .maybeSingle();
-                              const cmds = presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0
-                                ? presetData.commands
+                              
+                              let cmds = presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0
+                                ? [...presetData.commands]
                                 : [{ fn: "ScriptStart", input: prog.nome }];
+
+                              // Always carry the current presenter's name to vMix Titler if available
+                              const apresentadorNome = (prog as any).apresentadores?.nome;
+                              if (apresentadorNome) {
+                                cmds.push({
+                                  fn: "SetText",
+                                  input: "TITULO APRESENTADOR", // Assumed titler input name in vMix
+                                  value: apresentadorNome,
+                                  label: "Apresentador Automático"
+                                });
+                              }
+
                               await runCommandsUnified(cmds as any[], `Preset: ${prog.nome}`);
                             }}
                           >
