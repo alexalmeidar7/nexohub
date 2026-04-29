@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense, useRef } from "react";
 import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music, User, Video, Volume2, VolumeX, MonitorPlay, X, Play, Pause } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,6 +89,27 @@ export default function OnAirWidget() {
   const [isMuted, setIsMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const media = activeTab === "info" ? audioRef.current : videoRef.current;
+    if (media) {
+      media.volume = isMuted ? 0 : volume / 100;
+      media.muted = isMuted;
+    }
+  }, [volume, isMuted, activeTab]);
+
+  useEffect(() => {
+    const media = activeTab === "info" ? audioRef.current : videoRef.current;
+    if (media) {
+      if (isPlaying) {
+        media.play().catch(() => setIsPlaying(false));
+      } else {
+        media.pause();
+      }
+    }
+  }, [isPlaying, activeTab]);
 
   useEffect(() => {
     const update = async () => {
@@ -173,6 +194,12 @@ export default function OnAirWidget() {
       <div className="flex-1 relative min-h-0">
         {activeTab === "info" ? (
           <div className="h-full relative flex flex-col justify-center py-4">
+            <audio 
+              ref={audioRef}
+              src="https://streaming.logicahost.com.br/8240/stream"
+              autoPlay={isPlaying}
+              muted={isMuted}
+            />
             <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at center, color-mix(in srgb, var(--layout-accent-color) 8%, transparent), transparent 70%)" }} />
 
             {/* Main Content */}
@@ -264,9 +291,10 @@ export default function OnAirWidget() {
             <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
               <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-accent" size={24} /></div>}>
                 <video 
+                  ref={videoRef}
                   className="w-full h-full object-cover"
                   src="https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8"
-                  autoPlay
+                  autoPlay={isPlaying}
                   playsInline
                   muted={isMuted}
                 />
