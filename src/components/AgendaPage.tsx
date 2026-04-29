@@ -1247,15 +1247,30 @@ export default function AgendaPage() {
 
               {/* Horário da Gravação (apenas quando tipo = gravação) */}
               {formTipoEvento === "gravacao" && (
-                <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
-                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>🎬 Horário da Gravação</Label>
-                  <input
-                    type="time"
-                    value={formHorarioGravacao}
-                    onChange={(e) => setFormHorarioGravacao(e.target.value)}
-                    className="agenda-form-input h-10 w-full px-3 text-sm"
-                    style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
-                  />
+                <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>🎬 Horário da Gravação</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-[9px] font-medium opacity-60 mb-1 block">Início</Label>
+                      <input
+                        type="time"
+                        value={formHorarioGravacao}
+                        onChange={(e) => setFormHorarioGravacao(e.target.value)}
+                        className="agenda-form-input h-10 w-full px-3 text-sm"
+                        style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[9px] font-medium opacity-60 mb-1 block">Fim</Label>
+                      <input
+                        type="time"
+                        value={formHorarioGravacaoFim}
+                        onChange={(e) => setFormHorarioGravacaoFim(e.target.value)}
+                        className="agenda-form-input h-10 w-full px-3 text-sm"
+                        style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 
