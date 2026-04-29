@@ -212,7 +212,7 @@ export default function PromocoesKiosk() {
 
     const load = isPublicMode ? loadPublic : loadAuth;
     load().finally(() => setLoading(false));
-    const interval = setInterval(load, 30000);
+    const interval = setInterval(load, 10000); // Changed from 30s to 10s for better synchronization
     return () => clearInterval(interval);
   }, [isPublicMode, userSlug]);
 
