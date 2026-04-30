@@ -1872,6 +1872,7 @@ export default function CenarioInterativoPage() {
                               onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))} 
                               className="data-[state=checked]:bg-[var(--layout-accent-color)]"
                             />
+                          </div>
                         </div>
                       </div>
                     </div>
