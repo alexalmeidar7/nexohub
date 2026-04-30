@@ -2812,8 +2812,8 @@ export default function CenarioInterativoPage() {
                                    {/* ── BOX CAPA: music album art ── */}
                                    <div
                                      style={{
-                                       width: `${pvh(20)}px`,
-                                       height: `${pvh(20)}px`,
+                                       width: `${pvh(14)}px`,
+                                       height: `${pvh(14)}px`,
                                        borderRadius: `${pvh(2)}px`,
                                        overflow: "hidden",
                                        flexShrink: 0,
