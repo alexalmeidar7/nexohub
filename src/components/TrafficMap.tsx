@@ -17,7 +17,7 @@ interface TrafficMapProps {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const roundCoord = (value: number) => Math.round(value * 10000) / 10000;
 
-export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove, onPointMove, points = [], className, style }: TrafficMapProps) {
+export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove, onPointMove, points = [], activePointId, className, style }: TrafficMapProps) {
   const [view, setView] = useState(() => ({
     lat: roundCoord(clamp(lat, -85, 85)),
     lon: roundCoord(clamp(lon, -180, 180)),
@@ -25,22 +25,36 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
   }));
   const [isDragging, setIsDragging] = useState(false);
   const [dragPointId, setDragPointId] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [lastViewChange, setLastViewChange] = useState(0);
 
   useEffect(() => {
-    setView((prev) => {
-      const next = {
-        lat: roundCoord(clamp(lat, -85, 85)),
-        lon: roundCoord(clamp(lon, -180, 180)),
-        zoom: clamp(Math.round(zoom), 3, 15),
-      };
+    const next = {
+      lat: roundCoord(clamp(lat, -85, 85)),
+      lon: roundCoord(clamp(lon, -180, 180)),
+      zoom: clamp(Math.round(zoom), 3, 15),
+    };
 
+    setView((prev) => {
       if (prev.lat === next.lat && prev.lon === next.lon && prev.zoom === next.zoom) {
         return prev;
       }
-
+      setIsNavigating(true);
+      setLastViewChange(Date.now());
       return next;
     });
   }, [lat, lon, zoom]);
+
+  // Monitor when navigation finishes
+  useEffect(() => {
+    if (!isNavigating) return;
+    const timer = setTimeout(() => {
+      if (Date.now() - lastViewChange >= 1000) {
+        setIsNavigating(false);
+      }
+    }, 1100);
+    return () => clearTimeout(timer);
+  }, [isNavigating, lastViewChange]);
 
   const panStep = useMemo(() => {
     return Math.max(0.0035, 1.35 / Math.pow(2, Math.max(view.zoom - 3, 0) / 1.9));
