@@ -305,7 +305,8 @@ function ExceptionWordsInput({ value, onSave }: { value: string; onSave: (v: str
         size="sm"
         onClick={handleSave}
         disabled={!dirty}
-        className="h-7 px-3 text-xs"
+        className="h-7 px-3 text-xs bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white"
+        style={{ backgroundColor: 'var(--layout-accent-color)' }}
       >
         Salvar
       </Button>
