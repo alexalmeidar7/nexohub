@@ -1796,23 +1796,13 @@ export default function CenarioInterativoPage() {
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <div className="flex items-center gap-2">
                 <Eye size={16} style={{ color: mutedText }} />
-                <span className="text-sm font-semibold whitespace-nowrap">Preview (9:16)</span>
+                <span className="text-sm font-semibold whitespace-nowrap">Preview cenário interativo</span>
               </div>
               <div className="flex items-center gap-1.5">
-                {externalConnected ? (
+                {externalConnected && (
                   <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)" }}>
                     <Wifi size={10} style={{ color: "#4ade80" }} />
                     <span className="text-[10px] font-semibold" style={{ color: "#4ade80" }}>Online</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}>
-                      <WifiOff size={10} style={{ color: "#ef4444" }} />
-                      <span className="text-[10px] font-semibold" style={{ color: "#ef4444" }}>Offline</span>
-                    </div>
-                    <button onClick={forceReconnect} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold cursor-pointer transition-opacity hover:opacity-80" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: mutedText }}>
-                      <RefreshCw size={10} /> Forçar
-                    </button>
                   </div>
                 )}
               </div>
@@ -1823,16 +1813,6 @@ export default function CenarioInterativoPage() {
                   style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
                 >
                   <ExternalLink size={11} /> Abrir Tela
-                </button>
-                <button
-                  onClick={() => {
-                    updateHome({ elementPositions: undefined });
-                    toast.success("Layout padrão restaurado");
-                  }}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
-                  style={{ background: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 80%, white 20%)", color: "var(--layout-header-text, #fff)" }}
-                >
-                  <Undo2 size={11} /> Layout Default
                 </button>
                 <button
                   onClick={() => {
