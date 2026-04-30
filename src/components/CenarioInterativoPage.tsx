@@ -2745,7 +2745,7 @@ export default function CenarioInterativoPage() {
                                return (
                                  <div style={{
                                    position: "absolute",
-                                   top: `${pvh(4)}px`,
+                                   top: `calc(${pvh(4)}px - 2px)`,
                                    right: `${pvh(5)}px`,
                                    display: "flex",
                                    alignItems: "stretch",
