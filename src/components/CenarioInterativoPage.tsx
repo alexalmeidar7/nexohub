@@ -2218,7 +2218,7 @@ export default function CenarioInterativoPage() {
                       </div>
                     )}
 
-                    <BgImageUpload value={config.traffic.bgImage} onChange={v => updateTraffic({ bgImage: v })} mutedText={mutedText} userId={uid} category="traffic" />
+                    
                   </>
                 )}
               </TabsContent>
@@ -2450,7 +2450,7 @@ export default function CenarioInterativoPage() {
                             <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
                           )}
                           {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                          {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                          
                           {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                           {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                         </div>
