@@ -1211,6 +1211,31 @@ export default function CenarioInterativoPage() {
   const removeTrafficPoint = (id: string) =>
     updateTraffic({ points: config.traffic.points.filter(p => p.id !== id) });
 
+  const updateTrafficPointPosition = async (id: string, lat: number, lng: number) => {
+    try {
+      // Reverse geocode to get a label if it was moved to a new place
+      const { data } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query: `${lat}, ${lng}`, count: 1 },
+      });
+      
+      const newLabel = data?.results?.[0]?.display_name?.split(',')[0] || `Ponto ${config.traffic.points.findIndex(p => p.id === id) + 1}`;
+      
+      const updatedPoints = config.traffic.points.map(p => 
+        p.id === id ? { ...p, lat, lng, label: newLabel } : p
+      );
+      
+      updateTraffic({ points: updatedPoints });
+      toast.success("Posição do ponto atualizada");
+    } catch (err) {
+      console.error("Error updating point position:", err);
+      // Fallback update without geocoding
+      const updatedPoints = config.traffic.points.map(p => 
+        p.id === id ? { ...p, lat, lng } : p
+      );
+      updateTraffic({ points: updatedPoints });
+    }
+  };
+
   const goToTrafficPoint = (p: TrafficPoint) => {
     setTrafficCoords({ lat: p.lat, lon: p.lng });
     updateTraffic({ lat: p.lat, lon: p.lng, zoom: 15 });
