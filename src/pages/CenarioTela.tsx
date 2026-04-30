@@ -1628,19 +1628,8 @@ export default function CenarioTela() {
                       </div>
                     )}
 
-                   {/* Program progress bar — premium animated */}
-                   <div style={{ position: "absolute", bottom: `${vhToPx(2.5)}${vu}`, left: `${vhToPx(4)}${vu}`, right: `${vhToPx(4)}${vu}`, height: `${vhToPx(0.6)}${vu}`, background: "rgba(255,255,255,0.1)", zIndex: 15, overflow: "hidden", borderRadius: `${vhToPx(1)}${vu}`, border: "1px solid rgba(255,255,255,0.05)" }}>
-                     <div style={{
-                       width: `${progressPct}%`,
-                       height: "100%",
-                       borderRadius: `${vhToPx(0.3)}${vu}`,
-                       background: `linear-gradient(90deg, ${accentColor}, ${accentRgba(0.7)}, ${accentColor})`,
-                       backgroundSize: "200% 100%",
-                       animation: "shimmerProgress 2s linear infinite",
-                       transition: "width 1s linear",
-                       boxShadow: `0 0 6px ${accentRgba(0.6)}, 0 0 14px ${accentRgba(0.3)}`,
-                     }} />
-                   </div>
+                    {/* Program progress bar removida conforme solicitado */}
+
                    <style>{`@keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } @keyframes presenter-enter { 0% { opacity: 0; transform: translateX(-50%) translateY(15%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }`}</style>
                 </div>
               );
