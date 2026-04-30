@@ -122,7 +122,7 @@ export default function ApresentadorForm() {
       nome: nome.trim(),
       cargo: cargoValue,
       instagram: instagram.trim(),
-      whatsapp: whatsapp.replace(/\D/g, "").length > 2 ? whatsapp.trim() : "",
+      whatsapp: whatsapp.replace(/\D/g, "").length >= 10 ? whatsapp.trim() : "",
       foto: fotoUrl,
       ativo,
     };
@@ -176,19 +176,53 @@ export default function ApresentadorForm() {
   };
 
   const formatWhatsapp = (value: string) => {
-    // Strip non-digits, but always keep 55 prefix
+    // Strip everything except digits
     let digits = value.replace(/\D/g, "");
-    // If user somehow removed the 55 prefix, restore it
-    if (!digits.startsWith("55")) {
-      digits = "55" + digits.replace(/^55*/, "");
+    
+    // If it starts with 55, keep it. If not, we might add it later or assume it's part of the number.
+    // However, the request asks for +55 (XX) XXXXX-XXXX
+    
+    // If user starts typing and it's not 55, we could prepend 55, 
+    // but often users type the DDD directly.
+    // Let's force +55 as the start if it's long enough or empty.
+    
+    if (digits.length <= 2 && !digits.startsWith("55") && digits !== "") {
+      // If user types DDD without 55, we could auto-prepend 55
+      // but let's just format what we have.
     }
-    digits = digits.slice(0, 13); // 55 + 2 DDD + 9 digits
-    let formatted = "+55";
-    const local = digits.slice(2); // after country code
-    if (local.length > 0) formatted += " (" + local.slice(0, 2);
-    if (local.length >= 2) formatted += ")";
-    if (local.length > 2) formatted += " " + local.slice(2, 7);
-    if (local.length > 7) formatted += "-" + local.slice(7, 11);
+
+    // Maximum length for +55 (XX) XXXXX-XXXX is 13 digits (55 + 2 + 9)
+    digits = digits.slice(0, 13);
+    
+    if (digits.length === 0) return "";
+    
+    let formatted = "+";
+    
+    // Country code (up to 2 digits, usually 55)
+    if (digits.length > 0) {
+      formatted += digits.slice(0, 2);
+    }
+    
+    // DDD (up to 2 digits)
+    if (digits.length > 2) {
+      formatted += " (" + digits.slice(2, 4);
+    }
+    
+    // Closing parenthesis
+    if (digits.length >= 4) {
+      formatted += ") ";
+    }
+    
+    // First part of number (5 digits for mobile)
+    if (digits.length > 4) {
+      formatted += digits.slice(4, 9);
+    }
+    
+    // Dash and last part (4 digits)
+    if (digits.length > 9) {
+      formatted += "-" + digits.slice(9, 13);
+    }
+    
     return formatted;
   };
 
@@ -365,10 +399,14 @@ export default function ApresentadorForm() {
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#25D366" }}>
                   <Phone size={16} className="text-white" />
                 </div>
-                <input value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))} placeholder="+55 (DDD) 00000-0000"
+                <input value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))} placeholder="+55 (00) 00000-0000"
                   className="flex-1 px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
                   style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                  onFocus={e => { 
+                    if (!whatsapp) setWhatsapp("+55 ");
+                    e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; 
+                    e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; 
+                  }}
                   onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
                 />
               </div>
