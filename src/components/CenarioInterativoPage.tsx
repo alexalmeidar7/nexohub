@@ -1414,6 +1414,34 @@ export default function CenarioInterativoPage() {
                         />
                       </div>
 
+                      {/* Posição da Thumb */}
+                      {config.useProgramThumbAsBg && (
+                        <div className="p-4 space-y-3 transition-colors hover:bg-black/5 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1 rounded-md bg-blue-500/10 text-blue-600">
+                              <MapPin size={14} />
+                            </div>
+                            <Label className="text-xs font-bold">Alinhamento da Thumb</Label>
+                          </div>
+                          <div className="pl-7">
+                            <Select 
+                              value={config.programThumbPosition || "center"} 
+                              onValueChange={(v: "left" | "center" | "right") => setConfig(c => ({ ...c, programThumbPosition: v }))}
+                            >
+                              <SelectTrigger className="h-8 text-xs w-full bg-white/50">
+                                <SelectValue placeholder="Selecione o alinhamento" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="left">Esquerda</SelectItem>
+                                <SelectItem value="center">Centro</SelectItem>
+                                <SelectItem value="right">Direita</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="text-[10px] leading-relaxed opacity-60 mt-2">Escolha como a imagem de fundo deve ser centralizada no cenário.</p>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Palavras de Exceção */}
                       <div className="p-4 space-y-3 transition-colors hover:bg-black/5">
                         <div className="flex items-center justify-between">
