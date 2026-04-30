@@ -1501,7 +1501,7 @@ export default function CenarioInterativoPage() {
                     {/* Palavras de Exceção (Extra) */}
                     <div className="p-4 rounded-xl border bg-white/40 border-black/5">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1 rounded bg-rose-500/10 text-rose-600">
+                        <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
                           <EyeOff size={14} />
                         </div>
                         <Label className="text-xs font-bold uppercase">Filtro de Exceções</Label>
