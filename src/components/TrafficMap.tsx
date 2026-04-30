@@ -21,6 +21,7 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
     zoom: clamp(Math.round(zoom), 3, 15),
   }));
   const [isDragging, setIsDragging] = useState(false);
+  const [dragPointId, setDragPointId] = useState<string | null>(null);
 
   useEffect(() => {
     setView((prev) => {
