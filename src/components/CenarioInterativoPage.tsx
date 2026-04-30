@@ -1837,7 +1837,7 @@ export default function CenarioInterativoPage() {
 
             <div className="flex flex-col items-center gap-3 w-full h-[700px] pt-4 min-h-0 overflow-hidden bg-black/5 dark:bg-black/20 rounded-2xl relative">
               {/* Zoom Control */}
-              <div className="flex items-center gap-3 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 shadow-lg z-20">
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/20 shadow-2xl z-20">
                 <Minus size={14} className="text-white/60 cursor-pointer hover:text-white transition-colors" onClick={() => setPreviewZoom(z => Math.max(0.2, z - 0.1))} />
                 <Slider 
                   value={[previewZoom]} 
