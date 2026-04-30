@@ -1232,9 +1232,22 @@ export default function CenarioInterativoPage() {
                       <Palette size={14} className="text-primary" />
                       <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Fundo e Estética</h4>
                     </div>
+                    
                     <div className="space-y-4 p-4 rounded-xl border bg-card/30">
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold">Imagem de Fundo (URL)</Label>
+                      {/* Modo Alternado */}
+                      <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-500/5 border-blue-500/10">
+                        <div className="space-y-0.5">
+                          <Label className="text-xs font-bold">Modo de Fundo Alternado</Label>
+                          <p className="text-[10px] text-muted-foreground">Alterna entre capa do programa e imagem do artista a cada 10s</p>
+                        </div>
+                        <Switch 
+                          checked={config.bgAlternateMode} 
+                          onCheckedChange={(v) => setConfig(c => ({ ...c, bgAlternateMode: v }))} 
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold">Imagem de Fundo Padrão (URL)</Label>
                         <div className="flex gap-2">
                           <Input 
                             className="text-xs h-9" 
@@ -1253,7 +1266,88 @@ export default function CenarioInterativoPage() {
                           userId={user?.id} 
                           category="home-bg" 
                         />
-                        <p className="text-[10px] text-muted-foreground">Use uma imagem de alta resolução (1920x1080) para melhores resultados.</p>
+                      </div>
+
+                      {/* Configurações de Overlay do Programa */}
+                      <div className="pt-2 border-t space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-bold">Sobreposição na Capa do Programa</Label>
+                          <Switch 
+                            checked={config.thumbOverlayEnabled} 
+                            onCheckedChange={(v) => setConfig(c => ({ ...c, thumbOverlayEnabled: v }))} 
+                          />
+                        </div>
+                        {config.thumbOverlayEnabled && (
+                          <div className="space-y-3 animate-in fade-in slide-in-from-top-1">
+                            <div className="flex gap-3">
+                              <div className="flex-1 space-y-1">
+                                <Label className="text-[10px] opacity-70">Cor do Overlay</Label>
+                                <Input 
+                                  type="color" 
+                                  className="h-8 p-1 w-full" 
+                                  value={config.thumbOverlayColor || "#000000"} 
+                                  onChange={(e) => setConfig(c => ({ ...c, thumbOverlayColor: e.target.value }))} 
+                                />
+                              </div>
+                              <div className="flex-[2] space-y-1">
+                                <Label className="text-[10px] opacity-70">Opacidade ({config.thumbOverlayOpacity ?? 60}%)</Label>
+                                <Slider 
+                                  value={[config.thumbOverlayOpacity ?? 60]} 
+                                  min={0} max={100} step={1}
+                                  onValueChange={([v]) => setConfig(c => ({ ...c, thumbOverlayOpacity: v }))} 
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[10px] opacity-70">Posição da Capa</Label>
+                              <Select 
+                                value={config.programThumbPosition || "center"} 
+                                onValueChange={(v) => setConfig(c => ({ ...c, programThumbPosition: v }))}
+                              >
+                                <SelectTrigger className="h-7 text-[10px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="center">Centralizado</SelectItem>
+                                  <SelectItem value="top">Topo</SelectItem>
+                                  <SelectItem value="bottom">Base</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Configurações de Overlay do Artista */}
+                      <div className="pt-2 border-t space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-bold">Sobreposição na Imagem do Artista</Label>
+                          <Switch 
+                            checked={config.home.artistOverlayEnabled} 
+                            onCheckedChange={(v) => updateHome({ artistOverlayEnabled: v })} 
+                          />
+                        </div>
+                        {config.home.artistOverlayEnabled && (
+                          <div className="flex gap-3 animate-in fade-in slide-in-from-top-1">
+                            <div className="flex-1 space-y-1">
+                              <Label className="text-[10px] opacity-70">Cor</Label>
+                              <Input 
+                                type="color" 
+                                className="h-8 p-1 w-full" 
+                                value={config.home.artistOverlayColor || "#000000"} 
+                                onChange={(e) => updateHome({ artistOverlayColor: e.target.value })} 
+                              />
+                            </div>
+                            <div className="flex-[2] space-y-1">
+                              <Label className="text-[10px] opacity-70">Opacidade ({config.home.artistOverlayOpacity ?? 60}%)</Label>
+                              <Slider 
+                                value={[config.home.artistOverlayOpacity ?? 60]} 
+                                min={0} max={100} step={1}
+                                onValueChange={([v]) => updateHome({ artistOverlayOpacity: v })} 
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="pt-2 border-t space-y-3">
@@ -1474,10 +1568,36 @@ export default function CenarioInterativoPage() {
                       {/* Artist/Background Image Layer */}
                       <div className="absolute inset-0" style={{ zIndex: 2 }}>
                         {artistBgUrl && !isBreakTrack ? (
-                          <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "saturate(1.2) brightness(0.7)" }} />
+                          <div className="absolute inset-0">
+                            <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "saturate(1.2) brightness(0.7)" }} />
+                            {config.home.artistOverlayEnabled && (
+                              <div className="absolute inset-0" style={{ opacity: (config.home.artistOverlayOpacity ?? 60) / 100, background: config.home.artistOverlayColor || "#000000" }} />
+                            )}
+                          </div>
                         ) : config.home.bgImage ? (
                           <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />
                         ) : null}
+                      </div>
+
+                      {/* Program Thumb Layer */}
+                      <div className="absolute inset-0" style={{ zIndex: 3 }}>
+                        {(currentProgram?.thumb || currentProgram?.capa) && (
+                          <div className="absolute inset-0">
+                            <img 
+                              src={(currentProgram.thumb || currentProgram.capa) as string} 
+                              alt="" 
+                              className="absolute inset-0 w-full h-full object-cover" 
+                              style={{ 
+                                filter: config.bgAlternateMode ? "brightness(0.7)" : "blur(22px) brightness(0.7)", 
+                                objectPosition: config.programThumbPosition || "center",
+                                opacity: config.bgAlternateMode ? 1 : 0.8 // Em modo estático fica com blur atrás
+                              }} 
+                            />
+                            {config.thumbOverlayEnabled && (
+                              <div className="absolute inset-0" style={{ opacity: (config.thumbOverlayOpacity ?? 60) / 100, background: config.thumbOverlayColor || "#000000" }} />
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
