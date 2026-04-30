@@ -1834,18 +1834,74 @@ export default function CenarioInterativoPage() {
                 </div>
                 {config.traffic.enabled && (
                   <>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Nome da cidade..."
-                        value={trafficSearchCity}
-                        onChange={e => setTrafficSearchCity(e.target.value)}
-                        onKeyDown={e => e.key === "Enter" && handleTrafficSearch()}
-                        className="text-sm flex-1"
-                        style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
-                      />
-                      <Button size="sm" onClick={handleTrafficSearch} className="gap-1 text-xs" style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}>
-                        <Search size={14} /> Buscar
-                      </Button>
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-[10px] opacity-60 font-bold uppercase">Cidade</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Nome da cidade..."
+                              value={trafficSearchCity}
+                              onChange={e => setTrafficSearchCity(e.target.value)}
+                              onKeyDown={e => e.key === "Enter" && handleTrafficSearch()}
+                              className="text-sm h-9 flex-1"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                            <Button size="sm" onClick={handleTrafficSearch} className="h-9 px-3 gap-1 text-xs" style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}>
+                              <Search size={14} /> Buscar
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 relative">
+                        <Label className="text-[10px] opacity-60 font-bold uppercase">Endereço específico</Label>
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Input
+                              placeholder="Buscar endereço..."
+                              value={trafficSearchAddress}
+                              onChange={e => searchAddress(e.target.value)}
+                              className="text-sm h-9 pr-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                            {isSearchingAddress && (
+                              <div className="absolute right-2 top-2.5">
+                                <Loader2 size={14} className="animate-spin opacity-40" />
+                              </div>
+                            )}
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={addTrafficPoint} 
+                            className="h-9 gap-1 text-xs" 
+                            title="Marcar este ponto no mapa"
+                            style={{ borderColor: "var(--layout-border-color, #333)", color: textColor }}
+                          >
+                            <MapPin size={14} /> Marcar
+                          </Button>
+                        </div>
+                        
+                        {addressSuggestions.length > 0 && (
+                          <div 
+                            className="absolute z-50 w-full top-[calc(100%+4px)] rounded-lg border shadow-xl overflow-hidden max-h-48 overflow-y-auto"
+                            style={{ background: "var(--layout-page-bg, #ffffff)", borderColor: "var(--layout-border-color, #333)" }}
+                          >
+                            {addressSuggestions.map((addr, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => selectAddress(addr)}
+                                className="w-full text-left px-3 py-2 text-xs hover:bg-black/5 transition-colors border-b last:border-0"
+                                style={{ borderBottomColor: "rgba(0,0,0,0.05)", color: textColor }}
+                              >
+                                <div className="font-bold">{addr.name}</div>
+                                {addr.admin1 && <div className="opacity-60">{addr.admin1}, {addr.country}</div>}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="rounded-lg p-3 text-xs text-center" style={{ background: subTabBg, color: mutedText }}>
