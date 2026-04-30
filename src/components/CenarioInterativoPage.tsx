@@ -787,6 +787,7 @@ export default function CenarioInterativoPage() {
   const [trafficSearchAddress, setTrafficSearchAddress] = useState("");
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const [activeTrafficPointId, setActiveTrafficPointId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
