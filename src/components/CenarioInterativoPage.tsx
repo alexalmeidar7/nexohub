@@ -1266,7 +1266,13 @@ export default function CenarioInterativoPage() {
   const goToTrafficPoint = (p: TrafficPoint) => {
     setTrafficCoords({ lat: p.lat, lon: p.lng });
     updateTraffic({ lat: p.lat, lon: p.lng, zoom: 15 });
+    setActiveTrafficPointId(p.id);
     toast.info(`Navegando para: ${p.label}`);
+    
+    // Auto clear active state after some time
+    setTimeout(() => {
+      setActiveTrafficPointId(null);
+    }, 4000);
   };
 
   const toggleCurrency = (code: string) => {
