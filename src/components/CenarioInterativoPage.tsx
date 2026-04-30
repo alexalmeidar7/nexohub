@@ -1211,6 +1211,12 @@ export default function CenarioInterativoPage() {
   const removeTrafficPoint = (id: string) =>
     updateTraffic({ points: config.traffic.points.filter(p => p.id !== id) });
 
+  const goToTrafficPoint = (p: TrafficPoint) => {
+    setTrafficCoords({ lat: p.lat, lon: p.lng });
+    updateTraffic({ lat: p.lat, lon: p.lng, zoom: 15 });
+    toast.info(`Navegando para: ${p.label}`);
+  };
+
   const toggleCurrency = (code: string) => {
     const has = config.currency.currencies.includes(code);
     updateCurrency({ currencies: has ? config.currency.currencies.filter(c => c !== code) : [...config.currency.currencies, code] });
