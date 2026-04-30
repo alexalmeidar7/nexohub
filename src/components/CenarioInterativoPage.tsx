@@ -93,7 +93,7 @@ const defaultConfig: CenarioConfig = {
   city: "",
   useProgramThumbAsBg: false,
   programThumbPosition: "center",
-  bgType: "static",
+  bgType: "none",
   home: { bgImage: "", showArtistImage: true },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
