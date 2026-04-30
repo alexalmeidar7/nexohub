@@ -1447,7 +1447,7 @@ export default function CenarioTela() {
                   {/* Background already rendered as a full-canvas layer behind sidebar */}
 
                    {/* ── Relógio Digital (Top Right) ── */}
-                   (() => {
+                   {(() => {
                      const h = currentTime.getHours().toString().padStart(2, "0");
                      const m = currentTime.getMinutes().toString().padStart(2, "0");
                      const s = currentTime.getSeconds().toString().padStart(2, "0");
