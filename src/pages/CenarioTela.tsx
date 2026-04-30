@@ -1385,9 +1385,7 @@ export default function CenarioTela() {
                 <div style={{ width: `${vhToPx(1.2)}${vu}`, height: `${vhToPx(1.2)}${vu}`, borderRadius: "50%", background: drawColor }} />
               </button>
             )}
-          <button onClick={() => setDebugMode(p => !p)} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: debugMode ? "#ef4444" : "rgba(255,255,255,0.1)", border: debugMode ? `2px solid #ef4444` : "2px solid transparent", transition: "all 0.25s ease" }}>
-            <span style={{ fontSize: `${vhToPx(1.2)}${vu}`, fontWeight: "bold", color: "#fff" }}>BUG</span>
-          </button>
+          {/* Botão BUG removido */}
             <div className="flex flex-col gap-1 mt-auto">
               {/* Botões de camada movidos para a área central da Home conforme solicitado */}
             </div>
