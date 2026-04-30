@@ -2747,23 +2747,24 @@ export default function CenarioInterativoPage() {
                                zIndex: 15,
                              }}>
                                {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
-                               <div style={{
-                                 width: `${pvh(20)}px`,
-                                 height: `${pvh(20)}px`,
-                                 borderRadius: `${pvh(2)}px`,
-                                 background: `linear-gradient(145deg, var(--layout-accent-color, rgba(200,50,50,0.7)), rgba(0,0,0,0.4))`,
-                                 backdropFilter: "blur(20px)",
-                                 WebkitBackdropFilter: "blur(20px)",
-                                 padding: `${pvh(0.9)}px`,
-                                 boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-                                 border: "1px solid rgba(255,255,255,0.1)",
-                                 display: "flex",
-                                 flexDirection: "column",
-                                 gap: `${pvh(0.6)}px`,
-                                 zIndex: 2,
-                                 position: "relative",
-                                 flexShrink: 0,
-                               }}>
+                               {config.home.showProgramThumb !== false && (
+                                 <div style={{
+                                   width: `${pvh(20)}px`,
+                                   height: `${pvh(20)}px`,
+                                   borderRadius: `${pvh(2)}px`,
+                                   background: `linear-gradient(145deg, var(--layout-accent-color, rgba(200,50,50,0.7)), rgba(0,0,0,0.4))`,
+                                   backdropFilter: "blur(20px)",
+                                   WebkitBackdropFilter: "blur(20px)",
+                                   padding: `${pvh(0.9)}px`,
+                                   boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                                   border: "1px solid rgba(255,255,255,0.1)",
+                                   display: "flex",
+                                   flexDirection: "column",
+                                   gap: `${pvh(0.6)}px`,
+                                   zIndex: 2,
+                                   position: "relative",
+                                   flexShrink: 0,
+                                 }}>
                                  <div className="flex items-start justify-between" style={{ gap: `${pvh(0.6)}px`, minWidth: 0 }}>
                                    <div style={{ minWidth: 0, flex: 1 }}>
                                      <div className="flex items-center justify-center" style={{ gap: `${pvh(0.35)}px`, minWidth: 0 }}>
