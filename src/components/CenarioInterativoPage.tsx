@@ -1568,10 +1568,36 @@ export default function CenarioInterativoPage() {
                       {/* Artist/Background Image Layer */}
                       <div className="absolute inset-0" style={{ zIndex: 2 }}>
                         {artistBgUrl && !isBreakTrack ? (
-                          <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "saturate(1.2) brightness(0.7)" }} />
+                          <div className="absolute inset-0">
+                            <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "saturate(1.2) brightness(0.7)" }} />
+                            {config.home.artistOverlayEnabled && (
+                              <div className="absolute inset-0" style={{ opacity: (config.home.artistOverlayOpacity ?? 60) / 100, background: config.home.artistOverlayColor || "#000000" }} />
+                            )}
+                          </div>
                         ) : config.home.bgImage ? (
                           <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />
                         ) : null}
+                      </div>
+
+                      {/* Program Thumb Layer */}
+                      <div className="absolute inset-0" style={{ zIndex: 3 }}>
+                        {(currentProgram?.thumb || currentProgram?.capa) && (
+                          <div className="absolute inset-0">
+                            <img 
+                              src={(currentProgram.thumb || currentProgram.capa) as string} 
+                              alt="" 
+                              className="absolute inset-0 w-full h-full object-cover" 
+                              style={{ 
+                                filter: config.bgAlternateMode ? "brightness(0.7)" : "blur(22px) brightness(0.7)", 
+                                objectPosition: config.programThumbPosition || "center",
+                                opacity: config.bgAlternateMode ? 1 : 0.8 // Em modo estático fica com blur atrás
+                              }} 
+                            />
+                            {config.thumbOverlayEnabled && (
+                              <div className="absolute inset-0" style={{ opacity: (config.thumbOverlayOpacity ?? 60) / 100, background: config.thumbOverlayColor || "#000000" }} />
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
