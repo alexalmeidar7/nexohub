@@ -1246,6 +1246,13 @@ export default function CenarioInterativoPage() {
                             <Trash2 size={14} />
                           </Button>
                         </div>
+                        <BgImageUpload 
+                          value={config.home.bgImage} 
+                          onChange={(v) => updateHome({ bgImage: v })} 
+                          mutedText={mutedText} 
+                          userId={user?.id} 
+                          category="home-bg" 
+                        />
                         <p className="text-[10px] text-muted-foreground">Use uma imagem de alta resolução (1920x1080) para melhores resultados.</p>
                       </div>
 
@@ -1256,21 +1263,49 @@ export default function CenarioInterativoPage() {
                         </div>
                         
                         {config.home.bgGradient && (
-                          <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <div className="space-y-1.5">
-                              <Label className="text-[10px] font-semibold opacity-70">Cor Inicial</Label>
-                              <div className="flex gap-2 items-center">
-                                <div className="w-6 h-6 rounded border shrink-0" style={{ background: config.home.bgGradientColorA || "#1a1a2e" }} />
-                                <Input className="text-[10px] h-7" value={config.home.bgGradientColorA || "#1a1a2e"} onChange={(e) => updateHome({ bgGradientColorA: e.target.value })} />
+                          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-[10px] font-semibold opacity-70">Cor Inicial</Label>
+                                <div className="flex gap-2 items-center">
+                                  <div className="w-6 h-6 rounded border shrink-0" style={{ background: config.home.bgGradientColorA || "#1a1a2e" }} />
+                                  <Input className="text-[10px] h-7" value={config.home.bgGradientColorA || "#1a1a2e"} onChange={(e) => updateHome({ bgGradientColorA: e.target.value })} />
+                                </div>
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-[10px] font-semibold opacity-70">Cor Final</Label>
+                                <div className="flex gap-2 items-center">
+                                  <div className="w-6 h-6 rounded border shrink-0" style={{ background: config.home.bgGradientColorB || "#16213e" }} />
+                                  <Input className="text-[10px] h-7" value={config.home.bgGradientColorB || "#16213e"} onChange={(e) => updateHome({ bgGradientColorB: e.target.value })} />
+                                </div>
                               </div>
                             </div>
+
                             <div className="space-y-1.5">
-                              <Label className="text-[10px] font-semibold opacity-70">Cor Final</Label>
-                              <div className="flex gap-2 items-center">
-                                <div className="w-6 h-6 rounded border shrink-0" style={{ background: config.home.bgGradientColorB || "#16213e" }} />
-                                <Input className="text-[10px] h-7" value={config.home.bgGradientColorB || "#16213e"} onChange={(e) => updateHome({ bgGradientColorB: e.target.value })} />
-                              </div>
+                              <Label className="text-[10px] font-semibold opacity-70">Tipo de Gradiente</Label>
+                              <Select value={config.home.bgGradientType || "linear"} onValueChange={(v: "linear" | "radial") => updateHome({ bgGradientType: v })}>
+                                <SelectTrigger className="h-7 text-[10px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="linear">Linear</SelectItem>
+                                  <SelectItem value="radial">Radial</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
+
+                            {config.home.bgGradientType !== "radial" && (
+                              <div className="space-y-1.5">
+                                <div className="flex justify-between items-center">
+                                  <Label className="text-[10px] font-semibold opacity-70">Ângulo ({config.home.bgGradientAngle ?? 135}°)</Label>
+                                </div>
+                                <Slider 
+                                  value={[config.home.bgGradientAngle ?? 135]} 
+                                  min={0} max={360} step={1}
+                                  onValueChange={([v]) => updateHome({ bgGradientAngle: v })} 
+                                />
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1428,7 +1463,25 @@ export default function CenarioInterativoPage() {
               <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
                 <div ref={previewWrapRef} className="relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ease-out" style={{ height: "100%", width: "auto", aspectRatio: "9 / 16", background: "#000", transform: `scale(${previewZoom})`, transformOrigin: "top center" }}>
                   <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+                    {/* Render matching CenarioTela visual layers */}
+                    <div className="absolute inset-0" style={{ background: "#000", zIndex: 0 }}>
+                      {/* Gradient Layer */}
+                      <div className="absolute inset-0" style={{ 
+                        background: config.home.bgGradient ? buildHomeGradient(config.home) : "transparent",
+                        zIndex: 1 
+                      }} />
+                      
+                      {/* Artist/Background Image Layer */}
+                      <div className="absolute inset-0" style={{ zIndex: 2 }}>
+                        {artistBgUrl && !isBreakTrack ? (
+                          <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "saturate(1.2) brightness(0.7)" }} />
+                        ) : config.home.bgImage ? (
+                          <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 10 }}>
                       {/* Clock — aligned with progress bar */}
                       <div style={{ position: "absolute", top: `${pvh(3.5)}px`, left: `${pvh(4)}px`, color: "#fff", zIndex: 30, textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
                         <div style={{ fontSize: `${pvh(3.5)}px`, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>
@@ -1439,20 +1492,32 @@ export default function CenarioInterativoPage() {
                         </div>
                       </div>
 
+                      {/* Boxes Area (Simplified Preview) */}
+                      <div style={{ position: "absolute", top: `${pvh(3.5)}px`, right: `${pvh(4)}px`, width: `${pvh(14)}px`, height: `${pvh(14)}px`, borderRadius: `${pvh(2)}px`, overflow: "hidden", background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.2)", zIndex: 20 }}>
+                        {currentProgram?.thumb || currentProgram?.capa ? (
+                          <img src={currentProgram.thumb || currentProgram.capa} className="w-full h-full object-cover" alt="" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[8px] text-white/40 uppercase">Sem Capa</div>
+                        )}
+                      </div>
+
                       {/* Progress bar — elegant, thin, user-accented */}
                       <div style={{ position: "absolute", bottom: `${pvh(1.2)}px`, left: `${pvh(4)}px`, right: `${pvh(4)}px`, height: `${pvh(0.3)}px`, background: "rgba(255,255,255,0.1)", zIndex: 25, overflow: "hidden", borderRadius: "100px" }}>
                         <div style={{ width: `${(() => {
-                          if (!currentProgram) return 0;
+                          if (!currentProgram) return 30; // Default for preview
                           const [sh, sm] = currentProgram.horario_inicio.split(":").map(Number);
                           const [eh, em] = currentProgram.horario_fim.split(":").map(Number);
                           const startMin = sh * 60 + sm;
                           const endMin = eh * 60 + em;
                           const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
                           const total = endMin - startMin;
-                          return total > 0 ? Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100)) : 0;
+                          return total > 0 ? Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100)) : 30;
                         })()}%`, height: "100%", borderRadius: "100px", background: "var(--layout-accent-color, #3b82f6)", transition: "width 1s linear", boxShadow: "0 0 8px var(--layout-accent-color, #3b82f6)" }} />
                       </div>
                     </div>
+                    
+                    {/* Drawing Canvas */}
+                    <canvas ref={previewCanvasRef} className="absolute inset-0 w-full h-full" style={{ zIndex: 40, pointerEvents: previewDrawActive ? "auto" : "none" }} onMouseDown={handlePreviewDrawStart} onMouseMove={handlePreviewDrawMove} onMouseUp={handlePreviewDrawEnd} onMouseLeave={() => previewIsDrawingRef.current && handlePreviewDrawEnd()} onTouchStart={handlePreviewDrawStart} onTouchMove={handlePreviewDrawMove} onTouchEnd={handlePreviewDrawEnd} />
                   </div>
                 </div>
               </div>
