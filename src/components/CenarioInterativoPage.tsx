@@ -2055,8 +2055,8 @@ export default function CenarioInterativoPage() {
 
                              {/* ── TOP-RIGHT: "A seguir" ── */}
                              {nextProgram && (
-                               <div style={{ position: "absolute", top: `${pvh(3)}px`, right: `${pvh(4)}px`, zIndex: 20, textAlign: "right" }}>
-                                 <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.3)}px` }}>a seguir</div>
+                               <div style={{ position: "absolute", top: `${pvh(4)}px`, right: `${pvh(5)}px`, zIndex: 20, textAlign: "right" }}>
+                                 <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.5)}px` }}>a seguir</div>
                                  <div className="font-bold" style={{ fontSize: `${pvh(2.2)}px`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
                                  <div className="font-medium" style={{ fontSize: `${pvh(0.9)}px`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                                </div>
