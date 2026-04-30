@@ -18,7 +18,7 @@ interface TrafficMapProps {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const roundCoord = (value: number) => Math.round(value * 10000) / 10000;
 
-export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove, onPointMove, points = [], activePointId, className, style }: TrafficMapProps) {
+export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove, onPointMove, onPointSelect, points = [], activePointId, className, style }: TrafficMapProps) {
   const [view, setView] = useState(() => ({
     lat: roundCoord(clamp(lat, -85, 85)),
     lon: roundCoord(clamp(lon, -180, 180)),
