@@ -1544,10 +1544,8 @@ export default function CenarioInterativoPage() {
                   <div className="space-y-4">
                     <style>
                       {`
-                        #cenario-bg-configs > div {
-                          border-color: var(--layout-accent-color) !important;
-                          border-width: 2px !important;
-                          border-opacity: 0.6 !important;
+                        #cenario-bg-configs .grid > div {
+                          border-color: color-mix(in srgb, var(--layout-accent-color) 60%, transparent) !important;
                         }
                       `}
                     </style>
