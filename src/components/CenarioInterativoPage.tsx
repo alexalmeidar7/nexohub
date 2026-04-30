@@ -2772,7 +2772,7 @@ export default function CenarioInterativoPage() {
                                        <span className="font-normal" style={{ fontSize: `${pvh(1.05)}px`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram?.apresentador || ""}</span>
                                      </div>
                                    </div>
-                                    {currentProgram?.selo && config.home.showProgramThumb !== false && (
+                                    {currentProgram?.selo && (
                                       <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5.82)}px`, maxWidth: `${pvh(8.74)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
                                     )}
                                  </div>
