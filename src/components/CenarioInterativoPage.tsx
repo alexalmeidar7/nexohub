@@ -1343,7 +1343,7 @@ export default function CenarioInterativoPage() {
                       <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'static' ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${config.bgType === 'static' ? 'bg-blue-500 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'static' ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
                               <Image size={16} />
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">1. Fundo Estático</h4>
@@ -1351,7 +1351,7 @@ export default function CenarioInterativoPage() {
                           <Button 
                             size="sm" 
                             variant={config.bgType === 'static' ? "default" : "outline"} 
-                            className="h-7 text-[10px] font-bold uppercase"
+                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'static' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
                             onClick={() => setConfig(c => ({ ...c, bgType: 'static' }))}
                           >
                             {config.bgType === 'static' ? 'Ativado' : 'Ativar'}
