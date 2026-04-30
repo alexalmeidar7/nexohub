@@ -1699,6 +1699,54 @@ export default function CenarioInterativoPage() {
                                 <span className="text-[10px] opacity-50 uppercase font-extrabold">Dir</span>
                               </div>
                             </div>
+
+                            <div className="space-y-3 p-3 rounded-lg bg-black/5 border border-black/5 mt-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                                    <Palette size={14} />
+                                  </div>
+                                  <Label className="text-[10px] font-bold uppercase">Overlay por cima da Thumb</Label>
+                                </div>
+                                <Switch 
+                                  checked={!!config.thumbOverlayEnabled} 
+                                  onCheckedChange={v => setConfig(c => ({ ...c, thumbOverlayEnabled: v }))} 
+                                  className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                                />
+                              </div>
+
+                              {config.thumbOverlayEnabled && (
+                                <div className="space-y-3 pt-2 animate-in fade-in duration-300">
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                      <Label className="text-[10px] opacity-60 font-bold">Cor do Overlay</Label>
+                                      <div className="flex items-center gap-2">
+                                        <div 
+                                          className="w-8 h-8 rounded border shadow-sm shrink-0" 
+                                          style={{ background: config.thumbOverlayColor || "#000000" }} 
+                                        />
+                                        <Input 
+                                          type="text"
+                                          value={config.thumbOverlayColor || "#000000"}
+                                          onChange={e => setConfig(c => ({ ...c, thumbOverlayColor: e.target.value }))}
+                                          className="h-8 text-[10px] font-mono"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                      <Label className="text-[10px] opacity-60 font-bold">Opacidade ({config.thumbOverlayOpacity ?? 60}%)</Label>
+                                      <Slider 
+                                        value={[config.thumbOverlayOpacity ?? 60]} 
+                                        min={0} 
+                                        max={100} 
+                                        step={1} 
+                                        onValueChange={([v]) => setConfig(c => ({ ...c, thumbOverlayOpacity: v }))}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
