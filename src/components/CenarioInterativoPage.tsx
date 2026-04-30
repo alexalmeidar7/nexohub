@@ -1168,9 +1168,6 @@ export default function CenarioInterativoPage() {
 
   const updateHome = (partial: Partial<HomeConfig>) =>
     setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
-
-  const updateHome = (partial: Partial<HomeConfig>) =>
-    setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
   const updateWeather = (partial: Partial<WeatherConfig>) =>
     setConfig(c => ({ ...c, weather: { ...c.weather, ...partial } }));
   const updateTraffic = (partial: Partial<TrafficConfig>) =>
