@@ -1811,7 +1811,7 @@ export default function CenarioInterativoPage() {
                             value={config.traffic.zoom}
                             onChange={e => updateTraffic({ zoom: parseInt(e.target.value) })}
                             className="flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
-                            style={{ accentColor: "var(--layout-accent-color, #444)" }}
+                            style={{ accentColor: "var(--layout-accent-color, #3b82f6)" }}
                           />
                           <Button
                             size="sm"
