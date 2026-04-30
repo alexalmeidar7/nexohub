@@ -38,6 +38,7 @@ interface TrafficConfig {
   enabled: boolean;
   city: string;
   points: TrafficPoint[];
+  favorites?: TrafficPoint[];
   bgImage: string;
   lat: number | null;
   lon: number | null;
