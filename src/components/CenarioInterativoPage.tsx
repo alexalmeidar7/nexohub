@@ -1470,20 +1470,39 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 4 - Imagem do Artista */}
-                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
-                        <div className="flex items-center gap-2">
-                          <div className={`p-1.5 rounded-lg ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
-                            <Music size={16} />
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={`p-1.5 rounded-lg ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
+                              <Music size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold uppercase tracking-wider">4. Imagem do Artista</h4>
+                              <p className="text-[10px] opacity-50">Exibir capa do álbum (Deezer)</p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider">4. Imagem do Artista</h4>
-                            <p className="text-[10px] opacity-50">Exibir capa do álbum (Deezer)</p>
-                          </div>
+                          <Switch 
+                            checked={!!config.home.showArtistImage} 
+                            onCheckedChange={v => updateHome({ showArtistImage: v })} 
+                          />
                         </div>
-                        <Switch 
-                          checked={!!config.home.showArtistImage} 
-                          onCheckedChange={v => updateHome({ showArtistImage: v })} 
-                        />
+
+                        {config.home.showArtistImage && (
+                          <div className="pt-3 border-t border-[var(--layout-accent-color)]/20 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                                <EyeOff size={14} />
+                              </div>
+                              <Label className="text-[10px] font-bold uppercase">Filtro de Exceções</Label>
+                            </div>
+                            <div className="pl-7 space-y-2">
+                              <p className="text-[10px] leading-relaxed opacity-60">
+                                Força o degradê padrão quando estas palavras aparecem (ex: breaks).
+                              </p>
+                              <ExceptionWordsInput value={config.home.exceptionWords || ""} onSave={v => updateHome({ exceptionWords: v })} />
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* 5 - Alternar Automático */}
@@ -1501,22 +1520,6 @@ export default function CenarioInterativoPage() {
                           checked={!!config.bgAlternateMode} 
                           onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))} 
                         />
-                      </div>
-                    </div>
-
-                    {/* Palavras de Exceção (Extra) */}
-                    <div className="p-4 rounded-xl border bg-white/40 border-black/5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
-                          <EyeOff size={14} />
-                        </div>
-                        <Label className="text-xs font-bold uppercase">Filtro de Exceções</Label>
-                      </div>
-                      <div className="space-y-2 pl-7">
-                        <p className="text-[10px] leading-relaxed opacity-60">
-                          Força o degradê padrão quando estas palavras aparecem (ex: breaks).
-                        </p>
-                        <ExceptionWordsInput value={config.home.exceptionWords || ""} onSave={v => updateHome({ exceptionWords: v })} />
                       </div>
                     </div>
                   </div>
