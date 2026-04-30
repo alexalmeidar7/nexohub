@@ -1210,7 +1210,17 @@ export default function CenarioInterativoPage() {
               <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
                 <div ref={previewWrapRef} className="relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ease-out" style={{ height: "100%", width: "auto", aspectRatio: "9 / 16", background: "#000", transform: `scale(${previewZoom})`, transformOrigin: "top center" }}>
                   <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex" }}>
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+                      {/* Clock — aligned with progress bar */}
+                      <div style={{ position: "absolute", top: `${pvh(3.5)}px`, left: `${pvh(4)}px`, color: "#fff", zIndex: 30, textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+                        <div style={{ fontSize: `${pvh(3.5)}px`, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>
+                          {currentTime.getHours().toString().padStart(2, "0")}:{currentTime.getMinutes().toString().padStart(2, "0")}
+                        </div>
+                        <div style={{ fontSize: `${pvh(1.2)}px`, fontWeight: 600, opacity: 0.8, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "2px" }}>
+                          {currentTime.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}
+                        </div>
+                      </div>
+
                       {/* Progress bar — elegant, thin, user-accented */}
                       <div style={{ position: "absolute", bottom: `${pvh(1.2)}px`, left: `${pvh(4)}px`, right: `${pvh(4)}px`, height: `${pvh(0.3)}px`, background: "rgba(255,255,255,0.1)", zIndex: 25, overflow: "hidden", borderRadius: "100px" }}>
                         <div style={{ width: `${(() => {
