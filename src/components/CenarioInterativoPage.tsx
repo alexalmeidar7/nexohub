@@ -74,7 +74,7 @@ interface HomeConfig {
 interface CenarioConfig {
   city: string;
   useProgramThumbAsBg?: boolean;
-  programThumbPosition?: "left" | "center" | "right";
+  programThumbPosition?: string;
   bgAlternateMode?: boolean;
   bgType?: "static" | "gradient" | "thumb" | "none";
   home: HomeConfig;
