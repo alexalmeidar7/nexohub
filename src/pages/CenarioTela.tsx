@@ -1288,7 +1288,7 @@ export default function CenarioTela() {
                       src={prevArtistBgUrl}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(0.7)", transition: "opacity 1.2s ease-in-out" }}
                     />
                   )}
                   {isHomeOrChat && artistBgUrl && (
@@ -1296,7 +1296,7 @@ export default function CenarioTela() {
                       src={artistBgUrl}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(0.7)", transition: "opacity 1.2s ease-in-out" }}
                       onLoad={() => setArtistBgReady(true)}
                     />
                   )}
