@@ -15,7 +15,7 @@ serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
-    // Action: geocode - search cities
+    // Action: geocode - search cities and addresses
     if (action === "geocode") {
       const { query, count } = body;
       if (!query || query.trim().length < 2) {
@@ -23,11 +23,29 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const res = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=${count || 5}&language=pt`
-      );
+      
+      // We use Nominatim (OpenStreetMap) for better address search instead of Open-Meteo geocoding which is city-focused
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=${count || 5}&addressdetails=1&accept-language=pt-BR`;
+      
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "LovableVMIX/1.0",
+        }
+      });
+      
       const data = await res.json();
-      return new Response(JSON.stringify({ results: data.results || [] }), {
+      
+      // Transform Nominatim data to match the previous structure
+      const results = data.map((item: any) => ({
+        name: item.display_name.split(',')[0], // Extract first part as name
+        display_name: item.display_name,
+        latitude: parseFloat(item.lat),
+        longitude: parseFloat(item.lon),
+        admin1: item.address?.state || item.address?.city || "",
+        country: item.address?.country || ""
+      }));
+
+      return new Response(JSON.stringify({ results }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
