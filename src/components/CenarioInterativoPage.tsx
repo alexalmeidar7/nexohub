@@ -1851,7 +1851,7 @@ export default function CenarioInterativoPage() {
                 <span className="text-[10px] font-mono text-white/80 w-8 text-center">{Math.round(previewZoom * 100)}%</span>
               </div>
 
-              <div className="flex-1 min-h-0 flex items-start justify-center w-full overflow-hidden pb-8">
+              <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
                 <div
                   ref={previewWrapRef}
                   className="relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ease-out"
