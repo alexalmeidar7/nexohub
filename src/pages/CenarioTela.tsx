@@ -1510,7 +1510,7 @@ export default function CenarioTela() {
                   {/* WRAPPER: BOXES + CONTROLS */}
                   <div style={{
                     position: "absolute",
-                    top: `${vhToPx(3.5)}${vu}`,
+                    top: `calc(${vhToPx(3.5)}${vu} - 2px)`,
                     right: `${vhToPx(4)}${vu}`,
                     display: "flex",
                     flexDirection: "column",
