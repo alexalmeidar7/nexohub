@@ -2740,7 +2740,7 @@ export default function CenarioInterativoPage() {
                              {(() => {
                                const showProgram = config.home.showProgramThumb !== false;
                                const showMusic = !!musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false;
-                               const currentPhase = (showProgram && showMusic) ? (Math.floor(currentTime.getTime() / 8000) % 2 === 0 ? "program" : "music") : (showProgram ? "program" : "music");
+                               const currentPhase = (showProgram && showMusic) ? (Math.floor(Date.now() / 8000) % 2 === 0 ? "program" : "music") : (showProgram ? "program" : "music");
                                
                                return (
                                  <div style={{
