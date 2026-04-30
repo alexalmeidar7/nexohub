@@ -1875,7 +1875,6 @@ export default function CenarioInterativoPage() {
                             />
                           </div>
                         </div>
-                        </div>
                       </div>
                     </div>
                   </div>
