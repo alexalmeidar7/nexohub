@@ -1958,10 +1958,13 @@ export default function CenarioInterativoPage() {
                       </div>
                     )}
                     {!((activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled)) && (() => {
-                      const useThumb = !!config.useProgramThumbAsBg && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat");
+                      const bgType = config.bgType || "static";
+                      const useThumb = bgType === "thumb" && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat");
+                      const useGradient = bgType === "gradient" && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat");
                       const thumbSrc = currentProgram?.thumb || currentProgram?.capa || "";
+                      
                       return (
-                        <div className="absolute inset-0" style={{ background: activeTab === "home" ? (config.home.bgGradient ? buildHomeGradient(config.home) : (config.home.bgImage ? "#e8e8e8" : "#000")) : "#e8e8e8", zIndex: 0 }}>
+                        <div className="absolute inset-0" style={{ background: useGradient ? buildHomeGradient(config.home) : (bgType === "static" && config.home.bgImage ? "#e8e8e8" : "#000"), zIndex: 0 }}>
                           {useThumb && thumbSrc && (
                             <>
                               <img 
@@ -1977,7 +1980,9 @@ export default function CenarioInterativoPage() {
                               <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
                             </>
                           )}
-                          {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                          {bgType === "static" && config.home.bgImage && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
+                            <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                          )}
                           {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                           {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                           {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
