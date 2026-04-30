@@ -1300,6 +1300,15 @@ export default function CenarioTela() {
                       onLoad={() => setArtistBgReady(true)}
                     />
                   )}
+                  {config.home.artistOverlayEnabled && (
+                    <div 
+                      className="absolute inset-0 transition-opacity duration-1000" 
+                      style={{ 
+                        opacity: artistVisible ? (config.home.artistOverlayOpacity ?? 60) / 100 : 0,
+                        background: config.home.artistOverlayColor || "#000000"
+                      }} 
+                    />
+                  )}
                 </div>
 
                 {/* Camada 3: Thumb do programa (fica por cima da camada 1 e 2) */}
