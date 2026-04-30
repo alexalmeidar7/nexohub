@@ -1536,6 +1536,7 @@ export default function CenarioTela() {
                                   width: `${vhToPx(14)}${vu}`,
                                   height: `${vhToPx(14)}${vu}`,
                                   borderRadius: `${vhToPx(2)}${vu}`,
+                                  overflow: "hidden",
                                    background: `linear-gradient(145deg, ${accentRgba(0.7)}, rgba(0,0,0,0.4))`,
                                    backdropFilter: "blur(20px)",
                                    WebkitBackdropFilter: "blur(20px)",
