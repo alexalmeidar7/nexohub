@@ -1655,8 +1655,7 @@ export default function CenarioTela() {
                           )}
                         </div>
                       );
-                    );
-                  })()}
+                    })()}
 
                       {/* ── CONTROLS: Removidos conforme solicitado ── */}
 
