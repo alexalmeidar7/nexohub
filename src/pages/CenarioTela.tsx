@@ -1525,20 +1525,21 @@ export default function CenarioTela() {
                       gap: `${vhToPx(1)}${vu}`,
                     }}>
                       {/* BOX DO LOCUTOR: quadrado 1:1 (always on top) */}
-                      <div style={{
-                              width: `${vhToPx(20)}${vu}`,
-                              height: `${vhToPx(20)}${vu}`,
-                              borderRadius: `${vhToPx(2)}${vu}`,
-                               background: `linear-gradient(145deg, ${accentRgba(0.7)}, rgba(0,0,0,0.4))`,
-                               backdropFilter: "blur(20px)",
-                               WebkitBackdropFilter: "blur(20px)",
-                               padding: `${vhToPx(0.9)}${vu}`,
-                               boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-                               border: "1px solid rgba(255,255,255,0.1)",
-                             zIndex: 2,
-                             position: "relative",
-                             flexShrink: 0,
-                           }}>
+                      {config.home.showProgramThumb !== false && (
+                        <div style={{
+                                width: `${vhToPx(20)}${vu}`,
+                                height: `${vhToPx(20)}${vu}`,
+                                borderRadius: `${vhToPx(2)}${vu}`,
+                                 background: `linear-gradient(145deg, ${accentRgba(0.7)}, rgba(0,0,0,0.4))`,
+                                 backdropFilter: "blur(20px)",
+                                 WebkitBackdropFilter: "blur(20px)",
+                                 padding: `${vhToPx(0.9)}${vu}`,
+                                 boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                                 border: "1px solid rgba(255,255,255,0.1)",
+                               zIndex: 2,
+                               position: "relative",
+                               flexShrink: 0,
+                             }}>
                         {/* Presenter photo anchored at bottom, overflows top */}
                         {(() => {
                           const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
@@ -1571,7 +1572,7 @@ export default function CenarioTela() {
                           );
                         })()}
                         {/* Selo top-right */}
-                        {currentProgram?.selo && config.home.showProgramThumb !== false && (
+                        {currentProgram?.selo && (
                           <img src={currentProgram.selo} alt="" style={{ position: "absolute", top: `${vhToPx(0.8)}${vu}`, right: `${vhToPx(0.8)}${vu}`, maxHeight: `${vhToPx(5.82)}${vu}`, maxWidth: `${vhToPx(8.74)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))", zIndex: 3 }} />
                         )}
                         {/* Presenter name at bottom */}
@@ -1582,6 +1583,7 @@ export default function CenarioTela() {
                           </div>
                         </div>
                       </div>
+                      )}
 
                       {/* ── BOX CAPA: music cover with title overlay ── */}
                       {musicData?.capa && !isBreakTrack && !(isJornalistico && !!config.useProgramThumbAsBg && !!(currentProgram?.thumb || currentProgram?.capa)) && config.home.showMusicCover !== false && (
