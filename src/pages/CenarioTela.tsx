@@ -1509,12 +1509,11 @@ export default function CenarioTela() {
                   {/* WRAPPER: BOXES + CONTROLS */}
                   <div style={{
                     position: "absolute",
-                    bottom: `${vhToPx(37.75)}${vu}`,
-                    left: "50%",
-                    transform: "translateX(-50%)",
+                    top: `${vhToPx(3.5)}${vu}`,
+                    right: `${vhToPx(4)}${vu}`,
                     display: "flex",
                     flexDirection: "column",
-                    alignItems: "center",
+                    alignItems: "flex-end",
                     gap: `${vhToPx(2)}${vu}`,
                     zIndex: 15,
                   }}>
