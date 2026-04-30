@@ -1870,7 +1870,7 @@ export default function CenarioInterativoPage() {
                 >
                 <div className="absolute inset-0 overflow-hidden">
                   {/* Virtual 1080×1920 canvas, scaled to fit — mirrors CenarioTela exactly */}
-                  <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
+                  <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left", position: "absolute", top: "50%", left: "50%", translate: "-50% -50%" }}>
                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${pvh(1.8)}px` }}>
 
                     {/* Fullscreen background layers */}
