@@ -761,16 +761,19 @@ export default function CenarioInterativoPage() {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    // Mirror to external screen
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab, subTab: weatherSubTab, currencySubTab });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab, subTab: weatherSubTab, currencySubTab } });
   };
   const handleWeatherSubTabChange = (sub: string) => {
     setWeatherSubTab(sub);
+    // Mirror subtab change to external screen
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "weather", subTab: sub, currencySubTab });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "weather", subTab: sub, currencySubTab } });
   };
   const handleCurrencySubTabChange = (sub: "moedas" | "bolsas") => {
     setCurrencySubTab(sub);
+    // Mirror subtab change to external screen
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "currency", subTab: weatherSubTab, currencySubTab: sub });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "currency", subTab: weatherSubTab, currencySubTab: sub } });
   };
@@ -1163,24 +1166,8 @@ export default function CenarioInterativoPage() {
     };
   }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab, externalRotation]);
 
-  const handleTabChange = useCallback((t: string) => {
-    setActiveTab(t);
-  }, []);
-
-  const handleWeatherSubTabChange = useCallback((st: string) => {
-    setWeatherSubTab(st);
-  }, []);
-
-  const handleCurrencySubTabChange = useCallback((st: "moedas" | "bolsas") => {
-    setCurrencySubTab(st);
-    // Mirror currency subtab change to external screen
-    rtDrawChannelRef.current?.send({ 
-      type: "broadcast", 
-      event: "tab-change", 
-      payload: { tab: "currency", currencySubTab: st } 
-    });
-    cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "currency", currencySubTab: st });
-  }, []);
+  const updateHome = (partial: Partial<HomeConfig>) =>
+    setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
 
   const updateHome = (partial: Partial<HomeConfig>) =>
     setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
@@ -1273,16 +1260,7 @@ export default function CenarioInterativoPage() {
               </div>
             </div>
 
-            <Tabs value={activeTab} onValueChange={(t) => {
-              handleTabChange(t);
-              // Mirror to external screen
-              rtDrawChannelRef.current?.send({ 
-                type: "broadcast", 
-                event: "tab-change", 
-                payload: { tab: t } 
-              });
-              cenarioBcRef.current?.postMessage({ type: "tab-change", tab: t });
-            }}>
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="w-full grid grid-cols-5 mb-4" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
                 <TabsTrigger value="home" className="text-xs gap-1 data-[state=active]:shadow-sm"><Home size={14} /> Home</TabsTrigger>
                 <TabsTrigger value="weather" className="text-xs gap-1 data-[state=active]:shadow-sm"><CloudSun size={14} /> Tempo</TabsTrigger>
