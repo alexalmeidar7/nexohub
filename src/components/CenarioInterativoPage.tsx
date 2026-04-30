@@ -1550,7 +1550,6 @@ export default function CenarioInterativoPage() {
                       `}
                     </style>
                     <div id="cenario-bg-configs" className="space-y-4">
-                    </div>
                     <div className="px-1 py-1 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="p-1 rounded bg-black/5">
