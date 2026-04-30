@@ -1214,6 +1214,34 @@ export default function CenarioInterativoPage() {
     updateCurrency({ currencies: has ? config.currency.currencies.filter(c => c !== code) : [...config.currency.currencies, code] });
   };
 
+  const handleTrafficCityInput = async (query: string) => {
+    setTrafficSearchCity(query);
+    if (query.length < 2) {
+      setTrafficCitySuggestions([]);
+      return;
+    }
+    setIsSearchingCity(true);
+    try {
+      const { data } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query, count: 5 },
+      });
+      if (data?.results) setTrafficCitySuggestions(data.results);
+    } catch (err) {
+      console.error("City search error:", err);
+    }
+    setIsSearchingCity(false);
+  };
+
+  const selectTrafficCity = (city: any) => {
+    const cityName = city.name;
+    const { latitude, longitude } = city;
+    setTrafficSearchCity(cityName);
+    setTrafficCitySuggestions([]);
+    setTrafficCoords({ lat: latitude, lon: longitude });
+    updateTraffic({ city: cityName, lat: latitude, lon: longitude, zoom: 12 });
+    if (!config.city) setConfig(c => ({ ...c, city: cityName }));
+  };
+
   const handleTrafficSearch = async () => {
     if (!trafficSearchCity.trim()) return;
     setWeatherLoading(true);
@@ -1227,10 +1255,7 @@ export default function CenarioInterativoPage() {
         const cityName = trafficSearchCity.trim();
         setTrafficCoords({ lat: latitude, lon: longitude });
         updateTraffic({ city: cityName, lat: latitude, lon: longitude, zoom: 12 });
-        // Update main city if not set, following the pattern of preserving the "last city"
-        if (!config.city) {
-          setConfig(c => ({ ...c, city: cityName }));
-        }
+        if (!config.city) setConfig(c => ({ ...c, city: cityName }));
       } else {
         toast.error("Cidade não encontrada");
       }
