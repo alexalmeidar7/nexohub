@@ -1479,7 +1479,7 @@ export default function CenarioTela() {
                          zIndex: 20,
                          textShadow: "0 2px 10px rgba(0,0,0,0.5)",
                        }}>
-                         <div style={{ fontSize: `${vhToPx(3.5)}${vu}`, fontWeight: 800, lineHeight: 1, fontFamily: "monospace", letterSpacing: "-0.02em" }}>
+                         <div style={{ fontSize: `${vhToPx(3.5)}${vu}`, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>
                            {h}:{m}<span style={{ opacity: 0.6, fontSize: "0.7em", marginLeft: "2px" }}>{s}</span>
                          </div>
                          <div style={{ fontSize: `${vhToPx(1.2)}${vu}`, fontWeight: 600, opacity: 0.8, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "2px" }}>
