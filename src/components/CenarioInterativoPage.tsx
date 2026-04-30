@@ -1343,7 +1343,7 @@ export default function CenarioInterativoPage() {
                       <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'static' ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${config.bgType === 'static' ? 'bg-blue-500 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'static' ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
                               <Image size={16} />
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">1. Fundo Estático</h4>
@@ -1351,7 +1351,7 @@ export default function CenarioInterativoPage() {
                           <Button 
                             size="sm" 
                             variant={config.bgType === 'static' ? "default" : "outline"} 
-                            className="h-7 text-[10px] font-bold uppercase"
+                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'static' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
                             onClick={() => setConfig(c => ({ ...c, bgType: 'static' }))}
                           >
                             {config.bgType === 'static' ? 'Ativado' : 'Ativar'}
@@ -1361,10 +1361,10 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 2 - Fundo Degradê */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'gradient' ? 'bg-purple-50/30 border-purple-200' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'gradient' ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${config.bgType === 'gradient' ? 'bg-purple-500 text-white' : 'bg-purple-500/10 text-purple-600'}`}>
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'gradient' ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
                               <Palette size={16} />
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">2. Fundo Degradê</h4>
@@ -1372,7 +1372,7 @@ export default function CenarioInterativoPage() {
                           <Button 
                             size="sm" 
                             variant={config.bgType === 'gradient' ? "default" : "outline"} 
-                            className="h-7 text-[10px] font-bold uppercase"
+                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'gradient' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
                             onClick={() => {
                               setConfig(c => ({ ...c, bgType: 'gradient' }));
                               updateHome({ bgGradient: true });
@@ -1400,10 +1400,10 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 3 - Fundo Thumb */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'thumb' ? 'bg-indigo-50/30 border-indigo-200' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'thumb' ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${config.bgType === 'thumb' ? 'bg-indigo-500 text-white' : 'bg-indigo-500/10 text-indigo-600'}`}>
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'thumb' ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
                               <Shapes size={16} />
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">3. Fundo Thumb Programa</h4>
@@ -1411,7 +1411,7 @@ export default function CenarioInterativoPage() {
                           <Button 
                             size="sm" 
                             variant={config.bgType === 'thumb' ? "default" : "outline"} 
-                            className="h-7 text-[10px] font-bold uppercase"
+                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'thumb' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
                             onClick={() => {
                               setConfig(c => ({ ...c, bgType: 'thumb', useProgramThumbAsBg: true }));
                             }}
@@ -1456,9 +1456,9 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 4 - Imagem do Artista */}
-                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.home.showArtistImage ? 'bg-amber-50/30 border-amber-200' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.home.showArtistImage ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center gap-2">
-                          <div className={`p-1.5 rounded-lg ${config.home.showArtistImage ? 'bg-amber-500 text-white' : 'bg-amber-500/10 text-amber-600'}`}>
+                          <div className={`p-1.5 rounded-lg ${config.home.showArtistImage ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
                             <Music size={16} />
                           </div>
                           <div>
@@ -1473,9 +1473,9 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 5 - Alternar Automático */}
-                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.bgAlternateMode ? 'bg-emerald-50/30 border-emerald-200' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.bgAlternateMode ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center gap-2">
-                          <div className={`p-1.5 rounded-lg ${config.bgAlternateMode ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-emerald-600'}`}>
+                          <div className={`p-1.5 rounded-lg ${config.bgAlternateMode ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
                             <RefreshCw size={16} />
                           </div>
                           <div>
