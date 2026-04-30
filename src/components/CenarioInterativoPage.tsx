@@ -66,6 +66,9 @@ interface HomeConfig {
   exceptionWords?: string;
   elementPositions?: Record<string, ElementPosition>;
   showArtistImage?: boolean;
+  artistOverlayEnabled?: boolean;
+  artistOverlayColor?: string;
+  artistOverlayOpacity?: number;
 }
 
 interface CenarioConfig {
