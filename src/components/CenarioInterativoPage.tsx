@@ -1294,10 +1294,26 @@ export default function CenarioInterativoPage() {
   const selectAddress = (addr: any) => {
     const lat = addr.latitude;
     const lon = addr.longitude;
+    const addressName = addr.name || "";
     setTrafficCoords({ lat, lon });
     updateTraffic({ lat, lon, zoom: 15 });
-    setTrafficSearchAddress(addr.name || "");
+    setTrafficSearchAddress(addressName);
     setAddressSuggestions([]);
+
+    // Automatically add point when selecting from autocomplete
+    const newPoint: TrafficPoint = {
+      id: Math.random().toString(36).substring(2, 9),
+      label: addressName,
+      lat,
+      lng: lon,
+    };
+    updateTraffic({ 
+      lat, 
+      lon, 
+      zoom: 15,
+      points: [...config.traffic.points, newPoint] 
+    });
+    toast.success("Endereço marcado no mapa");
   };
 
   const addTrafficPoint = () => {
