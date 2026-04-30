@@ -1527,101 +1527,135 @@ export default function CenarioTela() {
                       return (
                         <div style={{
                           display: "flex",
-                          alignItems: "stretch",
-                          gap: `${vhToPx(1)}${vu}`,
-                          position: "relative"
+                          flexDirection: "column",
+                          alignItems: "flex-end",
+                          zIndex: 15,
                         }}>
-                          {/* BOX DO LOCUTOR: quadrado 1:1 (always on top) */}
                           <div style={{
-                                  width: `${vhToPx(14)}${vu}`,
-                                  height: `${vhToPx(14)}${vu}`,
-                                  borderRadius: `${vhToPx(2)}${vu}`,
-                                  overflow: "hidden",
-                                   background: `linear-gradient(145deg, ${accentRgba(0.7)}, rgba(0,0,0,0.4))`,
-                                   backdropFilter: "blur(20px)",
-                                   WebkitBackdropFilter: "blur(20px)",
-                                   padding: `${vhToPx(0.9)}${vu}`,
-                                   boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-                                   border: "1px solid rgba(255,255,255,0.1)",
-                                 zIndex: 2,
-                                 flexShrink: 0,
-                                 opacity: showProgram && currentPhase === "program" ? 1 : 0,
-                                 visibility: showProgram && currentPhase === "program" ? "visible" : "hidden",
-                                 transition: "opacity 0.8s ease, visibility 0.8s",
-                                 position: showProgram && currentPhase === "program" ? "relative" : "absolute"
-                               }}>
-                            {/* Presenter photo anchored at bottom, overflows top */}
-                            {(() => {
-                              const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
-                              const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
-                              if (!activeFoto) return null;
-                              return (
-                                <>
-                                  <img
-                                    key={activeFoto}
-                                    src={activeFoto}
-                                    alt=""
-                                    style={{
-                                      position: "absolute",
-                                      bottom: "0",
-                                      left: "50%",
-                                      transform: "translateX(-50%)",
-                                      height: "100%",
-                                      width: "auto",
-                                      objectFit: "contain",
-                                      objectPosition: "bottom center",
-                                      filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
-                                      pointerEvents: "none",
-                                      zIndex: 1,
-                                      animation: "presenter-enter 0.8s cubic-bezier(0.16,1,0.3,1) both",
-                                    }}
-                                  />
-                                </>
-                              );
-                            })()}
-                            {/* Selo top-right */}
-                            {currentProgram?.selo && (
-                              <img src={currentProgram.selo} alt="" style={{ position: "absolute", top: `${vhToPx(0.8)}${vu}`, right: `${vhToPx(0.8)}${vu}`, maxHeight: `${vhToPx(5.82)}${vu}`, maxWidth: `${vhToPx(8.74)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))", zIndex: 3 }} />
-                            )}
-                            {/* Presenter name at bottom */}
-                            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${vhToPx(1.5)}${vu}`, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", zIndex: 3 }}>
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.4)}${vu}` }}>
-                                <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
-                                <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
+                            display: "flex",
+                            alignItems: "stretch",
+                            position: "relative",
+                            width: `${vhToPx(14)}${vu}`,
+                            height: `${vhToPx(14)}${vu}`
+                          }}>
+                            {/* BOX DO LOCUTOR: quadrado 1:1 (always on top) */}
+                            <div style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    borderRadius: `${vhToPx(2)}${vu}`,
+                                    overflow: "hidden",
+                                     background: `linear-gradient(145deg, ${accentRgba(0.7)}, rgba(0,0,0,0.4))`,
+                                     backdropFilter: "blur(20px)",
+                                     WebkitBackdropFilter: "blur(20px)",
+                                     padding: `${vhToPx(0.9)}${vu}`,
+                                     boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                                     border: "1px solid rgba(255,255,255,0.1)",
+                                   zIndex: 2,
+                                   flexShrink: 0,
+                                   opacity: showProgram && currentPhase === "program" ? 1 : 0,
+                                   visibility: showProgram && currentPhase === "program" ? "visible" : "hidden",
+                                   transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                                   transform: `scale(${currentPhase === "program" ? 1 : 0.9}) rotate(${currentPhase === "program" ? 0 : -5}deg)`,
+                                   position: "absolute",
+                                   inset: 0
+                                 }}>
+                              {/* Presenter photo anchored at bottom, overflows top */}
+                              {(() => {
+                                const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
+                                const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
+                                if (!activeFoto) return null;
+                                return (
+                                  <>
+                                    <img
+                                      key={activeFoto}
+                                      src={activeFoto}
+                                      alt=""
+                                      style={{
+                                        position: "absolute",
+                                        bottom: "0",
+                                        left: "50%",
+                                        transform: "translateX(-50%)",
+                                        height: "100%",
+                                        width: "auto",
+                                        objectFit: "contain",
+                                        objectPosition: "bottom center",
+                                        filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
+                                        pointerEvents: "none",
+                                        zIndex: 1,
+                                        animation: "presenter-enter 0.8s cubic-bezier(0.16,1,0.3,1) both",
+                                      }}
+                                    />
+                                  </>
+                                );
+                              })()}
+                              {/* Selo top-right */}
+                              {currentProgram?.selo && (
+                                <img src={currentProgram.selo} alt="" style={{ position: "absolute", top: `${vhToPx(0.8)}${vu}`, right: `${vhToPx(0.8)}${vu}`, maxHeight: `${vhToPx(5.82)}${vu}`, maxWidth: `${vhToPx(8.74)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))", zIndex: 3 }} />
+                              )}
+                              {/* Presenter name at bottom */}
+                              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${vhToPx(1.5)}${vu}`, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", zIndex: 3 }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.4)}${vu}` }}>
+                                  <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
+                                  <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
+                                </div>
                               </div>
+                            </div>
+
+                            {/* ── BOX CAPA: music album art ── */}
+                            <div
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                borderRadius: `${vhToPx(2)}${vu}`,
+                                overflow: "hidden",
+                                flexShrink: 0,
+                                zIndex: 1,
+                                opacity: showMusic && currentPhase === "music" ? 1 : 0,
+                                visibility: showMusic && currentPhase === "music" ? "visible" : "hidden",
+                                transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                                transform: `scale(${currentPhase === "music" ? 1 : 0.9}) rotate(${currentPhase === "music" ? 0 : 5}deg)`,
+                                position: "absolute",
+                                inset: 0,
+                                boxShadow: "0 8px 32px rgba(0,0,0,0.4)"
+                              }}
+                            >
+                              {musicData?.capa && (
+                                <img
+                                  src={musicData.capa}
+                                  alt=""
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                    borderRadius: `${vhToPx(2)}${vu}`,
+                                  }}
+                                />
+                              )}
                             </div>
                           </div>
 
-                          {/* ── BOX CAPA: music album art ── */}
-                          <div
-                            style={{
-                              width: `${vhToPx(14)}${vu}`,
-                              height: `${vhToPx(14)}${vu}`,
-                              borderRadius: `${vhToPx(2)}${vu}`,
-                              overflow: "hidden",
-                              flexShrink: 0,
-                              zIndex: 1,
-                              opacity: showMusic && currentPhase === "music" ? 1 : 0,
-                              visibility: showMusic && currentPhase === "music" ? "visible" : "hidden",
-                              transition: "opacity 0.8s ease, visibility 0.8s",
-                              position: showMusic && currentPhase === "music" ? "relative" : "absolute",
-                              right: 0
-                            }}
-                          >
-                            {musicData?.capa && (
-                              <img
-                                src={musicData.capa}
-                                alt=""
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                  borderRadius: `${vhToPx(2)}${vu}`,
-                                }}
-                              />
-                            )}
-                          </div>
+                          {/* ── Music Details (Text below cover) ── */}
+                          {musicData && (
+                            <div style={{
+                              marginTop: `${vhToPx(1)}${vu}`,
+                              textAlign: "right",
+                              width: "100%",
+                              opacity: currentPhase === "music" ? 1 : 0,
+                              transform: `translateY(${currentPhase === "music" ? 0 : vhToPx(1) + vu})`,
+                              transition: "opacity 0.8s ease, transform 0.8s ease",
+                              visibility: currentPhase === "music" ? "visible" : "hidden"
+                            }}>
+                              <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+                                {musicData.titulo}
+                              </div>
+                              <div style={{ fontWeight: 700, fontSize: `${vhToPx(1)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.2)}${vu}`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                                {musicData.artista}
+                              </div>
+                            </div>
+                          )}
                         </div>
+                      );
+                    })()}
                       );
                     })()}
 
