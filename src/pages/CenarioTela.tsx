@@ -13,7 +13,7 @@ interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3D
 interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage: string; lat: number | null; lon: number | null; zoom: number; }
 interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
-interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; exceptionWords?: string; elementPositions?: Record<string, { x: number; y: number; scale: number }>; artistOverlayEnabled?: boolean; artistOverlayColor?: string; artistOverlayOpacity?: number; }
+interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; exceptionWords?: string; elementPositions?: Record<string, { x: number; y: number; scale: number }>; artistOverlayEnabled?: boolean; artistOverlayColor?: string; artistOverlayOpacity?: number; showMusicCover?: boolean; showProgramThumb?: boolean; }
 interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; programThumbPosition?: string; thumbOverlayEnabled?: boolean; thumbOverlayColor?: string; thumbOverlayOpacity?: number; bgAlternateMode?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
 
 function buildHomeGradient(h: HomeConfig): string {
@@ -1288,7 +1288,7 @@ export default function CenarioTela() {
                       src={prevArtistBgUrl}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(0.7)", transition: "opacity 1.2s ease-in-out" }}
                     />
                   )}
                   {isHomeOrChat && artistBgUrl && (
@@ -1296,7 +1296,7 @@ export default function CenarioTela() {
                       src={artistBgUrl}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(1.2)", transition: "opacity 1.2s ease-in-out" }}
+                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(0.7)", transition: "opacity 1.2s ease-in-out" }}
                       onLoad={() => setArtistBgReady(true)}
                     />
                   )}
@@ -1315,7 +1315,7 @@ export default function CenarioTela() {
                 <div className="absolute inset-0" style={{ zIndex: 3 }}>
                   {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
                     <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
-                      <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(1.2)", objectPosition: config.programThumbPosition || "center" } : { filter: "blur(22px) brightness(1.2)", transform: "scale(1.1)", objectPosition: config.programThumbPosition || "center" }} />
+                      <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(0.7)", objectPosition: config.programThumbPosition || "center" } : { filter: "blur(22px) brightness(0.7)", transform: "scale(1.1)", objectPosition: config.programThumbPosition || "center" }} />
                       {config.thumbOverlayEnabled && (
                         <div 
                           className="absolute inset-0 transition-opacity duration-1000" 
@@ -1331,11 +1331,11 @@ export default function CenarioTela() {
 
                 {/* Fundo de imagem padrão se nada estiver ativo */}
                 <div className="absolute inset-0" style={{ zIndex: 0 }}>
-                  {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                  {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />}
+                  {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />}
                   
-                  {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                  {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />}
+                  {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />}
                 </div>
               </div>
             );
@@ -1344,53 +1344,53 @@ export default function CenarioTela() {
           {/* Sidebar — always on top */}
           <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
           <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} 0`, marginLeft: "-1px" }}>
-            <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "home" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "home" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
+            <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "home" ? accentRgba(0.85) : "rgba(0,0,0,0.8)", border: activeTab === "home" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Home style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
             <div className="flex flex-col items-center" style={{ padding: `${vhToPx(0.4)}${vu}`, opacity: config.weather.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
-              <button onClick={() => { if (activeTab === "weather") { setActiveTab("home"); } else { setActiveTab("weather"); setWeatherSubTab("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "weather" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "weather" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
+              <button onClick={() => { if (activeTab === "weather") { setActiveTab("home"); } else { setActiveTab("weather"); setWeatherSubTab("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "weather" ? accentRgba(0.85) : "rgba(0,0,0,0.8)", border: activeTab === "weather" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
                 <CloudSun style={{ width: iconSize, height: iconSize }} className="text-white" />
               </button>
               <div style={{ overflow: "hidden", maxHeight: activeTab === "weather" ? `${vhToPx(20)}${vu}` : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "weather" ? 1 : 0 }}>
                 <div className="flex flex-col items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, paddingTop: `${vhToPx(0.4)}${vu}` }}>
                   {config.weather.enabled && config.weather.showCurrent && (
-                    <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("today"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "weather" && weatherSubTab === "today" ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: activeTab === "weather" && weatherSubTab === "today" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>1</button>
+                    <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("today"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "weather" && weatherSubTab === "today" ? accentRgba(0.2) : "rgba(0,0,0,0.8)", border: activeTab === "weather" && weatherSubTab === "today" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>1</button>
                   )}
                   {config.weather.enabled && config.weather.showForecast3Days && (
-                    <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("forecast"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "weather" && weatherSubTab === "forecast" ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: activeTab === "weather" && weatherSubTab === "forecast" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>2</button>
+                    <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("forecast"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "weather" && weatherSubTab === "forecast" ? accentRgba(0.2) : "rgba(0,0,0,0.8)", border: activeTab === "weather" && weatherSubTab === "forecast" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>2</button>
                   )}
                   {config.weather.enabled && config.weather.showSatellite && (
-                    <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("satellite"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "weather" && weatherSubTab === "satellite" ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: activeTab === "weather" && weatherSubTab === "satellite" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>3</button>
+                    <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("satellite"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "weather" && weatherSubTab === "satellite" ? accentRgba(0.2) : "rgba(0,0,0,0.8)", border: activeTab === "weather" && weatherSubTab === "satellite" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>3</button>
                   )}
                 </div>
               </div>
             </div>
-            <button onClick={() => setActiveTab("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: activeTab === "traffic" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
+            <button onClick={() => setActiveTab("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: activeTab === "traffic" ? accentRgba(0.85) : "rgba(0,0,0,0.8)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Car style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
             <div className="flex flex-col items-center" style={{ padding: `${vhToPx(0.4)}${vu}`, opacity: config.currency.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
-              <button onClick={() => { if (activeTab === "currency") { setActiveTab("home"); } else { setActiveTab("currency"); setCurrencySubTab("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "currency" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", border: activeTab === "currency" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
+              <button onClick={() => { if (activeTab === "currency") { setActiveTab("home"); } else { setActiveTab("currency"); setCurrencySubTab("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "currency" ? accentRgba(0.85) : "rgba(0,0,0,0.8)", border: activeTab === "currency" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
                 <DollarSign style={{ width: iconSize, height: iconSize }} className="text-white" />
               </button>
               <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? `${vhToPx(10)}${vu}` : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
                 <div className="flex flex-col items-center" style={{ gap: `${vhToPx(0.4)}${vu}`, paddingTop: `${vhToPx(0.4)}${vu}` }}>
                   {config.currency.enabled && (
-                    <button onClick={() => { setActiveTab("currency"); setCurrencySubTab("moedas"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "currency" && currencySubTab === "moedas" ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: activeTab === "currency" && currencySubTab === "moedas" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>1</button>
+                    <button onClick={() => { setActiveTab("currency"); setCurrencySubTab("moedas"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "currency" && currencySubTab === "moedas" ? accentRgba(0.2) : "rgba(0,0,0,0.8)", border: activeTab === "currency" && currencySubTab === "moedas" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>1</button>
                   )}
                   {config.currency.enabled && (
-                    <button onClick={() => { setActiveTab("currency"); setCurrencySubTab("bolsas"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "currency" && currencySubTab === "bolsas" ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: activeTab === "currency" && currencySubTab === "bolsas" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>2</button>
+                    <button onClick={() => { setActiveTab("currency"); setCurrencySubTab("bolsas"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, fontSize: subFontSize, background: activeTab === "currency" && currencySubTab === "bolsas" ? accentRgba(0.2) : "rgba(0,0,0,0.8)", border: activeTab === "currency" && currencySubTab === "bolsas" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>2</button>
                   )}
                 </div>
               </div>
             </div>
-            <button onClick={() => setActiveTab("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "chat" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
+            <button onClick={() => setActiveTab("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "chat" ? accentRgba(0.85) : "rgba(0,0,0,0.8)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <MessageCircle style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
-            <button onClick={() => { setDrawingActive(p => { const next = !p; if (!next) setShowDrawOptions(false); return next; }); }} onContextMenu={(e) => { e.preventDefault(); if (drawingActive) setShowDrawOptions(p => !p); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: drawingActive ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: drawingActive ? `2px solid ${accentColor}` : "2px solid transparent", transition: "all 0.25s ease" }}>
+            <button onClick={() => { setDrawingActive(p => { const next = !p; if (!next) setShowDrawOptions(false); return next; }); }} onContextMenu={(e) => { e.preventDefault(); if (drawingActive) setShowDrawOptions(p => !p); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: drawingActive ? accentRgba(0.2) : "rgba(0,0,0,0.8)", border: drawingActive ? `2px solid ${accentColor}` : "2px solid transparent", transition: "all 0.25s ease" }}>
               <Pen style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
             {drawingActive && (
-              <button onClick={() => setShowDrawOptions(p => !p)} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, background: showDrawOptions ? accentRgba(0.2) : "rgba(255,255,255,0.1)", border: showDrawOptions ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>
+              <button onClick={() => setShowDrawOptions(p => !p)} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: subBtnSize, height: subBtnSize, background: showDrawOptions ? accentRgba(0.2) : "rgba(0,0,0,0.8)", border: showDrawOptions ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent", transition: "all 0.25s ease" }}>
                 <div style={{ width: `${vhToPx(1.2)}${vu}`, height: `${vhToPx(1.2)}${vu}`, borderRadius: "50%", background: drawColor }} />
               </button>
             )}
@@ -1462,7 +1462,7 @@ export default function CenarioTela() {
                 <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: "transparent", color: "#fff", overflow: "hidden" }}>
                   {/* Background already rendered as a full-canvas layer behind sidebar */}
 
-                   {/* ── Relógio Digital (Top Right) ── */}
+                   {/* ── Relógio Digital (Top Left) ── */}
                    {(() => {
                      const h = currentTime.getHours().toString().padStart(2, "0");
                      const m = currentTime.getMinutes().toString().padStart(2, "0");
@@ -1471,10 +1471,10 @@ export default function CenarioTela() {
                        <div style={{
                          position: "absolute",
                          top: `${vhToPx(3.5)}${vu}`,
-                         right: `${vhToPx(4)}${vu}`,
+                         left: `${vhToPx(4)}${vu}`,
                          display: "flex",
                          flexDirection: "column",
-                         alignItems: "flex-end",
+                         alignItems: "flex-start",
                          color: "#fff",
                          zIndex: 20,
                          textShadow: "0 2px 10px rgba(0,0,0,0.5)",
@@ -1489,18 +1489,18 @@ export default function CenarioTela() {
                       );
                     })()}
 
-                  {/* Status Sync (Top Left) */}
-                  <div style={{ position: "absolute", top: `${vhToPx(3.5)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
+                  {/* Status Sync (Bottom Left) */}
+                  <div style={{ position: "absolute", bottom: `${vhToPx(3.5)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
                      <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}`, opacity: 0.7 }}>
-                       <div style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 6px #4ade80" }} />
+                       <div style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, borderRadius: "50%", background: accentColor, boxShadow: `0 0 6px ${accentColor}` }} />
                        <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff" }}>SYNC</span>
                      </div>
                    </div>
 
-                  {/* TOP-RIGHT: "A seguir" (Abaixo do relógio) */}
+                  {/* BOTTOM-RIGHT: "A seguir" */}
                   {nextProgram && (
-                     <div style={{ position: "absolute", top: `${vhToPx(9.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
-                       <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: "var(--layout-accent-color, #888)", marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
+                     <div style={{ position: "absolute", bottom: `${vhToPx(3.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
+                       <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
                        <div style={{ fontWeight: 700, fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, color: "#fff" }}>{nextProgram.nome}</div>
                        <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                      </div>
@@ -1571,7 +1571,7 @@ export default function CenarioTela() {
                           );
                         })()}
                         {/* Selo top-right */}
-                        {currentProgram?.selo && (
+                        {currentProgram?.selo && config.home.showProgramThumb !== false && (
                           <img src={currentProgram.selo} alt="" style={{ position: "absolute", top: `${vhToPx(0.8)}${vu}`, right: `${vhToPx(0.8)}${vu}`, maxHeight: `${vhToPx(5.82)}${vu}`, maxWidth: `${vhToPx(8.74)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))", zIndex: 3 }} />
                         )}
                         {/* Presenter name at bottom */}
@@ -1584,7 +1584,7 @@ export default function CenarioTela() {
                       </div>
 
                       {/* ── BOX CAPA: music cover with title overlay ── */}
-                      {musicData?.capa && !isBreakTrack && !(isJornalistico && !!config.useProgramThumbAsBg && !!(currentProgram?.thumb || currentProgram?.capa)) && (
+                      {musicData?.capa && !isBreakTrack && !(isJornalistico && !!config.useProgramThumbAsBg && !!(currentProgram?.thumb || currentProgram?.capa)) && config.home.showMusicCover !== false && (
                         <div
                           key={musicData.capa}
                           style={{
