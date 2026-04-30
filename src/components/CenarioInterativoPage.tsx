@@ -1521,6 +1521,7 @@ export default function CenarioInterativoPage() {
                           onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))} 
                         />
                       </div>
+                    </div>
                   </div>
                 </div>
               </TabsContent>
