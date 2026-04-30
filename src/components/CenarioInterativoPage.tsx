@@ -2801,8 +2801,9 @@ export default function CenarioInterativoPage() {
                                    ) : currentProgram ? (
                                      <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram.nome}</div>
                                    ) : null}
-                                 </div>
-                               </div>
+                                  </div>
+                                </div>
+                               )}
 
                                {/* ── BOX CAPA: slides out from behind locutor ── */}
                                {musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false && (
