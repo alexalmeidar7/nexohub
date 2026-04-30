@@ -787,6 +787,7 @@ export default function CenarioInterativoPage() {
   const [trafficSearchAddress, setTrafficSearchAddress] = useState("");
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const [activeTrafficPointId, setActiveTrafficPointId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -1265,7 +1266,13 @@ export default function CenarioInterativoPage() {
   const goToTrafficPoint = (p: TrafficPoint) => {
     setTrafficCoords({ lat: p.lat, lon: p.lng });
     updateTraffic({ lat: p.lat, lon: p.lng, zoom: 15 });
+    setActiveTrafficPointId(p.id);
     toast.info(`Navegando para: ${p.label}`);
+    
+    // Auto clear active state after some time
+    setTimeout(() => {
+      setActiveTrafficPointId(null);
+    }, 4000);
   };
 
   const toggleCurrency = (code: string) => {
@@ -2406,6 +2413,7 @@ export default function CenarioInterativoPage() {
                           zoom={config.traffic.zoom} 
                           interactive 
                           points={config.traffic.points}
+                          activePointId={activeTrafficPointId}
                           onMove={(lat, lon, zoom) => updateTraffic({ lat, lon, zoom })} 
                           onPointMove={(id, lat, lon) => updateTrafficPointPosition(id, lat, lon)}
                         />

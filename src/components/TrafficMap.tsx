@@ -9,6 +9,7 @@ interface TrafficMapProps {
   onMove?: (lat: number, lon: number, zoom: number) => void;
   onPointMove?: (id: string, lat: number, lon: number) => void;
   points?: { id: string, lat: number, lng: number }[];
+  activePointId?: string | null;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -16,7 +17,7 @@ interface TrafficMapProps {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const roundCoord = (value: number) => Math.round(value * 10000) / 10000;
 
-export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove, onPointMove, points = [], className, style }: TrafficMapProps) {
+export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove, onPointMove, points = [], activePointId, className, style }: TrafficMapProps) {
   const [view, setView] = useState(() => ({
     lat: roundCoord(clamp(lat, -85, 85)),
     lon: roundCoord(clamp(lon, -180, 180)),
@@ -24,22 +25,36 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
   }));
   const [isDragging, setIsDragging] = useState(false);
   const [dragPointId, setDragPointId] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [lastViewChange, setLastViewChange] = useState(0);
 
   useEffect(() => {
-    setView((prev) => {
-      const next = {
-        lat: roundCoord(clamp(lat, -85, 85)),
-        lon: roundCoord(clamp(lon, -180, 180)),
-        zoom: clamp(Math.round(zoom), 3, 15),
-      };
+    const next = {
+      lat: roundCoord(clamp(lat, -85, 85)),
+      lon: roundCoord(clamp(lon, -180, 180)),
+      zoom: clamp(Math.round(zoom), 3, 15),
+    };
 
+    setView((prev) => {
       if (prev.lat === next.lat && prev.lon === next.lon && prev.zoom === next.zoom) {
         return prev;
       }
-
+      setIsNavigating(true);
+      setLastViewChange(Date.now());
       return next;
     });
   }, [lat, lon, zoom]);
+
+  // Monitor when navigation finishes
+  useEffect(() => {
+    if (!isNavigating) return;
+    const timer = setTimeout(() => {
+      if (Date.now() - lastViewChange >= 1000) {
+        setIsNavigating(false);
+      }
+    }, 1100);
+    return () => clearTimeout(timer);
+  }, [isNavigating, lastViewChange]);
 
   const panStep = useMemo(() => {
     return Math.max(0.0035, 1.35 / Math.pow(2, Math.max(view.zoom - 3, 0) / 1.9));
@@ -136,10 +151,15 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
       />
       {interactive && (
         <div 
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
           style={{ zIndex: 5 }}
         >
-          <div className="text-[var(--layout-accent-color, #3b82f6)] animate-bounce">
+          {isNavigating && (
+            <div className="absolute top-[30%] bg-background/80 backdrop-blur-sm px-4 py-1.5 rounded-full border border-border/50 text-[10px] font-bold uppercase tracking-widest text-muted-foreground animate-pulse shadow-lg">
+              Navegando...
+            </div>
+          )}
+          <div className={`text-[var(--layout-accent-color, #3b82f6)] ${!dragPointId && !isNavigating ? 'animate-bounce' : ''}`}>
             <MapPin size={32} strokeWidth={3} fill="white" />
           </div>
         </div>
@@ -161,14 +181,16 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
         // Only show if within view bounds
         if (top < 0 || top > 100 || left < 0 || left > 100) return null;
 
+        const isActive = activePointId === p.id;
+
         return (
           <div
             key={p.id}
-            className="absolute cursor-move group"
+            className={`absolute cursor-move group transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
             style={{ 
               top: `${top}%`, 
               left: `${left}%`, 
-              zIndex: dragPointId === p.id ? 20 : 10,
+              zIndex: (dragPointId === p.id || isActive) ? 30 : 10,
               transform: "translate(-50%, -100%)",
               pointerEvents: "auto"
             }}
@@ -178,15 +200,18 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
               setDragPointId(p.id);
             }}
           >
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center relative">
+              {isActive && (
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-[var(--layout-accent-color)]/20 rounded-full animate-ping pointer-events-none" />
+              )}
               <div className="bg-white px-2 py-0.5 rounded shadow text-[10px] font-bold mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                 Arraste para mover
               </div>
               <MapPin 
-                size={24} 
-                className={dragPointId === p.id ? "text-red-500 scale-125" : "text-[var(--layout-accent-color)]"} 
+                size={isActive ? 32 : 24} 
+                className={dragPointId === p.id ? "text-red-500" : isActive ? "text-[var(--layout-accent-color)]" : "text-[var(--layout-accent-color)]/70"} 
                 style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
-                fill="white"
+                fill={isActive ? "white" : "rgba(255,255,255,0.7)"}
               />
             </div>
           </div>
