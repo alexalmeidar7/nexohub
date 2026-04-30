@@ -1596,9 +1596,9 @@ export default function CenarioTela() {
                       {/* ── CONTROLS: Removidos conforme solicitado ── */}
 
 
-                      {/* ── EXCEPTIONS: below artist image button ── */}
+                      {/* ── EXCEPTIONS: hidden ── */}
                       {config.home.exceptionWords && (
-                        <div style={{ textAlign: "center", maxWidth: `${vhToPx(40)}${vu}`, marginTop: `${vhToPx(0.5)}${vu}` }}>
+                        <div style={{ textAlign: "center", maxWidth: `${vhToPx(40)}${vu}`, marginTop: `${vhToPx(0.5)}${vu}`, display: "none" }}>
                           <span style={{ fontSize: `${vhToPx(0.8)}${vu}`, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", fontWeight: 600 }}>Exceções: </span>
                           <span style={{ fontSize: `${vhToPx(0.8)}${vu}`, color: "rgba(255,255,255,0.3)" }}>{config.home.exceptionWords}</span>
                         </div>
