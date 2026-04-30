@@ -8,6 +8,7 @@ interface TrafficMapProps {
   interactive?: boolean;
   onMove?: (lat: number, lon: number, zoom: number) => void;
   onPointMove?: (id: string, lat: number, lon: number) => void;
+  onPointSelect?: (id: string) => void;
   points?: { id: string, lat: number, lng: number }[];
   activePointId?: string | null;
   className?: string;
@@ -17,7 +18,7 @@ interface TrafficMapProps {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const roundCoord = (value: number) => Math.round(value * 10000) / 10000;
 
-export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove, onPointMove, points = [], activePointId, className, style }: TrafficMapProps) {
+export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove, onPointMove, onPointSelect, points = [], activePointId, className, style }: TrafficMapProps) {
   const [view, setView] = useState(() => ({
     lat: roundCoord(clamp(lat, -85, 85)),
     lon: roundCoord(clamp(lon, -180, 180)),
@@ -186,13 +187,17 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
         return (
           <div
             key={p.id}
-            className={`absolute cursor-move group transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
+            className={`absolute cursor-pointer group transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
             style={{ 
               top: `${top}%`, 
               left: `${left}%`, 
               zIndex: (dragPointId === p.id || isActive) ? 30 : 10,
               transform: "translate(-50%, -100%)",
               pointerEvents: "auto"
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPointSelect?.(p.id);
             }}
             onMouseDown={(e) => {
               e.stopPropagation();

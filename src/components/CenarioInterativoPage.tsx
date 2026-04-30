@@ -2416,6 +2416,10 @@ export default function CenarioInterativoPage() {
                           activePointId={activeTrafficPointId}
                           onMove={(lat, lon, zoom) => updateTraffic({ lat, lon, zoom })} 
                           onPointMove={(id, lat, lon) => updateTrafficPointPosition(id, lat, lon)}
+                          onPointSelect={(id) => {
+                            const p = config.traffic.points.find(pt => pt.id === id);
+                            if (p) goToTrafficPoint(p);
+                          }}
                         />
                       </div>
                     )}
