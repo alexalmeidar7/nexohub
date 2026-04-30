@@ -1625,7 +1625,20 @@ export default function CenarioInterativoPage() {
                       {/* Boxes Area (Simplified Preview) */}
                       <div style={{ position: "absolute", top: `${pvh(3.5)}px`, right: `${pvh(4)}px`, width: `${pvh(14)}px`, height: `${pvh(14)}px`, borderRadius: `${pvh(2)}px`, overflow: "hidden", background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.2)", zIndex: 20 }}>
                         {currentProgram?.thumb || currentProgram?.capa ? (
-                          <img src={currentProgram.thumb || currentProgram.capa} className="w-full h-full object-cover" alt="" />
+                          <div className="w-full h-full relative">
+                            <img src={currentProgram.thumb || currentProgram.capa} className="w-full h-full object-cover" alt="" />
+                            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${pvh(0.5)}px`, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", textAlign: "center" }}>
+                              <div style={{ fontSize: `${pvh(0.8)}px`, color: "#fff", fontWeight: 700 }}>
+                                {(() => {
+                                  const instagrams = currentProgram?.apresentadoresInstagrams || [];
+                                  const activeInstagram = instagrams.length > 0 
+                                    ? instagrams[presenterIdx % instagrams.length] 
+                                    : (currentProgram?.apresentadorInstagram || "nexohub_oficial");
+                                  return activeInstagram.startsWith('@') ? activeInstagram : `@${activeInstagram}`;
+                                })()}
+                              </div>
+                            </div>
+                          </div>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[8px] text-white/40 uppercase">Sem Capa</div>
                         )}
