@@ -1341,56 +1341,94 @@ export default function CenarioInterativoPage() {
 
                   {/* Configurações Visuais de Fundo */}
                   <div className="space-y-4">
-                    <div className="px-1 py-1 flex items-center gap-2">
-                      <div className="p-1 rounded bg-black/5">
-                        <Palette size={14} className="opacity-60" />
+                    <div className="px-1 py-1 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1 rounded bg-black/5">
+                          <Palette size={14} className="opacity-60" />
+                        </div>
+                        <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-60">Configuração do Fundo</h4>
                       </div>
-                      <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-60">Configuração do Fundo</h4>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-[9px] uppercase font-bold opacity-60 hover:opacity-100"
+                          onClick={() => setOpenSections({})}
+                        >
+                          Fechar Tudo
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-[9px] uppercase font-bold opacity-60 hover:opacity-100"
+                          onClick={() => setOpenSections({ static: true, gradient: true, thumb: true, artist: true, alternate: true })}
+                        >
+                          Abrir Tudo
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
                       {/* 1 - Fundo Estático */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-black/10'}`}>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                          <button 
+                            className="flex items-center gap-2 flex-1 text-left"
+                            onClick={() => setOpenSections(prev => ({ ...prev, static: !prev.static }))}
+                          >
                             <div className={`p-1.5 rounded-lg ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
                               <Image size={16} />
                             </div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider">1. Fundo Estático</h4>
+                            <div className="flex flex-col">
+                              <h4 className="text-xs font-bold uppercase tracking-wider">1. Fundo Estático</h4>
+                            </div>
+                            {openSections.static ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
+                          </button>
+                          <div className="pl-4 border-l border-black/5 ml-2">
+                            <Switch 
+                              checked={config.bgType === 'static'} 
+                              onCheckedChange={(checked) => setConfig(c => ({ ...c, bgType: checked ? 'static' : 'none' }))}
+                              className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                            />
                           </div>
-                          <Switch 
-                            checked={config.bgType === 'static'} 
-                            onCheckedChange={(checked) => setConfig(c => ({ ...c, bgType: checked ? 'static' : 'none' }))}
-                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
-                          />
                         </div>
-                        <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
+                        {openSections.static && (
+                          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                            <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
+                          </div>
+                        )}
                       </div>
 
                       {/* 2 - Fundo Degradê */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'gradient' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'gradient' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-black/10'}`}>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                          <button 
+                            className="flex items-center gap-2 flex-1 text-left"
+                            onClick={() => setOpenSections(prev => ({ ...prev, gradient: !prev.gradient }))}
+                          >
                             <div className={`p-1.5 rounded-lg ${config.bgType === 'gradient' ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
                               <Palette size={16} />
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">2. Fundo Degradê</h4>
+                            {openSections.gradient ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
+                          </button>
+                          <div className="pl-4 border-l border-black/5 ml-2">
+                            <Switch 
+                              checked={config.bgType === 'gradient'} 
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setConfig(c => ({ ...c, bgType: 'gradient' }));
+                                  updateHome({ bgGradient: true });
+                                } else {
+                                  setConfig(c => ({ ...c, bgType: 'none' }));
+                                }
+                              }}
+                              className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                            />
                           </div>
-                          <Switch 
-                            checked={config.bgType === 'gradient'} 
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setConfig(c => ({ ...c, bgType: 'gradient' }));
-                                updateHome({ bgGradient: true });
-                              } else {
-                                setConfig(c => ({ ...c, bgType: 'none' }));
-                              }
-                            }}
-                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
-                          />
                         </div>
                         
-                        {config.bgType === 'gradient' && (
+                        {openSections.gradient && config.bgType === 'gradient' && (
                           <div className="space-y-3 pt-1 animate-in slide-in-from-top-2 duration-300">
                             <GradientPicker
                               colorA={config.home.bgGradientColorA || "#1a1a2e"}
@@ -1408,28 +1446,34 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 3 - Fundo Thumb */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-black/10'}`}>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                          <button 
+                            className="flex items-center gap-2 flex-1 text-left"
+                            onClick={() => setOpenSections(prev => ({ ...prev, thumb: !prev.thumb }))}
+                          >
                             <div className={`p-1.5 rounded-lg ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
                               <Shapes size={16} />
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">3. Fundo Thumb Programa</h4>
+                            {openSections.thumb ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
+                          </button>
+                          <div className="pl-4 border-l border-black/5 ml-2">
+                            <Switch 
+                              checked={config.bgType === 'thumb'} 
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setConfig(c => ({ ...c, bgType: 'thumb', useProgramThumbAsBg: true }));
+                                } else {
+                                  setConfig(c => ({ ...c, bgType: 'none' }));
+                                }
+                              }}
+                              className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                            />
                           </div>
-                          <Switch 
-                            checked={config.bgType === 'thumb'} 
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setConfig(c => ({ ...c, bgType: 'thumb', useProgramThumbAsBg: true }));
-                              } else {
-                                setConfig(c => ({ ...c, bgType: 'none' }));
-                              }
-                            }}
-                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
-                          />
                         </div>
                         
-                        {config.bgType === 'thumb' && (
+                        {openSections.thumb && config.bgType === 'thumb' && (
                           <div className="space-y-3 pt-2 animate-in slide-in-from-top-2 duration-300 border-t border-black/5 mt-1">
                             <div className="flex flex-col gap-2">
                               <Label className="text-[10px] font-bold uppercase opacity-60">Ajustar Alinhamento</Label>
@@ -1468,9 +1512,12 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 4 - Imagem do Artista */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-black/10'}`}>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                          <button 
+                            className="flex items-center gap-2 flex-1 text-left"
+                            onClick={() => setOpenSections(prev => ({ ...prev, artist: !prev.artist }))}
+                          >
                             <div className={`p-1.5 rounded-lg ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
                               <Music size={16} />
                             </div>
@@ -1478,15 +1525,18 @@ export default function CenarioInterativoPage() {
                               <h4 className="text-xs font-bold uppercase tracking-wider">4. Imagem do Artista</h4>
                               <p className="text-[10px] opacity-50">Exibir capa do álbum (Deezer)</p>
                             </div>
+                            {openSections.artist ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
+                          </button>
+                          <div className="pl-4 border-l border-black/5 ml-2">
+                            <Switch 
+                              checked={!!config.home.showArtistImage} 
+                              onCheckedChange={v => updateHome({ showArtistImage: v })} 
+                              className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                            />
                           </div>
-                          <Switch 
-                            checked={!!config.home.showArtistImage} 
-                            onCheckedChange={v => updateHome({ showArtistImage: v })} 
-                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
-                          />
                         </div>
 
-                        {config.home.showArtistImage && (
+                        {openSections.artist && config.home.showArtistImage && (
                           <div className="pt-3 border-t border-[var(--layout-accent-color)]/20 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div className="flex items-center gap-2 mb-1">
                               <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
@@ -1505,22 +1555,32 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 5 - Alternar Automático */}
-                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.bgAlternateMode ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
-                        <div className="flex items-center gap-2">
-                          <div className={`p-1.5 rounded-lg ${config.bgAlternateMode ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
-                            <RefreshCw size={16} />
-                          </div>
-                          <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider">5. Alternância Automática</h4>
-                            <p className="text-[10px] opacity-50">Alternar entre as opções ativas acima</p>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgAlternateMode ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-black/10'}`}>
+                        <div className="flex items-center justify-between">
+                          <button 
+                            className="flex items-center gap-2 flex-1 text-left"
+                            onClick={() => setOpenSections(prev => ({ ...prev, alternate: !prev.alternate }))}
+                          >
+                            <div className={`p-1.5 rounded-lg ${config.bgAlternateMode ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
+                              <RefreshCw size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold uppercase tracking-wider">5. Alternância Automática</h4>
+                              <p className="text-[10px] opacity-50">Alternar entre as opções ativas acima</p>
+                            </div>
+                            {openSections.alternate ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
+                          </button>
+                          <div className="pl-4 border-l border-black/5 ml-2">
+                            <Switch 
+                              checked={!!config.bgAlternateMode} 
+                              onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))} 
+                              className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                            />
                           </div>
                         </div>
-                        <Switch 
-                          checked={!!config.bgAlternateMode} 
-                          onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))} 
-                          className="data-[state=checked]:bg-[var(--layout-accent-color)]"
-                        />
                       </div>
+                    </div>
+                  </div>
                     </div>
                   </div>
                 </div>
