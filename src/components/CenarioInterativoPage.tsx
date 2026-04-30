@@ -1435,7 +1435,7 @@ export default function CenarioInterativoPage() {
                                 <Button 
                                   size="sm" 
                                   variant={config.programThumbPosition === 'left' ? "default" : "outline"}
-                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'left' ? 'hover:opacity-90' : ''}`}
+                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'left' ? 'hover:opacity-90' : 'hover:bg-[var(--layout-accent-color)]/10 hover:text-[var(--layout-accent-color)] border-[var(--layout-accent-color)]/30 text-[var(--layout-accent-color)]'}`}
                                   style={config.programThumbPosition === 'left' ? { backgroundColor: 'var(--layout-accent-color)', color: accentContrast } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'left' }))}
                                 >
@@ -1444,7 +1444,7 @@ export default function CenarioInterativoPage() {
                                 <Button 
                                   size="sm" 
                                   variant={config.programThumbPosition === 'center' ? "default" : "outline"}
-                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'center' ? 'hover:opacity-90' : ''}`}
+                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'center' ? 'hover:opacity-90' : 'hover:bg-[var(--layout-accent-color)]/10 hover:text-[var(--layout-accent-color)] border-[var(--layout-accent-color)]/30 text-[var(--layout-accent-color)]'}`}
                                   style={config.programThumbPosition === 'center' ? { backgroundColor: 'var(--layout-accent-color)', color: accentContrast } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'center' }))}
                                 >
@@ -1453,7 +1453,7 @@ export default function CenarioInterativoPage() {
                                 <Button 
                                   size="sm" 
                                   variant={config.programThumbPosition === 'right' ? "default" : "outline"}
-                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'right' ? 'hover:opacity-90' : ''}`}
+                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'right' ? 'hover:opacity-90' : 'hover:bg-[var(--layout-accent-color)]/10 hover:text-[var(--layout-accent-color)] border-[var(--layout-accent-color)]/30 text-[var(--layout-accent-color)]'}`}
                                   style={config.programThumbPosition === 'right' ? { backgroundColor: 'var(--layout-accent-color)', color: accentContrast } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'right' }))}
                                 >
