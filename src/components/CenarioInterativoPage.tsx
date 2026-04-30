@@ -1163,39 +1163,256 @@ export default function CenarioInterativoPage() {
                 <TabsTrigger value="currency" className="text-xs gap-1 data-[state=active]:shadow-sm"><DollarSign size={14} /> Cotação</TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs gap-1 data-[state=active]:shadow-sm"><MessageCircle size={14} /> Chat</TabsTrigger>
               </TabsList>
-              <TabsContent value="home" className="space-y-5 animate-in fade-in-50 duration-500">
-                <div className="relative overflow-hidden rounded-xl border p-4 transition-all" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 3%, var(--layout-page-bg, #ffffff))", borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-primary/10 text-primary"><Clock size={16} /></div>
-                      <div>
-                        <h4 className="text-sm font-bold leading-none">Programa no ar</h4>
-                        <p className="text-[10px] opacity-60 mt-1 uppercase tracking-wider font-semibold">Monitoramento em tempo real</p>
+                <div className="space-y-6">
+                  {/* Programa no Ar Card */}
+                  <div className="relative overflow-hidden rounded-xl border p-4 transition-all" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 3%, var(--layout-page-bg, #ffffff))", borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-primary/10 text-primary"><Clock size={16} /></div>
+                        <div>
+                          <h4 className="text-sm font-bold leading-none">Programa no ar</h4>
+                          <p className="text-[10px] opacity-60 mt-1 uppercase tracking-wider font-semibold">Monitoramento em tempo real</p>
+                        </div>
                       </div>
+                      {currentProgram && (
+                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-600 text-[10px] font-bold border border-green-500/20">
+                          <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
+                          AO VIVO
+                        </div>
+                      )}
                     </div>
-                    {currentProgram && (
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-600 text-[10px] font-bold border border-green-500/20">
-                        <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
-                        AO VIVO
+                    {currentProgram ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 rounded-lg overflow-hidden border border-white/20 bg-muted shrink-0">
+                            <img src={currentProgram.thumb || currentProgram.capa || "https://images.unsplash.com/photo-1478737270239-2fccd27ee086?w=100&h=100&fit=crop"} className="h-full w-full object-cover" alt={currentProgram.nome} />
+                          </div>
+                          <div>
+                            <div className="text-sm font-extrabold line-clamp-1">{currentProgram.nome}</div>
+                            <div className="text-xs opacity-70 flex items-center gap-1 mt-0.5"><CalendarDays size={10} /> {currentProgram.horario_inicio} às {currentProgram.horario_fim}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-4 flex flex-col items-center justify-center text-center rounded-lg border-2 border-dashed border-black/5 bg-black/5">
+                        <MonitorPlay size={24} className="opacity-20 mb-2" />
+                        <span className="text-xs font-semibold opacity-40">Nenhum programa detectado no Estúdio FM</span>
                       </div>
                     )}
                   </div>
-                  {currentProgram ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-lg overflow-hidden border border-white/20 bg-muted shrink-0">
-                          <img src={currentProgram.thumb || currentProgram.capa || "https://images.unsplash.com/photo-1478737270239-2fccd27ee086?w=100&h=100&fit=crop"} className="h-full w-full object-cover" alt={currentProgram.nome} />
+
+                  {/* Capas e Visibilidade */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Image size={14} className="text-primary" />
+                      <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Capas e Visibilidade</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
+                        <div className="space-y-0.5">
+                          <Label className="text-xs font-bold">Capa do Programa</Label>
+                          <p className="text-[10px] text-muted-foreground">Alternar com a arte da música</p>
                         </div>
-                        <div>
-                          <div className="text-sm font-extrabold line-clamp-1">{currentProgram.nome}</div>
-                          <div className="text-xs opacity-70 flex items-center gap-1 mt-0.5"><CalendarDays size={10} /> {currentProgram.horario_inicio} às {currentProgram.horario_fim}</div>
+                        <Switch checked={config.home.showProgramThumb} onCheckedChange={(v) => updateHome({ showProgramThumb: v })} />
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
+                        <div className="space-y-0.5">
+                          <Label className="text-xs font-bold">Capa da Música</Label>
+                          <p className="text-[10px] text-muted-foreground">Mostrar arte do álbum (iTunes/Spotify)</p>
+                        </div>
+                        <Switch checked={config.home.showMusicCover} onCheckedChange={(v) => updateHome({ showMusicCover: v })} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fundo e Estética */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Palette size={14} className="text-primary" />
+                      <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Fundo e Estética</h4>
+                    </div>
+                    <div className="space-y-4 p-4 rounded-xl border bg-card/30">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold">Imagem de Fundo (URL)</Label>
+                        <div className="flex gap-2">
+                          <Input 
+                            className="text-xs h-9" 
+                            value={config.home.bgImage} 
+                            onChange={(e) => updateHome({ bgImage: e.target.value })} 
+                            placeholder="https://images.unsplash.com/..."
+                          />
+                          <Button size="icon" variant="outline" className="h-9 w-9 shrink-0" onClick={() => updateHome({ bgImage: "" })}>
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">Use uma imagem de alta resolução (1920x1080) para melhores resultados.</p>
+                      </div>
+
+                      <div className="pt-2 border-t space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-bold">Usar Gradiente no Fundo</Label>
+                          <Switch checked={config.home.bgGradient} onCheckedChange={(v) => updateHome({ bgGradient: v })} />
+                        </div>
+                        
+                        {config.home.bgGradient && (
+                          <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="space-y-1.5">
+                              <Label className="text-[10px] font-semibold opacity-70">Cor Inicial</Label>
+                              <div className="flex gap-2 items-center">
+                                <div className="w-6 h-6 rounded border shrink-0" style={{ background: config.home.bgGradientColorA || "#1a1a2e" }} />
+                                <Input className="text-[10px] h-7" value={config.home.bgGradientColorA || "#1a1a2e"} onChange={(e) => updateHome({ bgGradientColorA: e.target.value })} />
+                              </div>
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label className="text-[10px] font-semibold opacity-70">Cor Final</Label>
+                              <div className="flex gap-2 items-center">
+                                <div className="w-6 h-6 rounded border shrink-0" style={{ background: config.home.bgGradientColorB || "#16213e" }} />
+                                <Input className="text-[10px] h-7" value={config.home.bgGradientColorB || "#16213e"} onChange={(e) => updateHome({ bgGradientColorB: e.target.value })} />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Filtros e Exceções */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Eraser size={14} className="text-primary" />
+                      <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Filtros e Exceções</h4>
+                    </div>
+                    <div className="p-4 rounded-xl border bg-card/30 space-y-3">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold">Palavras de Exceção</Label>
+                        <Input 
+                          className="text-xs" 
+                          placeholder="vinheta, comercial, trilha..." 
+                          value={config.home.exceptionWords} 
+                          onChange={(e) => updateHome({ exceptionWords: e.target.value })}
+                        />
+                        <p className="text-[10px] text-muted-foreground">Músicas que contenham estas palavras no título não mostrarão a capa.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="weather" className="space-y-5 animate-in fade-in-50 duration-500">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-xl border bg-card/30">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500"><CloudSun size={18} /></div>
+                      <div>
+                        <h4 className="text-sm font-bold">Módulo de Previsão do Tempo</h4>
+                        <p className="text-[10px] opacity-60">Exibir clima e temperatura no cenário</p>
+                      </div>
+                    </div>
+                    <Switch checked={config.weather.enabled} onCheckedChange={(v) => updateWeather({ enabled: v })} />
+                  </div>
+
+                  {config.weather.enabled && (
+                    <div className="space-y-4 p-4 rounded-xl border bg-card/30 animate-in fade-in duration-300">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold">Cidade para Previsão</Label>
+                        <Input 
+                          className="text-xs" 
+                          placeholder="Ex: São Paulo, BR" 
+                          value={config.weather.city} 
+                          onChange={(e) => updateWeather({ city: e.target.value })}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex items-center justify-between p-2 rounded-lg border bg-card/50">
+                          <Label className="text-[10px] font-bold">Tempo Atual</Label>
+                          <Switch checked={config.weather.showCurrent} onCheckedChange={(v) => updateWeather({ showCurrent: v })} />
+                        </div>
+                        <div className="flex items-center justify-between p-2 rounded-lg border bg-card/50">
+                          <Label className="text-[10px] font-bold">Previsão 3 Dias</Label>
+                          <Switch checked={config.weather.showForecast3Days} onCheckedChange={(v) => updateWeather({ showForecast3Days: v })} />
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    <div className="py-4 flex flex-col items-center justify-center text-center rounded-lg border-2 border-dashed border-black/5 bg-black/5">
-                      <MonitorPlay size={24} className="opacity-20 mb-2" />
-                      <span className="text-xs font-semibold opacity-40">Nenhum programa detectado no Estúdio FM</span>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="traffic" className="space-y-5 animate-in fade-in-50 duration-500">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-xl border bg-card/30">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-orange-500/10 text-orange-500"><Car size={18} /></div>
+                      <div>
+                        <h4 className="text-sm font-bold">Módulo de Trânsito</h4>
+                        <p className="text-[10px] opacity-60">Exibir mapas e condições de tráfego</p>
+                      </div>
+                    </div>
+                    <Switch checked={config.traffic.enabled} onCheckedChange={(v) => updateTraffic({ enabled: v })} />
+                  </div>
+
+                  {config.traffic.enabled && (
+                    <div className="space-y-4 p-4 rounded-xl border bg-card/30 animate-in fade-in duration-300">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold">Cidade Padrão</Label>
+                        <Input 
+                          className="text-xs" 
+                          placeholder="Ex: Curitiba" 
+                          value={config.traffic.city} 
+                          onChange={(e) => updateTraffic({ city: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold">Zoom do Mapa</Label>
+                        <Slider 
+                          value={[config.traffic.zoom]} 
+                          min={10} max={18} step={1}
+                          onValueChange={([v]) => updateTraffic({ zoom: v })} 
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="currency" className="space-y-5 animate-in fade-in-50 duration-500">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-xl border bg-card/30">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-green-500/10 text-green-500"><DollarSign size={18} /></div>
+                      <div>
+                        <h4 className="text-sm font-bold">Módulo de Cotação</h4>
+                        <p className="text-[10px] opacity-60">Exibir valores de moedas e cripto</p>
+                      </div>
+                    </div>
+                    <Switch checked={config.currency.enabled} onCheckedChange={(v) => updateCurrency({ enabled: v })} />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="chat" className="space-y-5 animate-in fade-in-50 duration-500">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-xl border bg-card/30">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500"><MessageCircle size={18} /></div>
+                      <div>
+                        <h4 className="text-sm font-bold">Módulo de Chat (YouTube)</h4>
+                        <p className="text-[10px] opacity-60">Exibir chat ao vivo no cenário</p>
+                      </div>
+                    </div>
+                    <Switch checked={config.chat.enabled} onCheckedChange={(v) => updateChat({ enabled: v })} />
+                  </div>
+                  
+                  {config.chat.enabled && (
+                    <div className="space-y-4 p-4 rounded-xl border bg-card/30 animate-in fade-in duration-300">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold">URL do Vídeo YouTube</Label>
+                        <Input 
+                          className="text-xs" 
+                          placeholder="https://www.youtube.com/watch?v=..." 
+                          value={config.chat.youtubeVideoUrl} 
+                          onChange={(e) => updateChat({ youtubeVideoUrl: e.target.value })}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
