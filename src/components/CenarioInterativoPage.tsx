@@ -1931,7 +1931,7 @@ export default function CenarioInterativoPage() {
                                   style={{ borderBottomColor: "rgba(0,0,0,0.05)", color: textColor }}
                                 >
                                   <div className="font-bold">{city.name}</div>
-                                  {city.admin1 && <div className="opacity-60">{city.admin1}, {city.country}</div>}
+                                  <div className="opacity-60 text-[10px] truncate">{city.display_name || (city.admin1 ? `${city.admin1}, ${city.country}` : city.country)}</div>
                                 </button>
                               ))}
                             </div>
