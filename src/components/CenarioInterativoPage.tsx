@@ -76,6 +76,9 @@ interface CenarioConfig {
   city: string;
   useProgramThumbAsBg?: boolean;
   programThumbPosition?: string;
+  thumbOverlayEnabled?: boolean;
+  thumbOverlayColor?: string;
+  thumbOverlayOpacity?: number;
   bgAlternateMode?: boolean;
   bgType?: "static" | "gradient" | "thumb" | "none";
   home: HomeConfig;
@@ -1539,6 +1542,15 @@ export default function CenarioInterativoPage() {
 
                   {/* Configurações Visuais de Fundo */}
                   <div className="space-y-4">
+                    <style>
+                      {`
+                        #cenario-bg-configs .grid > div {
+                          border-color: color-mix(in srgb, var(--layout-accent-color) 60%, transparent) !important;
+                        }
+                      `}
+                    </style>
+                    <div id="cenario-bg-configs" className="space-y-4">
+                    </div>
                     <div className="px-1 py-1 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="p-1 rounded bg-black/5">
@@ -1568,7 +1580,7 @@ export default function CenarioInterativoPage() {
 
                     <div className="grid grid-cols-1 gap-4">
                       {/* 1 - Fundo Estático */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-black/10'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
                         <div className="flex items-center justify-between">
                           <button 
                             className="flex items-center gap-2 flex-1 text-left"
@@ -1598,7 +1610,7 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 2 - Fundo Degradê */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'gradient' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-black/10'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'gradient' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
                         <div className="flex items-center justify-between">
                           <button 
                             className="flex items-center gap-2 flex-1 text-left"
@@ -1644,7 +1656,7 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 3 - Fundo Thumb */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-black/10'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
                         <div className="flex items-center justify-between">
                           <button 
                             className="flex items-center gap-2 flex-1 text-left"
@@ -1696,12 +1708,60 @@ export default function CenarioInterativoPage() {
                                 <span className="text-[10px] opacity-50 uppercase font-extrabold">Dir</span>
                               </div>
                             </div>
+
+                            <div className="space-y-3 p-3 rounded-lg bg-black/5 border border-black/5 mt-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                                    <Palette size={14} />
+                                  </div>
+                                  <Label className="text-[10px] font-bold uppercase">Overlay por cima da Thumb</Label>
+                                </div>
+                                <Switch 
+                                  checked={!!config.thumbOverlayEnabled} 
+                                  onCheckedChange={v => setConfig(c => ({ ...c, thumbOverlayEnabled: v }))} 
+                                  className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                                />
+                              </div>
+
+                              {config.thumbOverlayEnabled && (
+                                <div className="space-y-3 pt-2 animate-in fade-in duration-300">
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                      <Label className="text-[10px] opacity-60 font-bold">Cor do Overlay</Label>
+                                      <div className="flex items-center gap-2">
+                                        <div 
+                                          className="w-8 h-8 rounded border shadow-sm shrink-0" 
+                                          style={{ background: config.thumbOverlayColor || "#000000" }} 
+                                        />
+                                        <Input 
+                                          type="text"
+                                          value={config.thumbOverlayColor || "#000000"}
+                                          onChange={e => setConfig(c => ({ ...c, thumbOverlayColor: e.target.value }))}
+                                          className="h-8 text-[10px] font-mono"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                      <Label className="text-[10px] opacity-60 font-bold">Opacidade ({config.thumbOverlayOpacity ?? 60}%)</Label>
+                                      <Slider 
+                                        value={[config.thumbOverlayOpacity ?? 60]} 
+                                        min={0} 
+                                        max={100} 
+                                        step={1} 
+                                        onValueChange={([v]) => setConfig(c => ({ ...c, thumbOverlayOpacity: v }))}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
 
                       {/* 4 - Imagem do Artista */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-black/10'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
                         <div className="flex items-center justify-between">
                           <button 
                             className="flex items-center gap-2 flex-1 text-left"
@@ -1792,7 +1852,7 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 5 - Alternar Automático */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgAlternateMode ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-black/10'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgAlternateMode ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
                         <div className="flex items-center justify-between">
                           <button 
                             className="flex items-center gap-2 flex-1 text-left"
@@ -2443,6 +2503,15 @@ export default function CenarioInterativoPage() {
                                   objectPosition: config.programThumbPosition || "center"
                                 }} 
                               />
+                              {config.thumbOverlayEnabled && (
+                                <div 
+                                  className="absolute inset-0 transition-opacity duration-1000" 
+                                  style={{ 
+                                    opacity: (config.thumbOverlayOpacity ?? 60) / 100,
+                                    background: config.thumbOverlayColor || "#000000"
+                                  }} 
+                                />
+                              )}
                               <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
                             </>
                           )}

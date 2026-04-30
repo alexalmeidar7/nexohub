@@ -14,7 +14,7 @@ interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage
 interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
 interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; exceptionWords?: string; elementPositions?: Record<string, { x: number; y: number; scale: number }>; artistOverlayEnabled?: boolean; artistOverlayColor?: string; artistOverlayOpacity?: number; }
-interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; programThumbPosition?: string; bgAlternateMode?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
+interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; programThumbPosition?: string; thumbOverlayEnabled?: boolean; thumbOverlayColor?: string; thumbOverlayOpacity?: number; bgAlternateMode?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
 
 function buildHomeGradient(h: HomeConfig): string {
   const a = h.bgGradientColorA || "#1a1a2e";
@@ -1316,6 +1316,15 @@ export default function CenarioTela() {
                   {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
                     <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
                       <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(1.2)", objectPosition: config.programThumbPosition || "center" } : { filter: "blur(22px) brightness(1.2)", transform: "scale(1.1)", objectPosition: config.programThumbPosition || "center" }} />
+                      {config.thumbOverlayEnabled && (
+                        <div 
+                          className="absolute inset-0 transition-opacity duration-1000" 
+                          style={{ 
+                            opacity: (config.thumbOverlayOpacity ?? 60) / 100,
+                            background: config.thumbOverlayColor || "#000000"
+                          }} 
+                        />
+                      )}
                     </div>
                   )}
                 </div>
