@@ -629,10 +629,8 @@ export default function CenarioInterativoPage() {
     const el = previewWrapRef.current;
     if (!el) return;
     const measure = () => {
-      // Use fixed aspect ratio and zoom for internal scale calculation
-      const scale = previewIsLandscape
-        ? (1080 * previewZoom) / PREV_H
-        : (1080 * previewZoom) / PREV_W;
+      // Internal scale is always PREV_W / container width to keep proportions fixed
+      const scale = el.clientWidth / PREV_W;
       setPreviewScale(scale || 1);
     };
     measure();
