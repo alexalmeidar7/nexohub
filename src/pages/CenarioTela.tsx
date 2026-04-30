@@ -1594,9 +1594,14 @@ export default function CenarioTela() {
                               )}
                               {/* Presenter name at bottom */}
                               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${vhToPx(1.5)}${vu}`, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", zIndex: 3 }}>
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.4)}${vu}` }}>
-                                  <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
-                                  <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
+                                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.15)}${vu}` }}>
+                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.4)}${vu}` }}>
+                                    <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
+                                    <span style={{ fontWeight: 400, fontSize: `${vhToPx(1.2)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
+                                  </div>
+                                  <div style={{ fontWeight: 700, fontSize: `${vhToPx(0.9)}${vu}`, color: accentColor, opacity: 0.9, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                                    @nexohub_oficial
+                                  </div>
                                 </div>
                               </div>
                             </div>
