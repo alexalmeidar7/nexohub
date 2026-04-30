@@ -1212,6 +1212,31 @@ export default function CenarioInterativoPage() {
   const removeTrafficPoint = (id: string) =>
     updateTraffic({ points: config.traffic.points.filter(p => p.id !== id) });
 
+  const toggleFavoritePoint = (p: TrafficPoint) => {
+    const favorites = config.traffic.favorites || [];
+    const isFavorite = favorites.some(f => f.id === p.id);
+    const newFavorites = isFavorite 
+      ? favorites.filter(f => f.id !== p.id) 
+      : [...favorites, p];
+    
+    updateTraffic({ favorites: newFavorites });
+    toast.success(isFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos");
+  };
+
+  const loadFavoritePoint = (p: TrafficPoint) => {
+    // Add to current points if not already there
+    if (!config.traffic.points.some(pt => pt.id === p.id)) {
+      updateTraffic({ 
+        points: [...config.traffic.points, p],
+        lat: p.lat,
+        lon: p.lng,
+        zoom: 15
+      });
+    } else {
+      goToTrafficPoint(p);
+    }
+  };
+
   const updateTrafficPointPosition = async (id: string, lat: number, lng: number) => {
     try {
       // Reverse geocode to get a label if it was moved to a new place
