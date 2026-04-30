@@ -1811,7 +1811,7 @@ export default function CenarioInterativoPage() {
                             value={config.traffic.zoom}
                             onChange={e => updateTraffic({ zoom: parseInt(e.target.value) })}
                             className="flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
-                            style={{ accentColor: "var(--layout-accent-color, #444)" }}
+                            style={{ accentColor: "var(--layout-accent-color, #3b82f6)" }}
                           />
                           <Button
                             size="sm"
@@ -1987,8 +1987,8 @@ export default function CenarioInterativoPage() {
 
             <div className="flex flex-col items-center gap-3 w-full h-[700px] pt-4 min-h-0 overflow-hidden bg-black/5 dark:bg-black/20 rounded-2xl relative">
               {/* Zoom Control */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/20 shadow-2xl z-20">
-                <Minus size={14} className="text-white/60 cursor-pointer hover:text-white transition-colors" onClick={() => setPreviewZoom(z => Math.max(0.2, z - 0.1))} />
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 rounded-full border shadow-2xl z-20 transition-all bg-[var(--layout-page-bg, #ffffff)]" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
+                <Minus size={14} className="cursor-pointer hover:opacity-100 transition-opacity" style={{ color: accentColor }} onClick={() => setPreviewZoom(z => Math.max(0.2, z - 0.1))} />
                 <Slider 
                   value={[previewZoom]} 
                   min={0.2} 
@@ -1996,9 +1996,10 @@ export default function CenarioInterativoPage() {
                   step={0.05} 
                   className="w-32 cursor-pointer" 
                   onValueChange={([val]) => setPreviewZoom(val)} 
+                  style={{ "--primary": accentColor } as any}
                 />
-                <Plus size={14} className="text-white/60 cursor-pointer hover:text-white transition-colors" onClick={() => setPreviewZoom(z => Math.min(1.0, z + 0.1))} />
-                <span className="text-[10px] font-mono text-white/80 w-8 text-center">{Math.round(previewZoom * 100)}%</span>
+                <Plus size={14} className="cursor-pointer hover:opacity-100 transition-opacity" style={{ color: accentColor }} onClick={() => setPreviewZoom(z => Math.min(1.0, z + 0.1))} />
+                <span className="text-[10px] font-mono w-8 text-center" style={{ color: textColor }}>{Math.round(previewZoom * 100)}%</span>
               </div>
 
               <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
@@ -2210,12 +2211,12 @@ export default function CenarioInterativoPage() {
                             })()}
                             
 
-                             {/* ── TOP-LEFT: Big neon clock + date + SYNC ── */}
+                             {/* ── TOP-LEFT: Clock + date + SYNC ── */}
                              <div style={{ position: "absolute", top: `${pvh(4)}px`, left: `${pvh(5)}px`, zIndex: 20 }}>
-                               <div className="font-black" style={{ fontSize: `${pvh(5.5)}px`, fontVariantNumeric: "tabular-nums", lineHeight: 0.9, color: "#fff", textShadow: "0 0 20px rgba(var(--layout-accent-rgb, 68,68,68),0.6), 0 0 40px rgba(var(--layout-accent-rgb, 68,68,68),0.3)", letterSpacing: "-0.02em" }}>
+                               <div className="font-black" style={{ fontSize: `${pvh(4.2)}px`, fontVariantNumeric: "tabular-nums", lineHeight: 0.9, color: "#fff", textShadow: "0 0 20px rgba(var(--layout-accent-rgb, 68,68,68),0.6), 0 0 40px rgba(var(--layout-accent-rgb, 68,68,68),0.3)", letterSpacing: "-0.02em" }}>
                                  {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                                </div>
-                               <div className="font-semibold" style={{ fontSize: `${pvh(1.3)}px`, color: "var(--layout-accent-color, #888)", marginTop: `${pvh(0.3)}px` }}>
+                               <div className="font-semibold" style={{ fontSize: `${pvh(1.15)}px`, color: "var(--layout-accent-color, #888)", marginTop: `${pvh(0.3)}px` }}>
                                  {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                                </div>
                                <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, marginTop: `${pvh(0.4)}px`, opacity: 0.7 }}>
