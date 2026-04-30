@@ -1163,6 +1163,25 @@ export default function CenarioInterativoPage() {
     };
   }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab, externalRotation]);
 
+  const handleTabChange = useCallback((t: string) => {
+    setActiveTab(t);
+  }, []);
+
+  const handleWeatherSubTabChange = useCallback((st: string) => {
+    setWeatherSubTab(st);
+  }, []);
+
+  const handleCurrencySubTabChange = useCallback((st: "moedas" | "bolsas") => {
+    setCurrencySubTab(st);
+    // Mirror currency subtab change to external screen
+    rtDrawChannelRef.current?.send({ 
+      type: "broadcast", 
+      event: "tab-change", 
+      payload: { tab: "currency", currencySubTab: st } 
+    });
+    cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "currency", currencySubTab: st });
+  }, []);
+
   const updateHome = (partial: Partial<HomeConfig>) =>
     setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
   const updateWeather = (partial: Partial<WeatherConfig>) =>
