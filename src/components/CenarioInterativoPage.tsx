@@ -2328,7 +2328,15 @@ export default function CenarioInterativoPage() {
                     )}
                     {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
                       <div className="absolute inset-0" style={{ zIndex: 5 }}>
-                        <TrafficMap lat={config.traffic.lat ?? trafficCoords.lat} lon={config.traffic.lon ?? trafficCoords.lon} zoom={config.traffic.zoom} interactive onMove={(lat, lon, zoom) => updateTraffic({ lat, lon, zoom })} />
+                        <TrafficMap 
+                          lat={config.traffic.lat ?? trafficCoords.lat} 
+                          lon={config.traffic.lon ?? trafficCoords.lon} 
+                          zoom={config.traffic.zoom} 
+                          interactive 
+                          points={config.traffic.points}
+                          onMove={(lat, lon, zoom) => updateTraffic({ lat, lon, zoom })} 
+                          onPointMove={(id, lat, lon) => updateTrafficPointPosition(id, lat, lon)}
+                        />
                       </div>
                     )}
                     {!((activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled)) && (() => {
