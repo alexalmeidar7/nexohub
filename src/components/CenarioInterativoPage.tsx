@@ -2588,7 +2588,7 @@ export default function CenarioInterativoPage() {
                                 </div>
                               </div>
                             </div>
-                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: activeTab === "traffic" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(255,255,255,0.1)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: activeTab === "traffic" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(0,0,0,0.8)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                               <Car style={{ width: iS, height: iS }} className="text-white" />
                             </button>
                             <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.currency.enabled ? 1 : 0.35 }}>
