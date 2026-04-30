@@ -1462,7 +1462,7 @@ export default function CenarioTela() {
                 <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: "transparent", color: "#fff", overflow: "hidden" }}>
                   {/* Background already rendered as a full-canvas layer behind sidebar */}
 
-                   {/* ── Relógio Digital (Top Right) ── */}
+                   {/* ── Relógio Digital (Top Left) ── */}
                    {(() => {
                      const h = currentTime.getHours().toString().padStart(2, "0");
                      const m = currentTime.getMinutes().toString().padStart(2, "0");
@@ -1471,10 +1471,10 @@ export default function CenarioTela() {
                        <div style={{
                          position: "absolute",
                          top: `${vhToPx(3.5)}${vu}`,
-                         right: `${vhToPx(4)}${vu}`,
+                         left: `${vhToPx(4)}${vu}`,
                          display: "flex",
                          flexDirection: "column",
-                         alignItems: "flex-end",
+                         alignItems: "flex-start",
                          color: "#fff",
                          zIndex: 20,
                          textShadow: "0 2px 10px rgba(0,0,0,0.5)",
@@ -1489,18 +1489,18 @@ export default function CenarioTela() {
                       );
                     })()}
 
-                  {/* Status Sync (Top Left) */}
-                  <div style={{ position: "absolute", top: `${vhToPx(3.5)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
+                  {/* Status Sync (Bottom Left) */}
+                  <div style={{ position: "absolute", bottom: `${vhToPx(3.5)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
                      <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}`, opacity: 0.7 }}>
-                       <div style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 6px #4ade80" }} />
+                       <div style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, borderRadius: "50%", background: accentColor, boxShadow: `0 0 6px ${accentColor}` }} />
                        <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff" }}>SYNC</span>
                      </div>
                    </div>
 
-                  {/* TOP-RIGHT: "A seguir" (Abaixo do relógio) */}
+                  {/* BOTTOM-RIGHT: "A seguir" */}
                   {nextProgram && (
-                     <div style={{ position: "absolute", top: `${vhToPx(9.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
-                       <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: "var(--layout-accent-color, #888)", marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
+                     <div style={{ position: "absolute", bottom: `${vhToPx(3.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
+                       <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
                        <div style={{ fontWeight: 700, fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, color: "#fff" }}>{nextProgram.nome}</div>
                        <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                      </div>
