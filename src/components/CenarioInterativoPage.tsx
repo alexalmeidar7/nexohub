@@ -629,10 +629,8 @@ export default function CenarioInterativoPage() {
     const el = previewWrapRef.current;
     if (!el) return;
     const measure = () => {
-      // Use fixed aspect ratio and zoom for internal scale calculation
-      const scale = previewIsLandscape
-        ? (1080 * previewZoom) / PREV_H
-        : (1080 * previewZoom) / PREV_W;
+      // Internal scale is always PREV_W / container width to keep proportions fixed
+      const scale = el.clientWidth / PREV_W;
       setPreviewScale(scale || 1);
     };
     measure();
@@ -1837,9 +1835,9 @@ export default function CenarioInterativoPage() {
               </div>
             )}
 
-            <div className="flex flex-col items-center gap-3 w-full pt-4 min-h-0 overflow-hidden">
+            <div className="flex flex-col items-center gap-3 w-full h-[700px] pt-4 min-h-0 overflow-hidden bg-black/5 dark:bg-black/20 rounded-2xl relative">
               {/* Zoom Control */}
-              <div className="flex items-center gap-3 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 shadow-lg z-20">
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/20 shadow-2xl z-20">
                 <Minus size={14} className="text-white/60 cursor-pointer hover:text-white transition-colors" onClick={() => setPreviewZoom(z => Math.max(0.2, z - 0.1))} />
                 <Slider 
                   value={[previewZoom]} 
@@ -1853,24 +1851,24 @@ export default function CenarioInterativoPage() {
                 <span className="text-[10px] font-mono text-white/80 w-8 text-center">{Math.round(previewZoom * 100)}%</span>
               </div>
 
-              <div className="flex-1 min-h-0 flex items-start justify-center w-full overflow-auto custom-scrollbar pb-8">
+              <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
                 <div
                   ref={previewWrapRef}
                   className="relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ease-out"
                   style={{
-                    height: `${1920 * previewZoom}px`,
-                    width: `${1080 * previewZoom}px`,
-                    minWidth: `${1080 * previewZoom}px`,
+                    height: "100%",
+                    width: "auto",
                     aspectRatio: "9 / 16",
                     boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
-                    border: "4px solid rgba(255,255,255,0.12)",
                     background: "#000",
-                    transform: "translateZ(0)",
+                    transform: `scale(${previewZoom})`,
+                    transformOrigin: "top center",
+                    transition: "transform 0.3s ease-out",
                   }}
                 >
                 <div className="absolute inset-0 overflow-hidden">
                   {/* Virtual 1080×1920 canvas, scaled to fit — mirrors CenarioTela exactly */}
-                  <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left", position: "absolute", top: "50%", left: "50%", translate: "-50% -50%" }}>
+                  <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${pvh(1.8)}px` }}>
 
                     {/* Fullscreen background layers */}
