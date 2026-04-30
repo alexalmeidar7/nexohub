@@ -2040,8 +2040,8 @@ export default function CenarioInterativoPage() {
                             
 
                              {/* ── TOP-LEFT: Big neon clock + date + SYNC ── */}
-                             <div style={{ position: "absolute", top: `${pvh(3)}px`, left: `${pvh(4)}px`, zIndex: 20 }}>
-                               <div className="font-black" style={{ fontSize: `${pvh(5.5)}px`, fontVariantNumeric: "tabular-nums", lineHeight: 1, color: "#fff", textShadow: "0 0 20px rgba(var(--layout-accent-rgb, 68,68,68),0.6), 0 0 40px rgba(var(--layout-accent-rgb, 68,68,68),0.3)", letterSpacing: "-0.02em" }}>
+                             <div style={{ position: "absolute", top: `${pvh(4)}px`, left: `${pvh(5)}px`, zIndex: 20 }}>
+                               <div className="font-black" style={{ fontSize: `${pvh(5.5)}px`, fontVariantNumeric: "tabular-nums", lineHeight: 0.9, color: "#fff", textShadow: "0 0 20px rgba(var(--layout-accent-rgb, 68,68,68),0.6), 0 0 40px rgba(var(--layout-accent-rgb, 68,68,68),0.3)", letterSpacing: "-0.02em" }}>
                                  {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                                </div>
                                <div className="font-semibold" style={{ fontSize: `${pvh(1.3)}px`, color: "var(--layout-accent-color, #888)", marginTop: `${pvh(0.3)}px` }}>
