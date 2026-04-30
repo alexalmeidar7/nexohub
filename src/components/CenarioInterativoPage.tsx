@@ -1543,7 +1543,55 @@ export default function CenarioInterativoPage() {
                         </div>
 
                         {openSections.artist && config.home.showArtistImage && (
-                          <div className="pt-3 border-t border-[var(--layout-accent-color)]/20 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="pt-3 border-t border-[var(--layout-accent-color)]/20 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="space-y-3 p-3 rounded-lg bg-black/5 border border-black/5">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                                    <Palette size={14} />
+                                  </div>
+                                  <Label className="text-[10px] font-bold uppercase">Overlay por cima da capa</Label>
+                                </div>
+                                <Switch 
+                                  checked={!!config.home.artistOverlayEnabled} 
+                                  onCheckedChange={v => updateHome({ artistOverlayEnabled: v })} 
+                                  className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                                />
+                              </div>
+
+                              {config.home.artistOverlayEnabled && (
+                                <div className="space-y-3 pt-2 animate-in fade-in duration-300">
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                      <Label className="text-[10px] opacity-60 font-bold">Cor do Overlay</Label>
+                                      <div className="flex items-center gap-2">
+                                        <div 
+                                          className="w-8 h-8 rounded border shadow-sm shrink-0" 
+                                          style={{ background: config.home.artistOverlayColor || "#000000" }} 
+                                        />
+                                        <Input 
+                                          type="text"
+                                          value={config.home.artistOverlayColor || "#000000"}
+                                          onChange={e => updateHome({ artistOverlayColor: e.target.value })}
+                                          className="h-8 text-[10px] font-mono"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                      <Label className="text-[10px] opacity-60 font-bold">Opacidade ({config.home.artistOverlayOpacity ?? 60}%)</Label>
+                                      <Slider 
+                                        value={[config.home.artistOverlayOpacity ?? 60]} 
+                                        min={0} 
+                                        max={100} 
+                                        step={1} 
+                                        onValueChange={([v]) => updateHome({ artistOverlayOpacity: v })}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
                             <div className="flex items-center gap-2 mb-1">
                               <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
                                 <EyeOff size={14} />
