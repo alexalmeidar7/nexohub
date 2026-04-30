@@ -384,6 +384,16 @@ export default function CenarioTela() {
           setLastSyncTime(new Date());
           setBackendHealth("online");
         }
+      }).on("broadcast", { event: "element-move" }, ({ payload }: any) => {
+        if (payload?.id && payload?.pos) {
+          setConfig(prev => ({
+            ...prev,
+            home: {
+              ...prev.home,
+              elementPositions: { ...prev.home.elementPositions, [payload.id]: payload.pos }
+            }
+          }));
+        }
       }).subscribe((status) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           setTimeout(() => {

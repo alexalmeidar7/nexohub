@@ -1172,12 +1172,20 @@ export default function CenarioInterativoPage() {
       const { error } = await supabase
         .from("user_settings")
         .upsert(payload, { onConflict: "user_id" });
+
       if (error) {
         console.error("Erro ao salvar cenário:", error);
       } else {
         setSavedFlash(true);
         if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
         savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
+
+        // Notifica todas as telas conectadas sobre a mudança de configuração
+        rtDrawChannelRef.current?.send({
+          type: "broadcast",
+          event: "config-update",
+          payload: { config: configWithTabs }
+        });
       }
       setSaving(false);
     };
@@ -1190,16 +1198,61 @@ export default function CenarioInterativoPage() {
     };
   }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab, externalRotation]);
 
-  const updateHome = (partial: Partial<HomeConfig>) =>
-    setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
-  const updateWeather = (partial: Partial<WeatherConfig>) =>
-    setConfig(c => ({ ...c, weather: { ...c.weather, ...partial } }));
-  const updateTraffic = (partial: Partial<TrafficConfig>) =>
-    setConfig(c => ({ ...c, traffic: { ...c.traffic, ...partial } }));
-  const updateCurrency = (partial: Partial<CurrencyConfig>) =>
-    setConfig(c => ({ ...c, currency: { ...c.currency, ...partial } }));
-  const updateChat = (partial: Partial<ChatConfig>) =>
-    setConfig(c => ({ ...c, chat: { ...c.chat, ...partial } }));
+  const updateHome = (partial: Partial<HomeConfig>) => {
+    setConfig(c => {
+      const next = { ...c, home: { ...c.home, ...partial } };
+      rtDrawChannelRef.current?.send({
+        type: "broadcast",
+        event: "config-update",
+        payload: { config: next }
+      });
+      return next;
+    });
+  };
+  const updateWeather = (partial: Partial<WeatherConfig>) => {
+    setConfig(c => {
+      const next = { ...c, weather: { ...c.weather, ...partial } };
+      rtDrawChannelRef.current?.send({
+        type: "broadcast",
+        event: "config-update",
+        payload: { config: next }
+      });
+      return next;
+    });
+  };
+  const updateTraffic = (partial: Partial<TrafficConfig>) => {
+    setConfig(c => {
+      const next = { ...c, traffic: { ...c.traffic, ...partial } };
+      rtDrawChannelRef.current?.send({
+        type: "broadcast",
+        event: "config-update",
+        payload: { config: next }
+      });
+      return next;
+    });
+  };
+  const updateCurrency = (partial: Partial<CurrencyConfig>) => {
+    setConfig(c => {
+      const next = { ...c, currency: { ...c.currency, ...partial } };
+      rtDrawChannelRef.current?.send({
+        type: "broadcast",
+        event: "config-update",
+        payload: { config: next }
+      });
+      return next;
+    });
+  };
+  const updateChat = (partial: Partial<ChatConfig>) => {
+    setConfig(c => {
+      const next = { ...c, chat: { ...c.chat, ...partial } };
+      rtDrawChannelRef.current?.send({
+        type: "broadcast",
+        event: "config-update",
+        payload: { config: next }
+      });
+      return next;
+    });
+  };
 
   const getElPos = useCallback((id: string): ElementPosition => {
     return config.home.elementPositions?.[id] ?? defaultPositions[id] ?? { x: 50, y: 50, scale: 1 };
@@ -1213,6 +1266,13 @@ export default function CenarioInterativoPage() {
         elementPositions: { ...c.home.elementPositions, [id]: pos },
       },
     }));
+    
+    // Broadcast instantâneo da mudança de posição do elemento para as telas
+    rtDrawChannelRef.current?.send({
+      type: "broadcast",
+      event: "element-move",
+      payload: { id, pos }
+    });
   }, []);
 
   const removeTrafficPoint = (id: string) =>
