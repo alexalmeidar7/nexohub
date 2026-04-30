@@ -2871,7 +2871,8 @@ export default function CenarioInterativoPage() {
                                    )}
                                  </div>
                                );
-                             })()}
+                             })()
+                             }
 
                              {/* ── Sponsor logos (centered bottom, same as external screen) ── */}
                              {sponsorLogos.length > 0 && (
