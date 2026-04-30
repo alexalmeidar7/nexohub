@@ -70,6 +70,7 @@ interface HomeConfig {
 interface CenarioConfig {
   city: string;
   useProgramThumbAsBg?: boolean;
+  programThumbPosition?: "left" | "center" | "right";
   bgAlternateMode?: boolean;
   home: HomeConfig;
   weather: WeatherConfig;
@@ -89,6 +90,7 @@ function buildHomeGradient(h: HomeConfig): string {
 const defaultConfig: CenarioConfig = {
   city: "",
   useProgramThumbAsBg: false,
+  programThumbPosition: "center",
   home: { bgImage: "" },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
@@ -1412,6 +1414,34 @@ export default function CenarioInterativoPage() {
                         />
                       </div>
 
+                      {/* Posição da Thumb */}
+                      {config.useProgramThumbAsBg && (
+                        <div className="p-4 space-y-3 transition-colors hover:bg-black/5 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1 rounded-md bg-blue-500/10 text-blue-600">
+                              <MapPin size={14} />
+                            </div>
+                            <Label className="text-xs font-bold">Alinhamento da Thumb</Label>
+                          </div>
+                          <div className="pl-7">
+                            <Select 
+                              value={config.programThumbPosition || "center"} 
+                              onValueChange={(v: "left" | "center" | "right") => setConfig(c => ({ ...c, programThumbPosition: v }))}
+                            >
+                              <SelectTrigger className="h-8 text-xs w-full bg-white/50">
+                                <SelectValue placeholder="Selecione o alinhamento" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="left">Esquerda</SelectItem>
+                                <SelectItem value="center">Centro</SelectItem>
+                                <SelectItem value="right">Direita</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="text-[10px] leading-relaxed opacity-60 mt-2">Escolha como a imagem de fundo deve ser centralizada no cenário.</p>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Palavras de Exceção */}
                       <div className="p-4 space-y-3 transition-colors hover:bg-black/5">
                         <div className="flex items-center justify-between">
@@ -1889,7 +1919,16 @@ export default function CenarioInterativoPage() {
                         <div className="absolute inset-0" style={{ background: activeTab === "home" ? (config.home.bgGradient ? buildHomeGradient(config.home) : (config.home.bgImage ? "#e8e8e8" : "#000")) : "#e8e8e8", zIndex: 0 }}>
                           {useThumb && thumbSrc && (
                             <>
-                              <img src={thumbSrc} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(18px) brightness(0.55)", transform: "scale(1.1)" }} />
+                              <img 
+                                src={thumbSrc} 
+                                alt="" 
+                                className="absolute inset-0 w-full h-full object-cover" 
+                                style={{ 
+                                  filter: "blur(18px) brightness(0.55)", 
+                                  transform: "scale(1.1)",
+                                  objectPosition: config.programThumbPosition || "center"
+                                }} 
+                              />
                               <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
                             </>
                           )}
@@ -2016,7 +2055,15 @@ export default function CenarioInterativoPage() {
                                   {/* Thumb layer (always mounted for fade) */}
                                   {hasThumb && (
                                     <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
-                                      <img src={thumbSrc} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? undefined : { filter: "blur(18px) brightness(0.55)", transform: "scale(1.1)" }} />
+                                      <img 
+                                        src={thumbSrc} 
+                                        alt="" 
+                                        className="absolute inset-0 w-full h-full object-cover" 
+                                        style={{ 
+                                          ...(altMode ? {} : { filter: "blur(18px) brightness(0.55)", transform: "scale(1.1)" }),
+                                          objectPosition: config.programThumbPosition || "center"
+                                        }} 
+                                      />
                                       {!altMode && (
                                         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
                                       )}
