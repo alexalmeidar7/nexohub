@@ -1205,10 +1205,75 @@ export default function CenarioInterativoPage() {
     updateCurrency({ currencies: has ? config.currency.currencies.filter(c => c !== code) : [...config.currency.currencies, code] });
   };
 
-  const handleTrafficSearch = () => {
+  const handleTrafficSearch = async () => {
     if (!trafficSearchCity.trim()) return;
-    // Reset lat/lon so geocoding will run for the new city
-    updateTraffic({ city: trafficSearchCity.trim(), lat: null, lon: null });
+    setWeatherLoading(true);
+    try {
+      const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query: trafficSearchCity.trim(), count: 1 },
+      });
+      const results = geoData?.results;
+      if (results && results.length > 0) {
+        const { latitude, longitude } = results[0];
+        setTrafficCoords({ lat: latitude, lon: longitude });
+        updateTraffic({ city: trafficSearchCity.trim(), lat: latitude, lon: longitude, zoom: 12 });
+      } else {
+        toast.error("Cidade não encontrada");
+      }
+    } catch (err) {
+      console.error("Traffic search error:", err);
+    }
+    setWeatherLoading(false);
+  };
+
+  const searchAddress = async (query: string) => {
+    setTrafficSearchAddress(query);
+    if (query.length < 3) {
+      setAddressSuggestions([]);
+      return;
+    }
+    
+    setIsSearchingAddress(true);
+    try {
+      const fullQuery = `${query}, ${trafficSearchCity || config.city}`;
+      const { data } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query: fullQuery, count: 5 },
+      });
+      
+      if (data?.results) {
+        setAddressSuggestions(data.results);
+      }
+    } catch (err) {
+      console.error("Address search error:", err);
+    }
+    setIsSearchingAddress(false);
+  };
+
+  const selectAddress = (addr: any) => {
+    const lat = addr.latitude;
+    const lon = addr.longitude;
+    setTrafficCoords({ lat, lon });
+    updateTraffic({ lat, lon, zoom: 15 });
+    setTrafficSearchAddress(addr.name || "");
+    setAddressSuggestions([]);
+  };
+
+  const addTrafficPoint = () => {
+    const lat = config.traffic.lat ?? trafficCoords?.lat;
+    const lon = config.traffic.lon ?? trafficCoords?.lon;
+    if (lat === undefined || lon === undefined || lat === null || lon === null) {
+      toast.error("Busque um endereço primeiro");
+      return;
+    }
+
+    const newPoint: TrafficPoint = {
+      id: Math.random().toString(36).substring(2, 9),
+      label: trafficSearchAddress || `Ponto ${config.traffic.points.length + 1}`,
+      lat,
+      lng: lon,
+    };
+    updateTraffic({ points: [...config.traffic.points, newPoint] });
+    toast.success("Ponto marcado no mapa");
   };
 
   const trafficMapCity = config.traffic.city || config.city || "São Paulo";
