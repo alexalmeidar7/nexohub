@@ -1172,12 +1172,20 @@ export default function CenarioInterativoPage() {
       const { error } = await supabase
         .from("user_settings")
         .upsert(payload, { onConflict: "user_id" });
+
       if (error) {
         console.error("Erro ao salvar cenário:", error);
       } else {
         setSavedFlash(true);
         if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
         savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
+
+        // Notifica todas as telas conectadas sobre a mudança de configuração
+        rtDrawChannelRef.current?.send({
+          type: "broadcast",
+          event: "config-update",
+          payload: { config: configWithTabs }
+        });
       }
       setSaving(false);
     };
