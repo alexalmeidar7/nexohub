@@ -1259,117 +1259,187 @@ export default function CenarioInterativoPage() {
               </TabsList>
 
               {/* ═══ Home ═══ */}
-              <TabsContent value="home" className="space-y-4">
-                <p className="text-xs" style={{ color: mutedText }}>
-                  Tela inicial: exibe hora atual, data e logos dos patrocinadores do programa no ar.
-                </p>
-
-                {/* Current program info */}
-                <div className="rounded-lg p-3 text-sm" style={{ background: subTabBg }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Clock size={14} style={{ color: mutedText }} />
-                    <span className="font-medium">Programa no ar</span>
-                  </div>
-                  {currentProgram ? (
-                    <div className="space-y-1">
-                      <span className="text-xs font-bold">{currentProgram.nome}</span>
-                      {sponsorLogos.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {sponsorLogos.map(l => (
-                            <div key={l.id} className="flex items-center gap-1 rounded px-2 py-1 text-[10px]" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
-                              {l.logo_url && <img src={l.logo_url} alt={l.nome} className="w-5 h-5 object-contain rounded" />}
-                              <span>{l.nome}</span>
-                            </div>
-                          ))}
+              <TabsContent value="home" className="space-y-5 animate-in fade-in-50 duration-500">
+                <div className="flex flex-col gap-5">
+                  {/* Status do Programa no Ar */}
+                  <div className="relative overflow-hidden rounded-xl border p-4 transition-all" 
+                       style={{ 
+                         background: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 3%, var(--layout-page-bg, #ffffff))",
+                         borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)"
+                       }}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                          <Clock size={16} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold leading-none">Programa no ar</h4>
+                          <p className="text-[10px] opacity-60 mt-1 uppercase tracking-wider font-semibold">Monitoramento em tempo real</p>
+                        </div>
+                      </div>
+                      {currentProgram && (
+                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-600 text-[10px] font-bold border border-green-500/20">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                          </span>
+                          AO VIVO
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <span className="text-xs" style={{ color: mutedText }}>Nenhum programa no ar no momento</span>
-                  )}
-                </div>
 
-                <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
+                    {currentProgram ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 rounded-lg overflow-hidden border border-white/20 bg-muted shrink-0">
+                            <img 
+                              src={currentProgram.thumb || currentProgram.capa || "https://images.unsplash.com/photo-1478737270239-2fccd27ee086?w=100&h=100&fit=crop"} 
+                              className="h-full w-full object-cover"
+                              alt={currentProgram.nome}
+                            />
+                          </div>
+                          <div>
+                            <div className="text-sm font-extrabold line-clamp-1">{currentProgram.nome}</div>
+                            <div className="text-xs opacity-70 flex items-center gap-1 mt-0.5">
+                              <CalendarDays size={10} />
+                              {currentProgram.horario_inicio} às {currentProgram.horario_fim}
+                            </div>
+                          </div>
+                        </div>
 
-                {/* Gradient background options */}
-                <div className="rounded-lg p-3 space-y-3" style={{ background: subTabBg }}>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-medium flex items-center gap-1.5">
-                      <Palette size={12} /> Fundo em degradê
-                    </Label>
-                    <Switch checked={!!config.home.bgGradient} onCheckedChange={v => updateHome({ bgGradient: v })} />
-                  </div>
-                  {config.home.bgGradient && (
-                    <div className="space-y-3 pt-1">
-                      <GradientPicker
-                        colorA={config.home.bgGradientColorA || "#1a1a2e"}
-                        colorB={config.home.bgGradientColorB || "#16213e"}
-                        angle={config.home.bgGradientAngle ?? 135}
-                        gradientType={config.home.bgGradientType || "linear"}
-                        onChangeColorA={v => updateHome({ bgGradientColorA: v })}
-                        onChangeColorB={v => updateHome({ bgGradientColorB: v })}
-                        onChangeAngle={v => updateHome({ bgGradientAngle: v })}
-                        onChangeType={v => updateHome({ bgGradientType: v })}
-                        showType
-                      />
-                    </div>
-                   )}
-
-                  {/* ── Thumb do programa como fundo (global) ── */}
-                  <div className="flex items-center justify-between pt-2 border-t border-white/10">
-                    <div className="flex flex-col pr-3">
-                      <Label className="text-xs font-medium flex items-center gap-1.5">
-                        <Palette size={12} /> Thumb do programa de fundo
-                      </Label>
-                      <span className="text-[10px]" style={{ color: mutedText }}>
-                        Aplica nas páginas Home, Tempo, Cotação e Chat.
-                      </span>
-                    </div>
-                    <Switch
-                      checked={!!config.useProgramThumbAsBg}
-                      onCheckedChange={v => setConfig(c => ({ ...c, useProgramThumbAsBg: v }))}
-                    />
-                  </div>
-
-                  {/* ── Alternar fundo: artista (Deezer) ↔ thumb do programa ── */}
-                  <div className="flex items-center justify-between pt-2 border-t border-white/10">
-                    <div className="flex flex-col pr-3">
-                      <Label className="text-xs font-medium flex items-center gap-1.5">
-                        <Palette size={12} /> Alternar fundo (10s artista / 10s thumb)
-                      </Label>
-                      <span className="text-[10px]" style={{ color: mutedText }}>
-                        Quando ativo, alterna automaticamente entre a imagem do artista (Deezer) e a thumb do programa a cada 10 segundos.
-                      </span>
-                    </div>
-                    <Switch
-                      checked={!!config.bgAlternateMode}
-                      onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))}
-                    />
-                  </div>
-                  {config.bgAlternateMode && (
-                    <div className="flex items-center justify-between rounded-md px-2.5 py-1.5 bg-white/5 border border-white/10 animate-fade-in">
-                      <div className="flex items-center gap-2">
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: "var(--layout-accent-color, #888)" }} />
-                          <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "var(--layout-accent-color, #888)" }} />
-                        </span>
-                        <span className="text-[10px] uppercase tracking-wider" style={{ color: mutedText }}>Preview ao vivo</span>
+                        {sponsorLogos.length > 0 && (
+                          <div className="pt-3 border-t border-dashed border-black/5 dark:border-white/5">
+                            <p className="text-[10px] font-bold opacity-50 mb-2 uppercase tracking-tighter">Patrocinadores vinculados</p>
+                            <div className="flex flex-wrap gap-2">
+                              {sponsorLogos.map(l => (
+                                <div key={l.id} className="group relative flex items-center gap-2 rounded-lg pl-1 pr-3 py-1 text-xs border transition-all hover:bg-white/50" 
+                                     style={{ background: "white", borderColor: "rgba(0,0,0,0.05)" }}>
+                                  {l.logo_url ? (
+                                    <img src={l.logo_url} alt={l.nome} className="w-6 h-6 object-contain rounded-md bg-white p-0.5" />
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center text-[8px] font-bold">L</div>
+                                  )}
+                                  <span className="font-semibold text-[11px] truncate max-w-[100px]">{l.nome}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-accent-color, #888)" }}>
-                        {altBgPhase === "artist" ? "🎤 Artista" : "📺 Thumb"}
-                      </span>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="py-4 flex flex-col items-center justify-center text-center rounded-lg border-2 border-dashed border-black/5 bg-black/5">
+                        <MonitorPlay size={24} className="opacity-20 mb-2" />
+                        <span className="text-xs font-semibold opacity-40">Nenhum programa detectado no Estúdio FM</span>
+                      </div>
+                    )}
+                  </div>
 
-                  {/* ── Palavras de exceção ── */}
-                  <div className="space-y-1.5 pt-2 border-t border-white/10">
-                    <Label className="text-xs font-medium flex items-center gap-1.5">
-                      <EyeOff size={12} /> Palavras de exceção
-                    </Label>
-                    <p className="text-[10px]" style={{ color: mutedText }}>
-                      Separadas por vírgula. Quando encontrada no artista ou música, o fundo usará o degradê e a capa não será exibida.
-                    </p>
-                    <ExceptionWordsInput value={config.home.exceptionWords || ""} onSave={v => updateHome({ exceptionWords: v })} />
+                  {/* Configurações Visuais */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Imagem de Fundo Estática */}
+                    <div className="flex flex-col gap-3 p-4 rounded-xl border bg-white/40" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)" }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600">
+                          <Image size={16} />
+                        </div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider">Fundo Estático</h4>
+                      </div>
+                      <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
+                    </div>
+
+                    {/* Fundo em Degradê */}
+                    <div className="flex flex-col gap-3 p-4 rounded-xl border bg-white/40" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)" }}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-600">
+                            <Palette size={16} />
+                          </div>
+                          <h4 className="text-xs font-bold uppercase tracking-wider">Cores Degradê</h4>
+                        </div>
+                        <Switch checked={!!config.home.bgGradient} onCheckedChange={v => updateHome({ bgGradient: v })} className="scale-75" />
+                      </div>
+                      
+                      {config.home.bgGradient ? (
+                        <div className="space-y-3 pt-1 animate-in slide-in-from-top-2 duration-300">
+                          <GradientPicker
+                            colorA={config.home.bgGradientColorA || "#1a1a2e"}
+                            colorB={config.home.bgGradientColorB || "#16213e"}
+                            angle={config.home.bgGradientAngle ?? 135}
+                            gradientType={config.home.bgGradientType || "linear"}
+                            onChangeColorA={v => updateHome({ bgGradientColorA: v })}
+                            onChangeColorB={v => updateHome({ bgGradientColorB: v })}
+                            onChangeAngle={v => updateHome({ bgGradientAngle: v })}
+                            onChangeType={v => updateHome({ bgGradientType: v })}
+                            showType
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex-1 flex items-center justify-center border-2 border-dashed border-black/5 rounded-lg">
+                          <span className="text-[10px] font-medium opacity-30">Degradê desativado</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Opções Avançadas de Fundo */}
+                  <div className="space-y-0 overflow-hidden rounded-xl border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}>
+                    <div className="px-4 py-3 bg-black/5 border-b border-black/5">
+                      <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-60">Comportamento do Fundo</h4>
+                    </div>
+                    
+                    <div className="divide-y divide-black/5 bg-white/20">
+                      {/* Alternar entre artista e thumb */}
+                      <div className="p-4 flex items-center justify-between gap-4 transition-colors hover:bg-black/5">
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1 rounded-md bg-amber-500/10 text-amber-600">
+                              <RefreshCw size={14} />
+                            </div>
+                            <Label className="text-xs font-bold">Modo Alternância Inteligente</Label>
+                          </div>
+                          <p className="text-[10px] leading-relaxed opacity-60">Intercala automaticamente entre a capa do artista (Deezer) e a thumb do programa a cada 10 segundos.</p>
+                        </div>
+                        <Switch
+                          checked={!!config.bgAlternateMode}
+                          onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))}
+                        />
+                      </div>
+
+                      {/* Thumb do programa global */}
+                      <div className="p-4 flex items-center justify-between gap-4 transition-colors hover:bg-black/5">
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1 rounded-md bg-indigo-500/10 text-indigo-600">
+                              <Shapes size={14} />
+                            </div>
+                            <Label className="text-xs font-bold">Thumb como Fundo Global</Label>
+                          </div>
+                          <p className="text-[10px] leading-relaxed opacity-60">Aplica a thumb do programa em todas as abas (Home, Tempo, Cotação e Chat).</p>
+                        </div>
+                        <Switch
+                          checked={!!config.useProgramThumbAsBg}
+                          onCheckedChange={v => setConfig(c => ({ ...c, useProgramThumbAsBg: v }))}
+                        />
+                      </div>
+
+                      {/* Palavras de Exceção */}
+                      <div className="p-4 space-y-3 transition-colors hover:bg-black/5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1 rounded-md bg-rose-500/10 text-rose-600">
+                              <EyeOff size={14} />
+                            </div>
+                            <Label className="text-xs font-bold">Filtro de Exceções</Label>
+                          </div>
+                        </div>
+                        <div className="space-y-2 pl-7">
+                          <p className="text-[10px] leading-relaxed opacity-60">
+                            Quando o título ou artista contiver estas palavras, o fundo mudará para o degradê padrão (ideal para vinhetas e breaks).
+                          </p>
+                          <ExceptionWordsInput value={config.home.exceptionWords || ""} onSave={v => updateHome({ exceptionWords: v })} />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </TabsContent>
