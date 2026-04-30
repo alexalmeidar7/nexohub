@@ -70,6 +70,8 @@ interface HomeConfig {
   artistOverlayEnabled?: boolean;
   artistOverlayColor?: string;
   artistOverlayOpacity?: number;
+  showMusicCover?: boolean;
+  showProgramThumb?: boolean;
 }
 
 interface CenarioConfig {
@@ -101,7 +103,7 @@ const defaultConfig: CenarioConfig = {
   useProgramThumbAsBg: false,
   programThumbPosition: "center",
   bgType: "none",
-  home: { bgImage: "", showArtistImage: true },
+  home: { bgImage: "", showArtistImage: true, showMusicCover: true, showProgramThumb: true },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
@@ -1538,6 +1540,34 @@ export default function CenarioInterativoPage() {
                         <span className="text-xs font-semibold opacity-40">Nenhum programa detectado no Estúdio FM</span>
                       </div>
                     )}
+                    {/* Visibilidade das Capas */}
+                    <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                          <Eye size={16} />
+                        </div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider">Visibilidade das Capas</h4>
+                      </div>
+                      
+                      <div className="space-y-2 pt-1 border-t border-black/5">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa da Música</Label>
+                          <Switch 
+                            checked={config.home.showMusicCover !== false} 
+                            onCheckedChange={v => updateHome({ showMusicCover: v })}
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Selo do Programa</Label>
+                          <Switch 
+                            checked={config.home.showProgramThumb !== false} 
+                            onCheckedChange={v => updateHome({ showProgramThumb: v })}
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Configurações Visuais de Fundo */}
@@ -2741,9 +2771,9 @@ export default function CenarioInterativoPage() {
                                        <span className="font-normal" style={{ fontSize: `${pvh(1.05)}px`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram?.apresentador || ""}</span>
                                      </div>
                                    </div>
-                                   {currentProgram?.selo && (
-                                     <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5.82)}px`, maxWidth: `${pvh(8.74)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
-                                   )}
+                                    {currentProgram?.selo && config.home.showProgramThumb !== false && (
+                                      <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5.82)}px`, maxWidth: `${pvh(8.74)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
+                                    )}
                                  </div>
 
                                  <div className="flex-1 flex items-center justify-center" style={{ minHeight: 0 }}>
@@ -2774,7 +2804,7 @@ export default function CenarioInterativoPage() {
                                </div>
 
                                {/* ── BOX CAPA: slides out from behind locutor ── */}
-                               {musicData?.capa && !isBreakTrack && (
+                               {musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false && (
                                  <div
                                    key={musicData.capa}
                                    style={{
