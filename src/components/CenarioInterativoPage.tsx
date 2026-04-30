@@ -73,7 +73,7 @@ interface CenarioConfig {
   useProgramThumbAsBg?: boolean;
   programThumbPosition?: "left" | "center" | "right";
   bgAlternateMode?: boolean;
-  bgType?: "static" | "gradient" | "thumb";
+  bgType?: "static" | "gradient" | "thumb" | "none";
   home: HomeConfig;
   weather: WeatherConfig;
   traffic: TrafficConfig;
