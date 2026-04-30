@@ -1446,64 +1446,84 @@ export default function CenarioTela() {
                 <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: "transparent", color: "#fff", overflow: "hidden" }}>
                   {/* Background already rendered as a full-canvas layer behind sidebar */}
 
-                   {/* ── TOP-LEFT: Big neon clock + date + SYNC ── */}
-                   <div style={{ position: "absolute", top: `${vhToPx(3)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
-                     <div style={{ fontWeight: 900, fontSize: `${vhToPx(2.4)}${vu}`, fontVariantNumeric: "tabular-nums", lineHeight: 1, color: "#fff", letterSpacing: "-0.02em" }}>
-                       {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                     </div>
-                     <div style={{ fontWeight: 600, fontSize: `${vhToPx(0.9)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.16)}${vu}` }}>
-                       {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                     </div>
-                     <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.26)}${vu}`, marginTop: `${vhToPx(0.22)}${vu}`, opacity: 0.7 }}>
-                       <div style={{ width: `${vhToPx(0.36)}${vu}`, height: `${vhToPx(0.36)}${vu}`, borderRadius: "50%", background: realtimeConnected ? "var(--layout-accent-color, #4ade80)" : "#ef4444", boxShadow: realtimeConnected ? `0 0 6px var(--layout-accent-color, #4ade80)` : "0 0 6px #ef4444" }} />
-                       <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: `${vhToPx(0.6)}${vu}` }}>
-                         {realtimeConnected ? "SYNC" : "OFF"}
-                       </span>
+                   {/* ── Relógio Digital (Top Right) ── */}
+                   (() => {
+                     const h = currentTime.getHours().toString().padStart(2, "0");
+                     const m = currentTime.getMinutes().toString().padStart(2, "0");
+                     const s = currentTime.getSeconds().toString().padStart(2, "0");
+                     return (
+                       <div style={{
+                         position: "absolute",
+                         top: `${vhToPx(3.5)}${vu}`,
+                         right: `${vhToPx(4)}${vu}`,
+                         display: "flex",
+                         flexDirection: "column",
+                         alignItems: "flex-end",
+                         color: "#fff",
+                         zIndex: 20,
+                         textShadow: "0 2px 10px rgba(0,0,0,0.5)",
+                       }}>
+                         <div style={{ fontSize: `${vhToPx(3.5)}${vu}`, fontWeight: 800, lineHeight: 1, fontFamily: "monospace", letterSpacing: "-0.02em" }}>
+                           {h}:{m}<span style={{ opacity: 0.6, fontSize: "0.7em", marginLeft: "2px" }}>{s}</span>
+                         </div>
+                         <div style={{ fontSize: `${vhToPx(1.2)}${vu}`, fontWeight: 600, opacity: 0.8, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "2px" }}>
+                           {currentTime.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", year: "2-digit" })}
+                         </div>
+                       </div>
+                     );
+                  })()}
+
+                  {/* Status Sync (Top Left) */}
+                  <div style={{ position: "absolute", top: `${vhToPx(3.5)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
+                     <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}`, opacity: 0.7 }}>
+                       <div style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 6px #4ade80" }} />
+                       <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff" }}>SYNC</span>
                      </div>
                    </div>
 
-                   {/* ── TOP-RIGHT: "A seguir" ── */}
-                   {nextProgram && (
-                     <div style={{ position: "absolute", top: `${vhToPx(3)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
-                       <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.3)}${vu}` }}>a seguir</div>
-                       <div style={{ fontWeight: 700, fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, wordBreak: "break-word", overflowWrap: "break-word" }}>{nextProgram.nome}</div>
+                  {/* TOP-RIGHT: "A seguir" (Abaixo do relógio) */}
+                  {nextProgram && (
+                     <div style={{ position: "absolute", top: `${vhToPx(9.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
+                       <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: "var(--layout-accent-color, #888)", marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
+                       <div style={{ fontWeight: 700, fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, color: "#fff" }}>{nextProgram.nome}</div>
                        <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                      </div>
                    )}
 
-                    {/* ── WRAPPER: BOXES + CONTROLS ── */}
+                  {/* WRAPPER: BOXES + CONTROLS */}
+                  <div style={{
+                    position: "absolute",
+                    bottom: `${vhToPx(37.75)}${vu}`,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: `${vhToPx(2)}${vu}`,
+                    zIndex: 15,
+                  }}>
+                    {/* ROW: BOX DO LOCUTOR + BOX CAPA */}
                     <div style={{
-                      position: "absolute",
-                      bottom: `${vhToPx(35)}${vu}`,
-                      left: "50%",
-                      transform: "translateX(-50%)",
                       display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: `${vhToPx(2)}${vu}`,
-                      zIndex: 15,
+                      alignItems: "stretch",
+                      gap: `${vhToPx(1)}${vu}`,
                     }}>
-                      {/* ── ROW: BOX DO LOCUTOR + BOX CAPA ── */}
+                      {/* BOX DO LOCUTOR: quadrado 1:1 (always on top) */}
                       <div style={{
-                        display: "flex",
-                        alignItems: "stretch",
-                        gap: `${vhToPx(1)}${vu}`,
-                      }}>
-                         {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
-                            <div style={{
-                              width: `${vhToPx(22)}${vu}`,
-                              height: `${vhToPx(22)}${vu}`,
-                              borderRadius: `${vhToPx(2.5)}${vu}`,
-                              background: "rgba(0, 0, 0, 0.3)",
-                              backdropFilter: "blur(40px)",
-                              WebkitBackdropFilter: "blur(40px)",
-                              boxShadow: "0 20px 60px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.15)",
-                              border: "1px solid rgba(255,255,255,0.2)",
+                              width: `${vhToPx(20)}${vu}`,
+                              height: `${vhToPx(20)}${vu}`,
+                              borderRadius: `${vhToPx(2)}${vu}`,
+                               background: `linear-gradient(145deg, ${accentRgba(0.7)}, rgba(0,0,0,0.4))`,
+                               backdropFilter: "blur(20px)",
+                               WebkitBackdropFilter: "blur(20px)",
+                               padding: `${vhToPx(0.9)}${vu}`,
+                               boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                               border: "1px solid rgba(255,255,255,0.1)",
                              zIndex: 2,
                              position: "relative",
                              flexShrink: 0,
                            }}>
-                           {/* Presenter photo anchored at bottom, overflows top */}
+                        {/* Presenter photo anchored at bottom, overflows top */}
                         {(() => {
                           const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
                           const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
@@ -1519,7 +1539,7 @@ export default function CenarioTela() {
                                   bottom: "0",
                                   left: "50%",
                                   transform: "translateX(-50%)",
-                                  height: "150%",
+                                  height: "100%",
                                   width: "auto",
                                   objectFit: "contain",
                                   objectPosition: "bottom center",
@@ -1552,21 +1572,21 @@ export default function CenarioTela() {
                         <div
                           key={musicData.capa}
                           style={{
-                            width: `${vhToPx(22)}${vu}`,
-                            height: `${vhToPx(22)}${vu}`,
-                            borderRadius: `${vhToPx(2.5)}${vu}`,
+                            width: `${vhToPx(20)}${vu}`,
+                            height: `${vhToPx(20)}${vu}`,
+                            borderRadius: `${vhToPx(2)}${vu}`,
                             overflow: "hidden",
                             flexShrink: 0,
                             zIndex: 1,
-                            marginLeft: `0`,
+                            marginLeft: `-${vhToPx(1)}${vu}`,
                             animation: "cenario-capa-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both",
                             position: "relative",
-                            padding: `0`,
-                             background: "transparent",
-                             backdropFilter: "none",
-                             WebkitBackdropFilter: "none",
-                             border: `none`,
-                             boxShadow: `none`,
+                            padding: `${vhToPx(0.78)}${vu}`,
+                            background: "rgba(255,255,255,0.12)",
+                            backdropFilter: "blur(20px)",
+                            WebkitBackdropFilter: "blur(20px)",
+                            border: "1px solid rgba(255,255,255,0.25)",
+                            boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
                           }}
                         >
                           <img
@@ -1576,19 +1596,9 @@ export default function CenarioTela() {
                               width: "100%",
                               height: "100%",
                               objectFit: "cover",
-                              borderRadius: `${vhToPx(2.5)}${vu}`,
-                              boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+                               borderRadius: `${vhToPx(1.4)}${vu}`,
                             }}
                           />
-                          {/* Removido overlay escuro */}
-                          {/* Music title + artist — centered */}
-                          <div key={musicKey} style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${vhToPx(1.5)}${vu}`, background: "linear-gradient(transparent, rgba(0,0,0,0.9))", zIndex: 2, animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both", textAlign: "center" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.4)}${vu}` }}>
-                              <Music size={Number(vhToPx(1.1))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
-                            </div>
-                            <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.4)}${vu}`, lineHeight: 1.2, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 12px rgba(0,0,0,0.8), 0 0 4px rgba(0,0,0,0.6)" }}>{musicData.titulo}</div>
-                            <div style={{ fontWeight: 500, fontSize: `${vhToPx(1)}${vu}`, opacity: 0.85, marginTop: `${vhToPx(0.25)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}>{musicData.artista}</div>
-                          </div>
                         </div>
                       )}
                       </div>
