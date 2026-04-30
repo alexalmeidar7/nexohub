@@ -1835,18 +1835,19 @@ export default function CenarioInterativoPage() {
               </div>
             )}
 
-            <div className="flex-1 min-h-0 flex items-center justify-center w-full">
+            <div className="flex-1 min-h-0 flex items-start justify-center w-full pt-4">
               <div
                 ref={previewWrapRef}
                 className="relative rounded-2xl overflow-hidden"
                 style={{
-                  height: "100%",
+                  height: "85vh",
                   width: "auto",
+                  minWidth: "300px",
                   maxWidth: "100%",
-                  maxHeight: "100%",
                   aspectRatio: "9 / 16",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-                  border: "2px solid rgba(255,255,255,0.08)",
+                  boxShadow: "0 20px 50px rgba(0,0,0,0.4)",
+                  border: "4px solid rgba(255,255,255,0.1)",
+                  background: "#000",
                 }}
               >
               <div className="absolute inset-0 overflow-hidden">
