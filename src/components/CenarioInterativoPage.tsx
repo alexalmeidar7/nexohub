@@ -1860,10 +1860,10 @@ export default function CenarioInterativoPage() {
                     width: "auto",
                     aspectRatio: "9 / 16",
                     boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
-                    border: "4px solid rgba(255,255,255,0.12)",
                     background: "#000",
                     transform: `scale(${previewZoom})`,
                     transformOrigin: "top center",
+                    transition: "transform 0.3s ease-out",
                   }}
                 >
                 <div className="absolute inset-0 overflow-hidden">
