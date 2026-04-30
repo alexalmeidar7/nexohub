@@ -708,7 +708,7 @@ export default function CenarioInterativoPage() {
   const [savedFlash, setSavedFlash] = useState(false);
   const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorInstagram?: string; apresentadoresInstagrams?: string[]; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
   const [presenterIdx, setPresenterIdx] = useState(0);
   const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
@@ -837,14 +837,24 @@ export default function CenarioInterativoPage() {
         let apresentadorNome = "";
         let apresentadorFoto = "";
         let apresentadoresFotos: string[] = [];
+        let apresentadorInstagram = "";
+        let apresentadoresInstagrams: string[] = [];
         const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
         if (apIds.length) {
-          const { data: aps } = await supabase.from("apresentadores").select("nome, foto").in("id", apIds);
+          const { data: aps } = await supabase.from("apresentadores").select("nome, foto, instagram").in("id", apIds);
           apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
           apresentadoresFotos = (aps || []).map(a => a.foto).filter((f): f is string => !!f);
           apresentadorFoto = apresentadoresFotos[0] || "";
+          apresentadoresInstagrams = (aps || []).map(a => a.instagram).filter((i): i is string => !!i);
+          apresentadorInstagram = apresentadoresInstagrams[0] || "";
         }
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, thumb: (onAir as any).thumb || null, capa: (onAir as any).capa || null, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, apresentadoresFotos, tipo_programa: onAir.tipo_programa });
+        setCurrentProgram({ 
+          nome: onAir.nome, id: onAir.id, selo: onAir.selo, thumb: (onAir as any).thumb || null, capa: (onAir as any).capa || null, 
+          horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, 
+          apresentador: apresentadorNome, apresentadorInstagram, apresentadoresInstagrams,
+          apresentadorFoto, apresentadoresFotos, 
+          tipo_programa: onAir.tipo_programa 
+        });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
           .select("id, nome, logo_url")
@@ -1615,7 +1625,20 @@ export default function CenarioInterativoPage() {
                       {/* Boxes Area (Simplified Preview) */}
                       <div style={{ position: "absolute", top: `${pvh(3.5)}px`, right: `${pvh(4)}px`, width: `${pvh(14)}px`, height: `${pvh(14)}px`, borderRadius: `${pvh(2)}px`, overflow: "hidden", background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.2)", zIndex: 20 }}>
                         {currentProgram?.thumb || currentProgram?.capa ? (
-                          <img src={currentProgram.thumb || currentProgram.capa} className="w-full h-full object-cover" alt="" />
+                          <div className="w-full h-full relative">
+                            <img src={currentProgram.thumb || currentProgram.capa} className="w-full h-full object-cover" alt="" />
+                            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${pvh(0.5)}px`, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", textAlign: "center" }}>
+                              <div style={{ fontSize: `${pvh(0.8)}px`, color: "#fff", fontWeight: 700 }}>
+                                {(() => {
+                                  const instagrams = currentProgram?.apresentadoresInstagrams || [];
+                                  const activeInstagram = instagrams.length > 0 
+                                    ? instagrams[presenterIdx % instagrams.length] 
+                                    : (currentProgram?.apresentadorInstagram || "nexohub_oficial");
+                                  return activeInstagram.startsWith('@') ? activeInstagram : `@${activeInstagram}`;
+                                })()}
+                              </div>
+                            </div>
+                          </div>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[8px] text-white/40 uppercase">Sem Capa</div>
                         )}

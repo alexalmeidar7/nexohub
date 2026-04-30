@@ -207,7 +207,7 @@ export default function CenarioTela() {
     return new URLSearchParams(window.location.search).get("weatherSubTab") || "today";
   });
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorInstagram?: string; apresentadoresInstagrams?: string[]; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
   const [presenterIdx, setPresenterIdx] = useState(0);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
@@ -793,14 +793,24 @@ export default function CenarioTela() {
         let apresentadorNome = "";
         let apresentadorFoto = "";
         let apresentadoresFotos: string[] = [];
+        let apresentadorInstagram = "";
+        let apresentadoresInstagrams: string[] = [];
         const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
         if (apIds.length) {
-          const { data: aps } = await supabase.from("apresentadores").select("nome, foto").in("id", apIds);
+          const { data: aps } = await supabase.from("apresentadores").select("nome, foto, instagram").in("id", apIds);
           apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
           apresentadoresFotos = (aps || []).map(a => a.foto).filter((f): f is string => !!f);
           apresentadorFoto = apresentadoresFotos[0] || "";
+          apresentadoresInstagrams = (aps || []).map(a => a.instagram).filter((i): i is string => !!i);
+          apresentadorInstagram = apresentadoresInstagrams[0] || "";
         }
-        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, apresentadoresFotos, tipo_programa: onAir.tipo_programa, thumb: (onAir as any).thumb, capa: (onAir as any).capa });
+        setCurrentProgram({ 
+          nome: onAir.nome, id: onAir.id, selo: onAir.selo, 
+          horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, 
+          apresentador: apresentadorNome, apresentadorInstagram, apresentadoresInstagrams,
+          apresentadorFoto, apresentadoresFotos, 
+          tipo_programa: onAir.tipo_programa, thumb: (onAir as any).thumb, capa: (onAir as any).capa 
+        });
         const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", effectiveUserId).eq("ativo", true).eq("excluido", false);
         setSponsorLogos(logos || []);
         // Find next program
@@ -1600,7 +1610,13 @@ export default function CenarioTela() {
                                     <span style={{ fontWeight: 400, fontSize: `${vhToPx(1.2)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
                                   </div>
                                   <div style={{ fontWeight: 700, fontSize: `${vhToPx(0.9)}${vu}`, color: accentColor, opacity: 0.9, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-                                    @nexohub_oficial
+                                    {(() => {
+                                      const instagrams = currentProgram?.apresentadoresInstagrams || [];
+                                      const activeInstagram = instagrams.length > 0 
+                                        ? instagrams[presenterIdx % instagrams.length] 
+                                        : (currentProgram?.apresentadorInstagram || "nexohub_oficial");
+                                      return activeInstagram.startsWith('@') ? activeInstagram : `@${activeInstagram}`;
+                                    })()}
                                   </div>
                                 </div>
                               </div>
