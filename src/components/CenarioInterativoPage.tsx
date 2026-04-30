@@ -781,6 +781,9 @@ export default function CenarioInterativoPage() {
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "currency", subTab: weatherSubTab, currencySubTab: sub } });
   };
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
+  const [trafficSearchAddress, setTrafficSearchAddress] = useState("");
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -1202,10 +1205,75 @@ export default function CenarioInterativoPage() {
     updateCurrency({ currencies: has ? config.currency.currencies.filter(c => c !== code) : [...config.currency.currencies, code] });
   };
 
-  const handleTrafficSearch = () => {
+  const handleTrafficSearch = async () => {
     if (!trafficSearchCity.trim()) return;
-    // Reset lat/lon so geocoding will run for the new city
-    updateTraffic({ city: trafficSearchCity.trim(), lat: null, lon: null });
+    setWeatherLoading(true);
+    try {
+      const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query: trafficSearchCity.trim(), count: 1 },
+      });
+      const results = geoData?.results;
+      if (results && results.length > 0) {
+        const { latitude, longitude } = results[0];
+        setTrafficCoords({ lat: latitude, lon: longitude });
+        updateTraffic({ city: trafficSearchCity.trim(), lat: latitude, lon: longitude, zoom: 12 });
+      } else {
+        toast.error("Cidade não encontrada");
+      }
+    } catch (err) {
+      console.error("Traffic search error:", err);
+    }
+    setWeatherLoading(false);
+  };
+
+  const searchAddress = async (query: string) => {
+    setTrafficSearchAddress(query);
+    if (query.length < 3) {
+      setAddressSuggestions([]);
+      return;
+    }
+    
+    setIsSearchingAddress(true);
+    try {
+      const fullQuery = `${query}, ${trafficSearchCity || config.city}`;
+      const { data } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query: fullQuery, count: 5 },
+      });
+      
+      if (data?.results) {
+        setAddressSuggestions(data.results);
+      }
+    } catch (err) {
+      console.error("Address search error:", err);
+    }
+    setIsSearchingAddress(false);
+  };
+
+  const selectAddress = (addr: any) => {
+    const lat = addr.latitude;
+    const lon = addr.longitude;
+    setTrafficCoords({ lat, lon });
+    updateTraffic({ lat, lon, zoom: 15 });
+    setTrafficSearchAddress(addr.name || "");
+    setAddressSuggestions([]);
+  };
+
+  const addTrafficPoint = () => {
+    const lat = config.traffic.lat ?? trafficCoords?.lat;
+    const lon = config.traffic.lon ?? trafficCoords?.lon;
+    if (lat === undefined || lon === undefined || lat === null || lon === null) {
+      toast.error("Busque um endereço primeiro");
+      return;
+    }
+
+    const newPoint: TrafficPoint = {
+      id: Math.random().toString(36).substring(2, 9),
+      label: trafficSearchAddress || `Ponto ${config.traffic.points.length + 1}`,
+      lat,
+      lng: lon,
+    };
+    updateTraffic({ points: [...config.traffic.points, newPoint] });
+    toast.success("Ponto marcado no mapa");
   };
 
   const trafficMapCity = config.traffic.city || config.city || "São Paulo";
@@ -1766,18 +1834,74 @@ export default function CenarioInterativoPage() {
                 </div>
                 {config.traffic.enabled && (
                   <>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Nome da cidade..."
-                        value={trafficSearchCity}
-                        onChange={e => setTrafficSearchCity(e.target.value)}
-                        onKeyDown={e => e.key === "Enter" && handleTrafficSearch()}
-                        className="text-sm flex-1"
-                        style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
-                      />
-                      <Button size="sm" onClick={handleTrafficSearch} className="gap-1 text-xs" style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}>
-                        <Search size={14} /> Buscar
-                      </Button>
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-[10px] opacity-60 font-bold uppercase">Cidade</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Nome da cidade..."
+                              value={trafficSearchCity}
+                              onChange={e => setTrafficSearchCity(e.target.value)}
+                              onKeyDown={e => e.key === "Enter" && handleTrafficSearch()}
+                              className="text-sm h-9 flex-1"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                            <Button size="sm" onClick={handleTrafficSearch} className="h-9 px-3 gap-1 text-xs" style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}>
+                              <Search size={14} /> Buscar
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 relative">
+                        <Label className="text-[10px] opacity-60 font-bold uppercase">Endereço específico</Label>
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Input
+                              placeholder="Buscar endereço..."
+                              value={trafficSearchAddress}
+                              onChange={e => searchAddress(e.target.value)}
+                              className="text-sm h-9 pr-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                            {isSearchingAddress && (
+                              <div className="absolute right-2 top-2.5">
+                                <Loader2 size={14} className="animate-spin opacity-40" />
+                              </div>
+                            )}
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={addTrafficPoint} 
+                            className="h-9 gap-1 text-xs" 
+                            title="Marcar este ponto no mapa"
+                            style={{ borderColor: "var(--layout-border-color, #333)", color: textColor }}
+                          >
+                            <MapPin size={14} /> Marcar
+                          </Button>
+                        </div>
+                        
+                        {addressSuggestions.length > 0 && (
+                          <div 
+                            className="absolute z-50 w-full top-[calc(100%+4px)] rounded-lg border shadow-xl overflow-hidden max-h-48 overflow-y-auto"
+                            style={{ background: "var(--layout-page-bg, #ffffff)", borderColor: "var(--layout-border-color, #333)" }}
+                          >
+                            {addressSuggestions.map((addr, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => selectAddress(addr)}
+                                className="w-full text-left px-3 py-2 text-xs hover:bg-black/5 transition-colors border-b last:border-0"
+                                style={{ borderBottomColor: "rgba(0,0,0,0.05)", color: textColor }}
+                              >
+                                <div className="font-bold">{addr.name}</div>
+                                {addr.admin1 && <div className="opacity-60">{addr.admin1}, {addr.country}</div>}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="rounded-lg p-3 text-xs text-center" style={{ background: subTabBg, color: mutedText }}>
