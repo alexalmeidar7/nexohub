@@ -1594,8 +1594,8 @@ export default function CenarioTela() {
                           {/* ── BOX CAPA: music album art ── */}
                           <div
                             style={{
-                              width: `${vhToPx(20)}${vu}`,
-                              height: `${vhToPx(20)}${vu}`,
+                              width: `${vhToPx(14)}${vu}`,
+                              height: `${vhToPx(14)}${vu}`,
                               borderRadius: `${vhToPx(2)}${vu}`,
                               overflow: "hidden",
                               flexShrink: 0,
