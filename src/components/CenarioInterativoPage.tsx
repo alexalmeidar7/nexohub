@@ -1134,6 +1134,8 @@ export default function CenarioInterativoPage() {
           const lon = results[0].longitude;
           setTrafficCoords({ lat, lon });
           updateTraffic({ lat, lon });
+          // If a search address was set but not a point, we could update it here
+          // but usually it's better to wait for the user to select an address.
         }
       } catch { /* silent */ }
     }, 1000);
