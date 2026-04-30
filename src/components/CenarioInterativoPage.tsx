@@ -1617,7 +1617,11 @@ export default function CenarioInterativoPage() {
                               <div className="flex items-center gap-3 px-1">
                                 <span className="text-[10px] opacity-50 uppercase font-extrabold">Esq</span>
                                 <Slider 
-                                  value={[parseInt(config.programThumbPosition || "50") || (config.programThumbPosition === "0%" ? 0 : 50)]} 
+                                  value={[(() => {
+                                    const pos = config.programThumbPosition || "50%";
+                                    const val = parseInt(pos);
+                                    return isNaN(val) ? 50 : val;
+                                  })()]} 
                                   min={0} 
                                   max={100} 
                                   step={1} 
