@@ -1473,7 +1473,7 @@ export default function CenarioTela() {
                      );
                   })()}
 
-                  {/* ── Status Sync (Top Left) ── */}
+                  {/* Status Sync (Top Left) */}
                   <div style={{ position: "absolute", top: `${vhToPx(3.5)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
                      <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}`, opacity: 0.7 }}>
                        <div style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 6px #4ade80" }} />
@@ -1481,7 +1481,7 @@ export default function CenarioTela() {
                      </div>
                    </div>
 
-                  {/* ── TOP-RIGHT: "A seguir" (Abaixo do relógio) ── */}
+                  {/* TOP-RIGHT: "A seguir" (Abaixo do relógio) */}
                   {nextProgram && (
                      <div style={{ position: "absolute", top: `${vhToPx(9.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
                        <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: "var(--layout-accent-color, #888)", marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
@@ -1490,7 +1490,7 @@ export default function CenarioTela() {
                      </div>
                    )}
 
-                  {/* ── WRAPPER: BOXES + CONTROLS ── */}
+                  {/* WRAPPER: BOXES + CONTROLS */}
                   <div style={{
                     position: "absolute",
                     bottom: `${vhToPx(37.75)}${vu}`,
@@ -1502,13 +1502,13 @@ export default function CenarioTela() {
                     gap: `${vhToPx(2)}${vu}`,
                     zIndex: 15,
                   }}>
-                    {/* ── ROW: BOX DO LOCUTOR + BOX CAPA ── */}
+                    {/* ROW: BOX DO LOCUTOR + BOX CAPA */}
                     <div style={{
                       display: "flex",
                       alignItems: "stretch",
                       gap: `${vhToPx(1)}${vu}`,
                     }}>
-                      {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
+                      {/* BOX DO LOCUTOR: quadrado 1:1 (always on top) */}
                       <div style={{
                               width: `${vhToPx(20)}${vu}`,
                               height: `${vhToPx(20)}${vu}`,
@@ -1523,7 +1523,7 @@ export default function CenarioTela() {
                              position: "relative",
                              flexShrink: 0,
                            }}>
-                           {/* Presenter photo anchored at bottom, overflows top */}
+                        {/* Presenter photo anchored at bottom, overflows top */}
                         {(() => {
                           const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
                           const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
