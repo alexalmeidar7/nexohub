@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, Plus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import DraggableElement, { ElementPosition, defaultPositions } from "@/components/cenario/DraggableElement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -334,6 +334,7 @@ export default function CenarioInterativoPage() {
   const previewIsDrawingRef = useRef(false);
   const previewWrapRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(0.278);
+  const [previewZoom, setPreviewZoom] = useState(0.6); // Default preview zoom level
   const PREV_W = 1080;
   const PREV_H = 1920;
   const pvh = useCallback((v: number) => v * PREV_H / 100, []);
@@ -628,16 +629,17 @@ export default function CenarioInterativoPage() {
     const el = previewWrapRef.current;
     if (!el) return;
     const measure = () => {
+      // Use fixed aspect ratio and zoom for internal scale calculation
       const scale = previewIsLandscape
-        ? Math.min(el.clientWidth / PREV_H, el.clientHeight / PREV_W)
-        : Math.min(el.clientWidth / PREV_W, el.clientHeight / PREV_H);
+        ? (1080 * previewZoom) / PREV_H
+        : (1080 * previewZoom) / PREV_W;
       setPreviewScale(scale || 1);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [previewIsLandscape]);
+  }, [previewIsLandscape, previewZoom]);
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
@@ -1835,21 +1837,37 @@ export default function CenarioInterativoPage() {
               </div>
             )}
 
-            <div className="flex-1 min-h-0 flex items-start justify-center w-full pt-4">
-              <div
-                ref={previewWrapRef}
-                className="relative rounded-2xl overflow-hidden"
-                style={{
-                  height: "85vh",
-                  width: "auto",
-                  minWidth: "300px",
-                  maxWidth: "100%",
-                  aspectRatio: "9 / 16",
-                  boxShadow: "0 20px 50px rgba(0,0,0,0.4)",
-                  border: "4px solid rgba(255,255,255,0.1)",
-                  background: "#000",
-                }}
-              >
+            <div className="flex flex-col items-center gap-3 w-full pt-4 min-h-0 overflow-hidden">
+              {/* Zoom Control */}
+              <div className="flex items-center gap-3 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 shadow-lg z-20">
+                <Minus size={14} className="text-white/60 cursor-pointer hover:text-white transition-colors" onClick={() => setPreviewZoom(z => Math.max(0.2, z - 0.1))} />
+                <Slider 
+                  value={[previewZoom]} 
+                  min={0.2} 
+                  max={1.0} 
+                  step={0.05} 
+                  className="w-32 cursor-pointer" 
+                  onValueChange={([val]) => setPreviewZoom(val)} 
+                />
+                <Plus size={14} className="text-white/60 cursor-pointer hover:text-white transition-colors" onClick={() => setPreviewZoom(z => Math.min(1.0, z + 0.1))} />
+                <span className="text-[10px] font-mono text-white/80 w-8 text-center">{Math.round(previewZoom * 100)}%</span>
+              </div>
+
+              <div className="flex-1 min-h-0 flex items-start justify-center w-full overflow-auto custom-scrollbar pb-8">
+                <div
+                  ref={previewWrapRef}
+                  className="relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ease-out"
+                  style={{
+                    height: `${1920 * previewZoom}px`,
+                    width: `${1080 * previewZoom}px`,
+                    minWidth: `${1080 * previewZoom}px`,
+                    aspectRatio: "9 / 16",
+                    boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
+                    border: "4px solid rgba(255,255,255,0.12)",
+                    background: "#000",
+                    transform: "translateZ(0)",
+                  }}
+                >
               <div className="absolute inset-0 overflow-hidden">
                 {/* Virtual 1080×1920 canvas, scaled to fit — mirrors CenarioTela exactly */}
                 <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left" }}>
@@ -2386,10 +2404,11 @@ export default function CenarioInterativoPage() {
                 </div>
               )}
             </div>
-            </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
+</div>
   );
 }
