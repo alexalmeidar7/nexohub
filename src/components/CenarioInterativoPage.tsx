@@ -65,6 +65,7 @@ interface HomeConfig {
   bgGradientAngle?: number;
   exceptionWords?: string;
   elementPositions?: Record<string, ElementPosition>;
+  showArtistImage?: boolean;
 }
 
 interface CenarioConfig {
@@ -72,6 +73,7 @@ interface CenarioConfig {
   useProgramThumbAsBg?: boolean;
   programThumbPosition?: "left" | "center" | "right";
   bgAlternateMode?: boolean;
+  bgType?: "static" | "gradient" | "thumb";
   home: HomeConfig;
   weather: WeatherConfig;
   traffic: TrafficConfig;
