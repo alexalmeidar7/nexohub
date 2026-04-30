@@ -1533,13 +1533,13 @@ export default function CenarioInterativoPage() {
                             </div>
                           </div>
                         )}
-                        )}
                       </div>
                     ) : (
                       <div className="py-4 flex flex-col items-center justify-center text-center rounded-lg border-2 border-dashed border-black/5 bg-black/5">
                         <MonitorPlay size={24} className="opacity-20 mb-2" />
                         <span className="text-xs font-semibold opacity-40">Nenhum programa detectado no Estúdio FM</span>
                       </div>
+                    )}
                     {/* Visibilidade das Capas */}
                     <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
                       <div className="flex items-center gap-2 mb-1">
