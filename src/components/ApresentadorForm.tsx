@@ -122,7 +122,7 @@ export default function ApresentadorForm() {
       nome: nome.trim(),
       cargo: cargoValue,
       instagram: instagram.trim(),
-      whatsapp: whatsapp.replace(/\D/g, "").length > 2 ? whatsapp.trim() : "",
+      whatsapp: whatsapp.replace(/\D/g, "").length >= 10 ? whatsapp.trim() : "",
       foto: fotoUrl,
       ativo,
     };
