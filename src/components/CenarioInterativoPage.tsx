@@ -2860,7 +2860,7 @@ export default function CenarioInterativoPage() {
                                        transform: `translateY(${currentPhase === "music" ? 0 : pvh(1)}px)`,
                                        transition: "opacity 0.8s ease, transform 0.8s ease",
                                        visibility: currentPhase === "music" ? "visible" : "hidden"
-                                     }}>
+                                      }}>
                                        <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
                                          {musicData.titulo}
                                        </div>
