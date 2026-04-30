@@ -1540,8 +1540,6 @@ export default function CenarioInterativoPage() {
                         <MonitorPlay size={24} className="opacity-20 mb-2" />
                         <span className="text-xs font-semibold opacity-40">Nenhum programa detectado no Estúdio FM</span>
                       </div>
-                    )}
-
                     {/* Visibilidade das Capas */}
                     <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
                       <div className="flex items-center gap-2 mb-1">
