@@ -2737,6 +2737,9 @@ export default function CenarioInterativoPage() {
                              )}
 
                              {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA (Top Right) ── */}
+                             {(() => {
+                               const showProgram = config.home.showProgramThumb !== false;
+                               const showMusic = !!musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false;
                                const currentPhase = (showProgram && showMusic) ? (Math.floor(currentTime.getTime() / 8000) % 2 === 0 ? "program" : "music") : (showProgram ? "program" : "music");
                                
                                return (
