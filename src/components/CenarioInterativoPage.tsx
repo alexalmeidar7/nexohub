@@ -1812,7 +1812,7 @@ export default function CenarioInterativoPage() {
                   className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
                   style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
                 >
-                  <ExternalLink size={11} /> Abrir Tela
+                  <ExternalLink size={11} /> Cenário interativo Externo
                 </button>
                 <button
                   onClick={() => {
