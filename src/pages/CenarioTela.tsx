@@ -1315,7 +1315,7 @@ export default function CenarioTela() {
                 <div className="absolute inset-0" style={{ zIndex: 3 }}>
                   {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
                     <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
-                      <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(1.2)" } : { filter: "blur(22px) brightness(1.2)", transform: "scale(1.1)" }} />
+                      <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(1.2)", objectPosition: config.programThumbPosition || "center" } : { filter: "blur(22px) brightness(1.2)", transform: "scale(1.1)", objectPosition: config.programThumbPosition || "center" }} />
                     </div>
                   )}
                 </div>
