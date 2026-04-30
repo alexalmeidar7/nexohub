@@ -2679,24 +2679,28 @@ export default function CenarioInterativoPage() {
                             })()}
                             
 
-                             {/* ── TOP-LEFT: Clock + date + SYNC ── */}
+                             {/* ── TOP-LEFT: Clock + date ── */}
                              <div style={{ position: "absolute", top: `${pvh(4)}px`, left: `${pvh(5)}px`, zIndex: 20 }}>
-                               <div className="font-black" style={{ fontSize: `${pvh(4.2)}px`, fontVariantNumeric: "tabular-nums", lineHeight: 0.9, color: "#fff", textShadow: "0 0 20px rgba(var(--layout-accent-rgb, 68,68,68),0.6), 0 0 40px rgba(var(--layout-accent-rgb, 68,68,68),0.3)", letterSpacing: "-0.02em" }}>
+                               <div className="font-black text-left" style={{ fontSize: `${pvh(4.2)}px`, fontVariantNumeric: "tabular-nums", lineHeight: 0.9, color: "#fff", textShadow: "0 0 20px rgba(var(--layout-accent-rgb, 68,68,68),0.6), 0 0 40px rgba(var(--layout-accent-rgb, 68,68,68),0.3)", letterSpacing: "-0.02em" }}>
                                  {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                                </div>
-                               <div className="font-semibold" style={{ fontSize: `${pvh(1.15)}px`, color: "var(--layout-accent-color, #888)", marginTop: `${pvh(0.3)}px` }}>
+                               <div className="font-semibold text-left" style={{ fontSize: `${pvh(1.15)}px`, color: "var(--layout-accent-color, #888)", marginTop: `${pvh(0.3)}px` }}>
                                  {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                               </div>
-                               <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, marginTop: `${pvh(0.4)}px`, opacity: 0.7 }}>
-                                 <div style={{ width: `${pvh(0.6)}px`, height: `${pvh(0.6)}px`, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 6px #4ade80" }} />
-                                 <span className="font-semibold uppercase" style={{ letterSpacing: "0.1em", fontSize: `${pvh(0.9)}px` }}>SYNC</span>
                                </div>
                              </div>
 
-                             {/* ── TOP-RIGHT: "A seguir" ── */}
+                             {/* ── SYNC (Bottom Left) ── */}
+                             <div className="flex items-center" style={{ position: "absolute", bottom: `${pvh(4)}px`, left: `${pvh(5)}px`, zIndex: 20, gap: `${pvh(0.4)}px`, opacity: 0.8 }}>
+                               <div style={{ width: `${pvh(0.7)}px`, height: `${pvh(0.7)}px`, borderRadius: "50%", background: "var(--layout-accent-color, #4ade80)", boxShadow: "0 0 8px var(--layout-accent-color, #4ade80)" }} />
+                               <span className="font-semibold uppercase" style={{ letterSpacing: "0.1em", fontSize: `${pvh(1)}px` }}>SYNC</span>
+                             </div>
+
+                             {/* ── BOTTOM-RIGHT: "A seguir" ── */}
                              {nextProgram && (
-                               <div style={{ position: "absolute", top: `${pvh(4)}px`, right: `${pvh(5)}px`, zIndex: 20, textAlign: "right" }}>
-                                 <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.5)}px` }}>a seguir</div>
+                               <div style={{ position: "absolute", bottom: `${pvh(4)}px`, right: `${pvh(5)}px`, zIndex: 20, textAlign: "right" }}>
+                                 <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.5)}px` }}>
+                                   <span style={{ color: "var(--layout-accent-color)" }}>a seguir</span>
+                                 </div>
                                  <div className="font-bold" style={{ fontSize: `${pvh(2.2)}px`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
                                  <div className="font-medium" style={{ fontSize: `${pvh(0.9)}px`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                                </div>
