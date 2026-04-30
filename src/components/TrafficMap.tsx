@@ -7,6 +7,8 @@ interface TrafficMapProps {
   zoom: number;
   interactive?: boolean;
   onMove?: (lat: number, lon: number, zoom: number) => void;
+  onPointMove?: (id: string, lat: number, lon: number) => void;
+  points?: { id: string, lat: number, lng: number }[];
   className?: string;
   style?: React.CSSProperties;
 }
