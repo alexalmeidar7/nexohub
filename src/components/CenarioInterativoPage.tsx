@@ -73,7 +73,7 @@ interface CenarioConfig {
   useProgramThumbAsBg?: boolean;
   programThumbPosition?: "left" | "center" | "right";
   bgAlternateMode?: boolean;
-  bgType?: "static" | "gradient" | "thumb";
+  bgType?: "static" | "gradient" | "thumb" | "none";
   home: HomeConfig;
   weather: WeatherConfig;
   traffic: TrafficConfig;
@@ -93,7 +93,7 @@ const defaultConfig: CenarioConfig = {
   city: "",
   useProgramThumbAsBg: false,
   programThumbPosition: "center",
-  bgType: "static",
+  bgType: "none",
   home: { bgImage: "", showArtistImage: true },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
@@ -1340,10 +1340,10 @@ export default function CenarioInterativoPage() {
 
                     <div className="grid grid-cols-1 gap-4">
                       {/* 1 - Fundo Estático */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'static' ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${config.bgType === 'static' ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
                               <Image size={16} />
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">1. Fundo Estático</h4>
@@ -1351,8 +1351,9 @@ export default function CenarioInterativoPage() {
                           <Button 
                             size="sm" 
                             variant={config.bgType === 'static' ? "default" : "outline"} 
-                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'static' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                            onClick={() => setConfig(c => ({ ...c, bgType: 'static' }))}
+                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
+                            style={config.bgType === 'static' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
+                            onClick={() => setConfig(c => ({ ...c, bgType: config.bgType === 'static' ? 'none' : 'static' }))}
                           >
                             {config.bgType === 'static' ? 'Ativado' : 'Ativar'}
                           </Button>
@@ -1361,10 +1362,10 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 2 - Fundo Degradê */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'gradient' ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'gradient' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${config.bgType === 'gradient' ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'gradient' ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
                               <Palette size={16} />
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">2. Fundo Degradê</h4>
@@ -1372,10 +1373,15 @@ export default function CenarioInterativoPage() {
                           <Button 
                             size="sm" 
                             variant={config.bgType === 'gradient' ? "default" : "outline"} 
-                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'gradient' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'gradient' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
+                            style={config.bgType === 'gradient' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
                             onClick={() => {
-                              setConfig(c => ({ ...c, bgType: 'gradient' }));
-                              updateHome({ bgGradient: true });
+                              if (config.bgType === 'gradient') {
+                                setConfig(c => ({ ...c, bgType: 'none' }));
+                              } else {
+                                setConfig(c => ({ ...c, bgType: 'gradient' }));
+                                updateHome({ bgGradient: true });
+                              }
                             }}
                           >
                             {config.bgType === 'gradient' ? 'Ativado' : 'Ativar'}
@@ -1400,10 +1406,10 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 3 - Fundo Thumb */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'thumb' ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${config.bgType === 'thumb' ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
                               <Shapes size={16} />
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">3. Fundo Thumb Programa</h4>
@@ -1411,9 +1417,14 @@ export default function CenarioInterativoPage() {
                           <Button 
                             size="sm" 
                             variant={config.bgType === 'thumb' ? "default" : "outline"} 
-                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'thumb' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
+                            style={config.bgType === 'thumb' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
                             onClick={() => {
-                              setConfig(c => ({ ...c, bgType: 'thumb', useProgramThumbAsBg: true }));
+                              if (config.bgType === 'thumb') {
+                                setConfig(c => ({ ...c, bgType: 'none' }));
+                              } else {
+                                setConfig(c => ({ ...c, bgType: 'thumb', useProgramThumbAsBg: true }));
+                              }
                             }}
                           >
                             {config.bgType === 'thumb' ? 'Ativado' : 'Ativar'}
@@ -1428,7 +1439,8 @@ export default function CenarioInterativoPage() {
                                 <Button 
                                   size="sm" 
                                   variant={config.programThumbPosition === 'left' ? "default" : "outline"}
-                                  className="flex-1 h-8 text-[10px]"
+                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'left' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
+                                  style={config.programThumbPosition === 'left' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'left' }))}
                                 >
                                   Esquerda
@@ -1436,7 +1448,8 @@ export default function CenarioInterativoPage() {
                                 <Button 
                                   size="sm" 
                                   variant={config.programThumbPosition === 'center' ? "default" : "outline"}
-                                  className="flex-1 h-8 text-[10px]"
+                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'center' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
+                                  style={config.programThumbPosition === 'center' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'center' }))}
                                 >
                                   Centro
@@ -1444,7 +1457,8 @@ export default function CenarioInterativoPage() {
                                 <Button 
                                   size="sm" 
                                   variant={config.programThumbPosition === 'right' ? "default" : "outline"}
-                                  className="flex-1 h-8 text-[10px]"
+                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'right' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
+                                  style={config.programThumbPosition === 'right' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'right' }))}
                                 >
                                   Direita
@@ -1456,9 +1470,9 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 4 - Imagem do Artista */}
-                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.home.showArtistImage ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center gap-2">
-                          <div className={`p-1.5 rounded-lg ${config.home.showArtistImage ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
+                          <div className={`p-1.5 rounded-lg ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
                             <Music size={16} />
                           </div>
                           <div>
@@ -1473,9 +1487,9 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 5 - Alternar Automático */}
-                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.bgAlternateMode ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
+                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.bgAlternateMode ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/30' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center gap-2">
-                          <div className={`p-1.5 rounded-lg ${config.bgAlternateMode ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
+                          <div className={`p-1.5 rounded-lg ${config.bgAlternateMode ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
                             <RefreshCw size={16} />
                           </div>
                           <div>
@@ -1493,7 +1507,7 @@ export default function CenarioInterativoPage() {
                     {/* Palavras de Exceção (Extra) */}
                     <div className="p-4 rounded-xl border bg-white/40 border-black/5">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1 rounded bg-rose-500/10 text-rose-600">
+                        <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
                           <EyeOff size={14} />
                         </div>
                         <Label className="text-xs font-bold uppercase">Filtro de Exceções</Label>
