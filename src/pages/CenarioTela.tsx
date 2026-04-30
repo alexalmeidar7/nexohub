@@ -1592,12 +1592,40 @@ export default function CenarioTela() {
                               {currentProgram?.selo && (
                                 <img src={currentProgram.selo} alt="" style={{ position: "absolute", top: `${vhToPx(0.8)}${vu}`, right: `${vhToPx(0.8)}${vu}`, maxHeight: `${vhToPx(5.82)}${vu}`, maxWidth: `${vhToPx(8.74)}${vu}`, objectFit: "contain", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))", zIndex: 3 }} />
                               )}
-                              {/* Presenter name at bottom */}
-                              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${vhToPx(1.5)}${vu}`, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", zIndex: 3 }}>
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.4)}${vu}` }}>
-                                  <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
-                                  <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
-                                </div>
+                              {/* Presenter/Music details at bottom */}
+                              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${vhToPx(1.2)}${vu}`, background: "linear-gradient(transparent, rgba(0,0,0,0.9))", zIndex: 3 }}>
+                                {musicData ? (
+                                  <div key={musicKey} style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.8)}${vu}` }}>
+                                      {musicData.capa && (
+                                        <img 
+                                          src={musicData.capa} 
+                                          alt="" 
+                                          style={{ 
+                                            width: `${vhToPx(3.2)}${vu}`, 
+                                            height: `${vhToPx(3.2)}${vu}`, 
+                                            borderRadius: `${vhToPx(0.4)}${vu}`,
+                                            objectFit: "cover",
+                                            boxShadow: "0 2px 8px rgba(0,0,0,0.4)"
+                                          }} 
+                                        />
+                                      )}
+                                      <div style={{ minWidth: 0, flex: 1 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.35)}${vu}`, marginBottom: `${vhToPx(0.1)}${vu}` }}>
+                                          <Music size={Number(vhToPx(0.85))} style={{ opacity: 0.7, flexShrink: 0, color: "#fff" }} />
+                                          <span style={{ letterSpacing: "0.1em", fontSize: `${vhToPx(0.72)}${vu}`, opacity: 0.7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600, color: "#fff", textTransform: "uppercase" }}>Tocando Agora</span>
+                                        </div>
+                                        <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.2)}${vu}`, lineHeight: 1.15, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>{musicData.titulo}</div>
+                                        <div style={{ fontWeight: 600, fontSize: `${vhToPx(0.9)}${vu}`, opacity: 0.8, marginTop: `${vhToPx(0.1)}${vu}`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: accentColor }}>{musicData.artista}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.4)}${vu}` }}>
+                                    <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
+                                    <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
 
