@@ -1868,10 +1868,10 @@ export default function CenarioInterativoPage() {
                     transform: "translateZ(0)",
                   }}
                 >
-              <div className="absolute inset-0 overflow-hidden">
-                {/* Virtual 1080×1920 canvas, scaled to fit — mirrors CenarioTela exactly */}
-                <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left" }}>
-                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${pvh(1.8)}px` }}>
+                <div className="absolute inset-0 overflow-hidden">
+                  {/* Virtual 1080×1920 canvas, scaled to fit — mirrors CenarioTela exactly */}
+                  <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${pvh(1.8)}px` }}>
 
                     {/* Fullscreen background layers */}
                     {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
