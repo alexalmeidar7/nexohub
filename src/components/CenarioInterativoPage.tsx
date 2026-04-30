@@ -1481,36 +1481,23 @@ export default function CenarioInterativoPage() {
                         
                         {openSections.thumb && config.bgType === 'thumb' && (
                           <div className="space-y-3 pt-2 animate-in slide-in-from-top-2 duration-300 border-t border-black/5 mt-1">
-                            <div className="flex flex-col gap-2">
-                              <Label className="text-[10px] font-bold uppercase opacity-60">Ajustar Alinhamento</Label>
-                              <div className="flex gap-2">
-                                <Button 
-                                  size="sm" 
-                                  variant={config.programThumbPosition === 'left' ? "default" : "outline"}
-                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'left' ? 'hover:opacity-90' : 'hover:bg-[var(--layout-accent-color)]/10 hover:text-[var(--layout-accent-color)] border-[var(--layout-accent-color)]/30 text-[var(--layout-accent-color)]'}`}
-                                  style={config.programThumbPosition === 'left' ? { backgroundColor: 'var(--layout-accent-color)', color: accentContrast } : {}}
-                                  onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'left' }))}
-                                >
-                                  Esquerda
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant={config.programThumbPosition === 'center' ? "default" : "outline"}
-                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'center' ? 'hover:opacity-90' : 'hover:bg-[var(--layout-accent-color)]/10 hover:text-[var(--layout-accent-color)] border-[var(--layout-accent-color)]/30 text-[var(--layout-accent-color)]'}`}
-                                  style={config.programThumbPosition === 'center' ? { backgroundColor: 'var(--layout-accent-color)', color: accentContrast } : {}}
-                                  onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'center' }))}
-                                >
-                                  Centro
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant={config.programThumbPosition === 'right' ? "default" : "outline"}
-                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'right' ? 'hover:opacity-90' : 'hover:bg-[var(--layout-accent-color)]/10 hover:text-[var(--layout-accent-color)] border-[var(--layout-accent-color)]/30 text-[var(--layout-accent-color)]'}`}
-                                  style={config.programThumbPosition === 'right' ? { backgroundColor: 'var(--layout-accent-color)', color: accentContrast } : {}}
-                                  onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'right' }))}
-                                >
-                                  Direita
-                                </Button>
+                            <div className="flex flex-col gap-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[10px] font-bold uppercase opacity-60">Ajustar Alinhamento</Label>
+                                <span className="text-[10px] font-mono opacity-60">{config.programThumbPosition || "50%"}</span>
+                              </div>
+                              <div className="flex items-center gap-3 px-1">
+                                <span className="text-[10px] opacity-50 uppercase font-extrabold">Esq</span>
+                                <Slider 
+                                  value={[parseInt(config.programThumbPosition || "50")]} 
+                                  min={0} 
+                                  max={100} 
+                                  step={1} 
+                                  onValueChange={([v]) => setConfig(c => ({ ...c, programThumbPosition: `${v}%` }))}
+                                  className="flex-1"
+                                  style={{ "--primary": "var(--layout-accent-color)" } as any}
+                                />
+                                <span className="text-[10px] opacity-50 uppercase font-extrabold">Dir</span>
                               </div>
                             </div>
                           </div>
