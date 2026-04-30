@@ -1163,6 +1163,7 @@ export default function CenarioInterativoPage() {
                 <TabsTrigger value="currency" className="text-xs gap-1 data-[state=active]:shadow-sm"><DollarSign size={14} /> Cotação</TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs gap-1 data-[state=active]:shadow-sm"><MessageCircle size={14} /> Chat</TabsTrigger>
               </TabsList>
+              <TabsContent value="home" className="space-y-5 animate-in fade-in-50 duration-500">
                 <div className="space-y-6">
                   {/* Programa no Ar Card */}
                   <div className="relative overflow-hidden rounded-xl border p-4 transition-all" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 3%, var(--layout-page-bg, #ffffff))", borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}>
