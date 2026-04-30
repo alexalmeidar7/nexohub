@@ -781,6 +781,8 @@ export default function CenarioInterativoPage() {
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "currency", subTab: weatherSubTab, currencySubTab: sub } });
   };
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
+  const [trafficCitySuggestions, setTrafficCitySuggestions] = useState<any[]>([]);
+  const [isSearchingCity, setIsSearchingCity] = useState(false);
   const [trafficSearchAddress, setTrafficSearchAddress] = useState("");
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -1212,6 +1214,34 @@ export default function CenarioInterativoPage() {
     updateCurrency({ currencies: has ? config.currency.currencies.filter(c => c !== code) : [...config.currency.currencies, code] });
   };
 
+  const handleTrafficCityInput = async (query: string) => {
+    setTrafficSearchCity(query);
+    if (query.length < 2) {
+      setTrafficCitySuggestions([]);
+      return;
+    }
+    setIsSearchingCity(true);
+    try {
+      const { data } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query, count: 5 },
+      });
+      if (data?.results) setTrafficCitySuggestions(data.results);
+    } catch (err) {
+      console.error("City search error:", err);
+    }
+    setIsSearchingCity(false);
+  };
+
+  const selectTrafficCity = (city: any) => {
+    const cityName = city.name;
+    const { latitude, longitude } = city;
+    setTrafficSearchCity(cityName);
+    setTrafficCitySuggestions([]);
+    setTrafficCoords({ lat: latitude, lon: longitude });
+    updateTraffic({ city: cityName, lat: latitude, lon: longitude, zoom: 12 });
+    if (!config.city) setConfig(c => ({ ...c, city: cityName }));
+  };
+
   const handleTrafficSearch = async () => {
     if (!trafficSearchCity.trim()) return;
     setWeatherLoading(true);
@@ -1225,10 +1255,7 @@ export default function CenarioInterativoPage() {
         const cityName = trafficSearchCity.trim();
         setTrafficCoords({ lat: latitude, lon: longitude });
         updateTraffic({ city: cityName, lat: latitude, lon: longitude, zoom: 12 });
-        // Update main city if not set, following the pattern of preserving the "last city"
-        if (!config.city) {
-          setConfig(c => ({ ...c, city: cityName }));
-        }
+        if (!config.city) setConfig(c => ({ ...c, city: cityName }));
       } else {
         toast.error("Cidade não encontrada");
       }
@@ -1851,21 +1878,46 @@ export default function CenarioInterativoPage() {
                   <>
                     <div className="space-y-3">
                       <div className="flex gap-2">
-                        <div className="flex-1 space-y-1">
+                        <div className="flex-1 space-y-1 relative">
                           <Label className="text-[10px] opacity-60 font-bold uppercase">Cidade</Label>
                           <div className="flex gap-2">
-                            <Input
-                              placeholder="Nome da cidade..."
-                              value={trafficSearchCity}
-                              onChange={e => setTrafficSearchCity(e.target.value)}
-                              onKeyDown={e => e.key === "Enter" && handleTrafficSearch()}
-                              className="text-sm h-9 flex-1"
-                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
-                            />
+                            <div className="relative flex-1">
+                              <Input
+                                placeholder="Nome da cidade..."
+                                value={trafficSearchCity}
+                                onChange={e => handleTrafficCityInput(e.target.value)}
+                                onKeyDown={e => e.key === "Enter" && handleTrafficSearch()}
+                                className="text-sm h-9 flex-1 pr-8"
+                                style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                              />
+                              {isSearchingCity && (
+                                <div className="absolute right-2 top-2.5">
+                                  <Loader2 size={14} className="animate-spin opacity-40" />
+                                </div>
+                              )}
+                            </div>
                             <Button size="sm" onClick={handleTrafficSearch} className="h-9 px-3 gap-1 text-xs" style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}>
                               <Search size={14} /> Buscar
                             </Button>
                           </div>
+                          {trafficCitySuggestions.length > 0 && (
+                            <div 
+                              className="absolute z-[60] w-full top-[calc(100%+4px)] rounded-lg border shadow-xl overflow-hidden max-h-48 overflow-y-auto"
+                              style={{ background: "var(--layout-page-bg, #ffffff)", borderColor: "var(--layout-border-color, #333)" }}
+                            >
+                              {trafficCitySuggestions.map((city, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => selectTrafficCity(city)}
+                                  className="w-full text-left px-3 py-2 text-xs hover:bg-black/5 transition-colors border-b last:border-0"
+                                  style={{ borderBottomColor: "rgba(0,0,0,0.05)", color: textColor }}
+                                >
+                                  <div className="font-bold">{city.name}</div>
+                                  {city.admin1 && <div className="opacity-60">{city.admin1}, {city.country}</div>}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
 
