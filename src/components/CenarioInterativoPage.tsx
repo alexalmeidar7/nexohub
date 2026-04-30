@@ -2867,7 +2867,8 @@ export default function CenarioInterativoPage() {
                                        <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
                                          {musicData.titulo}
                                        </div>
-                                       <div className="font-bold" style={{ fontSize: `${pvh(1)}px`, color: "var(--layout-accent-color, #4ade80)", marginTop: `${pvh(0.2)}px`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                                         {musicData.artista}
+                                       </div>
                                      </div>
                                    )}
                                  </div>
