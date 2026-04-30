@@ -1471,18 +1471,18 @@ export default function CenarioTela() {
                          </div>
                        </div>
                      );
-                   })(),
+                  })()}
 
-                   {/* ── Status Sync (Top Left) ── */}
-                   <div style={{ position: "absolute", top: `${vhToPx(3.5)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
+                  {/* ── Status Sync (Top Left) ── */}
+                  <div style={{ position: "absolute", top: `${vhToPx(3.5)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
                      <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}`, opacity: 0.7 }}>
                        <div style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 6px #4ade80" }} />
                        <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff" }}>SYNC</span>
                      </div>
                    </div>
 
-                   {/* ── TOP-RIGHT: "A seguir" (Abaixo do relógio) ── */}
-                   {nextProgram && (
+                  {/* ── TOP-RIGHT: "A seguir" (Abaixo do relógio) ── */}
+                  {nextProgram && (
                      <div style={{ position: "absolute", top: `${vhToPx(9.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
                        <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: "var(--layout-accent-color, #888)", marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
                        <div style={{ fontWeight: 700, fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, color: "#fff" }}>{nextProgram.nome}</div>
@@ -1490,26 +1490,26 @@ export default function CenarioTela() {
                      </div>
                    )}
 
-                    {/* ── WRAPPER: BOXES + CONTROLS ── */}
+                  {/* ── WRAPPER: BOXES + CONTROLS ── */}
+                  <div style={{
+                    position: "absolute",
+                    bottom: `${vhToPx(37.75)}${vu}`,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: `${vhToPx(2)}${vu}`,
+                    zIndex: 15,
+                  }}>
+                    {/* ── ROW: BOX DO LOCUTOR + BOX CAPA ── */}
                     <div style={{
-                      position: "absolute",
-                      bottom: `${vhToPx(37.75)}${vu}`,
-                      left: "50%",
-                      transform: "translateX(-50%)",
                       display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: `${vhToPx(2)}${vu}`,
-                      zIndex: 15,
+                      alignItems: "stretch",
+                      gap: `${vhToPx(1)}${vu}`,
                     }}>
-                      {/* ── ROW: BOX DO LOCUTOR + BOX CAPA ── */}
+                      {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
                       <div style={{
-                        display: "flex",
-                        alignItems: "stretch",
-                        gap: `${vhToPx(1)}${vu}`,
-                      }}>
-                         {/* ── BOX DO LOCUTOR: quadrado 1:1 (always on top) ── */}
-                            <div style={{
                               width: `${vhToPx(20)}${vu}`,
                               height: `${vhToPx(20)}${vu}`,
                               borderRadius: `${vhToPx(2)}${vu}`,
