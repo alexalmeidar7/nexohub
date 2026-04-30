@@ -1440,6 +1440,7 @@ export default function CenarioInterativoPage() {
                                   size="sm" 
                                   variant={config.programThumbPosition === 'left' ? "default" : "outline"}
                                   className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'left' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
+                                  style={config.programThumbPosition === 'left' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'left' }))}
                                 >
                                   Esquerda
@@ -1448,6 +1449,7 @@ export default function CenarioInterativoPage() {
                                   size="sm" 
                                   variant={config.programThumbPosition === 'center' ? "default" : "outline"}
                                   className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'center' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
+                                  style={config.programThumbPosition === 'center' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'center' }))}
                                 >
                                   Centro
@@ -1456,6 +1458,7 @@ export default function CenarioInterativoPage() {
                                   size="sm" 
                                   variant={config.programThumbPosition === 'right' ? "default" : "outline"}
                                   className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'right' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
+                                  style={config.programThumbPosition === 'right' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'right' }))}
                                 >
                                   Direita
