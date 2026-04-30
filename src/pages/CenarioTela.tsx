@@ -1256,7 +1256,7 @@ export default function CenarioTela() {
             const isHomeOrChat = activeTab === "home" || activeTab === "chat";
             const thumbUrl = (currentProgram?.thumb || currentProgram?.capa) as string | undefined;
             const hasThumb = !!thumbUrl;
-            const hasArtist = !!artistBgUrl && !!musicData?.artista && !isBreakTrack && !isJornalistico;
+            const hasArtist = !!artistBgUrl && !!musicData?.artista && !isBreakTrack;
 
             // Decide visibility (opacity) per layer
             let thumbVisible = showThumbLayer && hasThumb;
