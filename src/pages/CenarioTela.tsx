@@ -1533,8 +1533,8 @@ export default function CenarioTela() {
                         }}>
                           {/* BOX DO LOCUTOR: quadrado 1:1 (always on top) */}
                           <div style={{
-                                  width: `${vhToPx(20)}${vu}`,
-                                  height: `${vhToPx(20)}${vu}`,
+                                  width: `${vhToPx(14)}${vu}`,
+                                  height: `${vhToPx(14)}${vu}`,
                                   borderRadius: `${vhToPx(2)}${vu}`,
                                    background: `linear-gradient(145deg, ${accentRgba(0.7)}, rgba(0,0,0,0.4))`,
                                    backdropFilter: "blur(20px)",
