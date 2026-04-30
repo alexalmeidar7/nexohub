@@ -1593,46 +1593,8 @@ export default function CenarioTela() {
                       )}
                       </div>
 
-                      {/* ── CONTROLS: Toggle ARTISTA / THUMB ── */}
-                      <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(1.5)}${vu}`, marginTop: `${vhToPx(1)}${vu}` }}>
-                        <button 
-                          onClick={() => setShowArtistLayer(p => !p)} 
-                          style={{ 
-                            background: showArtistLayer ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.4)", 
-                            border: showArtistLayer ? `1.5px solid ${accentColor}` : "1.5px solid rgba(255,255,255,0.1)",
-                            borderRadius: `${vhToPx(1)}${vu}`,
-                            padding: `${vhToPx(0.6)}${vu} ${vhToPx(1.2)}${vu}`,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: `${vhToPx(0.8)}${vu}`,
-                            cursor: "pointer",
-                            transition: "all 0.2s ease",
-                            pointerEvents: "auto"
-                          }}
-                        >
-                          <Music size={Number(vhToPx(1.4))} color="white" style={{ opacity: showArtistLayer ? 1 : 0.5 }} />
-                          <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 700, color: "white" }}>ARTISTA</span>
-                        </button>
-                        
-                        <button 
-                          onClick={() => setShowThumbLayer(p => !p)} 
-                          style={{ 
-                            background: showThumbLayer ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.4)", 
-                            border: showThumbLayer ? `1.5px solid ${accentColor}` : "1.5px solid rgba(255,255,255,0.1)",
-                            borderRadius: `${vhToPx(1)}${vu}`,
-                            padding: `${vhToPx(0.6)}${vu} ${vhToPx(1.2)}${vu}`,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: `${vhToPx(0.8)}${vu}`,
-                            cursor: "pointer",
-                            transition: "all 0.2s ease",
-                            pointerEvents: "auto"
-                          }}
-                        >
-                          <Play size={Number(vhToPx(1.4))} color="white" style={{ opacity: showThumbLayer ? 1 : 0.5 }} />
-                          <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 700, color: "white" }}>THUMB</span>
-                        </button>
-                      </div>
+                      {/* ── CONTROLS: Removidos conforme solicitado ── */}
+
 
                       {/* ── EXCEPTIONS: below artist image button ── */}
                       {config.home.exceptionWords && (
@@ -1666,19 +1628,8 @@ export default function CenarioTela() {
                       </div>
                     )}
 
-                   {/* Program progress bar — premium animated */}
-                   <div style={{ position: "absolute", bottom: `${vhToPx(2.5)}${vu}`, left: `${vhToPx(4)}${vu}`, right: `${vhToPx(4)}${vu}`, height: `${vhToPx(0.6)}${vu}`, background: "rgba(255,255,255,0.1)", zIndex: 15, overflow: "hidden", borderRadius: `${vhToPx(1)}${vu}`, border: "1px solid rgba(255,255,255,0.05)" }}>
-                     <div style={{
-                       width: `${progressPct}%`,
-                       height: "100%",
-                       borderRadius: `${vhToPx(0.3)}${vu}`,
-                       background: `linear-gradient(90deg, ${accentColor}, ${accentRgba(0.7)}, ${accentColor})`,
-                       backgroundSize: "200% 100%",
-                       animation: "shimmerProgress 2s linear infinite",
-                       transition: "width 1s linear",
-                       boxShadow: `0 0 6px ${accentRgba(0.6)}, 0 0 14px ${accentRgba(0.3)}`,
-                     }} />
-                   </div>
+                    {/* Program progress bar removida conforme solicitado */}
+
                    <style>{`@keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } @keyframes presenter-enter { 0% { opacity: 0; transform: translateX(-50%) translateY(15%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }`}</style>
                 </div>
               );
