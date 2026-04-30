@@ -2736,12 +2736,11 @@ export default function CenarioInterativoPage() {
                                </div>
                              )}
 
-                             {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA ── */}
+                             {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA (Top Right) ── */}
                              <div style={{
                                position: "absolute",
-                               bottom: `${pvh(37.75)}px`,
-                               left: "50%",
-                               transform: "translateX(-50%)",
+                               top: `${pvh(4)}px`,
+                               right: `${pvh(5)}px`,
                                display: "flex",
                                alignItems: "stretch",
                                zIndex: 15,
