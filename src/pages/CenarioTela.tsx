@@ -1468,17 +1468,18 @@ export default function CenarioTela() {
                      const m = currentTime.getMinutes().toString().padStart(2, "0");
                      const s = currentTime.getSeconds().toString().padStart(2, "0");
                      return (
-                       <div style={{
-                         position: "absolute",
-                         top: `${vhToPx(3.5)}${vu}`,
-                         left: `${vhToPx(4)}${vu}`,
-                         display: "flex",
-                         flexDirection: "column",
-                         alignItems: "flex-start",
-                         color: "#fff",
-                         zIndex: 20,
-                         textShadow: "0 2px 10px rgba(0,0,0,0.5)",
-                       }}>
+                        <div style={{
+                          position: "absolute",
+                          top: `${vhToPx(3.5)}${vu}`,
+                          left: `${vhToPx(4)}${vu}`,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          color: "#fff",
+                          zIndex: 20,
+                          textShadow: "0 2px 10px rgba(0,0,0,0.5)",
+                          width: 'max-content'
+                        }}>
                          <div style={{ fontSize: `${vhToPx(3.5)}${vu}`, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>
                            {h}:{m}<span style={{ opacity: 0.6, fontSize: "0.7em", marginLeft: "2px" }}>{s}</span>
                          </div>
