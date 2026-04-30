@@ -1418,6 +1418,7 @@ export default function CenarioInterativoPage() {
                             size="sm" 
                             variant={config.bgType === 'thumb' ? "default" : "outline"} 
                             className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
+                            style={config.bgType === 'thumb' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
                             onClick={() => {
                               if (config.bgType === 'thumb') {
                                 setConfig(c => ({ ...c, bgType: 'none' }));
