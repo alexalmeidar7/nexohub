@@ -1215,8 +1215,13 @@ export default function CenarioInterativoPage() {
       const results = geoData?.results;
       if (results && results.length > 0) {
         const { latitude, longitude } = results[0];
+        const cityName = trafficSearchCity.trim();
         setTrafficCoords({ lat: latitude, lon: longitude });
-        updateTraffic({ city: trafficSearchCity.trim(), lat: latitude, lon: longitude, zoom: 12 });
+        updateTraffic({ city: cityName, lat: latitude, lon: longitude, zoom: 12 });
+        // Update main city if not set, following the pattern of preserving the "last city"
+        if (!config.city) {
+          setConfig(c => ({ ...c, city: cityName }));
+        }
       } else {
         toast.error("Cidade não encontrada");
       }
@@ -1228,14 +1233,17 @@ export default function CenarioInterativoPage() {
 
   const searchAddress = async (query: string) => {
     setTrafficSearchAddress(query);
-    if (query.length < 3) {
+    if (query.length < 2) {
       setAddressSuggestions([]);
       return;
     }
     
     setIsSearchingAddress(true);
     try {
-      const fullQuery = `${query}, ${trafficSearchCity || config.city}`;
+      // Use the last typed traffic city as a filter
+      const cityFilter = trafficSearchCity || config.traffic.city || config.city;
+      const fullQuery = cityFilter ? `${query}, ${cityFilter}` : query;
+      
       const { data } = await supabase.functions.invoke("fetch-weather", {
         body: { action: "geocode", query: fullQuery, count: 5 },
       });
