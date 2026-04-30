@@ -1584,7 +1584,7 @@ export default function CenarioTela() {
                       </div>
 
                       {/* ── BOX CAPA: music cover with title overlay ── */}
-                      {musicData?.capa && !isBreakTrack && !(isJornalistico && !!config.useProgramThumbAsBg && !!(currentProgram?.thumb || currentProgram?.capa)) && (
+                      {musicData?.capa && !isBreakTrack && !(isJornalistico && !!config.useProgramThumbAsBg && !!(currentProgram?.thumb || currentProgram?.capa)) && config.home.showMusicCover !== false && (
                         <div
                           key={musicData.capa}
                           style={{
