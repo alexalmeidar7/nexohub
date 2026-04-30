@@ -1470,8 +1470,8 @@ export default function CenarioTela() {
                            {currentTime.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", year: "2-digit" })}
                          </div>
                        </div>
-                     );
-                  })()}
+                      );
+                    })()}
 
                   {/* Status Sync (Top Left) */}
                   <div style={{ position: "absolute", top: `${vhToPx(3.5)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
