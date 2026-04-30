@@ -2756,7 +2756,7 @@ export default function CenarioInterativoPage() {
                                      width: `${pvh(14)}px`,
                                      height: `${pvh(14)}px`
                                    }}>
-                                     {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
+                                     {/* ── BOX DO LOCUTOR ── */}
                                      <div style={{
                                        width: "100%",
                                        height: "100%",
@@ -2817,7 +2817,7 @@ export default function CenarioInterativoPage() {
                                        </div>
                                      </div>
 
-                                     {/* ── BOX CAPA: music album art ── */}
+                                     {/* ── BOX CAPA MUSICA ── */}
                                      <div
                                        style={{
                                          width: "100%",
@@ -2850,7 +2850,7 @@ export default function CenarioInterativoPage() {
                                      </div>
                                    </div>
 
-                                   {/* ── Music Details (Text below cover) ── */}
+                                   {/* ── Music Details ── */}
                                    {musicData && (
                                      <div style={{
                                        marginTop: `${pvh(1)}px`,
