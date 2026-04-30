@@ -8,6 +8,7 @@ interface TrafficMapProps {
   interactive?: boolean;
   onMove?: (lat: number, lon: number, zoom: number) => void;
   onPointMove?: (id: string, lat: number, lon: number) => void;
+  onPointSelect?: (id: string) => void;
   points?: { id: string, lat: number, lng: number }[];
   activePointId?: string | null;
   className?: string;
