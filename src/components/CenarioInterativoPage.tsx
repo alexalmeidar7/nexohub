@@ -1919,7 +1919,16 @@ export default function CenarioInterativoPage() {
                         <div className="absolute inset-0" style={{ background: activeTab === "home" ? (config.home.bgGradient ? buildHomeGradient(config.home) : (config.home.bgImage ? "#e8e8e8" : "#000")) : "#e8e8e8", zIndex: 0 }}>
                           {useThumb && thumbSrc && (
                             <>
-                              <img src={thumbSrc} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(18px) brightness(0.55)", transform: "scale(1.1)" }} />
+                              <img 
+                                src={thumbSrc} 
+                                alt="" 
+                                className="absolute inset-0 w-full h-full object-cover" 
+                                style={{ 
+                                  filter: "blur(18px) brightness(0.55)", 
+                                  transform: "scale(1.1)",
+                                  objectPosition: config.programThumbPosition || "center"
+                                }} 
+                              />
                               <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
                             </>
                           )}
