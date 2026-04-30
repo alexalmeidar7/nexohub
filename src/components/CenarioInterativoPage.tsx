@@ -1853,24 +1853,24 @@ export default function CenarioInterativoPage() {
                 <span className="text-[10px] font-mono text-white/80 w-8 text-center">{Math.round(previewZoom * 100)}%</span>
               </div>
 
-              <div className="flex-1 min-h-0 flex items-start justify-center w-full overflow-auto custom-scrollbar pb-8">
+              <div className="flex-1 min-h-0 flex items-start justify-center w-full overflow-hidden pb-8">
                 <div
                   ref={previewWrapRef}
                   className="relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ease-out"
                   style={{
-                    height: `${1920 * previewZoom}px`,
-                    width: `${1080 * previewZoom}px`,
-                    minWidth: `${1080 * previewZoom}px`,
+                    height: "100%",
+                    width: "auto",
                     aspectRatio: "9 / 16",
                     boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
                     border: "4px solid rgba(255,255,255,0.12)",
                     background: "#000",
-                    transform: "translateZ(0)",
+                    transform: `scale(${previewZoom})`,
+                    transformOrigin: "top center",
                   }}
                 >
                 <div className="absolute inset-0 overflow-hidden">
                   {/* Virtual 1080×1920 canvas, scaled to fit — mirrors CenarioTela exactly */}
-                  <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left", position: "absolute", top: "50%", left: "50%", translate: "-50% -50%" }}>
+                  <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${pvh(1.8)}px` }}>
 
                     {/* Fullscreen background layers */}
