@@ -1510,7 +1510,7 @@ export default function CenarioTela() {
                   {/* WRAPPER: BOXES + CONTROLS */}
                   <div style={{
                     position: "absolute",
-                    top: `${vhToPx(3.5)}${vu}`,
+                    top: `calc(${vhToPx(3.5)}${vu} - 2px)`,
                     right: `${vhToPx(4)}${vu}`,
                     display: "flex",
                     flexDirection: "column",
@@ -1522,7 +1522,7 @@ export default function CenarioTela() {
                     {(() => {
                       const showProgram = config.home.showProgramThumb !== false;
                       const showMusic = !!musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false;
-                      const currentPhase = (showProgram && showMusic) ? (Math.floor(currentTime.getTime() / 8000) % 2 === 0 ? "program" : "music") : (showProgram ? "program" : "music");
+                      const currentPhase = (showProgram && showMusic) ? (Math.floor(Date.now() / 8000) % 2 === 0 ? "program" : "music") : (showProgram ? "program" : "music");
                       
                       return (
                         <div style={{
@@ -1533,8 +1533,8 @@ export default function CenarioTela() {
                         }}>
                           {/* BOX DO LOCUTOR: quadrado 1:1 (always on top) */}
                           <div style={{
-                                  width: `${vhToPx(20)}${vu}`,
-                                  height: `${vhToPx(20)}${vu}`,
+                                  width: `${vhToPx(14)}${vu}`,
+                                  height: `${vhToPx(14)}${vu}`,
                                   borderRadius: `${vhToPx(2)}${vu}`,
                                    background: `linear-gradient(145deg, ${accentRgba(0.7)}, rgba(0,0,0,0.4))`,
                                    backdropFilter: "blur(20px)",
@@ -1594,8 +1594,8 @@ export default function CenarioTela() {
                           {/* ── BOX CAPA: music album art ── */}
                           <div
                             style={{
-                              width: `${vhToPx(20)}${vu}`,
-                              height: `${vhToPx(20)}${vu}`,
+                              width: `${vhToPx(14)}${vu}`,
+                              height: `${vhToPx(14)}${vu}`,
                               borderRadius: `${vhToPx(2)}${vu}`,
                               overflow: "hidden",
                               flexShrink: 0,

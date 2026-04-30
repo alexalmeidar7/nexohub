@@ -2740,12 +2740,12 @@ export default function CenarioInterativoPage() {
                              {(() => {
                                const showProgram = config.home.showProgramThumb !== false;
                                const showMusic = !!musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false;
-                               const currentPhase = (showProgram && showMusic) ? (Math.floor(currentTime.getTime() / 8000) % 2 === 0 ? "program" : "music") : (showProgram ? "program" : "music");
+                               const currentPhase = (showProgram && showMusic) ? (Math.floor(Date.now() / 8000) % 2 === 0 ? "program" : "music") : (showProgram ? "program" : "music");
                                
                                return (
                                  <div style={{
                                    position: "absolute",
-                                   top: `${pvh(4)}px`,
+                                   top: `calc(${pvh(4)}px - 2px)`,
                                    right: `${pvh(5)}px`,
                                    display: "flex",
                                    alignItems: "stretch",
@@ -2753,8 +2753,8 @@ export default function CenarioInterativoPage() {
                                  }}>
                                    {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
                                    <div style={{
-                                     width: `${pvh(20)}px`,
-                                     height: `${pvh(20)}px`,
+                                     width: `${pvh(14)}px`,
+                                     height: `${pvh(14)}px`,
                                      borderRadius: `${pvh(2)}px`,
                                      background: `linear-gradient(145deg, var(--layout-accent-color, rgba(200,50,50,0.7)), rgba(0,0,0,0.4))`,
                                      backdropFilter: "blur(20px)",
@@ -2812,8 +2812,8 @@ export default function CenarioInterativoPage() {
                                    {/* ── BOX CAPA: music album art ── */}
                                    <div
                                      style={{
-                                       width: `${pvh(20)}px`,
-                                       height: `${pvh(20)}px`,
+                                       width: `${pvh(14)}px`,
+                                       height: `${pvh(14)}px`,
                                        borderRadius: `${pvh(2)}px`,
                                        overflow: "hidden",
                                        flexShrink: 0,
