@@ -1218,6 +1218,14 @@ export default function CenarioInterativoPage() {
   const subTabBg = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)";
   const subTabActive = "var(--layout-header-bg, #0d0446)";
 
+  // Helper function to get contrast text color based on accent background
+  const getContrastColor = (bgColorVar: string) => {
+    return `color-mix(in srgb, ${bgColorVar}, white 80%)`;
+  };
+
+  const accentColor = "var(--layout-accent-color, #3b82f6)";
+  const accentContrast = getContrastColor(accentColor);
+
   return (
     <div className="animate-fade-in space-y-5">
       <div className="rounded-2xl overflow-hidden" style={pageStyle}>
