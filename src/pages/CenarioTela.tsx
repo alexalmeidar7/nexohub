@@ -1365,7 +1365,7 @@ export default function CenarioTela() {
                 </div>
               </div>
             </div>
-            <button onClick={() => setActiveTab("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: activeTab === "traffic" ? accentRgba(0.85) : "rgba(255,255,255,0.1)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
+            <button onClick={() => setActiveTab("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, marginTop: `${vhToPx(0.3)}${vu}`, background: activeTab === "traffic" ? accentRgba(0.85) : "rgba(0,0,0,0.8)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? `2px solid ${accentColor}` : "2px solid transparent", transition: "background 0.3s ease, border-color 0.3s ease" }}>
               <Car style={{ width: iconSize, height: iconSize }} className="text-white" />
             </button>
             <div className="flex flex-col items-center" style={{ padding: `${vhToPx(0.4)}${vu}`, opacity: config.currency.enabled ? 1 : 0.35, transition: "opacity 0.3s ease" }}>
