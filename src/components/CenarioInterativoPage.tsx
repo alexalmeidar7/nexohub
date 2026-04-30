@@ -2055,7 +2055,15 @@ export default function CenarioInterativoPage() {
                                   {/* Thumb layer (always mounted for fade) */}
                                   {hasThumb && (
                                     <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
-                                      <img src={thumbSrc} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? undefined : { filter: "blur(18px) brightness(0.55)", transform: "scale(1.1)" }} />
+                                      <img 
+                                        src={thumbSrc} 
+                                        alt="" 
+                                        className="absolute inset-0 w-full h-full object-cover" 
+                                        style={{ 
+                                          ...(altMode ? {} : { filter: "blur(18px) brightness(0.55)", transform: "scale(1.1)" }),
+                                          objectPosition: config.programThumbPosition || "center"
+                                        }} 
+                                      />
                                       {!altMode && (
                                         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
                                       )}
