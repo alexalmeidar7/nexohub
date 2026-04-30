@@ -2737,107 +2737,110 @@ export default function CenarioInterativoPage() {
                              )}
 
                              {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA (Top Right) ── */}
-                             <div style={{
-                               position: "absolute",
-                               top: `${pvh(4)}px`,
-                               right: `${pvh(5)}px`,
-                               display: "flex",
-                               alignItems: "stretch",
-                               zIndex: 15,
-                             }}>
-                               {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
-                               {config.home.showProgramThumb !== false && (
+                             {(() => {
+                               const showProgram = config.home.showProgramThumb !== false;
+                               const showMusic = !!musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false;
+                               const currentPhase = (showProgram && showMusic) ? (Math.floor(currentTime.getTime() / 8000) % 2 === 0 ? "program" : "music") : (showProgram ? "program" : "music");
+                               
+                               return (
                                  <div style={{
-                                   width: `${pvh(20)}px`,
-                                   height: `${pvh(20)}px`,
-                                   borderRadius: `${pvh(2)}px`,
-                                   background: `linear-gradient(145deg, var(--layout-accent-color, rgba(200,50,50,0.7)), rgba(0,0,0,0.4))`,
-                                   backdropFilter: "blur(20px)",
-                                   WebkitBackdropFilter: "blur(20px)",
-                                   padding: `${pvh(0.9)}px`,
-                                   boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-                                   border: "1px solid rgba(255,255,255,0.1)",
+                                   position: "absolute",
+                                   top: `${pvh(4)}px`,
+                                   right: `${pvh(5)}px`,
                                    display: "flex",
-                                   flexDirection: "column",
-                                   gap: `${pvh(0.6)}px`,
-                                   zIndex: 2,
-                                   position: "relative",
-                                   flexShrink: 0,
+                                   alignItems: "stretch",
+                                   zIndex: 15,
                                  }}>
-                                 <div className="flex items-start justify-between" style={{ gap: `${pvh(0.6)}px`, minWidth: 0 }}>
-                                   <div style={{ minWidth: 0, flex: 1 }}>
-                                     <div className="flex items-center justify-center" style={{ gap: `${pvh(0.35)}px`, minWidth: 0 }}>
-                                       <Mic size={pvh(1)} style={{ opacity: 0.8, flexShrink: 0 }} />
-                                       <span className="font-normal" style={{ fontSize: `${pvh(1.05)}px`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram?.apresentador || ""}</span>
-                                     </div>
-                                   </div>
-                                    {currentProgram?.selo && (
-                                      <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5.82)}px`, maxWidth: `${pvh(8.74)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
-                                    )}
-                                 </div>
-
-                                 <div className="flex-1 flex items-center justify-center" style={{ minHeight: 0 }}>
-                                   {(() => {
-                                     const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
-                                     const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
-                                     if (!activeFoto) return null;
-                                     return (
-                                       <img key={activeFoto} src={activeFoto} alt="" style={{ maxHeight: `${pvh(8.6)}px`, maxWidth: "100%", objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))", WebkitMaskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)", maskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)" }} />
-                                     );
-                                   })()}
-                                 </div>
-
-                                 <div style={{ minHeight: 0 }}>
-                                   {musicData ? (
-                                     <div key={musicKey} style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                                       <div className="flex items-center" style={{ gap: `${pvh(0.35)}px`, marginBottom: `${pvh(0.25)}px` }}>
-                                         <Music size={pvh(0.85)} style={{ opacity: 0.7, flexShrink: 0 }} />
-                                         <span className="font-semibold uppercase" style={{ letterSpacing: "0.12em", fontSize: `${pvh(0.72)}px`, opacity: 0.7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Tocando Agora</span>
-                                       </div>
-                                       <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, lineHeight: 1.15, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
-                                       <div className="font-medium" style={{ fontSize: `${pvh(0.95)}px`, opacity: 0.7, marginTop: `${pvh(0.15)}px`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
-                                     </div>
-                                   ) : currentProgram ? (
-                                     <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram.nome}</div>
-                                   ) : null}
-                                  </div>
-                                </div>
-                               )}
-
-                               {/* ── BOX CAPA: slides out from behind locutor ── */}
-                               {musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false && (
-                                 <div
-                                   key={musicData.capa}
-                                   style={{
+                                   {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
+                                   <div style={{
                                      width: `${pvh(20)}px`,
                                      height: `${pvh(20)}px`,
                                      borderRadius: `${pvh(2)}px`,
-                                     overflow: "hidden",
-                                     flexShrink: 0,
-                                     zIndex: 1,
-                                     marginLeft: `-${pvh(1)}px`,
-                                     animation: "cenario-capa-slide-in 0.7s cubic-bezier(0.16,1,0.3,1) both",
-                                     padding: `${pvh(0.78)}px`,
-                                     background: "rgba(255,255,255,0.12)",
+                                     background: `linear-gradient(145deg, var(--layout-accent-color, rgba(200,50,50,0.7)), rgba(0,0,0,0.4))`,
                                      backdropFilter: "blur(20px)",
                                      WebkitBackdropFilter: "blur(20px)",
-                                     border: "1px solid rgba(255,255,255,0.25)",
-                                     boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
-                                   }}
-                                 >
-                                   <img
-                                     src={musicData.capa}
-                                     alt=""
+                                     padding: `${pvh(0.9)}px`,
+                                     boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                                     border: "1px solid rgba(255,255,255,0.1)",
+                                     display: "flex",
+                                     flexDirection: "column",
+                                     gap: `${pvh(0.6)}px`,
+                                     zIndex: 2,
+                                     flexShrink: 0,
+                                     opacity: showProgram && currentPhase === "program" ? 1 : 0,
+                                     visibility: showProgram && currentPhase === "program" ? "visible" : "hidden",
+                                     transition: "opacity 0.8s ease, visibility 0.8s",
+                                     position: showProgram && currentPhase === "program" ? "relative" : "absolute"
+                                   }}>
+                                     <div className="flex items-start justify-between" style={{ gap: `${pvh(0.6)}px`, minWidth: 0 }}>
+                                       <div style={{ minWidth: 0, flex: 1 }}>
+                                         <div className="flex items-center justify-center" style={{ gap: `${pvh(0.35)}px`, minWidth: 0 }}>
+                                           <Mic size={pvh(1)} style={{ opacity: 0.8, flexShrink: 0 }} />
+                                           <span className="font-normal" style={{ fontSize: `${pvh(1.05)}px`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram?.apresentador || ""}</span>
+                                         </div>
+                                       </div>
+                                       {currentProgram?.selo && (
+                                         <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5.82)}px`, maxWidth: `${pvh(8.74)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
+                                       )}
+                                     </div>
+                                     <div className="flex-1 flex items-center justify-center" style={{ minHeight: 0 }}>
+                                       {(() => {
+                                         const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
+                                         const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
+                                         if (!activeFoto) return null;
+                                         return (
+                                           <img key={activeFoto} src={activeFoto} alt="" style={{ maxHeight: `${pvh(8.6)}px`, maxWidth: "100%", objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))", WebkitMaskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)", maskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)" }} />
+                                         );
+                                       })()}
+                                     </div>
+                                     <div style={{ minHeight: 0 }}>
+                                       {musicData ? (
+                                         <div key={musicKey} style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                                           <div className="flex items-center" style={{ gap: `${pvh(0.35)}px`, marginBottom: `${pvh(0.25)}px` }}>
+                                             <Music size={pvh(0.85)} style={{ opacity: 0.7, flexShrink: 0 }} />
+                                             <span className="font-semibold uppercase" style={{ letterSpacing: "0.12em", fontSize: `${pvh(0.72)}px`, opacity: 0.7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Tocando Agora</span>
+                                           </div>
+                                           <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, lineHeight: 1.15, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
+                                           <div className="font-medium" style={{ fontSize: `${pvh(0.95)}px`, opacity: 0.7, marginTop: `${pvh(0.15)}px`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
+                                         </div>
+                                       ) : currentProgram ? (
+                                         <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram.nome}</div>
+                                       ) : null}
+                                     </div>
+                                   </div>
+
+                                   {/* ── BOX CAPA: music album art ── */}
+                                   <div
                                      style={{
-                                       width: "100%",
-                                       height: "100%",
-                                       objectFit: "cover",
-                                       borderRadius: `${pvh(1.4)}px`,
+                                       width: `${pvh(20)}px`,
+                                       height: `${pvh(20)}px`,
+                                       borderRadius: `${pvh(2)}px`,
+                                       overflow: "hidden",
+                                       flexShrink: 0,
+                                       zIndex: 1,
+                                       opacity: showMusic && currentPhase === "music" ? 1 : 0,
+                                       visibility: showMusic && currentPhase === "music" ? "visible" : "hidden",
+                                       transition: "opacity 0.8s ease, visibility 0.8s",
+                                       position: showMusic && currentPhase === "music" ? "relative" : "absolute",
+                                       right: 0
                                      }}
-                                   />
+                                   >
+                                     {musicData?.capa && (
+                                       <img
+                                         src={musicData.capa}
+                                         alt=""
+                                         style={{
+                                           width: "100%",
+                                           height: "100%",
+                                           objectFit: "cover",
+                                           borderRadius: `${pvh(2)}px`,
+                                         }}
+                                       />
+                                     )}
+                                   </div>
                                  </div>
-                               )}
-                             </div>
+                               );
+                             })()}
 
                              {/* ── Sponsor logos (centered bottom, same as external screen) ── */}
                              {sponsorLogos.length > 0 && (
