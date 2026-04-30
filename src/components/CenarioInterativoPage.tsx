@@ -1221,6 +1221,13 @@ export default function CenarioInterativoPage() {
         elementPositions: { ...c.home.elementPositions, [id]: pos },
       },
     }));
+    
+    // Broadcast instantâneo da mudança de posição do elemento para as telas
+    rtDrawChannelRef.current?.send({
+      type: "broadcast",
+      event: "element-move",
+      payload: { id, pos }
+    });
   }, []);
 
   const removeTrafficPoint = (id: string) =>
