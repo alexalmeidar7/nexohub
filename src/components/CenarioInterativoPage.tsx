@@ -2753,8 +2753,8 @@ export default function CenarioInterativoPage() {
                                  }}>
                                    {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
                                    <div style={{
-                                     width: `${pvh(20)}px`,
-                                     height: `${pvh(20)}px`,
+                                     width: `${pvh(14)}px`,
+                                     height: `${pvh(14)}px`,
                                      borderRadius: `${pvh(2)}px`,
                                      background: `linear-gradient(145deg, var(--layout-accent-color, rgba(200,50,50,0.7)), rgba(0,0,0,0.4))`,
                                      backdropFilter: "blur(20px)",
