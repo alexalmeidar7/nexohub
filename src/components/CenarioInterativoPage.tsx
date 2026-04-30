@@ -320,6 +320,7 @@ export default function CenarioInterativoPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
   const [activeTab, setActiveTab] = useState("home");
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
   const [satelliteZoom, setSatelliteZoom] = useState(6);
