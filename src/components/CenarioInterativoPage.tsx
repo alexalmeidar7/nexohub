@@ -1581,6 +1581,7 @@ export default function CenarioInterativoPage() {
                       </div>
                     </div>
                   </div>
+                </div>
               </TabsContent>
 
               {/* ═══ Weather ═══ */}
