@@ -1012,7 +1012,7 @@ export default function CenarioInterativoPage() {
       prevSaveRef.current = serialized;
       pendingSaveRef.current = null;
       setSaving(true);
-      const { error } = await supabase.from("user_settings").upsert({ user_id: user.id, cenario_config: configWithTabs }, { onConflict: "user_id" });
+      const { error } = await supabase.from("user_settings").upsert({ id: user.id, cenario_config: configWithTabs }, { onConflict: "id" });
       if (!error) {
         setSavedFlash(true);
         if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
