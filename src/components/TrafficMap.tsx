@@ -83,7 +83,20 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
   };
 
   return (
-    <div className={className} style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...style }}>
+    <div 
+      className={className} 
+      style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...style }}
+      onMouseMove={(e) => {
+        if (!isDragging || !interactive) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
+        // Approximation for dragging markers on a map is complex with iframe, 
+        // but for now we allow manual coordinate entry and panning.
+        // As Waze iframe doesn't support easy coordinate extraction on click,
+        // we'll keep the pan/zoom controls as the primary interaction.
+      }}
+    >
       <iframe
         key={`${view.lat}-${view.lon}-${iframeZoom}`}
         src={iframeSrc}
@@ -98,6 +111,16 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
           pointerEvents: interactive ? "auto" : "none",
         }}
       />
+      {interactive && (
+        <div 
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          style={{ zIndex: 5 }}
+        >
+          <div className="text-[var(--layout-accent-color, #3b82f6)] animate-bounce">
+            <MapPin size={32} strokeWidth={3} fill="white" />
+          </div>
+        </div>
+      )}
 
       {interactive && (
         <>
