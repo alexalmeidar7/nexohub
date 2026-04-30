@@ -1348,15 +1348,11 @@ export default function CenarioInterativoPage() {
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">1. Fundo Estático</h4>
                           </div>
-                          <Button 
-                            size="sm" 
-                            variant={config.bgType === 'static' ? "default" : "outline"} 
-                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
-                            style={config.bgType === 'static' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
-                            onClick={() => setConfig(c => ({ ...c, bgType: config.bgType === 'static' ? 'none' : 'static' }))}
-                          >
-                            {config.bgType === 'static' ? 'Ativado' : 'Ativar'}
-                          </Button>
+                          </div>
+                          <Switch 
+                            checked={config.bgType === 'static'} 
+                            onCheckedChange={(checked) => setConfig(c => ({ ...c, bgType: checked ? 'static' : 'none' }))}
+                          />
                         </div>
                         <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
                       </div>
@@ -1370,22 +1366,17 @@ export default function CenarioInterativoPage() {
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">2. Fundo Degradê</h4>
                           </div>
-                          <Button 
-                            size="sm" 
-                            variant={config.bgType === 'gradient' ? "default" : "outline"} 
-                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'gradient' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
-                            style={config.bgType === 'gradient' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
-                            onClick={() => {
-                              if (config.bgType === 'gradient') {
-                                setConfig(c => ({ ...c, bgType: 'none' }));
-                              } else {
+                          <Switch 
+                            checked={config.bgType === 'gradient'} 
+                            onCheckedChange={(checked) => {
+                              if (checked) {
                                 setConfig(c => ({ ...c, bgType: 'gradient' }));
                                 updateHome({ bgGradient: true });
+                              } else {
+                                setConfig(c => ({ ...c, bgType: 'none' }));
                               }
                             }}
-                          >
-                            {config.bgType === 'gradient' ? 'Ativado' : 'Ativar'}
-                          </Button>
+                          />
                         </div>
                         
                         {config.bgType === 'gradient' && (
@@ -1414,21 +1405,16 @@ export default function CenarioInterativoPage() {
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">3. Fundo Thumb Programa</h4>
                           </div>
-                          <Button 
-                            size="sm" 
-                            variant={config.bgType === 'thumb' ? "default" : "outline"} 
-                            className={`h-7 text-[10px] font-bold uppercase ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
-                            style={config.bgType === 'thumb' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
-                            onClick={() => {
-                              if (config.bgType === 'thumb') {
-                                setConfig(c => ({ ...c, bgType: 'none' }));
-                              } else {
+                          <Switch 
+                            checked={config.bgType === 'thumb'} 
+                            onCheckedChange={(checked) => {
+                              if (checked) {
                                 setConfig(c => ({ ...c, bgType: 'thumb', useProgramThumbAsBg: true }));
+                              } else {
+                                setConfig(c => ({ ...c, bgType: 'none' }));
                               }
                             }}
-                          >
-                            {config.bgType === 'thumb' ? 'Ativado' : 'Ativar'}
-                          </Button>
+                          />
                         </div>
                         
                         {config.bgType === 'thumb' && (
