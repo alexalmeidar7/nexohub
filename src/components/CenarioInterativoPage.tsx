@@ -1106,6 +1106,13 @@ export default function CenarioInterativoPage() {
   /* ─── Geocode traffic city ─── */
   const trafficCity = config.traffic.city || config.city;
   const trafficGeoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  useEffect(() => {
+    if (trafficCity) {
+      setTrafficSearchCity(trafficCity);
+    }
+  }, [trafficCity]);
+
   useEffect(() => {
     if (!config.traffic.enabled || !trafficCity) { setTrafficCoords(null); return; }
     // If config already has lat/lon from a previous geocode or manual input, use those
