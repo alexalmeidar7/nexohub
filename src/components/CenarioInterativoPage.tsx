@@ -2804,7 +2804,7 @@ export default function CenarioInterativoPage() {
                                </div>
 
                                {/* ── BOX CAPA: slides out from behind locutor ── */}
-                               {musicData?.capa && !isBreakTrack && (
+                               {musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false && (
                                  <div
                                    key={musicData.capa}
                                    style={{
