@@ -1583,6 +1583,7 @@ export default function CenarioTela() {
                           </div>
                         </div>
                       </div>
+                      )}
 
                       {/* ── BOX CAPA: music cover with title overlay ── */}
                       {musicData?.capa && !isBreakTrack && !(isJornalistico && !!config.useProgramThumbAsBg && !!(currentProgram?.thumb || currentProgram?.capa)) && config.home.showMusicCover !== false && (
