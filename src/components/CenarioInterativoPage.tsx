@@ -2887,9 +2887,9 @@ export default function CenarioInterativoPage() {
                                </div>
                              )}
 
-                             {/* Progress bar — premium animated */}
-                             <div style={{ position: "absolute", bottom: `${pvh(2)}px`, left: `${pvh(2.6)}px`, right: `${pvh(2.6)}px`, height: `${pvh(0.5)}px`, background: "rgba(255,255,255,0.15)", zIndex: 15, overflow: "hidden", borderRadius: `${pvh(0.3)}px` }}>
-                               <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `${pvh(0.3)}px`, background: "linear-gradient(90deg, var(--layout-accent-color, #444), rgba(255,255,255,0.5), var(--layout-accent-color, #444))", backgroundSize: "200% 100%", animation: "shimmerProgress 2s linear infinite", transition: "width 1s linear", boxShadow: "0 0 6px var(--layout-accent-color, #444), 0 0 14px rgba(255,255,255,0.15)" }} />
+                             {/* Progress bar — ultra-thin elegant version */}
+                             <div style={{ position: "absolute", bottom: `${pvh(1.2)}px`, left: `${pvh(4)}px`, right: `${pvh(4)}px`, height: `${pvh(0.25)}px`, background: "rgba(255,255,255,0.08)", zIndex: 15, overflow: "hidden", borderRadius: "100px" }}>
+                               <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: "100px", background: "var(--layout-accent-color, #444)", transition: "width 1s linear", boxShadow: "0 0 10px var(--layout-accent-color, #444)" }} />
                              </div>
                              <style>{`@keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
                           </div>
