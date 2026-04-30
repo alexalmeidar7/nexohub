@@ -65,6 +65,7 @@ interface HomeConfig {
   bgGradientAngle?: number;
   exceptionWords?: string;
   elementPositions?: Record<string, ElementPosition>;
+  showArtistImage?: boolean;
 }
 
 interface CenarioConfig {
@@ -72,6 +73,7 @@ interface CenarioConfig {
   useProgramThumbAsBg?: boolean;
   programThumbPosition?: "left" | "center" | "right";
   bgAlternateMode?: boolean;
+  bgType?: "static" | "gradient" | "thumb";
   home: HomeConfig;
   weather: WeatherConfig;
   traffic: TrafficConfig;
@@ -91,7 +93,8 @@ const defaultConfig: CenarioConfig = {
   city: "",
   useProgramThumbAsBg: false,
   programThumbPosition: "center",
-  home: { bgImage: "" },
+  bgType: "static",
+  home: { bgImage: "", showArtistImage: true },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
@@ -1326,138 +1329,180 @@ export default function CenarioInterativoPage() {
                     )}
                   </div>
 
-                  {/* Configurações Visuais */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Imagem de Fundo Estática */}
-                    <div className="flex flex-col gap-3 p-4 rounded-xl border bg-white/40" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)" }}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600">
-                          <Image size={16} />
-                        </div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider">Fundo Estático</h4>
+                  {/* Configurações Visuais de Fundo */}
+                  <div className="space-y-4">
+                    <div className="px-1 py-1 flex items-center gap-2">
+                      <div className="p-1 rounded bg-black/5">
+                        <Palette size={14} className="opacity-60" />
                       </div>
-                      <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
+                      <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-60">Configuração do Fundo</h4>
                     </div>
 
-                    {/* Fundo em Degradê */}
-                    <div className="flex flex-col gap-3 p-4 rounded-xl border bg-white/40" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)" }}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-600">
-                            <Palette size={16} />
-                          </div>
-                          <h4 className="text-xs font-bold uppercase tracking-wider">Cores Degradê</h4>
-                        </div>
-                        <Switch checked={!!config.home.bgGradient} onCheckedChange={v => updateHome({ bgGradient: v })} className="scale-75" />
-                      </div>
-                      
-                      {config.home.bgGradient ? (
-                        <div className="space-y-3 pt-1 animate-in slide-in-from-top-2 duration-300">
-                          <GradientPicker
-                            colorA={config.home.bgGradientColorA || "#1a1a2e"}
-                            colorB={config.home.bgGradientColorB || "#16213e"}
-                            angle={config.home.bgGradientAngle ?? 135}
-                            gradientType={config.home.bgGradientType || "linear"}
-                            onChangeColorA={v => updateHome({ bgGradientColorA: v })}
-                            onChangeColorB={v => updateHome({ bgGradientColorB: v })}
-                            onChangeAngle={v => updateHome({ bgGradientAngle: v })}
-                            onChangeType={v => updateHome({ bgGradientType: v })}
-                            showType
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex-1 flex items-center justify-center border-2 border-dashed border-black/5 rounded-lg">
-                          <span className="text-[10px] font-medium opacity-30">Degradê desativado</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Opções Avançadas de Fundo */}
-                  <div className="space-y-0 overflow-hidden rounded-xl border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}>
-                    <div className="px-4 py-3 bg-black/5 border-b border-black/5">
-                      <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-60">Comportamento do Fundo</h4>
-                    </div>
-                    
-                    <div className="divide-y divide-black/5 bg-white/20">
-                      {/* Alternar entre artista e thumb */}
-                      <div className="p-4 flex items-center justify-between gap-4 transition-colors hover:bg-black/5">
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1 rounded-md bg-amber-500/10 text-amber-600">
-                              <RefreshCw size={14} />
-                            </div>
-                            <Label className="text-xs font-bold">Modo Alternância Inteligente</Label>
-                          </div>
-                          <p className="text-[10px] leading-relaxed opacity-60">Intercala automaticamente entre a capa do artista (Deezer) e a thumb do programa a cada 10 segundos.</p>
-                        </div>
-                        <Switch
-                          checked={!!config.bgAlternateMode}
-                          onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))}
-                        />
-                      </div>
-
-                      {/* Thumb do programa global */}
-                      <div className="p-4 flex items-center justify-between gap-4 transition-colors hover:bg-black/5">
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1 rounded-md bg-indigo-500/10 text-indigo-600">
-                              <Shapes size={14} />
-                            </div>
-                            <Label className="text-xs font-bold">Thumb como Fundo Global</Label>
-                          </div>
-                          <p className="text-[10px] leading-relaxed opacity-60">Aplica a thumb do programa em todas as abas (Home, Tempo, Cotação e Chat).</p>
-                        </div>
-                        <Switch
-                          checked={!!config.useProgramThumbAsBg}
-                          onCheckedChange={v => setConfig(c => ({ ...c, useProgramThumbAsBg: v }))}
-                        />
-                      </div>
-
-                      {/* Posição da Thumb */}
-                      {config.useProgramThumbAsBg && (
-                        <div className="p-4 space-y-3 transition-colors hover:bg-black/5 animate-in fade-in slide-in-from-top-2 duration-300">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1 rounded-md bg-blue-500/10 text-blue-600">
-                              <MapPin size={14} />
-                            </div>
-                            <Label className="text-xs font-bold">Alinhamento da Thumb</Label>
-                          </div>
-                          <div className="pl-7">
-                            <Select 
-                              value={config.programThumbPosition || "center"} 
-                              onValueChange={(v: "left" | "center" | "right") => setConfig(c => ({ ...c, programThumbPosition: v }))}
-                            >
-                              <SelectTrigger className="h-8 text-xs w-full bg-white/50">
-                                <SelectValue placeholder="Selecione o alinhamento" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="left">Esquerda</SelectItem>
-                                <SelectItem value="center">Centro</SelectItem>
-                                <SelectItem value="right">Direita</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <p className="text-[10px] leading-relaxed opacity-60 mt-2">Escolha como a imagem de fundo deve ser centralizada no cenário.</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Palavras de Exceção */}
-                      <div className="p-4 space-y-3 transition-colors hover:bg-black/5">
+                    <div className="grid grid-cols-1 gap-4">
+                      {/* 1 - Fundo Estático */}
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'static' ? 'bg-blue-50/30 border-blue-200' : 'bg-white/40 border-black/5'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className="p-1 rounded-md bg-rose-500/10 text-rose-600">
-                              <EyeOff size={14} />
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'static' ? 'bg-blue-500 text-white' : 'bg-blue-500/10 text-blue-600'}`}>
+                              <Image size={16} />
                             </div>
-                            <Label className="text-xs font-bold">Filtro de Exceções</Label>
+                            <h4 className="text-xs font-bold uppercase tracking-wider">1. Fundo Estático</h4>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant={config.bgType === 'static' ? "default" : "outline"} 
+                            className="h-7 text-[10px] font-bold uppercase"
+                            onClick={() => setConfig(c => ({ ...c, bgType: 'static' }))}
+                          >
+                            {config.bgType === 'static' ? 'Ativado' : 'Ativar'}
+                          </Button>
+                        </div>
+                        <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
+                      </div>
+
+                      {/* 2 - Fundo Degradê */}
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'gradient' ? 'bg-purple-50/30 border-purple-200' : 'bg-white/40 border-black/5'}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'gradient' ? 'bg-purple-500 text-white' : 'bg-purple-500/10 text-purple-600'}`}>
+                              <Palette size={16} />
+                            </div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider">2. Fundo Degradê</h4>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant={config.bgType === 'gradient' ? "default" : "outline"} 
+                            className="h-7 text-[10px] font-bold uppercase"
+                            onClick={() => {
+                              setConfig(c => ({ ...c, bgType: 'gradient' }));
+                              updateHome({ bgGradient: true });
+                            }}
+                          >
+                            {config.bgType === 'gradient' ? 'Ativado' : 'Ativar'}
+                          </Button>
+                        </div>
+                        
+                        {config.bgType === 'gradient' && (
+                          <div className="space-y-3 pt-1 animate-in slide-in-from-top-2 duration-300">
+                            <GradientPicker
+                              colorA={config.home.bgGradientColorA || "#1a1a2e"}
+                              colorB={config.home.bgGradientColorB || "#16213e"}
+                              angle={config.home.bgGradientAngle ?? 135}
+                              gradientType={config.home.bgGradientType || "linear"}
+                              onChangeColorA={v => updateHome({ bgGradientColorA: v })}
+                              onChangeColorB={v => updateHome({ bgGradientColorB: v })}
+                              onChangeAngle={v => updateHome({ bgGradientAngle: v })}
+                              onChangeType={v => updateHome({ bgGradientType: v })}
+                              showType
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 3 - Fundo Thumb */}
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${config.bgType === 'thumb' ? 'bg-indigo-50/30 border-indigo-200' : 'bg-white/40 border-black/5'}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'thumb' ? 'bg-indigo-500 text-white' : 'bg-indigo-500/10 text-indigo-600'}`}>
+                              <Shapes size={16} />
+                            </div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider">3. Fundo Thumb Programa</h4>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant={config.bgType === 'thumb' ? "default" : "outline"} 
+                            className="h-7 text-[10px] font-bold uppercase"
+                            onClick={() => {
+                              setConfig(c => ({ ...c, bgType: 'thumb', useProgramThumbAsBg: true }));
+                            }}
+                          >
+                            {config.bgType === 'thumb' ? 'Ativado' : 'Ativar'}
+                          </Button>
+                        </div>
+                        
+                        {config.bgType === 'thumb' && (
+                          <div className="space-y-3 pt-2 animate-in slide-in-from-top-2 duration-300 border-t border-black/5 mt-1">
+                            <div className="flex flex-col gap-2">
+                              <Label className="text-[10px] font-bold uppercase opacity-60">Ajustar Alinhamento</Label>
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  variant={config.programThumbPosition === 'left' ? "default" : "outline"}
+                                  className="flex-1 h-8 text-[10px]"
+                                  onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'left' }))}
+                                >
+                                  Esquerda
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant={config.programThumbPosition === 'center' ? "default" : "outline"}
+                                  className="flex-1 h-8 text-[10px]"
+                                  onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'center' }))}
+                                >
+                                  Centro
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant={config.programThumbPosition === 'right' ? "default" : "outline"}
+                                  className="flex-1 h-8 text-[10px]"
+                                  onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'right' }))}
+                                >
+                                  Direita
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 4 - Imagem do Artista */}
+                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.home.showArtistImage ? 'bg-amber-50/30 border-amber-200' : 'bg-white/40 border-black/5'}`}>
+                        <div className="flex items-center gap-2">
+                          <div className={`p-1.5 rounded-lg ${config.home.showArtistImage ? 'bg-amber-500 text-white' : 'bg-amber-500/10 text-amber-600'}`}>
+                            <Music size={16} />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider">4. Imagem do Artista</h4>
+                            <p className="text-[10px] opacity-50">Exibir capa do álbum (Deezer)</p>
                           </div>
                         </div>
-                        <div className="space-y-2 pl-7">
-                          <p className="text-[10px] leading-relaxed opacity-60">
-                            Quando o título ou artista contiver estas palavras, o fundo mudará para o degradê padrão (ideal para vinhetas e breaks).
-                          </p>
-                          <ExceptionWordsInput value={config.home.exceptionWords || ""} onSave={v => updateHome({ exceptionWords: v })} />
+                        <Switch 
+                          checked={!!config.home.showArtistImage} 
+                          onCheckedChange={v => updateHome({ showArtistImage: v })} 
+                        />
+                      </div>
+
+                      {/* 5 - Alternar Automático */}
+                      <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${config.bgAlternateMode ? 'bg-emerald-50/30 border-emerald-200' : 'bg-white/40 border-black/5'}`}>
+                        <div className="flex items-center gap-2">
+                          <div className={`p-1.5 rounded-lg ${config.bgAlternateMode ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-emerald-600'}`}>
+                            <RefreshCw size={16} />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider">5. Alternância Automática</h4>
+                            <p className="text-[10px] opacity-50">Alternar entre as opções ativas acima</p>
+                          </div>
                         </div>
+                        <Switch 
+                          checked={!!config.bgAlternateMode} 
+                          onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))} 
+                        />
+                      </div>
+                    </div>
+
+                    {/* Palavras de Exceção (Extra) */}
+                    <div className="p-4 rounded-xl border bg-white/40 border-black/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1 rounded bg-rose-500/10 text-rose-600">
+                          <EyeOff size={14} />
+                        </div>
+                        <Label className="text-xs font-bold uppercase">Filtro de Exceções</Label>
+                      </div>
+                      <div className="space-y-2 pl-7">
+                        <p className="text-[10px] leading-relaxed opacity-60">
+                          Força o degradê padrão quando estas palavras aparecem (ex: breaks).
+                        </p>
+                        <ExceptionWordsInput value={config.home.exceptionWords || ""} onSave={v => updateHome({ exceptionWords: v })} />
                       </div>
                     </div>
                   </div>
@@ -1913,10 +1958,13 @@ export default function CenarioInterativoPage() {
                       </div>
                     )}
                     {!((activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled)) && (() => {
-                      const useThumb = !!config.useProgramThumbAsBg && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat");
+                      const bgType = config.bgType || "static";
+                      const useThumb = bgType === "thumb" && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat");
+                      const useGradient = bgType === "gradient" && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat");
                       const thumbSrc = currentProgram?.thumb || currentProgram?.capa || "";
+                      
                       return (
-                        <div className="absolute inset-0" style={{ background: activeTab === "home" ? (config.home.bgGradient ? buildHomeGradient(config.home) : (config.home.bgImage ? "#e8e8e8" : "#000")) : "#e8e8e8", zIndex: 0 }}>
+                        <div className="absolute inset-0" style={{ background: useGradient ? buildHomeGradient(config.home) : (bgType === "static" && config.home.bgImage ? "#e8e8e8" : "#000"), zIndex: 0 }}>
                           {useThumb && thumbSrc && (
                             <>
                               <img 
@@ -1932,7 +1980,9 @@ export default function CenarioInterativoPage() {
                               <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
                             </>
                           )}
-                          {activeTab === "home" && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                          {bgType === "static" && config.home.bgImage && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
+                            <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                          )}
                           {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                           {activeTab === "traffic" && config.traffic.bgImage && <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                           {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
@@ -2041,14 +2091,15 @@ export default function CenarioInterativoPage() {
                               const thumbSrc = currentProgram?.thumb || currentProgram?.capa || "";
                               const hasThumb = !!thumbSrc;
                               const hasArtist = !!artistBgUrl;
+                              const bgType = config.bgType || "static";
                               let thumbVisible: boolean;
                               let artistVisible: boolean;
                               if (altMode) {
-                                if (altBgPhase === "thumb") { thumbVisible = hasThumb; artistVisible = !hasThumb && hasArtist; }
-                                else { artistVisible = hasArtist; thumbVisible = !hasArtist && hasThumb; }
+                                if (altBgPhase === "thumb") { thumbVisible = hasThumb; artistVisible = !hasThumb && hasArtist && !!config.home.showArtistImage; }
+                                else { artistVisible = hasArtist && !!config.home.showArtistImage; thumbVisible = !artistVisible && hasThumb; }
                               } else {
-                                thumbVisible = !!config.useProgramThumbAsBg && hasThumb;
-                                artistVisible = hasArtist;
+                                thumbVisible = bgType === "thumb" && hasThumb;
+                                artistVisible = hasArtist && !!config.home.showArtistImage;
                               }
                               return (
                                 <>
@@ -2077,8 +2128,8 @@ export default function CenarioInterativoPage() {
                                     <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
                                   )}
                                   {!altMode && <div className="absolute inset-0" style={{ opacity: artistVisible ? 1 : 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)", transition: "opacity 1.2s ease-in-out" }} />}
-                                  {config.home.bgGradient && !artistVisible && !thumbVisible && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
-                                  {!artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                                   {bgType === "gradient" && !artistVisible && !thumbVisible && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
+                                   {!artistVisible && !thumbVisible && bgType === "static" && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                                 </>
                               );
                             })()}
