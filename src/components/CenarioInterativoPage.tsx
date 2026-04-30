@@ -1752,7 +1752,7 @@ export default function CenarioInterativoPage() {
                       </div>
 
                       {/* 4 - Imagem do Artista */}
-                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-black/10'}`}>
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
                         <div className="flex items-center justify-between">
                           <button 
                             className="flex items-center gap-2 flex-1 text-left"
