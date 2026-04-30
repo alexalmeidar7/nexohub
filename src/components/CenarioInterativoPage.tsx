@@ -2413,6 +2413,7 @@ export default function CenarioInterativoPage() {
                           zoom={config.traffic.zoom} 
                           interactive 
                           points={config.traffic.points}
+                          activePointId={activeTrafficPointId}
                           onMove={(lat, lon, zoom) => updateTraffic({ lat, lon, zoom })} 
                           onPointMove={(id, lat, lon) => updateTrafficPointPosition(id, lat, lon)}
                         />
