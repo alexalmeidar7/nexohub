@@ -70,6 +70,8 @@ interface HomeConfig {
   artistOverlayEnabled?: boolean;
   artistOverlayColor?: string;
   artistOverlayOpacity?: number;
+  showMusicCover?: boolean;
+  showProgramThumb?: boolean;
 }
 
 interface CenarioConfig {
