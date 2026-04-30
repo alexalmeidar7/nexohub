@@ -1359,6 +1359,7 @@ export default function CenarioInterativoPage() {
                           <Switch 
                             checked={config.bgType === 'static'} 
                             onCheckedChange={(checked) => setConfig(c => ({ ...c, bgType: checked ? 'static' : 'none' }))}
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
                           />
                         </div>
                         <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
@@ -1383,6 +1384,7 @@ export default function CenarioInterativoPage() {
                                 setConfig(c => ({ ...c, bgType: 'none' }));
                               }
                             }}
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
                           />
                         </div>
                         
@@ -1421,6 +1423,7 @@ export default function CenarioInterativoPage() {
                                 setConfig(c => ({ ...c, bgType: 'none' }));
                               }
                             }}
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
                           />
                         </div>
                         
@@ -1432,8 +1435,8 @@ export default function CenarioInterativoPage() {
                                 <Button 
                                   size="sm" 
                                   variant={config.programThumbPosition === 'left' ? "default" : "outline"}
-                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'left' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
-                                  style={config.programThumbPosition === 'left' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
+                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'left' ? 'hover:opacity-90' : ''}`}
+                                  style={config.programThumbPosition === 'left' ? { backgroundColor: 'var(--layout-accent-color)', color: accentContrast } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'left' }))}
                                 >
                                   Esquerda
@@ -1441,8 +1444,8 @@ export default function CenarioInterativoPage() {
                                 <Button 
                                   size="sm" 
                                   variant={config.programThumbPosition === 'center' ? "default" : "outline"}
-                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'center' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
-                                  style={config.programThumbPosition === 'center' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
+                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'center' ? 'hover:opacity-90' : ''}`}
+                                  style={config.programThumbPosition === 'center' ? { backgroundColor: 'var(--layout-accent-color)', color: accentContrast } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'center' }))}
                                 >
                                   Centro
@@ -1450,8 +1453,8 @@ export default function CenarioInterativoPage() {
                                 <Button 
                                   size="sm" 
                                   variant={config.programThumbPosition === 'right' ? "default" : "outline"}
-                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'right' ? 'bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white' : ''}`}
-                                  style={config.programThumbPosition === 'right' ? { backgroundColor: 'var(--layout-accent-color)' } : {}}
+                                  className={`flex-1 h-8 text-[10px] ${config.programThumbPosition === 'right' ? 'hover:opacity-90' : ''}`}
+                                  style={config.programThumbPosition === 'right' ? { backgroundColor: 'var(--layout-accent-color)', color: accentContrast } : {}}
                                   onClick={() => setConfig(c => ({ ...c, programThumbPosition: 'right' }))}
                                 >
                                   Direita
@@ -1477,6 +1480,7 @@ export default function CenarioInterativoPage() {
                           <Switch 
                             checked={!!config.home.showArtistImage} 
                             onCheckedChange={v => updateHome({ showArtistImage: v })} 
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
                           />
                         </div>
 
@@ -1512,6 +1516,7 @@ export default function CenarioInterativoPage() {
                         <Switch 
                           checked={!!config.bgAlternateMode} 
                           onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))} 
+                          className="data-[state=checked]:bg-[var(--layout-accent-color)]"
                         />
                       </div>
                     </div>
