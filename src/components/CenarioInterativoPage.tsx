@@ -1348,7 +1348,6 @@ export default function CenarioInterativoPage() {
                             </div>
                             <h4 className="text-xs font-bold uppercase tracking-wider">1. Fundo Estático</h4>
                           </div>
-                          </div>
                           <Switch 
                             checked={config.bgType === 'static'} 
                             onCheckedChange={(checked) => setConfig(c => ({ ...c, bgType: checked ? 'static' : 'none' }))}
