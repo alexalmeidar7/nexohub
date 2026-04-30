@@ -2139,29 +2139,75 @@ export default function CenarioInterativoPage() {
                       </div>
                     )}
 
-                    {config.traffic.points.length > 0 && (
-                      <div className="space-y-2 mt-2">
-                        <Label className="text-xs font-medium" style={{ color: mutedText }}>Pontos marcados</Label>
-                        {config.traffic.points.map(p => (
-                          <div 
-                            key={p.id} 
-                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs group transition-colors hover:bg-black/10 cursor-pointer" 
-                            style={{ background: subTabBg }}
-                            onClick={() => goToTrafficPoint(p)}
-                          >
-                            <MapPin size={12} className="text-[var(--layout-accent-color)]" />
-                            <span className="flex-1 font-medium truncate">{p.label}</span>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeTrafficPoint(p.id);
-                              }} 
-                              className="opacity-40 hover:opacity-100 hover:text-red-500 transition-all p-1"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                    {(config.traffic.points.length > 0 || (config.traffic.favorites && config.traffic.favorites.length > 0)) && (
+                      <div className="space-y-4 mt-2">
+                        {config.traffic.favorites && config.traffic.favorites.length > 0 && (
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium flex items-center gap-1.5" style={{ color: mutedText }}>
+                              <Star size={12} className="fill-yellow-500 text-yellow-500" /> Favoritos
+                            </Label>
+                            <div className="grid grid-cols-1 gap-2">
+                              {config.traffic.favorites.map(p => (
+                                <div 
+                                  key={p.id} 
+                                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs group transition-colors hover:bg-black/10 cursor-pointer" 
+                                  style={{ background: subTabBg }}
+                                  onClick={() => loadFavoritePoint(p)}
+                                >
+                                  <MapPin size={12} className="text-yellow-500" />
+                                  <span className="flex-1 font-medium truncate">{p.label}</span>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleFavoritePoint(p);
+                                    }} 
+                                    className="opacity-40 hover:opacity-100 transition-all p-1"
+                                  >
+                                    <Star size={14} className="fill-yellow-500 text-yellow-500" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        ))}
+                        )}
+
+                        {config.traffic.points.length > 0 && (
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium" style={{ color: mutedText }}>Pontos atuais</Label>
+                            {config.traffic.points.map(p => (
+                              <div 
+                                key={p.id} 
+                                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs group transition-colors hover:bg-black/10 cursor-pointer" 
+                                style={{ background: subTabBg }}
+                                onClick={() => goToTrafficPoint(p)}
+                              >
+                                <MapPin size={12} className="text-[var(--layout-accent-color)]" />
+                                <span className="flex-1 font-medium truncate">{p.label}</span>
+                                <div className="flex items-center gap-1">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleFavoritePoint(p);
+                                    }} 
+                                    className="opacity-40 hover:opacity-100 transition-all p-1"
+                                    title="Alternar favorito"
+                                  >
+                                    <Star size={14} className={(config.traffic.favorites || []).some(f => f.id === p.id) ? "fill-yellow-500 text-yellow-500" : ""} />
+                                  </button>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeTrafficPoint(p.id);
+                                    }} 
+                                    className="opacity-40 hover:opacity-100 hover:text-red-500 transition-all p-1"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
