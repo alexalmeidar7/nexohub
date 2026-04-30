@@ -2766,7 +2766,6 @@ export default function CenarioInterativoPage() {
                                      flexDirection: "column",
                                      gap: `${pvh(0.6)}px`,
                                      zIndex: 2,
-                                     position: "relative",
                                      flexShrink: 0,
                                      opacity: showProgram && currentPhase === "program" ? 1 : 0,
                                      visibility: showProgram && currentPhase === "program" ? "visible" : "hidden",
