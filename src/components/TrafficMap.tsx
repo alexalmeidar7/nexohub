@@ -20,6 +20,7 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
     lon: roundCoord(clamp(lon, -180, 180)),
     zoom: clamp(Math.round(zoom), 3, 15),
   }));
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     setView((prev) => {
