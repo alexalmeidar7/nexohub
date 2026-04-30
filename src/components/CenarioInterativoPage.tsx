@@ -1542,6 +1542,16 @@ export default function CenarioInterativoPage() {
 
                   {/* Configurações Visuais de Fundo */}
                   <div className="space-y-4">
+                    <style>
+                      {`
+                        #cenario-bg-configs > div {
+                          border-color: var(--layout-accent-color) !important;
+                          border-width: 2px !important;
+                          border-opacity: 0.6 !important;
+                        }
+                      `}
+                    </style>
+                    <div id="cenario-bg-configs" className="space-y-4">
                     <div className="px-1 py-1 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="p-1 rounded bg-black/5">
