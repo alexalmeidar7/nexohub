@@ -7,6 +7,8 @@ interface TrafficMapProps {
   zoom: number;
   interactive?: boolean;
   onMove?: (lat: number, lon: number, zoom: number) => void;
+  onPointMove?: (id: string, lat: number, lon: number) => void;
+  points?: { id: string, lat: number, lng: number }[];
   className?: string;
   style?: React.CSSProperties;
 }
@@ -14,13 +16,14 @@ interface TrafficMapProps {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const roundCoord = (value: number) => Math.round(value * 10000) / 10000;
 
-export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove, className, style }: TrafficMapProps) {
+export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove, onPointMove, points = [], className, style }: TrafficMapProps) {
   const [view, setView] = useState(() => ({
     lat: roundCoord(clamp(lat, -85, 85)),
     lon: roundCoord(clamp(lon, -180, 180)),
     zoom: clamp(Math.round(zoom), 3, 15),
   }));
   const [isDragging, setIsDragging] = useState(false);
+  const [dragPointId, setDragPointId] = useState<string | null>(null);
 
   useEffect(() => {
     setView((prev) => {
@@ -86,15 +89,35 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
     <div 
       className={className} 
       style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...style }}
+      onMouseUp={() => {
+        setIsDragging(false);
+        setDragPointId(null);
+      }}
+      onMouseLeave={() => {
+        setIsDragging(false);
+        setDragPointId(null);
+      }}
       onMouseMove={(e) => {
         if (!isDragging || !interactive) return;
         const rect = e.currentTarget.getBoundingClientRect();
         const x = (e.clientX - rect.left) / rect.width;
         const y = (e.clientY - rect.top) / rect.height;
-        // Approximation for dragging markers on a map is complex with iframe, 
-        // but for now we allow manual coordinate entry and panning.
-        // As Waze iframe doesn't support easy coordinate extraction on click,
-        // we'll keep the pan/zoom controls as the primary interaction.
+        
+        // When dragging the center point (no point ID)
+        if (!dragPointId) {
+          // Normal panning logic is already handled by buttons
+          return;
+        }
+
+        // Approximation for moving points on the map
+        // Waze iframe doesn't let us know exactly where we click, 
+        // but we can estimate based on the center and zoom
+        const latDelta = (y - 0.5) * -panStep * 2;
+        const lonDelta = (x - 0.5) * panStep * 2;
+        
+        if (onPointMove) {
+          onPointMove(dragPointId, view.lat + latDelta, view.lon + lonDelta);
+        }
       }}
     >
       <iframe
@@ -121,6 +144,54 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
           </div>
         </div>
       )}
+
+      {/* Render interactive markers for the points */}
+      {interactive && points.map(p => {
+        // Simple projection: approximate position relative to center
+        // This is not mathematically perfect for all zoom levels but works for UI feedback
+        const latDiff = p.lat - view.lat;
+        const lonDiff = p.lng - view.lon;
+        
+        // Scale diffs to pixels based on current zoom
+        // This scale factor is an approximation
+        const scale = Math.pow(2, view.zoom) * 0.01;
+        const top = 50 - (latDiff * scale * 100);
+        const left = 50 + (lonDiff * scale * 100);
+
+        // Only show if within view bounds
+        if (top < 0 || top > 100 || left < 0 || left > 100) return null;
+
+        return (
+          <div
+            key={p.id}
+            className="absolute cursor-move group"
+            style={{ 
+              top: `${top}%`, 
+              left: `${left}%`, 
+              zIndex: dragPointId === p.id ? 20 : 10,
+              transform: "translate(-50%, -100%)",
+              pointerEvents: "auto"
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              setIsDragging(true);
+              setDragPointId(p.id);
+            }}
+          >
+            <div className="flex flex-col items-center">
+              <div className="bg-white px-2 py-0.5 rounded shadow text-[10px] font-bold mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Arraste para mover
+              </div>
+              <MapPin 
+                size={24} 
+                className={dragPointId === p.id ? "text-red-500 scale-125" : "text-[var(--layout-accent-color)]"} 
+                style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
+                fill="white"
+              />
+            </div>
+          </div>
+        );
+      })}
 
       {interactive && (
         <>
