@@ -151,10 +151,15 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
       />
       {interactive && (
         <div 
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
           style={{ zIndex: 5 }}
         >
-          <div className="text-[var(--layout-accent-color, #3b82f6)] animate-bounce">
+          {isNavigating && (
+            <div className="absolute top-[30%] bg-background/80 backdrop-blur-sm px-4 py-1.5 rounded-full border border-border/50 text-[10px] font-bold uppercase tracking-widest text-muted-foreground animate-pulse shadow-lg">
+              Navegando...
+            </div>
+          )}
+          <div className={`text-[var(--layout-accent-color, #3b82f6)] ${!dragPointId && !isNavigating ? 'animate-bounce' : ''}`}>
             <MapPin size={32} strokeWidth={3} fill="white" />
           </div>
         </div>
