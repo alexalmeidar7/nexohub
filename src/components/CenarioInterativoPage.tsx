@@ -142,6 +142,7 @@ interface LiveWeather {
   daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number; rainMm?: number; windMax?: number }[];
 }
 
+/* ─── Currency API mapping ─── */
 const CURRENCY_API_MAP: Record<string, string> = {
   USD: "USD-BRL", EUR: "EUR-BRL", GBP: "GBP-BRL", ARS: "ARS-BRL", JPY: "JPY-BRL", BTC: "BTC-BRL", ETH: "ETH-BRL",
 };
@@ -180,6 +181,7 @@ async function fetchLiveCurrencies(codes: string[]): Promise<LiveCurrency[]> {
   }
 }
 
+/* ─── Stock Exchange (Bolsas) ─── */
 const STOCK_EXCHANGES = [
   { symbol: "^BVSP", name: "Ibovespa", flag: "🇧🇷" },
   { symbol: "^GSPC", name: "S&P 500", flag: "🇺🇸" },
@@ -219,6 +221,7 @@ const mockMessages = [
   { user: "Carlos", text: "Manda salve pra galera!" },
 ];
 
+/* ─── BG Upload helper ─── */
 async function uploadBgImage(file: File, userId: string, category: string): Promise<string> {
   const ext = file.name.split(".").pop() || "jpg";
   const path = `cenario/${userId}/${category}-${Date.now()}.${ext}`;
@@ -280,6 +283,7 @@ function BgImageUpload({ value, onChange, mutedText, userId, category }: { value
   );
 }
 
+/* ── Exception words input with manual save ── */
 function ExceptionWordsInput({ value, onSave }: { value: string; onSave: (v: string) => void }) {
   const [local, setLocal] = useState(value);
   const [dirty, setDirty] = useState(false);
@@ -319,6 +323,8 @@ function ExceptionWordsInput({ value, onSave }: { value: string; onSave: (v: str
   );
 }
 
+/* ─── COMPONENT ─── */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export default function CenarioInterativoPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
@@ -328,6 +334,7 @@ export default function CenarioInterativoPage() {
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
   const [satelliteZoom, setSatelliteZoom] = useState(6);
 
+  /* ─── Preview Drawing ─── */
   const [previewDrawActive, setPreviewDrawActive] = useState(false);
   const [previewHasDrawing, setPreviewHasDrawing] = useState(false);
   const [previewDrawColor, setPreviewDrawColor] = useState("#ff3b3b");
@@ -343,7 +350,7 @@ export default function CenarioInterativoPage() {
   const previewIsDrawingRef = useRef(false);
   const previewWrapRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(0.278);
-  const [previewZoom, setPreviewZoom] = useState(0.6);
+  const [previewZoom, setPreviewZoom] = useState(0.6); // Default preview zoom level
   const PREV_W = 1080;
   const PREV_H = 1920;
   const pvh = useCallback((v: number) => v * PREV_H / 100, []);
@@ -388,6 +395,7 @@ export default function CenarioInterativoPage() {
       ctx.putImageData(prev, 0, 0);
       setPreviewHasDrawing(drawHistoryRef.current.length > 0);
       sendDrawClear();
+      // Re-broadcast full canvas state isn't simple, so just clear remote & note limitation
     } else {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       setPreviewHasDrawing(false);
@@ -407,15 +415,70 @@ export default function CenarioInterativoPage() {
     ctx.lineJoin = "round";
     ctx.beginPath();
     switch (shape) {
-      case "square": ctx.rect(sx, sy, w, h); break;
-      case "circle": { const rx = Math.abs(w) / 2, ry = Math.abs(h) / 2; const cx = sx + w / 2, cy = sy + h / 2; ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); break; }
-      case "triangle": ctx.moveTo(sx + w / 2, sy); ctx.lineTo(sx + w, sy + h); ctx.lineTo(sx, sy + h); ctx.closePath(); break;
-      case "diamond": ctx.moveTo(sx + w / 2, sy); ctx.lineTo(sx + w, sy + h / 2); ctx.lineTo(sx + w / 2, sy + h); ctx.lineTo(sx, sy + h / 2); ctx.closePath(); break;
-      case "star": { const cx = sx + w / 2, cy = sy + h / 2; const outerR = Math.min(Math.abs(w), Math.abs(h)) / 2; const innerR = outerR * 0.4; for (let i = 0; i < 10; i++) { const r = i % 2 === 0 ? outerR : innerR; const angle = (Math.PI / 5) * i - Math.PI / 2; const px = cx + r * Math.cos(angle); const py = cy + r * Math.sin(angle); if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); } ctx.closePath(); break; }
-      case "arrow-up": { const cx = sx + w / 2; ctx.moveTo(cx, sy); ctx.lineTo(sx + w, sy + h * 0.4); ctx.moveTo(cx, sy); ctx.lineTo(sx, sy + h * 0.4); ctx.moveTo(cx, sy); ctx.lineTo(cx, sy + h); break; }
-      case "arrow-right": { const cy = sy + h / 2; ctx.moveTo(sx + w, cy); ctx.lineTo(sx + w * 0.6, sy); ctx.moveTo(sx + w, cy); ctx.lineTo(sx + w * 0.6, sy + h); ctx.moveTo(sx + w, cy); ctx.lineTo(sx, cy); break; }
-      case "arrow-down": { const cx = sx + w / 2; ctx.moveTo(cx, sy + h); ctx.lineTo(sx + w, sy + h * 0.6); ctx.moveTo(cx, sy + h); ctx.lineTo(sx, sy + h * 0.6); ctx.moveTo(cx, sy + h); ctx.lineTo(cx, sy); break; }
-      case "arrow-left": { const cy = sy + h / 2; ctx.moveTo(sx, cy); ctx.lineTo(sx + w * 0.4, sy); ctx.moveTo(sx, cy); ctx.lineTo(sx + w * 0.4, sy + h); ctx.moveTo(sx, cy); ctx.lineTo(sx + w, cy); break; }
+      case "square":
+        ctx.rect(sx, sy, w, h);
+        break;
+      case "circle": {
+        const rx = Math.abs(w) / 2, ry = Math.abs(h) / 2;
+        const cx = sx + w / 2, cy = sy + h / 2;
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        break;
+      }
+      case "triangle":
+        ctx.moveTo(sx + w / 2, sy);
+        ctx.lineTo(sx + w, sy + h);
+        ctx.lineTo(sx, sy + h);
+        ctx.closePath();
+        break;
+      case "diamond":
+        ctx.moveTo(sx + w / 2, sy);
+        ctx.lineTo(sx + w, sy + h / 2);
+        ctx.lineTo(sx + w / 2, sy + h);
+        ctx.lineTo(sx, sy + h / 2);
+        ctx.closePath();
+        break;
+      case "star": {
+        const cx = sx + w / 2, cy = sy + h / 2;
+        const outerR = Math.min(Math.abs(w), Math.abs(h)) / 2;
+        const innerR = outerR * 0.4;
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 === 0 ? outerR : innerR;
+          const angle = (Math.PI / 5) * i - Math.PI / 2;
+          const px = cx + r * Math.cos(angle);
+          const py = cy + r * Math.sin(angle);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        break;
+      }
+      case "arrow-up": {
+        const cx = sx + w / 2;
+        ctx.moveTo(cx, sy); ctx.lineTo(sx + w, sy + h * 0.4);
+        ctx.moveTo(cx, sy); ctx.lineTo(sx, sy + h * 0.4);
+        ctx.moveTo(cx, sy); ctx.lineTo(cx, sy + h);
+        break;
+      }
+      case "arrow-right": {
+        const cy = sy + h / 2;
+        ctx.moveTo(sx + w, cy); ctx.lineTo(sx + w * 0.6, sy);
+        ctx.moveTo(sx + w, cy); ctx.lineTo(sx + w * 0.6, sy + h);
+        ctx.moveTo(sx + w, cy); ctx.lineTo(sx, cy);
+        break;
+      }
+      case "arrow-down": {
+        const cx = sx + w / 2;
+        ctx.moveTo(cx, sy + h); ctx.lineTo(sx + w, sy + h * 0.6);
+        ctx.moveTo(cx, sy + h); ctx.lineTo(sx, sy + h * 0.6);
+        ctx.moveTo(cx, sy + h); ctx.lineTo(cx, sy);
+        break;
+      }
+      case "arrow-left": {
+        const cy = sy + h / 2;
+        ctx.moveTo(sx, cy); ctx.lineTo(sx + w * 0.4, sy);
+        ctx.moveTo(sx, cy); ctx.lineTo(sx + w * 0.4, sy + h);
+        ctx.moveTo(sx, cy); ctx.lineTo(sx + w, cy);
+        break;
+      }
     }
     ctx.stroke();
   }, []);
@@ -432,6 +495,7 @@ export default function CenarioInterativoPage() {
     }
   }, []);
 
+  /* ─── Supabase Realtime draw channel (cross-device) ─── */
   const rtDrawChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   useEffect(() => {
     if (!user?.id) return;
@@ -467,7 +531,8 @@ export default function CenarioInterativoPage() {
   }, [user?.id, drawOnCanvas]);
 
   const sendDraw = useCallback((action: string, px: number, py: number, color: string, width: number) => {
-    cenarioBcRef.current?.postMessage({ type: "draw", action, px, py, color, width });
+    const msg = { type: "draw" as const, action, px, py, color, width };
+    cenarioBcRef.current?.postMessage(msg);
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw", payload: { action, px, py, color, width } });
   }, []);
 
@@ -499,7 +564,7 @@ export default function CenarioInterativoPage() {
     const canvas = previewCanvasRef.current;
     if (!canvas || !previewIsDrawingRef.current) return;
     e.preventDefault();
-    if (previewDrawMode === "shape" && selectedShape && shapeStartPos) return;
+    if (previewDrawMode === "shape" && selectedShape && shapeStartPos) return; // shapes drawn on end
     const pos = getPreviewCanvasPos(e, canvas);
     if (previewDrawMode === "eraser") {
       const ctx = canvas.getContext("2d");
@@ -521,6 +586,7 @@ export default function CenarioInterativoPage() {
       drawShapeOnCanvas(canvas, selectedShape, shapeStartPos.px, shapeStartPos.py, pos.px, pos.py, previewDrawColor, previewDrawWidth);
       setPreviewHasDrawing(true);
       setShapeStartPos(null);
+      // broadcast shape
       cenarioBcRef.current?.postMessage({ type: "draw-shape", shape: selectedShape, startPx: shapeStartPos.px, startPy: shapeStartPos.py, endPx: pos.px, endPy: pos.py, color: previewDrawColor, width: previewDrawWidth });
       rtDrawChannelRef.current?.send({ type: "broadcast", event: "draw-shape", payload: { shape: selectedShape, startPx: shapeStartPos.px, startPy: shapeStartPos.py, endPx: pos.px, endPy: pos.py, color: previewDrawColor, width: previewDrawWidth } });
     }
@@ -559,6 +625,7 @@ export default function CenarioInterativoPage() {
   const currencySubTabRef = useRef(currencySubTab);
   useEffect(() => {
     configRef.current = config;
+    // Push config to external screen instantly via BroadcastChannel
     cenarioBcRef.current?.postMessage({ type: "config-update", config });
   }, [config]);
   useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
@@ -571,11 +638,14 @@ export default function CenarioInterativoPage() {
   const lastPongRef = useRef(0);
   const presenceConnectedRef = useRef(false);
   const presenceShownRef = useRef(false);
+  const previewIsLandscape = externalRotation === 90 || externalRotation === 270;
 
+  /* Measure preview container to compute scale exactly like CenarioTela */
   useEffect(() => {
     const el = previewWrapRef.current;
     if (!el) return;
     const measure = () => {
+      // Internal scale is always PREV_W / container width to keep proportions fixed
       const scale = el.clientWidth / PREV_W;
       setPreviewScale(scale || 1);
     };
@@ -583,8 +653,9 @@ export default function CenarioInterativoPage() {
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [previewIsLandscape, previewZoom]);
 
+  /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
     if (!user?.id) return;
     const ch = supabase.channel(`cenario-presence-${user.id}`, { config: { presence: { key: "painel-controle" } } });
@@ -670,29 +741,48 @@ export default function CenarioInterativoPage() {
       }
     };
 
+    // Ping external screen every 3s (only for same-browser BroadcastChannel)
     const pingInterval = setInterval(() => {
       bc.postMessage({ type: "ping" });
+      // If no pong in 5s AND no presence connection, mark offline
       setTimeout(() => {
         if (Date.now() - lastPongRef.current > 5000 && !presenceConnectedRef.current) setExternalConnected(false);
       }, 2000);
     }, 3000);
+    // Initial ping
     bc.postMessage({ type: "ping" });
 
     return () => { cenarioBcRef.current = null; clearInterval(pingInterval); bc.close(); };
   }, [drawOnCanvas]);
 
+  const forceReconnect = useCallback(() => {
+    cenarioBcRef.current?.postMessage({ type: "ping" });
+    cenarioBcRef.current?.postMessage({ type: "request-state" });
+    // Also re-send current state to wake up external screen
+    cenarioBcRef.current?.postMessage({
+      type: "full-state",
+      tab: activeTabRef.current,
+      subTab: weatherSubTabRef.current,
+      currencySubTab: currencySubTabRef.current,
+      config: configRef.current,
+    });
+  }, []);
+
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    // Mirror to external screen
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab, subTab: weatherSubTab, currencySubTab });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab, subTab: weatherSubTab, currencySubTab } });
   };
   const handleWeatherSubTabChange = (sub: string) => {
     setWeatherSubTab(sub);
+    // Mirror subtab change to external screen
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "weather", subTab: sub, currencySubTab });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "weather", subTab: sub, currencySubTab } });
   };
   const handleCurrencySubTabChange = (sub: "moedas" | "bolsas") => {
     setCurrencySubTab(sub);
+    // Mirror subtab change to external screen
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "currency", subTab: weatherSubTab, currencySubTab: sub });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "currency", subTab: weatherSubTab, currencySubTab: sub } });
   };
@@ -708,14 +798,22 @@ export default function CenarioInterativoPage() {
   const [savedFlash, setSavedFlash] = useState(false);
   const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorInstagram?: string; apresentadoresInstagrams?: string[]; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
   const [presenterIdx, setPresenterIdx] = useState(0);
   const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const prevMusicRef = useRef("");
+  /* ─── Artist background image (Deezer) ─── */
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
   const artistBgCacheRef = useRef<Record<string, string>>({});
+  const [prevArtistBgUrl, setPrevArtistBgUrl] = useState<string | null>(null);
   const [artistBgReady, setArtistBgReady] = useState(false);
+  useEffect(() => {
+    if (artistBgUrl) setPrevArtistBgUrl(artistBgUrl);
+  }, [artistBgUrl]);
+
+  /* ─── Alternate background mode (preview): absolute 10s slots, matching vMix ─── */
+  const altBgPhase: "artist" | "thumb" = config.bgAlternateMode && Math.floor(currentTime.getTime() / 10000) % 2 === 1 ? "thumb" : "artist";
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
@@ -728,6 +826,7 @@ export default function CenarioInterativoPage() {
   const [liveStocks, setLiveStocks] = useState<LiveStock[]>([]);
   const [stocksLoading, setStocksLoading] = useState(false);
 
+  /* ─── Fetch artist background from Deezer ─── */
   const exceptionWordsList = (config.home.exceptionWords || "break,vinhetas,hora certa").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
   const isBreakTrack = (() => {
     const titulo = (musicData?.titulo || "").toLowerCase();
@@ -735,7 +834,7 @@ export default function CenarioInterativoPage() {
     return exceptionWordsList.some(w => titulo === w || artista === w || titulo.includes(w) || artista.includes(w));
   })();
   useEffect(() => {
-    if (isBreakTrack) { setArtistBgUrl(null); setArtistBgReady(false); return; }
+    if (isBreakTrack) { setArtistBgUrl(null); setPrevArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
     if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
@@ -758,17 +857,20 @@ export default function CenarioInterativoPage() {
     return () => { cancelled = true; };
   }, [musicData?.artista, isBreakTrack]);
 
+  /* ─── Clock tick ─── */
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  /* ─── Sponsor logo cycling ─── */
   useEffect(() => {
     if (sponsorLogos.length <= 1) { setSponsorIdx(0); return; }
     const t = setInterval(() => setSponsorIdx(prev => (prev + 1) % sponsorLogos.length), 5000);
     return () => clearInterval(t);
   }, [sponsorLogos.length]);
 
+  /* ─── Music data sync from per-user localStorage ─── */
   useEffect(() => {
     if (!user?.id) return;
     const key = `masterview_music_data::${user.id}`;
@@ -787,7 +889,7 @@ export default function CenarioInterativoPage() {
     }, 2000);
     return () => clearInterval(poll);
   }, [user?.id]);
-
+  /* ─── Fetch live currencies ─── */
   useEffect(() => {
     if (!config.currency.enabled || !config.currency.currencies.length) return;
     let cancelled = false;
@@ -802,6 +904,7 @@ export default function CenarioInterativoPage() {
     return () => { cancelled = true; clearInterval(interval); };
   }, [config.currency.enabled, config.currency.currencies.join(",")]);
 
+  /* ─── Fetch live stocks ─── */
   useEffect(() => {
     if (!config.currency.enabled) return;
     let cancelled = false;
@@ -812,10 +915,11 @@ export default function CenarioInterativoPage() {
       setStocksLoading(false);
     };
     load();
-    const interval = setInterval(load, 120000);
+    const interval = setInterval(load, 120000); // refresh every 2min
     return () => { cancelled = true; clearInterval(interval); };
   }, [config.currency.enabled]);
 
+  /* ─── Fetch current program + sponsor logos ─── */
   useEffect(() => {
     if (!user?.id) return;
     const load = async () => {
@@ -823,38 +927,31 @@ export default function CenarioInterativoPage() {
       const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
       const today = dayNames[now.getDay()];
       const nowTime = now.toTimeString().slice(0, 5);
+
       const { data: progs } = await supabase
         .from("programas")
         .select("id, nome, horario_inicio, horario_fim, dias_semana, selo, thumb, capa, apresentador_id, apresentadores_ids, tipo_programa")
         .eq("user_id", user.id)
         .eq("ativo", true)
         .ilike("estudio", "%fm%");
+
       const onAir = progs?.find(p => {
         const dias = p.dias_semana || [];
         return dias.includes(today) && p.horario_inicio <= nowTime && p.horario_fim > nowTime;
       });
+
       if (onAir) {
         let apresentadorNome = "";
         let apresentadorFoto = "";
         let apresentadoresFotos: string[] = [];
-        let apresentadorInstagram = "";
-        let apresentadoresInstagrams: string[] = [];
         const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
         if (apIds.length) {
-          const { data: aps } = await supabase.from("apresentadores").select("nome, foto, instagram").in("id", apIds);
+          const { data: aps } = await supabase.from("apresentadores").select("nome, foto").in("id", apIds);
           apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
           apresentadoresFotos = (aps || []).map(a => a.foto).filter((f): f is string => !!f);
           apresentadorFoto = apresentadoresFotos[0] || "";
-          apresentadoresInstagrams = (aps || []).map(a => a.instagram).filter((i): i is string => !!i);
-          apresentadorInstagram = apresentadoresInstagrams[0] || "";
         }
-        setCurrentProgram({ 
-          nome: onAir.nome, id: onAir.id, selo: onAir.selo, thumb: (onAir as any).thumb || null, capa: (onAir as any).capa || null, 
-          horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, 
-          apresentador: apresentadorNome, apresentadorInstagram, apresentadoresInstagrams,
-          apresentadorFoto, apresentadoresFotos, 
-          tipo_programa: onAir.tipo_programa 
-        });
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id, selo: onAir.selo, thumb: (onAir as any).thumb || null, capa: (onAir as any).capa || null, horario_inicio: onAir.horario_inicio, horario_fim: onAir.horario_fim, apresentador: apresentadorNome, apresentadorFoto, apresentadoresFotos, tipo_programa: onAir.tipo_programa });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
           .select("id, nome, logo_url")
@@ -863,6 +960,7 @@ export default function CenarioInterativoPage() {
           .eq("ativo", true)
           .eq("excluido", false);
         setSponsorLogos(logos || []);
+        // Find next program
         const upcoming = progs?.filter(p => (p.dias_semana || []).includes(today) && p.horario_inicio > nowTime).sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
         if (upcoming?.length) {
           const np = upcoming[0];
@@ -881,6 +979,7 @@ export default function CenarioInterativoPage() {
     return () => clearInterval(interval);
   }, [user?.id]);
 
+  /* Rotate presenter photo every 10s when program has multiple presenters */
   useEffect(() => {
     const fotos = currentProgram?.apresentadoresFotos || [];
     setPresenterIdx(0);
@@ -891,6 +990,7 @@ export default function CenarioInterativoPage() {
     return () => clearInterval(id);
   }, [currentProgram?.id, currentProgram?.apresentadoresFotos?.join("|")]);
 
+  /* ─── Load from DB (with local cache fallback) ─── */
   useEffect(() => {
     const applyCachedConfig = () => {
       try {
@@ -901,20 +1001,25 @@ export default function CenarioInterativoPage() {
           setConfig(prev => ({ ...prev, ...parsed }));
           return true;
         }
-      } catch { }
+      } catch {
+        // silent
+      }
       return false;
     };
+
     if (!user?.id) {
       applyCachedConfig();
       setLoaded(true);
       return;
     }
+
     (async () => {
       const { data } = await supabase
         .from("user_settings")
         .select("cenario_config" as any)
         .eq("user_id", user.id)
         .maybeSingle();
+
       if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
         const savedConfig = (data as any).cenario_config as Partial<CenarioConfig> & {
           _activeTab?: string;
@@ -930,23 +1035,31 @@ export default function CenarioInterativoPage() {
         if (typeof savedConfig._screenRotation === "number") setExternalRotation(savedConfig._screenRotation);
         try {
           localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
-        } catch { }
+        } catch {
+          // silent
+        }
       } else {
         applyCachedConfig();
       }
+
       setLoaded(true);
     })();
   }, [user?.id]);
 
+  /* ─── Keep local cache + live sync for /cenario-tela ─── */
   useEffect(() => {
     if (!loaded) return;
     try {
       localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(config));
-    } catch { }
+    } catch {
+      // silent
+    }
+
     cenarioBcRef.current?.postMessage({ type: "config-update", config });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "config-update", payload: { config } });
   }, [config, loaded]);
 
+  /* ─── Fetch weather data ─── */
   const weatherCity = config.weather.city || config.city;
   const weatherFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -955,6 +1068,7 @@ export default function CenarioInterativoPage() {
     weatherFetchRef.current = setTimeout(async () => {
       setWeatherLoading(true);
       try {
+        // 1. Geocode city
         const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
           body: { action: "geocode", query: weatherCity, count: 1 },
         });
@@ -966,29 +1080,51 @@ export default function CenarioInterativoPage() {
         }
         const { latitude, longitude } = results[0];
         setWeatherCoords({ lat: latitude, lon: longitude });
+        // 2. Get forecast
         const { data: forecastData } = await supabase.functions.invoke("fetch-weather", {
           body: { action: "forecast", lat: latitude, lon: longitude, forecast_days: 5 },
         });
         if (forecastData?.ok && forecastData.data) {
           const d = forecastData.data;
           setLiveWeather({
-            current: { temp: Math.round(d.current?.temperature_2m ?? 0), humidity: Math.round(d.current?.relative_humidity_2m ?? 0), code: d.current?.weather_code ?? 0 },
+            current: {
+              temp: Math.round(d.current?.temperature_2m ?? 0),
+              humidity: Math.round(d.current?.relative_humidity_2m ?? 0),
+              code: d.current?.weather_code ?? 0,
+            },
             daily: (d.daily?.time || []).map((date: string, i: number) => ({
-              date, min: Math.round(d.daily.temperature_2m_min?.[i] ?? 0), max: Math.round(d.daily.temperature_2m_max?.[i] ?? 0), code: d.daily.weather_code?.[i] ?? 0, humidity: Math.round(d.daily.relative_humidity_2m_max?.[i] ?? 0), precip: Math.round(d.daily.precipitation_probability_max?.[i] ?? 0), rainMm: Math.round((d.daily.precipitation_sum?.[i] ?? 0) * 10) / 10, windMax: Math.round(d.daily.wind_speed_10m_max?.[i] ?? 0)
+              date,
+              min: Math.round(d.daily.temperature_2m_min?.[i] ?? 0),
+              max: Math.round(d.daily.temperature_2m_max?.[i] ?? 0),
+              code: d.daily.weather_code?.[i] ?? 0,
+              humidity: Math.round(d.daily.relative_humidity_2m_max?.[i] ?? 0),
+              precip: Math.round(d.daily.precipitation_probability_max?.[i] ?? 0),
+              rainMm: Math.round((d.daily.precipitation_sum?.[i] ?? 0) * 10) / 10,
+              windMax: Math.round(d.daily.wind_speed_10m_max?.[i] ?? 0),
             })),
           });
         }
-      } catch (err) { console.error("Weather fetch error:", err); }
+      } catch (err) {
+        console.error("Weather fetch error:", err);
+      }
       setWeatherLoading(false);
     }, 1000);
     return () => { if (weatherFetchRef.current) clearTimeout(weatherFetchRef.current); };
   }, [config.weather.enabled, weatherCity]);
 
+  /* ─── Geocode traffic city ─── */
   const trafficCity = config.traffic.city || config.city;
   const trafficGeoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => { if (trafficCity) setTrafficSearchCity(trafficCity); }, [trafficCity]);
+  
+  useEffect(() => {
+    if (trafficCity) {
+      setTrafficSearchCity(trafficCity);
+    }
+  }, [trafficCity]);
+
   useEffect(() => {
     if (!config.traffic.enabled || !trafficCity) { setTrafficCoords(null); return; }
+    // If config already has lat/lon from a previous geocode or manual input, use those
     if (config.traffic.lat != null && config.traffic.lon != null) {
       setTrafficCoords({ lat: config.traffic.lat, lon: config.traffic.lon });
       return;
@@ -996,15 +1132,19 @@ export default function CenarioInterativoPage() {
     if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current);
     trafficGeoRef.current = setTimeout(async () => {
       try {
-        const { data: geoData } = await supabase.functions.invoke("fetch-weather", { body: { action: "geocode", query: trafficCity, count: 1 } });
+        const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+          body: { action: "geocode", query: trafficCity, count: 1 },
+        });
         const results = geoData?.results;
         if (results?.length) {
           const lat = results[0].latitude;
           const lon = results[0].longitude;
           setTrafficCoords({ lat, lon });
           updateTraffic({ lat, lon });
+          // If a search address was set but not a point, we could update it here
+          // but usually it's better to wait for the user to select an address.
         }
-      } catch { }
+      } catch { /* silent */ }
     }, 1000);
     return () => { if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current); };
   }, [config.traffic.enabled, trafficCity, config.traffic.lat, config.traffic.lon]);
@@ -1015,15 +1155,26 @@ export default function CenarioInterativoPage() {
   useEffect(() => {
     if (!user?.id || !loaded) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    const configWithTabs = { ...config, _activeTab: activeTab, _weatherSubTab: weatherSubTab, _currencySubTab: currencySubTab, _screenRotation: externalRotation };
+    const configWithTabs = {
+      ...config,
+      _activeTab: activeTab,
+      _weatherSubTab: weatherSubTab,
+      _currencySubTab: currencySubTab,
+      _screenRotation: externalRotation,
+    };
     const serialized = JSON.stringify(configWithTabs);
     if (serialized === prevSaveRef.current) { pendingSaveRef.current = null; return; }
     const doSave = async () => {
       prevSaveRef.current = serialized;
       pendingSaveRef.current = null;
       setSaving(true);
-      const { error } = await supabase.from("user_settings").upsert({ user_id: user.id, cenario_config: configWithTabs } as any, { onConflict: "user_id" });
-      if (!error) {
+      const payload = { user_id: user.id, cenario_config: configWithTabs } as any;
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert(payload, { onConflict: "user_id" });
+      if (error) {
+        console.error("Erro ao salvar cenário:", error);
+      } else {
         setSavedFlash(true);
         if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
         savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
@@ -1032,116 +1183,253 @@ export default function CenarioInterativoPage() {
     };
     pendingSaveRef.current = doSave;
     saveTimeout.current = setTimeout(doSave, 800);
-    return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); if (pendingSaveRef.current) pendingSaveRef.current(); };
+    return () => {
+      if (saveTimeout.current) clearTimeout(saveTimeout.current);
+      // Flush pending save on unmount so data is never lost
+      if (pendingSaveRef.current) { pendingSaveRef.current(); }
+    };
   }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab, externalRotation]);
 
-  const updateHome = (partial: Partial<HomeConfig>) => setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
-  const updateWeather = (partial: Partial<WeatherConfig>) => setConfig(c => ({ ...c, weather: { ...c.weather, ...partial } }));
-  const updateTraffic = (partial: Partial<TrafficConfig>) => setConfig(c => ({ ...c, traffic: { ...c.traffic, ...partial } }));
-  const updateCurrency = (partial: Partial<CurrencyConfig>) => setConfig(c => ({ ...c, currency: { ...c.currency, ...partial } }));
-  const updateChat = (partial: Partial<ChatConfig>) => setConfig(c => ({ ...c, chat: { ...c.chat, ...partial } }));
+  const updateHome = (partial: Partial<HomeConfig>) =>
+    setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
+  const updateWeather = (partial: Partial<WeatherConfig>) =>
+    setConfig(c => ({ ...c, weather: { ...c.weather, ...partial } }));
+  const updateTraffic = (partial: Partial<TrafficConfig>) =>
+    setConfig(c => ({ ...c, traffic: { ...c.traffic, ...partial } }));
+  const updateCurrency = (partial: Partial<CurrencyConfig>) =>
+    setConfig(c => ({ ...c, currency: { ...c.currency, ...partial } }));
+  const updateChat = (partial: Partial<ChatConfig>) =>
+    setConfig(c => ({ ...c, chat: { ...c.chat, ...partial } }));
 
-  const removeTrafficPoint = (id: string) => updateTraffic({ points: config.traffic.points.filter(p => p.id !== id) });
+  const getElPos = useCallback((id: string): ElementPosition => {
+    return config.home.elementPositions?.[id] ?? defaultPositions[id] ?? { x: 50, y: 50, scale: 1 };
+  }, [config.home.elementPositions]);
+
+  const handleElMove = useCallback((id: string, pos: ElementPosition) => {
+    setConfig(c => ({
+      ...c,
+      home: {
+        ...c.home,
+        elementPositions: { ...c.home.elementPositions, [id]: pos },
+      },
+    }));
+  }, []);
+
+  const removeTrafficPoint = (id: string) =>
+    updateTraffic({ points: config.traffic.points.filter(p => p.id !== id) });
+
   const toggleFavoritePoint = (p: TrafficPoint) => {
     const favorites = config.traffic.favorites || [];
     const isFavorite = favorites.some(f => f.id === p.id);
-    updateTraffic({ favorites: isFavorite ? favorites.filter(f => f.id !== p.id) : [...favorites, p] });
+    const newFavorites = isFavorite 
+      ? favorites.filter(f => f.id !== p.id) 
+      : [...favorites, p];
+    
+    updateTraffic({ favorites: newFavorites });
     toast.success(isFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos");
   };
+
   const loadFavoritePoint = (p: TrafficPoint) => {
+    // Add to current points if not already there
     if (!config.traffic.points.some(pt => pt.id === p.id)) {
-      updateTraffic({ points: [...config.traffic.points, p], lat: p.lat, lon: p.lng, zoom: 15 });
+      updateTraffic({ 
+        points: [...config.traffic.points, p],
+        lat: p.lat,
+        lon: p.lng,
+        zoom: 15
+      });
     } else {
       goToTrafficPoint(p);
     }
   };
+
   const updateTrafficPointPosition = async (id: string, lat: number, lng: number) => {
     try {
-      const { data } = await supabase.functions.invoke("fetch-weather", { body: { action: "geocode", query: `${lat}, ${lng}`, count: 1 } });
+      // Reverse geocode to get a label if it was moved to a new place
+      const { data } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query: `${lat}, ${lng}`, count: 1 },
+      });
+      
       const newLabel = data?.results?.[0]?.display_name?.split(',')[0] || `Ponto ${config.traffic.points.findIndex(p => p.id === id) + 1}`;
-      updateTraffic({ points: config.traffic.points.map(p => p.id === id ? { ...p, lat, lng, label: newLabel } : p) });
+      
+      const updatedPoints = config.traffic.points.map(p => 
+        p.id === id ? { ...p, lat, lng, label: newLabel } : p
+      );
+      
+      updateTraffic({ points: updatedPoints });
       toast.success("Posição do ponto atualizada");
-    } catch {
-      updateTraffic({ points: config.traffic.points.map(p => p.id === id ? { ...p, lat, lng } : p) });
+    } catch (err) {
+      console.error("Error updating point position:", err);
+      // Fallback update without geocoding
+      const updatedPoints = config.traffic.points.map(p => 
+        p.id === id ? { ...p, lat, lng } : p
+      );
+      updateTraffic({ points: updatedPoints });
     }
   };
+
   const goToTrafficPoint = (p: TrafficPoint) => {
     setTrafficCoords({ lat: p.lat, lon: p.lng });
     updateTraffic({ lat: p.lat, lon: p.lng, zoom: 15 });
     setActiveTrafficPointId(p.id);
     toast.info(`Navegando para: ${p.label}`);
-    setTimeout(() => setActiveTrafficPointId(null), 4000);
+    
+    // Auto clear active state after some time
+    setTimeout(() => {
+      setActiveTrafficPointId(null);
+    }, 4000);
   };
+
   const toggleCurrency = (code: string) => {
     const has = config.currency.currencies.includes(code);
     updateCurrency({ currencies: has ? config.currency.currencies.filter(c => c !== code) : [...config.currency.currencies, code] });
   };
+
   const handleTrafficCityInput = async (query: string) => {
     setTrafficSearchCity(query);
-    if (query.length < 2) { setTrafficCitySuggestions([]); return; }
+    if (query.length < 2) {
+      setTrafficCitySuggestions([]);
+      return;
+    }
     setIsSearchingCity(true);
     try {
-      const { data } = await supabase.functions.invoke("fetch-weather", { body: { action: "geocode", query, count: 5 } });
+      const { data } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query, count: 5 },
+      });
       if (data?.results) setTrafficCitySuggestions(data.results);
-    } catch { }
+    } catch (err) {
+      console.error("City search error:", err);
+    }
     setIsSearchingCity(false);
   };
+
   const selectTrafficCity = (city: any) => {
-    setTrafficSearchCity(city.name);
+    const cityName = city.name;
+    const { latitude, longitude } = city;
+    setTrafficSearchCity(cityName);
     setTrafficCitySuggestions([]);
-    setTrafficCoords({ lat: city.latitude, lon: city.longitude });
-    updateTraffic({ city: city.name, lat: city.latitude, lon: city.longitude, zoom: 12 });
-    if (!config.city) setConfig(c => ({ ...c, city: city.name }));
+    setTrafficCoords({ lat: latitude, lon: longitude });
+    updateTraffic({ city: cityName, lat: latitude, lon: longitude, zoom: 12 });
+    if (!config.city) setConfig(c => ({ ...c, city: cityName }));
   };
+
   const handleTrafficSearch = async () => {
     if (!trafficSearchCity.trim()) return;
     setWeatherLoading(true);
     try {
-      const { data: geoData } = await supabase.functions.invoke("fetch-weather", { body: { action: "geocode", query: trafficSearchCity.trim(), count: 1 } });
-      if (geoData?.results?.length) {
-        const { latitude, longitude } = geoData.results[0];
+      const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query: trafficSearchCity.trim(), count: 1 },
+      });
+      const results = geoData?.results;
+      if (results && results.length > 0) {
+        const { latitude, longitude } = results[0];
+        const cityName = trafficSearchCity.trim();
         setTrafficCoords({ lat: latitude, lon: longitude });
-        updateTraffic({ city: trafficSearchCity.trim(), lat: latitude, lon: longitude, zoom: 12 });
-        if (!config.city) setConfig(c => ({ ...c, city: trafficSearchCity.trim() }));
-      } else toast.error("Cidade não encontrada");
-    } catch { }
+        updateTraffic({ city: cityName, lat: latitude, lon: longitude, zoom: 12 });
+        if (!config.city) setConfig(c => ({ ...c, city: cityName }));
+      } else {
+        toast.error("Cidade não encontrada");
+      }
+    } catch (err) {
+      console.error("Traffic search error:", err);
+    }
     setWeatherLoading(false);
   };
+
   const searchAddress = async (query: string) => {
     setTrafficSearchAddress(query);
-    if (query.length < 2) { setAddressSuggestions([]); return; }
+    if (query.length < 2) {
+      setAddressSuggestions([]);
+      return;
+    }
+    
     setIsSearchingAddress(true);
     try {
+      // Use the last typed traffic city as a filter
       const cityFilter = trafficSearchCity || config.traffic.city || config.city;
       const fullQuery = cityFilter ? `${query}, ${cityFilter}` : query;
-      const { data } = await supabase.functions.invoke("fetch-weather", { body: { action: "geocode", query: fullQuery, count: 5 } });
-      if (data?.results) setAddressSuggestions(data.results);
-    } catch { }
+      
+      const { data } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query: fullQuery, count: 5 },
+      });
+      
+      if (data?.results) {
+        setAddressSuggestions(data.results);
+      }
+    } catch (err) {
+      console.error("Address search error:", err);
+    }
     setIsSearchingAddress(false);
   };
+
   const selectAddress = (addr: any) => {
-    setTrafficCoords({ lat: addr.latitude, lon: addr.longitude });
-    updateTraffic({ lat: addr.latitude, lon: addr.longitude, zoom: 15 });
-    setTrafficSearchAddress(addr.name || "");
+    const lat = addr.latitude;
+    const lon = addr.longitude;
+    const addressName = addr.name || "";
+    setTrafficCoords({ lat, lon });
+    updateTraffic({ lat, lon, zoom: 15 });
+    setTrafficSearchAddress(addressName);
     setAddressSuggestions([]);
-    updateTraffic({ points: [...config.traffic.points, { id: Math.random().toString(36).substring(2, 9), label: addr.name || "", lat: addr.latitude, lng: addr.longitude }] });
+
+    // Automatically add point when selecting from autocomplete
+    const newPoint: TrafficPoint = {
+      id: Math.random().toString(36).substring(2, 9),
+      label: addressName,
+      lat,
+      lng: lon,
+    };
+    updateTraffic({ 
+      lat, 
+      lon, 
+      zoom: 15,
+      points: [...config.traffic.points, newPoint] 
+    });
     toast.success("Endereço marcado no mapa");
   };
+
   const addTrafficPoint = () => {
     const lat = config.traffic.lat ?? trafficCoords?.lat;
     const lon = config.traffic.lon ?? trafficCoords?.lon;
-    if (lat === undefined || lon === undefined || lat === null || lon === null) { toast.error("Busque um endereço primeiro"); return; }
-    updateTraffic({ points: [...config.traffic.points, { id: Math.random().toString(36).substring(2, 9), label: trafficSearchAddress || `Ponto ${config.traffic.points.length + 1}`, lat, lng: lon }] });
+    if (lat === undefined || lon === undefined || lat === null || lon === null) {
+      toast.error("Busque um endereço primeiro");
+      return;
+    }
+
+    const newPoint: TrafficPoint = {
+      id: Math.random().toString(36).substring(2, 9),
+      label: trafficSearchAddress || `Ponto ${config.traffic.points.length + 1}`,
+      lat,
+      lng: lon,
+    };
+    updateTraffic({ points: [...config.traffic.points, newPoint] });
     toast.success("Ponto marcado no mapa");
   };
 
-  const headerStyle = { background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" };
-  const pageStyle = { background: "var(--layout-page-bg, #ffffff)", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" };
+  const trafficMapCity = config.traffic.city || config.city || "São Paulo";
+  const uid = user?.id;
+
+  /* ─── styles ─── */
+  const headerStyle = {
+    background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))",
+    color: "var(--layout-header-text, #ffffff)",
+  };
+  const pageStyle = {
+    background: "var(--layout-page-bg, #ffffff)",
+    boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
+  };
   const textColor = "var(--layout-page-text, #1a1a1a)";
   const mutedText = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)";
   const subTabBg = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)";
   const subTabActive = "var(--layout-header-bg, #0d0446)";
+
+  // Helper function to get contrast text color based on accent background
+  const getContrastColor = (bgColorVar: string) => {
+    return `color-mix(in srgb, ${bgColorVar}, white 80%)`;
+  };
+
   const accentColor = "var(--layout-accent-color, #3b82f6)";
+  const accentContrast = getContrastColor(accentColor);
 
   return (
     <div className="animate-fade-in space-y-5">
@@ -1155,7 +1443,10 @@ export default function CenarioInterativoPage() {
             <p className="text-xs drop-shadow-sm" style={{ opacity: 0.8 }}>Configure os elementos do cenário para suas transmissões</p>
           </div>
         </div>
+
         <div className="p-5 flex flex-col lg:flex-row gap-6" style={{ color: textColor }}>
+
+          {/* ── LEFT: Configuration ── */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-4 flex-wrap">
               <Settings size={16} style={{ color: mutedText }} />
@@ -1165,6 +1456,7 @@ export default function CenarioInterativoPage() {
                 {!saving && savedFlash && <span className="text-[10px]" style={{ color: mutedText }}>✓ Salvo</span>}
               </div>
             </div>
+
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="w-full grid grid-cols-5 mb-4" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
                 <TabsTrigger value="home" className="text-xs gap-1 data-[state=active]:shadow-sm"><Home size={14} /> Home</TabsTrigger>
@@ -1173,13 +1465,21 @@ export default function CenarioInterativoPage() {
                 <TabsTrigger value="currency" className="text-xs gap-1 data-[state=active]:shadow-sm"><DollarSign size={14} /> Cotação</TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs gap-1 data-[state=active]:shadow-sm"><MessageCircle size={14} /> Chat</TabsTrigger>
               </TabsList>
+
+              {/* ═══ Home ═══ */}
               <TabsContent value="home" className="space-y-5 animate-in fade-in-50 duration-500">
-                <div className="space-y-6">
-                  {/* Programa no Ar Card */}
-                  <div className="relative overflow-hidden rounded-xl border p-4 transition-all" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 3%, var(--layout-page-bg, #ffffff))", borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}>
+                <div className="flex flex-col gap-5">
+                  {/* Status do Programa no Ar */}
+                  <div className="relative overflow-hidden rounded-xl border p-4 transition-all" 
+                       style={{ 
+                         background: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 3%, var(--layout-page-bg, #ffffff))",
+                         borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)"
+                       }}>
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-lg bg-primary/10 text-primary"><Clock size={16} /></div>
+                        <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                          <Clock size={16} />
+                        </div>
                         <div>
                           <h4 className="text-sm font-bold leading-none">Programa no ar</h4>
                           <p className="text-[10px] opacity-60 mt-1 uppercase tracking-wider font-semibold">Monitoramento em tempo real</p>
@@ -1187,22 +1487,52 @@ export default function CenarioInterativoPage() {
                       </div>
                       {currentProgram && (
                         <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-600 text-[10px] font-bold border border-green-500/20">
-                          <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                          </span>
                           AO VIVO
                         </div>
                       )}
                     </div>
+
                     {currentProgram ? (
                       <div className="space-y-4">
                         <div className="flex items-center gap-3">
                           <div className="h-12 w-12 rounded-lg overflow-hidden border border-white/20 bg-muted shrink-0">
-                            <img src={currentProgram.thumb || currentProgram.capa || "https://images.unsplash.com/photo-1478737270239-2fccd27ee086?w=100&h=100&fit=crop"} className="h-full w-full object-cover" alt={currentProgram.nome} />
+                            <img 
+                              src={currentProgram.thumb || currentProgram.capa || "https://images.unsplash.com/photo-1478737270239-2fccd27ee086?w=100&h=100&fit=crop"} 
+                              className="h-full w-full object-cover"
+                              alt={currentProgram.nome}
+                            />
                           </div>
                           <div>
                             <div className="text-sm font-extrabold line-clamp-1">{currentProgram.nome}</div>
-                            <div className="text-xs opacity-70 flex items-center gap-1 mt-0.5"><CalendarDays size={10} /> {currentProgram.horario_inicio} às {currentProgram.horario_fim}</div>
+                            <div className="text-xs opacity-70 flex items-center gap-1 mt-0.5">
+                              <CalendarDays size={10} />
+                              {currentProgram.horario_inicio} às {currentProgram.horario_fim}
+                            </div>
                           </div>
                         </div>
+
+                        {sponsorLogos.length > 0 && (
+                          <div className="pt-3 border-t border-dashed border-black/5 dark:border-white/5">
+                            <p className="text-[10px] font-bold opacity-50 mb-2 uppercase tracking-tighter">Patrocinadores vinculados</p>
+                            <div className="flex flex-wrap gap-2">
+                              {sponsorLogos.map(l => (
+                                <div key={l.id} className="group relative flex items-center gap-2 rounded-lg pl-1 pr-3 py-1 text-xs border transition-all hover:bg-white/50" 
+                                     style={{ background: "white", borderColor: "rgba(0,0,0,0.05)" }}>
+                                  {l.logo_url ? (
+                                    <img src={l.logo_url} alt={l.nome} className="w-6 h-6 object-contain rounded-md bg-white p-0.5" />
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center text-[8px] font-bold">L</div>
+                                  )}
+                                  <span className="font-semibold text-[11px] truncate max-w-[100px]">{l.nome}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="py-4 flex flex-col items-center justify-center text-center rounded-lg border-2 border-dashed border-black/5 bg-black/5">
@@ -1210,464 +1540,1584 @@ export default function CenarioInterativoPage() {
                         <span className="text-xs font-semibold opacity-40">Nenhum programa detectado no Estúdio FM</span>
                       </div>
                     )}
-                  </div>
-
-                  {/* Capas e Visibilidade */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Image size={14} className="text-primary" />
-                      <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Capas e Visibilidade</h4>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
-                        <div className="space-y-0.5">
-                          <Label className="text-xs font-bold">Capa do Programa</Label>
-                          <p className="text-[10px] text-muted-foreground">Alternar com a arte da música</p>
+                    {/* Visibilidade das Capas */}
+                    <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                          <Eye size={16} />
                         </div>
-                        <Switch checked={config.home.showProgramThumb} onCheckedChange={(v) => updateHome({ showProgramThumb: v })} />
+                        <h4 className="text-xs font-bold uppercase tracking-wider">Visibilidade das Capas</h4>
                       </div>
-                      <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
-                        <div className="space-y-0.5">
-                          <Label className="text-xs font-bold">Capa da Música</Label>
-                          <p className="text-[10px] text-muted-foreground">Mostrar arte do álbum (iTunes/Spotify)</p>
-                        </div>
-                        <Switch checked={config.home.showMusicCover} onCheckedChange={(v) => updateHome({ showMusicCover: v })} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Fundo e Estética */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Palette size={14} className="text-primary" />
-                      <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Fundo e Estética</h4>
-                    </div>
-                    
-                    <div className="space-y-4 p-4 rounded-xl border bg-card/30">
-                      {/* Modo Alternado */}
-                      <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-500/5 border-blue-500/10">
-                        <div className="space-y-0.5">
-                          <Label className="text-xs font-bold">Modo de Fundo Alternado</Label>
-                          <p className="text-[10px] text-muted-foreground">Alterna entre capa do programa e imagem do artista a cada 10s</p>
-                        </div>
-                        <Switch 
-                          checked={config.bgAlternateMode} 
-                          onCheckedChange={(v) => setConfig(c => ({ ...c, bgAlternateMode: v }))} 
-                        />
-                      </div>
-
-                      <div className="space-y-3">
-                        <Label className="text-xs font-bold">Imagem de Fundo Padrão (URL)</Label>
-                        <div className="flex gap-2">
-                          <Input 
-                            className="text-xs h-9" 
-                            value={config.home.bgImage} 
-                            onChange={(e) => updateHome({ bgImage: e.target.value })} 
-                            placeholder="https://images.unsplash.com/..."
-                          />
-                          <Button size="icon" variant="outline" className="h-9 w-9 shrink-0" onClick={() => updateHome({ bgImage: "" })}>
-                            <Trash2 size={14} />
-                          </Button>
-                        </div>
-                        <BgImageUpload 
-                          value={config.home.bgImage} 
-                          onChange={(v) => updateHome({ bgImage: v })} 
-                          mutedText={mutedText} 
-                          userId={user?.id} 
-                          category="home-bg" 
-                        />
-                      </div>
-
-                      {/* Configurações de Overlay do Programa */}
-                      <div className="pt-2 border-t space-y-3">
+                      
+                      <div className="space-y-2 pt-1 border-t border-black/5">
                         <div className="flex items-center justify-between">
-                          <Label className="text-xs font-bold">Sobreposição na Capa do Programa</Label>
+                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa da Música</Label>
                           <Switch 
-                            checked={config.thumbOverlayEnabled} 
-                            onCheckedChange={(v) => setConfig(c => ({ ...c, thumbOverlayEnabled: v }))} 
+                            checked={config.home.showMusicCover !== false} 
+                            onCheckedChange={v => updateHome({ showMusicCover: v })}
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
                           />
                         </div>
-                        {config.thumbOverlayEnabled && (
-                          <div className="space-y-3 animate-in fade-in slide-in-from-top-1">
-                            <div className="flex gap-3">
-                              <div className="flex-1 space-y-1">
-                                <Label className="text-[10px] opacity-70">Cor do Overlay</Label>
-                                <Input 
-                                  type="color" 
-                                  className="h-8 p-1 w-full" 
-                                  value={config.thumbOverlayColor || "#000000"} 
-                                  onChange={(e) => setConfig(c => ({ ...c, thumbOverlayColor: e.target.value }))} 
-                                />
-                              </div>
-                              <div className="flex-[2] space-y-1">
-                                <Label className="text-[10px] opacity-70">Opacidade ({config.thumbOverlayOpacity ?? 60}%)</Label>
-                                <Slider 
-                                  value={[config.thumbOverlayOpacity ?? 60]} 
-                                  min={0} max={100} step={1}
-                                  onValueChange={([v]) => setConfig(c => ({ ...c, thumbOverlayOpacity: v }))} 
-                                />
-                              </div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa do Programa</Label>
+                          <Switch 
+                            checked={config.home.showProgramThumb !== false} 
+                            onCheckedChange={v => updateHome({ showProgramThumb: v })}
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Configurações Visuais de Fundo */}
+                  <div className="space-y-4">
+                    <style>
+                      {`
+                        #cenario-bg-configs .grid > div {
+                          border-color: color-mix(in srgb, var(--layout-accent-color) 60%, transparent) !important;
+                        }
+                      `}
+                    </style>
+                    <div id="cenario-bg-configs" className="space-y-4">
+                    </div>
+                    <div className="px-1 py-1 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1 rounded bg-black/5">
+                          <Palette size={14} className="opacity-60" />
+                        </div>
+                        <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-60">Configuração do Fundo</h4>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-[9px] uppercase font-bold opacity-60 hover:opacity-100"
+                          onClick={() => setOpenSections({})}
+                        >
+                          Fechar Tudo
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-[9px] uppercase font-bold opacity-60 hover:opacity-100"
+                          onClick={() => setOpenSections({ static: true, gradient: true, thumb: true, artist: true, alternate: true })}
+                        >
+                          Abrir Tudo
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      {/* 1 - Fundo Estático */}
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
+                        <div className="flex items-center justify-between">
+                          <button 
+                            className="flex items-center gap-2 flex-1 text-left"
+                            onClick={() => setOpenSections(prev => ({ ...prev, static: !prev.static }))}
+                          >
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
+                              <Image size={16} />
                             </div>
-                            <div className="space-y-1">
-                              <Label className="text-[10px] opacity-70">Posição da Capa</Label>
-                              <Select 
-                                value={config.programThumbPosition || "center"} 
-                                onValueChange={(v) => setConfig(c => ({ ...c, programThumbPosition: v }))}
-                              >
-                                <SelectTrigger className="h-7 text-[10px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="center">Centralizado</SelectItem>
-                                  <SelectItem value="top">Topo</SelectItem>
-                                  <SelectItem value="bottom">Base</SelectItem>
-                                </SelectContent>
-                              </Select>
+                            <div className="flex flex-col">
+                              <h4 className="text-xs font-bold uppercase tracking-wider">1. Fundo Estático</h4>
                             </div>
+                            {openSections.static ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
+                          </button>
+                          <div className="pl-4 border-l border-black/5 ml-2">
+                            <Switch 
+                              checked={config.bgType === 'static'} 
+                              onCheckedChange={(checked) => setConfig(c => ({ ...c, bgType: checked ? 'static' : 'none' }))}
+                              className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                            />
+                          </div>
+                        </div>
+                        {openSections.static && (
+                          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                            <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
                           </div>
                         )}
                       </div>
 
-                      {/* Configurações de Overlay do Artista */}
-                      <div className="pt-2 border-t space-y-3">
+                      {/* 2 - Fundo Degradê */}
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'gradient' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
                         <div className="flex items-center justify-between">
-                          <Label className="text-xs font-bold">Sobreposição na Imagem do Artista</Label>
-                          <Switch 
-                            checked={config.home.artistOverlayEnabled} 
-                            onCheckedChange={(v) => updateHome({ artistOverlayEnabled: v })} 
-                          />
-                        </div>
-                        {config.home.artistOverlayEnabled && (
-                          <div className="flex gap-3 animate-in fade-in slide-in-from-top-1">
-                            <div className="flex-1 space-y-1">
-                              <Label className="text-[10px] opacity-70">Cor</Label>
-                              <Input 
-                                type="color" 
-                                className="h-8 p-1 w-full" 
-                                value={config.home.artistOverlayColor || "#000000"} 
-                                onChange={(e) => updateHome({ artistOverlayColor: e.target.value })} 
-                              />
+                          <button 
+                            className="flex items-center gap-2 flex-1 text-left"
+                            onClick={() => setOpenSections(prev => ({ ...prev, gradient: !prev.gradient }))}
+                          >
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'gradient' ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
+                              <Palette size={16} />
                             </div>
-                            <div className="flex-[2] space-y-1">
-                              <Label className="text-[10px] opacity-70">Opacidade ({config.home.artistOverlayOpacity ?? 60}%)</Label>
-                              <Slider 
-                                value={[config.home.artistOverlayOpacity ?? 60]} 
-                                min={0} max={100} step={1}
-                                onValueChange={([v]) => updateHome({ artistOverlayOpacity: v })} 
-                              />
-                            </div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider">2. Fundo Degradê</h4>
+                            {openSections.gradient ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
+                          </button>
+                          <div className="pl-4 border-l border-black/5 ml-2">
+                            <Switch 
+                              checked={config.bgType === 'gradient'} 
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setConfig(c => ({ ...c, bgType: 'gradient' }));
+                                  updateHome({ bgGradient: true });
+                                } else {
+                                  setConfig(c => ({ ...c, bgType: 'none' }));
+                                }
+                              }}
+                              className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                            />
                           </div>
-                        )}
-                      </div>
-
-                      <div className="pt-2 border-t space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-xs font-bold">Usar Gradiente no Fundo</Label>
-                          <Switch checked={config.home.bgGradient} onCheckedChange={(v) => updateHome({ bgGradient: v })} />
                         </div>
                         
-                        {config.home.bgGradient && (
-                          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="space-y-1.5">
-                                <Label className="text-[10px] font-semibold opacity-70">Cor Inicial</Label>
-                                <div className="flex gap-2 items-center">
-                                  <div className="w-6 h-6 rounded border shrink-0" style={{ background: config.home.bgGradientColorA || "#1a1a2e" }} />
-                                  <Input className="text-[10px] h-7" value={config.home.bgGradientColorA || "#1a1a2e"} onChange={(e) => updateHome({ bgGradientColorA: e.target.value })} />
-                                </div>
-                              </div>
-                              <div className="space-y-1.5">
-                                <Label className="text-[10px] font-semibold opacity-70">Cor Final</Label>
-                                <div className="flex gap-2 items-center">
-                                  <div className="w-6 h-6 rounded border shrink-0" style={{ background: config.home.bgGradientColorB || "#16213e" }} />
-                                  <Input className="text-[10px] h-7" value={config.home.bgGradientColorB || "#16213e"} onChange={(e) => updateHome({ bgGradientColorB: e.target.value })} />
-                                </div>
-                              </div>
-                            </div>
+                        {openSections.gradient && config.bgType === 'gradient' && (
+                          <div className="space-y-3 pt-1 animate-in slide-in-from-top-2 duration-300">
+                            <GradientPicker
+                              colorA={config.home.bgGradientColorA || "#1a1a2e"}
+                              colorB={config.home.bgGradientColorB || "#16213e"}
+                              angle={config.home.bgGradientAngle ?? 135}
+                              gradientType={config.home.bgGradientType || "linear"}
+                              onChangeColorA={v => updateHome({ bgGradientColorA: v })}
+                              onChangeColorB={v => updateHome({ bgGradientColorB: v })}
+                              onChangeAngle={v => updateHome({ bgGradientAngle: v })}
+                              onChangeType={v => updateHome({ bgGradientType: v })}
+                              showType
+                            />
+                          </div>
+                        )}
+                      </div>
 
-                            <div className="space-y-1.5">
-                              <Label className="text-[10px] font-semibold opacity-70">Tipo de Gradiente</Label>
-                              <Select value={config.home.bgGradientType || "linear"} onValueChange={(v: "linear" | "radial") => updateHome({ bgGradientType: v })}>
-                                <SelectTrigger className="h-7 text-[10px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="linear">Linear</SelectItem>
-                                  <SelectItem value="radial">Radial</SelectItem>
-                                </SelectContent>
-                              </Select>
+                      {/* 3 - Fundo Thumb */}
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
+                        <div className="flex items-center justify-between">
+                          <button 
+                            className="flex items-center gap-2 flex-1 text-left"
+                            onClick={() => setOpenSections(prev => ({ ...prev, thumb: !prev.thumb }))}
+                          >
+                            <div className={`p-1.5 rounded-lg ${config.bgType === 'thumb' ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
+                              <Shapes size={16} />
                             </div>
-
-                            {config.home.bgGradientType !== "radial" && (
-                              <div className="space-y-1.5">
-                                <div className="flex justify-between items-center">
-                                  <Label className="text-[10px] font-semibold opacity-70">Ângulo ({config.home.bgGradientAngle ?? 135}°)</Label>
-                                </div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider">3. Fundo Thumb Programa</h4>
+                            {openSections.thumb ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
+                          </button>
+                          <div className="pl-4 border-l border-black/5 ml-2">
+                            <Switch 
+                              checked={config.bgType === 'thumb'} 
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setConfig(c => ({ ...c, bgType: 'thumb', useProgramThumbAsBg: true }));
+                                } else {
+                                  setConfig(c => ({ ...c, bgType: 'none' }));
+                                }
+                              }}
+                              className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                            />
+                          </div>
+                        </div>
+                        
+                        {openSections.thumb && config.bgType === 'thumb' && (
+                          <div className="space-y-3 pt-2 animate-in slide-in-from-top-2 duration-300 border-t border-black/5 mt-1">
+                            <div className="flex flex-col gap-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[10px] font-bold uppercase opacity-60">Ajustar Alinhamento</Label>
+                                <span className="text-[10px] font-mono opacity-60">{config.programThumbPosition || "50%"}</span>
+                              </div>
+                              <div className="flex items-center gap-3 px-1">
+                                <span className="text-[10px] opacity-50 uppercase font-extrabold">Esq</span>
                                 <Slider 
-                                  value={[config.home.bgGradientAngle ?? 135]} 
-                                  min={0} max={360} step={1}
-                                  onValueChange={([v]) => updateHome({ bgGradientAngle: v })} 
+                                  value={[(() => {
+                                    const pos = config.programThumbPosition || "50%";
+                                    const val = parseInt(pos);
+                                    return isNaN(val) ? 50 : val;
+                                  })()]} 
+                                  min={0} 
+                                  max={100} 
+                                  step={1} 
+                                  onValueChange={([v]) => setConfig(c => ({ ...c, programThumbPosition: `${v}%` }))}
+                                  className="flex-1"
+                                  style={{ "--primary": "var(--layout-accent-color)" } as any}
                                 />
+                                <span className="text-[10px] opacity-50 uppercase font-extrabold">Dir</span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-3 p-3 rounded-lg bg-black/5 border border-black/5 mt-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                                    <Palette size={14} />
+                                  </div>
+                                  <Label className="text-[10px] font-bold uppercase">Overlay por cima da Thumb</Label>
+                                </div>
+                                <Switch 
+                                  checked={!!config.thumbOverlayEnabled} 
+                                  onCheckedChange={v => setConfig(c => ({ ...c, thumbOverlayEnabled: v }))} 
+                                  className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                                />
+                              </div>
+
+                              {config.thumbOverlayEnabled && (
+                                <div className="space-y-3 pt-2 animate-in fade-in duration-300">
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                      <Label className="text-[10px] opacity-60 font-bold">Cor do Overlay</Label>
+                                      <div className="flex items-center gap-2">
+                                        <div 
+                                          className="w-8 h-8 rounded border shadow-sm shrink-0" 
+                                          style={{ background: config.thumbOverlayColor || "#000000" }} 
+                                        />
+                                        <Input 
+                                          type="text"
+                                          value={config.thumbOverlayColor || "#000000"}
+                                          onChange={e => setConfig(c => ({ ...c, thumbOverlayColor: e.target.value }))}
+                                          className="h-8 text-[10px] font-mono"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                      <Label className="text-[10px] opacity-60 font-bold">Opacidade ({config.thumbOverlayOpacity ?? 60}%)</Label>
+                                      <Slider 
+                                        value={[config.thumbOverlayOpacity ?? 60]} 
+                                        min={0} 
+                                        max={100} 
+                                        step={1} 
+                                        onValueChange={([v]) => setConfig(c => ({ ...c, thumbOverlayOpacity: v }))}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 4 - Imagem do Artista */}
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
+                        <div className="flex items-center justify-between">
+                          <button 
+                            className="flex items-center gap-2 flex-1 text-left"
+                            onClick={() => setOpenSections(prev => ({ ...prev, artist: !prev.artist }))}
+                          >
+                            <div className={`p-1.5 rounded-lg ${config.home.showArtistImage ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
+                              <Music size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold uppercase tracking-wider">4. Imagem do Artista</h4>
+                              <p className="text-[10px] opacity-50">Exibir capa do álbum (Deezer)</p>
+                            </div>
+                            {openSections.artist ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
+                          </button>
+                          <div className="pl-4 border-l border-black/5 ml-2">
+                            <Switch 
+                              checked={!!config.home.showArtistImage} 
+                              onCheckedChange={v => updateHome({ showArtistImage: v })} 
+                              className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                            />
+                          </div>
+                        </div>
+
+                        {openSections.artist && config.home.showArtistImage && (
+                          <div className="pt-3 border-t border-[var(--layout-accent-color)]/20 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="space-y-3 p-3 rounded-lg bg-black/5 border border-black/5">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                                    <Palette size={14} />
+                                  </div>
+                                  <Label className="text-[10px] font-bold uppercase">Overlay por cima da capa</Label>
+                                </div>
+                                <Switch 
+                                  checked={!!config.home.artistOverlayEnabled} 
+                                  onCheckedChange={v => updateHome({ artistOverlayEnabled: v })} 
+                                  className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                                />
+                              </div>
+
+                              {config.home.artistOverlayEnabled && (
+                                <div className="space-y-3 pt-2 animate-in fade-in duration-300">
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                      <Label className="text-[10px] opacity-60 font-bold">Cor do Overlay</Label>
+                                      <div className="flex items-center gap-2">
+                                        <div 
+                                          className="w-8 h-8 rounded border shadow-sm shrink-0" 
+                                          style={{ background: config.home.artistOverlayColor || "#000000" }} 
+                                        />
+                                        <Input 
+                                          type="text"
+                                          value={config.home.artistOverlayColor || "#000000"}
+                                          onChange={e => updateHome({ artistOverlayColor: e.target.value })}
+                                          className="h-8 text-[10px] font-mono"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                      <Label className="text-[10px] opacity-60 font-bold">Opacidade ({config.home.artistOverlayOpacity ?? 60}%)</Label>
+                                      <Slider 
+                                        value={[config.home.artistOverlayOpacity ?? 60]} 
+                                        min={0} 
+                                        max={100} 
+                                        step={1} 
+                                        onValueChange={([v]) => updateHome({ artistOverlayOpacity: v })}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="p-1 rounded bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                                <EyeOff size={14} />
+                              </div>
+                              <Label className="text-[10px] font-bold uppercase">Filtro de Exceções</Label>
+                            </div>
+                            <div className="pl-7 space-y-2">
+                              <p className="text-[10px] leading-relaxed opacity-60">
+                                Força o degradê padrão quando estas palavras aparecem (ex: breaks).
+                              </p>
+                              <ExceptionWordsInput value={config.home.exceptionWords || ""} onSave={v => updateHome({ exceptionWords: v })} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 5 - Alternar Automático */}
+                      <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgAlternateMode ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
+                        <div className="flex items-center justify-between">
+                          <button 
+                            className="flex items-center gap-2 flex-1 text-left"
+                            onClick={() => setOpenSections(prev => ({ ...prev, alternate: !prev.alternate }))}
+                          >
+                            <div className={`p-1.5 rounded-lg ${config.bgAlternateMode ? 'bg-[var(--layout-accent-color)] text-white' : 'bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]'}`}>
+                              <RefreshCw size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold uppercase tracking-wider">5. Alternância Automática</h4>
+                              <p className="text-[10px] opacity-50">Alternar entre as opções ativas acima</p>
+                            </div>
+                            {openSections.alternate ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
+                          </button>
+                          <div className="pl-4 border-l border-black/5 ml-2">
+                            <Switch 
+                              checked={!!config.bgAlternateMode} 
+                              onCheckedChange={v => setConfig(c => ({ ...c, bgAlternateMode: v }))} 
+                              className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* ═══ Weather ═══ */}
+              <TabsContent value="weather" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Ativar Previsão do Tempo</Label>
+                  <Switch checked={config.weather.enabled} onCheckedChange={v => updateWeather({ enabled: v })} />
+                </div>
+
+                {config.weather.enabled && (
+                  <>
+                    <div className="flex gap-1 rounded-lg p-1" style={{ background: subTabBg }}>
+                      {[
+                        { key: "today", label: "Hoje", icon: <Sun size={13} /> },
+                        { key: "forecast", label: "3 Dias", icon: <CalendarDays size={13} /> },
+                        { key: "satellite", label: "Satélite", icon: <Satellite size={13} /> },
+                      ].map(t => (
+                        <button
+                          key={t.key}
+                          onClick={() => handleWeatherSubTabChange(t.key)}
+                          className="flex-1 flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all"
+                          style={{
+                            background: weatherSubTab === t.key ? subTabActive : "transparent",
+                            color: weatherSubTab === t.key ? "var(--layout-header-text, #fff)" : textColor,
+                          }}
+                        >
+                          {t.icon} {t.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {weatherSubTab === "today" && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Exibir tempo atual completo</Label>
+                          <Switch checked={config.weather.showCurrent} onCheckedChange={v => updateWeather({ showCurrent: v })} />
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade (ou use a cidade principal)</Label>
+                          <Input placeholder={config.city || "Ex: São Paulo"} value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
+                        </div>
+                        {weatherLoading && (
+                          <div className="flex items-center gap-2 text-xs" style={{ color: mutedText }}>
+                            <Loader2 size={14} className="animate-spin" /> Carregando dados...
+                          </div>
+                        )}
+                        {!weatherLoading && liveWeather && (
+                          <div className="rounded-lg p-3 space-y-2" style={{ background: subTabBg }}>
+                            <div className="flex items-center gap-3">
+                              <span className="text-3xl">{getWIcon(liveWeather.current.code)}</span>
+                              <div>
+                                <div className="text-2xl font-bold">{liveWeather.current.temp}°C</div>
+                                <div className="text-xs" style={{ color: mutedText }}>{getWLabel(liveWeather.current.code)}</div>
+                              </div>
+                            </div>
+                            <div className="flex gap-4 text-xs" style={{ color: mutedText }}>
+                              <span className="flex items-center gap-1"><Droplets size={12} /> {liveWeather.current.humidity}%</span>
+                              {liveWeather.daily[0] && (
+                                <>
+                                  <span className="flex items-center gap-1"><Thermometer size={12} /> {liveWeather.daily[0].min}° / {liveWeather.daily[0].max}°</span>
+                                  <span>💧 {liveWeather.daily[0].precip}%</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {!weatherLoading && !liveWeather && weatherCity && (
+                          <p className="text-xs" style={{ color: mutedText }}>Cidade não encontrada. Verifique o nome.</p>
+                        )}
+                      </div>
+                    )}
+
+                    {weatherSubTab === "forecast" && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Exibir previsão 3 dias</Label>
+                          <Switch checked={config.weather.showForecast3Days} onCheckedChange={v => updateWeather({ showForecast3Days: v })} />
+                        </div>
+                        {weatherLoading && (
+                          <div className="flex items-center gap-2 text-xs" style={{ color: mutedText }}>
+                            <Loader2 size={14} className="animate-spin" /> Carregando...
+                          </div>
+                        )}
+                        {!weatherLoading && liveWeather && liveWeather.daily.slice(1, 4).map((day, i) => {
+                          const d = new Date(day.date + "T12:00:00");
+                          const dayName = d.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" });
+                          return (
+                            <div key={i} className="flex items-center gap-3 rounded-lg px-3 py-2" style={{ background: subTabBg }}>
+                              <span className="text-xl">{getWIcon(day.code)}</span>
+                              <div className="flex-1">
+                                <div className="text-xs font-medium capitalize">{dayName}</div>
+                                <div className="text-[10px]" style={{ color: mutedText }}>{getWLabel(day.code)}</div>
+                              </div>
+                              <div className="text-right text-xs">
+                                <span className="font-bold">{day.max}°</span>
+                                <span style={{ color: mutedText }}> / {day.min}°</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {weatherSubTab === "satellite" && (
+                      <div className="space-y-3">
+                        <p className="text-xs" style={{ color: mutedText }}>
+                          Exibe imagens de satélite meteorológico da região configurada.
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Exibir imagens de satélite</Label>
+                          <Switch checked={config.weather.showSatellite} onCheckedChange={v => updateWeather({ showSatellite: v })} />
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade para satélite</Label>
+                          <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
+                        </div>
+                        {config.weather.showSatellite && weatherCoords && (
+                          <div className="rounded-lg p-3 text-xs text-center" style={{ background: subTabBg, color: mutedText }}>
+                            <Satellite size={16} className="mx-auto mb-1 opacity-60" />
+                            O mapa de satélite é exibido no Preview ao lado →
+                          </div>
+                        )}
+                        {config.weather.showSatellite && !weatherCoords && (
+                          <p className="text-xs text-center py-4" style={{ color: mutedText }}>
+                            {weatherCity ? "Buscando coordenadas..." : "Defina uma cidade para ver o satélite."}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    <BgImageUpload value={config.weather.bgImage} onChange={v => updateWeather({ bgImage: v })} mutedText={mutedText} userId={uid} category="weather" />
+                  </>
+                )}
+              </TabsContent>
+
+              {/* ═══ Traffic ═══ */}
+              <TabsContent value="traffic" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Ativar Trânsito</Label>
+                  <Switch checked={config.traffic.enabled} onCheckedChange={v => updateTraffic({ enabled: v })} />
+                </div>
+                {config.traffic.enabled && (
+                  <>
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <div className="flex-1 space-y-1 relative">
+                          <Label className="text-[10px] opacity-60 font-bold uppercase">Cidade</Label>
+                          <div className="flex gap-2">
+                            <div className="relative flex-1">
+                              <Input
+                                placeholder="Nome da cidade..."
+                                value={trafficSearchCity}
+                                onChange={e => handleTrafficCityInput(e.target.value)}
+                                onKeyDown={e => e.key === "Enter" && handleTrafficSearch()}
+                                className="text-sm h-9 flex-1 pr-8"
+                                style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                              />
+                              {isSearchingCity && (
+                                <div className="absolute right-2 top-2.5">
+                                  <Loader2 size={14} className="animate-spin opacity-40" />
+                                </div>
+                              )}
+                            </div>
+                            <Button size="sm" onClick={handleTrafficSearch} className="h-9 px-3 gap-1 text-xs" style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}>
+                              <Search size={14} /> Buscar
+                            </Button>
+                          </div>
+                          {trafficCitySuggestions.length > 0 && (
+                            <div 
+                              className="absolute z-[60] w-full top-[calc(100%+4px)] rounded-lg border shadow-xl overflow-hidden max-h-48 overflow-y-auto"
+                              style={{ background: "var(--layout-page-bg, #ffffff)", borderColor: "var(--layout-border-color, #333)" }}
+                            >
+                              {trafficCitySuggestions.map((city, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => selectTrafficCity(city)}
+                                  className="w-full text-left px-3 py-2 text-xs hover:bg-black/5 transition-colors border-b last:border-0"
+                                  style={{ borderBottomColor: "rgba(0,0,0,0.05)", color: textColor }}
+                                >
+                                  <div className="font-bold">{city.name}</div>
+                                  <div className="opacity-60 text-[10px] truncate">{city.display_name || (city.admin1 ? `${city.admin1}, ${city.country}` : city.country)}</div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 relative">
+                        <Label className="text-[10px] opacity-60 font-bold uppercase">Endereço específico</Label>
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Input
+                              placeholder="Buscar endereço..."
+                              value={trafficSearchAddress}
+                              onChange={e => searchAddress(e.target.value)}
+                              className="text-sm h-9 pr-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                            {isSearchingAddress && (
+                              <div className="absolute right-2 top-2.5">
+                                <Loader2 size={14} className="animate-spin opacity-40" />
                               </div>
                             )}
                           </div>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={addTrafficPoint} 
+                            className="h-9 gap-1 text-xs" 
+                            title="Marcar este ponto no mapa"
+                            style={{ borderColor: "var(--layout-border-color, #333)", color: textColor }}
+                          >
+                            <MapPin size={14} /> Marcar
+                          </Button>
+                        </div>
+                        
+                        {addressSuggestions.length > 0 && (
+                          <div 
+                            className="absolute z-50 w-full top-[calc(100%+4px)] rounded-lg border shadow-xl overflow-hidden max-h-48 overflow-y-auto"
+                            style={{ background: "var(--layout-page-bg, #ffffff)", borderColor: "var(--layout-border-color, #333)" }}
+                          >
+                            {addressSuggestions.map((addr, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => selectAddress(addr)}
+                                  className="w-full text-left px-3 py-2 text-xs hover:bg-black/5 transition-colors border-b last:border-0"
+                                  style={{ borderBottomColor: "rgba(0,0,0,0.05)", color: textColor }}
+                                >
+                                  <div className="font-bold">{addr.name}</div>
+                                  <div className="opacity-60 text-[10px] truncate">{addr.display_name || (addr.admin1 ? `${addr.admin1}, ${addr.country}` : addr.country)}</div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg p-3 text-xs text-center" style={{ background: subTabBg, color: mutedText }}>
+                      <Car size={16} className="mx-auto mb-1 opacity-60" />
+                      O mapa de trânsito é exibido no Preview ao lado →
+                    </div>
+
+                    {/* Lat / Lon / Zoom controls */}
+                    {trafficCoords && (
+                      <div className="space-y-2 mt-2">
+                        <Label className="text-xs font-medium" style={{ color: mutedText }}>Coordenadas e Zoom</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <Label className="text-[10px] opacity-60">Latitude</Label>
+                            <Input
+                              type="number"
+                              step="0.001"
+                              value={config.traffic.lat ?? trafficCoords.lat}
+                              onChange={e => {
+                                const v = parseFloat(e.target.value);
+                                if (!isNaN(v)) updateTraffic({ lat: v });
+                              }}
+                              className="text-xs h-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] opacity-60">Longitude</Label>
+                            <Input
+                              type="number"
+                              step="0.001"
+                              value={config.traffic.lon ?? trafficCoords.lon}
+                              onChange={e => {
+                                const v = parseFloat(e.target.value);
+                                if (!isNaN(v)) updateTraffic({ lon: v });
+                              }}
+                              className="text-xs h-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] opacity-60">Zoom</Label>
+                            <Input
+                              type="number"
+                              min={3}
+                              max={18}
+                              value={config.traffic.zoom}
+                              onChange={e => {
+                                const v = parseInt(e.target.value);
+                                if (!isNaN(v) && v >= 3 && v <= 18) updateTraffic({ zoom: v });
+                              }}
+                              className="text-xs h-8"
+                              style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 w-7 p-0 text-xs font-bold"
+                            style={{ borderColor: "var(--layout-border-color, #333)", color: textColor }}
+                            disabled={config.traffic.zoom <= 3}
+                            onClick={() => updateTraffic({ zoom: Math.max(3, config.traffic.zoom - 1) })}
+                          >
+                            −
+                          </Button>
+                          <input
+                            type="range"
+                            min={3}
+                            max={18}
+                            value={config.traffic.zoom}
+                            onChange={e => updateTraffic({ zoom: parseInt(e.target.value) })}
+                            className="flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
+                            style={{ accentColor: "var(--layout-accent-color, #3b82f6)" }}
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 w-7 p-0 text-xs font-bold"
+                            style={{ borderColor: "var(--layout-border-color, #333)", color: textColor }}
+                            disabled={config.traffic.zoom >= 18}
+                            onClick={() => updateTraffic({ zoom: Math.min(18, config.traffic.zoom + 1) })}
+                          >
+                            +
+                          </Button>
+                          <span className="text-[10px] font-mono opacity-50" style={{ color: textColor }}>{config.traffic.zoom}x</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {(config.traffic.points.length > 0 || (config.traffic.favorites && config.traffic.favorites.length > 0)) && (
+                      <div className="space-y-4 mt-2">
+                        {config.traffic.favorites && config.traffic.favorites.length > 0 && (
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium flex items-center gap-1.5" style={{ color: mutedText }}>
+                              <Star size={12} className="fill-yellow-500 text-yellow-500" /> Favoritos
+                            </Label>
+                            <div className="grid grid-cols-1 gap-2">
+                              {config.traffic.favorites.map(p => (
+                                <div 
+                                  key={p.id} 
+                                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs group transition-colors hover:bg-black/10 cursor-pointer" 
+                                  style={{ background: subTabBg }}
+                                  onClick={() => loadFavoritePoint(p)}
+                                >
+                                  <MapPin size={12} className="text-yellow-500" />
+                                  <span className="flex-1 font-medium truncate">{p.label}</span>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleFavoritePoint(p);
+                                    }} 
+                                    className="opacity-40 hover:opacity-100 transition-all p-1"
+                                  >
+                                    <Star size={14} className="fill-yellow-500 text-yellow-500" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {config.traffic.points.length > 0 && (
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium" style={{ color: mutedText }}>Pontos atuais</Label>
+                            {config.traffic.points.map(p => (
+                              <div 
+                                key={p.id} 
+                                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs group transition-colors hover:bg-black/10 cursor-pointer" 
+                                style={{ background: subTabBg }}
+                                onClick={() => goToTrafficPoint(p)}
+                              >
+                                <MapPin size={12} className="text-[var(--layout-accent-color)]" />
+                                <span className="flex-1 font-medium truncate">{p.label}</span>
+                                <div className="flex items-center gap-1">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleFavoritePoint(p);
+                                    }} 
+                                    className="opacity-40 hover:opacity-100 transition-all p-1"
+                                    title="Alternar favorito"
+                                  >
+                                    <Star size={14} className={(config.traffic.favorites || []).some(f => f.id === p.id) ? "fill-yellow-500 text-yellow-500" : ""} />
+                                  </button>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeTrafficPoint(p.id);
+                                    }} 
+                                    className="opacity-40 hover:opacity-100 hover:text-red-500 transition-all p-1"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
-                    </div>
-                  </div>
+                    )}
 
-                  {/* Filtros e Exceções */}
+                    
+                  </>
+                )}
+              </TabsContent>
+
+              {/* ═══ Currency ═══ */}
+              <TabsContent value="currency" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Ativar Cotações</Label>
+                  <Switch checked={config.currency.enabled} onCheckedChange={v => updateCurrency({ enabled: v })} />
+                </div>
+                {config.currency.enabled && (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Eraser size={14} className="text-primary" />
-                      <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Filtros e Exceções</h4>
+                    {/* Sub-tabs: Moedas / Bolsas */}
+                    <div className="flex gap-1 rounded-lg p-1" style={{ background: subTabBg }}>
+                      {([{ key: "moedas", label: "Moedas", icon: DollarSign }, { key: "bolsas", label: "Bolsas", icon: TrendingUp }] as const).map(t => (
+                        <button
+                          key={t.key}
+                          onClick={() => handleCurrencySubTabChange(t.key as "moedas" | "bolsas")}
+                          className="flex-1 flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all"
+                          style={{
+                            background: currencySubTab === t.key ? subTabActive : "transparent",
+                            color: currencySubTab === t.key ? "var(--layout-header-text, #fff)" : textColor,
+                          }}
+                        >
+                          <t.icon size={12} /> {t.label}
+                        </button>
+                      ))}
                     </div>
-                    <div className="p-4 rounded-xl border bg-card/30 space-y-3">
+
+                    {currencySubTab === "moedas" && (
+                      <>
+                        <p className="text-xs" style={{ color: mutedText }}>Selecione as moedas para exibir:</p>
+                        {CURRENCY_OPTIONS.map(opt => (
+                          <label key={opt.value} className="flex items-center gap-3 rounded-lg px-3 py-2 cursor-pointer text-sm hover:bg-black/5 transition-colors" style={{ background: config.currency.currencies.includes(opt.value) ? "color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, transparent)" : "transparent" }}>
+                            <input type="checkbox" checked={config.currency.currencies.includes(opt.value)} onChange={() => toggleCurrency(opt.value)} className="accent-[var(--layout-header-bg)]" />
+                            <DollarSign size={14} style={{ color: mutedText }} />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </>
+                    )}
+
+                    {currencySubTab === "bolsas" && (
                       <div className="space-y-2">
-                        <Label className="text-xs font-bold">Palavras de Exceção</Label>
-                        <Input 
-                          className="text-xs" 
-                          placeholder="vinheta, comercial, trilha..." 
-                          value={config.home.exceptionWords} 
-                          onChange={(e) => updateHome({ exceptionWords: e.target.value })}
-                        />
-                        <p className="text-[10px] text-muted-foreground">Músicas que contenham estas palavras no título não mostrarão a capa.</p>
+                        <p className="text-xs" style={{ color: mutedText }}>Principais bolsas de valores em tempo real:</p>
+                        {stocksLoading && !liveStocks.length ? (
+                          <div className="flex items-center gap-2 text-xs" style={{ color: mutedText }}><Loader2 size={14} className="animate-spin" /> Carregando bolsas...</div>
+                        ) : liveStocks.length > 0 ? (
+                          liveStocks.map(s => (
+                            <div key={s.symbol} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm" style={{ background: subTabBg }}>
+                              <span className="flex items-center gap-2 font-medium">
+                                <span>{s.flag}</span> {s.name}
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold">{s.value}</span>
+                                <span className="font-semibold text-xs" style={{ color: s.direction === "up" ? "#22c55e" : s.direction === "down" ? "#ef4444" : mutedText }}>{s.change}</span>
+                                {s.direction === "up" && <TrendingUp size={14} style={{ color: "#22c55e" }} />}
+                                {s.direction === "down" && <TrendingDown size={14} style={{ color: "#ef4444" }} />}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs opacity-60">Dados indisponíveis no momento</p>
+                        )}
                       </div>
-                    </div>
+                    )}
+
+                    <BgImageUpload value={config.currency.bgImage} onChange={v => updateCurrency({ bgImage: v })} mutedText={mutedText} userId={uid} category="currency" />
                   </div>
-                </div>
+                )}
               </TabsContent>
 
-              <TabsContent value="weather" className="space-y-5 animate-in fade-in-50 duration-500">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 rounded-xl border bg-card/30">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500"><CloudSun size={18} /></div>
-                      <div>
-                        <h4 className="text-sm font-bold">Módulo de Previsão do Tempo</h4>
-                        <p className="text-[10px] opacity-60">Exibir clima e temperatura no cenário</p>
-                      </div>
-                    </div>
-                    <Switch checked={config.weather.enabled} onCheckedChange={(v) => updateWeather({ enabled: v })} />
-                  </div>
-
-                  {config.weather.enabled && (
-                    <div className="space-y-4 p-4 rounded-xl border bg-card/30 animate-in fade-in duration-300">
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold">Cidade para Previsão</Label>
-                        <Input 
-                          className="text-xs" 
-                          placeholder="Ex: São Paulo, BR" 
-                          value={config.weather.city} 
-                          onChange={(e) => updateWeather({ city: e.target.value })}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="flex items-center justify-between p-2 rounded-lg border bg-card/50">
-                          <Label className="text-[10px] font-bold">Tempo Atual</Label>
-                          <Switch checked={config.weather.showCurrent} onCheckedChange={(v) => updateWeather({ showCurrent: v })} />
-                        </div>
-                        <div className="flex items-center justify-between p-2 rounded-lg border bg-card/50">
-                          <Label className="text-[10px] font-bold">Previsão 3 Dias</Label>
-                          <Switch checked={config.weather.showForecast3Days} onCheckedChange={(v) => updateWeather({ showForecast3Days: v })} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+              {/* ═══ Chat ═══ */}
+              <TabsContent value="chat" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Ativar Chat YouTube Live</Label>
+                  <Switch checked={config.chat.enabled} onCheckedChange={v => updateChat({ enabled: v })} />
                 </div>
-              </TabsContent>
-
-              <TabsContent value="traffic" className="space-y-5 animate-in fade-in-50 duration-500">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 rounded-xl border bg-card/30">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-orange-500/10 text-orange-500"><Car size={18} /></div>
-                      <div>
-                        <h4 className="text-sm font-bold">Módulo de Trânsito</h4>
-                        <p className="text-[10px] opacity-60">Exibir mapas e condições de tráfego</p>
-                      </div>
-                    </div>
-                    <Switch checked={config.traffic.enabled} onCheckedChange={(v) => updateTraffic({ enabled: v })} />
+                {config.chat.enabled && (
+                  <div className="space-y-3">
+                    <Label className="text-xs mb-1 block" style={{ color: mutedText }}>URL do vídeo/live do YouTube</Label>
+                    <Input placeholder="https://youtube.com/watch?v=..." value={config.chat.youtubeVideoUrl} onChange={e => updateChat({ youtubeVideoUrl: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
+                    <BgImageUpload value={config.chat.bgImage} onChange={v => updateChat({ bgImage: v })} mutedText={mutedText} userId={uid} category="chat" />
                   </div>
-
-                  {config.traffic.enabled && (
-                    <div className="space-y-4 p-4 rounded-xl border bg-card/30 animate-in fade-in duration-300">
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold">Cidade Padrão</Label>
-                        <Input 
-                          className="text-xs" 
-                          placeholder="Ex: Curitiba" 
-                          value={config.traffic.city} 
-                          onChange={(e) => updateTraffic({ city: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold">Zoom do Mapa</Label>
-                        <Slider 
-                          value={[config.traffic.zoom]} 
-                          min={10} max={18} step={1}
-                          onValueChange={([v]) => updateTraffic({ zoom: v })} 
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="currency" className="space-y-5 animate-in fade-in-50 duration-500">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 rounded-xl border bg-card/30">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-green-500/10 text-green-500"><DollarSign size={18} /></div>
-                      <div>
-                        <h4 className="text-sm font-bold">Módulo de Cotação</h4>
-                        <p className="text-[10px] opacity-60">Exibir valores de moedas e cripto</p>
-                      </div>
-                    </div>
-                    <Switch checked={config.currency.enabled} onCheckedChange={(v) => updateCurrency({ enabled: v })} />
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="chat" className="space-y-5 animate-in fade-in-50 duration-500">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 rounded-xl border bg-card/30">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500"><MessageCircle size={18} /></div>
-                      <div>
-                        <h4 className="text-sm font-bold">Módulo de Chat (YouTube)</h4>
-                        <p className="text-[10px] opacity-60">Exibir chat ao vivo no cenário</p>
-                      </div>
-                    </div>
-                    <Switch checked={config.chat.enabled} onCheckedChange={(v) => updateChat({ enabled: v })} />
-                  </div>
-                  
-                  {config.chat.enabled && (
-                    <div className="space-y-4 p-4 rounded-xl border bg-card/30 animate-in fade-in duration-300">
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold">URL do Vídeo YouTube</Label>
-                        <Input 
-                          className="text-xs" 
-                          placeholder="https://www.youtube.com/watch?v=..." 
-                          value={config.chat.youtubeVideoUrl} 
-                          onChange={(e) => updateChat({ youtubeVideoUrl: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>
+
+          {/* ── RIGHT: 9:16 Preview ── */}
           <div className="lg:flex-1 flex flex-col min-w-0" style={{ minHeight: 0 }}>
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <div className="flex items-center gap-2"><Eye size={16} style={{ color: mutedText }} /><span className="text-sm font-semibold whitespace-nowrap">Preview cenário interativo</span></div>
+              <div className="flex items-center gap-2">
+                <Eye size={16} style={{ color: mutedText }} />
+                <span className="text-sm font-semibold whitespace-nowrap">Preview cenário interativo</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {externalConnected && (
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)" }}>
+                    <Wifi size={10} style={{ color: "#4ade80" }} />
+                    <span className="text-[10px] font-semibold" style={{ color: "#4ade80" }}>Online</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+                <button
+                  onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
+                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
+                >
+                  <ExternalLink size={11} /> Cenário interativo Externo
+                </button>
+                <button
+                  onClick={() => {
+                    setExternalRotation(prev => {
+                      const val = (prev + 90) % 360;
+                      cenarioBcRef.current?.postMessage({ type: "rotate", angle: val });
+                      rtDrawChannelRef.current?.send({ type: "broadcast", event: "rotate", payload: { angle: val } });
+                      return val;
+                    });
+                  }}
+                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
+                >
+                  <RotateCw size={11} /> Rotacionar 90°
+                </button>
+              </div>
             </div>
+
+            {/* "Telas Conectadas" notification */}
+            {showConnectedMsg && (
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full mb-2 mx-auto w-fit animate-fade-in"
+                style={{
+                  background: "rgba(74,222,128,0.15)",
+                  border: "1px solid rgba(74,222,128,0.3)",
+                }}
+              >
+                <div className="rounded-full" style={{ width: 6, height: 6, background: "#4ade80", boxShadow: "0 0 6px #4ade80" }} />
+                <span className="text-[11px] font-semibold" style={{ color: "#4ade80" }}>Telas conectadas</span>
+              </div>
+            )}
+
             <div className="flex flex-col items-center gap-3 w-full h-[700px] pt-4 min-h-0 overflow-hidden bg-black/5 dark:bg-black/20 rounded-2xl relative">
+              {/* Zoom Control */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 rounded-full border shadow-2xl z-20 transition-all bg-[var(--layout-page-bg, #ffffff)]" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
+                <Minus size={14} className="cursor-pointer hover:opacity-100 transition-opacity" style={{ color: accentColor }} onClick={() => setPreviewZoom(z => Math.max(0.2, z - 0.1))} />
+                <Slider 
+                  value={[previewZoom]} 
+                  min={0.2} 
+                  max={1.0} 
+                  step={0.05} 
+                  className="w-32 cursor-pointer" 
+                  onValueChange={([val]) => setPreviewZoom(val)} 
+                  style={{ "--primary": accentColor } as any}
+                />
+                <Plus size={14} className="cursor-pointer hover:opacity-100 transition-opacity" style={{ color: accentColor }} onClick={() => setPreviewZoom(z => Math.min(1.0, z + 0.1))} />
+                <span className="text-[10px] font-mono w-8 text-center" style={{ color: textColor }}>{Math.round(previewZoom * 100)}%</span>
+              </div>
+
               <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
-                <div ref={previewWrapRef} className="relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ease-out" style={{ height: "100%", width: "auto", aspectRatio: "9 / 16", background: "#000", transform: `scale(${previewZoom})`, transformOrigin: "top center" }}>
+                <div
+                  ref={previewWrapRef}
+                  className="relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ease-out"
+                  style={{
+                    height: "100%",
+                    width: "auto",
+                    aspectRatio: "9 / 16",
+                    boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
+                    background: "#000",
+                    transform: `scale(${previewZoom})`,
+                    transformOrigin: "top center",
+                    transition: "transform 0.3s ease-out",
+                  }}
+                >
+                <div className="absolute inset-0 overflow-hidden">
+                  {/* Virtual 1080×1920 canvas, scaled to fit — mirrors CenarioTela exactly */}
                   <div style={{ width: PREV_W, height: PREV_H, transform: `scale(${previewScale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
-                    {/* Render matching CenarioTela visual layers */}
-                    <div className="absolute inset-0" style={{ background: "#000", zIndex: 0 }}>
-                      {/* Gradient Layer */}
-                      <div className="absolute inset-0" style={{ 
-                        background: config.home.bgGradient ? buildHomeGradient(config.home) : "transparent",
-                        zIndex: 1 
-                      }} />
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${pvh(1.8)}px` }}>
+
+                    {/* Fullscreen background layers */}
+                    {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
+                      <div className="absolute inset-0" style={{ zIndex: 5 }}>
+                        <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={(z) => { setSatelliteZoom(z); cenarioBcRef.current?.postMessage({ type: "zoom-change", zoom: z }); rtDrawChannelRef.current?.send({ type: "broadcast", event: "zoom-change", payload: { zoom: z } }); }} />
+                      </div>
+                    )}
+                    {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
+                      <div className="absolute inset-0" style={{ zIndex: 5 }}>
+                        <TrafficMap 
+                          lat={config.traffic.lat ?? trafficCoords.lat} 
+                          lon={config.traffic.lon ?? trafficCoords.lon} 
+                          zoom={config.traffic.zoom} 
+                          interactive 
+                          points={config.traffic.points}
+                          activePointId={activeTrafficPointId}
+                          onMove={(lat, lon, zoom) => updateTraffic({ lat, lon, zoom })} 
+                          onPointMove={(id, lat, lon) => updateTrafficPointPosition(id, lat, lon)}
+                          onPointSelect={(id) => {
+                            const p = config.traffic.points.find(pt => pt.id === id);
+                            if (p) goToTrafficPoint(p);
+                          }}
+                        />
+                      </div>
+                    )}
+                    {!((activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled)) && (() => {
+                      const bgType = config.bgType || "static";
+                      const useThumb = bgType === "thumb" && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat");
+                      const useGradient = bgType === "gradient" && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat");
+                      const thumbSrc = currentProgram?.thumb || currentProgram?.capa || "";
                       
-                      {/* Artist/Background Image Layer */}
-                      <div className="absolute inset-0" style={{ zIndex: 2 }}>
-                        {artistBgUrl && !isBreakTrack ? (
-                          <div className="absolute inset-0">
-                            <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "saturate(1.2) brightness(0.7)" }} />
-                            {config.home.artistOverlayEnabled && (
-                              <div className="absolute inset-0" style={{ opacity: (config.home.artistOverlayOpacity ?? 60) / 100, background: config.home.artistOverlayColor || "#000000" }} />
-                            )}
-                          </div>
-                        ) : config.home.bgImage ? (
-                          <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />
-                        ) : null}
-                      </div>
-
-                      {/* Program Thumb Layer */}
-                      <div className="absolute inset-0" style={{ zIndex: 3 }}>
-                        {(currentProgram?.thumb || currentProgram?.capa) && (
-                          <div className="absolute inset-0">
-                            <img 
-                              src={(currentProgram.thumb || currentProgram.capa) as string} 
-                              alt="" 
-                              className="absolute inset-0 w-full h-full object-cover" 
-                              style={{ 
-                                filter: config.bgAlternateMode ? "brightness(0.7)" : "blur(22px) brightness(0.7)", 
-                                objectPosition: config.programThumbPosition || "center",
-                                opacity: config.bgAlternateMode ? 1 : 0.8 // Em modo estático fica com blur atrás
-                              }} 
-                            />
-                            {config.thumbOverlayEnabled && (
-                              <div className="absolute inset-0" style={{ opacity: (config.thumbOverlayOpacity ?? 60) / 100, background: config.thumbOverlayColor || "#000000" }} />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 10 }}>
-                      {/* Clock — aligned with progress bar */}
-                      <div style={{ position: "absolute", top: `${pvh(3.5)}px`, left: `${pvh(4)}px`, color: "#fff", zIndex: 30, textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
-                        <div style={{ fontSize: `${pvh(3.5)}px`, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>
-                          {currentTime.getHours().toString().padStart(2, "0")}:{currentTime.getMinutes().toString().padStart(2, "0")}
+                      return (
+                        <div className="absolute inset-0" style={{ background: useGradient ? buildHomeGradient(config.home) : (bgType === "static" && config.home.bgImage ? "#e8e8e8" : "#000"), zIndex: 0 }}>
+                          {useThumb && thumbSrc && (
+                            <>
+                              <img 
+                                src={thumbSrc} 
+                                alt="" 
+                                className="absolute inset-0 w-full h-full object-cover" 
+                                style={{ 
+                                  filter: "blur(18px) brightness(0.55)", 
+                                  transform: "scale(1.1)",
+                                  objectPosition: config.programThumbPosition || "center"
+                                }} 
+                              />
+                              {config.thumbOverlayEnabled && (
+                                <div 
+                                  className="absolute inset-0 transition-opacity duration-1000" 
+                                  style={{ 
+                                    opacity: (config.thumbOverlayOpacity ?? 60) / 100,
+                                    background: config.thumbOverlayColor || "#000000"
+                                  }} 
+                                />
+                              )}
+                              <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
+                            </>
+                          )}
+                          {bgType === "static" && config.home.bgImage && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
+                            <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                          )}
+                          {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                          
+                          {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                          {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                         </div>
-                        <div style={{ fontSize: `${pvh(1.2)}px`, fontWeight: 600, opacity: 0.8, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "2px" }}>
-                          {currentTime.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}
-                        </div>
-                      </div>
+                      );
+                    })()}
 
-                      {/* Boxes Area (Simplified Preview) */}
-                      <div style={{ position: "absolute", top: `${pvh(3.5)}px`, right: `${pvh(4)}px`, width: `${pvh(14)}px`, height: `${pvh(14)}px`, borderRadius: `${pvh(2)}px`, overflow: "hidden", background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.2)", zIndex: 20 }}>
-                        {currentProgram?.thumb || currentProgram?.capa ? (
-                          <div className="w-full h-full relative">
-                            <img src={currentProgram.thumb || currentProgram.capa} className="w-full h-full object-cover" alt="" />
-                            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${pvh(0.5)}px`, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", textAlign: "center" }}>
-                              <div style={{ fontSize: `${pvh(0.8)}px`, color: "#fff", fontWeight: 700 }}>
-                                {(() => {
-                                  const instagrams = currentProgram?.apresentadoresInstagrams || [];
-                                  const activeInstagram = instagrams.length > 0 
-                                    ? instagrams[presenterIdx % instagrams.length] 
-                                    : (currentProgram?.apresentadorInstagram || "nexohub_oficial");
-                                  return activeInstagram.startsWith('@') ? activeInstagram : `@${activeInstagram}`;
-                                })()}
+                    {/* Sidebar — matches CenarioTela exactly */}
+                    {(() => {
+                      const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
+                      const bS = `${pvh(3.8)}px`;
+                      const iS = `${pvh(1.7)}px`;
+                      const sBS = `${pvh(2.8)}px`;
+                      const sFS = `${pvh(1.2)}px`;
+                      const sPad = `${pvh(0.6)}px`;
+                      return (
+                        <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
+                          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sPad, padding: `${sPad} 0`, marginLeft: "-1px" }}>
+                            <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "home" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(0,0,0,0.8)", border: activeTab === "home" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                              <Home style={{ width: iS, height: iS }} className="text-white" />
+                            </button>
+                            <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.weather.enabled ? 1 : 0.35 }}>
+                              <button onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "weather" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(0,0,0,0.8)", border: activeTab === "weather" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                                <CloudSun style={{ width: iS, height: iS }} className="text-white" />
+                              </button>
+                              <div style={{ overflow: "hidden", maxHeight: activeTab === "weather" ? `${pvh(20)}px` : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "weather" ? 1 : 0 }}>
+                                <div className="flex flex-col items-center" style={{ gap: `${pvh(0.4)}px`, paddingTop: `${pvh(0.4)}px` }}>
+                                  {config.weather.enabled && config.weather.showCurrent && (
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: activeTab === "weather" && weatherSubTab === "today" ? "rgba(128,128,128,0.25)" : "rgba(0,0,0,0.8)", border: activeTab === "weather" && weatherSubTab === "today" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent" }}>1</button>
+                                  )}
+                                  {config.weather.enabled && config.weather.showForecast3Days && (
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("forecast"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: activeTab === "weather" && weatherSubTab === "forecast" ? "rgba(128,128,128,0.25)" : "rgba(0,0,0,0.8)", border: activeTab === "weather" && weatherSubTab === "forecast" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent" }}>2</button>
+                                  )}
+                                  {config.weather.enabled && config.weather.showSatellite && (
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: activeTab === "weather" && weatherSubTab === "satellite" ? "rgba(128,128,128,0.25)" : "rgba(0,0,0,0.8)", border: activeTab === "weather" && weatherSubTab === "satellite" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent" }}>3</button>
+                                  )}
+                                </div>
                               </div>
                             </div>
+                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: activeTab === "traffic" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(0,0,0,0.8)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                              <Car style={{ width: iS, height: iS }} className="text-white" />
+                            </button>
+                            <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.currency.enabled ? 1 : 0.35 }}>
+                              <button onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "currency" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(0,0,0,0.8)", border: activeTab === "currency" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                                <DollarSign style={{ width: iS, height: iS }} className="text-white" />
+                              </button>
+                              <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? `${pvh(10)}px` : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
+                                <div className="flex flex-col items-center" style={{ gap: `${pvh(0.4)}px`, paddingTop: `${pvh(0.4)}px` }}>
+                                   <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: activeTab === "currency" && currencySubTab === "moedas" ? "rgba(128,128,128,0.25)" : "rgba(0,0,0,0.8)", border: activeTab === "currency" && currencySubTab === "moedas" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent" }}>1</button>
+                                   <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("bolsas"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: activeTab === "currency" && currencySubTab === "bolsas" ? "rgba(128,128,128,0.25)" : "rgba(0,0,0,0.8)", border: activeTab === "currency" && currencySubTab === "bolsas" ? "1px solid rgba(225,245,50,0.4)" : "1px solid transparent" }}>2</button>
+                                </div>
+                              </div>
+                            </div>
+                            <button onClick={() => config.chat.enabled && handleTabChange("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "chat" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(0,0,0,0.8)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                              <MessageCircle style={{ width: iS, height: iS }} className="text-white" />
+                            </button>
+                            <button onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: previewDrawActive ? "rgba(128,128,128,0.25)" : "rgba(0,0,0,0.8)", border: previewDrawActive ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                              <Pen style={{ width: iS, height: iS }} className="text-white" />
+                            </button>
+                            {previewDrawActive && (
+                              <>
+                                 <button onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: showPreviewDrawOptions ? "rgba(128,128,128,0.25)" : "rgba(0,0,0,0.8)", border: showPreviewDrawOptions ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>
+                                   <div style={{ width: `${pvh(1.2)}px`, height: `${pvh(1.2)}px`, borderRadius: "50%", background: previewDrawColor }} />
+                                 </button>
+                                 <button onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: previewDrawMode === "eraser" ? "rgba(128,128,128,0.25)" : "rgba(0,0,0,0.8)", border: previewDrawMode === "eraser" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>
+                                   <Eraser size={pvh(1)} className="text-white" />
+                                 </button>
+                                 <button onClick={undoLastDraw} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: "rgba(0,0,0,0.8)" }}>
+                                   <Undo2 size={pvh(1)} className="text-white" />
+                                 </button>
+                                 <button onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: previewDrawMode === "shape" ? "rgba(128,128,128,0.25)" : "rgba(0,0,0,0.8)", border: previewDrawMode === "shape" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>
+                                   <Shapes size={pvh(1)} className="text-white" />
+                                 </button>
+                              </>
+                            )}
                           </div>
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[8px] text-white/40 uppercase">Sem Capa</div>
-                        )}
-                      </div>
+                        </div>
+                      );
+                    })()}
 
-                      {/* Progress bar — elegant, thin, user-accented */}
-                      <div style={{ position: "absolute", bottom: `${pvh(1.2)}px`, left: `${pvh(4)}px`, right: `${pvh(4)}px`, height: `${pvh(0.3)}px`, background: "rgba(255,255,255,0.1)", zIndex: 25, overflow: "hidden", borderRadius: "100px" }}>
-                        <div style={{ width: `${(() => {
-                          if (!currentProgram) return 30; // Default for preview
+                    {/* Content area */}
+                    <div className="flex-1 relative" style={{ zIndex: 1 }}>
+                      <div
+                        key={activeTab + (activeTab === "weather" ? `-${weatherSubTab}` : "") + (activeTab === "currency" ? `-${currencySubTab}` : "")}
+                        className="absolute inset-0"
+                        style={{ animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both" }}
+                      >
+
+                      {/* ═══ HOME ═══ */}
+                      {activeTab === "home" && (() => {
+                        let progressPct = 0;
+                        if (currentProgram) {
                           const [sh, sm] = currentProgram.horario_inicio.split(":").map(Number);
                           const [eh, em] = currentProgram.horario_fim.split(":").map(Number);
                           const startMin = sh * 60 + sm;
                           const endMin = eh * 60 + em;
                           const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
                           const total = endMin - startMin;
-                          return total > 0 ? Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100)) : 30;
-                        })()}%`, height: "100%", borderRadius: "100px", background: "var(--layout-accent-color, #3b82f6)", transition: "width 1s linear", boxShadow: "0 0 8px var(--layout-accent-color, #3b82f6)" }} />
-                      </div>
+                          if (total > 0) progressPct = Math.min(100, Math.max(0, ((nowMin - startMin) / total) * 100));
+                        }
+                        return (
+                          <div ref={homeContentRef} className="absolute inset-0" style={{ color: "#fff", overflow: "hidden" }}>
+                            {(() => {
+                              const altMode = !!config.bgAlternateMode;
+                              const thumbSrc = currentProgram?.thumb || currentProgram?.capa || "";
+                              const hasThumb = !!thumbSrc;
+                              const hasArtist = !!artistBgUrl;
+                              const bgType = config.bgType || "static";
+                              let thumbVisible: boolean;
+                              let artistVisible: boolean;
+                              if (altMode) {
+                                if (altBgPhase === "thumb") { thumbVisible = hasThumb; artistVisible = !hasThumb && hasArtist && !!config.home.showArtistImage; }
+                                else { artistVisible = hasArtist && !!config.home.showArtistImage; thumbVisible = !artistVisible && hasThumb; }
+                              } else {
+                                thumbVisible = bgType === "thumb" && hasThumb;
+                                artistVisible = hasArtist && !!config.home.showArtistImage;
+                              }
+                              return (
+                                <>
+                                  {/* Thumb layer (always mounted for fade) */}
+                                  {hasThumb && (
+                                    <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
+                                      <img 
+                                        src={thumbSrc} 
+                                        alt="" 
+                                        className="absolute inset-0 w-full h-full object-cover" 
+                                        style={{ 
+                                          ...(altMode ? {} : { filter: "blur(18px) brightness(0.55)", transform: "scale(1.1)" }),
+                                          objectPosition: config.programThumbPosition || "center"
+                                        }} 
+                                      />
+                                      {!altMode && (
+                                        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
+                                      )}
+                                    </div>
+                                  )}
+                                  {/* Artist crossfade (previous) */}
+                                  {prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+                                    <img src={prevArtistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
+                                  )}
+                                  {artistBgUrl && (
+                                    <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
+                                  )}
+                                  {config.home.artistOverlayEnabled && (
+                                    <div 
+                                      className="absolute inset-0 transition-opacity duration-1000" 
+                                      style={{ 
+                                        opacity: artistVisible ? (config.home.artistOverlayOpacity ?? 60) / 100 : 0,
+                                        background: config.home.artistOverlayColor || "#000000"
+                                      }} 
+                                    />
+                                  )}
+                                  {!altMode && <div className="absolute inset-0" style={{ opacity: artistVisible ? 1 : 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)", transition: "opacity 1.2s ease-in-out" }} />}
+                                   {bgType === "gradient" && !artistVisible && !thumbVisible && <div className="absolute inset-0" style={{ background: buildHomeGradient(config.home) }} />}
+                                   {!artistVisible && !thumbVisible && bgType === "static" && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                                </>
+                              );
+                            })()}
+                            
+
+                             {/* ── TOP-LEFT: Clock + date ── */}
+                             <div style={{ position: "absolute", top: `${pvh(4)}px`, left: `${pvh(5)}px`, zIndex: 20 }}>
+                               <div className="font-black" style={{ fontSize: `${pvh(4.2)}px`, fontVariantNumeric: "tabular-nums", lineHeight: 0.9, color: "#fff", textShadow: "0 0 20px rgba(var(--layout-accent-rgb, 68,68,68),0.6), 0 0 40px rgba(var(--layout-accent-rgb, 68,68,68),0.3)", letterSpacing: "-0.02em", width: 'max-content' }}>
+                                 {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                               </div>
+                               <div className="font-semibold text-left" style={{ fontSize: `${pvh(1.15)}px`, color: "var(--layout-accent-color, #888)", marginTop: `${pvh(0.3)}px` }}>
+                                 {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                               </div>
+                             </div>
+
+                             {/* ── SYNC (Bottom Left) ── */}
+                             <div className="flex items-center" style={{ position: "absolute", bottom: `${pvh(4)}px`, left: `${pvh(5)}px`, zIndex: 20, gap: `${pvh(0.4)}px`, opacity: 0.8 }}>
+                               <div style={{ width: `${pvh(0.7)}px`, height: `${pvh(0.7)}px`, borderRadius: "50%", background: "var(--layout-accent-color, #4ade80)", boxShadow: "0 0 8px var(--layout-accent-color, #4ade80)" }} />
+                               <span className="font-semibold uppercase" style={{ letterSpacing: "0.1em", fontSize: `${pvh(1)}px` }}>SYNC</span>
+                             </div>
+
+                             {/* ── BOTTOM-RIGHT: "A seguir" ── */}
+                             {nextProgram && (
+                               <div style={{ position: "absolute", bottom: `${pvh(4)}px`, right: `${pvh(5)}px`, zIndex: 20, textAlign: "right" }}>
+                                 <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.5)}px` }}>
+                                   <span style={{ color: "var(--layout-accent-color)" }}>a seguir</span>
+                                 </div>
+                                 <div className="font-bold" style={{ fontSize: `${pvh(2.2)}px`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
+                                 <div className="font-medium" style={{ fontSize: `${pvh(0.9)}px`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                               </div>
+                             )}
+
+                             {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA (Top Right) ── */}
+                               const currentPhase = (showProgram && showMusic) ? (Math.floor(currentTime.getTime() / 8000) % 2 === 0 ? "program" : "music") : (showProgram ? "program" : "music");
+                               
+                               return (
+                                 <div style={{
+                                   position: "absolute",
+                                   top: `calc(${pvh(4)}px - 2px)`,
+                                   right: `${pvh(5)}px`,
+                                   display: "flex",
+                                   flexDirection: "column",
+                                   alignItems: "flex-end",
+                                   zIndex: 15,
+                                 }}>
+                                   <div style={{
+                                     display: "flex",
+                                     alignItems: "stretch",
+                                     position: "relative",
+                                     width: `${pvh(14)}px`,
+                                     height: `${pvh(14)}px`
+                                   }}>
+                                     {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
+                                     <div style={{
+                                       width: "100%",
+                                       height: "100%",
+                                       borderRadius: `${pvh(2)}px`,
+                                       overflow: "hidden",
+                                       background: `linear-gradient(145deg, var(--layout-accent-color, rgba(200,50,50,0.7)), rgba(0,0,0,0.4))`,
+                                       backdropFilter: "blur(20px)",
+                                       WebkitBackdropFilter: "blur(20px)",
+                                       padding: `${pvh(0.9)}px`,
+                                       boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                                       border: "1px solid rgba(255,255,255,0.1)",
+                                       display: "flex",
+                                       flexDirection: "column",
+                                       gap: `${pvh(0.6)}px`,
+                                       zIndex: 2,
+                                       flexShrink: 0,
+                                       opacity: showProgram && currentPhase === "program" ? 1 : 0,
+                                       visibility: showProgram && currentPhase === "program" ? "visible" : "hidden",
+                                       transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                                       transform: `scale(${currentPhase === "program" ? 1 : 0.9}) rotate(${currentPhase === "program" ? 0 : -5}deg)`,
+                                       position: "absolute",
+                                       inset: 0
+                                     }}>
+                                       <div className="flex items-start justify-between" style={{ gap: `${pvh(0.6)}px`, minWidth: 0 }}>
+                                         <div style={{ minWidth: 0, flex: 1 }}>
+                                           <div className="flex items-center justify-center" style={{ gap: `${pvh(0.35)}px`, minWidth: 0 }}>
+                                             <Mic size={pvh(1)} style={{ opacity: 0.8, flexShrink: 0 }} />
+                                             <span className="font-normal" style={{ fontSize: `${pvh(1.05)}px`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram?.apresentador || ""}</span>
+                                           </div>
+                                         </div>
+                                         {currentProgram?.selo && (
+                                           <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5.82)}px`, maxWidth: `${pvh(8.74)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
+                                         )}
+                                       </div>
+                                       <div className="flex-1 flex items-center justify-center" style={{ minHeight: 0 }}>
+                                         {(() => {
+                                           const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
+                                           const activeFoto = fotos[presenterIdx % (fotos.length || 1)];
+                                           if (!activeFoto) return null;
+                                           return (
+                                             <img key={activeFoto} src={activeFoto} alt="" style={{ maxHeight: `${pvh(8.6)}px`, maxWidth: "100%", objectFit: "contain", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))", WebkitMaskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)", maskImage: "linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 18%)" }} />
+                                           );
+                                         })()}
+                                       </div>
+                                       <div style={{ minHeight: 0 }}>
+                                         {musicData ? (
+                                           <div key={musicKey} style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+                                             <div className="flex items-center" style={{ gap: `${pvh(0.35)}px`, marginBottom: `${pvh(0.25)}px` }}>
+                                               <Music size={pvh(0.85)} style={{ opacity: 0.7, flexShrink: 0 }} />
+                                               <span className="font-semibold uppercase" style={{ letterSpacing: "0.12em", fontSize: `${pvh(0.72)}px`, opacity: 0.7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Tocando Agora</span>
+                                             </div>
+                                             <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, lineHeight: 1.15, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
+                                             <div className="font-medium" style={{ fontSize: `${pvh(0.95)}px`, opacity: 0.7, marginTop: `${pvh(0.15)}px`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
+                                           </div>
+                                         ) : currentProgram ? (
+                                           <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram.nome}</div>
+                                         ) : null}
+                                       </div>
+                                     </div>
+
+                                     {/* ── BOX CAPA: music album art ── */}
+                                     <div
+                                       style={{
+                                         width: "100%",
+                                         height: "100%",
+                                         borderRadius: `${pvh(2)}px`,
+                                         overflow: "hidden",
+                                         flexShrink: 0,
+                                         zIndex: 1,
+                                         opacity: showMusic && currentPhase === "music" ? 1 : 0,
+                                         visibility: showMusic && currentPhase === "music" ? "visible" : "hidden",
+                                         transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                                         transform: `scale(${currentPhase === "music" ? 1 : 0.9}) rotate(${currentPhase === "music" ? 0 : 5}deg)`,
+                                         position: "absolute",
+                                         inset: 0,
+                                         boxShadow: "0 8px 32px rgba(0,0,0,0.4)"
+                                       }}
+                                     >
+                                       {musicData?.capa && (
+                                         <img
+                                           src={musicData.capa}
+                                           alt=""
+                                           style={{
+                                             width: "100%",
+                                             height: "100%",
+                                             objectFit: "cover",
+                                             borderRadius: `${pvh(2)}px`,
+                                           }}
+                                         />
+                                       )}
+                                     </div>
+                                   </div>
+
+                                   {/* ── Music Details (Text below cover) ── */}
+                                   {musicData && (
+                                     <div style={{
+                                       marginTop: `${pvh(1)}px`,
+                                       textAlign: "right",
+                                       width: "100%",
+                                       opacity: currentPhase === "music" ? 1 : 0,
+                                       transform: `translateY(${currentPhase === "music" ? 0 : pvh(1)}px)`,
+                                       transition: "opacity 0.8s ease, transform 0.8s ease",
+                                       visibility: currentPhase === "music" ? "visible" : "hidden"
+                                      }}>
+                                       <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+                                         {musicData.titulo}
+                                       </div>
+                                       <div className="font-bold" style={{ fontSize: `${pvh(1)}px`, color: "var(--layout-accent-color, #4ade80)", marginTop: `${pvh(0.2)}px`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                                         {musicData.artista}
+                                       </div>
+                                     </div>
+                                   )}
+                                 </div>
+                               );
+                             })()}
+
+                             {/* ── Sponsor logos (centered bottom, same as external screen) ── */}
+                             {sponsorLogos.length > 0 && (
+                               <div style={{ position: "absolute", bottom: `${pvh(9)}px`, left: "50%", transform: "translateX(-50%)", zIndex: 10 }}>
+                                 <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: `${pvh(23.4)}px` }}>
+                                   {sponsorLogos.map((l, i) => l.logo_url && (
+                                     <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain" style={{ position: "absolute", maxWidth: `${pvh(39)}px`, maxHeight: `${pvh(21.5)}px`, opacity: i === sponsorIdx ? 1 : 0, transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)", transition: "opacity 0.8s ease, transform 0.8s ease", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" }} />
+                                   ))}
+                                 </div>
+                               </div>
+                             )}
+
+                             {/* Progress bar — premium animated */}
+                             <div style={{ position: "absolute", bottom: `${pvh(2)}px`, left: `${pvh(2.6)}px`, right: `${pvh(2.6)}px`, height: `${pvh(0.5)}px`, background: "rgba(255,255,255,0.15)", zIndex: 15, overflow: "hidden", borderRadius: `${pvh(0.3)}px` }}>
+                               <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `${pvh(0.3)}px`, background: "linear-gradient(90deg, var(--layout-accent-color, #444), rgba(255,255,255,0.5), var(--layout-accent-color, #444))", backgroundSize: "200% 100%", animation: "shimmerProgress 2s linear infinite", transition: "width 1s linear", boxShadow: "0 0 6px var(--layout-accent-color, #444), 0 0 14px rgba(255,255,255,0.15)" }} />
+                             </div>
+                             <style>{`@keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+                          </div>
+                        );
+                      })()}
+
+                      {/* ═══ WEATHER ═══ */}
+                      {activeTab === "weather" && weatherSubTab !== "satellite" && (
+                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
+                          {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d2847 30%, #134e7a 60%, #1a6fad 85%, #4a9fd4 100%)" }} />}
+                          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 75% 15%, rgba(255,255,255,0.12) 0%, transparent 55%)" }} />
+                          <div className="absolute bottom-0 left-0 right-0" style={{ height: "40%", background: "linear-gradient(to top, rgba(0,0,0,0.45), transparent)" }} />
+                          <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${pvh(4)}px`, paddingLeft: `calc(${pvh(4)}px + 50px)` }}>
+                            {liveWeather ? (<>
+                              {weatherSubTab === "today" && (
+                                <div style={{ width: "88%", maxWidth: `${pvh(46)}px` }}>
+                                  <div className="flex items-start justify-between" style={{ marginBottom: `${pvh(3)}px` }}>
+                                    <div>
+                                      <div className="font-black leading-none" style={{ fontSize: `${pvh(4.5)}px`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.6)" }}>{weatherCity || config.city || "Cidade"}</div>
+                                      <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${pvh(1.6)}px`, color: "var(--layout-accent-color, #444)", marginTop: `${pvh(0.6)}px`, letterSpacing: "0.2em" }}>agora</div>
+                                    </div>
+                                  </div>
+                                  <div className="rounded-3xl" style={{ padding: `${pvh(3)}px`, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 12px 48px rgba(0,0,0,0.2)" }}>
+                                    <div className="flex items-center" style={{ gap: `${pvh(3)}px`, marginBottom: `${pvh(2.5)}px` }}>
+                                      <div style={{ width: `${pvh(14)}px`, height: `${pvh(14)}px`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
+                                        <WeatherIcon code={liveWeather.current.code} size={pvh(14)} forceDay />
+                                      </div>
+                                      <div className="flex flex-col">
+                                        <div className="font-black" style={{ fontSize: `${pvh(8)}px`, lineHeight: 0.9, textShadow: "0 3px 16px rgba(0,0,0,0.4)" }}>{liveWeather.current.temp}°</div>
+                                        <div className="font-medium" style={{ fontSize: `${pvh(2)}px`, opacity: 0.85, marginTop: `${pvh(0.5)}px` }}>{getWLabel(liveWeather.current.code)}</div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-2xl" style={{ padding: `${pvh(1.8)}px ${pvh(2.5)}px`, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                                      <div className="flex items-center" style={{ gap: `${pvh(1)}px` }}>
+                                        <Thermometer size={pvh(2.2)} style={{ opacity: 0.7 }} />
+                                        <span className="font-bold tabular-nums" style={{ fontSize: `${pvh(2.2)}px` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
+                                      </div>
+                                      <div className="flex items-center" style={{ gap: `${pvh(2)}px`, fontSize: `${pvh(1.8)}px` }}>
+                                        <span className="flex items-center" style={{ gap: `${pvh(0.5)}px` }}><Droplets size={pvh(1.8)} style={{ opacity: 0.7 }} /> {liveWeather.current.humidity}%</span>
+                                        <span className="flex items-center" style={{ gap: `${pvh(0.5)}px` }}>🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {weatherSubTab === "forecast" && (
+                                <div className="flex flex-col items-center justify-center" style={{ width: "92%", maxWidth: `${pvh(55)}px`, height: "100%" }}>
+                                  <div className="text-center" style={{ marginBottom: `${pvh(4)}px` }}>
+                                    <div className="font-extrabold leading-none" style={{ fontSize: `${pvh(5)}px`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.5)" }}>{weatherCity || config.city || "Cidade"}</div>
+                                    <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${pvh(1.8)}px`, color: "var(--layout-accent-color, #444)", marginTop: `${pvh(0.8)}px`, letterSpacing: "0.2em" }}>próximos dias</div>
+                                  </div>
+                                  <div className="w-full flex flex-col" style={{ gap: `${pvh(1.5)}px` }}>
+                                    {liveWeather.daily.slice(1, 5).map((d, i) => (
+                                      <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
+                                        padding: `${pvh(2)}px ${pvh(2.5)}px`,
+                                        background: "rgba(255,255,255,0.06)",
+                                        borderRadius: `${pvh(2)}px`,
+                                        backdropFilter: "blur(20px)",
+                                        border: "1px solid rgba(255,255,255,0.1)",
+                                        boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                                        gap: `${pvh(2)}px`,
+                                      }}>
+                                        <div style={{ minWidth: `${pvh(11)}px` }}>
+                                          <span className="font-black capitalize" style={{ fontSize: `${pvh(2)}px`, lineHeight: 1.1 }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                                        </div>
+                                        <div style={{ width: `${pvh(6)}px`, height: `${pvh(6)}px`, flexShrink: 0 }}>
+                                          <WeatherIcon code={d.code} size={pvh(6)} forceDay />
+                                        </div>
+                                        <div className="flex flex-col flex-1" style={{ minWidth: 0, gap: `${pvh(0.4)}px` }}>
+                                          <div className="flex items-center" style={{ gap: `${pvh(1)}px`, fontSize: `${pvh(1.3)}px`, opacity: 0.7, lineHeight: 1 }}>
+                                            <span style={{ color: "#7dd3fc" }}>💧{d.precip}%</span>
+                                            <span>{d.rainMm}mm</span>
+                                          </div>
+                                          <div style={{ fontSize: `${pvh(1.3)}px`, opacity: 0.6, lineHeight: 1 }}>🌬 {d.windMax}km/h</div>
+                                        </div>
+                                        <div className="flex items-baseline" style={{ flexShrink: 0, gap: `${pvh(0.6)}px` }}>
+                                          <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2.8)}px`, lineHeight: 1 }}>{d.max}°</span>
+                                          <span className="font-medium tabular-nums" style={{ fontSize: `${pvh(1.7)}px`, opacity: 0.55, lineHeight: 1 }}>{d.min}°</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </>) : (
+                              <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${pvh(1.8)}px` }}>
+                                {weatherCity ? "Carregando..." : "Configure uma cidade"}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ═══ TRAFFIC ═══ */}
+                      {activeTab === "traffic" && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ padding: `${pvh(3)}px`, pointerEvents: "none" }}>
+                          {config.traffic.enabled && trafficCoords ? (
+                            <div className="flex items-center rounded-2xl" style={{ padding: `${pvh(1.2)}px ${pvh(3)}px`, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.12)", marginBottom: `${pvh(4)}px`, boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
+                              <Car style={{ width: `${pvh(2.5)}px`, height: `${pvh(2.5)}px`, color: "var(--layout-accent-color, #444)", marginRight: `${pvh(1)}px` }} />
+                              <span className="font-black" style={{ fontSize: `${pvh(2.4)}px`, color: "#fff", letterSpacing: "-0.01em" }}>{config.traffic.city || config.city || "Trânsito"}</span>
+                            </div>
+                          ) : (
+                            <div className="opacity-50" style={{ color: "#333", fontSize: `${pvh(1.8)}px` }}>Trânsito desativado</div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ═══ CURRENCY ═══ */}
+                      {activeTab === "currency" && (
+                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
+                          {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.5)" }} />}
+                          {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #080c14 0%, #0f1923 30%, #141e2e 60%, #0d1520 100%)" }} />}
+                          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 60%)" }} />
+                          <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${pvh(4)}px`, paddingLeft: `calc(${pvh(4)}px + 50px)` }}>
+                            {config.currency.enabled ? (
+                              <CenarioQuotesPanel
+                                accentColor="var(--layout-accent-color, #444)"
+                                currencyOptions={CURRENCY_OPTIONS}
+                                currencySubTab={currencySubTab}
+                                currencyCodes={config.currency.currencies}
+                                liveCurrencies={liveCurrencies}
+                                liveStocks={liveStocks}
+                                loadingCurrencies={currencyLoading}
+                                loadingStocks={stocksLoading}
+                                size={pvh}
+                              />
+                            ) : (
+                              <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: `${pvh(1.9)}px` }}>Cotação desativada</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ═══ CHAT ═══ */}
+                      {activeTab === "chat" && (
+                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
+                          {!config.chat.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)" }} />}
+                          <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.25), transparent)" }} />
+                          <div className="relative z-10 flex flex-col h-full" style={{ padding: `${pvh(3)}px` }}>
+                            {config.chat.enabled ? (<>
+                              <div className="flex justify-end mb-1"><MessageCircle size={pvh(3)} className="drop-shadow-lg" style={{ color: "var(--layout-accent-color, #444)" }} /></div>
+                              <div style={{ marginBottom: `${pvh(2)}px` }}>
+                                <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: `${pvh(4)}px` }}>mensagens</div>
+                                <div className="font-bold" style={{ fontSize: `${pvh(2.5)}px`, color: "var(--layout-accent-color, #444)" }}>chat</div>
+                              </div>
+                              <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)", padding: `${pvh(2)}px` }}>
+                                <div className="font-bold opacity-70" style={{ fontSize: `${pvh(1.6)}px`, marginBottom: `${pvh(1)}px` }}>mensagens aqui</div>
+                                {mockMessages.map((m, i) => (
+                                  <div key={i} className={`rounded-lg cenario-anim-row-${Math.min(i + 1, 8)}`} style={{ padding: `${pvh(1)}px ${pvh(1.5)}px`, marginBottom: `${pvh(0.8)}px`, background: "rgba(255,255,255,0.08)", fontSize: `${pvh(1.6)}px` }}>
+                                    <span className="font-bold">{m.user}: </span>
+                                    <span className="opacity-80">{m.text}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </>) : (
+                              <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${pvh(1.8)}px` }}>Chat desativado</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      </div>{/* end animated page wrapper */}
                     </div>
-                    
-                    {/* Drawing Canvas */}
-                    <canvas ref={previewCanvasRef} className="absolute inset-0 w-full h-full" style={{ zIndex: 40, pointerEvents: previewDrawActive ? "auto" : "none" }} onMouseDown={handlePreviewDrawStart} onMouseMove={handlePreviewDrawMove} onMouseUp={handlePreviewDrawEnd} onMouseLeave={() => previewIsDrawingRef.current && handlePreviewDrawEnd()} onTouchStart={handlePreviewDrawStart} onTouchMove={handlePreviewDrawMove} onTouchEnd={handlePreviewDrawEnd} />
                   </div>
                 </div>
               </div>
+
+              {/* Drawing options panel for preview */}
+              {previewDrawActive && showPreviewDrawOptions && (
+                <div className="absolute flex flex-col items-center gap-1 rounded-xl" style={{ left: 60, top: "50%", transform: "translateY(-50%)", zIndex: 45, padding: "6px 4px", background: "rgba(20,20,20,0.85)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  {PREV_DRAW_COLORS.map(c => (
+                    <button key={c} onClick={() => setPreviewDrawColor(c)} className="rounded-full cursor-pointer" style={{ width: 18, height: 18, background: c, border: previewDrawColor === c ? "2px solid #fff" : "2px solid transparent", boxShadow: previewDrawColor === c ? `0 0 6px ${c}` : "none", transition: "all 0.15s ease" }} />
+                  ))}
+                  <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.15)", margin: "2px 0" }} />
+                  {PREV_DRAW_WIDTHS.map(w => (
+                    <button key={w} onClick={() => setPreviewDrawWidth(w)} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: 18, height: 18, background: previewDrawWidth === w ? "rgba(255,255,255,0.2)" : "transparent", border: previewDrawWidth === w ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent", transition: "all 0.15s ease" }}>
+                      <div style={{ width: Math.max(3, w * 1.2), height: Math.max(3, w * 1.2), borderRadius: "50%", background: previewDrawColor }} />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Shapes panel */}
+              {previewDrawActive && showShapesPanel && (
+                <div className="absolute flex flex-row items-center gap-1 rounded-xl" style={{ left: 60, top: "65%", transform: "translateY(-50%)", zIndex: 45, padding: "6px", background: "rgba(20,20,20,0.85)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  {SHAPE_OPTIONS.map(s => {
+                    const Icon = s.icon;
+                    return (
+                      <button key={s.id} onClick={() => { setSelectedShape(s.id); setPreviewDrawMode("shape"); }} className="rounded-lg flex items-center justify-center cursor-pointer" style={{ width: 28, height: 28, background: selectedShape === s.id ? "rgba(128,128,128,0.25)" : "rgba(255,255,255,0.08)", border: selectedShape === s.id ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent", transition: "all 0.15s ease" }} title={s.label}>
+                        <Icon size={14} style={{ color: previewDrawColor }} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Drawing canvas overlay for preview — always mounted for remote sync */}
+              <canvas
+                ref={previewCanvasRef}
+                className="absolute rounded-2xl"
+                style={{ top: 0, bottom: 0, right: 0, left: 52, zIndex: 40, cursor: previewDrawActive ? (previewDrawMode === "eraser" ? "cell" : "crosshair") : "default", touchAction: previewDrawActive ? "none" : "auto", pointerEvents: previewDrawActive ? "auto" : "none" }}
+                onMouseDown={handlePreviewDrawStart}
+                onMouseMove={handlePreviewDrawMove}
+                onMouseUp={(e) => handlePreviewDrawEnd(e)}
+                onMouseLeave={() => { previewIsDrawingRef.current = false; setShapeStartPos(null); const canvas = previewCanvasRef.current; if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) ctx.globalCompositeOperation = "source-over"; } }}
+                onTouchStart={handlePreviewDrawStart}
+                onTouchMove={handlePreviewDrawMove}
+                onTouchEnd={(e) => handlePreviewDrawEnd(e)}
+              />
+
+              {/* Clear drawing button for preview */}
+              {previewHasDrawing && (
+                <button onClick={clearPreviewDrawing} className="absolute flex items-center justify-center rounded-full" style={{ top: 8, right: 8, zIndex: 45, width: 24, height: 24, background: "rgba(239,68,68,0.8)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" }}>
+                  <Eraser size={12} color="white" />
+                </button>
+              )}
+
+              {!config.weather.enabled && !config.traffic.enabled && !config.currency.enabled && !config.chat.enabled && !config.home.bgImage && (
+                <div className="absolute inset-0 flex items-center justify-center text-center" style={{ background: "rgba(26,26,26,0.85)" }}>
+                  <div className="text-white opacity-50">
+                    <MonitorPlay size={28} className="mx-auto mb-2" />
+                    <div className="text-[10px]">Ative os módulos para visualizar</div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
+</div>
   );
 }
