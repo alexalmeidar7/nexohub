@@ -13,7 +13,7 @@ interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3D
 interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage: string; lat: number | null; lon: number | null; zoom: number; }
 interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
-interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; exceptionWords?: string; elementPositions?: Record<string, { x: number; y: number; scale: number }>; }
+interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; exceptionWords?: string; elementPositions?: Record<string, { x: number; y: number; scale: number }>; artistOverlayEnabled?: boolean; artistOverlayColor?: string; artistOverlayOpacity?: number; }
 interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; bgAlternateMode?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
 
 function buildHomeGradient(h: HomeConfig): string {
@@ -1300,6 +1300,15 @@ export default function CenarioTela() {
                       onLoad={() => setArtistBgReady(true)}
                     />
                   )}
+                  {config.home.artistOverlayEnabled && (
+                    <div 
+                      className="absolute inset-0 transition-opacity duration-1000" 
+                      style={{ 
+                        opacity: artistVisible ? (config.home.artistOverlayOpacity ?? 60) / 100 : 0,
+                        background: config.home.artistOverlayColor || "#000000"
+                      }} 
+                    />
+                  )}
                 </div>
 
                 {/* Camada 3: Thumb do programa (fica por cima da camada 1 e 2) */}
@@ -1447,7 +1456,7 @@ export default function CenarioTela() {
                   {/* Background already rendered as a full-canvas layer behind sidebar */}
 
                    {/* ── Relógio Digital (Top Right) ── */}
-                   (() => {
+                   {(() => {
                      const h = currentTime.getHours().toString().padStart(2, "0");
                      const m = currentTime.getMinutes().toString().padStart(2, "0");
                      const s = currentTime.getSeconds().toString().padStart(2, "0");
@@ -1470,8 +1479,8 @@ export default function CenarioTela() {
                            {currentTime.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", year: "2-digit" })}
                          </div>
                        </div>
-                     );
-                  })()}
+                      );
+                    })()}
 
                   {/* Status Sync (Top Left) */}
                   <div style={{ position: "absolute", top: `${vhToPx(3.5)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
