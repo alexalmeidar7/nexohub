@@ -2091,14 +2091,15 @@ export default function CenarioInterativoPage() {
                               const thumbSrc = currentProgram?.thumb || currentProgram?.capa || "";
                               const hasThumb = !!thumbSrc;
                               const hasArtist = !!artistBgUrl;
+                              const bgType = config.bgType || "static";
                               let thumbVisible: boolean;
                               let artistVisible: boolean;
                               if (altMode) {
-                                if (altBgPhase === "thumb") { thumbVisible = hasThumb; artistVisible = !hasThumb && hasArtist; }
-                                else { artistVisible = hasArtist; thumbVisible = !hasArtist && hasThumb; }
+                                if (altBgPhase === "thumb") { thumbVisible = hasThumb; artistVisible = !hasThumb && hasArtist && !!config.home.showArtistImage; }
+                                else { artistVisible = hasArtist && !!config.home.showArtistImage; thumbVisible = !artistVisible && hasThumb; }
                               } else {
-                                thumbVisible = !!config.useProgramThumbAsBg && hasThumb;
-                                artistVisible = hasArtist;
+                                thumbVisible = bgType === "thumb" && hasThumb;
+                                artistVisible = hasArtist && !!config.home.showArtistImage;
                               }
                               return (
                                 <>
