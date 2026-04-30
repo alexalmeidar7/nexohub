@@ -629,16 +629,17 @@ export default function CenarioInterativoPage() {
     const el = previewWrapRef.current;
     if (!el) return;
     const measure = () => {
+      // Use fixed aspect ratio and zoom for internal scale calculation
       const scale = previewIsLandscape
-        ? Math.min(el.clientWidth / PREV_H, el.clientHeight / PREV_W)
-        : Math.min(el.clientWidth / PREV_W, el.clientHeight / PREV_H);
+        ? (1080 * previewZoom) / PREV_H
+        : (1080 * previewZoom) / PREV_W;
       setPreviewScale(scale || 1);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [previewIsLandscape]);
+  }, [previewIsLandscape, previewZoom]);
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
