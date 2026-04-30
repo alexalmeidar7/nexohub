@@ -761,16 +761,19 @@ export default function CenarioInterativoPage() {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    // Mirror to external screen
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab, subTab: weatherSubTab, currencySubTab });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab, subTab: weatherSubTab, currencySubTab } });
   };
   const handleWeatherSubTabChange = (sub: string) => {
     setWeatherSubTab(sub);
+    // Mirror subtab change to external screen
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "weather", subTab: sub, currencySubTab });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "weather", subTab: sub, currencySubTab } });
   };
   const handleCurrencySubTabChange = (sub: "moedas" | "bolsas") => {
     setCurrencySubTab(sub);
+    // Mirror subtab change to external screen
     cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "currency", subTab: weatherSubTab, currencySubTab: sub });
     rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "currency", subTab: weatherSubTab, currencySubTab: sub } });
   };
