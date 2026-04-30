@@ -1974,18 +1974,18 @@ export default function CenarioInterativoPage() {
                             style={{ background: "var(--layout-page-bg, #ffffff)", borderColor: "var(--layout-border-color, #333)" }}
                           >
                             {addressSuggestions.map((addr, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => selectAddress(addr)}
-                                className="w-full text-left px-3 py-2 text-xs hover:bg-black/5 transition-colors border-b last:border-0"
-                                style={{ borderBottomColor: "rgba(0,0,0,0.05)", color: textColor }}
-                              >
-                                <div className="font-bold">{addr.name}</div>
-                                {addr.admin1 && <div className="opacity-60">{addr.admin1}, {addr.country}</div>}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                                <button
+                                  key={idx}
+                                  onClick={() => selectAddress(addr)}
+                                  className="w-full text-left px-3 py-2 text-xs hover:bg-black/5 transition-colors border-b last:border-0"
+                                  style={{ borderBottomColor: "rgba(0,0,0,0.05)", color: textColor }}
+                                >
+                                  <div className="font-bold">{addr.name}</div>
+                                  <div className="opacity-60 text-[10px] truncate">{addr.display_name || (addr.admin1 ? `${addr.admin1}, ${addr.country}` : addr.country)}</div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                       </div>
                     </div>
 
