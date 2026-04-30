@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Minus, Plus } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Minus, Plus, MapPin } from "lucide-react";
 
 interface TrafficMapProps {
   lat: number;
