@@ -176,14 +176,16 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
         // Only show if within view bounds
         if (top < 0 || top > 100 || left < 0 || left > 100) return null;
 
+        const isActive = activePointId === p.id;
+
         return (
           <div
             key={p.id}
-            className="absolute cursor-move group"
+            className={`absolute cursor-move group transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
             style={{ 
               top: `${top}%`, 
               left: `${left}%`, 
-              zIndex: dragPointId === p.id ? 20 : 10,
+              zIndex: (dragPointId === p.id || isActive) ? 30 : 10,
               transform: "translate(-50%, -100%)",
               pointerEvents: "auto"
             }}
@@ -193,15 +195,18 @@ export default function TrafficMap({ lat, lon, zoom, interactive = false, onMove
               setDragPointId(p.id);
             }}
           >
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center relative">
+              {isActive && (
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-[var(--layout-accent-color)]/20 rounded-full animate-ping pointer-events-none" />
+              )}
               <div className="bg-white px-2 py-0.5 rounded shadow text-[10px] font-bold mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                 Arraste para mover
               </div>
               <MapPin 
-                size={24} 
-                className={dragPointId === p.id ? "text-red-500 scale-125" : "text-[var(--layout-accent-color)]"} 
+                size={isActive ? 32 : 24} 
+                className={dragPointId === p.id ? "text-red-500" : isActive ? "text-[var(--layout-accent-color)]" : "text-[var(--layout-accent-color)]/70"} 
                 style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
-                fill="white"
+                fill={isActive ? "white" : "rgba(255,255,255,0.7)"}
               />
             </div>
           </div>
