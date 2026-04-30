@@ -1533,6 +1533,7 @@ export default function CenarioInterativoPage() {
                             </div>
                           </div>
                         )}
+                        </div>
                       </div>
                     ) : (
                       <div className="py-4 flex flex-col items-center justify-center text-center rounded-lg border-2 border-dashed border-black/5 bg-black/5">
