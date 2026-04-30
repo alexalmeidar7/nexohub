@@ -1559,7 +1559,7 @@ export default function CenarioInterativoPage() {
                           />
                         </div>
                         <div className="flex items-center justify-between">
-                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Selo do Programa</Label>
+                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa do Programa</Label>
                           <Switch 
                             checked={config.home.showProgramThumb !== false} 
                             onCheckedChange={v => updateHome({ showProgramThumb: v })}
