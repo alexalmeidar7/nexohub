@@ -1534,12 +1534,42 @@ export default function CenarioInterativoPage() {
                           </div>
                         )}
                       </div>
+                      </div>
                     ) : (
                       <div className="py-4 flex flex-col items-center justify-center text-center rounded-lg border-2 border-dashed border-black/5 bg-black/5">
                         <MonitorPlay size={24} className="opacity-20 mb-2" />
                         <span className="text-xs font-semibold opacity-40">Nenhum programa detectado no Estúdio FM</span>
                       </div>
                     )}
+
+                    {/* Visibilidade das Capas */}
+                    <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                          <Eye size={16} />
+                        </div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider">Visibilidade das Capas</h4>
+                      </div>
+                      
+                      <div className="space-y-2 pt-1 border-t border-black/5">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa da Música</Label>
+                          <Switch 
+                            checked={config.home.showMusicCover !== false} 
+                            onCheckedChange={v => updateHome({ showMusicCover: v })}
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Selo do Programa</Label>
+                          <Switch 
+                            checked={config.home.showProgramThumb !== false} 
+                            onCheckedChange={v => updateHome({ showProgramThumb: v })}
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Configurações Visuais de Fundo */}
