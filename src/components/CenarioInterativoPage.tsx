@@ -1211,6 +1211,12 @@ export default function CenarioInterativoPage() {
   const removeTrafficPoint = (id: string) =>
     updateTraffic({ points: config.traffic.points.filter(p => p.id !== id) });
 
+  const goToTrafficPoint = (p: TrafficPoint) => {
+    setTrafficCoords({ lat: p.lat, lon: p.lng });
+    updateTraffic({ lat: p.lat, lon: p.lng, zoom: 15 });
+    toast.info(`Navegando para: ${p.label}`);
+  };
+
   const toggleCurrency = (code: string) => {
     const has = config.currency.currencies.includes(code);
     updateCurrency({ currencies: has ? config.currency.currencies.filter(c => c !== code) : [...config.currency.currencies, code] });
@@ -2086,10 +2092,23 @@ export default function CenarioInterativoPage() {
                       <div className="space-y-2 mt-2">
                         <Label className="text-xs font-medium" style={{ color: mutedText }}>Pontos marcados</Label>
                         {config.traffic.points.map(p => (
-                          <div key={p.id} className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs" style={{ background: subTabBg }}>
-                            <MapPin size={12} style={{ color: mutedText }} />
-                            <span className="flex-1 font-medium">{p.label}</span>
-                            <button onClick={() => removeTrafficPoint(p.id)} className="opacity-60 hover:opacity-100"><Trash2 size={14} /></button>
+                          <div 
+                            key={p.id} 
+                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs group transition-colors hover:bg-black/10 cursor-pointer" 
+                            style={{ background: subTabBg }}
+                            onClick={() => goToTrafficPoint(p)}
+                          >
+                            <MapPin size={12} className="text-[var(--layout-accent-color)]" />
+                            <span className="flex-1 font-medium truncate">{p.label}</span>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeTrafficPoint(p.id);
+                              }} 
+                              className="opacity-40 hover:opacity-100 hover:text-red-500 transition-all p-1"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
                         ))}
                       </div>
