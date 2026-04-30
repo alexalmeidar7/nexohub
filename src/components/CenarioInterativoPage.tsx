@@ -2494,6 +2494,15 @@ export default function CenarioInterativoPage() {
                                   objectPosition: config.programThumbPosition || "center"
                                 }} 
                               />
+                              {config.thumbOverlayEnabled && (
+                                <div 
+                                  className="absolute inset-0 transition-opacity duration-1000" 
+                                  style={{ 
+                                    opacity: (config.thumbOverlayOpacity ?? 60) / 100,
+                                    background: config.thumbOverlayColor || "#000000"
+                                  }} 
+                                />
+                              )}
                               <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)" }} />
                             </>
                           )}
