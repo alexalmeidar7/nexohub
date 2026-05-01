@@ -340,19 +340,19 @@ export default function CortesVideoPage() {
       
       const ffmpeg = await loadFfmpeg();
       
-      if (localDuration > 0 && endSeconds > Math.ceil(localDuration)) {
+      if (localDuration > 0 && endSeconds > localDuration + 0.5) {
         toast({
           title: "Tempo final inválido",
-          description: `O vídeo tem apenas ${formatDuration(Math.floor(localDuration))}. Ajuste o tempo final.`,
+          description: `O vídeo tem apenas ${formatDuration(localDuration)}. Ajuste o tempo final.`,
           variant: "destructive",
         });
         setCutting(false);
         return;
       }
-      if (localDuration > 0 && startSeconds >= Math.ceil(localDuration)) {
+      if (localDuration > 0 && startSeconds >= localDuration) {
         toast({
           title: "Tempo inicial inválido",
-          description: `O tempo inicial deve ser menor que ${formatDuration(Math.floor(localDuration))}.`,
+          description: `O tempo inicial deve ser menor que ${formatDuration(localDuration)}.`,
           variant: "destructive",
         });
         setCutting(false);
