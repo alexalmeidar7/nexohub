@@ -666,7 +666,8 @@ export default function VmixPage() {
           setOverlays(prev => ({ ...prev, [n]: ovInput !== "" && ovInput !== "0" }));
         }
       }
-      // Reset fail counter on success
+      // Reset fail counter and ensure status is connected on success
+      if (!connected) setConnected(true);
       silentFailCountRef.current = 0;
     } catch {
       // Only disconnect after 3 consecutive failures
