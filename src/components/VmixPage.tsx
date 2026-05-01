@@ -2775,7 +2775,7 @@ export default function VmixPage() {
             programaNome={prog.nome}
             programaHorario={`${prog.horario_inicio?.slice(0,5) || ""} – ${prog.horario_fim?.slice(0,5) || ""}`}
             userId={user.id}
-            inputs={inputs}
+            inputs={ndiInputs}
             onRunCommands={async (cmds) => {
               await runCommandsUnified(cmds as any[], "Teste concluído");
             }}
@@ -2789,7 +2789,7 @@ export default function VmixPage() {
           onClose={() => setEditingCustomButtonId(null)}
           buttonId={editingCustomButtonId === "new" ? null : editingCustomButtonId}
           userId={user.id}
-          inputs={inputs}
+          inputs={ndiInputs}
           onRunCommands={async (cmds) => {
             await runCommandsUnified(cmds as any[], "Teste concluído");
           }}
