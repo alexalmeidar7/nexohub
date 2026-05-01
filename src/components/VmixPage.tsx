@@ -444,7 +444,6 @@ export default function VmixPage() {
     if (trimmed && !/^https?:\/\//i.test(trimmed)) {
       trimmed = "http://" + trimmed;
     }
-    // Auto-adicionar porta 8088 se for IP sem porta
     try {
       const urlObj = new URL(trimmed);
       if (!urlObj.port && (/^[0-9.]+$/.test(urlObj.hostname) || urlObj.hostname === "localhost")) {
@@ -453,29 +452,46 @@ export default function VmixPage() {
       }
     } catch {}
 
-    const { data: existing } = await supabase
-      .from("user_settings")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    const payload = { vmix_url: trimmed, vmix_user: vmixUser.trim(), vmix_pass: vmixPass };
-    if (existing) {
-      await supabase.from("user_settings").update(payload).eq("user_id", user.id);
-    } else {
-      await supabase.from("user_settings").insert({ user_id: user.id, ...payload });
-    }
-    setSavedUrl(trimmed);
-    localStorage.setItem(`vmix_url_${user.id}`, trimmed);
+    const payload = { 
+      user_id: user.id,
+      name: studioName || "vMix Studio",
+      url: trimmed, 
+      username: vmixUser.trim(), 
+      password: vmixPass,
+      is_default: true 
+    };
 
-    // Auto-detect best mode
+    if (selectedConnectionId) {
+      await (supabase.from("vmix_connections" as any) as any)
+        .update(payload)
+        .eq("id", selectedConnectionId);
+    } else {
+      const { data } = await (supabase.from("vmix_connections" as any) as any)
+        .insert(payload)
+        .select()
+        .single();
+      if (data) setSelectedConnectionId(data.id);
+    }
+    
+    // Also update global settings for backward compatibility if needed
+    await supabase.from("user_settings").upsert({ 
+      user_id: user.id, 
+      vmix_url: trimmed, 
+      vmix_user: vmixUser.trim(), 
+      vmix_pass: vmixPass 
+    });
+
+    setSavedUrl(trimmed);
+    loadConnections();
+
     if (isPrivateIp(trimmed) && connectionMode === "proxy") {
       setConnectionMode("direct");
-      toast({ title: "Modo alterado para Direto", description: "IP local detectado. Proxy em nuvem não alcança rede local." });
+      toast({ title: "Modo alterado para Direto", description: "IP local detectado." });
     } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
       setConnectionMode("proxy");
-      toast({ title: "Modo alterado para Proxy", description: "IP público detectado. Usando conexão via proxy." });
+      toast({ title: "Modo alterado para Proxy", description: "IP público detectado." });
     }
-    toast({ title: "Configuração salva", description: "URL e credenciais do vMix salvas." });
+    toast({ title: "Configuração salva", description: `Conexão "${studioName}" salva com sucesso.` });
   };
 
   // Direct fetch to vMix (browser → vMix, no edge function)
