@@ -146,9 +146,9 @@ export default function CortesVideoPage() {
     });
 
     const cdns = [
+      "https://unpkg.com/@ffmpeg/core-dist@0.12.6/dist/umd",
       "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd",
-      "https://cdnjs.cloudflare.com/ajax/libs/ffmpeg-core/0.12.6/umd"
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd"
     ];
     
     let lastErr: any = null;
