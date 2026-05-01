@@ -382,6 +382,7 @@ export default function AgendaPage() {
   const [formHorarioGravacaoFim, setFormHorarioGravacaoFim] = useState("");
   const [uploadingArte, setUploadingArte] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
+  const [eventTypesConfig, setEventTypesConfig] = useState<any>(null);
 
   const [loadingData, setLoadingData] = useState(true);
   const [expressOpen, setExpressOpen] = useState(false);
