@@ -2772,7 +2772,7 @@ export default function VmixPage() {
             programaNome={prog.nome}
             programaHorario={`${prog.horario_inicio?.slice(0,5) || ""} – ${prog.horario_fim?.slice(0,5) || ""}`}
             userId={user.id}
-            inputs={ndiInputs}
+            inputs={inputs}
             onRunCommands={async (cmds) => {
               await runCommandsUnified(cmds as any[], "Teste concluído");
             }}
