@@ -384,7 +384,8 @@ export default function CortesVideoPage() {
         throw new Error("Não foi possível localizar o arquivo gerado pelo motor.");
       }
       
-      console.log(`[ffmpeg] Arquivo lido: ${data.byteLength} bytes`);
+      const dataLen = typeof data === 'string' ? data.length : (data as Uint8Array).byteLength;
+      console.log(`[ffmpeg] Arquivo lido: ${dataLen} bytes`);
       
       if (!data) {
         throw new Error("Não foi possível ler o arquivo gerado.");
