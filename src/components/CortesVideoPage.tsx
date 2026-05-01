@@ -439,6 +439,7 @@ export default function CortesVideoPage() {
       console.error("ffmpeg log context:", ffmpegLog);
       
       const errorMsg = err?.message || "Falha no processamento.";
+      setErrorMsg(errorMsg);
       toast({
         title: "Erro ao processar",
         description: errorMsg,
