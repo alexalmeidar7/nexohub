@@ -81,6 +81,8 @@ export default function CortesVideoPage() {
   const startTimeRef = useRef<number>(0);
   const [estimatedSeconds, setEstimatedSeconds] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<{ stack?: string; log?: string; exitCode?: number } | null>(null);
+  const [showErrorDetails, setShowErrorDetails] = useState(false);
 
   // Shared
   const [startTime, setStartTime] = useState("");
@@ -290,6 +292,8 @@ export default function CortesVideoPage() {
     try {
       setCutting(true);
       setErrorMsg(null);
+      setErrorDetails(null);
+      setShowErrorDetails(false);
       setProgress(0);
       setResult(null);
       
@@ -472,6 +476,11 @@ export default function CortesVideoPage() {
       
       const errorMsg = err?.message || "Falha no processamento.";
       setErrorMsg(errorMsg);
+      setErrorDetails({
+        stack: err?.stack,
+        log: ffmpegLog,
+        exitCode: err?.exitCode || (errorMsg.includes("código") ? parseInt(errorMsg.match(/\d+/)?.[0] || "0") : undefined)
+      });
       toast({
         title: "Erro ao processar",
         description: errorMsg,
@@ -490,6 +499,8 @@ export default function CortesVideoPage() {
     if (!canCut || !user) return;
     setCutting(true);
     setErrorMsg(null);
+    setErrorDetails(null);
+    setShowErrorDetails(false);
     setResult(null);
     setProgress(0);
     setStatusMsg("Enviando para o servidor...");
@@ -546,7 +557,13 @@ export default function CortesVideoPage() {
       setStatusMsg("");
       toast({ title: "Trecho gerado!", description: "Use o player abaixo ou baixe via link externo." });
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message || "Tente novamente.", variant: "destructive" });
+      const errorMsg = err.message || "Tente novamente.";
+      setErrorMsg(errorMsg);
+      setErrorDetails({
+        stack: err.stack,
+        log: "Falha na chamada ao servidor (Edge Function)."
+      });
+      toast({ title: "Erro", description: errorMsg, variant: "destructive" });
       setStatusMsg("");
     } finally {
       clearInterval(progressTimer);
@@ -841,10 +858,39 @@ export default function CortesVideoPage() {
               `}</style>
           {errorMsg && !cutting && (
             <div className="w-full max-w-md p-4 rounded-xl border border-destructive/50 bg-destructive/10 text-destructive text-xs animate-in fade-in slide-in-from-top-2">
-              <div className="font-bold flex items-center gap-2 mb-1">
-                ⚠️ Erro no processamento
+              <div className="font-bold flex items-center justify-between gap-2 mb-1">
+                <span className="flex items-center gap-2">⚠️ Erro no processamento</span>
+                {errorDetails && (
+                  <button 
+                    onClick={() => setShowErrorDetails(!showErrorDetails)}
+                    className="underline opacity-70 hover:opacity-100 transition-opacity"
+                  >
+                    {showErrorDetails ? "Ocultar detalhes" : "Ver detalhes técnicos"}
+                  </button>
+                )}
               </div>
               <p>{errorMsg}</p>
+              
+              {showErrorDetails && errorDetails && (
+                <div className="mt-3 p-2 rounded bg-black/20 font-mono text-[9px] overflow-auto max-h-40 space-y-2">
+                  {errorDetails.exitCode !== undefined && (
+                    <div className="text-red-400 font-bold">Exit Code: {errorDetails.exitCode}</div>
+                  )}
+                  {errorDetails.stack && (
+                    <div className="whitespace-pre-wrap border-b border-white/10 pb-2">
+                      <div className="opacity-50 mb-1">Stack Trace:</div>
+                      {errorDetails.stack}
+                    </div>
+                  )}
+                  {errorDetails.log && (
+                    <div className="whitespace-pre-wrap">
+                      <div className="opacity-50 mb-1">FFmpeg Log:</div>
+                      {errorDetails.log}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <p className="mt-2 opacity-70 text-[10px]">
                 Dica: Tente usar um vídeo menor ou use o modo YouTube para processamento em servidor.
               </p>
