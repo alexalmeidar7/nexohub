@@ -352,10 +352,6 @@ export default function CortesVideoPage() {
         }
       });
 
-      setStatusMsg("Lendo arquivo de vídeo...");
-      const ext = (localFile.name.split(".").pop() || "mp4").toLowerCase();
-      const inputName = `input.${ext}`;
-      const outputName = `corte_${Date.now()}.mp4`;
 
       setStatusMsg("Lendo arquivo de vídeo (isso pode levar alguns segundos)...");
       setProgress(5);
