@@ -194,28 +194,36 @@ export default function CortesVideoPage() {
   const handleCutLocal = async () => {
     if (!localFile || !canCut) return;
 
-    // Validate against actual video duration
-    if (localDuration > 0 && endSeconds > Math.ceil(localDuration)) {
-      toast({
-        title: "Tempo final inválido",
-        description: `O vídeo tem apenas ${formatDuration(Math.floor(localDuration))}. Ajuste o tempo final.`,
-        variant: "destructive",
-      });
-      return;
-    }
-    if (localDuration > 0 && startSeconds >= Math.ceil(localDuration)) {
-      toast({
-        title: "Tempo inicial inválido",
-        description: `O tempo inicial deve ser menor que ${formatDuration(Math.floor(localDuration))}.`,
-        variant: "destructive",
-      });
-      return;
-    }
+    // Trigger FFmpeg load before starting the cutting process state
+    // so the status message from loadFfmpeg is visible immediately
+    try {
+      setCutting(true);
+      setProgress(0);
+      setResult(null);
+      
+      const ffmpeg = await loadFfmpeg();
+      
+      // Validate against actual video duration
+      if (localDuration > 0 && endSeconds > Math.ceil(localDuration)) {
+        toast({
+          title: "Tempo final inválido",
+          description: `O vídeo tem apenas ${formatDuration(Math.floor(localDuration))}. Ajuste o tempo final.`,
+          variant: "destructive",
+        });
+        setCutting(false);
+        return;
+      }
+      if (localDuration > 0 && startSeconds >= Math.ceil(localDuration)) {
+        toast({
+          title: "Tempo inicial inválido",
+          description: `O tempo inicial deve ser menor que ${formatDuration(Math.floor(localDuration))}.`,
+          variant: "destructive",
+        });
+        setCutting(false);
+        return;
+      }
 
-    setCutting(true);
-    setProgress(0);
-    setResult(null);
-    startTimeRef.current = Date.now();
+      startTimeRef.current = Date.now();
     
     // Estimate time based on file size and format
     const sizeMB = localFile.size / (1024 * 1024);
