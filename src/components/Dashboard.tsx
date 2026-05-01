@@ -1209,8 +1209,14 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
                 <span className="text-[8px] opacity-60" style={{ color: "var(--layout-widget-text, #ffffff)" }}>
                   {evt.tipo_evento === "gravacao" ? `🎬 ${evt.horario_gravacao || ""}` : evt.programa?.horario_inicio}
                 </span>
-                <span className={`text-[7px] font-black px-1 rounded-sm ${evt.prioridade === "alta" ? "bg-red-500/30 text-red-400" : "bg-white/10 text-white/50"}`}>
-                  {evt.prioridade?.toUpperCase()}
+                <span 
+                  className="text-[7px] font-black px-1 rounded-sm"
+                  style={{ 
+                    backgroundColor: `${eventTypesConfig?.[evt.tipo_evento || "live"]?.color || "#ffffff"}33`, 
+                    color: eventTypesConfig?.[evt.tipo_evento || "live"]?.color || "rgba(255,255,255,0.5)" 
+                  }}
+                >
+                  {eventTypesConfig?.[evt.tipo_evento || "live"]?.label || evt.prioridade?.toUpperCase()}
                 </span>
               </div>
             </div>
