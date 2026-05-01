@@ -142,8 +142,15 @@ export default function CortesVideoPage() {
     setProgress(0);
     
     const ffmpeg = new FFmpeg();
+    
+    // O motor de vídeo reporta progresso de 0 a 1 durante o processamento.
+    // Vamos mapear isso para 10% - 90% da nossa barra de progresso total durante o corte.
     ffmpeg.on("progress", ({ progress: p }) => {
-      setProgress(Math.min(99, Math.round(p * 100)));
+      // Só atualizamos se estivermos realmente cortando (não apenas carregando)
+      // O estado 'cutting' é controlado externamente.
+      // Se p for 1, chegamos a 90% do total.
+      const mappedProgress = Math.round(10 + (p * 80));
+      setProgress(Math.min(90, mappedProgress));
     });
 
     const cdns = [
@@ -332,14 +339,17 @@ export default function CortesVideoPage() {
       const outputName = `corte_${Date.now()}.mp4`;
 
       setStatusMsg("Lendo arquivo de vídeo (isso pode levar alguns segundos)...");
+      setProgress(5);
       const videoData = await fetchFile(localFile);
       await ffmpeg.writeFile(inputName, videoData);
 
       setStatusMsg("Iniciando o corte...");
+      setProgress(10);
       const args: string[] = [];
       
       if (format === "original") {
         setStatusMsg("Cortando vídeo instantaneamente...");
+        setProgress(15);
         args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-c", "copy");
       } else {
         setStatusMsg("Preparando processamento...");
@@ -379,7 +389,8 @@ export default function CortesVideoPage() {
         throw new Error(`Falha ao recortar (código ${exitCode}). Tente outro trecho ou verifique se o vídeo não está corrompido.`);
       }
 
-      setStatusMsg("Lendo arquivo final do motor...");
+      setProgress(92);
+      setStatusMsg("Extraindo vídeo processado...");
       const data = await ffmpeg.readFile(outputName);
       
       if (!data) {
@@ -391,15 +402,19 @@ export default function CortesVideoPage() {
       console.log(`[ffmpeg] Arquivo lido: ${dataLen} bytes`);
       
       // Garantimos um ArrayBuffer limpo para o Blob.
-      // Em ambientes multithread, o motor usa SharedArrayBuffer, que não pode ser usado em Blobs diretamente em alguns navegadores.
       let finalData: Uint8Array;
+      
+      setProgress(95);
+      setStatusMsg("Otimizando memória do vídeo...");
       
       try {
         if (data instanceof Uint8Array) {
           if (typeof SharedArrayBuffer !== 'undefined' && data.buffer instanceof SharedArrayBuffer) {
             console.log("[ffmpeg] Convertendo SharedArrayBuffer para ArrayBuffer...");
             finalData = new Uint8Array(data.byteLength);
+            // set() pode ser pesado para arquivos grandes, mas é necessário
             finalData.set(data);
+            setProgress(97);
           } else {
             finalData = data;
           }
@@ -415,12 +430,29 @@ export default function CortesVideoPage() {
         throw new Error("Erro de memória ao processar o vídeo final. Tente um trecho menor.");
       }
 
-      if (finalData.length === 0) {
-        throw new Error("O vídeo gerado está vazio. Tente ajustar o tempo de início/fim.");
+      if (finalData.length < 100) {
+        throw new Error("O vídeo gerado está vazio ou inválido. Tente ajustar o tempo de início/fim.");
       }
 
-      const blob = new Blob([finalData as BlobPart], { type: "video/mp4" });
+      // Validação de assinatura MP4 (ftyp)
+      // MP4 starts with [any, any, any, any, 'f', 't', 'y', 'p']
+      const isMp4 = finalData.length > 8 && 
+                    finalData[4] === 0x66 && // f
+                    finalData[5] === 0x74 && // t
+                    finalData[6] === 0x79 && // y
+                    finalData[7] === 0x70;    // p
+
+      if (!isMp4) {
+        console.warn("[ffmpeg] Assinatura ftyp não encontrada no início do arquivo.");
+        // Não lançamos erro aqui para não bloquear casos específicos, mas registramos no console
+      }
+
+      setProgress(98);
+      setStatusMsg("Gerando link de download...");
+      // Forçamos o tipo para BlobPart para evitar erros de SharedArrayBuffer vs ArrayBuffer no TS
+      const blob = new Blob([finalData as unknown as BlobPart], { type: "video/mp4" });
       const blobUrl = URL.createObjectURL(blob);
+      setProgress(99);
 
       await ffmpeg.deleteFile(inputName).catch(() => {});
       await ffmpeg.deleteFile(outputName).catch(() => {});
@@ -469,16 +501,29 @@ export default function CortesVideoPage() {
 
     const progressTimer = setInterval(() => {
       setProgress((p) => {
-        if (p >= 95) return p;
-        const inc = p < 50 ? 4 : p < 80 ? 2 : 1;
+        if (p >= 99) return p;
+        
+        // Curva assintótica: quanto mais perto de 100, mais devagar aumenta
+        // p < 50: +4%
+        // p < 80: +2%
+        // p < 95: +0.5%
+        // p < 99: +0.1%
+        let inc = 0;
+        if (p < 50) inc = 4;
+        else if (p < 80) inc = 2;
+        else if (p < 95) inc = 0.5;
+        else inc = 0.1;
+        
+        const nextP = p + inc;
         
         // Dynamic messages based on progress
-        if (p < 30) setStatusMsg("Conectando ao YouTube...");
-        else if (p < 70) setStatusMsg("Cortando vídeo no servidor...");
-        else if (p < 90) setStatusMsg("Finalizando trecho...");
-        else setStatusMsg("Gerando link de download...");
+        if (nextP < 30) setStatusMsg("Conectando ao YouTube...");
+        else if (nextP < 70) setStatusMsg("Cortando vídeo no servidor...");
+        else if (nextP < 90) setStatusMsg("Finalizando trecho...");
+        else if (nextP < 98) setStatusMsg("Recebendo dados do servidor...");
+        else setStatusMsg("Preparando player...");
         
-        return Math.min(95, p + inc);
+        return Math.min(99, nextP);
       });
     }, 600);
 
