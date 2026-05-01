@@ -8,8 +8,16 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp
+  ScrollText, ChevronDown, ChevronUp, Lock
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { getIconForName } from "./CustomVmixButtonEditor";
 import logoMixControl from "@/assets/logo-mixcontrol.png";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
