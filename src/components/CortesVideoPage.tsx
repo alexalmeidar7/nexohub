@@ -86,7 +86,7 @@ export default function CortesVideoPage() {
 
   const [format, setFormat] = useState<"fullhd" | "reel" | "original">("fullhd");
   const [cutting, setCutting] = useState(false);
-  const [result, setResult] = useState<{
+  type CutResult = {
     blob_url?: string;
     file_name?: string;
     clip_embed_url?: string;
@@ -95,7 +95,9 @@ export default function CortesVideoPage() {
     download_url?: string;
     duration: number;
     is_local: boolean;
-  } | null>(null);
+  };
+  const [results, setResults] = useState<CutResult[]>([]);
+  const result = results[0] || null; // for compatibility with any remaining code using 'result'
 
   const [clips, setClips] = useState<{ id: string; start: string; end: string }[]>([
     { id: crypto.randomUUID(), start: "00:00:00.000", end: "00:00:10.000" }
