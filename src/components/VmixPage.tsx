@@ -259,6 +259,14 @@ export default function VmixPage() {
   }
   const [diagRunning, setDiagRunning] = useState(false);
   const [diagResult, setDiagResult] = useState<DiagResult | null>(null);
+
+  // Input mapping for name-based fallback (key -> title and title -> key)
+  const [inputMapping, setInputMapping] = useState<Record<string, { title: string; key: string }>>(() => {
+    try {
+      const saved = localStorage.getItem("vmix_input_mapping");
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
   
   const connectToVmixRef = useRef<(() => Promise<void>) | null>(null);
   const ndiAutoScanDoneRef = useRef(false);
@@ -370,15 +378,20 @@ export default function VmixPage() {
   useEffect(() => {
     if (!user) return;
     const loadSettings = async () => {
-      // Load global shortcuts
+      // Load global shortcuts and input mapping
       const { data: settings } = await supabase
         .from("user_settings")
-        .select("vmix_shortcuts")
+        .select("vmix_shortcuts, vmix_input_mapping")
         .eq("user_id", user.id)
         .maybeSingle();
       
       if (settings?.vmix_shortcuts && typeof settings.vmix_shortcuts === "object") {
         setInputShortcuts(settings.vmix_shortcuts as Record<string, string>);
+      }
+
+      if (settings?.vmix_input_mapping && typeof settings.vmix_input_mapping === "object") {
+        const mapping = settings.vmix_input_mapping as Record<string, { title: string; key: string }>;
+        setInputMapping(prev => ({ ...prev, ...mapping }));
       }
 
       // Load all connections
@@ -834,6 +847,42 @@ export default function VmixPage() {
     }
   }, [savedUrl, vmixFetch]);
 
+  // Update input mapping whenever inputs change
+  useEffect(() => {
+    if (inputs.length === 0) return;
+    
+    setInputMapping(prev => {
+      const next = { ...prev };
+      let changed = false;
+      
+      inputs.forEach(inp => {
+        // Map key to its title
+        if (next[inp.key]?.title !== inp.title) {
+          next[inp.key] = { title: inp.title, key: inp.key };
+          changed = true;
+        }
+        // Also ensure title maps to key for reverse lookup
+        // We use a special prefix for title lookups or just keep it separate
+        // For simplicity, we just ensure every key we currently have is up to date
+      });
+      
+      if (changed) {
+        localStorage.setItem("vmix_input_mapping", JSON.stringify(next));
+        // Also persist to DB
+        if (user) {
+          supabase.from("user_settings")
+            .update({ vmix_input_mapping: next as any })
+            .eq("user_id", user.id)
+            .then(({ error }) => {
+              if (error) console.error("Error saving input mapping to DB:", error);
+            });
+        }
+        return next;
+      }
+      return prev;
+    });
+  }, [inputs, user]);
+
   useEffect(() => {
     if (!savedUrl) return;
     
@@ -845,18 +894,39 @@ export default function VmixPage() {
     return () => clearInterval(id);
   }, [connected, savedUrl, silentRefresh]);
 
+  const resolveInputKey = useCallback((inputKey: string | undefined): string | undefined => {
+    if (!inputKey || !inputKey.includes("-")) return inputKey;
+    const exists = inputs.some(i => i.key === inputKey);
+    if (exists) return inputKey;
+    
+    const mapped = inputMapping[inputKey];
+    if (mapped) {
+      const fallback = inputs.find(i => i.title === mapped.title);
+      if (fallback) {
+        console.log(`Input ${inputKey} not found, falling back to ${fallback.title} (Key: ${fallback.key})`);
+        return fallback.key;
+      }
+    }
+    return inputKey;
+  }, [inputs, inputMapping]);
+
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
-    const cmdLabel = `${fn}${input ? ` Input=${input}` : ""}${value ? ` Value=${value}` : ""}`;
+
+    const effectiveInput = resolveInputKey(input);
+
+    const cmdLabel = `${fn}${effectiveInput ? ` Input=${effectiveInput}` : ""}${value ? ` Value=${value}` : ""}`;
     try {
       let path = `/api/?Function=${encodeURIComponent(fn)}`;
-      if (input) path += `&Input=${encodeURIComponent(input)}`;
+      if (effectiveInput) path += `&Input=${encodeURIComponent(effectiveInput)}`;
       if (value) path += `&Value=${encodeURIComponent(value)}`;
-      // Force direct mode for private IPs — proxy can't reach LAN
+      
       const forceMode: "direct" | "proxy" | undefined = isPrivateIp(savedUrl) ? "direct" : undefined;
       await vmixFetch(path, forceMode);
       addLog(cmdLabel, "ok", "Enviado com sucesso", "local");
-      setTimeout(() => connectToVmix(), 300);
+      
+      // Refresh state after command
+      setTimeout(() => silentRefresh(), 300);
     } catch (err: any) {
       addLog(cmdLabel, "error", err?.message || "Falha ao enviar", "local");
       toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
@@ -877,7 +947,11 @@ export default function VmixPage() {
   }, []);
 
   const runCommandsUnified = useCallback(async (cmds: any[], label: string) => {
-    const normalized = normalizeCommands(cmds);
+    const normalized = normalizeCommands(cmds).map(cmd => ({
+      ...cmd,
+      input: resolveInputKey(cmd.input)
+    }));
+    
     if (!normalized.length) return;
 
     const batchLabel = `[${label}] ${normalized.length} cmd(s)`;
@@ -2853,6 +2927,7 @@ export default function VmixPage() {
             onRunCommands={async (cmds) => {
               await runCommandsUnified(cmds as any[], "Teste concluído");
             }}
+            inputMapping={inputMapping}
           />
         );
       })()}

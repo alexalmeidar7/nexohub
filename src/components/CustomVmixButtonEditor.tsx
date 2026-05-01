@@ -96,6 +96,7 @@ interface Props {
   inputs: VmixInput[];
   onRunCommands: (commands: PresetCommand[]) => Promise<void>;
   onSaved: () => void;
+  inputMapping?: Record<string, { title: string; key: string }>;
 }
 
 const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -142,8 +143,19 @@ function getExtraLabel(fn: string): { keyLabel: string; valueLabel: string } {
   return { keyLabel: "Extra Key", valueLabel: "Extra Value" };
 }
 
-function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[]): string {
-  const inputLabel = cmd.input ? (inputs.find(i => i.key === cmd.input)?.title || cmd.input) : "";
+function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[], inputMapping?: Record<string, { title: string; key: string }>): string {
+  let inputLabel = "";
+  if (cmd.input) {
+    const directMatch = inputs.find(i => i.key === cmd.input);
+    if (directMatch) {
+      inputLabel = directMatch.title;
+    } else if (inputMapping && inputMapping[cmd.input]) {
+      inputLabel = `${inputMapping[cmd.input].title} (não encontrado)`;
+    } else {
+      inputLabel = cmd.input;
+    }
+  }
+
   let line = cmd.fn;
   if (cmd.input) line += `(${inputLabel}`;
   if (cmd.value) line += `, ${cmd.value}`;
@@ -152,7 +164,7 @@ function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[]): string {
   return line;
 }
 
-export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved }: Props) {
+export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved, inputMapping }: Props) {
   const { toast } = useToast();
   const [nome, setNome] = useState("");
   const [color, setColor] = useState("#f59e0b");
@@ -479,7 +491,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                         </span>
                         <div className="flex items-center gap-1 flex-1 min-w-0">
                           <GripVertical size={10} style={{ color: "#444" }} />
-                          <span className="text-[10px] font-bold truncate" style={{ color: "#ccc" }}>{formatCommandPreview(cmd, inputs)}</span>
+                          <span className="text-[10px] font-bold truncate" style={{ color: "#ccc" }}>{formatCommandPreview(cmd, inputs, inputMapping)}</span>
                         </div>
                         <div className="flex items-center gap-0.5">
                           <button onClick={() => moveCommand(idx, -1)} disabled={idx === 0} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-20" style={{ color: "#888" }}>
@@ -523,6 +535,11 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                               style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
                             >
                               <option value="">— Selecionar Input —</option>
+                              {cmd.input && !inputs.some(i => i.key === cmd.input) && inputMapping?.[cmd.input] && (
+                                <option value={cmd.input} disabled>
+                                  ⚠️ {inputMapping[cmd.input].title} (Não encontrado)
+                                </option>
+                              )}
                               {inputs.map(inp => (
                                 <option key={inp.key} value={inp.key}>{inp.number} – {inp.title}</option>
                               ))}
