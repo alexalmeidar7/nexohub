@@ -744,8 +744,8 @@ export default function VmixPage() {
       }
 
       setConnected(true);
-      const ndiCount = parsedInputs.filter(isNdiInput).length;
-      toast({ title: "Conectado!", description: `${ndiCount} fontes NDI detectadas (modo ${effectiveMode === "direct" ? "direto" : "proxy"}).` });
+      const inputCount = parsedInputs.length;
+      toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
       
       // Auto-scan NDI sources from network patterns
       setTimeout(() => scanNdiSources(), 1000);
@@ -1298,38 +1298,25 @@ export default function VmixPage() {
     </button>
   );
 
-  // Render the select combo with ONLY NDI inputs
+  // Render the select combo with all vMix inputs
   const renderInputSelect = (value: string | null, onChange: (val: string) => void) => (
     <select
       value={value || ""}
-      onChange={e => {
-        if (e.target.value.startsWith("ADD|")) {
-          const source = e.target.value.split("ADD|")[1];
-          addNdiInput(source);
-        } else {
-          onChange(e.target.value);
-        }
-      }}
+      onChange={e => onChange(e.target.value)}
       className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none font-bold"
       style={{ backgroundColor: "#222228", color: "#ccc", border: "1px solid #333" }}
     >
-      <option value="">— Selecione NDI (Rede/Inputs) —</option>
-      {ndiInputs.length > 0 && (
-        <optgroup label="Inputs vMix (Ativos)">
-          {ndiInputs.map(inp => (
-            <option key={inp.key || inp.number} value={inp.number}>🟢 {inp.number} – {inp.title}</option>
-          ))}
-        </optgroup>
-      )}
-      {ndiSources.length > 0 && (
-        <optgroup label="Fontes NDI na Rede (Disponíveis)">
-          {ndiSources.filter(src => !ndiInputs.some(inp => inp.title.includes(src))).map(src => (
-            <option key={src} value={`ADD|${src}`}>✨ Adicionar: {src}</option>
-          ))}
-        </optgroup>
-      )}
-      {ndiInputs.length === 0 && ndiSources.length === 0 && (
-        <option disabled>Nenhuma fonte NDI encontrada</option>
+      <option value="">— Selecione um Input —</option>
+      {inputs.map(inp => {
+        const isNdi = isNdiInput(inp);
+        return (
+          <option key={inp.key || inp.number} value={inp.number}>
+            {isNdi ? "🟢 " : ""}{inp.number} – {inp.title}
+          </option>
+        );
+      })}
+      {inputs.length === 0 && (
+        <option disabled>Nenhum input encontrado</option>
       )}
     </select>
   );
@@ -2187,7 +2174,7 @@ export default function VmixPage() {
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
           <div className="flex flex-wrap gap-2 items-start">
-            {inputs.filter(isNdiInput).map(input => {
+            {inputs.map(input => {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
               const isNdi = isNdiInput(input);
@@ -2298,8 +2285,8 @@ export default function VmixPage() {
                 </div>
               );
             })}
-            {inputs.filter(isNdiInput).length === 0 && (
-              <p className="text-[11px] text-white/30 py-4">Nenhum input NDI encontrado</p>
+            {inputs.length === 0 && (
+              <p className="text-[11px] text-white/30 py-4">Nenhum input encontrado no vMix</p>
             )}
           </div>
         )}
@@ -2785,7 +2772,7 @@ export default function VmixPage() {
             programaNome={prog.nome}
             programaHorario={`${prog.horario_inicio?.slice(0,5) || ""} – ${prog.horario_fim?.slice(0,5) || ""}`}
             userId={user.id}
-            inputs={ndiInputs}
+            inputs={inputs}
             onRunCommands={async (cmds) => {
               await runCommandsUnified(cmds as any[], "Teste concluído");
             }}
@@ -2799,7 +2786,7 @@ export default function VmixPage() {
           onClose={() => setEditingCustomButtonId(null)}
           buttonId={editingCustomButtonId === "new" ? null : editingCustomButtonId}
           userId={user.id}
-          inputs={ndiInputs}
+          inputs={inputs}
           onRunCommands={async (cmds) => {
             await runCommandsUnified(cmds as any[], "Teste concluído");
           }}
