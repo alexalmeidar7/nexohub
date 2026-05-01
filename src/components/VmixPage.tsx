@@ -2193,61 +2193,112 @@ export default function VmixPage() {
               const isPreview = previewInput === input.number;
               const isNdi = isNdiInput(input);
               const isMin = minimizedInputs[input.number];
-              const borderColor = isActive ? "#dc2626" : isPreview ? "#777" : "#333338";
-              const headerBg = isActive ? "#dc262630" : isPreview ? "#ffffff10" : "#222228";
-
-              if (isMin) {
-                return (
-                  <div
-                    key={input.key || input.number}
-                    className="flex flex-col items-center rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:brightness-110"
-                    style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 32, minHeight: 120 }}
-                    onClick={() => setMinimizedInputs(prev => ({ ...prev, [input.number]: false }))}
-                  >
-                    <div
-                      className="w-full flex items-center justify-center py-1"
-                      style={{ backgroundColor: headerBg }}
-                      onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: false })); }}
-                    >
-                      <span className="text-[8px] font-bold" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ccc" : "#777" }}>{input.number}</span>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center" style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
-                      <span className="text-[8px] font-bold text-white/50 truncate" style={{ maxHeight: 90 }}>{input.title}</span>
-                    </div>
-                  </div>
-                );
-              }
+              const borderColor = isActive ? "#dc2626" : isPreview ? "#3b82f6" : "#ffffff10";
+              const headerBg = isActive ? "#dc262620" : isPreview ? "#3b82f615" : "#111115";
 
               return (
                 <div
                   key={input.key || input.number}
-                  className="rounded-lg overflow-hidden transition-all duration-200 hover:brightness-110 cursor-pointer"
-                  style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 180 }}
-                  onClick={() => {
-                    sendCommand("CutDirect", input.number);
-                    setActiveInput(input.number);
-                  }}
+                  className={`relative rounded-xl overflow-hidden transition-all duration-300 group ${
+                    isActive ? "ring-2 ring-red-600 shadow-[0_0_25px_rgba(220,38,38,0.2)]" : 
+                    isPreview ? "ring-2 ring-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.15)]" : "border border-white/5 hover:border-white/20"
+                  }`}
+                  style={{ width: isMin ? 44 : 200, backgroundColor: "#1a1a1f" }}
                 >
-                  <div
-                    className="flex items-center gap-1 px-2 py-1"
-                    style={{ backgroundColor: headerBg }}
-                    onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: true })); }}
+                  {/* Status Indicator Bar */}
+                  <div className={`h-1 w-full ${isActive ? "bg-red-600" : isPreview ? "bg-blue-500" : "bg-transparent"}`} />
+
+                  {/* Header / Info */}
+                  <div 
+                    className="p-2.5 flex flex-col gap-1 cursor-pointer"
+                    onClick={() => {
+                      if (isPreview) {
+                        sendCommand("Cut");
+                        setActiveInput(input.number);
+                      } else {
+                        sendCommand("PreviewInput", input.number);
+                        setPreviewInput(input.number);
+                      }
+                    }}
                   >
-                    <span className="text-[9px] font-bold px-1 rounded" style={{
-                      backgroundColor: isActive ? "#dc2626" : isPreview ? "#555" : "#333338",
-                      color: isActive || isPreview ? "#fff" : "#888",
-                    }}>{input.number}</span>
-                    <span className="text-[10px] font-bold truncate flex-1 min-w-0" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>
-                      {isNdi && <span style={{ color: "#22c55e" }}>● </span>}
-                      {input.title}
-                    </span>
-                    {/* PGM / PVW badge in header */}
-                    {isActive && (
-                      <span className="text-[7px] font-black px-1.5 py-0.5 rounded flex-shrink-0 animate-pulse" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.05em" }}>PGM</span>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                        isActive ? "bg-red-600 text-white" : isPreview ? "bg-blue-600 text-white" : "bg-white/5 text-white/30"
+                      }`}>
+                        {input.number}
+                      </span>
+                      {isNdi && (
+                        <div className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                          <span className="text-[8px] font-black text-green-500 tracking-tighter">NDI</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {!isMin && (
+                      <h3 className={`text-[11px] font-bold uppercase tracking-tight truncate leading-tight ${
+                        isActive ? "text-white" : isPreview ? "text-blue-400" : "text-white/40"
+                      }`}>
+                        {input.title}
+                      </h3>
                     )}
-                    {isPreview && !isActive && (
-                      <span className="text-[7px] font-black px-1.5 py-0.5 rounded flex-shrink-0" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.05em" }}>PVW</span>
-                    )}
+                  </div>
+
+                  {/* Thumbnail / Preview Area */}
+                  {!isMin && (
+                    <div 
+                      className="relative aspect-video bg-black overflow-hidden cursor-pointer"
+                      onClick={() => {
+                        sendCommand("CutDirect", input.number);
+                        setActiveInput(input.number);
+                      }}
+                    >
+                      <ThumbnailImg inputNumber={input.number} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      
+                      {/* Interaction Overlays */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button className="px-3 py-1 bg-white text-black text-[9px] font-black rounded uppercase tracking-widest hover:bg-white/90">TAKE</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Footer Actions */}
+                  {!isMin && (
+                    <div className="p-1.5 flex items-center justify-between bg-black/40">
+                      <div className="flex gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCapturingShortcut(input.number);
+                          }}
+                          className={`text-[8px] font-bold px-2 py-0.5 rounded border ${
+                            inputShortcuts[input.number] ? "border-amber-500/30 text-amber-500 bg-amber-500/10" : "border-white/5 text-white/20 hover:text-white/40"
+                          }`}
+                        >
+                          {inputShortcuts[input.number] || "SHORTCUT"}
+                        </button>
+                      </div>
+                      
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setMinimizedInputs(prev => ({ ...prev, [input.number]: !isMin })); }}
+                        className="p-1 text-white/20 hover:text-white/40"
+                      >
+                        <ChevronDown size={10} />
+                      </button>
+                    </div>
+                  )}
+                  
+                  {isMin && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setMinimizedInputs(prev => ({ ...prev, [input.number]: false })); }}
+                      className="w-full py-2 text-white/20 hover:text-white/40 flex justify-center"
+                    >
+                      <ChevronUp size={10} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
                     {/* Keyboard shortcut badge/capture */}
                     <div className="relative group/shortcut flex-shrink-0">
                       <button
