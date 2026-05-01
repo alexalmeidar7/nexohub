@@ -143,6 +143,8 @@ export default function VmixPage() {
   const [vmixUser, setVmixUser] = useState("");
   const [vmixPass, setVmixPass] = useState("");
   const [savedUrl, setSavedUrl] = useState("");
+  const [vmixConnections, setVmixConnections] = useState<any[]>([]);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
@@ -154,6 +156,7 @@ export default function VmixPage() {
   const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"controls" | "scenes">("controls");
+  const [studioName, setStudioName] = useState("");
   // Keyboard shortcuts per input (persisted in localStorage)
   const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
     try {
