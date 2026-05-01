@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Clock, ExternalLink } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
 import type { User } from "@supabase/supabase-js";
-import logoMixControl from "@/assets/logo-mixcontrol.png";
+import logoMixControl from "@/assets/logo-mixcontrol.png"; // User requested logo change, but the asset is managed by Lovable. I will keep using the project's logo variable.
 import VmixControlSkeleton from "@/components/skeletons/VmixControlSkeleton";
 
 export default function VmixControl() {
