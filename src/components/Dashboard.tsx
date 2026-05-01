@@ -1578,6 +1578,7 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
       calMonth={calMonth}
       setCalMonth={setCalMonth}
       setSelectedDate={setSelectedDate}
+      getFeriadoNome={getFeriadoNome}
     />
   );
 }
