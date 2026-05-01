@@ -147,6 +147,13 @@ export default function CortesVideoPage() {
       results.forEach(res => {
         if (res.blob_url) URL.revokeObjectURL(res.blob_url);
       });
+      if (ffmpegRef.current) {
+        try {
+          ffmpegRef.current.terminate();
+        } catch (e) {
+          console.error("Cleanup error:", e);
+        }
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
