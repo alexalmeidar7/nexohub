@@ -521,6 +521,7 @@ export default function VmixPage() {
       result.recommendation = isEmbeddedPreview
         ? "⚠️ O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' no navegador para esse domínio."
         : "⚠️ O navegador bloqueia HTTP dentro de HTTPS (Mixed Content). Permita 'Conteúdo inseguro' para este site e tente novamente.";
+      if (!isEmbeddedPreview) setShowMixedContentDialog(true);
     } else if (isLocal) {
       result.recommendation = "⚠️ IP local detectado. Use modo Direto na mesma rede local; o modo Proxy só funciona com URL pública/túnel.";
     } else {
