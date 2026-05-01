@@ -1333,29 +1333,48 @@ export default function VmixPage() {
   // MJPEG/JPEG rapid-refresh image component (for vmix-snapshot-proxy, NDI HX Camera, etc.)
   const MjpegPlayer = ({ src, className = "" }: { src: string; className?: string }) => {
     const [imgSrc, setImgSrc] = useState(src);
+    const [hasError, setHasError] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    
     useEffect(() => {
+      setHasError(false);
       if (!src) return;
-      // If it looks like an MJPEG stream (contains /stream or is multipart), use as-is
-      // Otherwise, refresh the image every 500ms with cache-busting
+      
       const isMjpeg = /stream|mjpeg|motion/i.test(src);
       if (isMjpeg) {
         setImgSrc(src);
         return;
       }
-      // JPEG rapid refresh
+      
       const update = () => setImgSrc(`${src}${src.includes("?") ? "&" : "?"}_t=${Date.now()}`);
       update();
       intervalRef.current = setInterval(update, 500);
       return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }, [src]);
+
+    if (hasError) {
+      return (
+        <div className={`flex flex-col items-center justify-center p-4 text-center gap-2 ${className}`} style={{ backgroundColor: "#111" }}>
+          <AlertTriangle size={24} className="text-amber-500" />
+          <p className="text-[10px] text-white/70">Erro ao carregar vídeo.</p>
+          <p className="text-[8px] text-white/40 max-w-[150px]">Certifique-se que o vMix está ativo e você permitiu 'Conteúdo Inseguro' no cadeado do navegador.</p>
+          <button 
+            onClick={() => { setHasError(false); setImgSrc(src + (src.includes("?") ? "&" : "?") + "retry=" + Date.now()); }}
+            className="mt-1 px-2 py-1 bg-white/10 rounded text-[9px]"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      );
+    }
+
     return (
       <img
         src={imgSrc}
         className={className}
         style={{ objectFit: "contain", backgroundColor: "#000" }}
         alt="Monitor"
-        onError={() => {}}
+        onError={() => setHasError(true)}
       />
     );
   };
