@@ -570,15 +570,35 @@ export default function ApresentadorForm() {
               <tbody>
                 {filtered.map((a, i) => (
                   <tr key={a.id} className="group transition-colors hover:bg-[#f0f4ff]" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafaff", borderTop: "1px solid rgba(13,4,70,0.05)" }} data-no-row-hover>
-                    <td className="px-4 py-2.5">
-                      <span className="inline-block px-2 py-0.5 rounded-lg text-[10px] font-semibold"
-                        style={{
-                          backgroundColor: a.cargo === "Apresentador" ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : a.cargo === "Jornalista" ? "rgba(45,191,244,0.1)" : "rgba(251,216,55,0.15)",
-                          color: a.cargo === "Apresentador" ? "var(--layout-accent-color, #2563eb)" : a.cargo === "Jornalista" ? "#0e9bc0" : "#b8860b",
-                        }}
-                      >
-                        {a.cargo || "—"}
-                      </span>
+                    <td className="px-4 py-2.5 cursor-pointer" onClick={() => setEditingCell({ id: a.id, field: 'categoria' })}>
+                      {editingCell?.id === a.id && editingCell?.field === 'categoria' ? (
+                        <Select
+                          open={true}
+                          value={CATEGORIA_OPTIONS.includes(a.cargo) ? a.cargo : "Convidado"}
+                          onValueChange={(val) => {
+                            updateField(a.id, 'cargo', val);
+                            setEditingCell(null);
+                          }}
+                        >
+                          <SelectTrigger className="h-7 text-[10px] w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CATEGORIA_OPTIONS.map(c => (
+                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="inline-block px-2 py-0.5 rounded-lg text-[10px] font-semibold"
+                          style={{
+                            backgroundColor: a.cargo === "Apresentador" ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : a.cargo === "Jornalista" ? "rgba(45,191,244,0.1)" : "rgba(251,216,55,0.15)",
+                            color: a.cargo === "Apresentador" ? "var(--layout-accent-color, #2563eb)" : a.cargo === "Jornalista" ? "#0e9bc0" : "#b8860b",
+                          }}
+                        >
+                          {CATEGORIA_OPTIONS.includes(a.cargo) ? a.cargo : "Convidado"}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 font-semibold cursor-pointer min-w-[150px]" onClick={() => setEditingCell({ id: a.id, field: 'nome' })}>
                       {editingCell?.id === a.id && editingCell?.field === 'nome' ? (
