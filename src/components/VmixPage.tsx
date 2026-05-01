@@ -2786,7 +2786,7 @@ export default function VmixPage() {
           onClose={() => setEditingCustomButtonId(null)}
           buttonId={editingCustomButtonId === "new" ? null : editingCustomButtonId}
           userId={user.id}
-          inputs={ndiInputs}
+          inputs={inputs}
           onRunCommands={async (cmds) => {
             await runCommandsUnified(cmds as any[], "Teste concluído");
           }}
