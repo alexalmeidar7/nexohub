@@ -154,7 +154,7 @@ export default function CortesVideoPage() {
     let lastErr: any = null;
     for (const baseURL of cdns) {
       try {
-        console.log(`[ffmpeg] Tentando carregar de: ${baseURL}`);
+        console.log(`[ffmpeg] Tentando carregar de: ${baseURL} (SAB: ${typeof SharedArrayBuffer !== 'undefined'})`);
         
         const fetchWithProgress = async (url: string, label: string) => {
           setLoadDetail(`Baixando ${label}...`);
