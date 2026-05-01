@@ -321,6 +321,11 @@ export default function CortesVideoPage() {
     setResult(null);
     setProgress(0);
     setStatusMsg("Enviando para o servidor...");
+    startTimeRef.current = Date.now();
+    
+    // Estimate for YouTube (mostly server processing)
+    const estimate = 15 + (duration * 0.3);
+    setEstimatedSeconds(Math.round(estimate));
 
     const progressTimer = setInterval(() => {
       setProgress((p) => {
