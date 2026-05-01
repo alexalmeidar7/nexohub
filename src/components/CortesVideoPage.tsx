@@ -312,9 +312,15 @@ export default function CortesVideoPage() {
       setProgress((p) => {
         if (p >= 95) return p;
         const inc = p < 50 ? 4 : p < 80 ? 2 : 1;
+        
+        // Dynamic messages based on progress
+        if (p < 30) setStatusMsg("Conectando ao YouTube...");
+        else if (p < 70) setStatusMsg("Cortando vídeo no servidor...");
+        else if (p < 90) setStatusMsg("Finalizando trecho...");
+        else setStatusMsg("Gerando link de download...");
+        
         return Math.min(95, p + inc);
       });
-      setStatusMsg("Processando trecho no servidor...");
     }, 600);
 
     try {
