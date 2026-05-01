@@ -207,32 +207,37 @@ export default function CortesVideoPage() {
       ffmpeg.on("log", ({ message }) => {
         ffmpegLog += message + "\n";
         console.log("[ffmpeg]", message);
+        
+        // Dynamic status updates based on FFmpeg logs
+        if (message.includes("frame=")) {
+          setStatusMsg(format === "reel" ? "Formatando para REEL..." : "Processando frames...");
+        }
       });
 
-      setStatusMsg("Carregando arquivo...");
+      setStatusMsg("Lendo arquivo de vídeo...");
       const ext = (localFile.name.split(".").pop() || "mp4").toLowerCase();
       const inputName = `input.${ext}`;
       const outputName = `corte_${Date.now()}.mp4`;
 
       await ffmpeg.writeFile(inputName, await fetchFile(localFile));
 
-      setStatusMsg(format === "original" ? "Recortando instantaneamente..." : "Processando corte...");
+      setStatusMsg("Iniciando o corte...");
       
       const args: string[] = [];
       
-      // For "original" format, we use stream copy which is near-instant.
-      // We put -ss before -i for fast seeking.
       if (format === "original") {
+        setStatusMsg("Cortando vídeo instantaneamente...");
         args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-c", "copy");
       } else {
+        setStatusMsg("Preparando processamento...");
         const vf =
           format === "reel"
             ? "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1"
             : "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,setsar=1";
 
-        // Detect audio track presence by probing log output
         let hasAudio = true;
         try {
+          setStatusMsg("Verificando faixas de áudio...");
           const probeLog: string[] = [];
           const probeListener = ({ message }: { message: string }) => probeLog.push(message);
           ffmpeg.on("log", probeListener);
@@ -241,6 +246,7 @@ export default function CortesVideoPage() {
           hasAudio = probeLog.some((l) => /Stream #\d+:\d+.*Audio:/i.test(l));
         } catch { /* assume audio */ }
 
+        setStatusMsg(format === "reel" ? "Finalizando no formato REEL..." : "Finalizando no formato FULL HD...");
         args.push("-i", inputName, "-ss", String(startSeconds), "-t", String(duration), "-vf", vf,
           "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p");
         
@@ -259,7 +265,7 @@ export default function CortesVideoPage() {
         throw new Error(`Falha ao recortar (código ${exitCode}). Tente outro trecho ou um vídeo .mp4 padrão.`);
       }
 
-      setStatusMsg("Finalizando...");
+      setStatusMsg("Gerando arquivo de download...");
       const data = await ffmpeg.readFile(outputName);
       const u8 = data as Uint8Array;
       if (!u8 || u8.byteLength === 0) {
