@@ -793,7 +793,18 @@ export default function CortesVideoPage() {
                   to { background-position: 20px 0; }
                 }
               `}</style>
+          {errorMsg && !cutting && (
+            <div className="w-full max-w-md p-4 rounded-xl border border-destructive/50 bg-destructive/10 text-destructive text-xs animate-in fade-in slide-in-from-top-2">
+              <div className="font-bold flex items-center gap-2 mb-1">
+                ⚠️ Erro no processamento
+              </div>
+              <p>{errorMsg}</p>
+              <p className="mt-2 opacity-70 text-[10px]">
+                Dica: Tente usar um vídeo menor ou use o modo YouTube para processamento em servidor.
+              </p>
             </div>
+          )}
+        </div>
           )}
         </div>
 
