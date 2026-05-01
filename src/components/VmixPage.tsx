@@ -2923,6 +2923,7 @@ export default function VmixPage() {
             onRunCommands={async (cmds) => {
               await runCommandsUnified(cmds as any[], "Teste concluído");
             }}
+            inputMapping={inputMapping}
           />
         );
       })()}
