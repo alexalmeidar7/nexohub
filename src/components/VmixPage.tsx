@@ -41,12 +41,12 @@ interface VmixInput {
 // We also accept titles starting with "NDI (" as a fallback for some vMix versions/configurations.
 const isNdiInput = (inp: VmixInput) => {
   if (!inp) return false;
-  const title = inp.title || "";
-  const type = inp.type || "";
+  const title = (inp.title || "").toUpperCase();
+  const type = (inp.type || "").toUpperCase();
   return type === "NDI" || 
-         title.startsWith("NDI (") || 
-         title.toUpperCase().includes(" (NDI)") ||
-         title.toUpperCase().includes("NDI - ");
+         title.includes("NDI") || 
+         type.includes("NDI") ||
+         title.startsWith("NDI (");
 };
 
 interface SceneCommand {
