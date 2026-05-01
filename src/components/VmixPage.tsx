@@ -737,7 +737,7 @@ export default function VmixPage() {
       }
 
       setConnected(true);
-      const ndiCount = parsedInputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).length;
+      const ndiCount = parsedInputs.filter(isNdiInput).length;
       toast({ title: "Conectado!", description: `${ndiCount} fontes NDI detectadas (modo ${effectiveMode === "direct" ? "direto" : "proxy"}).` });
     } catch (err) {
       setConnected(false);
@@ -1461,7 +1461,7 @@ export default function VmixPage() {
     const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
     const label = inp ? inp.type : "Input";
     const hlsUrl = inputHlsUrls[inputNumber];
-    const isNdi = inp && (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi"));
+    const isNdi = inp && isNdiInput(inp);
     // If this input has an HLS/MJPEG URL configured, show the video player
     if (hlsUrl) {
       if (hlsUrl.includes(".m3u8")) {
@@ -2150,10 +2150,10 @@ export default function VmixPage() {
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
           <div className="flex flex-wrap gap-2 items-start">
-            {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).map(input => {
+            {inputs.filter(isNdiInput).map(input => {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
-              const isNdi = input.type === "NDI" || input.title.toLowerCase().includes("ndi");
+              const isNdi = isNdiInput(input);
               const isMin = minimizedInputs[input.number];
               const borderColor = isActive ? "#dc2626" : isPreview ? "#777" : "#333338";
               const headerBg = isActive ? "#dc262630" : isPreview ? "#ffffff10" : "#222228";
@@ -2320,7 +2320,7 @@ export default function VmixPage() {
                 </div>
               );
             })}
-            {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).length === 0 && (
+            {inputs.filter(isNdiInput).length === 0 && (
               <p className="text-[11px] text-white/30 py-4">Nenhum input NDI encontrado</p>
             )}
           </div>
