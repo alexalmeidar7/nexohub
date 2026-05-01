@@ -466,7 +466,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                     </span>
                     <div className="flex items-center gap-1 flex-1 min-w-0">
                       <GripVertical size={10} style={{ color: "#444" }} />
-                      <span className="text-[10px] font-bold truncate" style={{ color: "#ccc" }}>{formatCommandPreview(cmd, inputs)}</span>
+                      <span className="text-[10px] font-bold truncate" style={{ color: "#ccc" }}>{formatCommandPreview(cmd, inputs, inputMapping)}</span>
                     </div>
                     <div className="flex items-center gap-0.5">
                       <button onClick={() => moveCommand(idx, -1)} disabled={idx === 0} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-20" style={{ color: "#888" }}>
