@@ -372,6 +372,21 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   </div>
                 </div>
 
+                {/* Specific Date */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
+                    <Calendar size={10} /> Data Específica
+                  </label>
+                  <input
+                    type="date"
+                    value={dataEspecifica}
+                    onChange={e => setDataEspecifica(e.target.value)}
+                    className="w-full text-xs px-3 py-2 rounded-lg outline-none"
+                    style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                  />
+                  <span className="text-[8px]" style={{ color: "#555" }}>Opcional: use para um dia único</span>
+                </div>
+
                 {/* Time */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
@@ -384,7 +399,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                     className="w-full text-xs px-3 py-2 rounded-lg outline-none"
                     style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
                   />
-                  <span className="text-[8px]" style={{ color: "#555" }}>Opcional: horário de referência para execução</span>
+                  <span className="text-[8px]" style={{ color: "#555" }}>Opcional: horário de referência</span>
                 </div>
               </div>
 
