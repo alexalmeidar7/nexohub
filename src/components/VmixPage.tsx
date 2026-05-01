@@ -36,7 +36,13 @@ interface VmixInput {
   muted?: boolean;
 }
 
-interface SceneCommand {
+
+// Robust detection: vMix strictly uses "NDI" as the type for NDI inputs.
+// We also accept titles starting with "NDI (" as a fallback for some vMix versions/configurations.
+const isNdiInput = (inp: VmixInput) => {
+  return inp.type === "NDI" || inp.title.startsWith("NDI (");
+};
+
   id: string;
   fn: string;
   input?: string;
