@@ -386,11 +386,11 @@ export default function CortesVideoPage() {
 
       // Para arquivos grandes, fetchFile pode ser pesado. 
       // Em FFmpeg.wasm 0.12+, writeFile aceita Uint8Array diretamente.
-      const videoData = new Uint8Array(await localFile.arrayBuffer());
+      let videoData: Uint8Array | null = new Uint8Array(await localFile.arrayBuffer());
       await ffmpeg.writeFile(inputName, videoData);
       
       // Limpar videoData da memória JS o quanto antes para reduzir pressão de memória
-      (videoData as any) = null;
+      videoData = null;
 
       setStatusMsg("Iniciando o corte...");
       setProgress(10);
