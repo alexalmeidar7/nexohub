@@ -36,6 +36,19 @@ interface VmixInput {
   muted?: boolean;
 }
 
+
+// Robust detection: vMix strictly uses "NDI" as the type for NDI inputs.
+// We also accept titles starting with "NDI (" as a fallback for some vMix versions/configurations.
+const isNdiInput = (inp: VmixInput) => {
+  if (!inp) return false;
+  const title = inp.title || "";
+  const type = inp.type || "";
+  return type === "NDI" || 
+         title.startsWith("NDI (") || 
+         title.toUpperCase().includes(" (NDI)") ||
+         title.toUpperCase().includes("NDI - ");
+};
+
 interface SceneCommand {
   id: string;
   fn: string;
@@ -730,8 +743,11 @@ export default function VmixPage() {
       }
 
       setConnected(true);
-      const ndiCount = parsedInputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).length;
+      const ndiCount = parsedInputs.filter(isNdiInput).length;
       toast({ title: "Conectado!", description: `${ndiCount} fontes NDI detectadas (modo ${effectiveMode === "direct" ? "direto" : "proxy"}).` });
+      
+      // Auto-scan NDI sources from network patterns
+      setTimeout(() => scanNdiSources(), 1000);
     } catch (err) {
       setConnected(false);
       const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
@@ -1052,7 +1068,7 @@ export default function VmixPage() {
   const detectedMachines = useMemo(() => {
     const machines = new Set<string>();
     inputs.forEach(inp => {
-      if (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi")) {
+      if (isNdiInput(inp)) {
         const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
         if (match) machines.add(match[1]);
       }
@@ -1243,15 +1259,16 @@ export default function VmixPage() {
 
   const previewDomain = window.location.origin;
 
+
   // Helper: get input label with type indicator
   const inputLabel = (inp: VmixInput) => {
-    const isNdi = inp.type === "NDI" || inp.title.toLowerCase().includes("ndi");
+    const isNdi = isNdiInput(inp);
     return `${inp.number} – ${isNdi ? "🟢 " : ""}${inp.title}${isNdi ? " (NDI)" : ""}`;
   };
 
   // Group inputs for combo: regular inputs and NDI inputs
-  const ndiInputs = inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi"));
-  const regularInputs = inputs.filter(i => i.type !== "NDI" && !i.title.toLowerCase().includes("ndi"));
+  const ndiInputs = useMemo(() => inputs.filter(isNdiInput), [inputs]);
+  const regularInputs = useMemo(() => inputs.filter(i => !isNdiInput(i)), [inputs]);
 
   // ── Styles ──
   const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, _color = "#888") => (
@@ -1285,19 +1302,34 @@ export default function VmixPage() {
   const renderInputSelect = (value: string | null, onChange: (val: string) => void) => (
     <select
       value={value || ""}
-      onChange={e => onChange(e.target.value)}
-      className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
-      style={{ backgroundColor: "#222228", color: "#ccc" }}
+      onChange={e => {
+        if (e.target.value.startsWith("ADD|")) {
+          const source = e.target.value.split("ADD|")[1];
+          addNdiInput(source);
+        } else {
+          onChange(e.target.value);
+        }
+      }}
+      className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none font-bold"
+      style={{ backgroundColor: "#222228", color: "#ccc", border: "1px solid #333" }}
     >
-      <option value="">— Selecione NDI —</option>
-      {ndiInputs.length > 0 ? (
-        <optgroup label="NDI Sources">
+      <option value="">— Selecione NDI (Rede/Inputs) —</option>
+      {ndiInputs.length > 0 && (
+        <optgroup label="Inputs vMix (Ativos)">
           {ndiInputs.map(inp => (
             <option key={inp.key || inp.number} value={inp.number}>🟢 {inp.number} – {inp.title}</option>
           ))}
         </optgroup>
-      ) : (
-        <option disabled>Nenhum input NDI encontrado</option>
+      )}
+      {ndiSources.length > 0 && (
+        <optgroup label="Fontes NDI na Rede (Disponíveis)">
+          {ndiSources.filter(src => !ndiInputs.some(inp => inp.title.includes(src))).map(src => (
+            <option key={src} value={`ADD|${src}`}>✨ Adicionar: {src}</option>
+          ))}
+        </optgroup>
+      )}
+      {ndiInputs.length === 0 && ndiSources.length === 0 && (
+        <option disabled>Nenhuma fonte NDI encontrada</option>
       )}
     </select>
   );
@@ -1453,7 +1485,7 @@ export default function VmixPage() {
     const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
     const label = inp ? inp.type : "Input";
     const hlsUrl = inputHlsUrls[inputNumber];
-    const isNdi = inp && (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi"));
+    const isNdi = inp && isNdiInput(inp);
     // If this input has an HLS/MJPEG URL configured, show the video player
     if (hlsUrl) {
       if (hlsUrl.includes(".m3u8")) {
@@ -2142,10 +2174,10 @@ export default function VmixPage() {
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
           <div className="flex flex-wrap gap-2 items-start">
-            {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).map(input => {
+            {inputs.filter(isNdiInput).map(input => {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
-              const isNdi = input.type === "NDI" || input.title.toLowerCase().includes("ndi");
+              const isNdi = isNdiInput(input);
               const isMin = minimizedInputs[input.number];
               const borderColor = isActive ? "#dc2626" : isPreview ? "#777" : "#333338";
               const headerBg = isActive ? "#dc262630" : isPreview ? "#ffffff10" : "#222228";
@@ -2312,7 +2344,7 @@ export default function VmixPage() {
                 </div>
               );
             })}
-            {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).length === 0 && (
+            {inputs.filter(isNdiInput).length === 0 && (
               <p className="text-[11px] text-white/30 py-4">Nenhum input NDI encontrado</p>
             )}
           </div>
