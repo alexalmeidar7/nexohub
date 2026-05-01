@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Calendar } from "lucide-react";
 
 interface PresetCommand {
   id: string;
@@ -91,9 +91,25 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   const [showCode, setShowCode] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
   const [customHorario, setCustomHorario] = useState<string>("");
+  const [nome, setNome] = useState("");
+  const [estudio, setEstudio] = useState("FM");
+  const [diasSemana, setDiasSemana] = useState<string[]>([]);
+  const [dataEspecifica, setDataEspecifica] = useState("");
+
+  const DIAS_SEMANA_OPCOES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
   useEffect(() => {
     if (!open) return;
+    if (programaId === "new") {
+      setCommands([]);
+      setCustomHorario("");
+      setNome("");
+      setEstudio("FM");
+      setDiasSemana([]);
+      setDataEspecifica("");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     supabase
       .from("preset_commands" as any)
@@ -108,6 +124,20 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
           setCommands([]);
         }
         setCustomHorario(data?.custom_horario || "");
+      });
+
+    supabase
+      .from("programas")
+      .select("nome, estudio, dias_semana, data_variavel")
+      .eq("id", programaId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setNome(data.nome);
+          setEstudio(data.estudio || "FM");
+          setDiasSemana(data.dias_semana || []);
+          setDataEspecifica(data.data_variavel || "");
+        }
         setLoading(false);
       });
   }, [open, programaId, userId]);
@@ -133,21 +163,66 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   };
 
   const saveCommands = async () => {
+    if (programaId === "new" && !nome.trim()) {
+      toast({ title: "Nome obrigatório", description: "Informe um nome para o programa.", variant: "destructive" });
+      return;
+    }
     setSaving(true);
+
+    let currentProgId = programaId;
+
+    // Se for novo ou se quiser atualizar os dados básicos do programa
+    if (programaId === "new") {
+      const { data: newProg, error: progErr } = await supabase
+        .from("programas")
+        .insert({
+          user_id: userId,
+          nome: nome.trim(),
+          estudio,
+          dias_semana: diasSemana,
+          data_variavel: dataEspecifica || null,
+          horario_inicio: customHorario || "00:00:00",
+          horario_fim: customHorario || "00:00:00",
+          ativo: true
+        })
+        .select()
+        .single();
+      
+      if (progErr || !newProg) {
+        toast({ title: "Erro ao criar programa", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+      currentProgId = newProg.id;
+    } else {
+      // Atualizar dados básicos se programa já existe
+      await supabase
+        .from("programas")
+        .update({
+          nome: nome.trim(),
+          estudio,
+          dias_semana: diasSemana,
+          data_variavel: dataEspecifica || null,
+          horario_inicio: customHorario || "00:00:00",
+        })
+        .eq("id", programaId);
+    }
+
     const payload: any = { commands, custom_horario: customHorario || null };
     const { data: existing } = await (supabase.from("preset_commands" as any) as any)
       .select("id")
       .eq("user_id", userId)
-      .eq("programa_id", programaId)
+      .eq("programa_id", currentProgId)
       .maybeSingle();
 
     if (existing) {
       await (supabase.from("preset_commands" as any) as any).update(payload).eq("id", existing.id);
     } else {
-      await (supabase.from("preset_commands" as any) as any).insert({ user_id: userId, programa_id: programaId, ...payload });
+      await (supabase.from("preset_commands" as any) as any).insert({ user_id: userId, programa_id: currentProgId, ...payload });
     }
     setSaving(false);
-    toast({ title: "Ações salvas", description: `${commands.length} comando(s) salvos para ${programaNome}.${customHorario ? ` Horário: ${customHorario}` : " Usando horário da grade."}` });
+    toast({ title: "Ações salvas", description: `${commands.length} comando(s) salvos para ${nome || programaNome}.` });
+    onClose();
   };
 
   const runAll = async () => {
@@ -200,39 +275,97 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #ffffff0a", background: "linear-gradient(135deg, #1e1e28, #22222c)" }}>
           <div className="flex flex-col gap-1">
-            <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#eee" }}>{programaNome}</h2>
+            <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#eee" }}>
+              {programaId === "new" ? "Novo Programa Preset" : (nome || programaNome)}
+            </h2>
             <div className="flex items-center gap-1.5">
               <Clock size={10} style={{ color: "#888" }} />
-              <span className="text-[10px] font-mono" style={{ color: "#888", textDecoration: customHorario ? "line-through" : "none", opacity: customHorario ? 0.5 : 1 }}>{programaHorario}</span>
+              <span className="text-[10px] font-mono" style={{ color: "#888", textDecoration: (customHorario || programaId === "new") ? "none" : "line-through", opacity: (customHorario || programaId === "new") ? 1 : 0.5 }}>
+                {programaId === "new" ? (customHorario || "00:00") : programaHorario}
+              </span>
               <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#ffffff08", color: "#666" }}>{commands.length} ação(ões)</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Custom schedule time */}
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ backgroundColor: customHorario ? "#22c55e12" : "#ffffff06", border: `1px solid ${customHorario ? "#22c55e30" : "#333"}` }}>
-              <Clock size={12} style={{ color: customHorario ? "#22c55e" : "#666" }} />
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" style={{ color: "#888" }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Configurações do Programa */}
+        <div className="px-5 py-4 space-y-4 bg-white/5 border-b border-white/5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Nome do Programa</label>
               <input
-                type="time"
-                value={customHorario}
-                onChange={e => setCustomHorario(e.target.value)}
-                className="bg-transparent text-[11px] font-mono outline-none w-[70px]"
-                style={{ color: customHorario ? "#22c55e" : "#666", colorScheme: "dark" }}
-                title={customHorario ? `Horário personalizado: ${customHorario}` : "Definir horário personalizado (vazio = horário da grade)"}
+                type="text"
+                value={nome}
+                onChange={e => setNome(e.target.value)}
+                className="bg-[#181820] text-xs px-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc]"
+                placeholder="Ex: Manhã Mix, Top 10..."
               />
-              {customHorario && (
-                <button
-                  onClick={() => setCustomHorario("")}
-                  className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/10"
-                  style={{ color: "#888" }}
-                  title="Remover horário personalizado (usar grade)"
-                >
-                  <X size={10} />
-                </button>
-              )}
             </div>
-            <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" style={{ color: "#888" }}>
-              <X size={16} />
-            </button>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Estúdio</label>
+              <select
+                value={estudio}
+                onChange={e => setEstudio(e.target.value)}
+                className="bg-[#181820] text-xs px-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc]"
+              >
+                <option value="FM">FM</option>
+                <option value="PODCAST">PODCAST</option>
+                <option value="ESTÚDIO A">ESTÚDIO A</option>
+                <option value="ESTÚDIO B">ESTÚDIO B</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Horário de Execução</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="time"
+                  value={customHorario}
+                  onChange={e => setCustomHorario(e.target.value)}
+                  className="bg-[#181820] text-xs px-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc] flex-1"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Data Específica (Opcional)</label>
+              <div className="flex items-center gap-2 relative">
+                <Calendar size={12} className="absolute left-3 text-[#666]" />
+                <input
+                  type="date"
+                  value={dataEspecifica}
+                  onChange={e => setDataEspecifica(e.target.value)}
+                  className="bg-[#181820] text-xs pl-9 pr-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc] w-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Dias da Semana</label>
+            <div className="flex flex-wrap gap-1">
+              {DIAS_SEMANA_OPCOES.map(dia => {
+                const active = diasSemana.includes(dia);
+                return (
+                  <button
+                    key={dia}
+                    onClick={() => setDiasSemana(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia])}
+                    className="text-[9px] font-bold px-2 py-1 rounded border transition-all"
+                    style={{
+                      backgroundColor: active ? "#3b82f620" : "#ffffff05",
+                      color: active ? "#3b82f6" : "#666",
+                      borderColor: active ? "#3b82f640" : "transparent"
+                    }}
+                  >
+                    {dia.slice(0, 3)}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

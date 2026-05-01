@@ -305,6 +305,38 @@ export default function VmixPage() {
       });
   }, [user]);
 
+  // Load programas from DB
+  const loadProgramas = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("programas")
+      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .ilike("estudio", "%fm%")
+      .order("horario_inicio");
+    
+    if (data) {
+      const mapped = data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null }));
+      try {
+        const savedOrder = JSON.parse(localStorage.getItem("vmix_preset_order") || "[]") as string[];
+        if (savedOrder.length > 0) {
+          mapped.sort((a: any, b: any) => {
+            const ai = savedOrder.indexOf(a.id);
+            const bi = savedOrder.indexOf(b.id);
+            if (ai === -1 && bi === -1) return 0;
+            if (ai === -1) return 1;
+            if (bi === -1) return 1;
+            return ai - bi;
+          });
+        }
+      } catch {}
+      setProgramas(mapped);
+    }
+  }, [user]);
+
+  useEffect(() => { loadProgramas(); }, [loadProgramas]);
+
   // Load custom buttons
   const loadCustomButtons = useCallback(async () => {
     if (!user) return;
@@ -2311,9 +2343,19 @@ export default function VmixPage() {
               <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-4">
                 {/* Left: Programas Preset */}
                 <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
-                  <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
-                    <Radio size={14} style={{ color: "#999" }} />
-                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>programas preset</span>
+                  <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                    <div className="flex items-center gap-2">
+                      <Radio size={14} style={{ color: "#999" }} />
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>programas preset</span>
+                    </div>
+                    <button
+                      onClick={() => setEditingPresetId("new")}
+                      className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                      style={{ color: "#22c55e" }}
+                      title="Criar novo programa"
+                    >
+                      <Plus size={14} />
+                    </button>
                   </div>
                   <div className="p-4 space-y-4">
                     {(() => {
@@ -2586,13 +2628,13 @@ export default function VmixPage() {
         {/* NDI tab removed */}
       </div>
       {/* Preset Command Editor */}
-      {editingPresetId && (() => {
-        const prog = programas.find(p => p.id === editingPresetId);
-        if (!prog || !user) return null;
+      {editingPresetId && user && (() => {
+        const prog = editingPresetId === "new" ? { id: "new", nome: "Novo Programa", horario_inicio: "00:00", horario_fim: "00:00" } : programas.find(p => p.id === editingPresetId);
+        if (!prog) return null;
         return (
           <PresetCommandEditor
             open={true}
-            onClose={() => setEditingPresetId(null)}
+            onClose={() => { setEditingPresetId(null); loadProgramas(); }}
             programaId={prog.id}
             programaNome={prog.nome}
             programaHorario={`${prog.horario_inicio?.slice(0,5) || ""} – ${prog.horario_fim?.slice(0,5) || ""}`}
