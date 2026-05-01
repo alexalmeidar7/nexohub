@@ -286,29 +286,6 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#ffffff08", color: "#666" }}>{commands.length} ação(ões)</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Custom schedule time */}
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ backgroundColor: customHorario ? "#22c55e12" : "#ffffff06", border: `1px solid ${customHorario ? "#22c55e30" : "#333"}` }}>
-              <Clock size={12} style={{ color: customHorario ? "#22c55e" : "#666" }} />
-              <input
-                type="time"
-                value={customHorario}
-                onChange={e => setCustomHorario(e.target.value)}
-                className="bg-transparent text-[11px] font-mono outline-none w-[70px]"
-                style={{ color: customHorario ? "#22c55e" : "#666", colorScheme: "dark" }}
-                title={customHorario ? `Horário personalizado: ${customHorario}` : "Definir horário personalizado (vazio = horário da grade)"}
-              />
-              {customHorario && (
-                <button
-                  onClick={() => setCustomHorario("")}
-                  className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/10"
-                  style={{ color: "#888" }}
-                  title="Remover horário personalizado (usar grade)"
-                >
-                  <X size={10} />
-                </button>
-              )}
-            </div>
             <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" style={{ color: "#888" }}>
               <X size={16} />
             </button>
