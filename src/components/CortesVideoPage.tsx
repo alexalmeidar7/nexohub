@@ -517,7 +517,7 @@ export default function CortesVideoPage() {
     setErrorMsg(null);
     setErrorDetails(null);
     setShowErrorDetails(false);
-    setResult(null);
+    setResults([]);
     setProgress(0);
     setStatusMsg("Enviando para o servidor...");
     startTimeRef.current = Date.now();
