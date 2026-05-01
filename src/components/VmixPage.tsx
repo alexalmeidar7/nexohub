@@ -193,6 +193,11 @@ export default function VmixPage() {
     checkLan();
   }, [savedUrl]);
 
+  const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
+    try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
+    catch { return "direct"; }
+  });
+
   // Automatic mode switching based on network detection
   useEffect(() => {
     if (!savedUrl) return;
@@ -243,10 +248,6 @@ export default function VmixPage() {
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [editingCustomButtonId, setEditingCustomButtonId] = useState<string | null | "new">(null);
   const [activeCustomButton, setActiveCustomButton] = useState<string | null>(null);
-  const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
-    try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
-    catch { return "direct"; }
-  });
   // HLS stream URLs per input (for NDI live preview)
   const [inputHlsUrls, setInputHlsUrls] = useState<Record<string, string>>(() => {
     try { const s = localStorage.getItem("vmix_input_hls"); return s ? JSON.parse(s) : {}; } catch { return {}; }
