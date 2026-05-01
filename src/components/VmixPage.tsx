@@ -43,6 +43,7 @@ const isNdiInput = (inp: VmixInput) => {
   return inp.type === "NDI" || inp.title.startsWith("NDI (");
 };
 
+interface SceneCommand {
   id: string;
   fn: string;
   input?: string;
