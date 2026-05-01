@@ -384,13 +384,10 @@ export default function CortesVideoPage() {
         throw new Error("Não foi possível localizar o arquivo gerado pelo motor.");
       }
       
-      const dataLen = typeof data === 'string' ? data.length : (data as Uint8Array).byteLength;
+      const dataAsUint8 = data instanceof Uint8Array ? data : new Uint8Array(0);
+      const dataLen = typeof data === 'string' ? data.length : dataAsUint8.byteLength;
       console.log(`[ffmpeg] Arquivo lido: ${dataLen} bytes`);
       
-      if (!data) {
-        throw new Error("Não foi possível ler o arquivo gerado.");
-      }
-
       // Garantimos um ArrayBuffer limpo para o Blob.
       // Em ambientes multithread, o motor usa SharedArrayBuffer, que não pode ser usado em Blobs diretamente em alguns navegadores.
       let finalData: Uint8Array;
@@ -404,8 +401,12 @@ export default function CortesVideoPage() {
           } else {
             finalData = data;
           }
+        } else if (typeof data === 'string') {
+          // Caso improvável para vídeo, mas tratamos
+          const encoder = new TextEncoder();
+          finalData = encoder.encode(data);
         } else {
-          finalData = new Uint8Array(data as any);
+          finalData = new Uint8Array(0);
         }
       } catch (e) {
         console.error("[ffmpeg] Erro ao processar buffer de saída:", e);
