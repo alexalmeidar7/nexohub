@@ -402,15 +402,19 @@ export default function CortesVideoPage() {
       console.log(`[ffmpeg] Arquivo lido: ${dataLen} bytes`);
       
       // Garantimos um ArrayBuffer limpo para o Blob.
-      // Em ambientes multithread, o motor usa SharedArrayBuffer, que não pode ser usado em Blobs diretamente em alguns navegadores.
       let finalData: Uint8Array;
+      
+      setProgress(95);
+      setStatusMsg("Otimizando memória do vídeo...");
       
       try {
         if (data instanceof Uint8Array) {
           if (typeof SharedArrayBuffer !== 'undefined' && data.buffer instanceof SharedArrayBuffer) {
             console.log("[ffmpeg] Convertendo SharedArrayBuffer para ArrayBuffer...");
             finalData = new Uint8Array(data.byteLength);
+            // set() pode ser pesado para arquivos grandes, mas é necessário
             finalData.set(data);
+            setProgress(97);
           } else {
             finalData = data;
           }
