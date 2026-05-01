@@ -354,32 +354,85 @@ export default function VmixPage() {
 
   useEffect(() => {
     if (!user) return;
-    const loadUrl = async () => {
-      const { data } = await supabase
+    const loadSettings = async () => {
+      // Load global shortcuts
+      const { data: settings } = await supabase
         .from("user_settings")
-        .select("vmix_url, vmix_user, vmix_pass, vmix_shortcuts")
+        .select("vmix_shortcuts")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data?.vmix_url) {
-        setVmixUrl(data.vmix_url);
-        setSavedUrl(data.vmix_url);
-      }
-      if (data?.vmix_user) setVmixUser(data.vmix_user);
-      if (data?.vmix_pass) setVmixPass(data.vmix_pass);
-      if (data?.vmix_shortcuts && typeof data.vmix_shortcuts === "object") {
-        setInputShortcuts(data.vmix_shortcuts as Record<string, string>);
-      }
-      setLoading(false);
       
-      // Auto-connect on load if we have a saved URL
-      if (data?.vmix_url) {
+      if (settings?.vmix_shortcuts && typeof settings.vmix_shortcuts === "object") {
+        setInputShortcuts(settings.vmix_shortcuts as Record<string, string>);
+      }
+
+      // Load all connections
+      const { data: connections } = await supabase
+        .from("vmix_connections" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (connections && connections.length > 0) {
+        setVmixConnections(connections);
+        
+        // Try to find default or most recent
+        const def = connections.find((c: any) => c.is_default) || connections[0];
+        setSelectedConnectionId(def.id);
+        setVmixUrl(def.url);
+        setSavedUrl(def.url);
+        setVmixUser(def.username || "");
+        setVmixPass(def.password || "");
+        setStudioName(def.name);
+        
+        setLoading(false);
+        
+        // Auto-connect
         setTimeout(() => {
           connectToVmixRef.current?.();
         }, 800);
+      } else {
+        // Fallback to old user_settings if no connections in new table yet
+        const { data: oldData } = await supabase
+          .from("user_settings")
+          .select("vmix_url, vmix_user, vmix_pass")
+          .eq("user_id", user.id)
+          .maybeSingle();
+          
+        if (oldData?.vmix_url) {
+          setVmixUrl(oldData.vmix_url);
+          setSavedUrl(oldData.vmix_url);
+          setVmixUser(oldData.vmix_user || "");
+          setVmixPass(oldData.vmix_pass || "");
+          setStudioName("Estúdio Padrão");
+        }
+        setLoading(false);
       }
     };
-    loadUrl();
+    loadSettings();
   }, [user]);
+
+  const loadConnections = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("vmix_connections" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    if (data) setVmixConnections(data);
+  };
+
+  const handleSelectConnection = (conn: any) => {
+    setSelectedConnectionId(conn.id);
+    setVmixUrl(conn.url);
+    setSavedUrl(conn.url);
+    setVmixUser(conn.username || "");
+    setVmixPass(conn.password || "");
+    setStudioName(conn.name);
+    setConnected(false);
+    // Auto connect when switching
+    setTimeout(() => connectToVmix(), 300);
+  };
 
   // Persist connection mode
   useEffect(() => {
