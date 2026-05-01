@@ -1523,6 +1523,17 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
+      // Fetch user profile for event types config
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("event_types_config")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (profile?.event_types_config) {
+        setEventTypesConfig(profile.event_types_config);
+      }
+
       const { data: evts } = await supabase
         .from("agenda_eventos")
         .select("*")
