@@ -1414,6 +1414,9 @@ function ComercialWidgets() {
     </div>
   );
 
+  return null;
+}
+
 function DashboardAgenda({ onNavigate }: { onNavigate: (p: Page) => void }) {
   return (
     <DashboardAgendaOld 
