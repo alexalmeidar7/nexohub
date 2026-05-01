@@ -434,8 +434,11 @@ export default function CortesVideoPage() {
         throw new Error("O vídeo gerado está vazio. Tente ajustar o tempo de início/fim.");
       }
 
+      setProgress(98);
+      setStatusMsg("Gerando link de download...");
       const blob = new Blob([finalData as BlobPart], { type: "video/mp4" });
       const blobUrl = URL.createObjectURL(blob);
+      setProgress(99);
 
       await ffmpeg.deleteFile(inputName).catch(() => {});
       await ffmpeg.deleteFile(outputName).catch(() => {});
