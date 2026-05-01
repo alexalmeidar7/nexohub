@@ -681,17 +681,10 @@ export default function VmixPage() {
   useEffect(() => {
     if (!savedUrl) return;
     
-    // Initial sync
-    silentFailCountRef.current = 0;
-    
+    const pollInterval = connected ? 5000 : 20000;
     const id = setInterval(() => {
-      // If connected, poll every 5s
-      // If disconnected, poll every 20s to try and recover
-      const shouldPoll = connected || (Date.now() % 20000 < 5000); 
-      if (shouldPoll) {
-        silentRefresh();
-      }
-    }, 5000);
+      silentRefresh();
+    }, pollInterval);
     
     return () => clearInterval(id);
   }, [connected, savedUrl, silentRefresh]);
