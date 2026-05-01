@@ -1167,13 +1167,23 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
 
       <div className="flex-1 min-w-0 overflow-y-auto pr-1 space-y-1.5 scrollbar-hide">
         {feriadoHoje && (
-          <div className="p-1.5 rounded-lg bg-red-500/15 border border-red-500/30 mb-1">
-            <div className="flex items-center gap-1">
-              <Star size={9} className="text-red-500 fill-red-500" />
-              <p className="text-[9px] font-black text-red-500 uppercase tracking-tight">Feriado Nacional</p>
-            </div>
-            <p className="text-[10px] font-bold text-red-400 leading-tight mt-0.5">{feriadoHoje}</p>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="p-1.5 rounded-lg bg-red-500/15 border border-red-500/30 mb-1 cursor-help">
+                  <div className="flex items-center gap-1">
+                    <Star size={9} className="text-red-500 fill-red-500" />
+                    <p className="text-[9px] font-black text-red-500 uppercase tracking-tight">Feriado Nacional</p>
+                  </div>
+                  <p className="text-[10px] font-bold text-red-400 leading-tight mt-0.5">{feriadoHoje}</p>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-red-600 text-white border-red-500">
+                <p className="text-[10px] font-bold">{feriadoHoje}</p>
+                <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
         {dayEvents.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center opacity-30">
