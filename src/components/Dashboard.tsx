@@ -10,6 +10,7 @@ import logoFooter from "@/assets/logo-footer.png";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
@@ -1115,7 +1116,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   );
 }
 
-const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayEvents, eventDates, feriadoDates, calMonth, setCalMonth, setSelectedDate }: any) => (
+const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayEvents, eventDates, feriadoDates, calMonth, setCalMonth, setSelectedDate, getFeriadoNome }: any) => (
   <div className="flex flex-col h-full w-full">
     <style>{`
       .dashboard-calendar .has-event-dot { position: relative; }
@@ -1128,9 +1129,19 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
       <div className="flex items-center gap-2">
         <p className="text-[11px] font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>📅 Agenda {selectedDate && `— ${format(selectedDate, "dd/MM")}`}</p>
         {feriadoHoje && (
-          <span className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50">
-            Feriado
-          </span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50 cursor-help">
+                  Feriado
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-red-600 text-white border-red-500">
+                <p className="text-[10px] font-bold">{feriadoHoje}</p>
+                <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : ""}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
       <button
@@ -1151,18 +1162,29 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
           feriadoDates={feriadoDates}
           month={calMonth}
           onMonthChange={setCalMonth}
+          getFeriadoNome={getFeriadoNome}
         />
       </div>
 
       <div className="flex-1 min-w-0 overflow-y-auto pr-1 space-y-1.5 scrollbar-hide">
         {feriadoHoje && (
-          <div className="p-1.5 rounded-lg bg-red-500/15 border border-red-500/30 mb-1">
-            <div className="flex items-center gap-1">
-              <Star size={9} className="text-red-500 fill-red-500" />
-              <p className="text-[9px] font-black text-red-500 uppercase tracking-tight">Feriado Nacional</p>
-            </div>
-            <p className="text-[10px] font-bold text-red-400 leading-tight mt-0.5">{feriadoHoje}</p>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="p-1.5 rounded-lg bg-red-500/15 border border-red-500/30 mb-1 cursor-help">
+                  <div className="flex items-center gap-1">
+                    <Star size={9} className="text-red-500 fill-red-500" />
+                    <p className="text-[9px] font-black text-red-500 uppercase tracking-tight">Feriado Nacional</p>
+                  </div>
+                  <p className="text-[10px] font-bold text-red-400 leading-tight mt-0.5">{feriadoHoje}</p>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-red-600 text-white border-red-500">
+                <p className="text-[10px] font-bold">{feriadoHoje}</p>
+                <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
         {dayEvents.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center opacity-30">
@@ -1556,31 +1578,55 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
       calMonth={calMonth}
       setCalMonth={setCalMonth}
       setSelectedDate={setSelectedDate}
+      getFeriadoNome={getFeriadoNome}
     />
   );
 }
 
-function DashboardCalendar({ selected, onSelect, eventDates, feriadoDates, month, onMonthChange }: {
+function DashboardCalendar({ selected, onSelect, eventDates, feriadoDates, month, onMonthChange, getFeriadoNome }: {
   selected: Date | undefined;
   onSelect: (d: Date | undefined) => void;
   eventDates: Date[];
   feriadoDates: Date[];
   month: Date;
   onMonthChange: (d: Date) => void;
+  getFeriadoNome: (d: Date) => string | null;
 }) {
   return (
-    <CalendarUI
-      mode="single"
-      selected={selected}
-      onSelect={onSelect}
-      month={month}
-      onMonthChange={onMonthChange}
-      locale={ptBR}
-      modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
-      modifiersClassNames={{ 
-        hasEvent: "has-event-dot",
-        isFeriado: "is-feriado-dot"
-      }}
+    <TooltipProvider>
+      <CalendarUI
+        mode="single"
+        selected={selected}
+        onSelect={onSelect}
+        month={month}
+        onMonthChange={onMonthChange}
+        locale={ptBR}
+        modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
+        modifiersClassNames={{ 
+          hasEvent: "has-event-dot",
+          isFeriado: "is-feriado-dot"
+        }}
+        components={{
+          DayContent: ({ date, ...props }) => {
+            const feriado = getFeriadoNome(date);
+            const content = <span>{date.getDate()}</span>;
+            
+            if (feriado) {
+              return (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-help w-full h-full flex items-center justify-center">{content}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-red-600 text-white border-red-500 z-[100]">
+                    <p className="text-[10px] font-bold">{feriado}</p>
+                    <p className="text-[9px] opacity-90">{format(date, "dd/MM")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+            return content;
+          }
+        }}
       className="p-0 pointer-events-auto dashboard-calendar"
       classNames={{
         months: "w-full",
@@ -1605,6 +1651,7 @@ function DashboardCalendar({ selected, onSelect, eventDates, feriadoDates, month
         head_cell: { color: "var(--layout-widget-text, #ffffff)", opacity: 0.5, fontSize: "10px", padding: 0 },
       }}
     />
+    </TooltipProvider>
   );
 }
 

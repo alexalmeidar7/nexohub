@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
-import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User } from "lucide-react";
+import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User, Star } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -1027,6 +1033,24 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
   const [events, setEvents] = useState<any[]>([]);
   const [now, setNow] = useState(new Date());
 
+  const feriadosNacionais = [
+    { dia: 1, mes: 1, nome: "Confraternização Universal" },
+    { dia: 21, mes: 4, nome: "Tiradentes" },
+    { dia: 1, mes: 5, nome: "Dia do Trabalhador" },
+    { dia: 7, mes: 9, nome: "Independência do Brasil" },
+    { dia: 12, mes: 10, nome: "Nossa Senhora Aparecida" },
+    { dia: 2, mes: 11, nome: "Finados" },
+    { dia: 15, mes: 11, nome: "Proclamação da República" },
+    { dia: 20, mes: 11, nome: "Consciência Negra" },
+    { dia: 25, mes: 12, nome: "Natal" },
+  ];
+
+  const getFeriadoNome = (date: Date) => {
+    const f = feriadosNacionais.find(h => h.dia === date.getDate() && h.mes === (date.getMonth() + 1));
+    return f ? f.nome : null;
+  };
+
+
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(new Date());
@@ -1065,6 +1089,21 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
       <div className="flex items-center gap-2 mb-3">
         <CalendarDays size={14} style={{ color: "var(--layout-accent-color)" }} />
         <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text)" }}>Agenda de Eventos</p>
+        {getFeriadoNome(now) && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50 cursor-help">
+                  Feriado
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-red-600 text-white border-red-500">
+                <p className="text-[10px] font-bold">{getFeriadoNome(now)}</p>
+                <p className="text-[9px] opacity-90">{format(now, "dd/MM")}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         {filteredEvents.length > 0 && (
           <span
             className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full"
@@ -1137,6 +1176,22 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                   <p className="text-xs font-semibold truncate leading-tight" style={{ color: "var(--layout-widget-text)" }}>
                     {titulo}
                   </p>
+                  {getFeriadoNome(evDate) && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1 mt-0.5 cursor-help">
+                            <Star size={8} className="text-red-500 fill-red-500" />
+                            <span className="text-[8px] font-bold text-red-500 uppercase tracking-tight">Feriado</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-red-600 text-white border-red-500">
+                          <p className="text-[10px] font-bold">{getFeriadoNome(evDate)}</p>
+                          <p className="text-[9px] opacity-90">{format(evDate, "dd 'de' MMMM", { locale: ptBR })}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   {(() => {
                     const isGravacao = (ev.tipo_evento || "").toString().toLowerCase() === "gravacao";
                     const horarioExibido = isGravacao

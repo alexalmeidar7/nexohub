@@ -28,6 +28,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressInline, { type ExpressEditData } from "@/components/ProgramaExpressInline";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
@@ -1865,20 +1871,53 @@ export default function AgendaPage() {
                 .agenda-calendar .is-feriado-day { position: relative; }
                 .agenda-calendar .is-feriado-day::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background-color: #ef4444; }
               `}</style>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className={cn("p-2 pointer-events-auto agenda-calendar")}
-                locale={ptBR}
-                modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
-                modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day" }}
-              />
+              <TooltipProvider>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className={cn("p-2 pointer-events-auto agenda-calendar")}
+                  locale={ptBR}
+                  modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
+                  modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day" }}
+                  components={{
+                    DayContent: ({ date, ...props }) => {
+                      const feriado = getFeriadoNome(date);
+                      const content = <span>{date.getDate()}</span>;
+                      
+                      if (feriado) {
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help w-full h-full flex items-center justify-center">{content}</span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="bg-red-600 text-white border-red-500 z-[100]">
+                              <p className="text-[10px] font-bold">{feriado}</p>
+                              <p className="text-[9px] opacity-90">{format(date, "dd/MM")}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      }
+                      return content;
+                    }
+                  }}
+                />
+              </TooltipProvider>
               {getFeriadoNome(selectedDate) && (
-                <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5" style={{ color: "#ef4444" }}>
-                  <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
-                  {getFeriadoNome(selectedDate)}
-                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5 cursor-help" style={{ color: "#ef4444" }}>
+                        <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                        {getFeriadoNome(selectedDate)}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-red-600 text-white border-red-500">
+                      <p className="text-[10px] font-bold">{getFeriadoNome(selectedDate)}</p>
+                      <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
           </div>
@@ -2040,10 +2079,20 @@ export default function AgendaPage() {
                       </span>
                     </div>
                     {feriadoNome && (
-                      <div className="flex items-center gap-1 py-0.5 px-1.5 rounded bg-red-500/10 border border-red-500/20">
-                        <Star size={8} className="text-red-500 fill-red-500" />
-                        <span className="text-[8px] font-bold text-red-600 uppercase tracking-wider">Feriado</span>
-                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1 py-0.5 px-1.5 rounded bg-red-500/10 border border-red-500/20 cursor-help">
+                              <Star size={8} className="text-red-500 fill-red-500" />
+                              <span className="text-[8px] font-bold text-red-600 uppercase tracking-wider">Feriado</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-red-600 text-white border-red-500">
+                            <p className="text-[10px] font-bold">{feriadoNome}</p>
+                            <p className="text-[9px] opacity-90">{format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                     <div className="space-y-1">
                       {dayEvents.length === 0 ? (
