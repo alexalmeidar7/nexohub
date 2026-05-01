@@ -1525,6 +1525,10 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
       </div>
     </div>
   );
+}
+
+function DashboardAgendaDeleted2() {
+
 
   const todayStr = format(now, "yyyy-MM-dd");
   const currentTime = format(now, "HH:mm");
