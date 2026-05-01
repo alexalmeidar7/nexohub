@@ -430,13 +430,26 @@ export default function CortesVideoPage() {
         throw new Error("Erro de memória ao processar o vídeo final. Tente um trecho menor.");
       }
 
-      if (finalData.length === 0) {
-        throw new Error("O vídeo gerado está vazio. Tente ajustar o tempo de início/fim.");
+      if (finalData.length < 100) {
+        throw new Error("O vídeo gerado está vazio ou inválido. Tente ajustar o tempo de início/fim.");
+      }
+
+      // Validação de assinatura MP4 (ftyp)
+      // MP4 starts with [any, any, any, any, 'f', 't', 'y', 'p']
+      const isMp4 = finalData.length > 8 && 
+                    finalData[4] === 0x66 && // f
+                    finalData[5] === 0x74 && // t
+                    finalData[6] === 0x79 && // y
+                    finalData[7] === 0x70;    // p
+
+      if (!isMp4) {
+        console.warn("[ffmpeg] Assinatura ftyp não encontrada no início do arquivo.");
+        // Não lançamos erro aqui para não bloquear casos específicos, mas registramos no console
       }
 
       setProgress(98);
       setStatusMsg("Gerando link de download...");
-      const blob = new Blob([finalData as BlobPart], { type: "video/mp4" });
+      const blob = new Blob([finalData], { type: "video/mp4" });
       const blobUrl = URL.createObjectURL(blob);
       setProgress(99);
 
