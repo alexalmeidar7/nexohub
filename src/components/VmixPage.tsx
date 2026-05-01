@@ -730,7 +730,8 @@ export default function VmixPage() {
       }
 
       setConnected(true);
-      toast({ title: "Conectado!", description: `${parsedInputs.length} inputs (modo ${effectiveMode === "direct" ? "direto" : "proxy"}).` });
+      const ndiCount = parsedInputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).length;
+      toast({ title: "Conectado!", description: `${ndiCount} fontes NDI detectadas (modo ${effectiveMode === "direct" ? "direto" : "proxy"}).` });
     } catch (err) {
       setConnected(false);
       const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
@@ -1280,7 +1281,7 @@ export default function VmixPage() {
     </button>
   );
 
-  // Render the select combo with grouped inputs (regular + NDI)
+  // Render the select combo with ONLY NDI inputs
   const renderInputSelect = (value: string | null, onChange: (val: string) => void) => (
     <select
       value={value || ""}
@@ -1288,24 +1289,16 @@ export default function VmixPage() {
       className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
       style={{ backgroundColor: "#222228", color: "#ccc" }}
     >
-      <option value="">— Selecione —</option>
-      {regularInputs.length > 0 && (
-        <optgroup label="Inputs">
-          {regularInputs.map(inp => (
-            <option key={inp.key || inp.number} value={inp.number}>{inp.number} – {inp.title}</option>
-          ))}
-        </optgroup>
-      )}
-      {ndiInputs.length > 0 && (
+      <option value="">— Selecione NDI —</option>
+      {ndiInputs.length > 0 ? (
         <optgroup label="NDI Sources">
           {ndiInputs.map(inp => (
             <option key={inp.key || inp.number} value={inp.number}>🟢 {inp.number} – {inp.title}</option>
           ))}
         </optgroup>
+      ) : (
+        <option disabled>Nenhum input NDI encontrado</option>
       )}
-      {regularInputs.length === 0 && ndiInputs.length === 0 && inputs.map(inp => (
-        <option key={inp.key || inp.number} value={inp.number}>{inp.number} – {inp.title}</option>
-      ))}
     </select>
   );
 
@@ -2149,7 +2142,7 @@ export default function VmixPage() {
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
           <div className="flex flex-wrap gap-2 items-start">
-            {inputs.map(input => {
+            {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).map(input => {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
               const isNdi = input.type === "NDI" || input.title.toLowerCase().includes("ndi");
@@ -2319,8 +2312,8 @@ export default function VmixPage() {
                 </div>
               );
             })}
-            {inputs.length === 0 && (
-              <p className="text-[11px] text-white/30 py-4">Conecte ao vMix para ver os inputs</p>
+            {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).length === 0 && (
+              <p className="text-[11px] text-white/30 py-4">Nenhum input NDI encontrado</p>
             )}
           </div>
         )}
@@ -2783,7 +2776,7 @@ export default function VmixPage() {
             programaNome={prog.nome}
             programaHorario={`${prog.horario_inicio?.slice(0,5) || ""} – ${prog.horario_fim?.slice(0,5) || ""}`}
             userId={user.id}
-            inputs={inputs}
+            inputs={ndiInputs}
             onRunCommands={async (cmds) => {
               await runCommandsUnified(cmds as any[], "Teste concluído");
             }}
@@ -2797,7 +2790,7 @@ export default function VmixPage() {
           onClose={() => setEditingCustomButtonId(null)}
           buttonId={editingCustomButtonId === "new" ? null : editingCustomButtonId}
           userId={user.id}
-          inputs={inputs}
+          inputs={ndiInputs}
           onRunCommands={async (cmds) => {
             await runCommandsUnified(cmds as any[], "Teste concluído");
           }}
