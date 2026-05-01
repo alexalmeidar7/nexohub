@@ -383,14 +383,23 @@ export default function CortesVideoPage() {
       }
 
       // Convert to Blob safely handling both ArrayBuffer and SharedArrayBuffer (multi-threaded FFmpeg)
-      let blobPart: BlobPart = data;
-      if (data instanceof Uint8Array && data.buffer instanceof SharedArrayBuffer) {
-        // SharedArrayBuffer can't be put directly into a Blob in some environments/versions
-        // we slice it to get a regular ArrayBuffer view if needed, or just use the Uint8Array
-        blobPart = new Uint8Array(data); 
+      // FFmpeg @0.12 returns FileData which can be Uint8Array
+      let blob: Blob;
+      if (data instanceof Uint8Array) {
+        // If it's a Uint8Array backed by SharedArrayBuffer, we might need to copy it 
+        // to a regular ArrayBuffer because some browsers don't allow Blobs from SABs
+        if (typeof SharedArrayBuffer !== 'undefined' && data.buffer instanceof SharedArrayBuffer) {
+          const regularArray = new Uint8Array(data.length);
+          regularArray.set(data);
+          blob = new Blob([regularArray], { type: "video/mp4" });
+        } else {
+          blob = new Blob([data], { type: "video/mp4" });
+        }
+      } else {
+        // Fallback for other potential types in FileData
+        blob = new Blob([data as any], { type: "video/mp4" });
       }
       
-      const blob = new Blob([blobPart], { type: "video/mp4" });
       const blobUrl = URL.createObjectURL(blob);
 
       await ffmpeg.deleteFile(inputName).catch(() => {});
