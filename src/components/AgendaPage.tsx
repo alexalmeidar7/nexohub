@@ -793,6 +793,62 @@ export default function AgendaPage() {
     }
   };
 
+  const handleExportFeriados = () => {
+    if (!feriadosNacionais || feriadosNacionais.length === 0) {
+      toast({ title: "Nenhum feriado para exportar", variant: "destructive" });
+      return;
+    }
+
+    // Gerar conteúdo ICS
+    let icsContent = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//NexoHub//Agenda//BR",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH"
+    ].join("\r\n");
+
+    feriadosNacionais.forEach(f => {
+      const date = f.date;
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      // Data formato AAAAMMDD para evento de dia inteiro
+      const dateStr = `${year}${month}${day}`;
+      
+      icsContent += "\r\n" + [
+        "BEGIN:VEVENT",
+        `UID:feriado-${dateStr}@nexohub.com`,
+        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+        `DTSTART;VALUE=DATE:${dateStr}`,
+        `DTEND;VALUE=DATE:${year}${month}${String(date.getDate() + 1).padStart(2, '0')}`,
+        `SUMMARY:Feriado: ${f.nome}`,
+        "DESCRIPTION:Feriado Nacional Brasileiro",
+        "STATUS:CONFIRMED",
+        "TRANSP:TRANSPARENT",
+        "END:VEVENT"
+      ].join("\r\n");
+    });
+
+    icsContent += "\r\nEND:VCALENDAR";
+
+    // Criar blob e link para download
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `feriados_nacionais_${now.getFullYear()}.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({ 
+      title: "Feriados exportados!", 
+      description: "O arquivo .ics foi baixado. Importe-o no seu Google Calendar." 
+    });
+  };
+
 
   const handleClearAllPast = async () => {
     if (!user) return;
