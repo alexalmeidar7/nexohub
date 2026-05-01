@@ -474,7 +474,10 @@ export default function VmixPage() {
     const isLocal = isPrivateIp(savedUrl);
     const isEmbeddedPreview = window.self !== window.top;
     let protocol: "http" | "https" | "unknown" = "unknown";
-    try { protocol = new URL(savedUrl).protocol === "https:" ? "https" : "http"; } catch {}
+    try { 
+      const u = savedUrl.startsWith("http") ? savedUrl : "http://" + savedUrl;
+      protocol = new URL(u).protocol === "https:" ? "https" : "http"; 
+    } catch {}
     const secureCtx = window.isSecureContext;
 
     const result: DiagResult = {
