@@ -405,11 +405,25 @@ export default function VmixPage() {
   // Unified fetch that uses the selected mode (or an explicit override)
   const vmixFetch = useCallback(async (path: string, modeOverride?: "direct" | "proxy"): Promise<string> => {
     const effectiveMode = modeOverride ?? connectionMode;
-    if (effectiveMode === "direct") {
-      return vmixDirectFetch(path);
+    try {
+      if (effectiveMode === "direct") {
+        return await vmixDirectFetch(path);
+      }
+      return await vmixProxyFetch(path);
+    } catch (err) {
+      // Auto-fallback: If proxy fails and it's a local IP, try direct (might work if user is in same LAN)
+      if (effectiveMode === "proxy" && savedUrl && isPrivateIp(savedUrl)) {
+        console.log("Proxy failed for local IP, trying direct fallback...");
+        return await vmixDirectFetch(path);
+      }
+      // If direct fails and it's a public IP, try proxy automatically
+      if (effectiveMode === "direct" && savedUrl && !isPrivateIp(savedUrl)) {
+        console.log("Direct failed for public IP, trying proxy fallback...");
+        return await vmixProxyFetch(path);
+      }
+      throw err;
     }
-    return vmixProxyFetch(path);
-  }, [connectionMode, vmixDirectFetch, vmixProxyFetch]);
+  }, [connectionMode, vmixDirectFetch, vmixProxyFetch, savedUrl]);
 
    // ── Input type visual placeholders (SnapshotInput removed — it saves to disk on vMix!) ──
   const inputTypeColors: Record<string, string> = {
