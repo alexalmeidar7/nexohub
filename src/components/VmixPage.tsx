@@ -1919,6 +1919,23 @@ export default function VmixPage() {
             <div className="ml-auto flex gap-1">
               <button
                 onClick={() => {
+                  const baseUrl = savedUrl.replace(/\/+$/, "");
+                  setMonitorStreamUrls(prev => ({ ...prev, preview: `${baseUrl}/mjpeg?Input=Preview` }));
+                  setMonitorIframeMode(prev => ({ ...prev, preview: false }));
+                  toast({ title: "Vídeo NDI Ativado", description: "Carregando stream MJPEG do vMix Preview." });
+                }}
+                className="text-[8px] px-2 py-0.5 rounded transition-all flex items-center gap-1"
+                style={{
+                  backgroundColor: monitorStreamUrls.preview?.includes("mjpeg") ? "#dc262620" : "#ffffff08",
+                  color: monitorStreamUrls.preview?.includes("mjpeg") ? "#dc2626" : "#666",
+                  border: `1px solid ${monitorStreamUrls.preview?.includes("mjpeg") ? "#dc262640" : "#ffffff10"}`,
+                }}
+                title="Ativar Live Preview (vMix NDI/MJPEG)"
+              >
+                <Monitor size={10} /> LIVE
+              </button>
+              <button
+                onClick={() => {
                   setMonitorIframeMode(prev => ({ ...prev, preview: !prev.preview }));
                   if (!monitorIframeMode.preview) setMonitorStreamUrls(prev => ({ ...prev, preview: "" }));
                 }}
@@ -1940,11 +1957,11 @@ export default function VmixPage() {
                 }}
                 className="text-[8px] px-1.5 py-0.5 rounded transition-all"
                 style={{
-                  backgroundColor: monitorStreamUrls.preview ? "#3b82f620" : "#ffffff08",
-                  color: monitorStreamUrls.preview ? "#3b82f6" : "#666",
-                  border: `1px solid ${monitorStreamUrls.preview ? "#3b82f640" : "#ffffff10"}`,
+                  backgroundColor: monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f620" : "#ffffff08",
+                  color: monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f640" : "#ffffff10"}`,
                 }}
-                title="Configurar URL de stream (MJPEG/HLS)"
+                title="Configurar URL de stream manual (HLS/NDI Bridge)"
               >
                 📡
               </button>
