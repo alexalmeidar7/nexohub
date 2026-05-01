@@ -275,10 +275,14 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #ffffff0a", background: "linear-gradient(135deg, #1e1e28, #22222c)" }}>
           <div className="flex flex-col gap-1">
-            <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#eee" }}>{programaNome}</h2>
+            <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#eee" }}>
+              {programaId === "new" ? "Novo Programa Preset" : (nome || programaNome)}
+            </h2>
             <div className="flex items-center gap-1.5">
               <Clock size={10} style={{ color: "#888" }} />
-              <span className="text-[10px] font-mono" style={{ color: "#888", textDecoration: customHorario ? "line-through" : "none", opacity: customHorario ? 0.5 : 1 }}>{programaHorario}</span>
+              <span className="text-[10px] font-mono" style={{ color: "#888", textDecoration: (customHorario || programaId === "new") ? "none" : "line-through", opacity: (customHorario || programaId === "new") ? 1 : 0.5 }}>
+                {programaId === "new" ? (customHorario || "00:00") : programaHorario}
+              </span>
               <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#ffffff08", color: "#666" }}>{commands.length} ação(ões)</span>
             </div>
           </div>
