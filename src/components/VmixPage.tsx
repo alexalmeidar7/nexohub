@@ -418,7 +418,6 @@ export default function VmixPage() {
       .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
       .eq("user_id", user.id)
       .eq("ativo", true)
-      .ilike("estudio", "%fm%")
       .order("horario_inicio")
       .then(({ data }) => {
         if (data) {
@@ -3047,11 +3046,23 @@ export default function VmixPage() {
                                 title="Editar ações"
                               ><Wand2 size={10} /></button>
                               <button
-                                onClick={(e) => { e.stopPropagation(); setProgramas(prev => prev.filter(p => p.id !== prog.id)); }}
+                                onClick={async (e) => { 
+                                  e.stopPropagation(); 
+                                  if (confirm(`Excluir o programa "${prog.nome}" permanentemente?`)) {
+                                    const { error } = await supabase.from("programas").delete().eq("id", prog.id);
+                                    if (!error) {
+                                      setProgramas(prev => prev.filter(p => p.id !== prog.id));
+                                      toast({ title: "Excluído", description: "Programa removido com sucesso." });
+                                    } else {
+                                      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+                                    }
+                                  }
+                                }}
                                 className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors"
                                 style={{ color: "#f87171" }}
                                 title="Excluir"
                               ><Trash2 size={10} /></button>
+
                             </div>
                           </div>
                         );
