@@ -2632,14 +2632,64 @@ export default function VmixPage() {
                       <Radio size={14} style={{ color: "#999" }} />
                       <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>programas preset</span>
                     </div>
-                    <button
-                      onClick={() => setEditingPresetId("new")}
-                      className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
-                      style={{ color: "#22c55e" }}
-                      title="Criar novo programa"
-                    >
-                      <Plus size={14} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          const data = JSON.stringify(programas, null, 2);
+                          const blob = new Blob([data], { type: "application/json" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `presets-programas-${new Date().toISOString().split("T")[0]}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          toast({ title: "Exportado", description: "Lista de programas exportada com sucesso." });
+                        }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#888" }}
+                        title="Exportar programas"
+                      >
+                        <Download size={12} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = ".json";
+                          input.onchange = async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0];
+                            if (!file) return;
+                            try {
+                              const text = await file.text();
+                              const imported = JSON.parse(text);
+                              if (Array.isArray(imported)) {
+                                // Simple import: we just show them, they are not saved to DB yet unless edited/saved individually
+                                // or we could batch insert. For now, let's just toast and suggest manual re-save if needed
+                                // or better: offer to merge/replace.
+                                setProgramas(prev => [...imported, ...prev.filter(p => !imported.find((i: any) => i.id === p.id))]);
+                                toast({ title: "Importado", description: `${imported.length} programas carregados na lista.` });
+                              }
+                            } catch (err) {
+                              toast({ title: "Erro na importação", variant: "destructive" });
+                            }
+                          };
+                          input.click();
+                        }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#888" }}
+                        title="Importar programas"
+                      >
+                        <Upload size={12} />
+                      </button>
+                      <button
+                        onClick={() => setEditingPresetId("new")}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#22c55e" }}
+                        title="Criar novo programa"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
                   </div>
                   <div className="p-4 space-y-4">
                     {(() => {
