@@ -2187,7 +2187,7 @@ export default function VmixPage() {
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
           <div className="flex flex-wrap gap-2 items-start">
-            {inputs.filter(isNdiInput).map(input => {
+            {inputs.map(input => {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
               const isNdi = isNdiInput(input);
