@@ -167,62 +167,119 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
       toast({ title: "Nome obrigatório", description: "Informe um nome para o programa.", variant: "destructive" });
       return;
     }
+    
+    const time = customHorario || "00:00:00";
+    
+    // Conflit validation
     setSaving(true);
-
-    let currentProgId = programaId;
-
-    // Se for novo ou se quiser atualizar os dados básicos do programa
-    if (programaId === "new") {
-      const { data: newProg, error: progErr } = await supabase
+    try {
+      const { data: conflictProgs, error: conflictErr } = await supabase
         .from("programas")
-        .insert({
-          user_id: userId,
-          nome: nome.trim(),
-          estudio,
-          dias_semana: diasSemana,
-          data_variavel: dataEspecifica || null,
-          horario_inicio: customHorario || "00:00:00",
-          horario_fim: customHorario || "00:00:00",
-          ativo: true
-        })
-        .select()
-        .single();
-      
-      if (progErr || !newProg) {
-        toast({ title: "Erro ao criar programa", variant: "destructive" });
+        .select("id, nome, estudio, horario_inicio, dias_semana, data_variavel")
+        .eq("user_id", userId)
+        .eq("estudio", estudio)
+        .eq("horario_inicio", time.length === 5 ? `${time}:00` : time)
+        .neq("id", programaId === "new" ? "00000000-0000-0000-0000-000000000000" : programaId); // Evita comparar com si mesmo
+
+      if (conflictErr) throw conflictErr;
+
+      // Check if there is a real overlap in days or specific date
+      const hasConflict = conflictProgs?.some(p => {
+        // Se ambos têm data específica e é a mesma
+        if (dataEspecifica && p.data_variavel === dataEspecifica) return true;
+        
+        // Se um tem data específica e o outro não, mas o dia da semana coincide
+        if (dataEspecifica && !p.data_variavel) {
+          const dateObj = new Date(dataEspecifica + "T12:00:00");
+          const dayName = DIAS_SEMANA_OPCOES[dateObj.getDay()];
+          if (p.dias_semana?.includes(dayName)) return true;
+        }
+
+        if (!dataEspecifica && p.data_variavel) {
+          const dateObj = new Date(p.data_variavel + "T12:00:00");
+          const dayName = DIAS_SEMANA_OPCOES[dateObj.getDay()];
+          if (diasSemana.includes(dayName)) return true;
+        }
+
+        // Se ambos usam dias da semana, verificar interseção
+        if (!dataEspecifica && !p.data_variavel) {
+          return diasSemana.some(d => p.dias_semana?.includes(d));
+        }
+
+        return false;
+      });
+
+      if (hasConflict) {
+        const conflict = conflictProgs!.find(() => true);
+        toast({ 
+          title: "Conflito de Agendamento", 
+          description: `Já existe o programa "${conflict?.nome}" agendado para este horário no ${estudio}.`, 
+          variant: "destructive" 
+        });
         setSaving(false);
         return;
       }
-      currentProgId = newProg.id;
-    } else {
-      // Atualizar dados básicos se programa já existe
-      await supabase
-        .from("programas")
-        .update({
-          nome: nome.trim(),
-          estudio,
-          dias_semana: diasSemana,
-          data_variavel: dataEspecifica || null,
-          horario_inicio: customHorario || "00:00:00",
-        })
-        .eq("id", programaId);
-    }
 
-    const payload: any = { commands, custom_horario: customHorario || null };
-    const { data: existing } = await (supabase.from("preset_commands" as any) as any)
-      .select("id")
-      .eq("user_id", userId)
-      .eq("programa_id", currentProgId)
-      .maybeSingle();
+      let currentProgId = programaId;
 
-    if (existing) {
-      await (supabase.from("preset_commands" as any) as any).update(payload).eq("id", existing.id);
-    } else {
-      await (supabase.from("preset_commands" as any) as any).insert({ user_id: userId, programa_id: currentProgId, ...payload });
+      // Se for novo ou se quiser atualizar os dados básicos do programa
+      if (programaId === "new") {
+        const { data: newProg, error: progErr } = await supabase
+          .from("programas")
+          .insert({
+            user_id: userId,
+            nome: nome.trim(),
+            estudio,
+            dias_semana: diasSemana,
+            data_variavel: dataEspecifica || null,
+            horario_inicio: time,
+            horario_fim: time,
+            ativo: true
+          })
+          .select()
+          .single();
+        
+        if (progErr || !newProg) {
+          toast({ title: "Erro ao criar programa", variant: "destructive" });
+          setSaving(false);
+          return;
+        }
+        currentProgId = newProg.id;
+      } else {
+        // Atualizar dados básicos se programa já existe
+        await supabase
+          .from("programas")
+          .update({
+            nome: nome.trim(),
+            estudio,
+            dias_semana: diasSemana,
+            data_variavel: dataEspecifica || null,
+            horario_inicio: time,
+          })
+          .eq("id", programaId);
+      }
+
+      const payload: any = { commands, custom_horario: customHorario || null };
+      const { data: existing } = await (supabase.from("preset_commands" as any) as any)
+        .select("id")
+        .eq("user_id", userId)
+        .eq("programa_id", currentProgId)
+        .maybeSingle();
+
+      if (existing) {
+        await (supabase.from("preset_commands" as any) as any).update(payload).eq("id", existing.id);
+      } else {
+        await (supabase.from("preset_commands" as any) as any).insert({ user_id: userId, programa_id: currentProgId, ...payload });
+      }
+      
+      toast({ title: "Ações salvas", description: `${commands.length} comando(s) salvos para ${nome || programaNome}.` });
+      onClose();
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erro ao salvar", variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    toast({ title: "Ações salvas", description: `${commands.length} comando(s) salvos para ${nome || programaNome}.` });
-    onClose();
   };
 
   const runAll = async () => {
