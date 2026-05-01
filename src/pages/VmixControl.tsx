@@ -142,7 +142,7 @@ export default function VmixControl() {
           </button>
         </div>
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <img src={logoMixControl} alt="Mix Control" className="h-5" />
+          <img src={logoMixControl} alt="NEXO VMIX CONTROL" className="h-6" />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-white/60 text-xs">{user.email}</span>
