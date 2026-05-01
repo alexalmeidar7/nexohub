@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Hls from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -1253,6 +1253,10 @@ export default function VmixPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [effectiveConnected, capturingShortcut]);
 
+  // Group inputs for combo: regular inputs and NDI inputs
+  const ndiInputs = useMemo(() => inputs.filter(isNdiInput), [inputs]);
+  const regularInputs = useMemo(() => inputs.filter(i => !isNdiInput(i)), [inputs]);
+
   if (loading) return <ModulePageSkeleton />;
 
   const hasLocalHttpUrl = savedUrl && isPrivateIp(savedUrl) && isInsecureHttpUrl(savedUrl);
@@ -1260,16 +1264,11 @@ export default function VmixPage() {
 
   const previewDomain = window.location.origin;
 
-
   // Helper: get input label with type indicator
   const inputLabel = (inp: VmixInput) => {
     const isNdi = isNdiInput(inp);
     return `${inp.number} – ${isNdi ? "🟢 " : ""}${inp.title}${isNdi ? " (NDI)" : ""}`;
   };
-
-  // Group inputs for combo: regular inputs and NDI inputs
-  const ndiInputs = useMemo(() => inputs.filter(isNdiInput), [inputs]);
-  const regularInputs = useMemo(() => inputs.filter(i => !isNdiInput(i)), [inputs]);
 
   // ── Styles ──
   const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, _color = "#888") => (
