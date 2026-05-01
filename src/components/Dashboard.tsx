@@ -1341,6 +1341,29 @@ function DashboardAgenda() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [calMonth, setCalMonth] = useState(new Date());
 
+  const feriadosNacionais = [
+    { dia: 1, mes: 1, nome: "Confraternização Universal" },
+    { dia: 21, mes: 4, nome: "Tiradentes" },
+    { dia: 1, mes: 5, nome: "Dia do Trabalhador" },
+    { dia: 7, mes: 9, nome: "Independência do Brasil" },
+    { dia: 12, mes: 10, nome: "Nossa Senhora Aparecida" },
+    { dia: 2, mes: 11, nome: "Finados" },
+    { dia: 15, mes: 11, nome: "Proclamação da República" },
+    { dia: 20, mes: 11, nome: "Consciência Negra" },
+    { dia: 25, mes: 12, nome: "Natal" },
+  ];
+
+  const getFeriadoNome = (date?: Date) => {
+    if (!date) return null;
+    const f = feriadosNacionais.find(h => h.dia === date.getDate() && h.mes === (date.getMonth() + 1));
+    return f ? f.nome : null;
+  };
+
+  const feriadoDates = feriadosNacionais.map(f => {
+    const d = new Date();
+    return new Date(d.getFullYear(), f.mes - 1, f.dia);
+  });
+
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
