@@ -77,10 +77,11 @@ export default function CortesVideoPage() {
   const [ffmpegReady, setFfmpegReady] = useState(false);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
 
+  const resultRef = useRef<HTMLDivElement>(null);
   // Shared
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [format, setFormat] = useState<"fullhd" | "reel">("fullhd");
+  const [format, setFormat] = useState<"fullhd" | "reel" | "original">("fullhd");
   const [cutting, setCutting] = useState(false);
   const [result, setResult] = useState<{
     blob_url?: string;
@@ -122,6 +123,12 @@ export default function CortesVideoPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (result && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [result]);
 
   const loadFfmpeg = async () => {
     if (ffmpegRef.current && ffmpegReady) return ffmpegRef.current;
@@ -209,30 +216,41 @@ export default function CortesVideoPage() {
 
       await ffmpeg.writeFile(inputName, await fetchFile(localFile));
 
-      setStatusMsg("Processando corte...");
-      const vf =
-        format === "reel"
-          ? "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1"
-          : "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,setsar=1";
-
-      // Detect audio track presence by probing log output
-      let hasAudio = true;
-      try {
-        const probeLog: string[] = [];
-        const probeListener = ({ message }: { message: string }) => probeLog.push(message);
-        ffmpeg.on("log", probeListener);
-        await ffmpeg.exec(["-i", inputName, "-hide_banner"]).catch(() => {});
-        ffmpeg.off("log", probeListener);
-        hasAudio = probeLog.some((l) => /Stream #\d+:\d+.*Audio:/i.test(l));
-      } catch { /* assume audio */ }
-
-      const args: string[] = ["-i", inputName, "-ss", String(startSeconds), "-t", String(duration), "-vf", vf,
-        "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p"];
-      if (hasAudio) {
-        args.push("-c:a", "aac", "-b:a", "128k", "-ac", "2");
+      setStatusMsg(format === "original" ? "Recortando instantaneamente..." : "Processando corte...");
+      
+      const args: string[] = [];
+      
+      // For "original" format, we use stream copy which is near-instant.
+      // We put -ss before -i for fast seeking.
+      if (format === "original") {
+        args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-c", "copy");
       } else {
-        args.push("-an");
+        const vf =
+          format === "reel"
+            ? "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1"
+            : "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,setsar=1";
+
+        // Detect audio track presence by probing log output
+        let hasAudio = true;
+        try {
+          const probeLog: string[] = [];
+          const probeListener = ({ message }: { message: string }) => probeLog.push(message);
+          ffmpeg.on("log", probeListener);
+          await ffmpeg.exec(["-i", inputName, "-hide_banner"]).catch(() => {});
+          ffmpeg.off("log", probeListener);
+          hasAudio = probeLog.some((l) => /Stream #\d+:\d+.*Audio:/i.test(l));
+        } catch { /* assume audio */ }
+
+        args.push("-i", inputName, "-ss", String(startSeconds), "-t", String(duration), "-vf", vf,
+          "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p");
+        
+        if (hasAudio) {
+          args.push("-c:a", "aac", "-b:a", "128k", "-ac", "2");
+        } else {
+          args.push("-an");
+        }
       }
+      
       args.push("-movflags", "+faststart", "-y", outputName);
 
       const exitCode = await ffmpeg.exec(args);
@@ -520,6 +538,7 @@ export default function CortesVideoPage() {
               {([
                 { k: "fullhd" as const, label: "FULL HD", sub: "1920 × 1080", w: 56, h: 32 },
                 { k: "reel" as const, label: "REEL", sub: "1080 × 1920", w: 32, h: 56 },
+                { k: "original" as const, label: "ORIGINAL", sub: "Sem Alteração", w: 44, h: 44 },
               ]).map(({ k, label, sub, w, h }) => {
                 const active = format === k;
                 return (
@@ -550,8 +569,10 @@ export default function CortesVideoPage() {
               })}
               <p className="text-[10px] leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                 {format === "reel"
-                  ? "Vertical: o vídeo é centralizado e cortado nas laterais (sem distorção)."
-                  : "Horizontal padrão para TV/web."}
+                  ? "Vertical: o vídeo é centralizado e cortado nas laterais (ideal para Reels/TikTok)."
+                  : format === "original"
+                  ? "Ultra-rápido: mantém a qualidade original e corta em segundos (pode haver pequena variação no início/fim)."
+                  : "Horizontal padrão: 1920x1080 (YouTube/TV)."}
               </p>
             </div>
           </div>
@@ -577,7 +598,7 @@ export default function CortesVideoPage() {
 
         {/* Result */}
         {result && (
-          <div className="space-y-4">
+          <div className="space-y-4" ref={resultRef}>
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
               <div className="p-4 flex justify-center">
                 <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: result.is_local && format === "reel" ? 320 : 640 }}>
