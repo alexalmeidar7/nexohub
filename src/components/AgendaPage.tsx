@@ -2114,8 +2114,13 @@ export default function AgendaPage() {
                         </p>
                       ) : (
                         dayEvents.slice(0, 4).map((evt) => {
-                          const sc = studioColors(evt.programa?.estudio);
-                          const isLive = (evt.tipo_evento || "live") === "live";
+                          const eventConfig = eventTypesConfig?.[evt.tipo_evento || "live"];
+                          const sc = { 
+                            bg: `${eventConfig?.color || "#2563eb"}15`, 
+                            border: eventConfig?.color || "#2563eb",
+                            text: eventConfig?.color || "#2563eb"
+                          };
+                          const label = eventConfig?.label || (evt.tipo_evento === "live" ? "LIVE" : evt.tipo_evento?.toUpperCase());
                           return (
                             <div
                               key={evt.id}
