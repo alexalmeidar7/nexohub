@@ -134,32 +134,45 @@ export default function CortesVideoPage() {
 
   const loadFfmpeg = async () => {
     if (ffmpegRef.current && ffmpegReady) return ffmpegRef.current;
+    
+    // Initialize status and progress for fresh load
     setStatusMsg("Carregando motor de vídeo (primeira vez ~25MB)...");
+    setProgress(0);
+    
     const ffmpeg = new FFmpeg();
     ffmpeg.on("progress", ({ progress: p }) => {
       setProgress(Math.min(99, Math.round(p * 100)));
     });
-    // Use single-thread build (no SharedArrayBuffer / COOP-COEP required).
-    // Try jsDelivr first, fallback to unpkg if it fails.
+
     const cdns = [
       "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd",
       "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
+      "https://cdnjs.cloudflare.com/ajax/libs/ffmpeg-core/0.12.6/umd"
     ];
+    
     let lastErr: any = null;
     for (const baseURL of cdns) {
       try {
+        console.log(`[ffmpeg] Tentando carregar de: ${baseURL}`);
         await ffmpeg.load({
           coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
           wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
         });
         lastErr = null;
+        console.log(`[ffmpeg] Carregado com sucesso de: ${baseURL}`);
         break;
       } catch (e) {
         console.warn("[ffmpeg] CDN load failed:", baseURL, e);
         lastErr = e;
       }
     }
-    if (lastErr) throw new Error("Não foi possível carregar o motor de vídeo. Verifique sua conexão e tente novamente.");
+    
+    if (lastErr) {
+      const msg = "Não foi possível carregar o motor de vídeo. Verifique sua conexão e tente novamente.";
+      setStatusMsg(msg);
+      throw new Error(msg);
+    }
+    
     ffmpegRef.current = ffmpeg;
     setFfmpegReady(true);
     return ffmpeg;
@@ -181,48 +194,47 @@ export default function CortesVideoPage() {
   const handleCutLocal = async () => {
     if (!localFile || !canCut) return;
 
-    // Validate against actual video duration
-    if (localDuration > 0 && endSeconds > Math.ceil(localDuration)) {
-      toast({
-        title: "Tempo final inválido",
-        description: `O vídeo tem apenas ${formatDuration(Math.floor(localDuration))}. Ajuste o tempo final.`,
-        variant: "destructive",
-      });
-      return;
-    }
-    if (localDuration > 0 && startSeconds >= Math.ceil(localDuration)) {
-      toast({
-        title: "Tempo inicial inválido",
-        description: `O tempo inicial deve ser menor que ${formatDuration(Math.floor(localDuration))}.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setCutting(true);
-    setProgress(0);
-    setResult(null);
-    startTimeRef.current = Date.now();
-    
-    // Estimate time based on file size and format
-    const sizeMB = localFile.size / (1024 * 1024);
-    let estimate = 0;
-    if (format === "original") {
-      estimate = Math.max(2, sizeMB / 100); // Original is very fast
-    } else {
-      const complexity = format === "reel" ? 1.5 : 1;
-      estimate = Math.max(5, (sizeMB * 0.15) * complexity + (duration * 0.2));
-    }
-    setEstimatedSeconds(Math.round(estimate));
-
     let ffmpegLog = "";
     try {
+      setCutting(true);
+      setProgress(0);
+      setResult(null);
+      
       const ffmpeg = await loadFfmpeg();
+      
+      if (localDuration > 0 && endSeconds > Math.ceil(localDuration)) {
+        toast({
+          title: "Tempo final inválido",
+          description: `O vídeo tem apenas ${formatDuration(Math.floor(localDuration))}. Ajuste o tempo final.`,
+          variant: "destructive",
+        });
+        setCutting(false);
+        return;
+      }
+      if (localDuration > 0 && startSeconds >= Math.ceil(localDuration)) {
+        toast({
+          title: "Tempo inicial inválido",
+          description: `O tempo inicial deve ser menor que ${formatDuration(Math.floor(localDuration))}.`,
+          variant: "destructive",
+        });
+        setCutting(false);
+        return;
+      }
+
+      startTimeRef.current = Date.now();
+      const sizeMB = localFile.size / (1024 * 1024);
+      let estimate = 0;
+      if (format === "original") {
+        estimate = Math.max(2, sizeMB / 100);
+      } else {
+        const complexity = format === "reel" ? 1.5 : 1;
+        estimate = Math.max(5, (sizeMB * 0.15) * complexity + (duration * 0.2));
+      }
+      setEstimatedSeconds(Math.round(estimate));
+
       ffmpeg.on("log", ({ message }) => {
         ffmpegLog += message + "\n";
         console.log("[ffmpeg]", message);
-        
-        // Dynamic status updates based on FFmpeg logs
         if (message.includes("frame=")) {
           setStatusMsg(format === "reel" ? "Formatando para REEL..." : "Processando frames...");
         }
@@ -236,7 +248,6 @@ export default function CortesVideoPage() {
       await ffmpeg.writeFile(inputName, await fetchFile(localFile));
 
       setStatusMsg("Iniciando o corte...");
-      
       const args: string[] = [];
       
       if (format === "original") {
@@ -272,7 +283,6 @@ export default function CortesVideoPage() {
       }
       
       args.push("-movflags", "+faststart", "-y", outputName);
-
       const exitCode = await ffmpeg.exec(args);
 
       if (exitCode !== 0) {
@@ -309,7 +319,6 @@ export default function CortesVideoPage() {
         variant: "destructive",
       });
       setStatusMsg("");
-
     } finally {
       setCutting(false);
     }
