@@ -1031,7 +1031,23 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
   const { user } = useAuth();
   const uid = dataUserId || user?.id;
   const [events, setEvents] = useState<any[]>([]);
-  const [now, setNow] = useState(new Date());
+  const feriadosNacionais = [
+    { dia: 1, mes: 1, nome: "Confraternização Universal" },
+    { dia: 21, mes: 4, nome: "Tiradentes" },
+    { dia: 1, mes: 5, nome: "Dia do Trabalhador" },
+    { dia: 7, mes: 9, nome: "Independência do Brasil" },
+    { dia: 12, mes: 10, nome: "Nossa Senhora Aparecida" },
+    { dia: 2, mes: 11, nome: "Finados" },
+    { dia: 15, mes: 11, nome: "Proclamação da República" },
+    { dia: 20, mes: 11, nome: "Consciência Negra" },
+    { dia: 25, mes: 12, nome: "Natal" },
+  ];
+
+  const getFeriadoNome = (date: Date) => {
+    const f = feriadosNacionais.find(h => h.dia === date.getDate() && h.mes === (date.getMonth() + 1));
+    return f ? f.nome : null;
+  };
+
 
   useEffect(() => {
     const timer = setInterval(() => {
