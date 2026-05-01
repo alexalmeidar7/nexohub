@@ -244,7 +244,7 @@ export default function VmixPage() {
   }
   const [diagRunning, setDiagRunning] = useState(false);
   const [diagResult, setDiagResult] = useState<DiagResult | null>(null);
-  const [showMixedContentDialog, setShowMixedContentDialog] = useState(false);
+  // const [showMixedContentDialog, setShowMixedContentDialog] = useState(false); // REMOVED as requested
   const connectToVmixRef = useRef<(() => Promise<void>) | null>(null);
   const ndiAutoScanDoneRef = useRef(false);
   const silentFailCountRef = useRef(0);
