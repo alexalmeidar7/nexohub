@@ -2000,6 +2000,7 @@ export default function AgendaPage() {
               <div className="p-3 space-y-1.5 max-h-[400px] overflow-y-auto scrollbar-hide">
                 {feriadosNacionais
                   .filter(f => f.date >= new Date(new Date().setHours(0,0,0,0)))
+                  .sort((a, b) => a.date.getTime() - b.date.getTime())
                   .slice(0, 8)
                   .map((f, idx) => (
                     <div 
