@@ -286,10 +286,9 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#ffffff08", color: "#666" }}>{commands.length} ação(ões)</span>
             </div>
           </div>
-            <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" style={{ color: "#888" }}>
-              <X size={16} />
-            </button>
-          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" style={{ color: "#888" }}>
+            <X size={16} />
+          </button>
         </div>
 
         {/* Configurações do Programa */}
