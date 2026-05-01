@@ -244,7 +244,7 @@ export default function VmixPage() {
   }
   const [diagRunning, setDiagRunning] = useState(false);
   const [diagResult, setDiagResult] = useState<DiagResult | null>(null);
-  const [showMixedContentDialog, setShowMixedContentDialog] = useState(false);
+  
   const connectToVmixRef = useRef<(() => Promise<void>) | null>(null);
   const ndiAutoScanDoneRef = useRef(false);
   const silentFailCountRef = useRef(0);
@@ -642,7 +642,8 @@ export default function VmixPage() {
       result.recommendation = isEmbeddedPreview
         ? "⚠️ O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' no navegador para esse domínio."
         : "⚠️ Conexão falhou. Se você JÁ permitiu 'Conteúdo Inseguro' no cadeado do navegador, verifique: 1) O IP/Porta estão corretos? 2) O vMix está aberto? 3) O Firewall do Windows permite a porta 8088?";
-      if (!isEmbeddedPreview && result.directResult === "fail") setShowMixedContentDialog(true);
+      if (!isEmbeddedPreview && result.directResult === "fail") {
+      }
     } else if (isLocal) {
       result.recommendation = "⚠️ IP local detectado. Use modo Direto na mesma rede local; o modo Proxy só funciona com URL pública/túnel.";
     } else {
@@ -739,7 +740,7 @@ export default function VmixPage() {
         /failed to fetch|networkerror|mixed content|cors/i.test(message);
 
       if (isMixedOrCorsLikely) {
-        setShowMixedContentDialog(true);
+        
       }
 
       const hint = isMixedOrCorsLikely
@@ -1767,67 +1768,7 @@ export default function VmixPage() {
 
   return (
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e0e0e0" }}>
-      {/* ── CONNECTION ALERT ── */}
-      {!connected && savedUrl && !loading && (
-        <div className="p-4 rounded-xl border border-yellow-500/20 bg-yellow-500/5 animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-yellow-500/10">
-              <WifiOff className="text-yellow-500" size={20} />
-            </div>
-            <div className="flex-1 space-y-2">
-              <h3 className="text-sm font-bold text-yellow-500">Conexão com vMix Inativa</h3>
-              <p className="text-xs text-white/60 leading-relaxed">
-                Não conseguimos conectar ao vMix em <code className="px-1.5 py-0.5 rounded bg-white/5 text-white/80">{savedUrl}</code>. 
-                {isPrivateIp(savedUrl) ? (
-                  <>
-                    <br /><br />
-                    <strong>Rede Local Detectada:</strong> Como o NexoHub usa HTTPS, o navegador bloqueia conexões HTTP locais por segurança.
-                    <ul className="list-disc ml-4 mt-2 space-y-1">
-                      <li>Abra este painel em uma <strong>nova aba</strong> (não use o preview interno).</li>
-                      <li>Clique no ícone de <strong>Cadeado/Configurações</strong> na barra de endereços.</li>
-                      <li>Vá em <strong>Configurações do Site</strong> e altere "Conteúdo Inseguro" para <strong>Permitir</strong>.</li>
-                      <li>Recarregue a página e clique em Conectar.</li>
-                    </ul>
-                  </>
-                ) : (
-                  " Verifique se o IP está correto, se o Web Controller está ativo no vMix (Porta 8088) e se o Firewall permite a conexão."
-                )}
-              </p>
-              <div className="flex gap-2 pt-2">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => connectToVmix()} 
-                  disabled={connecting}
-                  className="h-8 text-[11px] bg-yellow-500/10 border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-500"
-                >
-                  {connecting ? <Loader2 className="animate-spin mr-2" size={12} /> : <RefreshCw className="mr-2" size={12} />}
-                  Tentar Novamente
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  onClick={() => runDiagnostic()}
-                  className="h-8 text-[11px] text-white/40 hover:text-white"
-                >
-                  Executar Diagnóstico
-                </Button>
-                {isPrivateIp(savedUrl) && window.self !== window.top && (
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => window.open(window.location.href, "_blank")}
-                    className="h-8 text-[11px] bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20 text-blue-400"
-                  >
-                    <ExternalLink className="mr-2" size={12} />
-                    Abrir em Nova Aba
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── CONNECTION ALERT REMOVED ── */}
 
       {/* ── URL + GO LIVE / RECORD row ── */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -2932,77 +2873,7 @@ export default function VmixPage() {
         </div>
       </div>
 
-      <Dialog open={showMixedContentDialog} onOpenChange={setShowMixedContentDialog}>
-        <DialogContent className="sm:max-w-[500px] bg-[#1a1a1f] border-[#ffffff10] text-white">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-yellow-500">
-              <Lock size={20} />
-              Bloqueio de Segurança Detectado
-            </DialogTitle>
-            <DialogDescription className="text-white/60 pt-2">
-              O navegador está bloqueando a conexão com o seu vMix local (HTTP) porque este site usa segurança máxima (HTTPS).
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="rounded-lg p-4 bg-yellow-500/5 border border-yellow-500/10 space-y-3">
-              <p className="text-xs font-semibold text-yellow-500/90 uppercase tracking-wider">Como liberar a conexão:</p>
-              
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="w-5 h-5 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">1</div>
-                  <p className="text-xs text-white/80">Clique no ícone de <span className="font-bold text-white">🔒 Cadeado</span> ou <span className="font-bold text-white">⚙️ Ajustes</span> na barra de endereços (ao lado da URL).</p>
-                </div>
-                
-                <div className="flex gap-3">
-                  <div className="w-5 h-5 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">2</div>
-                  <p className="text-xs text-white/80">Clique em <span className="font-bold text-white">Configurações do site</span>.</p>
-                </div>
-                
-                <div className="flex gap-3">
-                  <div className="w-5 h-5 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">3</div>
-                  <p className="text-xs text-white/80">Encontre <span className="font-bold text-white">Conteúdo inseguro</span> (Insecure content) e mude para <span className="font-bold text-green-400">Permitir</span>.</p>
-                </div>
-                
-                <div className="flex gap-3">
-                  <div className="w-5 h-5 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">4</div>
-                  <p className="text-xs text-white/80">Volte aqui e clique em <span className="font-bold text-white">Conectar agora</span>.</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-              <p className="text-[10px] text-blue-400 font-bold uppercase mb-1">Dica importante:</p>
-              <p className="text-[10px] text-white/70">
-                Se após permitir o erro persistir, verifique se o vMix está aberto e se a porta <span className="text-white font-mono">8088</span> está liberada no seu Firewall.
-              </p>
-            </div>
-
-            <p className="text-[10px] text-white/40 text-center italic">
-              Por questões de segurança do navegador, sites não podem alterar essa configuração automaticamente.
-            </p>
-          </div>
-          
-          <DialogFooter className="flex gap-2 sm:justify-center">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowMixedContentDialog(false)}
-              className="bg-transparent border-white/10 text-white/60 hover:text-white"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={() => {
-                setShowMixedContentDialog(false);
-                connectToVmix();
-              }}
-              className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
-            >
-              Conectar agora
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Instruction Dialog REMOVED */}
     </div>
   );
 }
