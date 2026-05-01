@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
       const [apsResult, logosResult] = await withTimeout(
         Promise.all([
           apIds.length
-            ? supabase.from("apresentadores").select("nome, foto").in("id", apIds)
+            ? supabase.from("apresentadores").select("nome, foto, instagram").in("id", apIds)
             : Promise.resolve({ data: null }),
           supabase
             .from("logos_patrocinadores")
@@ -162,6 +162,7 @@ Deno.serve(async (req) => {
       const apresentadorNome = apsResult.data?.map((a: any) => a.nome).join(", ") || "";
       const apresentadoresFotos = (apsResult.data || []).map((a: any) => a.foto).filter((f: any) => !!f);
       const apresentadorFoto = apresentadoresFotos[0] || "";
+      const apresentadorInstagram = apsResult.data?.map((a: any) => a.instagram).filter((i: any) => !!i).join(", ") || "";
 
       currentProgram = {
         nome: onAir.nome,
@@ -174,6 +175,7 @@ Deno.serve(async (req) => {
         apresentador: apresentadorNome,
         apresentadorFoto,
         apresentadoresFotos,
+        apresentadorInstagram,
         tipo_programa: onAir.tipo_programa || null,
       };
 
