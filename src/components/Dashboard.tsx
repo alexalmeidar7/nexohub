@@ -1585,6 +1585,46 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
     if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) return false;
     return true;
   });
+  const handleExportFeriados = () => {
+    let icsContent = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//NexoHub//Dashboard//BR",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH"
+    ].join("\r\n");
+
+    const year = now.getFullYear();
+    feriadosNacionais.forEach(f => {
+      const month = String(f.mes).padStart(2, '0');
+      const day = String(f.dia).padStart(2, '0');
+      const dateStr = `${year}${month}${day}`;
+      
+      icsContent += "\r\n" + [
+        "BEGIN:VEVENT",
+        `UID:feriado-${dateStr}@nexohub.com`,
+        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+        `DTSTART;VALUE=DATE:${dateStr}`,
+        `DTEND;VALUE=DATE:${year}${month}${String(f.dia + 1).padStart(2, '0')}`,
+        `SUMMARY:Feriado: ${f.nome}`,
+        "DESCRIPTION:Feriado Nacional Brasileiro",
+        "STATUS:CONFIRMED",
+        "TRANSP:TRANSPARENT",
+        "END:VEVENT"
+      ].join("\r\n");
+    });
+
+    icsContent += "\r\nEND:VCALENDAR";
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `feriados_${year}.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   const feriadoHoje = getFeriadoNome(selectedDate || new Date());
   const eventDates = getCalendarDates();
