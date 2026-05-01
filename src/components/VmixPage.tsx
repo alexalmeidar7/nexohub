@@ -1059,7 +1059,7 @@ export default function VmixPage() {
   const detectedMachines = useMemo(() => {
     const machines = new Set<string>();
     inputs.forEach(inp => {
-      if (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi")) {
+      if (isNdiInput(inp)) {
         const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
         if (match) machines.add(match[1]);
       }
