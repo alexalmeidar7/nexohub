@@ -84,9 +84,6 @@ export default function CortesVideoPage() {
   const [errorDetails, setErrorDetails] = useState<{ stack?: string; log?: string; exitCode?: number } | null>(null);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
 
-  // Shared
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
   const [format, setFormat] = useState<"fullhd" | "reel" | "original">("fullhd");
   const [cutting, setCutting] = useState(false);
   const [result, setResult] = useState<{
@@ -108,6 +105,13 @@ export default function CortesVideoPage() {
   const activeClip = useMemo(() => clips.find(c => c.id === activeClipId) || clips[0], [clips, activeClipId]);
   const startTime = activeClip.start;
   const endTime = activeClip.end;
+
+  const setStartTime = (val: string) => {
+    setClips(prev => prev.map(c => c.id === activeClipId ? { ...c, start: val } : c));
+  };
+  const setEndTime = (val: string) => {
+    setClips(prev => prev.map(c => c.id === activeClipId ? { ...c, end: val } : c));
+  };
 
   const videoId = useMemo(() => extractYoutubeId(youtubeUrl), [youtubeUrl]);
 
