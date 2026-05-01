@@ -384,25 +384,29 @@ export default function CortesVideoPage() {
         throw new Error("Não foi possível ler o arquivo gerado.");
       }
 
-      // We need to ensure we have a plain ArrayBuffer to create a Blob
-      // Multi-threaded environments use SharedArrayBuffer which cannot be used in Blobs
-      let finalData: ArrayBuffer | Uint8Array;
+      // Garantimos um ArrayBuffer limpo para o Blob.
+      // Em ambientes multithread, o motor usa SharedArrayBuffer, que não pode ser usado em Blobs diretamente em alguns navegadores.
+      let finalData: Uint8Array;
       
-      if (data instanceof Uint8Array) {
-        if (typeof SharedArrayBuffer !== 'undefined' && data.buffer instanceof SharedArrayBuffer) {
-          // Copy SharedArrayBuffer to a regular ArrayBuffer
-          const buffer = new ArrayBuffer(data.byteLength);
-          new Uint8Array(buffer).set(data);
-          finalData = buffer;
+      try {
+        if (data instanceof Uint8Array) {
+          if (typeof SharedArrayBuffer !== 'undefined' && data.buffer instanceof SharedArrayBuffer) {
+            console.log("[ffmpeg] Convertendo SharedArrayBuffer para ArrayBuffer...");
+            finalData = new Uint8Array(data.byteLength);
+            finalData.set(data);
+          } else {
+            finalData = data;
+          }
         } else {
-          finalData = data;
+          finalData = new Uint8Array(data as any);
         }
-      } else {
-        finalData = data as any;
+      } catch (e) {
+        console.error("[ffmpeg] Erro ao processar buffer de saída:", e);
+        throw new Error("Erro de memória ao processar o vídeo final. Tente um trecho menor.");
       }
 
-      if (finalData instanceof Uint8Array && finalData.length === 0) {
-        throw new Error("Arquivo gerado está vazio.");
+      if (finalData.length === 0) {
+        throw new Error("O vídeo gerado está vazio. Tente ajustar o tempo de início/fim.");
       }
 
       const blob = new Blob([finalData as BlobPart], { type: "video/mp4" });
