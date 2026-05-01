@@ -573,11 +573,14 @@ export default function ApresentadorForm() {
                     <td className="px-4 py-2.5 cursor-pointer" onClick={() => setEditingCell({ id: a.id, field: 'categoria' })}>
                       {editingCell?.id === a.id && editingCell?.field === 'categoria' ? (
                         <Select
-                          open={true}
+                          defaultOpen={true}
                           value={CATEGORIA_OPTIONS.includes(a.cargo) ? a.cargo : "Convidado"}
                           onValueChange={(val) => {
-                            updateField(a.id, 'cargo', val);
                             setEditingCell(null);
+                            updateField(a.id, 'cargo', val);
+                          }}
+                          onOpenChange={(open) => {
+                            if (!open) setEditingCell(null);
                           }}
                         >
                           <SelectTrigger className="h-7 text-[10px] w-full">
