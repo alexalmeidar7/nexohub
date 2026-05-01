@@ -243,6 +243,7 @@ export default function VmixPage() {
   const [ndiUrl, setNdiUrl] = useState("");
   const [ndiSources, setNdiSources] = useState<string[]>([]);
   const [ndiScanning, setNdiScanning] = useState(false);
+  const [manualNdiHost, setManualNdiHost] = useState("");
 
   // Diagnostic state
   interface DiagResult {
