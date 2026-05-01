@@ -8,7 +8,7 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, Lock, Download, Upload
+  ScrollText, ChevronDown, ChevronUp, Lock, Download, Upload, Network, Zap
 } from "lucide-react";
 import {
   Dialog,
@@ -149,7 +149,14 @@ function formatKeyName(e: KeyboardEvent): string {
   return parts.join(" + ");
 }
 
+interface NetworkInterfaceInfo {
+  type: string;
+  effectiveType: string;
+  recommendation?: string;
+}
+
 export default function VmixPage() {
+  const [networkInfo, setNetworkInfo] = useState<NetworkInterfaceInfo | null>(null);
   const [lanStatus, setLanStatus] = useState<"checking" | "same_lan" | "different_network" | "unknown">("checking");
   const { user } = useAuth();
   const { toast } = useToast();
@@ -192,6 +199,40 @@ export default function VmixPage() {
 
     checkLan();
   }, [savedUrl]);
+
+  // Network Interface Detection (Wi-Fi/Ethernet)
+  useEffect(() => {
+    const updateNetworkInfo = () => {
+      const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+      if (!conn) {
+        setNetworkInfo(null);
+        return;
+      }
+
+      const type = conn.type || "unknown";
+      const effectiveType = conn.effectiveType || "unknown";
+      
+      let recommendation = "";
+      if (type === "wifi") {
+        recommendation = "Você está via Wi-Fi. Recomendamos usar cabo Ethernet para controle vMix profissional com menor latência.";
+      } else if (type === "cellular") {
+        recommendation = "Rede móvel (3G/4G/5G) detectada. Recomendamos Wi-Fi ou Ethernet para estabilidade no controle.";
+      } else if (type === "ethernet") {
+        recommendation = "Conexão via cabo detectada. Excelente escolha para estabilidade e performance no vMix.";
+      } else if (type === "other" || type === "unknown") {
+        recommendation = "Tipo de conexão não identificado. Para melhor experiência, priorize o uso de cabos.";
+      }
+
+      setNetworkInfo({ type, effectiveType, recommendation });
+    };
+
+    updateNetworkInfo();
+    const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    if (conn && conn.addEventListener) {
+      conn.addEventListener('change', updateNetworkInfo);
+      return () => conn.removeEventListener('change', updateNetworkInfo);
+    }
+  }, []);
 
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
     try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
@@ -1699,6 +1740,37 @@ export default function VmixPage() {
                      lanStatus === "same_lan" ? "Você está na mesma rede LAN que o vMix. O controle direto deve funcionar perfeitamente." :
                      "Não detectamos o vMix na sua rede local atual. Certifique-se de estar no mesmo Wi-Fi/Rede do vMix ou use um IP público com modo Proxy."}
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* Network Interface Recommendation */}
+            {networkInfo && (
+              <div className={`rounded-xl p-4 flex items-start gap-3 border ${
+                networkInfo.type === 'ethernet' 
+                  ? "bg-blue-500/10 border-blue-500/20 text-blue-400" 
+                  : "bg-white/5 border-white/10 text-white/50"
+              }`}>
+                {networkInfo.type === 'ethernet' ? <Zap size={16} className="mt-0.5" /> : <Network size={16} className="mt-0.5" />}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider">
+                      Interface: {
+                        networkInfo.type === 'wifi' ? 'Wi-Fi' : 
+                        networkInfo.type === 'ethernet' ? 'Ethernet (Cabo)' : 
+                        networkInfo.type === 'cellular' ? 'Dados Móveis' : 
+                        'Rede Ativa'
+                      }
+                    </p>
+                    <span className="px-1.5 py-0.5 rounded text-[8px] bg-white/10 text-white/60 font-mono">
+                      {networkInfo.effectiveType}
+                    </span>
+                  </div>
+                  {networkInfo.recommendation && (
+                    <p className="text-[10px] leading-relaxed opacity-80 italic">
+                      {networkInfo.recommendation}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
