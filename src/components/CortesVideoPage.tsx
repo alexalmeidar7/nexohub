@@ -531,6 +531,7 @@ export default function CortesVideoPage() {
               {([
                 { k: "fullhd" as const, label: "FULL HD", sub: "1920 × 1080", w: 56, h: 32 },
                 { k: "reel" as const, label: "REEL", sub: "1080 × 1920", w: 32, h: 56 },
+                { k: "original" as const, label: "ORIGINAL", sub: "Sem Alteração", w: 44, h: 44 },
               ]).map(({ k, label, sub, w, h }) => {
                 const active = format === k;
                 return (
