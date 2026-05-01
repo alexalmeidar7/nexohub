@@ -952,6 +952,123 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         </Suspense>
       </CollapsibleBox>}
 
+function EventTypesConfigSection() {
+  const { user } = useAuth();
+  const [config, setConfig] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("event_types_config")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.event_types_config) {
+          setConfig(data.event_types_config);
+        } else {
+          // Fallback to default if not set
+          setConfig({
+            "live": {"color": "#2563eb", "label": "LIVE"},
+            "gravacao": {"color": "#ef4444", "label": "GRAVAÇÃO"},
+            "reuniao": {"color": "#8b5cf6", "label": "REUNIÃO"},
+            "outro": {"color": "#6b7280", "label": "OUTRO"}
+          });
+        }
+        setLoading(false);
+      });
+  }, [user]);
+
+  const handleUpdate = (type: string, field: string, value: string) => {
+    setConfig((prev: any) => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        [field]: field === "label" ? value.toUpperCase() : value
+      }
+    }));
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ event_types_config: config })
+      .eq("user_id", user.id);
+    
+    setSaving(false);
+    if (error) {
+      toast.error("Erro ao salvar configurações.");
+    } else {
+      toast.success("Configurações de eventos salvas!");
+      // Dispatch event to update other components
+      window.dispatchEvent(new Event("layout-colors-updated"));
+    }
+  };
+
+  if (loading) return <div className="flex justify-center py-4"><Loader2 className="animate-spin" size={20} /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {Object.keys(config || {}).map((type) => (
+          <div key={type} className="p-4 rounded-xl space-y-3" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tipo: {type}</span>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: config[type].color }} />
+                <span className="text-[10px] font-bold" style={{ color: config[type].color }}>{config[type].label}</span>
+              </div>
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Rótulo (Texto)</label>
+              <StyledInput 
+                value={config[type].label} 
+                onChange={(e) => handleUpdate(type, "label", e.target.value)} 
+                placeholder="Ex: LIVE" 
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Cor do Evento</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={config[type].color}
+                  onChange={(e) => handleUpdate(type, "color", e.target.value)}
+                  className="w-10 h-10 rounded-lg cursor-pointer border-none p-0 shrink-0"
+                  style={{ WebkitAppearance: "none", background: "none" }}
+                />
+                <StyledInput 
+                  value={config[type].color} 
+                  onChange={(e) => handleUpdate(type, "color", e.target.value)} 
+                  placeholder="#000000"
+                  className="font-mono"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="flex justify-end">
+        <button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-50"
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          {saving ? "Salvando..." : "Salvar Configurações de Eventos"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
       {/* Box 6: Tipos de Eventos */}
       {(section === "all" || section === "empresa") && <CollapsibleBox title="Personalizar Tipos de Eventos" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
         <EventTypesConfigSection />
