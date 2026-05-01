@@ -1904,10 +1904,20 @@ export default function AgendaPage() {
                 />
               </TooltipProvider>
               {getFeriadoNome(selectedDate) && (
-                <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5" style={{ color: "#ef4444" }}>
-                  <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
-                  {getFeriadoNome(selectedDate)}
-                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5 cursor-help" style={{ color: "#ef4444" }}>
+                        <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                        {getFeriadoNome(selectedDate)}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-red-600 text-white border-red-500">
+                      <p className="text-[10px] font-bold">{getFeriadoNome(selectedDate)}</p>
+                      <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
           </div>
