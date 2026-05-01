@@ -88,14 +88,16 @@ interface Programa {
 // Helper to detect private/local IPs
 function isPrivateIp(url: string): boolean {
   try {
-    const hostname = new URL(url).hostname;
+    const u = url.startsWith("http") ? url : "http://" + url;
+    const hostname = new URL(u).hostname;
     return /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|localhost|::1)/i.test(hostname);
   } catch { return false; }
 }
 
 function isInsecureHttpUrl(url: string): boolean {
   try {
-    return new URL(url).protocol === "http:";
+    const u = url.startsWith("http") ? url : "http://" + url;
+    return new URL(u).protocol === "http:";
   } catch {
     return false;
   }
@@ -351,7 +353,19 @@ export default function VmixPage() {
 
   const saveUrl = async () => {
     if (!user || !vmixUrl.trim()) return;
-    const trimmed = vmixUrl.trim();
+    let trimmed = vmixUrl.trim();
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+      trimmed = "http://" + trimmed;
+    }
+    // Auto-adicionar porta 8088 se for IP sem porta
+    try {
+      const urlObj = new URL(trimmed);
+      if (!urlObj.port && (/^[0-9.]+$/.test(urlObj.hostname) || urlObj.hostname === "localhost")) {
+        urlObj.port = "8088";
+        trimmed = urlObj.toString().replace(/\/$/, "");
+      }
+    } catch {}
+
     const { data: existing } = await supabase
       .from("user_settings")
       .select("id")
@@ -380,7 +394,8 @@ export default function VmixPage() {
   // Direct fetch to vMix (browser → vMix, no edge function)
   const vmixDirectFetch = useCallback(async (path: string): Promise<string> => {
     if (!savedUrl) throw new Error("URL não configurada");
-    const baseUrl = savedUrl.replace(/\/+$/, "");
+    let baseUrl = savedUrl.replace(/\/+$/, "");
+    if (!baseUrl.startsWith("http")) baseUrl = "http://" + baseUrl;
     const targetUrl = baseUrl + path;
     const headers: Record<string, string> = {
       "Accept": "application/xml, text/xml, text/html, */*",
@@ -459,7 +474,10 @@ export default function VmixPage() {
     const isLocal = isPrivateIp(savedUrl);
     const isEmbeddedPreview = window.self !== window.top;
     let protocol: "http" | "https" | "unknown" = "unknown";
-    try { protocol = new URL(savedUrl).protocol === "https:" ? "https" : "http"; } catch {}
+    try { 
+      const u = savedUrl.startsWith("http") ? savedUrl : "http://" + savedUrl;
+      protocol = new URL(u).protocol === "https:" ? "https" : "http"; 
+    } catch {}
     const secureCtx = window.isSecureContext;
 
     const result: DiagResult = {
@@ -486,9 +504,9 @@ export default function VmixPage() {
       if (/failed to fetch|networkerror|load failed/i.test(msg)) {
         if (secureCtx && protocol === "http") {
           result.mixedContentBlocked = true;
-          result.directError = "Bloqueado por Mixed Content (HTTPS → HTTP)";
+          result.directError = "Conexão recusada ou Bloqueio de Mixed Content";
         } else {
-          result.directError = "Rede inacessível ou CORS bloqueado pelo vMix";
+          result.directError = "Rede inacessível, IP incorreto ou Firewall";
         }
       }
     }
@@ -520,8 +538,8 @@ export default function VmixPage() {
     } else if (isLocal && result.mixedContentBlocked) {
       result.recommendation = isEmbeddedPreview
         ? "⚠️ O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' no navegador para esse domínio."
-        : "⚠️ O navegador bloqueia HTTP dentro de HTTPS (Mixed Content). Permita 'Conteúdo inseguro' para este site e tente novamente.";
-      if (!isEmbeddedPreview) setShowMixedContentDialog(true);
+        : "⚠️ Conexão falhou. Se você JÁ permitiu 'Conteúdo Inseguro' no cadeado do navegador, verifique: 1) O IP/Porta estão corretos? 2) O vMix está aberto? 3) O Firewall do Windows permite a porta 8088?";
+      if (!isEmbeddedPreview && result.directResult === "fail") setShowMixedContentDialog(true);
     } else if (isLocal) {
       result.recommendation = "⚠️ IP local detectado. Use modo Direto na mesma rede local; o modo Proxy só funciona com URL pública/túnel.";
     } else {
@@ -2708,6 +2726,13 @@ export default function VmixPage() {
               </div>
             </div>
             
+            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <p className="text-[10px] text-blue-400 font-bold uppercase mb-1">Dica importante:</p>
+              <p className="text-[10px] text-white/70">
+                Se após permitir o erro persistir, verifique se o vMix está aberto e se a porta <span className="text-white font-mono">8088</span> está liberada no seu Firewall.
+              </p>
+            </div>
+
             <p className="text-[10px] text-white/40 text-center italic">
               Por questões de segurança do navegador, sites não podem alterar essa configuração automaticamente.
             </p>
