@@ -382,8 +382,15 @@ export default function CortesVideoPage() {
         throw new Error("Arquivo gerado está vazio. Verifique os tempos selecionados.");
       }
 
-      // Convert to Blob safely
-      const blob = new Blob([data], { type: "video/mp4" });
+      // Convert to Blob safely handling both ArrayBuffer and SharedArrayBuffer (multi-threaded FFmpeg)
+      let blobPart: BlobPart = data;
+      if (data instanceof Uint8Array && data.buffer instanceof SharedArrayBuffer) {
+        // SharedArrayBuffer can't be put directly into a Blob in some environments/versions
+        // we slice it to get a regular ArrayBuffer view if needed, or just use the Uint8Array
+        blobPart = new Uint8Array(data); 
+      }
+      
+      const blob = new Blob([blobPart], { type: "video/mp4" });
       const blobUrl = URL.createObjectURL(blob);
 
       await ffmpeg.deleteFile(inputName).catch(() => {});
