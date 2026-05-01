@@ -1414,6 +1414,9 @@ function ComercialWidgets() {
     </div>
   );
 
+  return null;
+}
+
 function DashboardAgenda({ onNavigate }: { onNavigate: (p: Page) => void }) {
   return (
     <DashboardAgendaOld 
@@ -1524,6 +1527,8 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
         </div>
       </div>
     </div>
+  );
+
   const todayStr = format(now, "yyyy-MM-dd");
   const currentTime = format(now, "HH:mm");
   const selDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
