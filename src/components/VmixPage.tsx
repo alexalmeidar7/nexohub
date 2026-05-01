@@ -1773,6 +1773,7 @@ export default function VmixPage() {
                   )}
                 </div>
               </div>
+            )}
 
             {/* URL Input Group */}
             <div>
