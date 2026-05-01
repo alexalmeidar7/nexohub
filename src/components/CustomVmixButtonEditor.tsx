@@ -157,6 +157,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   const [nome, setNome] = useState("");
   const [color, setColor] = useState("#f59e0b");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
+  const [dataEspecifica, setDataEspecifica] = useState("");
   const [horario, setHorario] = useState("");
   const [commands, setCommands] = useState<PresetCommand[]>([]);
   const [loading, setLoading] = useState(false);
