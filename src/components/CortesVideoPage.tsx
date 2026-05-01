@@ -80,6 +80,7 @@ export default function CortesVideoPage() {
   const resultRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<number>(0);
   const [estimatedSeconds, setEstimatedSeconds] = useState<number | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Shared
   const [startTime, setStartTime] = useState("");
