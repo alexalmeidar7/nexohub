@@ -1395,30 +1395,55 @@ function ComercialWidgets() {
   }, [user]);
 
   if (loading) return (
-    <div className="animate-pulse">
+    <div className="animate-pulse h-full">
       <div className="flex items-center gap-1.5 mb-2">
-        <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: "var(--layout-button-bg, #0f1058333)", opacity: 0.2 }} />
-        <div className="w-28 h-3 rounded bg-white/10" />
+        <div className="w-3.5 h-3.5 rounded bg-white/10" />
+        <div className="w-20 h-3 rounded bg-white/10" />
       </div>
-      <div className="w-12 h-8 rounded bg-white/10 mb-1" />
-      <div className="w-36 h-2.5 rounded bg-white/5" />
+      <div className="flex gap-2 flex-1 min-h-0">
+        <div className="w-[105px] rounded bg-white/5" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-10 rounded bg-white/5" />
+          <div className="h-10 rounded bg-white/5" />
+        </div>
+      </div>
     </div>
   );
 
+  const todayStr = format(now, "yyyy-MM-dd");
+  const currentTime = format(now, "HH:mm");
+
+  const selDateStr = selectedDate
+    ? format(selectedDate, "yyyy-MM-dd")
+    : "";
+
+  const dayEvents = eventos.filter((e) => {
+    const matchesDate = eventMatchesDate(e, selDateStr);
+    if (!matchesDate) return false;
+    if (e.status === "concluido" || e.status === "cancelado") return false;
+    const isToday = selDateStr === todayStr;
+    if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) return false;
+    return true;
+  });
+
+  const feriadoHoje = getFeriadoNome(selectedDate || new Date());
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>🏆 Patrocinadores Ativos</p>
-        <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #ffffff)", opacity: 0.7 }}>no ar</span>
-      </div>
-      <p className="text-3xl font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>{totalLogos}</p>
-      <p className="text-[10px] mt-1" style={{ color: "var(--layout-widget-text, #ffffff)", opacity: 0.5 }}>logos vinculadas a programas</p>
-    </div>
+    <DashboardAgendaWithStyles
+      onNavigate={onNavigate}
+      feriadoHoje={feriadoHoje}
+      selectedDate={selectedDate}
+      dayEvents={dayEvents}
+      eventDates={eventDates}
+      feriadoDates={feriadoDates}
+      calMonth={calMonth}
+      setCalMonth={setCalMonth}
+      setSelectedDate={setSelectedDate}
+    />
   );
 }
 
-/* ========== DASHBOARD AGENDA ========== */
-function DashboardAgenda() {
+function DashboardAgendaOld() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState<any[]>([]);
@@ -1651,9 +1676,8 @@ function DashboardCalendar({ selected, onSelect, eventDates, feriadoDates, month
         day_today: "font-bold",
         day_outside: "opacity-30",
       }}
-      modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
-        hasEvent: { backgroundColor: "var(--layout-button-bg, #0f1058333)", fontWeight: "bold", color: "var(--layout-button-text, #fff)", borderRadius: "50%" },
+        isFeriado: { color: "#ef4444" },
       }}
       styles={{
         day: { color: "var(--layout-widget-text, #ffffff)", fontSize: "14px" },
