@@ -187,24 +187,24 @@ export default function CortesVideoPage() {
           return URL.createObjectURL(blob);
         };
 
-        const coreURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.js`, "core.js");
-        const wasmURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.wasm`, "core.wasm");
+        // Optimization: Use toBlobURL which is more robust for FFmpeg loading
+        // and handles the cross-origin worker script better.
+        const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
+        const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
         
-        // If SharedArrayBuffer is available, we also need the worker
         let workerURL: string | undefined = undefined;
         if (typeof SharedArrayBuffer !== 'undefined') {
           try {
-            workerURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.worker.js`, "worker.js");
+            workerURL = await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, "text/javascript");
           } catch (e) {
-            console.warn("[ffmpeg] Worker load failed or not found, continuing without it:", e);
+            console.warn("[ffmpeg] Worker load failed, continuing without it:", e);
           }
         }
         
         setLoadDetail("Instanciando WebAssembly...");
         
-        // Add a timeout to prevent infinite hang
         const loadTimeout = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Tempo esgotado ao instanciar o motor (30s). Verifique sua conexão.")), 30000)
+          setTimeout(() => reject(new Error("Tempo esgotado ao instanciar o motor (30s).")), 30000)
         );
 
         await Promise.race([
