@@ -323,6 +323,13 @@ export default function VmixPage() {
         setInputShortcuts(data.vmix_shortcuts as Record<string, string>);
       }
       setLoading(false);
+      
+      // Auto-connect on load if we have a saved URL
+      if (data?.vmix_url) {
+        setTimeout(() => {
+          connectToVmixRef.current?.();
+        }, 800);
+      }
     };
     loadUrl();
   }, [user]);
