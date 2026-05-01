@@ -1552,13 +1552,7 @@ function DashboardAgendaOld3({ onNavigate, setCurrentPage }: { onNavigate: (p: P
 
   return (
     <DashboardAgendaWithStyles
-      onNavigate={(page: Page) => {
-        if (page === "agenda") {
-          setCurrentPage("agenda");
-        } else {
-          onNavigate(page);
-        }
-      }}
+      onNavigate={onNavigate}
       feriadoHoje={feriadoHoje}
       selectedDate={selectedDate}
       dayEvents={dayEvents}
