@@ -91,8 +91,8 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
   );
 }
 
-function CollapsibleBox({ title, icon, children }: { title: string; icon?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+function CollapsibleBox({ title, icon, children, defaultOpen = false }: { title: string; icon?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 4px 20px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
       <button
