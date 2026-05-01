@@ -1293,19 +1293,34 @@ export default function VmixPage() {
   const renderInputSelect = (value: string | null, onChange: (val: string) => void) => (
     <select
       value={value || ""}
-      onChange={e => onChange(e.target.value)}
-      className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
-      style={{ backgroundColor: "#222228", color: "#ccc" }}
+      onChange={e => {
+        if (e.target.value.startsWith("ADD|")) {
+          const source = e.target.value.split("ADD|")[1];
+          addNdiInput(source);
+        } else {
+          onChange(e.target.value);
+        }
+      }}
+      className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none font-bold"
+      style={{ backgroundColor: "#222228", color: "#ccc", border: "1px solid #333" }}
     >
-      <option value="">— Selecione NDI —</option>
-      {ndiInputs.length > 0 ? (
-        <optgroup label="NDI Sources">
+      <option value="">— Selecione NDI (Rede/Inputs) —</option>
+      {ndiInputs.length > 0 && (
+        <optgroup label="Inputs vMix (Ativos)">
           {ndiInputs.map(inp => (
             <option key={inp.key || inp.number} value={inp.number}>🟢 {inp.number} – {inp.title}</option>
           ))}
         </optgroup>
-      ) : (
-        <option disabled>Nenhum input NDI encontrado</option>
+      )}
+      {ndiSources.length > 0 && (
+        <optgroup label="Fontes NDI na Rede (Disponíveis)">
+          {ndiSources.filter(src => !ndiInputs.some(inp => inp.title.includes(src))).map(src => (
+            <option key={src} value={`ADD|${src}`}>✨ Adicionar: {src}</option>
+          ))}
+        </optgroup>
+      )}
+      {ndiInputs.length === 0 && ndiSources.length === 0 && (
+        <option disabled>Nenhuma fonte NDI encontrada</option>
       )}
     </select>
   );
