@@ -164,7 +164,7 @@ export default function CortesVideoPage() {
     }
   }, [results]);
 
-  const resetEngine = () => {
+  const resetEngine = async () => {
     if (ffmpegRef.current) {
       try {
         ffmpegRef.current.terminate();
@@ -174,6 +174,8 @@ export default function CortesVideoPage() {
     }
     ffmpegRef.current = null;
     setFfmpegReady(false);
+    setStatusMsg("Reiniciando o motor...");
+    await loadFfmpeg();
   };
 
   const loadFfmpeg = async () => {
@@ -338,19 +340,19 @@ export default function CortesVideoPage() {
       
       const ffmpeg = await loadFfmpeg();
       
-      if (localDuration > 0 && endSeconds > Math.ceil(localDuration)) {
+      if (localDuration > 0 && endSeconds > localDuration + 0.5) {
         toast({
           title: "Tempo final inválido",
-          description: `O vídeo tem apenas ${formatDuration(Math.floor(localDuration))}. Ajuste o tempo final.`,
+          description: `O vídeo tem apenas ${formatDuration(localDuration)}. Ajuste o tempo final.`,
           variant: "destructive",
         });
         setCutting(false);
         return;
       }
-      if (localDuration > 0 && startSeconds >= Math.ceil(localDuration)) {
+      if (localDuration > 0 && startSeconds >= localDuration) {
         toast({
           title: "Tempo inicial inválido",
-          description: `O tempo inicial deve ser menor que ${formatDuration(Math.floor(localDuration))}.`,
+          description: `O tempo inicial deve ser menor que ${formatDuration(localDuration)}.`,
           variant: "destructive",
         });
         setCutting(false);
@@ -359,6 +361,12 @@ export default function CortesVideoPage() {
 
       startTimeRef.current = Date.now();
       const sizeMB = localFile.size / (1024 * 1024);
+      
+      // Validação de segurança para o navegador
+      if (sizeMB > 2000) {
+        throw new Error("O vídeo é muito grande para ser processado no navegador (limite recomendado: 2GB). Use o modo YouTube para vídeos pesados.");
+      }
+
       let estimate = 0;
       if (format === "original") {
         estimate = Math.max(2, sizeMB / 100);
@@ -376,8 +384,7 @@ export default function CortesVideoPage() {
         }
       });
 
-
-      setStatusMsg("Lendo arquivo de vídeo (isso pode levar alguns segundos)...");
+      setStatusMsg("Lendo arquivo de vídeo...");
       setProgress(5);
       
       const ext = (localFile.name.split(".").pop() || "mp4").toLowerCase();
@@ -386,11 +393,17 @@ export default function CortesVideoPage() {
 
       // Para arquivos grandes, fetchFile pode ser pesado. 
       // Em FFmpeg.wasm 0.12+, writeFile aceita Uint8Array diretamente.
-      let videoData: Uint8Array | null = new Uint8Array(await localFile.arrayBuffer());
+      // Ler o arquivo uma única vez como ArrayBuffer para evitar múltiplas cópias pesadas
+      const arrayBuffer = await localFile.arrayBuffer();
+      const videoData = new Uint8Array(arrayBuffer);
+      
+      setStatusMsg("Escrevendo arquivo no motor...");
       await ffmpeg.writeFile(inputName, videoData);
       
-      // Limpar videoData da memória JS o quanto antes para reduzir pressão de memória
-      videoData = null;
+      // Liberar referências imediatamente após o writeFile
+      (videoData as any) = null;
+      (localFile as any) = null; 
+
 
       setStatusMsg("Iniciando o corte...");
       setProgress(10);
