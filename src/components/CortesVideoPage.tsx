@@ -136,20 +136,21 @@ export default function CortesVideoPage() {
       .catch(() => setVideoTitle(""));
   }, [videoId, mode]);
 
-  // Cleanup local URL
   useEffect(() => {
     return () => {
       if (localUrl) URL.revokeObjectURL(localUrl);
-      if (result?.blob_url) URL.revokeObjectURL(result.blob_url);
+      results.forEach(res => {
+        if (res.blob_url) URL.revokeObjectURL(res.blob_url);
+      });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (result && resultRef.current) {
+    if (results.length > 0 && resultRef.current) {
       resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [result]);
+  }, [results]);
 
   const loadFfmpeg = async () => {
     if (ffmpegRef.current && ffmpegReady) return ffmpegRef.current;
