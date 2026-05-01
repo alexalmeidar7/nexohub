@@ -73,6 +73,7 @@ export default function CortesVideoPage() {
   const [localDuration, setLocalDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
+  const [loadDetail, setLoadDetail] = useState("");
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const [ffmpegReady, setFfmpegReady] = useState(false);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -135,8 +136,8 @@ export default function CortesVideoPage() {
   const loadFfmpeg = async () => {
     if (ffmpegRef.current && ffmpegReady) return ffmpegRef.current;
     
-    // Initialize status and progress for fresh load
-    setStatusMsg("Carregando motor de vídeo (primeira vez ~25MB)...");
+    setStatusMsg("Carregando motor de vídeo...");
+    setLoadDetail("Iniciando...");
     setProgress(0);
     
     const ffmpeg = new FFmpeg();
@@ -155,19 +156,48 @@ export default function CortesVideoPage() {
       try {
         console.log(`[ffmpeg] Tentando carregar de: ${baseURL}`);
         
-        // Use standard fetch to check if the resource is actually reachable before calling load
-        const check = await fetch(`${baseURL}/ffmpeg-core.js`, { method: 'HEAD' }).catch(() => ({ ok: false }));
-        if (!check.ok) throw new Error("CDN unreachable");
+        const fetchWithProgress = async (url: string, label: string) => {
+          setLoadDetail(`Baixando ${label}...`);
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          
+          const reader = response.body?.getReader();
+          const contentLength = +(response.headers.get('Content-Length') || 0);
+          
+          if (!reader || !contentLength) {
+            setLoadDetail(`Carregando ${label}...`);
+            return toBlobURL(url, label.includes("js") ? "text/javascript" : "application/wasm");
+          }
 
-        const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
-        const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
+          let receivedLength = 0;
+          const chunks = [];
+          while(true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            receivedLength += value.length;
+            const pct = Math.round((receivedLength / contentLength) * 100);
+            const mb = (receivedLength / (1024 * 1024)).toFixed(1);
+            const totalMb = (contentLength / (1024 * 1024)).toFixed(1);
+            setLoadDetail(`${label}: ${mb}MB de ${totalMb}MB (${pct}%)`);
+            setProgress(Math.round(pct * 0.9)); // Reserve some for instantiating
+          }
+
+          const blob = new Blob(chunks, { type: label.includes("js") ? "text/javascript" : "application/wasm" });
+          return URL.createObjectURL(blob);
+        };
+
+        const coreURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.js`, "core.js");
+        const wasmURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.wasm`, "core.wasm");
         
+        setLoadDetail("Instanciando WebAssembly...");
         await ffmpeg.load({
           coreURL,
           wasmURL,
         });
         
         lastErr = null;
+        setLoadDetail("Motor pronto!");
         console.log(`[ffmpeg] Carregado com sucesso de: ${baseURL}`);
         break;
       } catch (e) {
@@ -177,8 +207,9 @@ export default function CortesVideoPage() {
     }
     
     if (lastErr) {
-      const msg = "Não foi possível carregar o motor de vídeo. Verifique sua conexão e tente novamente.";
+      const msg = "Erro ao carregar motor de vídeo. Tente recarregar a página.";
       setStatusMsg(msg);
+      setLoadDetail("");
       throw new Error(msg);
     }
     
