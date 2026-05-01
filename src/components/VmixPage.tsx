@@ -2056,6 +2056,7 @@ export default function VmixPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap bg-[#1a1a1f] p-2 rounded-xl border border-white/5 shadow-2xl">
         {/* Left: Studio Connection Status */}
         <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-[#111115] border border-[#ffffff08] shadow-inner">
+          <img src={logoMixControl} alt="Mix Control" className="h-5" />
           <div className="flex items-center gap-2">
             <div 
               className="w-2 h-2 rounded-full animate-pulse" 
