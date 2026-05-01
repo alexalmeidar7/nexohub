@@ -1116,7 +1116,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   );
 }
 
-const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayEvents, eventDates, feriadoDates, calMonth, setCalMonth, setSelectedDate, getFeriadoNome, eventTypesConfig }: any) => (
+const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayEvents, eventDates, feriadoDates, calMonth, setCalMonth, setSelectedDate, getFeriadoNome, eventTypesConfig, onExportFeriados }: any) => (
   <div className="flex flex-col h-full w-full">
     <style>{`
       .dashboard-calendar .has-event-dot { position: relative; }
@@ -1132,13 +1132,17 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50 cursor-help">
+                <span 
+                  className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50 cursor-help"
+                  onClick={(e) => { e.stopPropagation(); onExportFeriados(); }}
+                >
                   Feriado
                 </span>
               </TooltipTrigger>
               <TooltipContent side="top" className="bg-red-600 text-white border-red-500">
                 <p className="text-[10px] font-bold">{feriadoHoje}</p>
                 <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : ""}</p>
+                <p className="text-[8px] mt-1 italic border-t border-white/20 pt-1">Clique para exportar feriados</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -1581,6 +1585,46 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
     if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) return false;
     return true;
   });
+  const handleExportFeriados = () => {
+    let icsContent = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//NexoHub//Dashboard//BR",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH"
+    ].join("\r\n");
+
+    const year = now.getFullYear();
+    feriadosNacionais.forEach(f => {
+      const month = String(f.mes).padStart(2, '0');
+      const day = String(f.dia).padStart(2, '0');
+      const dateStr = `${year}${month}${day}`;
+      
+      icsContent += "\r\n" + [
+        "BEGIN:VEVENT",
+        `UID:feriado-${dateStr}@nexohub.com`,
+        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+        `DTSTART;VALUE=DATE:${dateStr}`,
+        `DTEND;VALUE=DATE:${year}${month}${String(f.dia + 1).padStart(2, '0')}`,
+        `SUMMARY:Feriado: ${f.nome}`,
+        "DESCRIPTION:Feriado Nacional Brasileiro",
+        "STATUS:CONFIRMED",
+        "TRANSP:TRANSPARENT",
+        "END:VEVENT"
+      ].join("\r\n");
+    });
+
+    icsContent += "\r\nEND:VCALENDAR";
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `feriados_${year}.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   const feriadoHoje = getFeriadoNome(selectedDate || new Date());
   const eventDates = getCalendarDates();
@@ -1598,6 +1642,7 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
       setSelectedDate={setSelectedDate}
       getFeriadoNome={getFeriadoNome}
       eventTypesConfig={eventTypesConfig}
+      onExportFeriados={handleExportFeriados}
     />
   );
 }
