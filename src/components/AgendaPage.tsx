@@ -3,7 +3,7 @@ import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertT
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, isSameDay } from "date-fns";
-import { ptBR } from "date-fns,locale";
+import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -2013,7 +2013,8 @@ export default function AgendaPage() {
             </div>
             <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
               {weekEvents.map(({ dateStr, date, events: dayEvents }) => {
-                const isToday = format(new Date(), "yyyy-MM-dd") === dateStr;
+                const isToday = isSameDay(date, now);
+                const feriadoNome = getFeriadoNome(date);
                 return (
                   <button
                     type="button"
@@ -2021,7 +2022,9 @@ export default function AgendaPage() {
                     onClick={() => setSelectedDate(date)}
                     className="text-left rounded-lg p-2 flex flex-col gap-1.5 hover:shadow-sm transition-all"
                     style={{
-                      backgroundColor: isToday
+                      backgroundColor: feriadoNome 
+                        ? "rgba(239, 68, 68, 0.04)" 
+                        : isToday
                         ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
                         : "rgba(13,4,70,0.03)",
                       border: `1px solid color-mix(in srgb, var(--layout-border-color, #333333) ${isToday ? 50 : 20}%, transparent)`,
