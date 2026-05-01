@@ -1649,6 +1649,7 @@ function DashboardCalendar({ selected, onSelect, eventDates, feriadoDates, month
         head_cell: { color: "var(--layout-widget-text, #ffffff)", opacity: 0.5, fontSize: "10px", padding: 0 },
       }}
     />
+    </TooltipProvider>
   );
 }
 
