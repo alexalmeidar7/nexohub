@@ -418,7 +418,6 @@ export default function VmixPage() {
       .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
       .eq("user_id", user.id)
       .eq("ativo", true)
-      .ilike("estudio", "%fm%")
       .order("horario_inicio")
       .then(({ data }) => {
         if (data) {
