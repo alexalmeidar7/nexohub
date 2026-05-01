@@ -882,16 +882,37 @@ export default function VmixPage() {
 
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
-    const cmdLabel = `${fn}${input ? ` Input=${input}` : ""}${value ? ` Value=${value}` : ""}`;
+
+    let effectiveInput = input;
+    
+    // Resolve input if it's a GUID and not found in current inputs
+    if (input && input.includes("-")) { // Simple check for UUID/GUID
+      const exists = inputs.some(i => i.key === input);
+      if (!exists) {
+        // Look up by title from our mapping
+        const mapped = inputMapping[input];
+        if (mapped) {
+          const fallback = inputs.find(i => i.title === mapped.title);
+          if (fallback) {
+            console.log(`Input ${input} not found, falling back to ${fallback.title} (Key: ${fallback.key})`);
+            effectiveInput = fallback.key;
+          }
+        }
+      }
+    }
+
+    const cmdLabel = `${fn}${effectiveInput ? ` Input=${effectiveInput}` : ""}${value ? ` Value=${value}` : ""}`;
     try {
       let path = `/api/?Function=${encodeURIComponent(fn)}`;
-      if (input) path += `&Input=${encodeURIComponent(input)}`;
+      if (effectiveInput) path += `&Input=${encodeURIComponent(effectiveInput)}`;
       if (value) path += `&Value=${encodeURIComponent(value)}`;
-      // Force direct mode for private IPs — proxy can't reach LAN
+      
       const forceMode: "direct" | "proxy" | undefined = isPrivateIp(savedUrl) ? "direct" : undefined;
       await vmixFetch(path, forceMode);
       addLog(cmdLabel, "ok", "Enviado com sucesso", "local");
-      setTimeout(() => connectToVmix(), 300);
+      
+      // Refresh state after command
+      setTimeout(() => silentRefresh(), 300);
     } catch (err: any) {
       addLog(cmdLabel, "error", err?.message || "Falha ao enviar", "local");
       toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
