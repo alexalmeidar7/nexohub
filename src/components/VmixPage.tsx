@@ -204,23 +204,32 @@ export default function VmixPage() {
     
     const isLocal = isPrivateIp(savedUrl);
     
-    if (isLocal && lanStatus === "same_lan" && connectionMode === "proxy") {
-      console.log("Auto-switching to direct mode for local IP on same LAN");
-      setConnectionMode("direct");
-      toast({ 
-        title: "Modo Automático", 
-        description: "Rede local detectada. Alternado para modo Direto." 
+    // We check the condition but we only want to auto-switch when the network context changes
+    if (isLocal && lanStatus === "same_lan") {
+      setConnectionMode(prev => {
+        if (prev === "proxy") {
+          toast({ 
+            title: "Modo Automático", 
+            description: "Rede local detectada. Alternado para modo Direto." 
+          });
+          return "direct";
+        }
+        return prev;
       });
-    } else if (!isLocal && connectionMode === "direct") {
-      // For public IPs, proxy is often more reliable due to CORS/HTTPS
-      console.log("Auto-switching to proxy mode for public IP");
-      setConnectionMode("proxy");
-      toast({ 
-        title: "Modo Automático", 
-        description: "IP Público detectado. Alternado para modo Proxy." 
+    } else if (!isLocal && savedUrl) {
+      setConnectionMode(prev => {
+        if (prev === "direct") {
+          toast({ 
+            title: "Modo Automático", 
+            description: "IP Público detectado. Alternado para modo Proxy." 
+          });
+          return "proxy";
+        }
+        return prev;
       });
     }
-  }, [lanStatus, savedUrl, toast]); // Removed connectionMode to allow manual overrides without snap-back
+  }, [lanStatus, savedUrl, toast]); 
+
 
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
