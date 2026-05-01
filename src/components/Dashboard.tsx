@@ -1582,7 +1582,7 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
   );
 }
 
-function DashboardCalendar({ selected, onSelect, eventDates, feriadoDates, month, onMonthChange }: {
+function DashboardCalendar({ selected, onSelect, eventDates, feriadoDates, month, onMonthChange, getFeriadoNome }: {
   selected: Date | undefined;
   onSelect: (d: Date | undefined) => void;
   eventDates: Date[];
