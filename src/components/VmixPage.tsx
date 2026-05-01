@@ -220,7 +220,7 @@ export default function VmixPage() {
         description: "IP Público detectado. Alternado para modo Proxy." 
       });
     }
-  }, [lanStatus, savedUrl, connectionMode, toast]);
+  }, [lanStatus, savedUrl, toast]); // Removed connectionMode to allow manual overrides without snap-back
 
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
