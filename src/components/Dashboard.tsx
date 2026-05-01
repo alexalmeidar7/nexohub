@@ -1517,33 +1517,10 @@ function DashboardAgendaOld({ onNavigate }: { onNavigate: (p: Page) => void }) {
     </div>
   );
 
-  const todayStr = format(now, "yyyy-MM-dd");
-  const currentTime = format(now, "HH:mm");
-  const selDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
-
-  const dayEvents = eventos.filter((e) => {
-    const matchesDate = eventMatchesDate(e, selDateStr);
-    if (!matchesDate) return false;
-    if (e.status === "concluido" || e.status === "cancelado") return false;
-    const isToday = selDateStr === todayStr;
-    if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) return false;
-    return true;
-  });
-
-  const feriadoHoje = getFeriadoNome(selectedDate || new Date());
-  const eventDates = getCalendarDates();
-
   return (
-    <DashboardAgendaWithStyles
+    <DashboardAgendaOld 
       onNavigate={onNavigate}
-      feriadoHoje={feriadoHoje}
-      selectedDate={selectedDate}
-      dayEvents={dayEvents}
-      eventDates={eventDates}
-      feriadoDates={feriadoDates}
-      calMonth={calMonth}
-      setCalMonth={setCalMonth}
-      setSelectedDate={setSelectedDate}
+      setCurrentPage={(window as any).setCurrentPageGlobal}
     />
   );
 }
