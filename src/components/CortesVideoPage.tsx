@@ -134,32 +134,45 @@ export default function CortesVideoPage() {
 
   const loadFfmpeg = async () => {
     if (ffmpegRef.current && ffmpegReady) return ffmpegRef.current;
+    
+    // Initialize status and progress for fresh load
     setStatusMsg("Carregando motor de vídeo (primeira vez ~25MB)...");
+    setProgress(0);
+    
     const ffmpeg = new FFmpeg();
     ffmpeg.on("progress", ({ progress: p }) => {
       setProgress(Math.min(99, Math.round(p * 100)));
     });
-    // Use single-thread build (no SharedArrayBuffer / COOP-COEP required).
-    // Try jsDelivr first, fallback to unpkg if it fails.
+
     const cdns = [
       "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd",
       "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
+      "https://cdnjs.cloudflare.com/ajax/libs/ffmpeg-core/0.12.6/umd"
     ];
+    
     let lastErr: any = null;
     for (const baseURL of cdns) {
       try {
+        console.log(`[ffmpeg] Tentando carregar de: ${baseURL}`);
         await ffmpeg.load({
           coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
           wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
         });
         lastErr = null;
+        console.log(`[ffmpeg] Carregado com sucesso de: ${baseURL}`);
         break;
       } catch (e) {
         console.warn("[ffmpeg] CDN load failed:", baseURL, e);
         lastErr = e;
       }
     }
-    if (lastErr) throw new Error("Não foi possível carregar o motor de vídeo. Verifique sua conexão e tente novamente.");
+    
+    if (lastErr) {
+      const msg = "Não foi possível carregar o motor de vídeo. Verifique sua conexão e tente novamente.";
+      setStatusMsg(msg);
+      throw new Error(msg);
+    }
+    
     ffmpegRef.current = ffmpeg;
     setFfmpegReady(true);
     return ffmpeg;
