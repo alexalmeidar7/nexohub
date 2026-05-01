@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -1448,11 +1448,6 @@ function DashboardAgenda() {
     return new Date(d.getFullYear(), f.mes - 1, f.dia);
   });
 
-  const feriadoDates = feriadosNacionais.map(f => {
-    const d = new Date();
-    return new Date(d.getFullYear(), f.mes - 1, f.dia);
-  });
-
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
@@ -1586,6 +1581,7 @@ function DashboardAgenda() {
         selected={selectedDate}
         onSelect={setSelectedDate}
         eventDates={eventDates}
+        feriadoDates={feriadoDates}
         month={calMonth}
         onMonthChange={setCalMonth}
       />
@@ -1600,7 +1596,11 @@ function DashboardAgenda() {
         </div>
       )}
       <DashboardAgendaWithStyles
-        onNavigate={onNavigate}
+        onNavigate={(page: Page) => {
+          if (page === "agenda") {
+            setCurrentPage("agenda");
+          }
+        }}
         feriadoHoje={feriadoHoje}
         selectedDate={selectedDate}
         dayEvents={dayEvents}
