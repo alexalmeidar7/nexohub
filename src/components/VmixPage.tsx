@@ -1387,7 +1387,7 @@ export default function VmixPage() {
       style={{ backgroundColor: "#222228", color: "#ccc", border: "1px solid #333" }}
     >
       <option value="">— Selecione um Input —</option>
-      {inputs.map(inp => {
+      {inputs.filter(isNdiInput).map(inp => {
         const isNdi = isNdiInput(inp);
         return (
           <option key={inp.key || inp.number} value={inp.number}>
