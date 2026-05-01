@@ -1116,7 +1116,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   );
 }
 
-const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayEvents, eventDates, feriadoDates, calMonth, setCalMonth, setSelectedDate, getFeriadoNome }: any) => (
+const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayEvents, eventDates, feriadoDates, calMonth, setCalMonth, setSelectedDate, getFeriadoNome, eventTypesConfig }: any) => (
   <div className="flex flex-col h-full w-full">
     <style>{`
       .dashboard-calendar .has-event-dot { position: relative; }
