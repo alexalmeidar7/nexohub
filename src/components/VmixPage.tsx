@@ -1250,12 +1250,6 @@ export default function VmixPage() {
 
   const previewDomain = window.location.origin;
 
-  // Helper: detect if an input is a genuine NDI source
-  const isNdiInput = (inp: VmixInput) => {
-    // Robust detection: vMix strictly uses "NDI" as the type for NDI inputs.
-    // We also accept titles starting with "NDI (" as a fallback for some vMix versions/configurations.
-    return inp.type === "NDI" || inp.title.startsWith("NDI (");
-  };
 
   // Helper: get input label with type indicator
   const inputLabel = (inp: VmixInput) => {
