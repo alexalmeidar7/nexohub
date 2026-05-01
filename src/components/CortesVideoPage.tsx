@@ -73,6 +73,7 @@ export default function CortesVideoPage() {
   const [localDuration, setLocalDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
+  const [loadDetail, setLoadDetail] = useState("");
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const [ffmpegReady, setFfmpegReady] = useState(false);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -135,8 +136,8 @@ export default function CortesVideoPage() {
   const loadFfmpeg = async () => {
     if (ffmpegRef.current && ffmpegReady) return ffmpegRef.current;
     
-    // Initialize status and progress for fresh load
-    setStatusMsg("Carregando motor de vídeo (primeira vez ~25MB)...");
+    setStatusMsg("Carregando motor de vídeo...");
+    setLoadDetail("Iniciando...");
     setProgress(0);
     
     const ffmpeg = new FFmpeg();
@@ -155,19 +156,48 @@ export default function CortesVideoPage() {
       try {
         console.log(`[ffmpeg] Tentando carregar de: ${baseURL}`);
         
-        // Use standard fetch to check if the resource is actually reachable before calling load
-        const check = await fetch(`${baseURL}/ffmpeg-core.js`, { method: 'HEAD' }).catch(() => ({ ok: false }));
-        if (!check.ok) throw new Error("CDN unreachable");
+        const fetchWithProgress = async (url: string, label: string) => {
+          setLoadDetail(`Baixando ${label}...`);
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          
+          const reader = response.body?.getReader();
+          const contentLength = +(response.headers.get('Content-Length') || 0);
+          
+          if (!reader || !contentLength) {
+            setLoadDetail(`Carregando ${label}...`);
+            return toBlobURL(url, label.includes("js") ? "text/javascript" : "application/wasm");
+          }
 
-        const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
-        const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
+          let receivedLength = 0;
+          const chunks = [];
+          while(true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            receivedLength += value.length;
+            const pct = Math.round((receivedLength / contentLength) * 100);
+            const mb = (receivedLength / (1024 * 1024)).toFixed(1);
+            const totalMb = (contentLength / (1024 * 1024)).toFixed(1);
+            setLoadDetail(`${label}: ${mb}MB de ${totalMb}MB (${pct}%)`);
+            setProgress(Math.round(pct * 0.9)); // Reserve some for instantiating
+          }
+
+          const blob = new Blob(chunks, { type: label.includes("js") ? "text/javascript" : "application/wasm" });
+          return URL.createObjectURL(blob);
+        };
+
+        const coreURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.js`, "core.js");
+        const wasmURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.wasm`, "core.wasm");
         
+        setLoadDetail("Instanciando WebAssembly...");
         await ffmpeg.load({
           coreURL,
           wasmURL,
         });
         
         lastErr = null;
+        setLoadDetail("Motor pronto!");
         console.log(`[ffmpeg] Carregado com sucesso de: ${baseURL}`);
         break;
       } catch (e) {
@@ -177,8 +207,9 @@ export default function CortesVideoPage() {
     }
     
     if (lastErr) {
-      const msg = "Não foi possível carregar o motor de vídeo. Verifique sua conexão e tente novamente.";
+      const msg = "Erro ao carregar motor de vídeo. Tente recarregar a página.";
       setStatusMsg(msg);
+      setLoadDetail("");
       throw new Error(msg);
     }
     
@@ -640,13 +671,20 @@ export default function CortesVideoPage() {
                   Tempo estimado: {Math.max(1, Math.round(estimatedSeconds - (progress / 100 * estimatedSeconds)))}s restantes
                 </div>
               )}
-              <div className="w-full flex justify-between items-center px-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
-                  {statusMsg || "Iniciando..."}
-                </span>
-                <span className="text-xs font-black" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  {progress}%
-                </span>
+              <div className="w-full flex flex-col gap-1 px-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
+                    {statusMsg || "Iniciando..."}
+                  </span>
+                  <span className="text-xs font-black" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    {progress}%
+                  </span>
+                </div>
+                {loadDetail && (
+                  <span className="text-[9px] font-mono opacity-60 italic" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    {loadDetail}
+                  </span>
+                )}
               </div>
               <div className="w-full h-3 rounded-full p-[2px] shadow-inner" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }}>
                 <div 
