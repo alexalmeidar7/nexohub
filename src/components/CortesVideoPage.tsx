@@ -389,7 +389,8 @@ export default function CortesVideoPage() {
         throw new Error(`Falha ao recortar (código ${exitCode}). Tente outro trecho ou verifique se o vídeo não está corrompido.`);
       }
 
-      setStatusMsg("Lendo arquivo final do motor...");
+      setProgress(92);
+      setStatusMsg("Extraindo vídeo processado...");
       const data = await ffmpeg.readFile(outputName);
       
       if (!data) {
