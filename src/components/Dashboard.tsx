@@ -1642,6 +1642,7 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
       setSelectedDate={setSelectedDate}
       getFeriadoNome={getFeriadoNome}
       eventTypesConfig={eventTypesConfig}
+      onExportFeriados={handleExportFeriados}
     />
   );
 }
