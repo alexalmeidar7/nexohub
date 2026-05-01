@@ -196,41 +196,57 @@ export default function CortesVideoPage() {
         const wasmURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.wasm`, "wasm", "application/wasm");
         
         let workerURL: string | undefined = undefined;
-        // Só tenta carregar worker se SharedArrayBuffer existir E se não estivermos em um ambiente que bloqueia worker cross-origin
-        if (typeof SharedArrayBuffer !== 'undefined') {
+        let canUseWorker = typeof SharedArrayBuffer !== 'undefined';
+        
+        if (canUseWorker) {
           try {
             workerURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.worker.js`, "worker.js", "text/javascript");
           } catch (e) {
-            console.warn("[ffmpeg] Worker load failed, continuing without it:", e);
+            console.warn("[ffmpeg] Worker load failed, will try without it:", e);
+            workerURL = undefined;
+            canUseWorker = false;
           }
         }
         
-        setLoadDetail("Instanciando motor (isso pode levar alguns segundos)...");
-        setProgress(90);
-        
-        const loadTimeout = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout ao instanciar o motor (45s). Verifique sua conexão.")), 45000)
-        );
+        const tryLoad = async (withWorker: boolean) => {
+          setLoadDetail(withWorker ? "Instanciando motor (multithread)..." : "Instanciando motor (single-thread)...");
+          setProgress(90);
+          
+          const loadTimeout = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`Timeout ao instanciar o motor (${withWorker ? 'multithread' : 'single-thread'}).`)), 30000)
+          );
 
-        await Promise.race([
-          ffmpeg.load({
-            coreURL,
-            wasmURL,
-            ...(workerURL ? { workerURL } : {}),
-          }),
-          loadTimeout
-        ]);
+          await Promise.race([
+            ffmpeg.load({
+              coreURL,
+              wasmURL,
+              ...(withWorker && workerURL ? { workerURL } : {}),
+            }),
+            loadTimeout
+          ]);
+        };
+
+        try {
+          await tryLoad(canUseWorker);
+        } catch (e: any) {
+          if (canUseWorker) {
+            console.warn("[ffmpeg] Falha no modo multithread, tentando single-thread...", e);
+            await tryLoad(false);
+          } else {
+            throw e;
+          }
+        }
         
         lastErr = null;
         setLoadDetail("Motor pronto!");
         setProgress(100);
-        console.log(`[ffmpeg] Carregado com sucesso de: ${baseURL}`);
+        console.log(`[ffmpeg] Carregado com sucesso de: ${baseURL} (Modo: ${canUseWorker ? 'Multi' : 'Single'})`);
         break;
       } catch (e: any) {
         console.error("[ffmpeg] CDN load failed:", baseURL, e);
         lastErr = e;
         setLoadDetail(`Falha na CDN ${baseURL.split('/')[2]}: ${e.message || 'Erro desconhecido'}`);
-        // Se falhou, tenta a próxima CDN
+        // Continua para a próxima CDN
       }
     }
     
