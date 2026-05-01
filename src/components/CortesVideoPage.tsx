@@ -152,6 +152,18 @@ export default function CortesVideoPage() {
     }
   }, [results]);
 
+  const resetEngine = () => {
+    if (ffmpegRef.current) {
+      try {
+        ffmpegRef.current.terminate();
+      } catch (e) {
+        console.error("Error terminating ffmpeg:", e);
+      }
+    }
+    ffmpegRef.current = null;
+    setFfmpegReady(false);
+  };
+
   const loadFfmpeg = async () => {
     if (ffmpegRef.current && ffmpegReady) return ffmpegRef.current;
     
