@@ -590,19 +590,19 @@ export default function CortesVideoPage() {
 
   const handleCut = () => (mode === "local" ? handleCutLocal() : handleCutYoutube());
 
-  const handleDownload = () => {
-    if (result?.is_local && result.blob_url) {
+  const handleDownloadRes = (res: CutResult) => {
+    if (res.is_local && res.blob_url) {
       const a = document.createElement("a");
-      a.href = result.blob_url;
-      a.download = result.file_name || "corte.mp4";
+      a.href = res.blob_url;
+      a.download = res.file_name || "corte.mp4";
       document.body.appendChild(a);
       a.click();
       a.remove();
       return;
     }
-    if (result?.download_url) {
+    if (res.download_url) {
       const a = document.createElement("a");
-      a.href = result.download_url;
+      a.href = res.download_url;
       a.download = `corte_${startTime.replace(/:/g, "-")}_${endTime.replace(/:/g, "-")}.mp4`;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
@@ -615,6 +615,8 @@ export default function CortesVideoPage() {
       window.open(`https://www.ssyoutube.com/watch?v=${videoId}&t=${startSeconds}`, "_blank");
     }
   };
+
+  const handleDownload = () => result && handleDownloadRes(result);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
