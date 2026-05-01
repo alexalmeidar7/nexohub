@@ -1989,6 +1989,7 @@ export default function AgendaPage() {
                 </TooltipProvider>
               )}
             </div>
+          </div>
             {/* Próximos Feriados Section */}
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
               <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "linear-gradient(135deg, #ef4444, #b91c1c)", color: "#ffffff" }}>
