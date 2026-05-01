@@ -1031,6 +1031,8 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
   const { user } = useAuth();
   const uid = dataUserId || user?.id;
   const [events, setEvents] = useState<any[]>([]);
+  const [now, setNow] = useState(new Date());
+
   const feriadosNacionais = [
     { dia: 1, mes: 1, nome: "Confraternização Universal" },
     { dia: 21, mes: 4, nome: "Tiradentes" },
