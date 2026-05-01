@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -173,6 +173,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const { user } = useAuth();
   const layoutColors = useLayoutColors();
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
+
+  useEffect(() => {
+    (window as any).setCurrentPageGlobal = setCurrentPage;
+  }, []);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -978,7 +982,7 @@ interface WidgetCard {
 const defaultWidgets: WidgetCard[] = [
   { id: "weather", bg: "glass", render: (nav) => <WeatherWidget onNavigate={nav} /> },
   { id: "top10", bg: "glass", render: () => <TopLikedSongs /> },
-  { id: "agenda", bg: "glass", render: () => <DashboardAgenda /> },
+  { id: "agenda", bg: "glass", render: (onNav: any) => <DashboardAgendaOld onNavigate={onNav} setCurrentPage={(window as any).setCurrentPageGlobal} /> },
   { id: "noar", bg: "glass-dark", render: () => <OnAirWidget /> },
   { id: "comercial", bg: "glass", render: () => <ComercialWidgets /> },
 ];
@@ -1110,6 +1114,90 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
     </div>
   );
 }
+
+const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayEvents, eventDates, feriadoDates, calMonth, setCalMonth, setSelectedDate }: any) => (
+  <div className="flex flex-col h-full w-full">
+    <style>{`
+      .dashboard-calendar .has-event-dot { position: relative; }
+      .dashboard-calendar .has-event-dot::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 2px; height: 2px; background: var(--layout-accent-color, #2563eb); border-radius: 50%; }
+      .dashboard-calendar .is-feriado-dot { position: relative; }
+      .dashboard-calendar .is-feriado-dot::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; background: #ef4444; border-radius: 50%; }
+      .dashboard-calendar .rdp-day_today { border: 1px solid var(--layout-accent-color, #2563eb); font-weight: bold; }
+    `}</style>
+    <div className="flex items-center justify-between mb-2 shrink-0">
+      <div className="flex items-center gap-2">
+        <p className="text-[11px] font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>📅 Agenda {selectedDate && `— ${format(selectedDate, "dd/MM")}`}</p>
+        {feriadoHoje && (
+          <span className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50">
+            Feriado
+          </span>
+        )}
+      </div>
+      <button
+        onClick={() => onNavigate("agenda")}
+        className="text-[10px] font-semibold hover:opacity-70 flex items-center gap-1"
+        style={{ color: "var(--layout-widget-text, #ffffff)", opacity: 0.6 }}
+      >
+        ver tudo <ExternalLink size={10} />
+      </button>
+    </div>
+
+    <div className="flex gap-2 flex-1 min-h-0">
+      <div className="w-[105px] lg:w-[125px] shrink-0">
+        <DashboardCalendar
+          selected={selectedDate}
+          onSelect={setSelectedDate}
+          eventDates={eventDates}
+          feriadoDates={feriadoDates}
+          month={calMonth}
+          onMonthChange={setCalMonth}
+        />
+      </div>
+
+      <div className="flex-1 min-w-0 overflow-y-auto pr-1 space-y-1.5 scrollbar-hide">
+        {feriadoHoje && (
+          <div className="p-1.5 rounded-lg bg-red-500/15 border border-red-500/30 mb-1">
+            <div className="flex items-center gap-1">
+              <Star size={9} className="text-red-500 fill-red-500" />
+              <p className="text-[9px] font-black text-red-500 uppercase tracking-tight">Feriado Nacional</p>
+            </div>
+            <p className="text-[10px] font-bold text-red-400 leading-tight mt-0.5">{feriadoHoje}</p>
+          </div>
+        )}
+        {dayEvents.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center opacity-30">
+            <CalendarDays size={18} className="mb-1" style={{ color: "var(--layout-widget-text, #ffffff)" }} />
+            <p className="text-[9px]" style={{ color: "var(--layout-widget-text, #ffffff)" }}>Vazio</p>
+          </div>
+        ) : (
+          dayEvents.map((evt: any) => (
+            <div
+              key={evt.id}
+              onClick={() => {
+                sessionStorage.setItem("agenda_focus_event", evt.id);
+                onNavigate("agenda");
+              }}
+              className="p-1.5 rounded-lg cursor-pointer transition-all hover:bg-white/10 active:scale-[0.98] border border-white/5"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+              }}
+            >
+              <p className="text-[10px] font-bold truncate" style={{ color: "var(--layout-widget-text, #ffffff)" }}>{evt.programa?.nome}</p>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="text-[8px] opacity-60" style={{ color: "var(--layout-widget-text, #ffffff)" }}>
+                  {evt.tipo_evento === "gravacao" ? `🎬 ${evt.horario_gravacao || ""}` : evt.programa?.horario_inicio}
+                </span>
+                <span className={`text-[7px] font-black px-1 rounded-sm ${evt.prioridade === "alta" ? "bg-red-500/30 text-red-400" : "bg-white/10 text-white/50"}`}>
+                  {evt.prioridade?.toUpperCase()}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  </div>
+);
 
 /* ========== SERVER CLOCK ========== */
 function ServerClock() {
@@ -1311,35 +1399,94 @@ function ComercialWidgets() {
   }, [user]);
 
   if (loading) return (
-    <div className="animate-pulse">
+    <div className="animate-pulse h-full">
       <div className="flex items-center gap-1.5 mb-2">
-        <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: "var(--layout-button-bg, #0f1058333)", opacity: 0.2 }} />
-        <div className="w-28 h-3 rounded bg-white/10" />
+        <div className="w-3.5 h-3.5 rounded bg-white/10" />
+        <div className="w-20 h-3 rounded bg-white/10" />
       </div>
-      <div className="w-12 h-8 rounded bg-white/10 mb-1" />
-      <div className="w-36 h-2.5 rounded bg-white/5" />
+      <div className="flex gap-2 flex-1 min-h-0">
+        <div className="w-[105px] rounded bg-white/5" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-10 rounded bg-white/5" />
+          <div className="h-10 rounded bg-white/5" />
+        </div>
+      </div>
     </div>
   );
 
+function DashboardAgenda({ onNavigate }: { onNavigate: (p: Page) => void }) {
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>🏆 Patrocinadores Ativos</p>
-        <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #ffffff)", opacity: 0.7 }}>no ar</span>
-      </div>
-      <p className="text-3xl font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>{totalLogos}</p>
-      <p className="text-[10px] mt-1" style={{ color: "var(--layout-widget-text, #ffffff)", opacity: 0.5 }}>logos vinculadas a programas</p>
-    </div>
+    <DashboardAgendaOld 
+      onNavigate={onNavigate}
+      setCurrentPage={(window as any).setCurrentPageGlobal}
+    />
   );
 }
 
-/* ========== DASHBOARD AGENDA ========== */
-function DashboardAgenda() {
+function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Page) => void; setCurrentPage: (p: Page) => void }) {
   const { user } = useAuth();
+  const [now, setNow] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [calMonth, setCalMonth] = useState(new Date());
+
+  const feriadosNacionais = [
+    { dia: 1, mes: 1, nome: "Confraternização Universal" },
+    { dia: 21, mes: 4, nome: "Tiradentes" },
+    { dia: 1, mes: 5, nome: "Dia do Trabalhador" },
+    { dia: 7, mes: 9, nome: "Independência do Brasil" },
+    { dia: 12, mes: 10, nome: "Nossa Senhora Aparecida" },
+    { dia: 2, mes: 11, nome: "Finados" },
+    { dia: 15, mes: 11, nome: "Proclamação da República" },
+    { dia: 20, mes: 11, nome: "Consciência Negra" },
+    { dia: 25, mes: 12, nome: "Natal" },
+  ];
+
+  const getFeriadoNome = (date?: Date) => {
+    if (!date) return null;
+    const f = feriadosNacionais.find(h => h.dia === date.getDate() && h.mes === (date.getMonth() + 1));
+    return f ? f.nome : null;
+  };
+
+  const feriadoDates = feriadosNacionais.map(f => {
+    const d = new Date();
+    return new Date(d.getFullYear(), f.mes - 1, f.dia);
+  });
+
+  const eventMatchesDate = (evt: any, dateStr: string) => {
+    if (evt.data === dateStr) return true;
+    const evtDate = new Date(evt.data + "T12:00:00");
+    const checkDate = new Date(dateStr + "T12:00:00");
+    if (checkDate < evtDate) return false;
+    if (evt.recorrencia === "semanal") return evtDate.getDay() === checkDate.getDay();
+    if (evt.recorrencia === "mensal") return evtDate.getDate() === checkDate.getDate();
+    return false;
+  };
+
+  const getCalendarDates = () => {
+    const dates: Date[] = [];
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+    for (const evt of eventos) {
+      if (evt.recorrencia === "unico") {
+        dates.push(new Date(evt.data + "T12:00:00"));
+      } else {
+        const d = new Date(start);
+        while (d <= end) {
+          const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          if (eventMatchesDate(evt, ds)) dates.push(new Date(d));
+          d.setDate(d.getDate() + 1);
+        }
+      }
+    }
+    return dates;
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -1363,136 +1510,56 @@ function DashboardAgenda() {
     fetchData();
   }, [user]);
 
-  const eventMatchesDate = (evt: any, dateStr: string) => {
-    if (evt.data === dateStr) return true;
-    const evtDate = new Date(evt.data + "T12:00:00");
-    const checkDate = new Date(dateStr + "T12:00:00");
-    if (checkDate < evtDate) return false;
-    if (evt.recorrencia === "semanal") return evtDate.getDay() === checkDate.getDay();
-    if (evt.recorrencia === "mensal") return evtDate.getDate() === checkDate.getDate();
-    return false;
-  };
-
-  const getCalendarDates = () => {
-    const dates: Date[] = [];
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 2, 0);
-    for (const evt of eventos) {
-      if (evt.recorrencia === "unico") {
-        dates.push(new Date(evt.data + "T12:00:00"));
-      } else {
-        const d = new Date(start);
-        while (d <= end) {
-          const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-          if (eventMatchesDate(evt, ds)) dates.push(new Date(d));
-          d.setDate(d.getDate() + 1);
-        }
-      }
-    }
-    return dates;
-  };
-  const eventDates = getCalendarDates();
-
-  const [now, setNow] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(new Date());
-    }, 30000); // Update every 30s to catch passed end times
-    return () => clearInterval(timer);
-  }, []);
-
+  if (loading) return (
+    <div className="animate-pulse h-full">
+      <div className="flex items-center gap-1.5 mb-2">
+        <div className="w-3.5 h-3.5 rounded bg-white/10" />
+        <div className="w-20 h-3 rounded bg-white/10" />
+      </div>
+      <div className="flex gap-2 flex-1 min-h-0">
+        <div className="w-[105px] rounded bg-white/5" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-10 rounded bg-white/5" />
+          <div className="h-10 rounded bg-white/5" />
+        </div>
+      </div>
+    </div>
   const todayStr = format(now, "yyyy-MM-dd");
   const currentTime = format(now, "HH:mm");
-
-  const selDateStr = selectedDate
-    ? format(selectedDate, "yyyy-MM-dd")
-    : "";
+  const selDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
 
   const dayEvents = eventos.filter((e) => {
     const matchesDate = eventMatchesDate(e, selDateStr);
     if (!matchesDate) return false;
-
-    // Filter out completed or cancelled events
     if (e.status === "concluido" || e.status === "cancelado") return false;
-
-    // Filter out events where recording has ended (only for today)
     const isToday = selDateStr === todayStr;
-    if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) {
-      return false;
-    }
-
+    if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) return false;
     return true;
   });
 
-  if (loading) {
-    return (
-      <div className="flex flex-col h-full animate-pulse">
-        <div className="flex items-center gap-1.5 mb-1">
-          <div className="w-3.5 h-3.5 rounded bg-white/10" />
-          <div className="w-14 h-3 rounded bg-white/10" />
-        </div>
-        <div className="grid grid-cols-7 gap-0.5 mb-1">
-          {Array.from({ length: 35 }).map((_, i) => (
-            <div key={i} className="w-full aspect-square rounded bg-white/5" />
-          ))}
-        </div>
-        <div className="mt-1 space-y-1">
-          <div className="h-6 rounded-lg" style={{ backgroundColor: "var(--layout-button-bg, #0f1058333)", opacity: 0.15 }} />
-        </div>
-      </div>
-    );
-  }
-
-
-
-  const prevMonth = () => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1));
-  const nextMonth = () => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1));
-
-  const monthLabel = calMonth.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
+  const feriadoHoje = getFeriadoNome(selectedDate || new Date());
+  const eventDates = getCalendarDates();
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Header: icon + AGENDA + month nav */}
-      <div className="flex items-center gap-1.5 mb-1">
-        <CalendarDays size={14} style={{ color: "var(--layout-button-bg, #0f1058333)" }} />
-        <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "var(--layout-widget-text, #ffffff)" }}>Agenda</span>
-        <div className="flex items-center gap-1 ml-auto">
-          <button onClick={prevMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
-            <ChevronDown size={10} className="rotate-90" style={{ color: "var(--layout-button-bg, #0f1058333)" }} />
-          </button>
-          <span className="text-[9px] font-semibold capitalize" style={{ color: "var(--layout-button-bg, #0f1058333)", minWidth: "55px", textAlign: "center" }}>{monthLabel}</span>
-          <button onClick={nextMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
-            <ChevronDown size={10} className="-rotate-90" style={{ color: "var(--layout-button-bg, #0f1058333)" }} />
-          </button>
-        </div>
-      </div>
-      <DashboardCalendar
-        selected={selectedDate}
-        onSelect={setSelectedDate}
-        eventDates={eventDates}
-        month={calMonth}
-        onMonthChange={setCalMonth}
-      />
-      {dayEvents.length > 0 && (
-        <div className="mt-1 space-y-1 overflow-y-auto flex-1 scrollbar-hide">
-          {dayEvents.map((evt: any) => (
-            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "var(--layout-button-bg, #0f1058333)", color: "var(--layout-button-text, #fff)" }}>
-              <p className="font-semibold">{evt.programa?.nome || "Evento"}</p>
-              {evt.programa && <p className="opacity-70">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <DashboardAgendaWithStyles
+      onNavigate={onNavigate}
+      feriadoHoje={feriadoHoje}
+      selectedDate={selectedDate}
+      dayEvents={dayEvents}
+      eventDates={eventDates}
+      feriadoDates={feriadoDates}
+      calMonth={calMonth}
+      setCalMonth={setCalMonth}
+      setSelectedDate={setSelectedDate}
+    />
   );
 }
 
-function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChange }: {
+function DashboardCalendar({ selected, onSelect, eventDates, feriadoDates, month, onMonthChange }: {
   selected: Date | undefined;
   onSelect: (d: Date | undefined) => void;
   eventDates: Date[];
+  feriadoDates: Date[];
   month: Date;
   onMonthChange: (d: Date) => void;
 }) {
@@ -1504,7 +1571,12 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
       month={month}
       onMonthChange={onMonthChange}
       locale={ptBR}
-      className="p-0 pointer-events-auto"
+      modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
+      modifiersClassNames={{ 
+        hasEvent: "has-event-dot",
+        isFeriado: "is-feriado-dot"
+      }}
+      className="p-0 pointer-events-auto dashboard-calendar"
       classNames={{
         months: "w-full",
         month: "w-full space-y-0",
@@ -1520,9 +1592,8 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
         day_today: "font-bold",
         day_outside: "opacity-30",
       }}
-      modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
-        hasEvent: { backgroundColor: "var(--layout-button-bg, #0f1058333)", fontWeight: "bold", color: "var(--layout-button-text, #fff)", borderRadius: "50%" },
+        isFeriado: { color: "#ef4444" },
       }}
       styles={{
         day: { color: "var(--layout-widget-text, #ffffff)", fontSize: "14px" },
@@ -1530,4 +1601,8 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
       }}
     />
   );
+}
+
+function DashboardAgendaFlyoutPlaceholder() {
+  return null;
 }

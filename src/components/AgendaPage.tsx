@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle, History } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle, History, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressInline, { type ExpressEditData } from "@/components/ProgramaExpressInline";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
-import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2 } from "lucide-react";
+import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2, Sparkles } from "lucide-react";
 
 function ParticipanteSearchPicker({
   apresentadores,
@@ -314,6 +314,24 @@ const studioColors = (name?: string) => {
     text: `hsl(${h} 70% 28%)`,
   };
 };
+const feriadosNacionais = [
+  { dia: 1, mes: 1, nome: "Confraternização Universal" },
+  { dia: 21, mes: 4, nome: "Tiradentes" },
+  { dia: 1, mes: 5, nome: "Dia do Trabalhador" },
+  { dia: 7, mes: 9, nome: "Independência do Brasil" },
+  { dia: 12, mes: 10, nome: "Nossa Senhora Aparecida" },
+  { dia: 2, mes: 11, nome: "Finados" },
+  { dia: 15, mes: 11, nome: "Proclamação da República" },
+  { dia: 20, mes: 11, nome: "Consciência Negra" },
+  { dia: 25, mes: 12, nome: "Natal" },
+];
+
+const getFeriadoNome = (date?: Date) => {
+  if (!date) return null;
+  const f = feriadosNacionais.find(h => h.dia === date.getDate() && h.mes === (date.getMonth() + 1));
+  return f ? f.nome : null;
+};
+
 export default function AgendaPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1995,7 +2013,8 @@ export default function AgendaPage() {
             </div>
             <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
               {weekEvents.map(({ dateStr, date, events: dayEvents }) => {
-                const isToday = format(new Date(), "yyyy-MM-dd") === dateStr;
+                const isToday = isSameDay(date, now);
+                const feriadoNome = getFeriadoNome(date);
                 return (
                   <button
                     type="button"
@@ -2003,7 +2022,9 @@ export default function AgendaPage() {
                     onClick={() => setSelectedDate(date)}
                     className="text-left rounded-lg p-2 flex flex-col gap-1.5 hover:shadow-sm transition-all"
                     style={{
-                      backgroundColor: isToday
+                      backgroundColor: feriadoNome 
+                        ? "rgba(239, 68, 68, 0.04)" 
+                        : isToday
                         ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
                         : "rgba(13,4,70,0.03)",
                       border: `1px solid color-mix(in srgb, var(--layout-border-color, #333333) ${isToday ? 50 : 20}%, transparent)`,
@@ -2018,6 +2039,12 @@ export default function AgendaPage() {
                         {format(date, "dd/MM")}
                       </span>
                     </div>
+                    {feriadoNome && (
+                      <div className="flex items-center gap-1 py-0.5 px-1.5 rounded bg-red-500/10 border border-red-500/20">
+                        <Star size={8} className="text-red-500 fill-red-500" />
+                        <span className="text-[8px] font-bold text-red-600 uppercase tracking-wider">Feriado</span>
+                      </div>
+                    )}
                     <div className="space-y-1">
                       {dayEvents.length === 0 ? (
                         <p className="text-[9px] italic" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 35%, transparent)" }}>
