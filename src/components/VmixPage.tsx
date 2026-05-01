@@ -868,11 +868,20 @@ export default function VmixPage() {
       
       if (changed) {
         localStorage.setItem("vmix_input_mapping", JSON.stringify(next));
+        // Also persist to DB
+        if (user) {
+          supabase.from("user_settings")
+            .update({ vmix_input_mapping: next as any })
+            .eq("user_id", user.id)
+            .then(({ error }) => {
+              if (error) console.error("Error saving input mapping to DB:", error);
+            });
+        }
         return next;
       }
       return prev;
     });
-  }, [inputs]);
+  }, [inputs, user]);
 
   useEffect(() => {
     if (!savedUrl) return;
