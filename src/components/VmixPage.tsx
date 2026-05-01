@@ -1794,25 +1794,30 @@ export default function VmixPage() {
 
   return (
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e0e0e0" }}>
-      {/* ── CONNECTION ALERT REMOVED ── */}
-
-      {/* ── URL + GO LIVE / RECORD row ── */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* URL section */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
-          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: connected ? "#22c55e" : "#666", boxShadow: connected ? "0 0 6px #22c55e60" : "none" }} />
+      {/* ── Header Toolbar (Connection & Actions) ── */}
+      <div className="flex items-center justify-between gap-4 flex-wrap bg-[#1a1a1f] p-2 rounded-xl border border-white/5 shadow-2xl">
+        {/* Left: Studio Connection Status */}
+        <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-[#111115] border border-[#ffffff08] shadow-inner">
+          <div className="flex items-center gap-2">
+            <div 
+              className="w-2 h-2 rounded-full animate-pulse" 
+              style={{ 
+                backgroundColor: connected ? "#22c55e" : "#ef4444", 
+                boxShadow: connected ? "0 0 10px rgba(34,197,94,0.6)" : "0 0 10px rgba(239,68,68,0.6)" 
+              }} 
+            />
+            <span className="text-[10px] font-black uppercase tracking-[0.1em] text-white/40">Estúdio</span>
+          </div>
           
           {connected && selectedConnectionId ? (
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Conectado a</span>
-              <span className="text-xs font-bold text-white uppercase">{studioName}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-white uppercase tracking-wider">{studioName}</span>
               <div className="w-px h-3 bg-white/10 mx-1" />
               <button 
                 onClick={() => setShowStudioSelector(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-all hover:bg-blue-500/10"
+                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-bold text-blue-400 hover:text-blue-300 transition-all hover:bg-blue-500/10 border border-blue-500/20"
               >
-                <Monitor size={12} />
-                Trocar Estúdio
+                TROCAR
               </button>
               <button 
                 onClick={() => {
@@ -1822,94 +1827,70 @@ export default function VmixPage() {
                   setStudioName("");
                   setSavedUrl("");
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-red-400 hover:text-red-300 transition-all hover:bg-red-500/10"
-                title="Desconectar do estúdio"
+                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-bold text-red-500/70 hover:text-red-500 transition-all hover:bg-red-500/10 border border-red-500/20"
+                title="Desconectar"
               >
-                <XCircle size={12} />
-                Desconectar
+                SAIR
               </button>
             </div>
           ) : (
-            <>
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={vmixUrl}
                 onChange={e => setVmixUrl(e.target.value)}
-                placeholder="http://SEU_IP_PUBLICO:8088"
-                className="w-52 px-3 py-1.5 rounded text-xs outline-none transition-all focus:ring-1 focus:ring-white/10"
-                style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
+                placeholder="IP vMix"
+                className="w-32 px-2 py-1 rounded text-[10px] outline-none bg-[#0a0a0d] text-white border border-white/5 font-mono"
               />
-              <button onClick={saveUrl} className="px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200 hover:scale-[1.02]"
-                style={{ backgroundColor: "#ffffff08", border: "1px solid #ffffff10" }}
-              >
-                Salvar
-              </button>
-              <button
+              <button 
                 onClick={connectToVmix}
                 disabled={connecting}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200"
-                style={{ backgroundColor: connected ? "#22c55e18" : "#ffffff08", border: `1px solid ${connected ? "#22c55e30" : "#ffffff10"}` }}
+                className="px-3 py-1 rounded text-[9px] font-black bg-blue-600 hover:bg-blue-500 text-white transition-all uppercase tracking-widest disabled:opacity-50"
               >
-                {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} style={{ color: connected ? "#22c55e" : "#666" }} />}
-                {connected ? "Conectado" : "Conectar"}
-              </button>
-            </>
-          )}
-        </div>
-        {/* GO LIVE / RECORD section */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
-          {/* GO LIVE group */}
-          <div className="group/live flex items-center gap-1">
-            <button
-              onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-              style={{
-                backgroundColor: streaming ? "#6b1010" : "#2a2a30",
-                color: streaming ? "#fff" : "#aaa",
-                boxShadow: streaming ? "0 0 16px #6b101060" : "none",
-                border: `1px solid ${streaming ? "#8b2020" : "#3a3a40"}`,
-              }}
-            >
-              {streaming ? "● LIVE" : "GO LIVE"}
-            </button>
-            <div className="flex items-center gap-1 max-w-0 overflow-hidden opacity-0 transition-all duration-200 group-hover/live:max-w-[300px] group-hover/live:opacity-100">
-              <button
-                onClick={() => sendCommand("StartStreaming")}
-                className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
-                style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
-                onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
-                onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-              >
-                STREAMING 1
-              </button>
-              <button
-                onClick={() => sendCommand("StartStreaming")}
-                className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
-                style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
-                onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
-                onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-              >
-                STREAMING 2
+                {connecting ? "..." : "Conectar"}
               </button>
             </div>
+          )}
+        </div>
+
+        {/* Right: Global Actions (Live, Rec, Refresh) */}
+        <div className="flex items-center gap-2">
+          {/* STREAMING STATUS BUTTONS */}
+          <div className="flex items-center gap-1 bg-[#111115] p-1 rounded-lg border border-white/5 shadow-inner">
+            <button
+              onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
+              className={`px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${
+                streaming 
+                  ? "bg-[#dc2626] text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-[#ff4444]" 
+                  : "bg-[#2a2a30] text-white/40 border border-white/5 hover:text-white/70"
+              }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${streaming ? "bg-white animate-pulse" : "bg-white/20"}`} />
+              {streaming ? "ON AIR" : "GO LIVE"}
+            </button>
+            
+            <button
+              onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
+              className={`px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${
+                recording 
+                  ? "bg-[#dc2626] text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-[#ff4444]" 
+                  : "bg-[#2a2a30] text-white/40 border border-white/5 hover:text-white/70"
+              }`}
+            >
+              <Disc size={12} className={recording ? "animate-spin" : ""} />
+              {recording ? "REC" : "RECORD"}
+            </button>
+
+            <div className="w-px h-6 bg-white/5 mx-1" />
+
+            <button 
+              onClick={() => connectToVmix()} 
+              className="p-1.5 rounded-lg text-white/30 hover:text-white transition-colors hover:bg-white/5" 
+              title="Refresh vMix State"
+            >
+              <RefreshCw size={14} className={connecting ? "animate-spin" : ""} />
+            </button>
           </div>
-          {/* RECORD button (independent) */}
-          <button
-            onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
-            className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-            style={{
-              backgroundColor: recording ? "#6b1010" : "#2a2a30",
-              color: recording ? "#fff" : "#aaa",
-              border: `1px solid ${recording ? "#8b2020" : "#3a3a40"}`,
-            }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #3a3a3a60"; }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-          >
-            {recording ? "● REC" : "RECORD"}
-          </button>
-          <button onClick={() => connectToVmix()} className="text-white/40 hover:text-white transition-colors" title="Atualizar">
-            <RefreshCw size={14} />
-          </button>
         </div>
       </div>
 
