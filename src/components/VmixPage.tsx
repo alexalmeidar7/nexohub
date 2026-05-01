@@ -1801,28 +1801,46 @@ export default function VmixPage() {
         {/* URL section */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
           <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: connected ? "#22c55e" : "#666", boxShadow: connected ? "0 0 6px #22c55e60" : "none" }} />
-          <input
-            type="text"
-            value={vmixUrl}
-            onChange={e => setVmixUrl(e.target.value)}
-            placeholder="http://SEU_IP_PUBLICO:8088"
-            className="w-52 px-3 py-1.5 rounded text-xs outline-none transition-all focus:ring-1 focus:ring-white/10"
-            style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
-          />
-          <button onClick={saveUrl} className="px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200 hover:scale-[1.02]"
-            style={{ backgroundColor: "#ffffff08", border: "1px solid #ffffff10" }}
-          >
-            Salvar
-          </button>
-          <button
-            onClick={connectToVmix}
-            disabled={connecting}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200"
-            style={{ backgroundColor: connected ? "#22c55e18" : "#ffffff08", border: `1px solid ${connected ? "#22c55e30" : "#ffffff10"}` }}
-          >
-            {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} style={{ color: connected ? "#22c55e" : "#666" }} />}
-            {connected ? "Conectado" : "Conectar"}
-          </button>
+          
+          {connected && selectedConnectionId ? (
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Conectado a</span>
+              <span className="text-xs font-bold text-white uppercase">{studioName}</span>
+              <div className="w-px h-3 bg-white/10 mx-1" />
+              <button 
+                onClick={() => setShowStudioSelector(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-all hover:bg-blue-500/10"
+              >
+                <Monitor size={12} />
+                Trocar Estúdio
+              </button>
+            </div>
+          ) : (
+            <>
+              <input
+                type="text"
+                value={vmixUrl}
+                onChange={e => setVmixUrl(e.target.value)}
+                placeholder="http://SEU_IP_PUBLICO:8088"
+                className="w-52 px-3 py-1.5 rounded text-xs outline-none transition-all focus:ring-1 focus:ring-white/10"
+                style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
+              />
+              <button onClick={saveUrl} className="px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200 hover:scale-[1.02]"
+                style={{ backgroundColor: "#ffffff08", border: "1px solid #ffffff10" }}
+              >
+                Salvar
+              </button>
+              <button
+                onClick={connectToVmix}
+                disabled={connecting}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200"
+                style={{ backgroundColor: connected ? "#22c55e18" : "#ffffff08", border: `1px solid ${connected ? "#22c55e30" : "#ffffff10"}` }}
+              >
+                {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} style={{ color: connected ? "#22c55e" : "#666" }} />}
+                {connected ? "Conectado" : "Conectar"}
+              </button>
+            </>
+          )}
         </div>
         {/* GO LIVE / RECORD section */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
