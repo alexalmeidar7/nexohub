@@ -952,6 +952,16 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         </Suspense>
       </CollapsibleBox>}
 
+      {/* Box 6: Tipos de Eventos */}
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Personalizar Tipos de Eventos" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
+        <EventTypesConfigSection />
+      </CollapsibleBox>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EventTypesConfigSection() {
   const { user } = useAuth();
   const [config, setConfig] = useState<any>(null);
