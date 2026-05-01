@@ -10,6 +10,7 @@ import logoFooter from "@/assets/logo-footer.png";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
