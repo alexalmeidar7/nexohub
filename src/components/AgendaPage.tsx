@@ -2112,6 +2112,15 @@ export default function AgendaPage() {
                     Hoje
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={handleExportFeriados}
+                  className="px-2 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity flex items-center gap-1"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
+                  title="Exportar feriados para o Google Calendar"
+                >
+                  <Download size={10} /> Exportar Feriados
+                </button>
               </span>
               <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
                 {weekEvents.reduce((sum, d) => sum + d.events.length, 0)} evento{weekEvents.reduce((sum, d) => sum + d.events.length, 0) !== 1 ? "s" : ""}
