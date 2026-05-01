@@ -209,30 +209,41 @@ export default function CortesVideoPage() {
 
       await ffmpeg.writeFile(inputName, await fetchFile(localFile));
 
-      setStatusMsg("Processando corte...");
-      const vf =
-        format === "reel"
-          ? "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1"
-          : "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,setsar=1";
-
-      // Detect audio track presence by probing log output
-      let hasAudio = true;
-      try {
-        const probeLog: string[] = [];
-        const probeListener = ({ message }: { message: string }) => probeLog.push(message);
-        ffmpeg.on("log", probeListener);
-        await ffmpeg.exec(["-i", inputName, "-hide_banner"]).catch(() => {});
-        ffmpeg.off("log", probeListener);
-        hasAudio = probeLog.some((l) => /Stream #\d+:\d+.*Audio:/i.test(l));
-      } catch { /* assume audio */ }
-
-      const args: string[] = ["-i", inputName, "-ss", String(startSeconds), "-t", String(duration), "-vf", vf,
-        "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p"];
-      if (hasAudio) {
-        args.push("-c:a", "aac", "-b:a", "128k", "-ac", "2");
+      setStatusMsg(format === "original" ? "Recortando instantaneamente..." : "Processando corte...");
+      
+      const args: string[] = [];
+      
+      // For "original" format, we use stream copy which is near-instant.
+      // We put -ss before -i for fast seeking.
+      if (format === "original") {
+        args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-c", "copy");
       } else {
-        args.push("-an");
+        const vf =
+          format === "reel"
+            ? "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1"
+            : "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,setsar=1";
+
+        // Detect audio track presence by probing log output
+        let hasAudio = true;
+        try {
+          const probeLog: string[] = [];
+          const probeListener = ({ message }: { message: string }) => probeLog.push(message);
+          ffmpeg.on("log", probeListener);
+          await ffmpeg.exec(["-i", inputName, "-hide_banner"]).catch(() => {});
+          ffmpeg.off("log", probeListener);
+          hasAudio = probeLog.some((l) => /Stream #\d+:\d+.*Audio:/i.test(l));
+        } catch { /* assume audio */ }
+
+        args.push("-i", inputName, "-ss", String(startSeconds), "-t", String(duration), "-vf", vf,
+          "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p");
+        
+        if (hasAudio) {
+          args.push("-c:a", "aac", "-b:a", "128k", "-ac", "2");
+        } else {
+          args.push("-an");
+        }
       }
+      
       args.push("-movflags", "+faststart", "-y", outputName);
 
       const exitCode = await ffmpeg.exec(args);
