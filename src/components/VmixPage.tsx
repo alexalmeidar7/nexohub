@@ -205,6 +205,7 @@ export default function VmixPage() {
     try { const s = localStorage.getItem("vmix_monitor_iframe"); return s ? JSON.parse(s) : { preview: false, output: false }; } catch { return { preview: false, output: false }; }
   });
   const [monitorsCollapsed, setMonitorsCollapsed] = useState(true);
+  const [showStudioSelector, setShowStudioSelector] = useState(false);
 
   // Command log panel
   interface VmixLogEntry { id: number; time: string; command: string; status: "ok" | "error" | "pending"; detail: string; source: "local" | "server" | "scheduler"; }
