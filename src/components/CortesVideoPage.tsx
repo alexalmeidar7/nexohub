@@ -421,12 +421,18 @@ export default function CortesVideoPage() {
       setStatusMsg("");
       toast({ title: "Corte gerado!", description: "O vídeo está pronto para download." });
     } catch (err: any) {
-      console.error("Cut error:", err, "\nffmpeg log:\n", ffmpegLog);
+      console.error("Cut error:", err);
+      console.error("ffmpeg log context:", ffmpegLog);
+      
+      const errorMsg = err?.message || "Falha no processamento.";
       toast({
         title: "Erro ao processar",
-        description: err?.message || "Falha no processamento. Verifique o console para detalhes.",
+        description: errorMsg,
         variant: "destructive",
       });
+      
+      // Armazenar log para debug se necessário
+      setLoadDetail(`ERRO: ${errorMsg}`);
       setStatusMsg("");
     } finally {
       setCutting(false);
