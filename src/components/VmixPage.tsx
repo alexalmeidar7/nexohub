@@ -642,7 +642,9 @@ export default function VmixPage() {
       result.recommendation = isEmbeddedPreview
         ? "⚠️ O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' no navegador para esse domínio."
         : "⚠️ Conexão falhou. Se você JÁ permitiu 'Conteúdo Inseguro' no cadeado do navegador, verifique: 1) O IP/Porta estão corretos? 2) O vMix está aberto? 3) O Firewall do Windows permite a porta 8088?";
-      if (!isEmbeddedPreview && result.directResult === "fail") setShowMixedContentDialog(true);
+      if (!isEmbeddedPreview && result.directResult === "fail") {
+        // setShowMixedContentDialog(true); // REMOVED
+      }
     } else if (isLocal) {
       result.recommendation = "⚠️ IP local detectado. Use modo Direto na mesma rede local; o modo Proxy só funciona com URL pública/túnel.";
     } else {
