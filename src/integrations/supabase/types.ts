@@ -991,6 +991,7 @@ export type Database = {
           created_at: string
           email: string | null
           estado: string | null
+          event_types_config: Json | null
           id: string
           nome: string | null
           pais: string | null
@@ -1005,6 +1006,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           estado?: string | null
+          event_types_config?: Json | null
           id?: string
           nome?: string | null
           pais?: string | null
@@ -1019,6 +1021,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           estado?: string | null
+          event_types_config?: Json | null
           id?: string
           nome?: string | null
           pais?: string | null

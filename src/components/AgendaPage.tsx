@@ -382,6 +382,7 @@ export default function AgendaPage() {
   const [formHorarioGravacaoFim, setFormHorarioGravacaoFim] = useState("");
   const [uploadingArte, setUploadingArte] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
+  const [eventTypesConfig, setEventTypesConfig] = useState<any>(null);
 
   const [loadingData, setLoadingData] = useState(true);
   const [expressOpen, setExpressOpen] = useState(false);
@@ -412,6 +413,16 @@ export default function AgendaPage() {
 
   const fetchEventos = useCallback(async () => {
     if (!user) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("event_types_config")
+      .eq("user_id", user.id)
+      .single();
+    
+    if (profile?.event_types_config) {
+      setEventTypesConfig(profile.event_types_config);
+    }
+
     const { data: evts } = await supabase
       .from("agenda_eventos")
       .select("*")
@@ -2066,7 +2077,9 @@ export default function AgendaPage() {
                         : isToday
                         ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
                         : "rgba(13,4,70,0.03)",
-                      border: `1px solid color-mix(in srgb, var(--layout-border-color, #333333) ${isToday ? 50 : 20}%, transparent)`,
+                      border: feriadoNome
+                        ? "1px solid rgba(239, 68, 68, 0.2)"
+                        : `1px solid color-mix(in srgb, var(--layout-border-color, #333333) ${isToday ? 50 : 20}%, transparent)`,
                       minHeight: 110,
                     }}
                   >
@@ -2101,8 +2114,13 @@ export default function AgendaPage() {
                         </p>
                       ) : (
                         dayEvents.slice(0, 4).map((evt) => {
-                          const sc = studioColors(evt.programa?.estudio);
-                          const isLive = (evt.tipo_evento || "live") === "live";
+                          const eventConfig = eventTypesConfig?.[evt.tipo_evento || "live"];
+                          const sc = { 
+                            bg: `${eventConfig?.color || "#2563eb"}15`, 
+                            border: eventConfig?.color || "#2563eb",
+                            text: eventConfig?.color || "#2563eb"
+                          };
+                          const label = eventConfig?.label || (evt.tipo_evento === "live" ? "LIVE" : evt.tipo_evento?.toUpperCase());
                           return (
                             <div
                               key={evt.id}
@@ -2121,17 +2139,17 @@ export default function AgendaPage() {
                                 <span
                                   className="text-[8px] font-bold px-1 py-[1px] rounded shrink-0"
                                   style={{
-                                    backgroundColor: isLive ? "#dc2626" : "#475569",
+                                    backgroundColor: sc.border,
                                     color: "#ffffff",
                                   }}
-                                  title={isLive ? "Ao vivo" : "Gravação"}
+                                  title={label}
                                 >
-                                  {isLive ? "● LIVE" : "🎬 REC"}
+                                  {label}
                                 </span>
                               </div>
                               {evt.programa && (
                                 <p className="text-[9px] leading-tight" style={{ color: `${sc.text}99` }}>
-                                  {(!isLive && evt.horario_gravacao ? evt.horario_gravacao : evt.programa.horario_inicio).slice(0, 5)}
+                                  {(evt.horario_gravacao ? evt.horario_gravacao : evt.programa.horario_inicio).slice(0, 5)}
                                   {evt.programa.estudio && ` • ${evt.programa.estudio}`}
                                 </p>
                               )}

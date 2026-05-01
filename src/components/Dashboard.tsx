@@ -1116,7 +1116,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   );
 }
 
-const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayEvents, eventDates, feriadoDates, calMonth, setCalMonth, setSelectedDate, getFeriadoNome }: any) => (
+const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayEvents, eventDates, feriadoDates, calMonth, setCalMonth, setSelectedDate, getFeriadoNome, eventTypesConfig }: any) => (
   <div className="flex flex-col h-full w-full">
     <style>{`
       .dashboard-calendar .has-event-dot { position: relative; }
@@ -1209,8 +1209,14 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
                 <span className="text-[8px] opacity-60" style={{ color: "var(--layout-widget-text, #ffffff)" }}>
                   {evt.tipo_evento === "gravacao" ? `🎬 ${evt.horario_gravacao || ""}` : evt.programa?.horario_inicio}
                 </span>
-                <span className={`text-[7px] font-black px-1 rounded-sm ${evt.prioridade === "alta" ? "bg-red-500/30 text-red-400" : "bg-white/10 text-white/50"}`}>
-                  {evt.prioridade?.toUpperCase()}
+                <span 
+                  className="text-[7px] font-black px-1 rounded-sm"
+                  style={{ 
+                    backgroundColor: `${eventTypesConfig?.[evt.tipo_evento || "live"]?.color || "#ffffff"}33`, 
+                    color: eventTypesConfig?.[evt.tipo_evento || "live"]?.color || "rgba(255,255,255,0.5)" 
+                  }}
+                >
+                  {eventTypesConfig?.[evt.tipo_evento || "live"]?.label || evt.prioridade?.toUpperCase()}
                 </span>
               </div>
             </div>
@@ -1453,6 +1459,7 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
   const [now, setNow] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState<any[]>([]);
+  const [eventTypesConfig, setEventTypesConfig] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [calMonth, setCalMonth] = useState(new Date());
 
@@ -1516,6 +1523,17 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
+      // Fetch user profile for event types config
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("event_types_config")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (profile?.event_types_config) {
+        setEventTypesConfig(profile.event_types_config);
+      }
+
       const { data: evts } = await supabase
         .from("agenda_eventos")
         .select("*")
@@ -1579,6 +1597,7 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
       setCalMonth={setCalMonth}
       setSelectedDate={setSelectedDate}
       getFeriadoNome={getFeriadoNome}
+      eventTypesConfig={eventTypesConfig}
     />
   );
 }
