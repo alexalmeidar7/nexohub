@@ -28,6 +28,7 @@ interface Props {
   userId: string;
   inputs: VmixInput[];
   onRunCommands: (commands: PresetCommand[]) => Promise<void>;
+  inputMapping?: Record<string, { title: string; key: string }>;
 }
 
 const PRESET_COMMANDS = [
