@@ -358,7 +358,8 @@ export default function CortesVideoPage() {
         } catch { /* assume audio */ }
 
         setStatusMsg(format === "reel" ? "Finalizando no formato REEL..." : "Finalizando no formato FULL HD...");
-        args.push("-i", inputName, "-ss", String(startSeconds), "-t", String(duration), "-vf", vf,
+        // IMPORTANTE: Mover -ss ANTES do -i para busca rápida (input seek)
+        args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-vf", vf,
           "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p");
         
         if (hasAudio) {
@@ -369,10 +370,11 @@ export default function CortesVideoPage() {
       }
       
       args.push("-movflags", "+faststart", "-y", outputName);
+      console.log("[ffmpeg] Executando comando:", args.join(" "));
       const exitCode = await ffmpeg.exec(args);
 
       if (exitCode !== 0) {
-        throw new Error(`Falha ao recortar (código ${exitCode}). Tente outro trecho ou um vídeo .mp4 padrão.`);
+        throw new Error(`Falha ao recortar (código ${exitCode}). Tente outro trecho ou verifique se o vídeo não está corrompido.`);
       }
 
       setStatusMsg("Lendo arquivo final do motor...");
