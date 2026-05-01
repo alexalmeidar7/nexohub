@@ -145,8 +145,8 @@ export default function CortesVideoPage() {
     });
 
     const cdns = [
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd",
       "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd",
       "https://cdnjs.cloudflare.com/ajax/libs/ffmpeg-core/0.12.6/umd"
     ];
     
@@ -154,10 +154,19 @@ export default function CortesVideoPage() {
     for (const baseURL of cdns) {
       try {
         console.log(`[ffmpeg] Tentando carregar de: ${baseURL}`);
+        
+        // Use standard fetch to check if the resource is actually reachable before calling load
+        const check = await fetch(`${baseURL}/ffmpeg-core.js`, { method: 'HEAD' }).catch(() => ({ ok: false }));
+        if (!check.ok) throw new Error("CDN unreachable");
+
+        const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
+        const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
+        
         await ffmpeg.load({
-          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+          coreURL,
+          wasmURL,
         });
+        
         lastErr = null;
         console.log(`[ffmpeg] Carregado com sucesso de: ${baseURL}`);
         break;
