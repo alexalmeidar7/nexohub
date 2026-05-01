@@ -329,7 +329,9 @@ export default function CortesVideoPage() {
       const inputName = `input.${ext}`;
       const outputName = `corte_${Date.now()}.mp4`;
 
-      await ffmpeg.writeFile(inputName, await fetchFile(localFile));
+      setStatusMsg("Lendo arquivo de vídeo (isso pode levar alguns segundos)...");
+      const videoData = await fetchFile(localFile);
+      await ffmpeg.writeFile(inputName, videoData);
 
       setStatusMsg("Iniciando o corte...");
       const args: string[] = [];
@@ -373,14 +375,15 @@ export default function CortesVideoPage() {
         throw new Error(`Falha ao recortar (código ${exitCode}). Tente outro trecho ou um vídeo .mp4 padrão.`);
       }
 
-      setStatusMsg("Gerando arquivo de download...");
+      setStatusMsg("Lendo arquivo final do motor...");
       const data = await ffmpeg.readFile(outputName);
-      const u8 = data as Uint8Array;
-      if (!u8 || u8.byteLength === 0) {
+      
+      if (!data || (data instanceof Uint8Array && data.length === 0)) {
         throw new Error("Arquivo gerado está vazio. Verifique os tempos selecionados.");
       }
-      const buf = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
-      const blob = new Blob([buf], { type: "video/mp4" });
+
+      // Convert to Blob safely
+      const blob = new Blob([data], { type: "video/mp4" });
       const blobUrl = URL.createObjectURL(blob);
 
       await ffmpeg.deleteFile(inputName).catch(() => {});
