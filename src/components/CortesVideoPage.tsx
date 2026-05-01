@@ -467,67 +467,52 @@ export default function CortesVideoPage() {
   };
 
   const handleCutYoutube = async () => {
-    if (!canCut || !user) return;
+    if (!videoId || clips.length === 0 || !user) return;
+    
     setCutting(true);
     setErrorMsg(null);
     setErrorDetails(null);
     setShowErrorDetails(false);
     setResults([]);
     setProgress(0);
-    setStatusMsg("Enviando para o servidor...");
-    startTimeRef.current = Date.now();
     
-    // Estimate for YouTube (mostly server processing)
-    const estimate = 15 + (duration * 0.3);
-    setEstimatedSeconds(Math.round(estimate));
-
-    const progressTimer = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 99) return p;
-        
-        // Curva assintótica: quanto mais perto de 100, mais devagar aumenta
-        // p < 50: +4%
-        // p < 80: +2%
-        // p < 95: +0.5%
-        // p < 99: +0.1%
-        let inc = 0;
-        if (p < 50) inc = 4;
-        else if (p < 80) inc = 2;
-        else if (p < 95) inc = 0.5;
-        else inc = 0.1;
-        
-        const nextP = p + inc;
-        
-        // Dynamic messages based on progress
-        if (nextP < 30) setStatusMsg("Conectando ao YouTube...");
-        else if (nextP < 70) setStatusMsg("Cortando vídeo no servidor...");
-        else if (nextP < 90) setStatusMsg("Finalizando trecho...");
-        else if (nextP < 98) setStatusMsg("Recebendo dados do servidor...");
-        else setStatusMsg("Preparando player...");
-        
-        return Math.min(99, nextP);
-      });
-    }, 600);
-
+    const totalClips = clips.length;
+    const newResults: CutResult[] = [];
+    
     try {
-      const { data, error } = await supabase.functions.invoke("cut-youtube-video", {
-        body: { youtube_url: youtubeUrl, start_seconds: startSeconds, end_seconds: endSeconds },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      for (let i = 0; i < totalClips; i++) {
+        const clip = clips[i];
+        const clipStartSeconds = parseHMS(clip.start);
+        const clipEndSeconds = parseHMS(clip.end);
+        
+        setStatusMsg(`Enviando trecho ${i + 1} de ${totalClips} para o servidor...`);
+        setProgress(Math.round((i / totalClips) * 90));
 
-      const newResult: CutResult = {
-        clip_embed_url: data.clip_embed_url,
-        share_url: data.share_url,
-        thumbnail_url: data.thumbnail_url,
-        download_url: data.download_url || "",
-        duration: data.duration,
-        is_local: false,
-      };
-      setResults(prev => [newResult, ...prev]);
+        const { data, error } = await supabase.functions.invoke("cut-youtube-video", {
+          body: { 
+            youtube_url: youtubeUrl, 
+            start_seconds: clipStartSeconds, 
+            end_seconds: clipEndSeconds 
+          },
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        newResults.push({
+          clip_embed_url: data.clip_embed_url,
+          share_url: data.share_url,
+          thumbnail_url: data.thumbnail_url,
+          download_url: data.download_url || "",
+          duration: data.duration,
+          is_local: false,
+        });
+      }
+
+      setResults(newResults);
       setProgress(100);
       setStatusMsg("");
-      toast({ title: "Trecho gerado!", description: "Use o player abaixo ou baixe via link externo." });
+      toast({ title: "Trechos gerados!", description: `${newResults.length} trecho(s) pronto(s) para uso.` });
     } catch (err: any) {
       const errorMsg = err.message || "Tente novamente.";
       setErrorMsg(errorMsg);
@@ -538,7 +523,6 @@ export default function CortesVideoPage() {
       toast({ title: "Erro", description: errorMsg, variant: "destructive" });
       setStatusMsg("");
     } finally {
-      clearInterval(progressTimer);
       setCutting(false);
     }
   };
