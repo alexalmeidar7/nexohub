@@ -617,6 +617,11 @@ export default function CortesVideoPage() {
           </button>
           {cutting && (
             <div className="w-full max-w-md flex flex-col items-center gap-3 mt-4">
+              {estimatedSeconds && progress < 100 && (
+                <div className="text-[10px] font-bold opacity-60 uppercase tracking-widest animate-pulse" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  Tempo estimado: {Math.max(1, Math.round(estimatedSeconds - (progress / 100 * estimatedSeconds)))}s restantes
+                </div>
+              )}
               <div className="w-full flex justify-between items-center px-1">
                 <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
                   {statusMsg || "Iniciando..."}
