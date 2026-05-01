@@ -202,6 +202,18 @@ export default function CortesVideoPage() {
     setCutting(true);
     setProgress(0);
     setResult(null);
+    startTimeRef.current = Date.now();
+    
+    // Estimate time based on file size and format
+    const sizeMB = localFile.size / (1024 * 1024);
+    let estimate = 0;
+    if (format === "original") {
+      estimate = Math.max(2, sizeMB / 100); // Original is very fast
+    } else {
+      const complexity = format === "reel" ? 1.5 : 1;
+      estimate = Math.max(5, (sizeMB * 0.15) * complexity + (duration * 0.2));
+    }
+    setEstimatedSeconds(Math.round(estimate));
 
     let ffmpegLog = "";
     try {
