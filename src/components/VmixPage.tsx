@@ -305,6 +305,38 @@ export default function VmixPage() {
       });
   }, [user]);
 
+  // Load programas from DB
+  const loadProgramas = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("programas")
+      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .ilike("estudio", "%fm%")
+      .order("horario_inicio");
+    
+    if (data) {
+      const mapped = data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null }));
+      try {
+        const savedOrder = JSON.parse(localStorage.getItem("vmix_preset_order") || "[]") as string[];
+        if (savedOrder.length > 0) {
+          mapped.sort((a: any, b: any) => {
+            const ai = savedOrder.indexOf(a.id);
+            const bi = savedOrder.indexOf(b.id);
+            if (ai === -1 && bi === -1) return 0;
+            if (ai === -1) return 1;
+            if (bi === -1) return 1;
+            return ai - bi;
+          });
+        }
+      } catch {}
+      setProgramas(mapped);
+    }
+  }, [user]);
+
+  useEffect(() => { loadProgramas(); }, [loadProgramas]);
+
   // Load custom buttons
   const loadCustomButtons = useCallback(async () => {
     if (!user) return;
