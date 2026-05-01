@@ -149,7 +149,14 @@ function formatKeyName(e: KeyboardEvent): string {
   return parts.join(" + ");
 }
 
+interface NetworkInterfaceInfo {
+  type: string;
+  effectiveType: string;
+  recommendation?: string;
+}
+
 export default function VmixPage() {
+  const [networkInfo, setNetworkInfo] = useState<NetworkInterfaceInfo | null>(null);
   const [lanStatus, setLanStatus] = useState<"checking" | "same_lan" | "different_network" | "unknown">("checking");
   const { user } = useAuth();
   const { toast } = useToast();
