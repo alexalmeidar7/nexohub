@@ -190,11 +190,31 @@ export default function CortesVideoPage() {
         const coreURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.js`, "core.js");
         const wasmURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.wasm`, "core.wasm");
         
+        // If SharedArrayBuffer is available, we also need the worker
+        let workerURL: string | undefined = undefined;
+        if (typeof SharedArrayBuffer !== 'undefined') {
+          try {
+            workerURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.worker.js`, "worker.js");
+          } catch (e) {
+            console.warn("[ffmpeg] Worker load failed or not found, continuing without it:", e);
+          }
+        }
+        
         setLoadDetail("Instanciando WebAssembly...");
-        await ffmpeg.load({
-          coreURL,
-          wasmURL,
-        });
+        
+        // Add a timeout to prevent infinite hang
+        const loadTimeout = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Tempo esgotado ao instanciar o motor (30s). Verifique sua conexão.")), 30000)
+        );
+
+        await Promise.race([
+          ffmpeg.load({
+            coreURL,
+            wasmURL,
+            ...(workerURL ? { workerURL } : {}),
+          }),
+          loadTimeout
+        ]);
         
         lastErr = null;
         setLoadDetail("Motor pronto!");
