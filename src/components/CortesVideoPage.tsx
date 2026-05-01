@@ -142,8 +142,15 @@ export default function CortesVideoPage() {
     setProgress(0);
     
     const ffmpeg = new FFmpeg();
+    
+    // O motor de vídeo reporta progresso de 0 a 1 durante o processamento.
+    // Vamos mapear isso para 10% - 90% da nossa barra de progresso total durante o corte.
     ffmpeg.on("progress", ({ progress: p }) => {
-      setProgress(Math.min(99, Math.round(p * 100)));
+      // Só atualizamos se estivermos realmente cortando (não apenas carregando)
+      // O estado 'cutting' é controlado externamente.
+      // Se p for 1, chegamos a 90% do total.
+      const mappedProgress = Math.round(10 + (p * 80));
+      setProgress(Math.min(90, mappedProgress));
     });
 
     const cdns = [
