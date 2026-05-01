@@ -156,17 +156,17 @@ export default function CortesVideoPage() {
       try {
         console.log(`[ffmpeg] Tentando carregar de: ${baseURL} (SAB: ${typeof SharedArrayBuffer !== 'undefined'})`);
         
-        const fetchWithProgress = async (url: string, label: string) => {
-          setLoadDetail(`Baixando ${label}...`);
+        const fetchWithProgress = async (url: string, label: string, mime: string) => {
+          setLoadDetail(`Iniciando download de ${label}...`);
           const response = await fetch(url);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          if (!response.ok) throw new Error(`HTTP ${response.status} ao baixar ${label}`);
           
           const reader = response.body?.getReader();
           const contentLength = +(response.headers.get('Content-Length') || 0);
           
-          if (!reader || !contentLength) {
-            setLoadDetail(`Carregando ${label}...`);
-            return toBlobURL(url, label.includes("js") ? "text/javascript" : "application/wasm");
+          if (!reader) {
+            setLoadDetail(`Baixando ${label} (sem progresso)...`);
+            return toBlobURL(url, mime);
           }
 
           let receivedLength = 0;
@@ -176,35 +176,40 @@ export default function CortesVideoPage() {
             if (done) break;
             chunks.push(value);
             receivedLength += value.length;
-            const pct = Math.round((receivedLength / contentLength) * 100);
-            const mb = (receivedLength / (1024 * 1024)).toFixed(1);
-            const totalMb = (contentLength / (1024 * 1024)).toFixed(1);
-            setLoadDetail(`${label}: ${mb}MB de ${totalMb}MB (${pct}%)`);
-            setProgress(Math.round(pct * 0.9)); // Reserve some for instantiating
+            if (contentLength) {
+              const pct = Math.round((receivedLength / contentLength) * 100);
+              const mb = (receivedLength / (1024 * 1024)).toFixed(1);
+              const totalMb = (contentLength / (1024 * 1024)).toFixed(1);
+              setLoadDetail(`${label}: ${mb}MB de ${totalMb}MB (${pct}%)`);
+              // core.js is small (~3MB), wasm is large (~25MB)
+              const weight = label === "core.js" ? 0.1 : 0.8;
+              const base = label === "core.js" ? 0 : 10;
+              setProgress(Math.round(base + (pct * weight)));
+            }
           }
 
-          const blob = new Blob(chunks, { type: label.includes("js") ? "text/javascript" : "application/wasm" });
+          const blob = new Blob(chunks, { type: mime });
           return URL.createObjectURL(blob);
         };
 
-        // Optimization: Use toBlobURL which is more robust for FFmpeg loading
-        // and handles the cross-origin worker script better.
-        const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
-        const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
+        const coreURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.js`, "core.js", "text/javascript");
+        const wasmURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.wasm`, "wasm", "application/wasm");
         
         let workerURL: string | undefined = undefined;
+        // Só tenta carregar worker se SharedArrayBuffer existir E se não estivermos em um ambiente que bloqueia worker cross-origin
         if (typeof SharedArrayBuffer !== 'undefined') {
           try {
-            workerURL = await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, "text/javascript");
+            workerURL = await fetchWithProgress(`${baseURL}/ffmpeg-core.worker.js`, "worker.js", "text/javascript");
           } catch (e) {
             console.warn("[ffmpeg] Worker load failed, continuing without it:", e);
           }
         }
         
-        setLoadDetail("Instanciando WebAssembly...");
+        setLoadDetail("Instanciando motor (isso pode levar alguns segundos)...");
+        setProgress(90);
         
         const loadTimeout = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Tempo esgotado ao instanciar o motor (30s).")), 30000)
+          setTimeout(() => reject(new Error("Timeout ao instanciar o motor (45s). Verifique sua conexão.")), 45000)
         );
 
         await Promise.race([
@@ -218,11 +223,14 @@ export default function CortesVideoPage() {
         
         lastErr = null;
         setLoadDetail("Motor pronto!");
+        setProgress(100);
         console.log(`[ffmpeg] Carregado com sucesso de: ${baseURL}`);
         break;
-      } catch (e) {
-        console.warn("[ffmpeg] CDN load failed:", baseURL, e);
+      } catch (e: any) {
+        console.error("[ffmpeg] CDN load failed:", baseURL, e);
         lastErr = e;
+        setLoadDetail(`Falha na CDN ${baseURL.split('/')[2]}: ${e.message || 'Erro desconhecido'}`);
+        // Se falhou, tenta a próxima CDN
       }
     }
     
