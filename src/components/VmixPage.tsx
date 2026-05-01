@@ -1682,8 +1682,6 @@ export default function VmixPage() {
       </div>
     );
   };
-    );
-  };
 
   // ── Not connected ──
   if (!effectiveConnected) {
