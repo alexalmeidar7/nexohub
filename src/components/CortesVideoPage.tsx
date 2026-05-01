@@ -597,13 +597,32 @@ export default function CortesVideoPage() {
             {cutting ? <><Loader2 size={16} className="animate-spin" /> Processando...</> : <><Scissors size={16} /> Gerar Corte</>}
           </button>
           {cutting && (
-            <div className="w-full max-w-md flex flex-col items-center gap-1">
-              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
-                <div className="h-full transition-all" style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color, #2563eb)" }} />
+            <div className="w-full max-w-md flex flex-col items-center gap-3 mt-4">
+              <div className="w-full flex justify-between items-center px-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
+                  {statusMsg || "Iniciando..."}
+                </span>
+                <span className="text-xs font-black" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  {progress}%
+                </span>
               </div>
-              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-                {statusMsg || `${progress}%`}
-              </p>
+              <div className="w-full h-3 rounded-full p-[2px] shadow-inner" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }}>
+                <div 
+                  className="h-full rounded-full transition-all duration-300 ease-out relative overflow-hidden shadow-sm" 
+                  style={{ 
+                    width: `${progress}%`, 
+                    background: "linear-gradient(90deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 80%, white 20%))" 
+                  }}
+                >
+                  <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-[progress-bar-stripes_1s_linear_infinite]" />
+                </div>
+              </div>
+              <style>{`
+                @keyframes progress-bar-stripes {
+                  from { background-position: 0 0; }
+                  to { background-position: 20px 0; }
+                }
+              `}</style>
             </div>
           )}
         </div>
