@@ -226,7 +226,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       return;
     }
     setSaving(true);
-    const payload = { nome: nome.trim(), color, dias_semana: diasSemana, horario, commands };
+    const payload = { nome: nome.trim(), color, dias_semana: diasSemana, data_especifica: dataEspecifica || null, horario, commands };
     if (buttonId) {
       await (supabase.from("custom_vmix_buttons" as any) as any).update(payload).eq("id", buttonId);
     } else {
