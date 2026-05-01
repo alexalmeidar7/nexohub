@@ -378,28 +378,32 @@ export default function CortesVideoPage() {
       setStatusMsg("Lendo arquivo final do motor...");
       const data = await ffmpeg.readFile(outputName);
       
-      if (!data || (data instanceof Uint8Array && data.length === 0)) {
-        throw new Error("Arquivo gerado está vazio. Verifique os tempos selecionados.");
+      if (!data) {
+        throw new Error("Não foi possível ler o arquivo gerado.");
       }
 
-      // Convert to Blob safely handling both ArrayBuffer and SharedArrayBuffer (multi-threaded FFmpeg)
-      // FFmpeg @0.12 returns FileData which can be Uint8Array
-      let blob: Blob;
+      // We need to ensure we have a plain ArrayBuffer to create a Blob
+      // Multi-threaded environments use SharedArrayBuffer which cannot be used in Blobs
+      let finalData: ArrayBuffer | Uint8Array;
+      
       if (data instanceof Uint8Array) {
-        // If it's a Uint8Array backed by SharedArrayBuffer, we might need to copy it 
-        // to a regular ArrayBuffer because some browsers don't allow Blobs from SABs
         if (typeof SharedArrayBuffer !== 'undefined' && data.buffer instanceof SharedArrayBuffer) {
-          const regularArray = new Uint8Array(data.length);
-          regularArray.set(data);
-          blob = new Blob([regularArray], { type: "video/mp4" });
+          // Copy SharedArrayBuffer to a regular ArrayBuffer
+          const buffer = new ArrayBuffer(data.byteLength);
+          new Uint8Array(buffer).set(data);
+          finalData = buffer;
         } else {
-          blob = new Blob([data], { type: "video/mp4" });
+          finalData = data;
         }
       } else {
-        // Fallback for other potential types in FileData
-        blob = new Blob([data as any], { type: "video/mp4" });
+        finalData = data as any;
       }
-      
+
+      if (finalData instanceof Uint8Array && finalData.length === 0) {
+        throw new Error("Arquivo gerado está vazio.");
+      }
+
+      const blob = new Blob([finalData as BlobPart], { type: "video/mp4" });
       const blobUrl = URL.createObjectURL(blob);
 
       await ffmpeg.deleteFile(inputName).catch(() => {});
