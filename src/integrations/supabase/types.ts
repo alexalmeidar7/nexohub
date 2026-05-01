@@ -1634,6 +1634,7 @@ export type Database = {
           shopping_active: boolean
           updated_at: string
           user_id: string
+          vmix_input_mapping: Json | null
           vmix_pass: string | null
           vmix_shortcuts: Json | null
           vmix_url: string | null
@@ -1653,6 +1654,7 @@ export type Database = {
           shopping_active?: boolean
           updated_at?: string
           user_id: string
+          vmix_input_mapping?: Json | null
           vmix_pass?: string | null
           vmix_shortcuts?: Json | null
           vmix_url?: string | null
@@ -1672,6 +1674,7 @@ export type Database = {
           shopping_active?: boolean
           updated_at?: string
           user_id?: string
+          vmix_input_mapping?: Json | null
           vmix_pass?: string | null
           vmix_shortcuts?: Json | null
           vmix_url?: string | null
