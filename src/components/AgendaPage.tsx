@@ -2046,10 +2046,20 @@ export default function AgendaPage() {
                       </span>
                     </div>
                     {feriadoNome && (
-                      <div className="flex items-center gap-1 py-0.5 px-1.5 rounded bg-red-500/10 border border-red-500/20">
-                        <Star size={8} className="text-red-500 fill-red-500" />
-                        <span className="text-[8px] font-bold text-red-600 uppercase tracking-wider">Feriado</span>
-                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1 py-0.5 px-1.5 rounded bg-red-500/10 border border-red-500/20 cursor-help">
+                              <Star size={8} className="text-red-500 fill-red-500" />
+                              <span className="text-[8px] font-bold text-red-600 uppercase tracking-wider">Feriado</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-red-600 text-white border-red-500">
+                            <p className="text-[10px] font-bold">{feriadoNome}</p>
+                            <p className="text-[9px] opacity-90">{format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                     <div className="space-y-1">
                       {dayEvents.length === 0 ? (
