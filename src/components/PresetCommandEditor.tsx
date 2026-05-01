@@ -73,8 +73,19 @@ function getExtraLabel(fn: string): { keyLabel: string; valueLabel: string } {
   return { keyLabel: "Extra Key", valueLabel: "Extra Value" };
 }
 
-function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[]): string {
-  const inputLabel = cmd.input ? (inputs.find(i => i.key === cmd.input)?.title || cmd.input) : "";
+function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[], inputMapping?: Record<string, { title: string; key: string }>): string {
+  let inputLabel = "";
+  if (cmd.input) {
+    const directMatch = inputs.find(i => i.key === cmd.input);
+    if (directMatch) {
+      inputLabel = directMatch.title;
+    } else if (inputMapping && inputMapping[cmd.input]) {
+      inputLabel = `${inputMapping[cmd.input].title} (não encontrado)`;
+    } else {
+      inputLabel = cmd.input;
+    }
+  }
+  
   let line = cmd.fn;
   if (cmd.input) line += `(${inputLabel}`;
   if (cmd.value) line += `, ${cmd.value}`;
