@@ -400,11 +400,6 @@ export default function CortesVideoPage() {
       setStatusMsg("Escrevendo arquivo no motor...");
       await ffmpeg.writeFile(inputName, videoData);
       
-      // Liberar referências imediatamente após o writeFile
-      (videoData as any) = null;
-      (localFile as any) = null; 
-
-
       setStatusMsg("Iniciando o corte...");
       setProgress(10);
       const args: string[] = [];
