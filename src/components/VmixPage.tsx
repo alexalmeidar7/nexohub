@@ -673,7 +673,7 @@ export default function VmixPage() {
       if (!isEmbeddedPreview && result.directResult === "fail") {
       }
     } else if (isLocal) {
-      result.recommendation = "⚠️ IP local detectado. Use modo Direto na mesma rede local; o modo Proxy só funciona com URL pública/túnel.";
+      result.recommendation = "⚠️ IP local detectado. O modo Proxy (nuvem) não funciona com IPs locais. 1) Verifique se o vMix está aberto e o Web Controller ativo na porta 8088; 2) Se você estiver no preview do Lovable, abra /vmix-control em uma nova aba para permitir a conexão direta local.";
     } else {
       result.recommendation = "❌ Nenhum modo conectou. Verifique: 1) Port forwarding configurado no roteador (porta 8088 → IP do PC)? 2) vMix Web Controller ativo? 3) Firewall permite conexões na porta 8088?";
     }
@@ -703,10 +703,10 @@ export default function VmixPage() {
       setConnected(false);
       setConnectionMode("direct");
       toast({
-        title: "Proxy indisponível para IP local",
+        title: "IP Local detectado",
         description: isEmbeddedPreview
-          ? "No preview interno, abra /vmix-control em nova aba e use o modo Direto."
-          : "IP local não é acessível pelo proxy em nuvem. Mudamos para Direto automaticamente.",
+          ? "No preview interno do Lovable, abra /vmix-control em nova aba para conectar ao seu vMix local."
+          : "IP local não é acessível pelo proxy em nuvem. Mudamos para o modo Direto automaticamente.",
         variant: "destructive",
       });
       if (isEmbeddedPreview) {
