@@ -599,10 +599,26 @@ export default function ApresentadorForm() {
                         a.nome
                       )}
                     </td>
-                    <td className="px-4 py-2.5">
-                      <span className="text-[11px] font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                        {a.cargo || "—"}
-                      </span>
+                    <td className="px-4 py-2.5 cursor-pointer" onClick={() => setEditingCell({ id: a.id, field: 'cargo' })}>
+                      {editingCell?.id === a.id && editingCell?.field === 'cargo' ? (
+                        <input
+                          autoFocus
+                          defaultValue={a.cargo}
+                          className="w-full px-2 py-1 rounded border border-blue-400 outline-none"
+                          onBlur={(e) => {
+                            if (e.target.value !== a.cargo) updateField(a.id, 'cargo', e.target.value);
+                            setEditingCell(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.currentTarget.blur();
+                            if (e.key === 'Escape') setEditingCell(null);
+                          }}
+                        />
+                      ) : (
+                        <span className="text-[11px] font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          {a.cargo || "—"}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex flex-col gap-0.5">
