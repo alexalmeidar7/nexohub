@@ -100,6 +100,15 @@ export default function CortesVideoPage() {
     is_local: boolean;
   } | null>(null);
 
+  const [clips, setClips] = useState<{ id: string; start: string; end: string }[]>([
+    { id: crypto.randomUUID(), start: "00:00:00.000", end: "00:00:10.000" }
+  ]);
+  const [activeClipId, setActiveClipId] = useState<string>(clips[0].id);
+
+  const activeClip = useMemo(() => clips.find(c => c.id === activeClipId) || clips[0], [clips, activeClipId]);
+  const startTime = activeClip.start;
+  const endTime = activeClip.end;
+
   const videoId = useMemo(() => extractYoutubeId(youtubeUrl), [youtubeUrl]);
 
   const startSeconds = parseHMS(startTime);
