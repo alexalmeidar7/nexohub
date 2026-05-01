@@ -457,6 +457,7 @@ export default function CortesVideoPage() {
   const handleCutYoutube = async () => {
     if (!canCut || !user) return;
     setCutting(true);
+    setErrorMsg(null);
     setResult(null);
     setProgress(0);
     setStatusMsg("Enviando para o servidor...");
