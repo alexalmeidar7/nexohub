@@ -192,6 +192,31 @@ export default function VmixPage() {
 
     checkLan();
   }, [savedUrl]);
+
+  // Automatic mode switching based on network detection
+  useEffect(() => {
+    if (!savedUrl) return;
+    
+    const isLocal = isPrivateIp(savedUrl);
+    
+    if (isLocal && lanStatus === "same_lan" && connectionMode === "proxy") {
+      console.log("Auto-switching to direct mode for local IP on same LAN");
+      setConnectionMode("direct");
+      toast({ 
+        title: "Modo Automático", 
+        description: "Rede local detectada. Alternado para modo Direto." 
+      });
+    } else if (!isLocal && connectionMode === "direct") {
+      // For public IPs, proxy is often more reliable due to CORS/HTTPS
+      console.log("Auto-switching to proxy mode for public IP");
+      setConnectionMode("proxy");
+      toast({ 
+        title: "Modo Automático", 
+        description: "IP Público detectado. Alternado para modo Proxy." 
+      });
+    }
+  }, [lanStatus, savedUrl, connectionMode, toast]);
+
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
