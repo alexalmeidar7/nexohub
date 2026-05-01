@@ -91,9 +91,25 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   const [showCode, setShowCode] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
   const [customHorario, setCustomHorario] = useState<string>("");
+  const [nome, setNome] = useState("");
+  const [estudio, setEstudio] = useState("FM");
+  const [diasSemana, setDiasSemana] = useState<string[]>([]);
+  const [dataEspecifica, setDataEspecifica] = useState("");
+
+  const DIAS_SEMANA_OPCOES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
   useEffect(() => {
     if (!open) return;
+    if (programaId === "new") {
+      setCommands([]);
+      setCustomHorario("");
+      setNome("");
+      setEstudio("FM");
+      setDiasSemana([]);
+      setDataEspecifica("");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     supabase
       .from("preset_commands" as any)
@@ -108,6 +124,20 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
           setCommands([]);
         }
         setCustomHorario(data?.custom_horario || "");
+      });
+
+    supabase
+      .from("programas")
+      .select("nome, estudio, dias_semana, data_variavel")
+      .eq("id", programaId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setNome(data.nome);
+          setEstudio(data.estudio || "FM");
+          setDiasSemana(data.dias_semana || []);
+          setDataEspecifica(data.data_variavel || "");
+        }
         setLoading(false);
       });
   }, [open, programaId, userId]);
