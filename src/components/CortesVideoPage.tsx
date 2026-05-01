@@ -328,7 +328,7 @@ export default function CortesVideoPage() {
   };
 
   const handleCutLocal = async () => {
-    if (!localFile || !canCut) return;
+    if (!localFile || clips.length === 0) return;
 
     let ffmpegLog = "";
     try {
@@ -337,44 +337,15 @@ export default function CortesVideoPage() {
       setErrorDetails(null);
       setShowErrorDetails(false);
       setProgress(0);
+      setResults([]);
       
       const ffmpeg = await loadFfmpeg();
       
-      if (localDuration > 0 && endSeconds > localDuration + 0.5) {
-        toast({
-          title: "Tempo final inválido",
-          description: `O vídeo tem apenas ${formatDuration(localDuration)}. Ajuste o tempo final.`,
-          variant: "destructive",
-        });
-        setCutting(false);
-        return;
-      }
-      if (localDuration > 0 && startSeconds >= localDuration) {
-        toast({
-          title: "Tempo inicial inválido",
-          description: `O tempo inicial deve ser menor que ${formatDuration(localDuration)}.`,
-          variant: "destructive",
-        });
-        setCutting(false);
-        return;
-      }
-
-      startTimeRef.current = Date.now();
-      const sizeMB = localFile.size / (1024 * 1024);
-      
       // Validação de segurança para o navegador
+      const sizeMB = localFile.size / (1024 * 1024);
       if (sizeMB > 2000) {
         throw new Error("O vídeo é muito grande para ser processado no navegador (limite recomendado: 2GB). Use o modo YouTube para vídeos pesados.");
       }
-
-      let estimate = 0;
-      if (format === "original") {
-        estimate = Math.max(2, sizeMB / 100);
-      } else {
-        const complexity = format === "reel" ? 1.5 : 1;
-        estimate = Math.max(5, (sizeMB * 0.15) * complexity + (duration * 0.2));
-      }
-      setEstimatedSeconds(Math.round(estimate));
 
       ffmpeg.on("log", ({ message }) => {
         ffmpegLog += message + "\n";
@@ -389,164 +360,107 @@ export default function CortesVideoPage() {
       
       const ext = (localFile.name.split(".").pop() || "mp4").toLowerCase();
       const inputName = `input.${ext}`;
-      const outputName = `corte_${Date.now()}.mp4`;
-
-      // Para arquivos grandes, fetchFile pode ser pesado. 
-      // Em FFmpeg.wasm 0.12+, writeFile aceita Uint8Array diretamente.
-      // Ler o arquivo uma única vez como ArrayBuffer para evitar múltiplas cópias pesadas
-      const arrayBuffer = await localFile.arrayBuffer();
-      const videoData = new Uint8Array(arrayBuffer);
       
+      // Usar fetchFile para carregar o arquivo no FFmpeg FS de forma eficiente
       setStatusMsg("Escrevendo arquivo no motor...");
-      await ffmpeg.writeFile(inputName, videoData);
+      await ffmpeg.writeFile(inputName, await fetchFile(localFile));
       
-      setStatusMsg("Iniciando o corte...");
-      setProgress(10);
-      const args: string[] = [];
-      
-      if (format === "original") {
-        setStatusMsg("Cortando vídeo (modo rápido)...");
-        setProgress(15);
-        // Busca rápida (-ss antes de -i) + cópia de stream (-c copy)
-        args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-c", "copy", "-map", "0", "-movflags", "+faststart");
-      } else {
-        setStatusMsg("Preparando processamento...");
-        const vf =
-          format === "reel"
+      const totalClips = clips.length;
+      const newResults: CutResult[] = [];
+
+      for (let i = 0; i < totalClips; i++) {
+        const clip = clips[i];
+        const clipStartSeconds = parseHMS(clip.start);
+        const clipEndSeconds = parseHMS(clip.end);
+        const clipDuration = clipEndSeconds - clipStartSeconds;
+        
+        if (clipDuration <= 0) continue;
+
+        setStatusMsg(`Processando trecho ${i + 1} de ${totalClips}...`);
+        const baseProgress = 10 + (i / totalClips) * 80;
+        setProgress(Math.round(baseProgress));
+
+        const outputName = `corte_${i}_${Date.now()}.mp4`;
+        const args: string[] = [];
+        
+        if (format === "original") {
+          args.push("-ss", String(clipStartSeconds), "-t", String(clipDuration), "-i", inputName, "-c", "copy", "-map", "0", "-movflags", "+faststart");
+        } else {
+          const vf = format === "reel"
             ? "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1"
             : "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,setsar=1";
 
-        let hasAudio = true;
-        try {
-          setStatusMsg("Verificando faixas de áudio...");
-          const probeLog: string[] = [];
-          const probeListener = ({ message }: { message: string }) => probeLog.push(message);
-          ffmpeg.on("log", probeListener);
-          await ffmpeg.exec(["-i", inputName, "-hide_banner"]).catch(() => {});
-          ffmpeg.off("log", probeListener);
-          hasAudio = probeLog.some((l) => /Stream #\d+:\d+.*Audio:/i.test(l));
-        } catch { /* assume audio */ }
+          let hasAudio = true;
+          try {
+            const probeLog: string[] = [];
+            const probeListener = ({ message }: { message: string }) => probeLog.push(message);
+            ffmpeg.on("log", probeListener);
+            await ffmpeg.exec(["-i", inputName, "-hide_banner"]).catch(() => {});
+            ffmpeg.off("log", probeListener);
+            hasAudio = probeLog.some((l) => /Stream #\d+:\d+.*Audio:/i.test(l));
+          } catch { /* assume audio */ }
 
-        setStatusMsg(format === "reel" ? "Formatando para REEL..." : "Formatando para FULL HD...");
-        // Re-encoding com busca rápida e presets otimizados para web/browser
-        args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-vf", vf,
-          "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23", "-pix_fmt", "yuv420p");
-        
-        if (hasAudio) {
-          args.push("-c:a", "aac", "-b:a", "128k", "-ac", "2");
-        } else {
-          args.push("-an");
+          args.push("-ss", String(clipStartSeconds), "-t", String(clipDuration), "-i", inputName, "-vf", vf,
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23", "-pix_fmt", "yuv420p");
+          
+          if (hasAudio) {
+            args.push("-c:a", "aac", "-b:a", "128k", "-ac", "2");
+          } else {
+            args.push("-an");
+          }
+          args.push("-movflags", "+faststart");
         }
-        args.push("-movflags", "+faststart");
-      }
-      
-      args.push("-y", outputName);
-      console.log("[ffmpeg] Executando comando:", args.join(" "));
-      const exitCode = await ffmpeg.exec(args);
+        
+        args.push("-y", outputName);
+        console.log(`[ffmpeg] Executando trecho ${i + 1}:`, args.join(" "));
+        const exitCode = await ffmpeg.exec(args);
 
-      if (exitCode !== 0) {
-        throw new Error(`O motor de vídeo retornou erro (código ${exitCode}). Isso geralmente acontece com formatos incompatíveis ou falta de memória no navegador.`);
-      }
+        if (exitCode !== 0) {
+          throw new Error(`O motor de vídeo retornou erro no trecho ${i + 1} (código ${exitCode}).`);
+        }
 
-      // LIMPEZA IMEDIATA DO INPUT PARA LIBERAR MEMÓRIA WASM
-      setStatusMsg("Limpando arquivos temporários...");
-      await ffmpeg.deleteFile(inputName).catch(() => {});
+        const data = await ffmpeg.readFile(outputName);
+        if (!data) throw new Error(`Falha ao ler o arquivo gerado para o trecho ${i + 1}.`);
+        
+        await ffmpeg.deleteFile(outputName).catch(() => {});
 
-      setProgress(92);
-      setStatusMsg("Extraindo vídeo processado...");
-      const data = await ffmpeg.readFile(outputName);
-      
-      if (!data) {
-        throw new Error("Não foi possível localizar o arquivo gerado pelo motor.");
-      }
-      
-      // APÓS LER, DELETAMOS DO WASM IMEDIATAMENTE
-      await ffmpeg.deleteFile(outputName).catch(() => {});
-
-      const dataAsUint8 = data instanceof Uint8Array ? data : new Uint8Array(0);
-      const dataLen = dataAsUint8.byteLength;
-      console.log(`[ffmpeg] Arquivo lido: ${dataLen} bytes`);
-      
-      let finalData: Uint8Array;
-      
-      setProgress(95);
-      setStatusMsg("Finalizando arquivo...");
-      
-      try {
-        // Se estiver usando SharedArrayBuffer (multi-thread), o Blob vai falhar se passarmos o buffer original.
-        // Precisamos copiar para um ArrayBuffer normal, mas fazemos isso com cuidado.
+        const dataAsUint8 = data instanceof Uint8Array ? data : new Uint8Array(0);
+        
+        // Se estiver usando SharedArrayBuffer, precisamos copiar para um buffer normal antes de criar o Blob
+        let finalData: Uint8Array;
         if (typeof SharedArrayBuffer !== 'undefined' && dataAsUint8.buffer instanceof SharedArrayBuffer) {
-          console.log("[ffmpeg] Convertendo SharedArrayBuffer para Blob (cópia necessária)...");
-          finalData = new Uint8Array(dataLen);
+          finalData = new Uint8Array(dataAsUint8.length);
           finalData.set(dataAsUint8);
-          // O dado original 'data' pode ser liberado
-          (data as any) = null;
         } else {
           finalData = dataAsUint8;
         }
-        setProgress(97);
-      } catch (e) {
-        console.error("[ffmpeg] Erro ao processar buffer de saída:", e);
-        throw new Error("O navegador ficou sem memória ao gerar o arquivo final. Tente um trecho mais curto.");
+
+        const blob = new Blob([finalData], { type: "video/mp4" });
+        const blobUrl = URL.createObjectURL(blob);
+
+        newResults.push({
+          blob_url: blobUrl,
+          file_name: `trecho_${i + 1}_${clip.start.replace(/:/g, "-")}.mp4`,
+          duration: clipDuration,
+          is_local: true,
+        });
       }
-
-      if (finalData.length < 100) {
-        throw new Error("O vídeo gerado está vazio. Verifique se os tempos de início e fim estão dentro da duração total do vídeo original.");
-      }
-
-      // Validação de assinatura MP4 (ftyp)
-      // MP4 starts with [any, any, any, any, 'f', 't', 'y', 'p']
-      const isMp4 = finalData.length > 8 && 
-                    finalData[4] === 0x66 && // f
-                    finalData[5] === 0x74 && // t
-                    finalData[6] === 0x79 && // y
-                    finalData[7] === 0x70;    // p
-
-      if (!isMp4) {
-        console.warn("[ffmpeg] Assinatura ftyp não encontrada no início do arquivo.");
-        // Não lançamos erro aqui para não bloquear casos específicos, mas registramos no console
-      }
-
-      setProgress(98);
-      setStatusMsg("Gerando link de download...");
-      // Forçamos o tipo para BlobPart para evitar erros de SharedArrayBuffer vs ArrayBuffer no TS
-      const blob = new Blob([finalData as unknown as BlobPart], { type: "video/mp4" });
-      const blobUrl = URL.createObjectURL(blob);
-      setProgress(99);
 
       await ffmpeg.deleteFile(inputName).catch(() => {});
-      await ffmpeg.deleteFile(outputName).catch(() => {});
-
-      const newResult: CutResult = {
-        blob_url: blobUrl,
-        file_name: outputName,
-        duration,
-        is_local: true,
-      };
-      setResults(prev => [newResult, ...prev]);
+      setResults(newResults);
       setProgress(100);
       setStatusMsg("");
-      toast({ title: "Corte gerado!", description: "O vídeo está pronto para download." });
+      toast({ title: "Cortes gerados!", description: `${newResults.length} trecho(s) pronto(s) para download.` });
     } catch (err: any) {
       console.error("Cut error:", err);
-      console.error("ffmpeg log context:", ffmpegLog);
-      
       const errorMsg = err?.message || "Falha no processamento.";
       setErrorMsg(errorMsg);
       setErrorDetails({
         stack: err?.stack,
         log: ffmpegLog,
-        exitCode: err?.exitCode || (errorMsg.includes("código") ? parseInt(errorMsg.match(/\d+/)?.[0] || "0") : undefined)
+        exitCode: err?.exitCode
       });
-      toast({
-        title: "Erro ao processar",
-        description: errorMsg,
-        variant: "destructive",
-      });
-      
-      // Armazenar log para debug se necessário
-      setLoadDetail(`ERRO: ${errorMsg}`);
-      setStatusMsg("");
+      toast({ title: "Erro ao processar", description: errorMsg, variant: "destructive" });
     } finally {
       setCutting(false);
     }
