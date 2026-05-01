@@ -1128,9 +1128,19 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
       <div className="flex items-center gap-2">
         <p className="text-[11px] font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>📅 Agenda {selectedDate && `— ${format(selectedDate, "dd/MM")}`}</p>
         {feriadoHoje && (
-          <span className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50">
-            Feriado
-          </span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50 cursor-help">
+                  Feriado
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-red-600 text-white border-red-500">
+                <p className="text-[10px] font-bold">{feriadoHoje}</p>
+                <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : ""}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
       <button
