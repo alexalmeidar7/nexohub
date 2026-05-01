@@ -282,6 +282,7 @@ export default function CortesVideoPage() {
     let ffmpegLog = "";
     try {
       setCutting(true);
+      setErrorMsg(null);
       setProgress(0);
       setResult(null);
       
