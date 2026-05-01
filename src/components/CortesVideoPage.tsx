@@ -164,7 +164,7 @@ export default function CortesVideoPage() {
     }
   }, [results]);
 
-  const resetEngine = () => {
+  const resetEngine = async () => {
     if (ffmpegRef.current) {
       try {
         ffmpegRef.current.terminate();
@@ -174,6 +174,8 @@ export default function CortesVideoPage() {
     }
     ffmpegRef.current = null;
     setFfmpegReady(false);
+    setStatusMsg("Reiniciando o motor...");
+    await loadFfmpeg();
   };
 
   const loadFfmpeg = async () => {
