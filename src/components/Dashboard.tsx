@@ -1414,7 +1414,7 @@ function ComercialWidgets() {
     </div>
   );
 
-function DashboardAgendaOld({ onNavigate }: { onNavigate: (p: Page) => void }) {
+function DashboardAgenda({ onNavigate }: { onNavigate: (p: Page) => void }) {
   const { user } = useAuth();
   const [now, setNow] = useState(new Date());
   const [loading, setLoading] = useState(true);
