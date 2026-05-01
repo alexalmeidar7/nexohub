@@ -76,8 +76,10 @@ export default function CortesVideoPage() {
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const [ffmpegReady, setFfmpegReady] = useState(false);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
-
   const resultRef = useRef<HTMLDivElement>(null);
+  const startTimeRef = useRef<number>(0);
+  const [estimatedSeconds, setEstimatedSeconds] = useState<number | null>(null);
+
   // Shared
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -200,6 +202,18 @@ export default function CortesVideoPage() {
     setCutting(true);
     setProgress(0);
     setResult(null);
+    startTimeRef.current = Date.now();
+    
+    // Estimate time based on file size and format
+    const sizeMB = localFile.size / (1024 * 1024);
+    let estimate = 0;
+    if (format === "original") {
+      estimate = Math.max(2, sizeMB / 100); // Original is very fast
+    } else {
+      const complexity = format === "reel" ? 1.5 : 1;
+      estimate = Math.max(5, (sizeMB * 0.15) * complexity + (duration * 0.2));
+    }
+    setEstimatedSeconds(Math.round(estimate));
 
     let ffmpegLog = "";
     try {
@@ -307,6 +321,11 @@ export default function CortesVideoPage() {
     setResult(null);
     setProgress(0);
     setStatusMsg("Enviando para o servidor...");
+    startTimeRef.current = Date.now();
+    
+    // Estimate for YouTube (mostly server processing)
+    const estimate = 15 + (duration * 0.3);
+    setEstimatedSeconds(Math.round(estimate));
 
     const progressTimer = setInterval(() => {
       setProgress((p) => {
@@ -598,6 +617,11 @@ export default function CortesVideoPage() {
           </button>
           {cutting && (
             <div className="w-full max-w-md flex flex-col items-center gap-3 mt-4">
+              {estimatedSeconds && progress < 100 && (
+                <div className="text-[10px] font-bold opacity-60 uppercase tracking-widest animate-pulse" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  Tempo estimado: {Math.max(1, Math.round(estimatedSeconds - (progress / 100 * estimatedSeconds)))}s restantes
+                </div>
+              )}
               <div className="w-full flex justify-between items-center px-1">
                 <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
                   {statusMsg || "Iniciando..."}
