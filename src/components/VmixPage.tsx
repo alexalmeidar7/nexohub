@@ -2311,8 +2311,8 @@ export default function VmixPage() {
                 </div>
               );
             })}
-            {inputs.length === 0 && (
-              <p className="text-[11px] text-white/30 py-4">Conecte ao vMix para ver os inputs</p>
+            {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).length === 0 && (
+              <p className="text-[11px] text-white/30 py-4">Nenhum input NDI encontrado</p>
             )}
           </div>
         )}
