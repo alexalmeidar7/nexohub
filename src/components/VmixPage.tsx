@@ -1243,15 +1243,22 @@ export default function VmixPage() {
 
   const previewDomain = window.location.origin;
 
+  // Helper: detect if an input is a genuine NDI source
+  const isNdiInput = (inp: VmixInput) => {
+    // Robust detection: vMix strictly uses "NDI" as the type for NDI inputs.
+    // We also accept titles starting with "NDI (" as a fallback for some vMix versions/configurations.
+    return inp.type === "NDI" || inp.title.startsWith("NDI (");
+  };
+
   // Helper: get input label with type indicator
   const inputLabel = (inp: VmixInput) => {
-    const isNdi = inp.type === "NDI" || inp.title.toLowerCase().includes("ndi");
+    const isNdi = isNdiInput(inp);
     return `${inp.number} – ${isNdi ? "🟢 " : ""}${inp.title}${isNdi ? " (NDI)" : ""}`;
   };
 
   // Group inputs for combo: regular inputs and NDI inputs
-  const ndiInputs = inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi"));
-  const regularInputs = inputs.filter(i => i.type !== "NDI" && !i.title.toLowerCase().includes("ndi"));
+  const ndiInputs = useMemo(() => inputs.filter(isNdiInput), [inputs]);
+  const regularInputs = useMemo(() => inputs.filter(i => !isNdiInput(i)), [inputs]);
 
   // ── Styles ──
   const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, _color = "#888") => (
