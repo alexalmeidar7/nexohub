@@ -2873,37 +2873,21 @@ export default function CenarioInterativoPage() {
                                            );
                                          })()}
                                        </div>
-                                        <div style={{ minHeight: 0 }}>
-                                          {musicData ? (
-                                            <div key={musicKey} style={{ animation: "cenario-cover-in 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-                                              <div className="flex items-center" style={{ gap: `${pvh(1)}px` }}>
-                                                {musicData.capa && (
-                                                  <img 
-                                                    src={musicData.capa} 
-                                                    alt="" 
-                                                    style={{ 
-                                                      width: `${pvh(3.5)}px`, 
-                                                      height: `${pvh(3.5)}px`, 
-                                                      borderRadius: `${pvh(0.5)}px`,
-                                                      objectFit: "cover",
-                                                      boxShadow: "0 2px 8px rgba(0,0,0,0.3)"
-                                                    }} 
-                                                  />
-                                                )}
-                                                <div style={{ minWidth: 0, flex: 1 }}>
-                                                  <div className="flex items-center" style={{ gap: `${pvh(0.35)}px`, marginBottom: `${pvh(0.15)}px` }}>
-                                                    <Music size={pvh(0.85)} style={{ opacity: 0.7, flexShrink: 0 }} />
-                                                    <span className="font-semibold uppercase" style={{ letterSpacing: "0.12em", fontSize: `${pvh(0.72)}px`, opacity: 0.7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Tocando Agora</span>
-                                                  </div>
-                                                  <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, lineHeight: 1.15, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.titulo}</div>
-                                                  <div className="font-medium" style={{ fontSize: `${pvh(0.95)}px`, opacity: 0.7, marginTop: `${pvh(0.15)}px`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{musicData.artista}</div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          ) : currentProgram ? (
-                                            <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram.nome}</div>
-                                          ) : null}
-                                        </div>
+                                         <div style={{ minHeight: 0 }}>
+                                           <div className="flex flex-col items-center justify-center" style={{ gap: `${pvh(0.2)}px`, padding: `${pvh(0.5)}px` }}>
+                                             <div className="flex items-center" style={{ gap: `${pvh(0.4)}px` }}>
+                                               <Mic size={pvh(1.2)} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
+                                               <span className="font-bold text-white text-center" style={{ fontSize: `${pvh(1.3)}px`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>
+                                                 {currentProgram?.apresentador || currentProgram?.nome || ""}
+                                               </span>
+                                             </div>
+                                             {currentProgram?.apresentadorInstagram && (
+                                               <span className="font-semibold" style={{ fontSize: `${pvh(0.9)}px`, color: "var(--layout-accent-color)", opacity: 0.9, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                                                 {currentProgram.apresentadorInstagram}
+                                               </span>
+                                             )}
+                                           </div>
+                                         </div>
                                      </div>
 
                                      {/* ── BOX CAPA: music album art ── */}
