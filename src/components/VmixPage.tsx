@@ -367,8 +367,7 @@ export default function VmixPage() {
       }
 
       // Load all connections
-      const { data: connections } = await supabase
-        .from("vmix_connections" as any)
+      const { data: connections } = await (supabase.from("vmix_connections" as any) as any)
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -377,7 +376,7 @@ export default function VmixPage() {
         setVmixConnections(connections);
         
         // Try to find default or most recent
-        const def = connections.find((c: any) => c.is_default) || connections[0];
+        const def = (connections as any[]).find((c: any) => c.is_default) || connections[0];
         setSelectedConnectionId(def.id);
         setVmixUrl(def.url);
         setSavedUrl(def.url);
