@@ -2150,8 +2150,23 @@ export default function VmixPage() {
               </div>
             )}
           </div>
+          {/* NDI Network Sources Strip (Quick Access) */}
+          {ndiSources.length > 0 && (
+            <div className="flex gap-2 p-2 overflow-x-auto bg-black/40 border-t border-white/5 scrollbar-hide">
+              {ndiSources.map(source => (
+                <button
+                  key={source}
+                  onClick={() => addNdiInput(source)}
+                  className="whitespace-nowrap flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-[8px] font-black text-green-500 hover:bg-green-500/20 transition-all uppercase tracking-tighter"
+                  title={`Adicionar ${source} ao vMix`}
+                >
+                  <Radio size={10} /> {source}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        </div>
+      </div>
         )}
       </div>
 
