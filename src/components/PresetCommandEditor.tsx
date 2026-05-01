@@ -163,21 +163,66 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   };
 
   const saveCommands = async () => {
+    if (programaId === "new" && !nome.trim()) {
+      toast({ title: "Nome obrigatório", description: "Informe um nome para o programa.", variant: "destructive" });
+      return;
+    }
     setSaving(true);
+
+    let currentProgId = programaId;
+
+    // Se for novo ou se quiser atualizar os dados básicos do programa
+    if (programaId === "new") {
+      const { data: newProg, error: progErr } = await supabase
+        .from("programas")
+        .insert({
+          user_id: userId,
+          nome: nome.trim(),
+          estudio,
+          dias_semana: diasSemana,
+          data_variavel: dataEspecifica || null,
+          horario_inicio: customHorario || "00:00:00",
+          horario_fim: customHorario || "00:00:00",
+          ativo: true
+        })
+        .select()
+        .single();
+      
+      if (progErr || !newProg) {
+        toast({ title: "Erro ao criar programa", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+      currentProgId = newProg.id;
+    } else {
+      // Atualizar dados básicos se programa já existe
+      await supabase
+        .from("programas")
+        .update({
+          nome: nome.trim(),
+          estudio,
+          dias_semana: diasSemana,
+          data_variavel: dataEspecifica || null,
+          horario_inicio: customHorario || "00:00:00",
+        })
+        .eq("id", programaId);
+    }
+
     const payload: any = { commands, custom_horario: customHorario || null };
     const { data: existing } = await (supabase.from("preset_commands" as any) as any)
       .select("id")
       .eq("user_id", userId)
-      .eq("programa_id", programaId)
+      .eq("programa_id", currentProgId)
       .maybeSingle();
 
     if (existing) {
       await (supabase.from("preset_commands" as any) as any).update(payload).eq("id", existing.id);
     } else {
-      await (supabase.from("preset_commands" as any) as any).insert({ user_id: userId, programa_id: programaId, ...payload });
+      await (supabase.from("preset_commands" as any) as any).insert({ user_id: userId, programa_id: currentProgId, ...payload });
     }
     setSaving(false);
-    toast({ title: "Ações salvas", description: `${commands.length} comando(s) salvos para ${programaNome}.${customHorario ? ` Horário: ${customHorario}` : " Usando horário da grade."}` });
+    toast({ title: "Ações salvas", description: `${commands.length} comando(s) salvos para ${nome || programaNome}.` });
+    onClose();
   };
 
   const runAll = async () => {
