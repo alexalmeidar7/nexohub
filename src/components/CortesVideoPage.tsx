@@ -999,14 +999,31 @@ export default function CortesVideoPage() {
                 </div>
               )}
 
+              <div className="flex gap-2 mt-3">
+                <button 
+                  onClick={resetEngine}
+                  className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
+                  style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "white", border: "1px solid rgba(255,255,255,0.2)" }}
+                >
+                  🔄 Reiniciar Motor
+                </button>
+                <button 
+                  onClick={handleCut}
+                  className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
+                  style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "white" }}
+                >
+                  ⚡ Tentar Novamente
+                </button>
+              </div>
+
               <p className="mt-2 opacity-70 text-[10px]">
                 Dica: Tente usar um vídeo menor ou use o modo YouTube para processamento em servidor.
               </p>
             </div>
           )}
         </div>
-          )}
-        </div>
+      )}
+    </div>
 
         {/* Result List */}
         {results.length > 0 && (
