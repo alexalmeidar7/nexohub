@@ -2077,7 +2077,9 @@ export default function AgendaPage() {
                         : isToday
                         ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
                         : "rgba(13,4,70,0.03)",
-                      border: `1px solid color-mix(in srgb, var(--layout-border-color, #333333) ${isToday ? 50 : 20}%, transparent)`,
+                      border: feriadoNome
+                        ? "1px solid rgba(239, 68, 68, 0.2)"
+                        : `1px solid color-mix(in srgb, var(--layout-border-color, #333333) ${isToday ? 50 : 20}%, transparent)`,
                       minHeight: 110,
                     }}
                   >
