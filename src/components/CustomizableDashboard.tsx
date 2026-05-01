@@ -1089,6 +1089,21 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
       <div className="flex items-center gap-2 mb-3">
         <CalendarDays size={14} style={{ color: "var(--layout-accent-color)" }} />
         <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text)" }}>Agenda de Eventos</p>
+        {getFeriadoNome(now) && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50 cursor-help">
+                  Feriado
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-red-600 text-white border-red-500">
+                <p className="text-[10px] font-bold">{getFeriadoNome(now)}</p>
+                <p className="text-[9px] opacity-90">{format(now, "dd/MM")}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         {filteredEvents.length > 0 && (
           <span
             className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full"
