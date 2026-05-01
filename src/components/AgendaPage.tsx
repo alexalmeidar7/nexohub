@@ -1988,6 +1988,43 @@ export default function AgendaPage() {
                 </TooltipProvider>
               )}
             </div>
+            {/* Próximos Feriados Section */}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "linear-gradient(135deg, #ef4444, #b91c1c)", color: "#ffffff" }}>
+                <div className="flex items-center gap-1.5">
+                  <Star size={12} className="fill-white" />
+                  Próximos Feriados
+                </div>
+              </div>
+              <div className="p-3 space-y-1.5 max-h-[400px] overflow-y-auto scrollbar-hide">
+                {feriadosNacionais
+                  .filter(f => f.date >= new Date(new Date().setHours(0,0,0,0)))
+                  .slice(0, 8)
+                  .map((f, idx) => (
+                    <div 
+                      key={idx} 
+                      className="p-2 rounded-lg flex items-center justify-between group transition-colors hover:bg-red-50"
+                      style={{ border: "1px solid rgba(239, 68, 68, 0.1)" }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-md bg-red-100 flex flex-col items-center justify-center shrink-0">
+                          <span className="text-[11px] font-black text-red-600 leading-none">{format(f.date, "dd")}</span>
+                          <span className="text-[7px] font-bold text-red-400 uppercase tracking-tighter">{format(f.date, "MMM", { locale: ptBR }).replace('.', '')}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-bold text-gray-800 truncate leading-tight">{f.nome}</p>
+                          <p className="text-[9px] font-semibold text-red-500 uppercase tracking-wider">Nacional</p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 group-hover:bg-red-200 group-hover:text-red-700 transition-colors uppercase">
+                          {format(f.date, "EEEE", { locale: ptBR }).split('-')[0]}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
           </div>
 
           {/* Events + Upcoming */}
