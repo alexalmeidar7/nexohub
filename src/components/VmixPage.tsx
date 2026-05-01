@@ -394,7 +394,8 @@ export default function VmixPage() {
   // Direct fetch to vMix (browser → vMix, no edge function)
   const vmixDirectFetch = useCallback(async (path: string): Promise<string> => {
     if (!savedUrl) throw new Error("URL não configurada");
-    const baseUrl = savedUrl.replace(/\/+$/, "");
+    let baseUrl = savedUrl.replace(/\/+$/, "");
+    if (!baseUrl.startsWith("http")) baseUrl = "http://" + baseUrl;
     const targetUrl = baseUrl + path;
     const headers: Record<string, string> = {
       "Accept": "application/xml, text/xml, text/html, */*",
