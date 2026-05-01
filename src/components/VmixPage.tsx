@@ -2667,6 +2667,71 @@ export default function VmixPage() {
           )}
         </div>
       </div>
+
+      <Dialog open={showMixedContentDialog} onOpenChange={setShowMixedContentDialog}>
+        <DialogContent className="sm:max-w-[500px] bg-[#1a1a1f] border-[#ffffff10] text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-yellow-500">
+              <Lock size={20} />
+              Bloqueio de Segurança Detectado
+            </DialogTitle>
+            <DialogDescription className="text-white/60 pt-2">
+              O navegador está bloqueando a conexão com o seu vMix local (HTTP) porque este site usa segurança máxima (HTTPS).
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="rounded-lg p-4 bg-yellow-500/5 border border-yellow-500/10 space-y-3">
+              <p className="text-xs font-semibold text-yellow-500/90 uppercase tracking-wider">Como liberar a conexão:</p>
+              
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <div className="w-5 h-5 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">1</div>
+                  <p className="text-xs text-white/80">Clique no ícone de <span className="font-bold text-white">🔒 Cadeado</span> ou <span className="font-bold text-white">⚙️ Ajustes</span> na barra de endereços (ao lado da URL).</p>
+                </div>
+                
+                <div className="flex gap-3">
+                  <div className="w-5 h-5 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">2</div>
+                  <p className="text-xs text-white/80">Clique em <span className="font-bold text-white">Configurações do site</span>.</p>
+                </div>
+                
+                <div className="flex gap-3">
+                  <div className="w-5 h-5 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">3</div>
+                  <p className="text-xs text-white/80">Encontre <span className="font-bold text-white">Conteúdo inseguro</span> (Insecure content) e mude para <span className="font-bold text-green-400">Permitir</span>.</p>
+                </div>
+                
+                <div className="flex gap-3">
+                  <div className="w-5 h-5 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">4</div>
+                  <p className="text-xs text-white/80">Volte aqui e clique em <span className="font-bold text-white">Conectar agora</span>.</p>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-[10px] text-white/40 text-center italic">
+              Por questões de segurança do navegador, sites não podem alterar essa configuração automaticamente.
+            </p>
+          </div>
+          
+          <DialogFooter className="flex gap-2 sm:justify-center">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowMixedContentDialog(false)}
+              className="bg-transparent border-white/10 text-white/60 hover:text-white"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowMixedContentDialog(false);
+                connectToVmix();
+              }}
+              className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+            >
+              Conectar agora
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
