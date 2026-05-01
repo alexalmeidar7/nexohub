@@ -41,12 +41,12 @@ interface VmixInput {
 // We also accept titles starting with "NDI (" as a fallback for some vMix versions/configurations.
 const isNdiInput = (inp: VmixInput) => {
   if (!inp) return false;
-  const title = inp.title || "";
-  const type = inp.type || "";
+  const title = (inp.title || "").toUpperCase();
+  const type = (inp.type || "").toUpperCase();
   return type === "NDI" || 
-         title.startsWith("NDI (") || 
-         title.toUpperCase().includes(" (NDI)") ||
-         title.toUpperCase().includes("NDI - ");
+         title.includes("NDI") || 
+         type.includes("NDI") ||
+         title.startsWith("NDI (");
 };
 
 interface SceneCommand {
@@ -243,6 +243,7 @@ export default function VmixPage() {
   const [ndiUrl, setNdiUrl] = useState("");
   const [ndiSources, setNdiSources] = useState<string[]>([]);
   const [ndiScanning, setNdiScanning] = useState(false);
+  const [manualNdiHost, setManualNdiHost] = useState("");
 
   // Diagnostic state
   interface DiagResult {
@@ -1070,14 +1071,18 @@ export default function VmixPage() {
     const machines = new Set<string>();
     inputs.forEach(inp => {
       if (isNdiInput(inp)) {
-        const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
-        if (match) machines.add(match[1]);
+        // Match machine name: NDI (MACHINE (Source)) or NDI - MACHINE
+        const title = inp.title || "";
+        const match = title.match(/(?:NDI\s*[\(-]?\s*)?([A-Z0-9_-]+)/i);
+        if (match && match[1] && match[1].length > 2) {
+          machines.add(match[1]);
+        }
       }
     });
     return Array.from(machines);
   }, [inputs]);
 
-  const scanNdiSources = useCallback(async () => {
+  const scanNdiSources = useCallback(async (customHost?: string) => {
     if (!savedUrl || !connected) {
       setNdiSources([]);
       return;
@@ -1085,12 +1090,13 @@ export default function VmixPage() {
 
     setNdiScanning(true);
     try {
-      // IMPORTANT: vMix HTTP API does not expose live NDI network discovery (mDNS-only).
-      // We build suggestions from machine names already seen in current NDI inputs.
-      const machineList = [...detectedMachines];
-      const suggestions: string[] = [];
+      // Build suggestions from current inputs AND manual host
+      const machineList = new Set([...detectedMachines]);
+      if (customHost) machineList.add(customHost);
+      if (manualNdiHost) machineList.add(manualNdiHost);
 
-      for (const machine of machineList) {
+      const suggestions: string[] = [];
+      for (const machine of Array.from(machineList)) {
         suggestions.push(
           `${machine} (vMix - Output 1)`,
           `${machine} (vMix - Output 2)`,
@@ -1099,18 +1105,18 @@ export default function VmixPage() {
           `${machine} (vMix Video)`,
           `${machine} (vMix Audio - Master)`,
           `${machine} (vMix Audio - Headphones)`,
-          `${machine} (Radeon RX 460 Series 1)`,
-          `${machine} (Radeon RX 460 Series 2)`,
+          `${machine} (Screen 1)`,
+          `${machine} (Screen 2)`,
         );
       }
 
       const uniqueSuggestions = Array.from(new Set(suggestions));
       setNdiSources(uniqueSuggestions);
 
-      if (uniqueSuggestions.length === 0) {
+      if (uniqueSuggestions.length === 0 && (customHost || manualNdiHost)) {
         toast({
           title: "Busca NDI",
-          description: "Nenhum host NDI detectado nos inputs atuais. Adicione uma fonte manual para iniciar a detecção assistida.",
+          description: "Nenhuma fonte sugerida para este host. Verifique se o nome/IP está correto.",
         });
       }
     } catch {
@@ -1119,7 +1125,7 @@ export default function VmixPage() {
     } finally {
       setNdiScanning(false);
     }
-  }, [savedUrl, connected, detectedMachines, toast]);
+  }, [savedUrl, connected, detectedMachines, manualNdiHost, toast]);
 
   // NDI auto-scan removed (NDI tab removed)
 
@@ -2144,8 +2150,23 @@ export default function VmixPage() {
               </div>
             )}
           </div>
+          {/* NDI Network Sources Strip (Quick Access) */}
+          {ndiSources.length > 0 && (
+            <div className="flex gap-2 p-2 overflow-x-auto bg-black/40 border-t border-white/5 scrollbar-hide">
+              {ndiSources.map(source => (
+                <button
+                  key={source}
+                  onClick={() => addNdiInput(source)}
+                  className="whitespace-nowrap flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-[8px] font-black text-green-500 hover:bg-green-500/20 transition-all uppercase tracking-tighter"
+                  title={`Adicionar ${source} ao vMix`}
+                >
+                  <Radio size={10} /> {source}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        </div>
+      </div>
         )}
       </div>
 
@@ -2288,6 +2309,62 @@ export default function VmixPage() {
             {inputs.length === 0 && (
               <p className="text-[11px] text-white/30 py-4">Nenhum input encontrado no vMix</p>
             )}
+            {/* NDI Network Sources Discovery Section */}
+            <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Fontes NDI na Rede</h3>
+                </div>
+                <div className="flex gap-2 flex-1 max-w-sm ml-auto">
+                   <input 
+                     type="text"
+                     placeholder="Nome do PC ou IP (Ex: DESKTOP-123)"
+                     className="flex-1 bg-[#111115] border border-white/10 rounded-lg px-3 py-1.5 text-[10px] text-white outline-none focus:ring-1 ring-white/30 transition-all"
+                     value={manualNdiHost}
+                     onChange={e => setManualNdiHost(e.target.value)}
+                     onKeyDown={e => e.key === 'Enter' && scanNdiSources()}
+                   />
+                   <Button 
+                     size="sm" 
+                     variant="outline" 
+                     className="h-9 px-4 text-[10px] font-black gap-2 border-white/10 hover:bg-white/5"
+                     onClick={() => scanNdiSources()}
+                     disabled={ndiScanning}
+                   >
+                     {ndiScanning ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                     BUSCAR
+                   </Button>
+                </div>
+              </div>
+
+              {ndiSources.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {ndiSources.map(source => (
+                    <button
+                      key={source}
+                      onClick={() => addNdiInput(source)}
+                      className="group relative flex flex-col items-center justify-center p-4 rounded-xl bg-[#111115] border border-white/5 hover:border-green-500/40 hover:bg-green-500/5 transition-all duration-300"
+                    >
+                      <Radio size={18} className="text-white/10 group-hover:text-green-500 transition-colors mb-2.5" />
+                      <span className="text-[9px] font-black text-white/40 group-hover:text-white text-center leading-tight line-clamp-2 uppercase tracking-tight">{source}</span>
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
+                        <Plus size={12} className="text-green-500" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 rounded-2xl bg-[#111115]/40 border border-dashed border-white/5">
+                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                     <HelpCircle size={20} className="text-white/20" />
+                   </div>
+                   <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest text-center max-w-[200px] leading-relaxed">
+                     Insira o nome de um PC ou IP na rede para detectar fontes NDI disponíveis
+                   </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
