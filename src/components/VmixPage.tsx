@@ -1082,7 +1082,7 @@ export default function VmixPage() {
     return Array.from(machines);
   }, [inputs]);
 
-  const scanNdiSources = useCallback(async () => {
+  const scanNdiSources = useCallback(async (customHost?: string) => {
     if (!savedUrl || !connected) {
       setNdiSources([]);
       return;
@@ -1090,12 +1090,13 @@ export default function VmixPage() {
 
     setNdiScanning(true);
     try {
-      // IMPORTANT: vMix HTTP API does not expose live NDI network discovery (mDNS-only).
-      // We build suggestions from machine names already seen in current NDI inputs.
-      const machineList = [...detectedMachines];
-      const suggestions: string[] = [];
+      // Build suggestions from current inputs AND manual host
+      const machineList = new Set([...detectedMachines]);
+      if (customHost) machineList.add(customHost);
+      if (manualNdiHost) machineList.add(manualNdiHost);
 
-      for (const machine of machineList) {
+      const suggestions: string[] = [];
+      for (const machine of Array.from(machineList)) {
         suggestions.push(
           `${machine} (vMix - Output 1)`,
           `${machine} (vMix - Output 2)`,
@@ -1104,18 +1105,18 @@ export default function VmixPage() {
           `${machine} (vMix Video)`,
           `${machine} (vMix Audio - Master)`,
           `${machine} (vMix Audio - Headphones)`,
-          `${machine} (Radeon RX 460 Series 1)`,
-          `${machine} (Radeon RX 460 Series 2)`,
+          `${machine} (Screen 1)`,
+          `${machine} (Screen 2)`,
         );
       }
 
       const uniqueSuggestions = Array.from(new Set(suggestions));
       setNdiSources(uniqueSuggestions);
 
-      if (uniqueSuggestions.length === 0) {
+      if (uniqueSuggestions.length === 0 && (customHost || manualNdiHost)) {
         toast({
           title: "Busca NDI",
-          description: "Nenhum host NDI detectado nos inputs atuais. Adicione uma fonte manual para iniciar a detecção assistida.",
+          description: "Nenhuma fonte sugerida para este host. Verifique se o nome/IP está correto.",
         });
       }
     } catch {
@@ -1124,7 +1125,7 @@ export default function VmixPage() {
     } finally {
       setNdiScanning(false);
     }
-  }, [savedUrl, connected, detectedMachines, toast]);
+  }, [savedUrl, connected, detectedMachines, manualNdiHost, toast]);
 
   // NDI auto-scan removed (NDI tab removed)
 
