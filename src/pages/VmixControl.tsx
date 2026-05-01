@@ -103,7 +103,7 @@ export default function VmixControl() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all focus:ring-2"
-              style={{ backgroundColor: "#f0f4fa", color: "#0d0446", border: "1px solid #e2e8f0" } as React.CSSProperties}
+              style={{ backgroundColor: "#f0f4fa", color: "#0d0446", border: "1px solid #e2e8f0" }}
             />
           </div>
 
