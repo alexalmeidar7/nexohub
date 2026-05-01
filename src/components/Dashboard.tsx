@@ -1544,6 +1544,54 @@ function DashboardAgendaOld({ onNavigate }: { onNavigate: (p: Page) => void }) {
   );
 }
 
+function DashboardCalendar({ selected, onSelect, eventDates, feriadoDates, month, onMonthChange }: {
+  selected: Date | undefined;
+  onSelect: (d: Date | undefined) => void;
+  eventDates: Date[];
+  feriadoDates: Date[];
+  month: Date;
+  onMonthChange: (d: Date) => void;
+}) {
+  return (
+    <CalendarUI
+      mode="single"
+      selected={selected}
+      onSelect={onSelect}
+      month={month}
+      onMonthChange={onMonthChange}
+      locale={ptBR}
+      modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
+      modifiersClassNames={{ 
+        hasEvent: "has-event-dot",
+        isFeriado: "is-feriado-dot"
+      }}
+      className="p-0 pointer-events-auto dashboard-calendar"
+      classNames={{
+        months: "w-full",
+        month: "w-full space-y-0",
+        caption: "hidden",
+        nav: "hidden",
+        table: "w-full border-collapse",
+        head_row: "flex",
+        head_cell: "flex-1 text-center font-medium",
+        row: "flex w-full",
+        cell: "flex-1 text-center p-0",
+        day: "h-[24px] w-[24px] p-0 font-normal text-[14px] mx-auto flex items-center justify-center rounded-full hover:text-white transition-colors",
+        day_selected: "!bg-[#0d0446] !text-white",
+        day_today: "font-bold",
+        day_outside: "opacity-30",
+      }}
+      modifiersStyles={{
+        isFeriado: { color: "#ef4444" },
+      }}
+      styles={{
+        day: { color: "var(--layout-widget-text, #ffffff)", fontSize: "14px" },
+        head_cell: { color: "var(--layout-widget-text, #ffffff)", opacity: 0.5, fontSize: "10px", padding: 0 },
+      }}
+    />
+  );
+}
+
 function DashboardAgendaFlyoutPlaceholder() {
   return null;
 }
