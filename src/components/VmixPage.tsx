@@ -2298,8 +2298,8 @@ export default function VmixPage() {
                 </div>
               );
             })}
-            {inputs.filter(isNdiInput).length === 0 && (
-              <p className="text-[11px] text-white/30 py-4">Nenhum input NDI encontrado</p>
+            {inputs.length === 0 && (
+              <p className="text-[11px] text-white/30 py-4">Nenhum input encontrado no vMix</p>
             )}
           </div>
         )}
