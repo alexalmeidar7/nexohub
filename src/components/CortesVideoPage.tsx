@@ -562,10 +562,10 @@ export default function CortesVideoPage() {
               })}
               <p className="text-[10px] leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                 {format === "reel"
-                  ? "Vertical: o vídeo é centralizado e cortado nas laterais (sem distorção)."
+                  ? "Vertical: o vídeo é centralizado e cortado nas laterais (ideal para Reels/TikTok)."
                   : format === "original"
-                  ? "Corte instantâneo: mantém a resolução original (mais rápido)."
-                  : "Horizontal padrão para TV/web."}
+                  ? "Ultra-rápido: mantém a qualidade original e corta em segundos (pode haver pequena variação no início/fim)."
+                  : "Horizontal padrão: 1920x1080 (YouTube/TV)."}
               </p>
             </div>
           </div>
