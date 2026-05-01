@@ -2294,6 +2294,62 @@ export default function VmixPage() {
             {inputs.length === 0 && (
               <p className="text-[11px] text-white/30 py-4">Nenhum input encontrado no vMix</p>
             )}
+            {/* NDI Network Sources Discovery Section */}
+            <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Fontes NDI na Rede</h3>
+                </div>
+                <div className="flex gap-2 flex-1 max-w-sm ml-auto">
+                   <input 
+                     type="text"
+                     placeholder="Nome do PC ou IP (Ex: DESKTOP-123)"
+                     className="flex-1 bg-[#111115] border border-white/10 rounded-lg px-3 py-1.5 text-[10px] text-white outline-none focus:ring-1 ring-white/30 transition-all"
+                     value={manualNdiHost}
+                     onChange={e => setManualNdiHost(e.target.value)}
+                     onKeyDown={e => e.key === 'Enter' && scanNdiSources()}
+                   />
+                   <Button 
+                     size="sm" 
+                     variant="outline" 
+                     className="h-9 px-4 text-[10px] font-black gap-2 border-white/10 hover:bg-white/5"
+                     onClick={() => scanNdiSources()}
+                     disabled={ndiScanning}
+                   >
+                     {ndiScanning ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                     BUSCAR
+                   </Button>
+                </div>
+              </div>
+
+              {ndiSources.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {ndiSources.map(source => (
+                    <button
+                      key={source}
+                      onClick={() => addNdiInput(source)}
+                      className="group relative flex flex-col items-center justify-center p-4 rounded-xl bg-[#111115] border border-white/5 hover:border-green-500/40 hover:bg-green-500/5 transition-all duration-300"
+                    >
+                      <Radio size={18} className="text-white/10 group-hover:text-green-500 transition-colors mb-2.5" />
+                      <span className="text-[9px] font-black text-white/40 group-hover:text-white text-center leading-tight line-clamp-2 uppercase tracking-tight">{source}</span>
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
+                        <Plus size={12} className="text-green-500" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 rounded-2xl bg-[#111115]/40 border border-dashed border-white/5">
+                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                     <HelpCircle size={20} className="text-white/20" />
+                   </div>
+                   <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest text-center max-w-[200px] leading-relaxed">
+                     Insira o nome de um PC ou IP na rede para detectar fontes NDI disponíveis
+                   </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
