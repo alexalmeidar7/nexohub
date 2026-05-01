@@ -177,26 +177,13 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* User / NexoHub routes */}
-            <Route path="/user" element={<Navigate to="/user/nexohub/home" replace />} />
-            <Route path="/user/login" element={<Index />} />
-            <Route path="/user/nexohub/home" element={<MasterViewHome />} />
-            <Route path="/user/nexohub/telapromo" element={<PromocoesKiosk />} />
-            <Route path="/user/:userSlug/nexohub/telapromo" element={<PromocoesKiosk />} />
-            <Route path="/user/nexohub/player" element={<PlayerHub />} />
-            <Route path="/user/:userSlug/nexohub/player" element={<PlayerHub />} />
-            <Route path="/user/nexohub/player/watch" element={<PlayerPage />} />
-            <Route path="/user/:userSlug/nexohub/player/watch" element={<PlayerPage />} />
-            <Route path="/user/nexohub/player/catalog" element={<PlayerCatalog />} />
-            <Route path="/user/:userSlug/nexohub/player/catalog" element={<PlayerCatalog />} />
-            <Route path="/user/nexohub/player/app" element={<PlayerApp />} />
-            <Route path="/user/:userSlug/nexohub/player/app" element={<PlayerApp />} />
-            <Route path="/user/:userSlug/telainterativatelao" element={<TelaInterativa />} />
-
-            {/* Legacy redirects */}
-            <Route path="/masterview/home" element={<Navigate to="/user/nexohub/home" replace />} />
-            <Route path="/modulo-tela-estudio-promocao" element={<Navigate to="/user/nexohub/telapromo" replace />} />
-            <Route path="/player" element={<Navigate to="/user/nexohub/player" replace />} />
+            {/* Main routes */}
+            <Route path="/home" element={<MasterViewHome />} />
+            <Route path="/telapromo" element={<PromocoesKiosk />} />
+            <Route path="/player" element={<PlayerHub />} />
+            <Route path="/player/watch" element={<PlayerPage />} />
+            <Route path="/player/catalog" element={<PlayerCatalog />} />
+            <Route path="/player/app" element={<PlayerApp />} />
             <Route path="/jornal-export" element={<JornalExport />} />
             <Route path="/roteiro-export" element={<RoteiroExport />} />
             <Route path="/roteiro-apresentador-edit" element={<RoteiroApresentadorEdit />} />
@@ -204,6 +191,15 @@ const App = () => (
             <Route path="/vmix-control" element={<VmixControl />} />
             <Route path="/cenario-tela" element={<CenarioTela />} />
             <Route path="/intercom" element={<IntercomListener />} />
+            <Route path="/telainterativatelao" element={<TelaInterativa />} />
+
+            {/* Slug routes for dynamic access */}
+            <Route path="/:userSlug/telapromo" element={<PromocoesKiosk />} />
+            <Route path="/:userSlug/player" element={<PlayerHub />} />
+            <Route path="/:userSlug/player/watch" element={<PlayerPage />} />
+            <Route path="/:userSlug/player/catalog" element={<PlayerCatalog />} />
+            <Route path="/:userSlug/player/app" element={<PlayerApp />} />
+            <Route path="/:userSlug/telainterativatelao" element={<TelaInterativa />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -213,6 +209,26 @@ const App = () => (
             <Route path="/admin/modules" element={<AdminModules />} />
             <Route path="/admin/plans" element={<AdminPlans />} />
             <Route path="/admin/messages" element={<AdminMessages />} />
+
+            {/* User / NexoHub legacy redirects */}
+            <Route path="/user" element={<Navigate to="/home" replace />} />
+            <Route path="/user/login" element={<Index />} />
+            <Route path="/user/nexohub/home" element={<Navigate to="/home" replace />} />
+            <Route path="/user/nexohub/telapromo" element={<Navigate to="/telapromo" replace />} />
+            <Route path="/user/:userSlug/nexohub/telapromo" element={<Navigate to="/:userSlug/telapromo" replace />} />
+            <Route path="/user/nexohub/player" element={<Navigate to="/player" replace />} />
+            <Route path="/user/:userSlug/nexohub/player" element={<Navigate to="/:userSlug/player" replace />} />
+            <Route path="/user/nexohub/player/watch" element={<Navigate to="/player/watch" replace />} />
+            <Route path="/user/:userSlug/nexohub/player/watch" element={<Navigate to="/:userSlug/player/watch" replace />} />
+            <Route path="/user/nexohub/player/catalog" element={<Navigate to="/player/catalog" replace />} />
+            <Route path="/user/:userSlug/nexohub/player/catalog" element={<Navigate to="/:userSlug/player/catalog" replace />} />
+            <Route path="/user/nexohub/player/app" element={<Navigate to="/player/app" replace />} />
+            <Route path="/user/:userSlug/nexohub/player/app" element={<Navigate to="/:userSlug/player/app" replace />} />
+            <Route path="/user/:userSlug/telainterativatelao" element={<Navigate to="/:userSlug/telainterativatelao" replace />} />
+
+            {/* Legacy redirects */}
+            <Route path="/masterview/home" element={<Navigate to="/home" replace />} />
+            <Route path="/modulo-tela-estudio-promocao" element={<Navigate to="/telapromo" replace />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
