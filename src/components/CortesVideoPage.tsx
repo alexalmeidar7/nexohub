@@ -329,7 +329,9 @@ export default function CortesVideoPage() {
       const inputName = `input.${ext}`;
       const outputName = `corte_${Date.now()}.mp4`;
 
-      await ffmpeg.writeFile(inputName, await fetchFile(localFile));
+      setStatusMsg("Lendo arquivo de vídeo (isso pode levar alguns segundos)...");
+      const videoData = await fetchFile(localFile);
+      await ffmpeg.writeFile(inputName, videoData);
 
       setStatusMsg("Iniciando o corte...");
       const args: string[] = [];
@@ -373,14 +375,35 @@ export default function CortesVideoPage() {
         throw new Error(`Falha ao recortar (código ${exitCode}). Tente outro trecho ou um vídeo .mp4 padrão.`);
       }
 
-      setStatusMsg("Gerando arquivo de download...");
+      setStatusMsg("Lendo arquivo final do motor...");
       const data = await ffmpeg.readFile(outputName);
-      const u8 = data as Uint8Array;
-      if (!u8 || u8.byteLength === 0) {
-        throw new Error("Arquivo gerado está vazio. Verifique os tempos selecionados.");
+      
+      if (!data) {
+        throw new Error("Não foi possível ler o arquivo gerado.");
       }
-      const buf = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
-      const blob = new Blob([buf], { type: "video/mp4" });
+
+      // We need to ensure we have a plain ArrayBuffer to create a Blob
+      // Multi-threaded environments use SharedArrayBuffer which cannot be used in Blobs
+      let finalData: ArrayBuffer | Uint8Array;
+      
+      if (data instanceof Uint8Array) {
+        if (typeof SharedArrayBuffer !== 'undefined' && data.buffer instanceof SharedArrayBuffer) {
+          // Copy SharedArrayBuffer to a regular ArrayBuffer
+          const buffer = new ArrayBuffer(data.byteLength);
+          new Uint8Array(buffer).set(data);
+          finalData = buffer;
+        } else {
+          finalData = data;
+        }
+      } else {
+        finalData = data as any;
+      }
+
+      if (finalData instanceof Uint8Array && finalData.length === 0) {
+        throw new Error("Arquivo gerado está vazio.");
+      }
+
+      const blob = new Blob([finalData as BlobPart], { type: "video/mp4" });
       const blobUrl = URL.createObjectURL(blob);
 
       await ffmpeg.deleteFile(inputName).catch(() => {});
