@@ -77,6 +77,7 @@ export default function CortesVideoPage() {
   const [ffmpegReady, setFfmpegReady] = useState(false);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
 
+  const resultRef = useRef<HTMLDivElement>(null);
   // Shared
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
