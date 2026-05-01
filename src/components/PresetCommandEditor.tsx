@@ -500,8 +500,8 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                           className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
                           style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
                         >
-                          <option value="">— Selecionar —</option>
-                          {inputs.map(inp => (
+                          <option value="">— Selecionar NDI —</option>
+                          {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).map(inp => (
                             <option key={inp.key} value={inp.key}>{inp.number} – {inp.title}</option>
                           ))}
                         </select>
