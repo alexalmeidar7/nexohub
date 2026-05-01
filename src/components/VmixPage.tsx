@@ -1363,14 +1363,17 @@ export default function VmixPage() {
   // Monitor content helper — returns JSX or null
   const getMonitorContent = (type: "preview" | "output") => {
     const streamUrl = monitorStreamUrls[type];
+    const isIframe = monitorIframeMode[type];
+
     if (streamUrl) {
       if (streamUrl.includes(".m3u8")) {
         return <HlsPlayer src={streamUrl} className="w-full h-full" />;
       }
       return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
     }
+
     // Iframe mode — embed vMix Web Controller
-    if (monitorIframeMode[type] && savedUrl) {
+    if (isIframe && savedUrl) {
       const baseUrl = savedUrl.replace(/\/+$/, "");
       return (
         <div className="w-full h-full relative" style={{ backgroundColor: "#000" }}>
@@ -1388,22 +1391,42 @@ export default function VmixPage() {
         </div>
       );
     }
-    // When connected, show input info placeholder
+
+    // When connected, show input info placeholder with "Live" button
     const inputNum = type === "preview" ? previewInput : activeInput;
     if (connected && inputNum) {
       const inp = inputs.find(i => i.number === inputNum);
       const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
       return (
         <div className="w-full h-full flex flex-col items-center justify-center relative" style={{ backgroundColor: bgColor }}>
-          <div className="text-center space-y-1">
+          <div className="text-center space-y-1 z-10">
             <span className="text-[11px] font-bold text-white/70 uppercase tracking-wider">{inp?.type || "Input"}</span>
             <p className="text-[13px] font-semibold text-white/90 max-w-[80%] mx-auto truncate">{inp?.title || `Input ${inputNum}`}</p>
             <p className="text-[9px] text-white/40">Input {inputNum} • {inp?.state || "—"}</p>
+            
+            <button 
+              onClick={() => {
+                const baseUrl = savedUrl.replace(/\/+$/, "");
+                const url = type === "preview" ? `${baseUrl}/mjpeg?Input=Preview` : `${baseUrl}/mjpeg`;
+                setMonitorStreamUrls(prev => ({ ...prev, [type]: url }));
+                setMonitorIframeMode(prev => ({ ...prev, [type]: false }));
+              }}
+              className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold text-white transition-all hover:scale-105 active:scale-95"
+              style={{ backgroundColor: "#dc2626", boxShadow: "0 0 15px rgba(220, 38, 38, 0.4)" }}
+            >
+              <Monitor size={12} /> ATIVAR VÍDEO NDI (MJPEG)
+            </button>
           </div>
+          
           <div className="absolute bottom-2 left-0 right-0 flex justify-center">
             <span className="text-[8px] px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.5)", color: "#888" }}>
               📡 URL de stream ou ⬛ Iframe para preview ao vivo
             </span>
+          </div>
+          
+          {/* Background decoration */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+             <div className="absolute -inset-10 bg-gradient-to-br from-white/20 to-transparent blur-3xl transform rotate-12" />
           </div>
         </div>
       );
