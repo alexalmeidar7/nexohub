@@ -487,16 +487,29 @@ export default function CortesVideoPage() {
 
     const progressTimer = setInterval(() => {
       setProgress((p) => {
-        if (p >= 95) return p;
-        const inc = p < 50 ? 4 : p < 80 ? 2 : 1;
+        if (p >= 99) return p;
+        
+        // Curva assintótica: quanto mais perto de 100, mais devagar aumenta
+        // p < 50: +4%
+        // p < 80: +2%
+        // p < 95: +0.5%
+        // p < 99: +0.1%
+        let inc = 0;
+        if (p < 50) inc = 4;
+        else if (p < 80) inc = 2;
+        else if (p < 95) inc = 0.5;
+        else inc = 0.1;
+        
+        const nextP = p + inc;
         
         // Dynamic messages based on progress
-        if (p < 30) setStatusMsg("Conectando ao YouTube...");
-        else if (p < 70) setStatusMsg("Cortando vídeo no servidor...");
-        else if (p < 90) setStatusMsg("Finalizando trecho...");
-        else setStatusMsg("Gerando link de download...");
+        if (nextP < 30) setStatusMsg("Conectando ao YouTube...");
+        else if (nextP < 70) setStatusMsg("Cortando vídeo no servidor...");
+        else if (nextP < 90) setStatusMsg("Finalizando trecho...");
+        else if (nextP < 98) setStatusMsg("Recebendo dados do servidor...");
+        else setStatusMsg("Preparando player...");
         
-        return Math.min(95, p + inc);
+        return Math.min(99, nextP);
       });
     }, 600);
 
