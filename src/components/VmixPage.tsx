@@ -378,15 +378,20 @@ export default function VmixPage() {
   useEffect(() => {
     if (!user) return;
     const loadSettings = async () => {
-      // Load global shortcuts
+      // Load global shortcuts and input mapping
       const { data: settings } = await supabase
         .from("user_settings")
-        .select("vmix_shortcuts")
+        .select("vmix_shortcuts, vmix_input_mapping")
         .eq("user_id", user.id)
         .maybeSingle();
       
       if (settings?.vmix_shortcuts && typeof settings.vmix_shortcuts === "object") {
         setInputShortcuts(settings.vmix_shortcuts as Record<string, string>);
+      }
+
+      if (settings?.vmix_input_mapping && typeof settings.vmix_input_mapping === "object") {
+        const mapping = settings.vmix_input_mapping as Record<string, { title: string; key: string }>;
+        setInputMapping(prev => ({ ...prev, ...mapping }));
       }
 
       // Load all connections
