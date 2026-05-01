@@ -738,11 +738,59 @@ export default function CortesVideoPage() {
         )}
 
 
+        {/* Trechos List */}
+        <div className="mb-5 flex flex-wrap gap-2">
+          {clips.map((clip, idx) => (
+            <div key={clip.id} className="relative group">
+              <button
+                onClick={() => setActiveClipId(clip.id)}
+                className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+                style={{
+                  backgroundColor: activeClipId === clip.id ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
+                  color: activeClipId === clip.id ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+                  border: activeClipId === clip.id ? "none" : "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)"
+                }}
+              >
+                Trecho {idx + 1}
+              </button>
+              {clips.length > 1 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newClips = clips.filter(c => c.id !== clip.id);
+                    setClips(newClips);
+                    if (activeClipId === clip.id) setActiveClipId(newClips[0].id);
+                  }}
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+          {clips.length < 5 && (
+            <button
+              onClick={() => {
+                const newId = crypto.randomUUID();
+                setClips([...clips, { id: newId, start: "00:00:00.000", end: "00:00:10.000" }]);
+                setActiveClipId(newId);
+              }}
+              className="px-4 py-2 rounded-xl text-xs font-bold border-2 border-dashed transition-all"
+              style={{
+                borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)",
+                color: "var(--layout-page-text, #1a1a1a)"
+              }}
+            >
+              + Novo Trecho
+            </button>
+          )}
+        </div>
+
         {/* Time inputs + Format */}
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-5">
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-              <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>⏱️ Definir Trecho</h3>
+              <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>⏱️ Definir Trecho {clips.findIndex(c => c.id === activeClipId) + 1}</h3>
             </div>
             <div className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
