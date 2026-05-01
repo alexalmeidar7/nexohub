@@ -1132,13 +1132,17 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50 cursor-help">
+                <span 
+                  className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50 cursor-help"
+                  onClick={(e) => { e.stopPropagation(); onExportFeriados(); }}
+                >
                   Feriado
                 </span>
               </TooltipTrigger>
               <TooltipContent side="top" className="bg-red-600 text-white border-red-500">
                 <p className="text-[10px] font-bold">{feriadoHoje}</p>
                 <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : ""}</p>
+                <p className="text-[8px] mt-1 italic border-t border-white/20 pt-1">Clique para exportar feriados</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
