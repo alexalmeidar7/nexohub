@@ -2858,17 +2858,11 @@ export default function CenarioInterativoPage() {
                                        position: "absolute",
                                        inset: 0
                                      }}>
-                                       <div className="flex items-start justify-between" style={{ gap: `${pvh(0.6)}px`, minWidth: 0 }}>
-                                         <div style={{ minWidth: 0, flex: 1 }}>
-                                           <div className="flex items-center justify-center" style={{ gap: `${pvh(0.35)}px`, minWidth: 0 }}>
-                                             <Mic size={pvh(1)} style={{ opacity: 0.8, flexShrink: 0 }} />
-                                             <span className="font-normal" style={{ fontSize: `${pvh(1.05)}px`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentProgram?.apresentador || ""}</span>
-                                           </div>
-                                         </div>
-                                         {currentProgram?.selo && (
-                                           <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5.82)}px`, maxWidth: `${pvh(8.74)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
-                                         )}
-                                       </div>
+                                        <div className="flex items-start justify-end" style={{ minWidth: 0 }}>
+                                          {currentProgram?.selo && (
+                                            <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5.82)}px`, maxWidth: `${pvh(8.74)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
+                                          )}
+                                        </div>
                                        <div className="flex-1 flex items-center justify-center" style={{ minHeight: 0 }}>
                                          {(() => {
                                            const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
