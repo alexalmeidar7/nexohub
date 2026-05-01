@@ -741,7 +741,7 @@ export default function VmixPage() {
         /failed to fetch|networkerror|mixed content|cors/i.test(message);
 
       if (isMixedOrCorsLikely) {
-        setShowMixedContentDialog(true);
+        // setShowMixedContentDialog(true); // REMOVED
       }
 
       const hint = isMixedOrCorsLikely
