@@ -1927,7 +1927,6 @@ export default function AgendaPage() {
                 📅 Calendário
               </div>
               <div className="p-3">
-            <div className="p-3">
               <style>{`
                 .agenda-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; }
                 .agenda-calendar .rdp-day_selected { background-color: var(--layout-accent-color, #2563eb) !important; color: #fff !important; }
