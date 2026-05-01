@@ -477,12 +477,13 @@ export default function CortesVideoPage() {
       await ffmpeg.deleteFile(inputName).catch(() => {});
       await ffmpeg.deleteFile(outputName).catch(() => {});
 
-      setResult({
+      const newResult: CutResult = {
         blob_url: blobUrl,
         file_name: outputName,
         duration,
         is_local: true,
-      });
+      };
+      setResults(prev => [newResult, ...prev]);
       setProgress(100);
       setStatusMsg("");
       toast({ title: "Corte gerado!", description: "O vídeo está pronto para download." });
