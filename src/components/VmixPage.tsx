@@ -192,6 +192,45 @@ export default function VmixPage() {
 
     checkLan();
   }, [savedUrl]);
+
+  const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
+    try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
+    catch { return "direct"; }
+  });
+
+  // Automatic mode switching based on network detection
+  useEffect(() => {
+    if (!savedUrl) return;
+    
+    const isLocal = isPrivateIp(savedUrl);
+    
+    // We check the condition but we only want to auto-switch when the network context changes
+    if (isLocal && lanStatus === "same_lan") {
+      setConnectionMode(prev => {
+        if (prev === "proxy") {
+          toast({ 
+            title: "Modo Automático", 
+            description: "Rede local detectada. Alternado para modo Direto." 
+          });
+          return "direct";
+        }
+        return prev;
+      });
+    } else if (!isLocal && savedUrl) {
+      setConnectionMode(prev => {
+        if (prev === "direct") {
+          toast({ 
+            title: "Modo Automático", 
+            description: "IP Público detectado. Alternado para modo Proxy." 
+          });
+          return "proxy";
+        }
+        return prev;
+      });
+    }
+  }, [lanStatus, savedUrl, toast]); 
+
+
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
@@ -218,10 +257,6 @@ export default function VmixPage() {
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [editingCustomButtonId, setEditingCustomButtonId] = useState<string | null | "new">(null);
   const [activeCustomButton, setActiveCustomButton] = useState<string | null>(null);
-  const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
-    try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
-    catch { return "direct"; }
-  });
   // HLS stream URLs per input (for NDI live preview)
   const [inputHlsUrls, setInputHlsUrls] = useState<Record<string, string>>(() => {
     try { const s = localStorage.getItem("vmix_input_hls"); return s ? JSON.parse(s) : {}; } catch { return {}; }
@@ -1670,7 +1705,31 @@ export default function VmixPage() {
 
             {/* URL Input Group */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-2">Endereço do vMix</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/30">Endereço do vMix</label>
+                <div className="flex bg-[#111115] p-0.5 rounded-lg border border-white/5">
+                  <button
+                    onClick={() => {
+                      setConnectionMode("direct");
+                      toast({ title: "Modo Direto selecionado", description: "Conexão direta pelo navegador." });
+                    }}
+                    className={`px-2 py-0.5 rounded text-[8px] font-bold transition-all ${connectionMode === "direct" ? "bg-white/10 text-white" : "text-white/20 hover:text-white/40"}`}
+                    title="Conexão direta pelo navegador (Ideal para rede local/LAN)"
+                  >
+                    DIRETO
+                  </button>
+                  <button
+                    onClick={() => {
+                      setConnectionMode("proxy");
+                      toast({ title: "Modo Proxy selecionado", description: "Conexão via servidor na nuvem." });
+                    }}
+                    className={`px-2 py-0.5 rounded text-[8px] font-bold transition-all ${connectionMode === "proxy" ? "bg-white/10 text-white" : "text-white/20 hover:text-white/40"}`}
+                    title="Conexão via Proxy (Ideal para IPs públicos ou evitar erros de SSL/CORS)"
+                  >
+                    PROXY
+                  </button>
+                </div>
+              </div>
               <div className="flex gap-2 items-center flex-wrap">
                 <div className="flex-1 min-w-[200px] flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
                   <Wifi size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
