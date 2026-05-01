@@ -1696,7 +1696,31 @@ export default function VmixPage() {
 
             {/* URL Input Group */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-2">Endereço do vMix</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/30">Endereço do vMix</label>
+                <div className="flex bg-[#111115] p-0.5 rounded-lg border border-white/5">
+                  <button
+                    onClick={() => {
+                      setConnectionMode("direct");
+                      toast({ title: "Modo Direto selecionado", description: "Conexão direta pelo navegador." });
+                    }}
+                    className={`px-2 py-0.5 rounded text-[8px] font-bold transition-all ${connectionMode === "direct" ? "bg-white/10 text-white" : "text-white/20 hover:text-white/40"}`}
+                    title="Conexão direta pelo navegador (Ideal para rede local/LAN)"
+                  >
+                    DIRETO
+                  </button>
+                  <button
+                    onClick={() => {
+                      setConnectionMode("proxy");
+                      toast({ title: "Modo Proxy selecionado", description: "Conexão via servidor na nuvem." });
+                    }}
+                    className={`px-2 py-0.5 rounded text-[8px] font-bold transition-all ${connectionMode === "proxy" ? "bg-white/10 text-white" : "text-white/20 hover:text-white/40"}`}
+                    title="Conexão via Proxy (Ideal para IPs públicos ou evitar erros de SSL/CORS)"
+                  >
+                    PROXY
+                  </button>
+                </div>
+              </div>
               <div className="flex gap-2 items-center flex-wrap">
                 <div className="flex-1 min-w-[200px] flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
                   <Wifi size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
