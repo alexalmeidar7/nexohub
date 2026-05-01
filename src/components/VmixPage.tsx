@@ -8,7 +8,7 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, Lock, Download, Upload
+  ScrollText, ChevronDown, ChevronUp, Lock, Download, Upload, Network, Zap
 } from "lucide-react";
 import {
   Dialog,
