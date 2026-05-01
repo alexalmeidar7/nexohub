@@ -1161,6 +1161,22 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
                   <p className="text-xs font-semibold truncate leading-tight" style={{ color: "var(--layout-widget-text)" }}>
                     {titulo}
                   </p>
+                  {getFeriadoNome(evDate) && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1 mt-0.5 cursor-help">
+                            <Star size={8} className="text-red-500 fill-red-500" />
+                            <span className="text-[8px] font-bold text-red-500 uppercase tracking-tight">Feriado</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-red-600 text-white border-red-500">
+                          <p className="text-[10px] font-bold">{getFeriadoNome(evDate)}</p>
+                          <p className="text-[9px] opacity-90">{format(evDate, "dd 'de' MMMM", { locale: ptBR })}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   {(() => {
                     const isGravacao = (ev.tipo_evento || "").toString().toLowerCase() === "gravacao";
                     const horarioExibido = isGravacao
