@@ -259,6 +259,14 @@ export default function VmixPage() {
   }
   const [diagRunning, setDiagRunning] = useState(false);
   const [diagResult, setDiagResult] = useState<DiagResult | null>(null);
+
+  // Input mapping for name-based fallback (key -> title and title -> key)
+  const [inputMapping, setInputMapping] = useState<Record<string, { title: string; key: string }>>(() => {
+    try {
+      const saved = localStorage.getItem("vmix_input_mapping");
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
   
   const connectToVmixRef = useRef<(() => Promise<void>) | null>(null);
   const ndiAutoScanDoneRef = useRef(false);
