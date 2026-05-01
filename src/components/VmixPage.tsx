@@ -842,6 +842,33 @@ export default function VmixPage() {
     }
   }, [savedUrl, vmixFetch]);
 
+  // Update input mapping whenever inputs change
+  useEffect(() => {
+    if (inputs.length === 0) return;
+    
+    setInputMapping(prev => {
+      const next = { ...prev };
+      let changed = false;
+      
+      inputs.forEach(inp => {
+        // Map key to its title
+        if (next[inp.key]?.title !== inp.title) {
+          next[inp.key] = { title: inp.title, key: inp.key };
+          changed = true;
+        }
+        // Also ensure title maps to key for reverse lookup
+        // We use a special prefix for title lookups or just keep it separate
+        // For simplicity, we just ensure every key we currently have is up to date
+      });
+      
+      if (changed) {
+        localStorage.setItem("vmix_input_mapping", JSON.stringify(next));
+        return next;
+      }
+      return prev;
+    });
+  }, [inputs]);
+
   useEffect(() => {
     if (!savedUrl) return;
     
