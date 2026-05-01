@@ -1871,15 +1871,38 @@ export default function AgendaPage() {
                 .agenda-calendar .is-feriado-day { position: relative; }
                 .agenda-calendar .is-feriado-day::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background-color: #ef4444; }
               `}</style>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className={cn("p-2 pointer-events-auto agenda-calendar")}
-                locale={ptBR}
-                modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
-                modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day" }}
-              />
+              <TooltipProvider>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className={cn("p-2 pointer-events-auto agenda-calendar")}
+                  locale={ptBR}
+                  modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
+                  modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day" }}
+                  components={{
+                    DayContent: ({ date, ...props }) => {
+                      const feriado = getFeriadoNome(date);
+                      const content = <span>{date.getDate()}</span>;
+                      
+                      if (feriado) {
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help w-full h-full flex items-center justify-center">{content}</span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="bg-red-600 text-white border-red-500 z-[100]">
+                              <p className="text-[10px] font-bold">{feriado}</p>
+                              <p className="text-[9px] opacity-90">{format(date, "dd/MM")}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      }
+                      return content;
+                    }
+                  }}
+                />
+              </TooltipProvider>
               {getFeriadoNome(selectedDate) && (
                 <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5" style={{ color: "#ef4444" }}>
                   <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
