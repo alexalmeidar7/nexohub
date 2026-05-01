@@ -562,14 +562,15 @@ export default function CortesVideoPage() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setResult({
+      const newResult: CutResult = {
         clip_embed_url: data.clip_embed_url,
         share_url: data.share_url,
         thumbnail_url: data.thumbnail_url,
         download_url: data.download_url || "",
         duration: data.duration,
         is_local: false,
-      });
+      };
+      setResults(prev => [newResult, ...prev]);
       setProgress(100);
       setStatusMsg("");
       toast({ title: "Trecho gerado!", description: "Use o player abaixo ou baixe via link externo." });
