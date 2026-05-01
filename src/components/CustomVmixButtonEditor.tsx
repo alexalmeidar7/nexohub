@@ -96,6 +96,7 @@ interface Props {
   inputs: VmixInput[];
   onRunCommands: (commands: PresetCommand[]) => Promise<void>;
   onSaved: () => void;
+  inputMapping?: Record<string, { title: string; key: string }>;
 }
 
 const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
