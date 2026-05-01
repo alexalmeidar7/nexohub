@@ -1162,6 +1162,7 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
           feriadoDates={feriadoDates}
           month={calMonth}
           onMonthChange={setCalMonth}
+          getFeriadoNome={getFeriadoNome}
         />
       </div>
 
