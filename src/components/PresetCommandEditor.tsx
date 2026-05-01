@@ -513,6 +513,11 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                           style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
                         >
                           <option value="">— Selecionar Input —</option>
+                          {cmd.input && !inputs.some(i => i.key === cmd.input) && inputMapping?.[cmd.input] && (
+                            <option value={cmd.input} disabled>
+                              ⚠️ {inputMapping[cmd.input].title} (Não encontrado)
+                            </option>
+                          )}
                           {inputs.map(inp => (
                             <option key={inp.key} value={inp.key}>{inp.number} – {inp.title}</option>
                           ))}
