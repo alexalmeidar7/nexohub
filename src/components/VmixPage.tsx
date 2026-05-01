@@ -1767,67 +1767,7 @@ export default function VmixPage() {
 
   return (
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e0e0e0" }}>
-      {/* ── CONNECTION ALERT ── */}
-      {!connected && savedUrl && !loading && (
-        <div className="p-4 rounded-xl border border-yellow-500/20 bg-yellow-500/5 animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-yellow-500/10">
-              <WifiOff className="text-yellow-500" size={20} />
-            </div>
-            <div className="flex-1 space-y-2">
-              <h3 className="text-sm font-bold text-yellow-500">Conexão com vMix Inativa</h3>
-              <p className="text-xs text-white/60 leading-relaxed">
-                Não conseguimos conectar ao vMix em <code className="px-1.5 py-0.5 rounded bg-white/5 text-white/80">{savedUrl}</code>. 
-                {isPrivateIp(savedUrl) ? (
-                  <>
-                    <br /><br />
-                    <strong>Rede Local Detectada:</strong> Como o NexoHub usa HTTPS, o navegador bloqueia conexões HTTP locais por segurança.
-                    <ul className="list-disc ml-4 mt-2 space-y-1">
-                      <li>Abra este painel em uma <strong>nova aba</strong> (não use o preview interno).</li>
-                      <li>Clique no ícone de <strong>Cadeado/Configurações</strong> na barra de endereços.</li>
-                      <li>Vá em <strong>Configurações do Site</strong> e altere "Conteúdo Inseguro" para <strong>Permitir</strong>.</li>
-                      <li>Recarregue a página e clique em Conectar.</li>
-                    </ul>
-                  </>
-                ) : (
-                  " Verifique se o IP está correto, se o Web Controller está ativo no vMix (Porta 8088) e se o Firewall permite a conexão."
-                )}
-              </p>
-              <div className="flex gap-2 pt-2">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => connectToVmix()} 
-                  disabled={connecting}
-                  className="h-8 text-[11px] bg-yellow-500/10 border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-500"
-                >
-                  {connecting ? <Loader2 className="animate-spin mr-2" size={12} /> : <RefreshCw className="mr-2" size={12} />}
-                  Tentar Novamente
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  onClick={() => runDiagnostic()}
-                  className="h-8 text-[11px] text-white/40 hover:text-white"
-                >
-                  Executar Diagnóstico
-                </Button>
-                {isPrivateIp(savedUrl) && window.self !== window.top && (
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => window.open(window.location.href, "_blank")}
-                    className="h-8 text-[11px] bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20 text-blue-400"
-                  >
-                    <ExternalLink className="mr-2" size={12} />
-                    Abrir em Nova Aba
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── CONNECTION ALERT REMOVED ── */}
 
       {/* ── URL + GO LIVE / RECORD row ── */}
       <div className="flex items-center gap-2 flex-wrap">
