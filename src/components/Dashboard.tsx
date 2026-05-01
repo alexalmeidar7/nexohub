@@ -1527,7 +1527,11 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
   );
 }
 
-function DashboardAgendaOld2({ onNavigate, setCurrentPage }: { onNavigate: (p: Page) => void; setCurrentPage: (p: Page) => void }) {
+// Fixed syntax
+function DashboardAgendaOld3({ onNavigate, setCurrentPage }: { onNavigate: (p: Page) => void; setCurrentPage: (p: Page) => void }) {
+  return null;
+}
+
   const { user } = useAuth();
   const [now, setNow] = useState(new Date());
   const todayStr = format(now, "yyyy-MM-dd");
