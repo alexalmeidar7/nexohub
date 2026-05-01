@@ -1457,12 +1457,27 @@ export default function VmixPage() {
 
           {/* Card Body */}
           <div className="p-6 space-y-5">
+            {/* Studio Name Input */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-2">Nome do Estúdio</label>
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
+                <Monitor size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
+                <input
+                  type="text"
+                  value={studioName}
+                  onChange={e => setStudioName(e.target.value)}
+                  placeholder="Ex: Estúdio A, Control Room..."
+                  className="flex-1 text-sm outline-none bg-transparent text-white placeholder:text-white/20"
+                />
+              </div>
+            </div>
+
             {/* URL Input Group */}
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-2">Endereço do vMix</label>
               <div className="flex gap-2 items-center flex-wrap">
                 <div className="flex-1 min-w-[200px] flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
-                  <Monitor size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
+                  <Wifi size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
                   <input
                     type="text"
                     value={vmixUrl}
@@ -1472,7 +1487,7 @@ export default function VmixPage() {
                   />
                 </div>
                 <button onClick={saveUrl} className="px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110" style={{ backgroundColor: "#3a3a44" }}>
-                  Salvar
+                  {selectedConnectionId ? "Atualizar" : "Salvar Novo"}
                 </button>
                 {savedUrl && (
                   <button
@@ -1485,23 +1500,64 @@ export default function VmixPage() {
                     {connecting ? "Conectando..." : "Conectar"}
                   </button>
                 )}
-                <div className="relative group">
-                  <button className="p-2 rounded-lg text-white/20 hover:text-white/50 transition-colors">
-                    <HelpCircle size={14} />
-                  </button>
-                  <div className="absolute left-0 top-full mt-2 w-80 p-4 rounded-xl text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
-                    style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
-                  >
-                    <p className="font-bold text-white/90 mb-2">Conexão Direta:</p>
-                    <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
-                      <p className="font-bold text-[#22c55e] mb-1">🟢 Rede Local</p>
-                      <p className="text-white/50">Use o IP local do computador com vMix (ex: <strong className="text-white/70">http://192.168.x.x:8088</strong>).</p>
-                    </div>
-                    <p className="text-white/30 text-[10px]">💡 Certifique-se de estar na mesma rede que o vMix.</p>
-                  </div>
-                </div>
               </div>
             </div>
+
+            {/* Saved Connections List */}
+            {vmixConnections.length > 0 && (
+              <div className="pt-4 border-t border-white/5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-3">Conexões Salvas</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {vmixConnections.map((conn) => (
+                    <div 
+                      key={conn.id}
+                      onClick={() => handleSelectConnection(conn)}
+                      className={`group relative p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                        selectedConnectionId === conn.id 
+                          ? "bg-blue-500/10 border-blue-500/50" 
+                          : "bg-white/5 border-white/5 hover:bg-white/10"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className={`w-2 h-2 rounded-full ${selectedConnectionId === conn.id ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-white/20"}`} />
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-bold text-white/90 truncate">{conn.name}</p>
+                          <p className="text-[9px] text-white/40 truncate">{conn.url}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (confirm(`Excluir conexão "${conn.name}"?`)) {
+                            await (supabase.from("vmix_connections" as any) as any).delete().eq("id", conn.id);
+                            if (selectedConnectionId === conn.id) setSelectedConnectionId(null);
+                            loadConnections();
+                            toast({ title: "Conexão excluída" });
+                          }
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/20 text-white/20 hover:text-red-400 transition-all"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <button 
+                    onClick={() => {
+                      setSelectedConnectionId(null);
+                      setStudioName("");
+                      setVmixUrl("");
+                      setVmixUser("");
+                      setVmixPass("");
+                      setConnected(false);
+                    }}
+                    className="p-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus size={12} className="text-white/40" />
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Nova Conexão</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Diagnostic Button */}
             {savedUrl && (
