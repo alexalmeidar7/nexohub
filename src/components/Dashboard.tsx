@@ -173,6 +173,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const { user } = useAuth();
   const layoutColors = useLayoutColors();
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
+
+  useEffect(() => {
+    (window as any).setCurrentPageGlobal = setCurrentPage;
+  }, []);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -978,7 +982,7 @@ interface WidgetCard {
 const defaultWidgets: WidgetCard[] = [
   { id: "weather", bg: "glass", render: (nav) => <WeatherWidget onNavigate={nav} /> },
   { id: "top10", bg: "glass", render: () => <TopLikedSongs /> },
-  { id: "agenda", bg: "glass", render: (onNav: any) => <DashboardAgendaOld onNavigate={onNav} /> },
+  { id: "agenda", bg: "glass", render: (onNav: any) => <DashboardAgendaOld onNavigate={onNav} setCurrentPage={(window as any).setCurrentPageGlobal} /> },
   { id: "noar", bg: "glass-dark", render: () => <OnAirWidget /> },
   { id: "comercial", bg: "glass", render: () => <ComercialWidgets /> },
 ];
@@ -1532,6 +1536,146 @@ function DashboardAgendaOld({ onNavigate }: { onNavigate: (p: Page) => void }) {
   return (
     <DashboardAgendaWithStyles
       onNavigate={onNavigate}
+      feriadoHoje={feriadoHoje}
+      selectedDate={selectedDate}
+      dayEvents={dayEvents}
+      eventDates={eventDates}
+      feriadoDates={feriadoDates}
+      calMonth={calMonth}
+      setCalMonth={setCalMonth}
+      setSelectedDate={setSelectedDate}
+    />
+  );
+}
+
+function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Page) => void; setCurrentPage: (p: Page) => void }) {
+  const { user } = useAuth();
+  const [now, setNow] = useState(new Date());
+  const [loading, setLoading] = useState(true);
+  const [eventos, setEventos] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [calMonth, setCalMonth] = useState(new Date());
+
+  const feriadosNacionais = [
+    { dia: 1, mes: 1, nome: "Confraternização Universal" },
+    { dia: 21, mes: 4, nome: "Tiradentes" },
+    { dia: 1, mes: 5, nome: "Dia do Trabalhador" },
+    { dia: 7, mes: 9, nome: "Independência do Brasil" },
+    { dia: 12, mes: 10, nome: "Nossa Senhora Aparecida" },
+    { dia: 2, mes: 11, nome: "Finados" },
+    { dia: 15, mes: 11, nome: "Proclamação da República" },
+    { dia: 20, mes: 11, nome: "Consciência Negra" },
+    { dia: 25, mes: 12, nome: "Natal" },
+  ];
+
+  const getFeriadoNome = (date?: Date) => {
+    if (!date) return null;
+    const f = feriadosNacionais.find(h => h.dia === date.getDate() && h.mes === (date.getMonth() + 1));
+    return f ? f.nome : null;
+  };
+
+  const feriadoDates = feriadosNacionais.map(f => {
+    const d = new Date();
+    return new Date(d.getFullYear(), f.mes - 1, f.dia);
+  });
+
+  const eventMatchesDate = (evt: any, dateStr: string) => {
+    if (evt.data === dateStr) return true;
+    const evtDate = new Date(evt.data + "T12:00:00");
+    const checkDate = new Date(dateStr + "T12:00:00");
+    if (checkDate < evtDate) return false;
+    if (evt.recorrencia === "semanal") return evtDate.getDay() === checkDate.getDay();
+    if (evt.recorrencia === "mensal") return evtDate.getDate() === checkDate.getDate();
+    return false;
+  };
+
+  const getCalendarDates = () => {
+    const dates: Date[] = [];
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+    for (const evt of eventos) {
+      if (evt.recorrencia === "unico") {
+        dates.push(new Date(evt.data + "T12:00:00"));
+      } else {
+        const d = new Date(start);
+        while (d <= end) {
+          const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          if (eventMatchesDate(evt, ds)) dates.push(new Date(d));
+          d.setDate(d.getDate() + 1);
+        }
+      }
+    }
+    return dates;
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchData = async () => {
+      const { data: evts } = await supabase
+        .from("agenda_eventos")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("data");
+      if (!evts) { setEventos([]); setLoading(false); return; }
+      const programaIds = evts.map((e: any) => e.programa_id).filter(Boolean);
+      const { data: progs } = programaIds.length
+        ? await supabase.from("programas").select("*").in("id", programaIds)
+        : { data: [] };
+      setEventos(evts.map((e: any) => ({
+        ...e,
+        programa: (progs || []).find((p: any) => p.id === e.programa_id),
+      })));
+      setLoading(false);
+    };
+    fetchData();
+  }, [user]);
+
+  if (loading) return (
+    <div className="animate-pulse h-full">
+      <div className="flex items-center gap-1.5 mb-2">
+        <div className="w-3.5 h-3.5 rounded bg-white/10" />
+        <div className="w-20 h-3 rounded bg-white/10" />
+      </div>
+      <div className="flex gap-2 flex-1 min-h-0">
+        <div className="w-[105px] rounded bg-white/5" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-10 rounded bg-white/5" />
+          <div className="h-10 rounded bg-white/5" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const todayStr = format(now, "yyyy-MM-dd");
+  const currentTime = format(now, "HH:mm");
+  const selDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
+
+  const dayEvents = eventos.filter((e) => {
+    const matchesDate = eventMatchesDate(e, selDateStr);
+    if (!matchesDate) return false;
+    if (e.status === "concluido" || e.status === "cancelado") return false;
+    const isToday = selDateStr === todayStr;
+    if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) return false;
+    return true;
+  });
+
+  const feriadoHoje = getFeriadoNome(selectedDate || new Date());
+  const eventDates = getCalendarDates();
+
+  return (
+    <DashboardAgendaWithStyles
+      onNavigate={(page: Page) => {
+        if (page === "agenda") {
+          setCurrentPage("agenda");
+        } else {
+          onNavigate(page);
+        }
+      }}
       feriadoHoje={feriadoHoje}
       selectedDate={selectedDate}
       dayEvents={dayEvents}
