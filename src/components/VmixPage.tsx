@@ -2628,13 +2628,13 @@ export default function VmixPage() {
         {/* NDI tab removed */}
       </div>
       {/* Preset Command Editor */}
-      {editingPresetId && (() => {
-        const prog = programas.find(p => p.id === editingPresetId);
-        if (!prog || !user) return null;
+      {editingPresetId && user && (() => {
+        const prog = editingPresetId === "new" ? { id: "new", nome: "Novo Programa", horario_inicio: "00:00", horario_fim: "00:00" } : programas.find(p => p.id === editingPresetId);
+        if (!prog) return null;
         return (
           <PresetCommandEditor
             open={true}
-            onClose={() => setEditingPresetId(null)}
+            onClose={() => { setEditingPresetId(null); loadProgramas(); }}
             programaId={prog.id}
             programaNome={prog.nome}
             programaHorario={`${prog.horario_inicio?.slice(0,5) || ""} – ${prog.horario_fim?.slice(0,5) || ""}`}
