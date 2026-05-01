@@ -744,8 +744,8 @@ export default function VmixPage() {
       }
 
       setConnected(true);
-      const ndiCount = parsedInputs.filter(isNdiInput).length;
-      toast({ title: "Conectado!", description: `${ndiCount} fontes NDI detectadas (modo ${effectiveMode === "direct" ? "direto" : "proxy"}).` });
+      const inputCount = parsedInputs.length;
+      toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
       
       // Auto-scan NDI sources from network patterns
       setTimeout(() => scanNdiSources(), 1000);
