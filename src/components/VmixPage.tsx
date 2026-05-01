@@ -2141,7 +2141,7 @@ export default function VmixPage() {
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
           <div className="flex flex-wrap gap-2 items-start">
-            {inputs.map(input => {
+            {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).map(input => {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
               const isNdi = input.type === "NDI" || input.title.toLowerCase().includes("ndi");
