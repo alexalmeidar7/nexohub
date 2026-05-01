@@ -80,7 +80,7 @@ export default function CortesVideoPage() {
   // Shared
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [format, setFormat] = useState<"fullhd" | "reel">("fullhd");
+  const [format, setFormat] = useState<"fullhd" | "reel" | "original">("fullhd");
   const [cutting, setCutting] = useState(false);
   const [result, setResult] = useState<{
     blob_url?: string;
