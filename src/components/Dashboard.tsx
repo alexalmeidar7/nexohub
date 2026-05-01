@@ -1459,6 +1459,7 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
   const [now, setNow] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState<any[]>([]);
+  const [eventTypesConfig, setEventTypesConfig] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [calMonth, setCalMonth] = useState(new Date());
 
