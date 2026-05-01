@@ -2875,9 +2875,66 @@ export default function VmixPage() {
 
                 {/* Right: Botões de Efeitos */}
                 <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
-                  <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
-                    <Wand2 size={14} style={{ color: "#f59e0b" }} />
-                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>botões de efeitos</span>
+                  <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                    <div className="flex items-center gap-2">
+                      <Wand2 size={14} style={{ color: "#f59e0b" }} />
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>botões de efeitos</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          const data = JSON.stringify(customButtons, null, 2);
+                          const blob = new Blob([data], { type: "application/json" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `botoes-efeitos-${new Date().toISOString().split("T")[0]}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          toast({ title: "Exportado", description: "Lista de efeitos exportada com sucesso." });
+                        }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#888" }}
+                        title="Exportar efeitos"
+                      >
+                        <Download size={12} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = ".json";
+                          input.onchange = async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0];
+                            if (!file) return;
+                            try {
+                              const text = await file.text();
+                              const imported = JSON.parse(text);
+                              if (Array.isArray(imported)) {
+                                setCustomButtons(prev => [...imported, ...prev.filter(p => !imported.find((i: any) => i.id === p.id))]);
+                                toast({ title: "Importado", description: `${imported.length} efeitos carregados na lista.` });
+                              }
+                            } catch (err) {
+                              toast({ title: "Erro na importação", variant: "destructive" });
+                            }
+                          };
+                          input.click();
+                        }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#888" }}
+                        title="Importar efeitos"
+                      >
+                        <Upload size={12} />
+                      </button>
+                      <button
+                        onClick={() => setEditingCustomButtonId("new")}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#22c55e" }}
+                        title="Criar novo efeito"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
                   </div>
                   <div className="p-4 space-y-4">
                     <div className="grid grid-cols-3 gap-2">
