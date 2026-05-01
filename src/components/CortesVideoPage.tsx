@@ -646,7 +646,7 @@ export default function CortesVideoPage() {
           ] as const).map(({ k, label, icon: Icon }) => (
             <button
               key={k}
-              onClick={() => { setMode(k); setResult(null); }}
+              onClick={() => { setMode(k); setResults([]); }}
               className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all"
               style={{
                 backgroundColor: mode === k ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
@@ -670,7 +670,7 @@ export default function CortesVideoPage() {
                 <input
                   type="url"
                   value={youtubeUrl}
-                  onChange={(e) => { setYoutubeUrl(e.target.value); setResult(null); }}
+                  onChange={(e) => { setYoutubeUrl(e.target.value); setResults([]); }}
                   placeholder="https://www.youtube.com/watch?v=..."
                   className="w-full pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
                   style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
