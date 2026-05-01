@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
       const [apsResult, logosResult] = await withTimeout(
         Promise.all([
           apIds.length
-            ? supabase.from("apresentadores").select("nome, foto").in("id", apIds)
+            ? supabase.from("apresentadores").select("nome, foto, instagram").in("id", apIds)
             : Promise.resolve({ data: null }),
           supabase
             .from("logos_patrocinadores")
