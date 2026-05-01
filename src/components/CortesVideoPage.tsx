@@ -155,7 +155,10 @@ export default function CortesVideoPage() {
       try {
         console.log(`[ffmpeg] Tentando carregar de: ${baseURL}`);
         
-        // Use standard fetch with timeout/validation if needed, or just let toBlobURL handle it
+        // Use standard fetch to check if the resource is actually reachable before calling load
+        const check = await fetch(`${baseURL}/ffmpeg-core.js`, { method: 'HEAD' }).catch(() => ({ ok: false }));
+        if (!check.ok) throw new Error("CDN unreachable");
+
         const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
         const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
         
