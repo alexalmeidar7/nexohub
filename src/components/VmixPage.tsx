@@ -1814,6 +1814,20 @@ export default function VmixPage() {
                 <Monitor size={12} />
                 Trocar Estúdio
               </button>
+              <button 
+                onClick={() => {
+                  setConnected(false);
+                  setSelectedConnectionId(null);
+                  setVmixUrl("");
+                  setStudioName("");
+                  setSavedUrl("");
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-red-400 hover:text-red-300 transition-all hover:bg-red-500/10"
+                title="Desconectar do estúdio"
+              >
+                <XCircle size={12} />
+                Desconectar
+              </button>
             </div>
           ) : (
             <>
