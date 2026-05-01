@@ -2139,17 +2139,17 @@ export default function AgendaPage() {
                                 <span
                                   className="text-[8px] font-bold px-1 py-[1px] rounded shrink-0"
                                   style={{
-                                    backgroundColor: isLive ? "#dc2626" : "#475569",
+                                    backgroundColor: sc.border,
                                     color: "#ffffff",
                                   }}
-                                  title={isLive ? "Ao vivo" : "Gravação"}
+                                  title={label}
                                 >
-                                  {isLive ? "● LIVE" : "🎬 REC"}
+                                  {label}
                                 </span>
                               </div>
                               {evt.programa && (
                                 <p className="text-[9px] leading-tight" style={{ color: `${sc.text}99` }}>
-                                  {(!isLive && evt.horario_gravacao ? evt.horario_gravacao : evt.programa.horario_inicio).slice(0, 5)}
+                                  {(evt.horario_gravacao ? evt.horario_gravacao : evt.programa.horario_inicio).slice(0, 5)}
                                   {evt.programa.estudio && ` • ${evt.programa.estudio}`}
                                 </p>
                               )}
