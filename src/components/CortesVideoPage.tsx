@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Scissors, Download, Clock, Link2, Loader2, Play, Copy, ExternalLink, Upload, Youtube, FileVideo } from "lucide-react";
+import { Scissors, Download, Clock, Link2, Loader2, Play, Copy, ExternalLink, Upload, Youtube, FileVideo, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -84,12 +84,9 @@ export default function CortesVideoPage() {
   const [errorDetails, setErrorDetails] = useState<{ stack?: string; log?: string; exitCode?: number } | null>(null);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
 
-  // Shared
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
   const [format, setFormat] = useState<"fullhd" | "reel" | "original">("fullhd");
   const [cutting, setCutting] = useState(false);
-  const [result, setResult] = useState<{
+  type CutResult = {
     blob_url?: string;
     file_name?: string;
     clip_embed_url?: string;
@@ -98,7 +95,25 @@ export default function CortesVideoPage() {
     download_url?: string;
     duration: number;
     is_local: boolean;
-  } | null>(null);
+  };
+  const [results, setResults] = useState<CutResult[]>([]);
+  const result = results[0] || null; // for compatibility with any remaining code using 'result'
+
+  const [clips, setClips] = useState<{ id: string; start: string; end: string }[]>([
+    { id: crypto.randomUUID(), start: "00:00:00.000", end: "00:00:10.000" }
+  ]);
+  const [activeClipId, setActiveClipId] = useState<string>(clips[0].id);
+
+  const activeClip = useMemo(() => clips.find(c => c.id === activeClipId) || clips[0], [clips, activeClipId]);
+  const startTime = activeClip.start;
+  const endTime = activeClip.end;
+
+  const setStartTime = (val: string) => {
+    setClips(prev => prev.map(c => c.id === activeClipId ? { ...c, start: val } : c));
+  };
+  const setEndTime = (val: string) => {
+    setClips(prev => prev.map(c => c.id === activeClipId ? { ...c, end: val } : c));
+  };
 
   const videoId = useMemo(() => extractYoutubeId(youtubeUrl), [youtubeUrl]);
 
@@ -121,20 +136,21 @@ export default function CortesVideoPage() {
       .catch(() => setVideoTitle(""));
   }, [videoId, mode]);
 
-  // Cleanup local URL
   useEffect(() => {
     return () => {
       if (localUrl) URL.revokeObjectURL(localUrl);
-      if (result?.blob_url) URL.revokeObjectURL(result.blob_url);
+      results.forEach(res => {
+        if (res.blob_url) URL.revokeObjectURL(res.blob_url);
+      });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (result && resultRef.current) {
+    if (results.length > 0 && resultRef.current) {
       resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [result]);
+  }, [results]);
 
   const loadFfmpeg = async () => {
     if (ffmpegRef.current && ffmpegReady) return ffmpegRef.current;
@@ -282,7 +298,7 @@ export default function CortesVideoPage() {
     if (localUrl) URL.revokeObjectURL(localUrl);
     setLocalFile(file);
     setLocalUrl(URL.createObjectURL(file));
-    setResult(null);
+    setResults([]);
   };
 
   const handleCutLocal = async () => {
@@ -295,7 +311,6 @@ export default function CortesVideoPage() {
       setErrorDetails(null);
       setShowErrorDetails(false);
       setProgress(0);
-      setResult(null);
       
       const ffmpeg = await loadFfmpeg();
       
@@ -461,12 +476,13 @@ export default function CortesVideoPage() {
       await ffmpeg.deleteFile(inputName).catch(() => {});
       await ffmpeg.deleteFile(outputName).catch(() => {});
 
-      setResult({
+      const newResult: CutResult = {
         blob_url: blobUrl,
         file_name: outputName,
         duration,
         is_local: true,
-      });
+      };
+      setResults(prev => [newResult, ...prev]);
       setProgress(100);
       setStatusMsg("");
       toast({ title: "Corte gerado!", description: "O vídeo está pronto para download." });
@@ -501,7 +517,7 @@ export default function CortesVideoPage() {
     setErrorMsg(null);
     setErrorDetails(null);
     setShowErrorDetails(false);
-    setResult(null);
+    setResults([]);
     setProgress(0);
     setStatusMsg("Enviando para o servidor...");
     startTimeRef.current = Date.now();
@@ -545,14 +561,15 @@ export default function CortesVideoPage() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setResult({
+      const newResult: CutResult = {
         clip_embed_url: data.clip_embed_url,
         share_url: data.share_url,
         thumbnail_url: data.thumbnail_url,
         download_url: data.download_url || "",
         duration: data.duration,
         is_local: false,
-      });
+      };
+      setResults(prev => [newResult, ...prev]);
       setProgress(100);
       setStatusMsg("");
       toast({ title: "Trecho gerado!", description: "Use o player abaixo ou baixe via link externo." });
@@ -573,19 +590,19 @@ export default function CortesVideoPage() {
 
   const handleCut = () => (mode === "local" ? handleCutLocal() : handleCutYoutube());
 
-  const handleDownload = () => {
-    if (result?.is_local && result.blob_url) {
+  const handleDownloadRes = (res: CutResult) => {
+    if (res.is_local && res.blob_url) {
       const a = document.createElement("a");
-      a.href = result.blob_url;
-      a.download = result.file_name || "corte.mp4";
+      a.href = res.blob_url;
+      a.download = res.file_name || "corte.mp4";
       document.body.appendChild(a);
       a.click();
       a.remove();
       return;
     }
-    if (result?.download_url) {
+    if (res.download_url) {
       const a = document.createElement("a");
-      a.href = result.download_url;
+      a.href = res.download_url;
       a.download = `corte_${startTime.replace(/:/g, "-")}_${endTime.replace(/:/g, "-")}.mp4`;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
@@ -598,6 +615,8 @@ export default function CortesVideoPage() {
       window.open(`https://www.ssyoutube.com/watch?v=${videoId}&t=${startSeconds}`, "_blank");
     }
   };
+
+  const handleDownload = () => result && handleDownloadRes(result);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -629,7 +648,7 @@ export default function CortesVideoPage() {
           ] as const).map(({ k, label, icon: Icon }) => (
             <button
               key={k}
-              onClick={() => { setMode(k); setResult(null); }}
+              onClick={() => { setMode(k); setResults([]); }}
               className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all"
               style={{
                 backgroundColor: mode === k ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
@@ -653,7 +672,7 @@ export default function CortesVideoPage() {
                 <input
                   type="url"
                   value={youtubeUrl}
-                  onChange={(e) => { setYoutubeUrl(e.target.value); setResult(null); }}
+                  onChange={(e) => { setYoutubeUrl(e.target.value); setResults([]); }}
                   placeholder="https://www.youtube.com/watch?v=..."
                   className="w-full pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
                   style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
@@ -725,11 +744,79 @@ export default function CortesVideoPage() {
         )}
 
 
+        {/* Trechos List */}
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              <Scissors size={12} /> Trechos para Processar
+            </h4>
+            <span className="text-[10px] opacity-40">{clips.length}/5 trechos</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {clips.map((clip, idx) => {
+              const isActive = activeClipId === clip.id;
+              return (
+                <div key={clip.id} className="relative group">
+                  <button
+                    onClick={() => setActiveClipId(clip.id)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border shadow-sm hover:shadow-md"
+                    style={{
+                      backgroundColor: isActive ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)",
+                      color: isActive ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+                      borderColor: isActive ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)"
+                    }}
+                  >
+                    <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] ${isActive ? 'bg-white/20' : 'bg-black/10'}`}>
+                      {idx + 1}
+                    </span>
+                    <span className="font-mono text-[10px]">{toHMS(parseHMS(clip.start)).split('.')[0]}</span>
+                  </button>
+                  {clips.length > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newClips = clips.filter(c => c.id !== clip.id);
+                        setClips(newClips);
+                        if (isActive) setActiveClipId(newClips[0].id);
+                      }}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-600"
+                    >
+                      <Trash2 size={10} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            {clips.length < 5 && (
+              <button
+                onClick={() => {
+                  const newId = crypto.randomUUID();
+                  const lastClip = clips[clips.length - 1];
+                  const lastEnd = parseHMS(lastClip.end);
+                  const nextStart = lastEnd;
+                  const nextEnd = Math.min(localDuration || 3600, nextStart + 10);
+                  setClips([...clips, { id: newId, start: toHMS(nextStart), end: toHMS(nextEnd) }]);
+                  setActiveClipId(newId);
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold border-2 border-dashed transition-all hover:border-solid flex items-center gap-2"
+                style={{
+                  borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
+                  color: "var(--layout-page-text, #1a1a1a)"
+                }}
+              >
+                <Plus size={14} /> Adicionar
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Time inputs + Format */}
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-5">
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-              <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>⏱️ Definir Trecho</h3>
+              <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--layout-header-text, #ffffff)" }}>
+                <Clock size={16} /> Ajustar Trecho #{clips.findIndex(c => c.id === activeClipId) + 1}
+              </h3>
             </div>
             <div className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
@@ -900,56 +987,91 @@ export default function CortesVideoPage() {
           )}
         </div>
 
-        {/* Result */}
-        {result && (
-          <div className="space-y-4" ref={resultRef}>
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="p-4 flex justify-center">
-                <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: result.is_local && format === "reel" ? 320 : 640 }}>
-                  {result.is_local && result.blob_url ? (
-                    <video src={result.blob_url} controls autoPlay className="w-full bg-black" style={{ aspectRatio: format === "reel" ? "9 / 16" : "16 / 9" }} />
-                  ) : (
-                    <iframe src={result.clip_embed_url} title="Clip preview" className="w-full aspect-video"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                  )}
-                </div>
-              </div>
+        {/* Result List */}
+        {results.length > 0 && (
+          <div className="space-y-6 mt-8" ref={resultRef}>
+            <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
+              <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                <Scissors size={14} className="text-red-500" /> Downloads Disponíveis
+              </h4>
+              <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">{results.length} arquivo(s) gerado(s)</span>
             </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {results.map((res, idx) => (
+                <div key={idx} className="rounded-xl overflow-hidden border transition-all hover:shadow-lg" 
+                  style={{ 
+                    backgroundColor: "var(--layout-page-bg, #ffffff)", 
+                    borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.05)"
+                  }}>
+                  {/* Miniature/Header */}
+                  <div className="relative group aspect-video bg-black overflow-hidden">
+                    {res.is_local && res.blob_url ? (
+                      <video src={res.blob_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    ) : (
+                      <img src={res.thumbnail_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="thumbnail" />
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                      <button 
+                        onClick={() => {
+                          // Simple preview swap logic if needed, or just download
+                          handleDownloadRes(res);
+                        }}
+                        className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white border border-white/30"
+                      >
+                        <Download size={20} />
+                      </button>
+                    </div>
+                    <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-[10px] font-mono text-white backdrop-blur-sm">
+                      {formatDuration(res.duration)}
+                    </div>
+                  </div>
 
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
-                <div className="flex items-center gap-2">
-                  <Play size={14} />
-                  <span className="text-sm font-bold">Trecho gerado com sucesso!</span>
+                  <div className="p-3">
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="truncate">
+                        <div className="text-[11px] font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          {res.is_local ? res.file_name : `Download YouTube #${idx + 1}`}
+                        </div>
+                        <div className="text-[9px] opacity-50 font-mono">
+                          {res.is_local ? "Processado Localmente" : "Processado no Servidor"}
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDownloadRes(res)}
+                        className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                        style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                        title="Baixar"
+                      >
+                        <Download size={14} />
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {!res.is_local && res.share_url && (
+                        <button 
+                          onClick={() => copyToClipboard(res.share_url!)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-bold bg-gray-100 hover:bg-gray-200 transition-colors"
+                          style={{ color: "#333" }}
+                        >
+                          <Copy size={10} /> Link
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-[10px] mt-0.5" style={{ opacity: 0.7 }}>Duração: {formatDuration(result.duration)}</p>
-              </div>
-              <div className="p-4 flex flex-wrap gap-2">
-                <button onClick={handleDownload}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "#dc2626", color: "#fff" }}>
-                  <Download size={12} /> Baixar Vídeo (.mp4)
-                </button>
-                {!result.is_local && result.share_url && (
-                  <>
-                    <button onClick={() => copyToClipboard(result.share_url!)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                      style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}>
-                      <Copy size={12} /> Copiar Link com Tempo
-                    </button>
-                    <button onClick={() => copyToClipboard(result.clip_embed_url!)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                      style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "#fff" }}>
-                      <Copy size={12} /> Copiar Embed
-                    </button>
-                    <a href={result.share_url} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                      style={{ backgroundColor: "#16a34a", color: "#fff" }}>
-                      <ExternalLink size={12} /> Abrir no YouTube
-                    </a>
-                  </>
-                )}
-              </div>
+              ))}
+            </div>
+            
+            <div className="flex justify-center pt-4">
+              <button 
+                onClick={() => setResults([])}
+                className="text-[10px] font-bold opacity-40 hover:opacity-100 transition-opacity flex items-center gap-1"
+                style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+              >
+                Limpar todos os downloads
+              </button>
             </div>
           </div>
         )}
