@@ -449,7 +449,8 @@ export default function CortesVideoPage() {
 
       setProgress(98);
       setStatusMsg("Gerando link de download...");
-      const blob = new Blob([finalData], { type: "video/mp4" });
+      // Forçamos o tipo para BlobPart para evitar erros de SharedArrayBuffer vs ArrayBuffer no TS
+      const blob = new Blob([finalData as unknown as BlobPart], { type: "video/mp4" });
       const blobUrl = URL.createObjectURL(blob);
       setProgress(99);
 
