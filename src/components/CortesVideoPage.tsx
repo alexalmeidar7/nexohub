@@ -339,14 +339,17 @@ export default function CortesVideoPage() {
       const outputName = `corte_${Date.now()}.mp4`;
 
       setStatusMsg("Lendo arquivo de vídeo (isso pode levar alguns segundos)...");
+      setProgress(5);
       const videoData = await fetchFile(localFile);
       await ffmpeg.writeFile(inputName, videoData);
 
       setStatusMsg("Iniciando o corte...");
+      setProgress(10);
       const args: string[] = [];
       
       if (format === "original") {
         setStatusMsg("Cortando vídeo instantaneamente...");
+        setProgress(15);
         args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-c", "copy");
       } else {
         setStatusMsg("Preparando processamento...");
