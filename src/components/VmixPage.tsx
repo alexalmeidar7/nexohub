@@ -1678,38 +1678,10 @@ export default function VmixPage() {
           <span className="text-[7px] text-white/20 mt-1 px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
             Clique 🔗 HLS para stream
           </span>
-            )}
-
-            {/* Network Interface Recommendation */}
-            {networkInfo && (
-              <div className={`rounded-xl p-4 flex items-start gap-3 border ${
-                networkInfo.type === 'ethernet' 
-                  ? "bg-blue-500/10 border-blue-500/20 text-blue-400" 
-                  : "bg-white/5 border-white/10 text-white/50"
-              }`}>
-                {networkInfo.type === 'ethernet' ? <Zap size={16} className="mt-0.5" /> : <Network size={16} className="mt-0.5" />}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-[11px] font-bold uppercase tracking-wider">
-                      Interface: {
-                        networkInfo.type === 'wifi' ? 'Wi-Fi' : 
-                        networkInfo.type === 'ethernet' ? 'Ethernet (Cabo)' : 
-                        networkInfo.type === 'cellular' ? 'Dados Móveis' : 
-                        'Rede Ativa'
-                      }
-                    </p>
-                    <span className="px-1.5 py-0.5 rounded text-[8px] bg-white/10 text-white/60 font-mono">
-                      {networkInfo.effectiveType}
-                    </span>
-                  </div>
-                  {networkInfo.recommendation && (
-                    <p className="text-[10px] leading-relaxed opacity-80 italic">
-                      {networkInfo.recommendation}
-                    </p>
-                  )}
-                </div>
-              </div>
+        )}
       </div>
+    );
+  };
     );
   };
 
