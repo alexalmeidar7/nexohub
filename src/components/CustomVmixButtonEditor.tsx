@@ -179,6 +179,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
             setNome(data.nome || "");
             setColor(data.color || "#f59e0b");
             setDiasSemana(data.dias_semana || []);
+            setDataEspecifica(data.data_especifica || "");
             setHorario(data.horario || "");
             setCommands(Array.isArray(data.commands) ? data.commands : []);
           }
