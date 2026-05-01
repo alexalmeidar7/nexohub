@@ -435,7 +435,7 @@ export default function CortesVideoPage() {
           finalData = dataAsUint8;
         }
 
-        const blob = new Blob([finalData], { type: "video/mp4" });
+        const blob = new Blob([finalData as any], { type: "video/mp4" });
         const blobUrl = URL.createObjectURL(blob);
 
         newResults.push({
