@@ -80,6 +80,7 @@ export default function CortesVideoPage() {
   const resultRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<number>(0);
   const [estimatedSeconds, setEstimatedSeconds] = useState<number | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Shared
   const [startTime, setStartTime] = useState("");
@@ -146,9 +147,9 @@ export default function CortesVideoPage() {
     });
 
     const cdns = [
+      "https://unpkg.com/@ffmpeg/core-dist@0.12.6/dist/umd",
       "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd",
-      "https://cdnjs.cloudflare.com/ajax/libs/ffmpeg-core/0.12.6/umd"
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd"
     ];
     
     let lastErr: any = null;
@@ -281,6 +282,7 @@ export default function CortesVideoPage() {
     let ffmpegLog = "";
     try {
       setCutting(true);
+      setErrorMsg(null);
       setProgress(0);
       setResult(null);
       
@@ -358,7 +360,8 @@ export default function CortesVideoPage() {
         } catch { /* assume audio */ }
 
         setStatusMsg(format === "reel" ? "Finalizando no formato REEL..." : "Finalizando no formato FULL HD...");
-        args.push("-i", inputName, "-ss", String(startSeconds), "-t", String(duration), "-vf", vf,
+        // IMPORTANTE: Mover -ss ANTES do -i para busca rápida (input seek)
+        args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-vf", vf,
           "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p");
         
         if (hasAudio) {
@@ -369,38 +372,51 @@ export default function CortesVideoPage() {
       }
       
       args.push("-movflags", "+faststart", "-y", outputName);
+      console.log("[ffmpeg] Executando comando:", args.join(" "));
       const exitCode = await ffmpeg.exec(args);
 
       if (exitCode !== 0) {
-        throw new Error(`Falha ao recortar (código ${exitCode}). Tente outro trecho ou um vídeo .mp4 padrão.`);
+        throw new Error(`Falha ao recortar (código ${exitCode}). Tente outro trecho ou verifique se o vídeo não está corrompido.`);
       }
 
       setStatusMsg("Lendo arquivo final do motor...");
       const data = await ffmpeg.readFile(outputName);
       
       if (!data) {
-        throw new Error("Não foi possível ler o arquivo gerado.");
+        throw new Error("Não foi possível localizar o arquivo gerado pelo motor.");
       }
-
-      // We need to ensure we have a plain ArrayBuffer to create a Blob
-      // Multi-threaded environments use SharedArrayBuffer which cannot be used in Blobs
-      let finalData: ArrayBuffer | Uint8Array;
       
-      if (data instanceof Uint8Array) {
-        if (typeof SharedArrayBuffer !== 'undefined' && data.buffer instanceof SharedArrayBuffer) {
-          // Copy SharedArrayBuffer to a regular ArrayBuffer
-          const buffer = new ArrayBuffer(data.byteLength);
-          new Uint8Array(buffer).set(data);
-          finalData = buffer;
+      const dataAsUint8 = data instanceof Uint8Array ? data : new Uint8Array(0);
+      const dataLen = typeof data === 'string' ? data.length : dataAsUint8.byteLength;
+      console.log(`[ffmpeg] Arquivo lido: ${dataLen} bytes`);
+      
+      // Garantimos um ArrayBuffer limpo para o Blob.
+      // Em ambientes multithread, o motor usa SharedArrayBuffer, que não pode ser usado em Blobs diretamente em alguns navegadores.
+      let finalData: Uint8Array;
+      
+      try {
+        if (data instanceof Uint8Array) {
+          if (typeof SharedArrayBuffer !== 'undefined' && data.buffer instanceof SharedArrayBuffer) {
+            console.log("[ffmpeg] Convertendo SharedArrayBuffer para ArrayBuffer...");
+            finalData = new Uint8Array(data.byteLength);
+            finalData.set(data);
+          } else {
+            finalData = data;
+          }
+        } else if (typeof data === 'string') {
+          // Caso improvável para vídeo, mas tratamos
+          const encoder = new TextEncoder();
+          finalData = encoder.encode(data);
         } else {
-          finalData = data;
+          finalData = new Uint8Array(0);
         }
-      } else {
-        finalData = data as any;
+      } catch (e) {
+        console.error("[ffmpeg] Erro ao processar buffer de saída:", e);
+        throw new Error("Erro de memória ao processar o vídeo final. Tente um trecho menor.");
       }
 
-      if (finalData instanceof Uint8Array && finalData.length === 0) {
-        throw new Error("Arquivo gerado está vazio.");
+      if (finalData.length === 0) {
+        throw new Error("O vídeo gerado está vazio. Tente ajustar o tempo de início/fim.");
       }
 
       const blob = new Blob([finalData as BlobPart], { type: "video/mp4" });
@@ -419,12 +435,19 @@ export default function CortesVideoPage() {
       setStatusMsg("");
       toast({ title: "Corte gerado!", description: "O vídeo está pronto para download." });
     } catch (err: any) {
-      console.error("Cut error:", err, "\nffmpeg log:\n", ffmpegLog);
+      console.error("Cut error:", err);
+      console.error("ffmpeg log context:", ffmpegLog);
+      
+      const errorMsg = err?.message || "Falha no processamento.";
+      setErrorMsg(errorMsg);
       toast({
         title: "Erro ao processar",
-        description: err?.message || "Falha no processamento. Verifique o console para detalhes.",
+        description: errorMsg,
         variant: "destructive",
       });
+      
+      // Armazenar log para debug se necessário
+      setLoadDetail(`ERRO: ${errorMsg}`);
       setStatusMsg("");
     } finally {
       setCutting(false);
@@ -434,6 +457,7 @@ export default function CortesVideoPage() {
   const handleCutYoutube = async () => {
     if (!canCut || !user) return;
     setCutting(true);
+    setErrorMsg(null);
     setResult(null);
     setProgress(0);
     setStatusMsg("Enviando para o servidor...");
@@ -770,7 +794,18 @@ export default function CortesVideoPage() {
                   to { background-position: 20px 0; }
                 }
               `}</style>
+          {errorMsg && !cutting && (
+            <div className="w-full max-w-md p-4 rounded-xl border border-destructive/50 bg-destructive/10 text-destructive text-xs animate-in fade-in slide-in-from-top-2">
+              <div className="font-bold flex items-center gap-2 mb-1">
+                ⚠️ Erro no processamento
+              </div>
+              <p>{errorMsg}</p>
+              <p className="mt-2 opacity-70 text-[10px]">
+                Dica: Tente usar um vídeo menor ou use o modo YouTube para processamento em servidor.
+              </p>
             </div>
+          )}
+        </div>
           )}
         </div>
 
