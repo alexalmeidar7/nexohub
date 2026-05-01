@@ -600,6 +600,11 @@ export default function ApresentadorForm() {
                       )}
                     </td>
                     <td className="px-4 py-2.5">
+                      <span className="text-[11px] font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                        {a.cargo || "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5">
                       <div className="flex flex-col gap-0.5">
                         <div className="cursor-pointer" onClick={() => setEditingCell({ id: a.id, field: 'instagram' })}>
                           {editingCell?.id === a.id && editingCell?.field === 'instagram' ? (
