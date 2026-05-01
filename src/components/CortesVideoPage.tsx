@@ -598,7 +598,7 @@ export default function CortesVideoPage() {
 
         {/* Result */}
         {result && (
-          <div className="space-y-4">
+          <div className="space-y-4" ref={resultRef}>
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
               <div className="p-4 flex justify-center">
                 <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: result.is_local && format === "reel" ? 320 : 640 }}>
