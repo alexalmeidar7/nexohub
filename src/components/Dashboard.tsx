@@ -1527,9 +1527,9 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
   );
 }
 
-function DashboardAgendaDeleted2() {
-
-
+function DashboardAgendaOld2({ onNavigate, setCurrentPage }: { onNavigate: (p: Page) => void; setCurrentPage: (p: Page) => void }) {
+  const { user } = useAuth();
+  const [now, setNow] = useState(new Date());
   const todayStr = format(now, "yyyy-MM-dd");
   const currentTime = format(now, "HH:mm");
   const selDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
