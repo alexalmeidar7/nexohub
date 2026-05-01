@@ -59,6 +59,11 @@ function maskHMS(raw: string): string {
 
 type Mode = "youtube" | "local";
 
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
+  toast({ title: "Copiado!", description: "Link copiado para a área de transferência." });
+};
+
 export default function CortesVideoPage() {
   const { user } = useAuth();
   const [mode, setMode] = useState<Mode>("youtube");
