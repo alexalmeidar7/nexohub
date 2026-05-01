@@ -1280,7 +1280,7 @@ export default function VmixPage() {
     </button>
   );
 
-  // Render the select combo with grouped inputs (regular + NDI)
+  // Render the select combo with ONLY NDI inputs
   const renderInputSelect = (value: string | null, onChange: (val: string) => void) => (
     <select
       value={value || ""}
@@ -1288,24 +1288,16 @@ export default function VmixPage() {
       className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
       style={{ backgroundColor: "#222228", color: "#ccc" }}
     >
-      <option value="">— Selecione —</option>
-      {regularInputs.length > 0 && (
-        <optgroup label="Inputs">
-          {regularInputs.map(inp => (
-            <option key={inp.key || inp.number} value={inp.number}>{inp.number} – {inp.title}</option>
-          ))}
-        </optgroup>
-      )}
-      {ndiInputs.length > 0 && (
+      <option value="">— Selecione NDI —</option>
+      {ndiInputs.length > 0 ? (
         <optgroup label="NDI Sources">
           {ndiInputs.map(inp => (
             <option key={inp.key || inp.number} value={inp.number}>🟢 {inp.number} – {inp.title}</option>
           ))}
         </optgroup>
+      ) : (
+        <option disabled>Nenhum input NDI encontrado</option>
       )}
-      {regularInputs.length === 0 && ndiInputs.length === 0 && inputs.map(inp => (
-        <option key={inp.key || inp.number} value={inp.number}>{inp.number} – {inp.title}</option>
-      ))}
     </select>
   );
 
