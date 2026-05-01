@@ -315,6 +315,84 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
           </div>
         </div>
 
+        {/* Configurações do Programa */}
+        <div className="px-5 py-4 space-y-4 bg-white/5 border-b border-white/5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Nome do Programa</label>
+              <input
+                type="text"
+                value={nome}
+                onChange={e => setNome(e.target.value)}
+                className="bg-[#181820] text-xs px-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc]"
+                placeholder="Ex: Manhã Mix, Top 10..."
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Estúdio</label>
+              <select
+                value={estudio}
+                onChange={e => setEstudio(e.target.value)}
+                className="bg-[#181820] text-xs px-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc]"
+              >
+                <option value="FM">FM</option>
+                <option value="PODCAST">PODCAST</option>
+                <option value="ESTÚDIO A">ESTÚDIO A</option>
+                <option value="ESTÚDIO B">ESTÚDIO B</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Horário de Execução</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="time"
+                  value={customHorario}
+                  onChange={e => setCustomHorario(e.target.value)}
+                  className="bg-[#181820] text-xs px-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc] flex-1"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Data Específica (Opcional)</label>
+              <div className="flex items-center gap-2 relative">
+                <Calendar size={12} className="absolute left-3 text-[#666]" />
+                <input
+                  type="date"
+                  value={dataEspecifica}
+                  onChange={e => setDataEspecifica(e.target.value)}
+                  className="bg-[#181820] text-xs pl-9 pr-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc] w-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Dias da Semana</label>
+            <div className="flex flex-wrap gap-1">
+              {DIAS_SEMANA_OPCOES.map(dia => {
+                const active = diasSemana.includes(dia);
+                return (
+                  <button
+                    key={dia}
+                    onClick={() => setDiasSemana(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia])}
+                    className="text-[9px] font-bold px-2 py-1 rounded border transition-all"
+                    style={{
+                      backgroundColor: active ? "#3b82f620" : "#ffffff05",
+                      color: active ? "#3b82f6" : "#666",
+                      borderColor: active ? "#3b82f640" : "transparent"
+                    }}
+                  >
+                    {dia.slice(0, 3)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {/* Commands list */}
         <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
           {loading ? (
