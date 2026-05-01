@@ -1682,6 +1682,42 @@ export type Database = {
         }
         Relationships: []
       }
+      vmix_connections: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean | null
+          name: string
+          password: string | null
+          updated_at: string
+          url: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name: string
+          password?: string | null
+          updated_at?: string
+          url: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          password?: string | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       watch_history: {
         Row: {
           channel_cover_url: string | null

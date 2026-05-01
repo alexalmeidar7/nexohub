@@ -143,6 +143,8 @@ export default function VmixPage() {
   const [vmixUser, setVmixUser] = useState("");
   const [vmixPass, setVmixPass] = useState("");
   const [savedUrl, setSavedUrl] = useState("");
+  const [vmixConnections, setVmixConnections] = useState<any[]>([]);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
@@ -154,6 +156,7 @@ export default function VmixPage() {
   const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"controls" | "scenes">("controls");
+  const [studioName, setStudioName] = useState("");
   // Keyboard shortcuts per input (persisted in localStorage)
   const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
     try {
@@ -351,32 +354,84 @@ export default function VmixPage() {
 
   useEffect(() => {
     if (!user) return;
-    const loadUrl = async () => {
-      const { data } = await supabase
+    const loadSettings = async () => {
+      // Load global shortcuts
+      const { data: settings } = await supabase
         .from("user_settings")
-        .select("vmix_url, vmix_user, vmix_pass, vmix_shortcuts")
+        .select("vmix_shortcuts")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data?.vmix_url) {
-        setVmixUrl(data.vmix_url);
-        setSavedUrl(data.vmix_url);
-      }
-      if (data?.vmix_user) setVmixUser(data.vmix_user);
-      if (data?.vmix_pass) setVmixPass(data.vmix_pass);
-      if (data?.vmix_shortcuts && typeof data.vmix_shortcuts === "object") {
-        setInputShortcuts(data.vmix_shortcuts as Record<string, string>);
-      }
-      setLoading(false);
       
-      // Auto-connect on load if we have a saved URL
-      if (data?.vmix_url) {
+      if (settings?.vmix_shortcuts && typeof settings.vmix_shortcuts === "object") {
+        setInputShortcuts(settings.vmix_shortcuts as Record<string, string>);
+      }
+
+      // Load all connections
+      const { data: connections } = await (supabase.from("vmix_connections" as any) as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (connections && connections.length > 0) {
+        setVmixConnections(connections);
+        
+        // Try to find default or most recent
+        const def = (connections as any[]).find((c: any) => c.is_default) || connections[0];
+        setSelectedConnectionId(def.id);
+        setVmixUrl(def.url);
+        setSavedUrl(def.url);
+        setVmixUser(def.username || "");
+        setVmixPass(def.password || "");
+        setStudioName(def.name);
+        
+        setLoading(false);
+        
+        // Auto-connect
         setTimeout(() => {
           connectToVmixRef.current?.();
         }, 800);
+      } else {
+        // Fallback to old user_settings if no connections in new table yet
+        const { data: oldData } = await supabase
+          .from("user_settings")
+          .select("vmix_url, vmix_user, vmix_pass")
+          .eq("user_id", user.id)
+          .maybeSingle();
+          
+        if (oldData?.vmix_url) {
+          setVmixUrl(oldData.vmix_url);
+          setSavedUrl(oldData.vmix_url);
+          setVmixUser(oldData.vmix_user || "");
+          setVmixPass(oldData.vmix_pass || "");
+          setStudioName("Estúdio Padrão");
+        }
+        setLoading(false);
       }
     };
-    loadUrl();
+    loadSettings();
   }, [user]);
+
+  const loadConnections = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("vmix_connections" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    if (data) setVmixConnections(data);
+  };
+
+  const handleSelectConnection = (conn: any) => {
+    setSelectedConnectionId(conn.id);
+    setVmixUrl(conn.url);
+    setSavedUrl(conn.url);
+    setVmixUser(conn.username || "");
+    setVmixPass(conn.password || "");
+    setStudioName(conn.name);
+    setConnected(false);
+    // Auto connect when switching
+    setTimeout(() => connectToVmix(), 300);
+  };
 
   // Persist connection mode
   useEffect(() => {
@@ -389,7 +444,6 @@ export default function VmixPage() {
     if (trimmed && !/^https?:\/\//i.test(trimmed)) {
       trimmed = "http://" + trimmed;
     }
-    // Auto-adicionar porta 8088 se for IP sem porta
     try {
       const urlObj = new URL(trimmed);
       if (!urlObj.port && (/^[0-9.]+$/.test(urlObj.hostname) || urlObj.hostname === "localhost")) {
@@ -398,29 +452,46 @@ export default function VmixPage() {
       }
     } catch {}
 
-    const { data: existing } = await supabase
-      .from("user_settings")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    const payload = { vmix_url: trimmed, vmix_user: vmixUser.trim(), vmix_pass: vmixPass };
-    if (existing) {
-      await supabase.from("user_settings").update(payload).eq("user_id", user.id);
-    } else {
-      await supabase.from("user_settings").insert({ user_id: user.id, ...payload });
-    }
-    setSavedUrl(trimmed);
-    localStorage.setItem(`vmix_url_${user.id}`, trimmed);
+    const payload = { 
+      user_id: user.id,
+      name: studioName || "vMix Studio",
+      url: trimmed, 
+      username: vmixUser.trim(), 
+      password: vmixPass,
+      is_default: true 
+    };
 
-    // Auto-detect best mode
+    if (selectedConnectionId) {
+      await (supabase.from("vmix_connections" as any) as any)
+        .update(payload)
+        .eq("id", selectedConnectionId);
+    } else {
+      const { data } = await (supabase.from("vmix_connections" as any) as any)
+        .insert(payload)
+        .select()
+        .single();
+      if (data) setSelectedConnectionId(data.id);
+    }
+    
+    // Also update global settings for backward compatibility if needed
+    await supabase.from("user_settings").upsert({ 
+      user_id: user.id, 
+      vmix_url: trimmed, 
+      vmix_user: vmixUser.trim(), 
+      vmix_pass: vmixPass 
+    });
+
+    setSavedUrl(trimmed);
+    loadConnections();
+
     if (isPrivateIp(trimmed) && connectionMode === "proxy") {
       setConnectionMode("direct");
-      toast({ title: "Modo alterado para Direto", description: "IP local detectado. Proxy em nuvem não alcança rede local." });
+      toast({ title: "Modo alterado para Direto", description: "IP local detectado." });
     } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
       setConnectionMode("proxy");
-      toast({ title: "Modo alterado para Proxy", description: "IP público detectado. Usando conexão via proxy." });
+      toast({ title: "Modo alterado para Proxy", description: "IP público detectado." });
     }
-    toast({ title: "Configuração salva", description: "URL e credenciais do vMix salvas." });
+    toast({ title: "Configuração salva", description: `Conexão "${studioName}" salva com sucesso.` });
   };
 
   // Direct fetch to vMix (browser → vMix, no edge function)
@@ -1386,12 +1457,27 @@ export default function VmixPage() {
 
           {/* Card Body */}
           <div className="p-6 space-y-5">
+            {/* Studio Name Input */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-2">Nome do Estúdio</label>
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
+                <Monitor size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
+                <input
+                  type="text"
+                  value={studioName}
+                  onChange={e => setStudioName(e.target.value)}
+                  placeholder="Ex: Estúdio A, Control Room..."
+                  className="flex-1 text-sm outline-none bg-transparent text-white placeholder:text-white/20"
+                />
+              </div>
+            </div>
+
             {/* URL Input Group */}
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-2">Endereço do vMix</label>
               <div className="flex gap-2 items-center flex-wrap">
                 <div className="flex-1 min-w-[200px] flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
-                  <Monitor size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
+                  <Wifi size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
                   <input
                     type="text"
                     value={vmixUrl}
@@ -1401,7 +1487,7 @@ export default function VmixPage() {
                   />
                 </div>
                 <button onClick={saveUrl} className="px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110" style={{ backgroundColor: "#3a3a44" }}>
-                  Salvar
+                  {selectedConnectionId ? "Atualizar" : "Salvar Novo"}
                 </button>
                 {savedUrl && (
                   <button
@@ -1414,23 +1500,64 @@ export default function VmixPage() {
                     {connecting ? "Conectando..." : "Conectar"}
                   </button>
                 )}
-                <div className="relative group">
-                  <button className="p-2 rounded-lg text-white/20 hover:text-white/50 transition-colors">
-                    <HelpCircle size={14} />
-                  </button>
-                  <div className="absolute left-0 top-full mt-2 w-80 p-4 rounded-xl text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
-                    style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
-                  >
-                    <p className="font-bold text-white/90 mb-2">Conexão Direta:</p>
-                    <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
-                      <p className="font-bold text-[#22c55e] mb-1">🟢 Rede Local</p>
-                      <p className="text-white/50">Use o IP local do computador com vMix (ex: <strong className="text-white/70">http://192.168.x.x:8088</strong>).</p>
-                    </div>
-                    <p className="text-white/30 text-[10px]">💡 Certifique-se de estar na mesma rede que o vMix.</p>
-                  </div>
-                </div>
               </div>
             </div>
+
+            {/* Saved Connections List */}
+            {vmixConnections.length > 0 && (
+              <div className="pt-4 border-t border-white/5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-3">Conexões Salvas</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {vmixConnections.map((conn) => (
+                    <div 
+                      key={conn.id}
+                      onClick={() => handleSelectConnection(conn)}
+                      className={`group relative p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                        selectedConnectionId === conn.id 
+                          ? "bg-blue-500/10 border-blue-500/50" 
+                          : "bg-white/5 border-white/5 hover:bg-white/10"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className={`w-2 h-2 rounded-full ${selectedConnectionId === conn.id ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-white/20"}`} />
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-bold text-white/90 truncate">{conn.name}</p>
+                          <p className="text-[9px] text-white/40 truncate">{conn.url}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (confirm(`Excluir conexão "${conn.name}"?`)) {
+                            await (supabase.from("vmix_connections" as any) as any).delete().eq("id", conn.id);
+                            if (selectedConnectionId === conn.id) setSelectedConnectionId(null);
+                            loadConnections();
+                            toast({ title: "Conexão excluída" });
+                          }
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/20 text-white/20 hover:text-red-400 transition-all"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <button 
+                    onClick={() => {
+                      setSelectedConnectionId(null);
+                      setStudioName("");
+                      setVmixUrl("");
+                      setVmixUser("");
+                      setVmixPass("");
+                      setConnected(false);
+                    }}
+                    className="p-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus size={12} className="text-white/40" />
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Nova Conexão</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Diagnostic Button */}
             {savedUrl && (
