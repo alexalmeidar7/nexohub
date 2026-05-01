@@ -150,6 +150,7 @@ function formatKeyName(e: KeyboardEvent): string {
 }
 
 export default function VmixPage() {
+  const [lanStatus, setLanStatus] = useState<"checking" | "same_lan" | "different_network" | "unknown">("checking");
   const { user } = useAuth();
   const { toast } = useToast();
   const [vmixUrl, setVmixUrl] = useState("");
@@ -158,6 +159,39 @@ export default function VmixPage() {
   const [savedUrl, setSavedUrl] = useState("");
   const [vmixConnections, setVmixConnections] = useState<any[]>([]);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  
+  // Logic to check LAN connectivity
+  useEffect(() => {
+    if (!savedUrl || !isPrivateIp(savedUrl)) {
+      setLanStatus("unknown");
+      return;
+    }
+
+    const checkLan = async () => {
+      setLanStatus("checking");
+      try {
+        // Try a very quick fetch to the vMix API with a short timeout
+        // This only works if the user is on the same network
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        
+        let baseUrl = savedUrl.replace(/\/+$/, "");
+        if (!baseUrl.startsWith("http")) baseUrl = "http://" + baseUrl;
+        
+        await fetch(baseUrl + "/api/", { 
+          mode: 'no-cors', 
+          signal: controller.signal 
+        });
+        
+        clearTimeout(timeoutId);
+        setLanStatus("same_lan");
+      } catch (err) {
+        setLanStatus("different_network");
+      }
+    };
+
+    checkLan();
+  }, [savedUrl]);
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
@@ -1606,6 +1640,33 @@ export default function VmixPage() {
                 />
               </div>
             </div>
+
+            {/* LAN Status & Connection Hint */}
+            {savedUrl && isPrivateIp(savedUrl) && (
+              <div className={`mb-4 rounded-xl p-4 flex items-start gap-3 border ${
+                lanStatus === "same_lan" 
+                  ? "bg-green-500/10 border-green-500/20 text-green-400" 
+                  : lanStatus === "different_network"
+                  ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                  : "bg-white/5 border-white/10 text-white/40"
+              }`}>
+                {lanStatus === "checking" ? <Loader2 size={16} className="animate-spin mt-0.5" /> : 
+                 lanStatus === "same_lan" ? <CheckCircle size={16} className="mt-0.5" /> : 
+                 <WifiOff size={16} className="mt-0.5" />}
+                <div className="flex-1">
+                  <p className="text-[11px] font-bold uppercase tracking-wider mb-1">
+                    {lanStatus === "checking" ? "Verificando rede..." :
+                     lanStatus === "same_lan" ? "Rede Local Detectada" :
+                     "Rede vMix Não Encontrada"}
+                  </p>
+                  <p className="text-[10px] leading-relaxed opacity-80">
+                    {lanStatus === "checking" ? "Testando se seu dispositivo consegue ver o vMix diretamente." :
+                     lanStatus === "same_lan" ? "Você está na mesma rede LAN que o vMix. O controle direto deve funcionar perfeitamente." :
+                     "Não detectamos o vMix na sua rede local atual. Certifique-se de estar no mesmo Wi-Fi/Rede do vMix ou use um IP público com modo Proxy."}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* URL Input Group */}
             <div>
