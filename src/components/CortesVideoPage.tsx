@@ -194,8 +194,7 @@ export default function CortesVideoPage() {
   const handleCutLocal = async () => {
     if (!localFile || !canCut) return;
 
-    // Trigger FFmpeg load before starting the cutting process state
-    // so the status message from loadFfmpeg is visible immediately
+    let ffmpegLog = "";
     try {
       setCutting(true);
       setProgress(0);
@@ -203,7 +202,6 @@ export default function CortesVideoPage() {
       
       const ffmpeg = await loadFfmpeg();
       
-      // Validate against actual video duration
       if (localDuration > 0 && endSeconds > Math.ceil(localDuration)) {
         toast({
           title: "Tempo final inválido",
@@ -224,26 +222,19 @@ export default function CortesVideoPage() {
       }
 
       startTimeRef.current = Date.now();
-    
-    // Estimate time based on file size and format
-    const sizeMB = localFile.size / (1024 * 1024);
-    let estimate = 0;
-    if (format === "original") {
-      estimate = Math.max(2, sizeMB / 100); // Original is very fast
-    } else {
-      const complexity = format === "reel" ? 1.5 : 1;
-      estimate = Math.max(5, (sizeMB * 0.15) * complexity + (duration * 0.2));
-    }
-    setEstimatedSeconds(Math.round(estimate));
+      const sizeMB = localFile.size / (1024 * 1024);
+      let estimate = 0;
+      if (format === "original") {
+        estimate = Math.max(2, sizeMB / 100);
+      } else {
+        const complexity = format === "reel" ? 1.5 : 1;
+        estimate = Math.max(5, (sizeMB * 0.15) * complexity + (duration * 0.2));
+      }
+      setEstimatedSeconds(Math.round(estimate));
 
-    let ffmpegLog = "";
-    try {
-      const ffmpeg = await loadFfmpeg();
       ffmpeg.on("log", ({ message }) => {
         ffmpegLog += message + "\n";
         console.log("[ffmpeg]", message);
-        
-        // Dynamic status updates based on FFmpeg logs
         if (message.includes("frame=")) {
           setStatusMsg(format === "reel" ? "Formatando para REEL..." : "Processando frames...");
         }
@@ -257,7 +248,6 @@ export default function CortesVideoPage() {
       await ffmpeg.writeFile(inputName, await fetchFile(localFile));
 
       setStatusMsg("Iniciando o corte...");
-      
       const args: string[] = [];
       
       if (format === "original") {
@@ -293,7 +283,6 @@ export default function CortesVideoPage() {
       }
       
       args.push("-movflags", "+faststart", "-y", outputName);
-
       const exitCode = await ffmpeg.exec(args);
 
       if (exitCode !== 0) {
@@ -330,7 +319,6 @@ export default function CortesVideoPage() {
         variant: "destructive",
       });
       setStatusMsg("");
-
     } finally {
       setCutting(false);
     }
