@@ -361,6 +361,12 @@ export default function CortesVideoPage() {
 
       startTimeRef.current = Date.now();
       const sizeMB = localFile.size / (1024 * 1024);
+      
+      // Validação de segurança para o navegador
+      if (sizeMB > 2000) {
+        throw new Error("O vídeo é muito grande para ser processado no navegador (limite recomendado: 2GB). Use o modo YouTube para vídeos pesados.");
+      }
+
       let estimate = 0;
       if (format === "original") {
         estimate = Math.max(2, sizeMB / 100);
@@ -378,8 +384,7 @@ export default function CortesVideoPage() {
         }
       });
 
-
-      setStatusMsg("Lendo arquivo de vídeo (isso pode levar alguns segundos)...");
+      setStatusMsg("Lendo arquivo de vídeo...");
       setProgress(5);
       
       const ext = (localFile.name.split(".").pop() || "mp4").toLowerCase();
