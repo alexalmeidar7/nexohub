@@ -359,17 +359,28 @@ export default function CortesVideoPage() {
 
       setStatusMsg("Lendo arquivo de vídeo (isso pode levar alguns segundos)...");
       setProgress(5);
-      const videoData = await fetchFile(localFile);
+      
+      const ext = (localFile.name.split(".").pop() || "mp4").toLowerCase();
+      const inputName = `input.${ext}`;
+      const outputName = `corte_${Date.now()}.mp4`;
+
+      // Para arquivos grandes, fetchFile pode ser pesado. 
+      // Em FFmpeg.wasm 0.12+, writeFile aceita Uint8Array diretamente.
+      const videoData = new Uint8Array(await localFile.arrayBuffer());
       await ffmpeg.writeFile(inputName, videoData);
+      
+      // Limpar videoData da memória JS o quanto antes para reduzir pressão de memória
+      (videoData as any) = null;
 
       setStatusMsg("Iniciando o corte...");
       setProgress(10);
       const args: string[] = [];
       
       if (format === "original") {
-        setStatusMsg("Cortando vídeo instantaneamente...");
+        setStatusMsg("Cortando vídeo (modo rápido)...");
         setProgress(15);
-        args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-c", "copy");
+        // Busca rápida (-ss antes de -i) + cópia de stream (-c copy)
+        args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-c", "copy", "-map", "0", "-movflags", "+faststart");
       } else {
         setStatusMsg("Preparando processamento...");
         const vf =
@@ -388,25 +399,30 @@ export default function CortesVideoPage() {
           hasAudio = probeLog.some((l) => /Stream #\d+:\d+.*Audio:/i.test(l));
         } catch { /* assume audio */ }
 
-        setStatusMsg(format === "reel" ? "Finalizando no formato REEL..." : "Finalizando no formato FULL HD...");
-        // IMPORTANTE: Mover -ss ANTES do -i para busca rápida (input seek)
+        setStatusMsg(format === "reel" ? "Formatando para REEL..." : "Formatando para FULL HD...");
+        // Re-encoding com busca rápida e presets otimizados para web/browser
         args.push("-ss", String(startSeconds), "-t", String(duration), "-i", inputName, "-vf", vf,
-          "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p");
+          "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23", "-pix_fmt", "yuv420p");
         
         if (hasAudio) {
           args.push("-c:a", "aac", "-b:a", "128k", "-ac", "2");
         } else {
           args.push("-an");
         }
+        args.push("-movflags", "+faststart");
       }
       
-      args.push("-movflags", "+faststart", "-y", outputName);
+      args.push("-y", outputName);
       console.log("[ffmpeg] Executando comando:", args.join(" "));
       const exitCode = await ffmpeg.exec(args);
 
       if (exitCode !== 0) {
-        throw new Error(`Falha ao recortar (código ${exitCode}). Tente outro trecho ou verifique se o vídeo não está corrompido.`);
+        throw new Error(`O motor de vídeo retornou erro (código ${exitCode}). Isso geralmente acontece com formatos incompatíveis ou falta de memória no navegador.`);
       }
+
+      // LIMPEZA IMEDIATA DO INPUT PARA LIBERAR MEMÓRIA WASM
+      setStatusMsg("Limpando arquivos temporários...");
+      await ffmpeg.deleteFile(inputName).catch(() => {});
 
       setProgress(92);
       setStatusMsg("Extraindo vídeo processado...");
@@ -416,41 +432,38 @@ export default function CortesVideoPage() {
         throw new Error("Não foi possível localizar o arquivo gerado pelo motor.");
       }
       
+      // APÓS LER, DELETAMOS DO WASM IMEDIATAMENTE
+      await ffmpeg.deleteFile(outputName).catch(() => {});
+
       const dataAsUint8 = data instanceof Uint8Array ? data : new Uint8Array(0);
-      const dataLen = typeof data === 'string' ? data.length : dataAsUint8.byteLength;
+      const dataLen = dataAsUint8.byteLength;
       console.log(`[ffmpeg] Arquivo lido: ${dataLen} bytes`);
       
-      // Garantimos um ArrayBuffer limpo para o Blob.
       let finalData: Uint8Array;
       
       setProgress(95);
-      setStatusMsg("Otimizando memória do vídeo...");
+      setStatusMsg("Finalizando arquivo...");
       
       try {
-        if (data instanceof Uint8Array) {
-          if (typeof SharedArrayBuffer !== 'undefined' && data.buffer instanceof SharedArrayBuffer) {
-            console.log("[ffmpeg] Convertendo SharedArrayBuffer para ArrayBuffer...");
-            finalData = new Uint8Array(data.byteLength);
-            // set() pode ser pesado para arquivos grandes, mas é necessário
-            finalData.set(data);
-            setProgress(97);
-          } else {
-            finalData = data;
-          }
-        } else if (typeof data === 'string') {
-          // Caso improvável para vídeo, mas tratamos
-          const encoder = new TextEncoder();
-          finalData = encoder.encode(data);
+        // Se estiver usando SharedArrayBuffer (multi-thread), o Blob vai falhar se passarmos o buffer original.
+        // Precisamos copiar para um ArrayBuffer normal, mas fazemos isso com cuidado.
+        if (typeof SharedArrayBuffer !== 'undefined' && dataAsUint8.buffer instanceof SharedArrayBuffer) {
+          console.log("[ffmpeg] Convertendo SharedArrayBuffer para Blob (cópia necessária)...");
+          finalData = new Uint8Array(dataLen);
+          finalData.set(dataAsUint8);
+          // O dado original 'data' pode ser liberado
+          (data as any) = null;
         } else {
-          finalData = new Uint8Array(0);
+          finalData = dataAsUint8;
         }
+        setProgress(97);
       } catch (e) {
         console.error("[ffmpeg] Erro ao processar buffer de saída:", e);
-        throw new Error("Erro de memória ao processar o vídeo final. Tente um trecho menor.");
+        throw new Error("O navegador ficou sem memória ao gerar o arquivo final. Tente um trecho mais curto.");
       }
 
       if (finalData.length < 100) {
-        throw new Error("O vídeo gerado está vazio ou inválido. Tente ajustar o tempo de início/fim.");
+        throw new Error("O vídeo gerado está vazio. Verifique se os tempos de início e fim estão dentro da duração total do vídeo original.");
       }
 
       // Validação de assinatura MP4 (ftyp)
