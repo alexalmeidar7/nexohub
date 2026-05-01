@@ -671,13 +671,20 @@ export default function CortesVideoPage() {
                   Tempo estimado: {Math.max(1, Math.round(estimatedSeconds - (progress / 100 * estimatedSeconds)))}s restantes
                 </div>
               )}
-              <div className="w-full flex justify-between items-center px-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
-                  {statusMsg || "Iniciando..."}
-                </span>
-                <span className="text-xs font-black" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  {progress}%
-                </span>
+              <div className="w-full flex flex-col gap-1 px-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
+                    {statusMsg || "Iniciando..."}
+                  </span>
+                  <span className="text-xs font-black" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    {progress}%
+                  </span>
+                </div>
+                {loadDetail && (
+                  <span className="text-[9px] font-mono opacity-60 italic" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    {loadDetail}
+                  </span>
+                )}
               </div>
               <div className="w-full h-3 rounded-full p-[2px] shadow-inner" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }}>
                 <div 
