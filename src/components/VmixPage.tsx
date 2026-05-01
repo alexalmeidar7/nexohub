@@ -1794,25 +1794,30 @@ export default function VmixPage() {
 
   return (
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e0e0e0" }}>
-      {/* ── CONNECTION ALERT REMOVED ── */}
-
-      {/* ── URL + GO LIVE / RECORD row ── */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* URL section */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
-          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: connected ? "#22c55e" : "#666", boxShadow: connected ? "0 0 6px #22c55e60" : "none" }} />
+      {/* ── Header Toolbar (Connection & Actions) ── */}
+      <div className="flex items-center justify-between gap-4 flex-wrap bg-[#1a1a1f] p-2 rounded-xl border border-white/5 shadow-2xl">
+        {/* Left: Studio Connection Status */}
+        <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-[#111115] border border-[#ffffff08] shadow-inner">
+          <div className="flex items-center gap-2">
+            <div 
+              className="w-2 h-2 rounded-full animate-pulse" 
+              style={{ 
+                backgroundColor: connected ? "#22c55e" : "#ef4444", 
+                boxShadow: connected ? "0 0 10px rgba(34,197,94,0.6)" : "0 0 10px rgba(239,68,68,0.6)" 
+              }} 
+            />
+            <span className="text-[10px] font-black uppercase tracking-[0.1em] text-white/40">Estúdio</span>
+          </div>
           
           {connected && selectedConnectionId ? (
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Conectado a</span>
-              <span className="text-xs font-bold text-white uppercase">{studioName}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-white uppercase tracking-wider">{studioName}</span>
               <div className="w-px h-3 bg-white/10 mx-1" />
               <button 
                 onClick={() => setShowStudioSelector(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-all hover:bg-blue-500/10"
+                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-bold text-blue-400 hover:text-blue-300 transition-all hover:bg-blue-500/10 border border-blue-500/20"
               >
-                <Monitor size={12} />
-                Trocar Estúdio
+                TROCAR
               </button>
               <button 
                 onClick={() => {
@@ -1822,94 +1827,70 @@ export default function VmixPage() {
                   setStudioName("");
                   setSavedUrl("");
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-red-400 hover:text-red-300 transition-all hover:bg-red-500/10"
-                title="Desconectar do estúdio"
+                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-bold text-red-500/70 hover:text-red-500 transition-all hover:bg-red-500/10 border border-red-500/20"
+                title="Desconectar"
               >
-                <XCircle size={12} />
-                Desconectar
+                SAIR
               </button>
             </div>
           ) : (
-            <>
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={vmixUrl}
                 onChange={e => setVmixUrl(e.target.value)}
-                placeholder="http://SEU_IP_PUBLICO:8088"
-                className="w-52 px-3 py-1.5 rounded text-xs outline-none transition-all focus:ring-1 focus:ring-white/10"
-                style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
+                placeholder="IP vMix"
+                className="w-32 px-2 py-1 rounded text-[10px] outline-none bg-[#0a0a0d] text-white border border-white/5 font-mono"
               />
-              <button onClick={saveUrl} className="px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200 hover:scale-[1.02]"
-                style={{ backgroundColor: "#ffffff08", border: "1px solid #ffffff10" }}
-              >
-                Salvar
-              </button>
-              <button
+              <button 
                 onClick={connectToVmix}
                 disabled={connecting}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200"
-                style={{ backgroundColor: connected ? "#22c55e18" : "#ffffff08", border: `1px solid ${connected ? "#22c55e30" : "#ffffff10"}` }}
+                className="px-3 py-1 rounded text-[9px] font-black bg-blue-600 hover:bg-blue-500 text-white transition-all uppercase tracking-widest disabled:opacity-50"
               >
-                {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} style={{ color: connected ? "#22c55e" : "#666" }} />}
-                {connected ? "Conectado" : "Conectar"}
-              </button>
-            </>
-          )}
-        </div>
-        {/* GO LIVE / RECORD section */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
-          {/* GO LIVE group */}
-          <div className="group/live flex items-center gap-1">
-            <button
-              onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-              style={{
-                backgroundColor: streaming ? "#6b1010" : "#2a2a30",
-                color: streaming ? "#fff" : "#aaa",
-                boxShadow: streaming ? "0 0 16px #6b101060" : "none",
-                border: `1px solid ${streaming ? "#8b2020" : "#3a3a40"}`,
-              }}
-            >
-              {streaming ? "● LIVE" : "GO LIVE"}
-            </button>
-            <div className="flex items-center gap-1 max-w-0 overflow-hidden opacity-0 transition-all duration-200 group-hover/live:max-w-[300px] group-hover/live:opacity-100">
-              <button
-                onClick={() => sendCommand("StartStreaming")}
-                className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
-                style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
-                onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
-                onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-              >
-                STREAMING 1
-              </button>
-              <button
-                onClick={() => sendCommand("StartStreaming")}
-                className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
-                style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
-                onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
-                onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-              >
-                STREAMING 2
+                {connecting ? "..." : "Conectar"}
               </button>
             </div>
+          )}
+        </div>
+
+        {/* Right: Global Actions (Live, Rec, Refresh) */}
+        <div className="flex items-center gap-2">
+          {/* STREAMING STATUS BUTTONS */}
+          <div className="flex items-center gap-1 bg-[#111115] p-1 rounded-lg border border-white/5 shadow-inner">
+            <button
+              onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
+              className={`px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${
+                streaming 
+                  ? "bg-[#dc2626] text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-[#ff4444]" 
+                  : "bg-[#2a2a30] text-white/40 border border-white/5 hover:text-white/70"
+              }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${streaming ? "bg-white animate-pulse" : "bg-white/20"}`} />
+              {streaming ? "ON AIR" : "GO LIVE"}
+            </button>
+            
+            <button
+              onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
+              className={`px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${
+                recording 
+                  ? "bg-[#dc2626] text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-[#ff4444]" 
+                  : "bg-[#2a2a30] text-white/40 border border-white/5 hover:text-white/70"
+              }`}
+            >
+              <Disc size={12} className={recording ? "animate-spin" : ""} />
+              {recording ? "REC" : "RECORD"}
+            </button>
+
+            <div className="w-px h-6 bg-white/5 mx-1" />
+
+            <button 
+              onClick={() => connectToVmix()} 
+              className="p-1.5 rounded-lg text-white/30 hover:text-white transition-colors hover:bg-white/5" 
+              title="Refresh vMix State"
+            >
+              <RefreshCw size={14} className={connecting ? "animate-spin" : ""} />
+            </button>
           </div>
-          {/* RECORD button (independent) */}
-          <button
-            onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
-            className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-            style={{
-              backgroundColor: recording ? "#6b1010" : "#2a2a30",
-              color: recording ? "#fff" : "#aaa",
-              border: `1px solid ${recording ? "#8b2020" : "#3a3a40"}`,
-            }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #3a3a3a60"; }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-          >
-            {recording ? "● REC" : "RECORD"}
-          </button>
-          <button onClick={() => connectToVmix()} className="text-white/40 hover:text-white transition-colors" title="Atualizar">
-            <RefreshCw size={14} />
-          </button>
         </div>
       </div>
 
@@ -2212,167 +2193,108 @@ export default function VmixPage() {
               const isPreview = previewInput === input.number;
               const isNdi = isNdiInput(input);
               const isMin = minimizedInputs[input.number];
-              const borderColor = isActive ? "#dc2626" : isPreview ? "#777" : "#333338";
-              const headerBg = isActive ? "#dc262630" : isPreview ? "#ffffff10" : "#222228";
-
-              if (isMin) {
-                return (
-                  <div
-                    key={input.key || input.number}
-                    className="flex flex-col items-center rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:brightness-110"
-                    style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 32, minHeight: 120 }}
-                    onClick={() => setMinimizedInputs(prev => ({ ...prev, [input.number]: false }))}
-                  >
-                    <div
-                      className="w-full flex items-center justify-center py-1"
-                      style={{ backgroundColor: headerBg }}
-                      onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: false })); }}
-                    >
-                      <span className="text-[8px] font-bold" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ccc" : "#777" }}>{input.number}</span>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center" style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
-                      <span className="text-[8px] font-bold text-white/50 truncate" style={{ maxHeight: 90 }}>{input.title}</span>
-                    </div>
-                  </div>
-                );
-              }
+              const borderColor = isActive ? "#dc2626" : isPreview ? "#3b82f6" : "#ffffff10";
+              const headerBg = isActive ? "#dc262620" : isPreview ? "#3b82f615" : "#111115";
 
               return (
                 <div
                   key={input.key || input.number}
-                  className="rounded-lg overflow-hidden transition-all duration-200 hover:brightness-110 cursor-pointer"
-                  style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 180 }}
-                  onClick={() => {
-                    sendCommand("CutDirect", input.number);
-                    setActiveInput(input.number);
-                  }}
+                  className={`relative rounded-xl overflow-hidden transition-all duration-300 group ${
+                    isActive ? "ring-2 ring-red-600 shadow-[0_0_25px_rgba(220,38,38,0.2)]" : 
+                    isPreview ? "ring-2 ring-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.15)]" : "border border-white/5 hover:border-white/20"
+                  }`}
+                  style={{ width: isMin ? 44 : 200, backgroundColor: "#1a1a1f" }}
                 >
-                  <div
-                    className="flex items-center gap-1 px-2 py-1"
-                    style={{ backgroundColor: headerBg }}
-                    onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: true })); }}
+                  {/* Status Indicator Bar */}
+                  <div className={`h-1 w-full ${isActive ? "bg-red-600" : isPreview ? "bg-blue-500" : "bg-transparent"}`} />
+
+                  {/* Header / Info */}
+                  <div 
+                    className="p-2.5 flex flex-col gap-1 cursor-pointer"
+                    onClick={() => {
+                      if (isPreview) {
+                        sendCommand("Cut");
+                        setActiveInput(input.number);
+                      } else {
+                        sendCommand("PreviewInput", input.number);
+                        setPreviewInput(input.number);
+                      }
+                    }}
                   >
-                    <span className="text-[9px] font-bold px-1 rounded" style={{
-                      backgroundColor: isActive ? "#dc2626" : isPreview ? "#555" : "#333338",
-                      color: isActive || isPreview ? "#fff" : "#888",
-                    }}>{input.number}</span>
-                    <span className="text-[10px] font-bold truncate flex-1 min-w-0" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>
-                      {isNdi && <span style={{ color: "#22c55e" }}>● </span>}
-                      {input.title}
-                    </span>
-                    {/* PGM / PVW badge in header */}
-                    {isActive && (
-                      <span className="text-[7px] font-black px-1.5 py-0.5 rounded flex-shrink-0 animate-pulse" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.05em" }}>PGM</span>
-                    )}
-                    {isPreview && !isActive && (
-                      <span className="text-[7px] font-black px-1.5 py-0.5 rounded flex-shrink-0" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.05em" }}>PVW</span>
-                    )}
-                    {/* Keyboard shortcut badge/capture */}
-                    <div className="relative group/shortcut flex-shrink-0">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCapturingShortcut(capturingShortcut === input.number ? null : input.number);
-                        }}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setInputShortcuts(prev => {
-                            const copy = { ...prev };
-                            delete copy[input.number];
-                            return copy;
-                          });
-                        }}
-                        className="text-[7px] font-mono font-bold px-1.5 py-0.5 rounded transition-all"
-                        style={{
-                          backgroundColor: capturingShortcut === input.number ? "#f59e0b30" : inputShortcuts[input.number] ? "#ffffff10" : "#ffffff06",
-                          color: capturingShortcut === input.number ? "#f59e0b" : inputShortcuts[input.number] ? "#aaa" : "#555",
-                          border: `1px solid ${capturingShortcut === input.number ? "#f59e0b40" : "#ffffff08"}`,
-                          minWidth: 20,
-                          textAlign: "center",
-                        }}
-                      >
-                        {capturingShortcut === input.number ? "⌨ ..." : inputShortcuts[input.number] || "⌨"}
-                      </button>
-                      {/* Tooltip on hover */}
-                      {inputShortcuts[input.number] && capturingShortcut !== input.number && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg opacity-0 group-hover/shortcut:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50"
-                          style={{ backgroundColor: "#111118", border: "1px solid #333", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Keyboard size={14} style={{ color: "#f59e0b" }} />
-                            <span className="text-sm font-mono font-black tracking-wider" style={{ color: "#f59e0b" }}>{inputShortcuts[input.number]}</span>
-                          </div>
-                          <div className="text-[8px] mt-0.5 text-center" style={{ color: "#666" }}>clique direito para limpar</div>
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0" style={{ borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #333" }} />
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                        isActive ? "bg-red-600 text-white" : isPreview ? "bg-blue-600 text-white" : "bg-white/5 text-white/30"
+                      }`}>
+                        {input.number}
+                      </span>
+                      {isNdi && (
+                        <div className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                          <span className="text-[8px] font-black text-green-500 tracking-tighter">NDI</span>
                         </div>
                       )}
                     </div>
-                  </div>
-                   <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
-                    <ThumbnailImg inputNumber={input.number} className="w-full h-full object-contain" alt={input.title} />
-                    {isNdi && (
-                      <div className="absolute top-1 left-1 flex gap-1">
-                        <span className="text-[7px] font-bold px-1 rounded" style={{ backgroundColor: "#22c55e30", color: "#22c55e", border: "1px solid #22c55e40" }}>NDI</span>
-                        {inputHlsUrls[input.number] && (
-                          <span className="text-[7px] font-bold px-1 rounded animate-pulse" style={{ backgroundColor: "#dc262630", color: "#dc2626", border: "1px solid #dc262640" }}>LIVE</span>
-                        )}
-                      </div>
+                    
+                    {!isMin && (
+                      <h3 className={`text-[11px] font-bold uppercase tracking-tight truncate leading-tight ${
+                        isActive ? "text-white" : isPreview ? "text-blue-400" : "text-white/40"
+                      }`}>
+                        {input.title}
+                      </h3>
                     )}
-                    {/* Stream URL config button for all inputs */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingHlsInput(editingHlsInput === input.number ? null : input.number);
-                        setHlsTempUrl(inputHlsUrls[input.number] || "");
-                      }}
-                      className="absolute bottom-1 right-1 text-[7px] px-1 py-0.5 rounded transition-all"
-                      style={{
-                        backgroundColor: inputHlsUrls[input.number] ? "#22c55e20" : "#ffffff10",
-                        color: inputHlsUrls[input.number] ? "#22c55e" : "#888",
-                        border: `1px solid ${inputHlsUrls[input.number] ? "#22c55e30" : "#ffffff15"}`,
-                      }}
-                      title="Configurar URL de stream (HLS/MJPEG/JPEG)"
-                    >
-                      {inputHlsUrls[input.number] ? "📡" : "🔗 Stream"}
-                    </button>
                   </div>
-                  {/* HLS URL editor inline */}
-                  {editingHlsInput === input.number && (
-                    <div className="flex gap-1 px-1.5 py-1.5" style={{ backgroundColor: "#111114", borderTop: "1px solid #ffffff08" }} onClick={e => e.stopPropagation()}>
-                      <input
-                        type="text"
-                        value={hlsTempUrl}
-                        onChange={e => setHlsTempUrl(e.target.value)}
-                        placeholder="URL do stream (HLS .m3u8, MJPEG, ou JPEG)"
-                        className="flex-1 text-[9px] px-1.5 py-1 rounded outline-none"
-                        style={{ backgroundColor: "#1a1a20", color: "#ccc", border: "1px solid #333" }}
-                        onKeyDown={e => {
-                          if (e.key === "Enter") {
-                            setInputHlsUrls(prev => hlsTempUrl.trim() ? { ...prev, [input.number]: hlsTempUrl.trim() } : (() => { const c = { ...prev }; delete c[input.number]; return c; })());
-                            setEditingHlsInput(null);
-                          }
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          setInputHlsUrls(prev => hlsTempUrl.trim() ? { ...prev, [input.number]: hlsTempUrl.trim() } : (() => { const c = { ...prev }; delete c[input.number]; return c; })());
-                          setEditingHlsInput(null);
-                        }}
-                        className="text-[8px] px-1.5 rounded"
-                        style={{ backgroundColor: "#22c55e20", color: "#22c55e", border: "1px solid #22c55e30" }}
-                      >✓</button>
-                      {inputHlsUrls[input.number] && (
-                        <button
-                          onClick={() => {
-                            setInputHlsUrls(prev => { const c = { ...prev }; delete c[input.number]; return c; });
-                            setEditingHlsInput(null);
-                          }}
-                          className="text-[8px] px-1.5 rounded"
-                          style={{ backgroundColor: "#dc262620", color: "#dc2626", border: "1px solid #dc262630" }}
-                        >✕</button>
-                      )}
+
+                  {/* Thumbnail / Preview Area */}
+                  {!isMin && (
+                    <div 
+                      className="relative aspect-video bg-black overflow-hidden cursor-pointer"
+                      onClick={() => {
+                        sendCommand("CutDirect", input.number);
+                        setActiveInput(input.number);
+                      }}
+                    >
+                      <ThumbnailImg inputNumber={input.number} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      
+                      {/* Interaction Overlays */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button className="px-3 py-1 bg-white text-black text-[9px] font-black rounded uppercase tracking-widest hover:bg-white/90">TAKE</button>
+                      </div>
                     </div>
+                  )}
+
+                  {/* Footer Actions */}
+                  {!isMin && (
+                    <div className="p-1.5 flex items-center justify-between bg-black/40">
+                      <div className="flex gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCapturingShortcut(input.number);
+                          }}
+                          className={`text-[8px] font-bold px-2 py-0.5 rounded border ${
+                            inputShortcuts[input.number] ? "border-amber-500/30 text-amber-500 bg-amber-500/10" : "border-white/5 text-white/20 hover:text-white/40"
+                          }`}
+                        >
+                          {inputShortcuts[input.number] || "SHORTCUT"}
+                        </button>
+                      </div>
+                      
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setMinimizedInputs(prev => ({ ...prev, [input.number]: !isMin })); }}
+                        className="p-1 text-white/20 hover:text-white/40"
+                      >
+                        <ChevronDown size={10} />
+                      </button>
+                    </div>
+                  )}
+                  
+                  {isMin && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setMinimizedInputs(prev => ({ ...prev, [input.number]: false })); }}
+                      className="w-full py-2 text-white/20 hover:text-white/40 flex justify-center"
+                    >
+                      <ChevronUp size={10} />
+                    </button>
                   )}
                 </div>
               );
@@ -2486,18 +2408,26 @@ export default function VmixPage() {
 
           return (
             <>
-              {/* ── Programa no Ar + A Seguir (compact) ── */}
-              <div className="flex gap-2 items-center">
-                {/* NO AR */}
-                <div className="flex-1 flex items-center gap-3 rounded-lg px-3 py-2" style={{ backgroundColor: "#1a1a1f", border: "1px solid #dc262640" }}>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#dc2626" }}>No Ar</span>
+              {/* ── Dynamic Schedule Header ── */}
+              <div className="flex items-stretch gap-3">
+                {/* CURRENTLY ON AIR - LARGE RED INDICATOR */}
+                <div className="flex-1 rounded-xl p-4 border border-[#dc2626] bg-[#dc262610] shadow-[0_0_30px_rgba(220,38,38,0.15)] flex flex-col justify-between">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#dc2626] text-white animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">NO AR</span>
+                    </div>
+                    {onAir && (
+                      <span className="text-[10px] font-bold text-white/50 font-mono tracking-tighter">
+                        {onAir.horario_inicio?.slice(0,5)} — {onAir.horario_fim?.slice(0,5)}
+                      </span>
+                    )}
                   </div>
+
                   {onAir ? (
-                    <>
-                      <span className="text-[11px] font-bold text-white truncate shrink-0 max-w-[140px]">{onAir.nome}</span>
-                      <span className="text-[9px] text-white/40 shrink-0">{onAir.horario_inicio?.slice(0,5)} – {onAir.horario_fim?.slice(0,5)}</span>
+                    <div className="space-y-3">
+                      <h2 className="text-2xl font-black text-white uppercase tracking-tight leading-none truncate">{onAir.nome}</h2>
+                      
                       {(() => {
                         const remSec = secondsUntilEnd(onAir);
                         const totalSec = programDurationSec(onAir);
@@ -2510,34 +2440,49 @@ export default function VmixPage() {
                           ? `${String(rh).padStart(2, "0")}:${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`
                           : `${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`;
                         return (
-                          <div className="flex-1 flex items-center gap-2 min-w-0">
-                            <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#333" }}>
-                              <div className="h-full rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%`, backgroundColor: "#dc2626" }} />
+                          <div className="space-y-1.5">
+                            <div className="flex items-end justify-between">
+                              <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Restante</span>
+                              <span className="text-xl font-mono font-black tabular-nums tracking-widest" style={{ color: remSec <= 300 ? "#dc2626" : "#fff" }}>
+                                {remSec <= 0 ? "00:00" : timeStr}
+                              </span>
                             </div>
-                            <span className="text-[11px] font-mono font-black tracking-wider shrink-0" style={{ color: remSec <= 300 ? "#dc2626" : "#fff" }}>
-                              {remSec <= 0 ? "00:00" : timeStr}
-                            </span>
+                            <div className="h-1.5 rounded-full bg-[#ffffff08] overflow-hidden">
+                              <div className="h-full rounded-full bg-[#dc2626] transition-all duration-1000 ease-linear" style={{ width: `${progress}%`, boxShadow: "0 0 10px rgba(220,38,38,0.5)" }} />
+                            </div>
                           </div>
                         );
                       })()}
-                    </>
+                    </div>
                   ) : (
-                    <span className="text-[10px] text-white/30">Nenhum programa no ar</span>
+                    <div className="flex-1 flex items-center justify-center border border-dashed border-white/5 rounded-lg bg-black/20">
+                      <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Aguardando programação</span>
+                    </div>
                   )}
                 </div>
 
-                {/* A SEGUIR - only 1 program */}
-                <div className="shrink-0 flex items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
-                  <Eye size={10} style={{ color: "#666" }} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#666" }}>A seguir</span>
-                  {upcoming.length > 0 ? (
-                    <>
-                      <span className="text-[10px] font-medium text-white/70 truncate max-w-[120px]">{upcoming[0].nome}</span>
-                      <span className="text-[9px] text-white/30">{upcoming[0].horario_inicio?.slice(0,5)}</span>
-                    </>
-                  ) : (
-                    <span className="text-[9px] text-white/30">—</span>
-                  )}
+                {/* UPCOMING - COMPACT SIDEBAR */}
+                <div className="w-80 rounded-xl p-4 border border-[#ffffff08] bg-[#1a1a1f] flex flex-col">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Eye size={14} className="text-white/40" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">A Seguir</span>
+                  </div>
+
+                  <div className="flex-1 space-y-3">
+                    {upcoming.length > 0 ? upcoming.slice(0, 2).map((up, i) => (
+                      <div key={up.id} className={`p-3 rounded-lg border bg-black/20 ${i === 0 ? "border-white/10" : "border-white/5 opacity-50"}`}>
+                        <div className="flex justify-between items-start gap-2 mb-1">
+                          <span className="text-xs font-black text-white/90 uppercase truncate">{up.nome}</span>
+                          <span className="text-[10px] font-mono font-bold text-blue-400 shrink-0">{up.horario_inicio?.slice(0,5)}</span>
+                        </div>
+                        <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Estúdio: {up.estudio || "—"}</p>
+                      </div>
+                    )) : (
+                      <div className="flex-1 flex items-center justify-center">
+                        <span className="text-[9px] font-bold text-white/10 uppercase tracking-widest">Sem próximos eventos</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
