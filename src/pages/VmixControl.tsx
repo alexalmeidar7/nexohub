@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Clock, ExternalLink } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
