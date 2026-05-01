@@ -200,6 +200,40 @@ export default function VmixPage() {
     checkLan();
   }, [savedUrl]);
 
+  // Network Interface Detection (Wi-Fi/Ethernet)
+  useEffect(() => {
+    const updateNetworkInfo = () => {
+      const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+      if (!conn) {
+        setNetworkInfo(null);
+        return;
+      }
+
+      const type = conn.type || "unknown";
+      const effectiveType = conn.effectiveType || "unknown";
+      
+      let recommendation = "";
+      if (type === "wifi") {
+        recommendation = "Você está via Wi-Fi. Recomendamos usar cabo Ethernet para controle vMix profissional com menor latência.";
+      } else if (type === "cellular") {
+        recommendation = "Rede móvel (3G/4G/5G) detectada. Recomendamos Wi-Fi ou Ethernet para estabilidade no controle.";
+      } else if (type === "ethernet") {
+        recommendation = "Conexão via cabo detectada. Excelente escolha para estabilidade e performance no vMix.";
+      } else if (type === "other" || type === "unknown") {
+        recommendation = "Tipo de conexão não identificado. Para melhor experiência, priorize o uso de cabos.";
+      }
+
+      setNetworkInfo({ type, effectiveType, recommendation });
+    };
+
+    updateNetworkInfo();
+    const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    if (conn && conn.addEventListener) {
+      conn.addEventListener('change', updateNetworkInfo);
+      return () => conn.removeEventListener('change', updateNetworkInfo);
+    }
+  }, []);
+
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
     try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
     catch { return "direct"; }
