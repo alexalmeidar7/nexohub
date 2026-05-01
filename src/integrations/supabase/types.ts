@@ -537,6 +537,7 @@ export type Database = {
           color: string | null
           commands: Json
           created_at: string
+          data_especifica: string | null
           dias_semana: string[] | null
           horario: string | null
           id: string
@@ -548,6 +549,7 @@ export type Database = {
           color?: string | null
           commands?: Json
           created_at?: string
+          data_especifica?: string | null
           dias_semana?: string[] | null
           horario?: string | null
           id?: string
@@ -559,6 +561,7 @@ export type Database = {
           color?: string | null
           commands?: Json
           created_at?: string
+          data_especifica?: string | null
           dias_semana?: string[] | null
           horario?: string | null
           id?: string
