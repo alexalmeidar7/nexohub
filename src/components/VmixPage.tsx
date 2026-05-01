@@ -616,6 +616,10 @@ export default function VmixPage() {
         isLocal &&
         /failed to fetch|networkerror|mixed content|cors/i.test(message);
 
+      if (isMixedOrCorsLikely) {
+        setShowMixedContentDialog(true);
+      }
+
       const hint = isMixedOrCorsLikely
         ? (isEmbeddedPreview
           ? " O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' nesse domínio."
