@@ -1333,29 +1333,48 @@ export default function VmixPage() {
   // MJPEG/JPEG rapid-refresh image component (for vmix-snapshot-proxy, NDI HX Camera, etc.)
   const MjpegPlayer = ({ src, className = "" }: { src: string; className?: string }) => {
     const [imgSrc, setImgSrc] = useState(src);
+    const [hasError, setHasError] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    
     useEffect(() => {
+      setHasError(false);
       if (!src) return;
-      // If it looks like an MJPEG stream (contains /stream or is multipart), use as-is
-      // Otherwise, refresh the image every 500ms with cache-busting
+      
       const isMjpeg = /stream|mjpeg|motion/i.test(src);
       if (isMjpeg) {
         setImgSrc(src);
         return;
       }
-      // JPEG rapid refresh
+      
       const update = () => setImgSrc(`${src}${src.includes("?") ? "&" : "?"}_t=${Date.now()}`);
       update();
       intervalRef.current = setInterval(update, 500);
       return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }, [src]);
+
+    if (hasError) {
+      return (
+        <div className={`flex flex-col items-center justify-center p-4 text-center gap-2 ${className}`} style={{ backgroundColor: "#111" }}>
+          <AlertTriangle size={24} className="text-amber-500" />
+          <p className="text-[10px] text-white/70">Erro ao carregar vídeo.</p>
+          <p className="text-[8px] text-white/40 max-w-[150px]">Certifique-se que o vMix está ativo e você permitiu 'Conteúdo Inseguro' no cadeado do navegador.</p>
+          <button 
+            onClick={() => { setHasError(false); setImgSrc(src + (src.includes("?") ? "&" : "?") + "retry=" + Date.now()); }}
+            className="mt-1 px-2 py-1 bg-white/10 rounded text-[9px]"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      );
+    }
+
     return (
       <img
         src={imgSrc}
         className={className}
         style={{ objectFit: "contain", backgroundColor: "#000" }}
         alt="Monitor"
-        onError={() => {}}
+        onError={() => setHasError(true)}
       />
     );
   };
@@ -1363,14 +1382,17 @@ export default function VmixPage() {
   // Monitor content helper — returns JSX or null
   const getMonitorContent = (type: "preview" | "output") => {
     const streamUrl = monitorStreamUrls[type];
+    const isIframe = monitorIframeMode[type];
+
     if (streamUrl) {
       if (streamUrl.includes(".m3u8")) {
         return <HlsPlayer src={streamUrl} className="w-full h-full" />;
       }
       return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
     }
+
     // Iframe mode — embed vMix Web Controller
-    if (monitorIframeMode[type] && savedUrl) {
+    if (isIframe && savedUrl) {
       const baseUrl = savedUrl.replace(/\/+$/, "");
       return (
         <div className="w-full h-full relative" style={{ backgroundColor: "#000" }}>
@@ -1388,22 +1410,42 @@ export default function VmixPage() {
         </div>
       );
     }
-    // When connected, show input info placeholder
+
+    // When connected, show input info placeholder with "Live" button
     const inputNum = type === "preview" ? previewInput : activeInput;
     if (connected && inputNum) {
       const inp = inputs.find(i => i.number === inputNum);
       const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
       return (
         <div className="w-full h-full flex flex-col items-center justify-center relative" style={{ backgroundColor: bgColor }}>
-          <div className="text-center space-y-1">
+          <div className="text-center space-y-1 z-10">
             <span className="text-[11px] font-bold text-white/70 uppercase tracking-wider">{inp?.type || "Input"}</span>
             <p className="text-[13px] font-semibold text-white/90 max-w-[80%] mx-auto truncate">{inp?.title || `Input ${inputNum}`}</p>
             <p className="text-[9px] text-white/40">Input {inputNum} • {inp?.state || "—"}</p>
+            
+            <button 
+              onClick={() => {
+                const baseUrl = savedUrl.replace(/\/+$/, "");
+                const url = type === "preview" ? `${baseUrl}/mjpeg?Input=Preview` : `${baseUrl}/mjpeg`;
+                setMonitorStreamUrls(prev => ({ ...prev, [type]: url }));
+                setMonitorIframeMode(prev => ({ ...prev, [type]: false }));
+              }}
+              className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold text-white transition-all hover:scale-105 active:scale-95"
+              style={{ backgroundColor: "#dc2626", boxShadow: "0 0 15px rgba(220, 38, 38, 0.4)" }}
+            >
+              <Monitor size={12} /> ATIVAR VÍDEO NDI (MJPEG)
+            </button>
           </div>
+          
           <div className="absolute bottom-2 left-0 right-0 flex justify-center">
             <span className="text-[8px] px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.5)", color: "#888" }}>
               📡 URL de stream ou ⬛ Iframe para preview ao vivo
             </span>
+          </div>
+          
+          {/* Background decoration */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+             <div className="absolute -inset-10 bg-gradient-to-br from-white/20 to-transparent blur-3xl transform rotate-12" />
           </div>
         </div>
       );
@@ -1896,6 +1938,23 @@ export default function VmixPage() {
             <div className="ml-auto flex gap-1">
               <button
                 onClick={() => {
+                  const baseUrl = savedUrl.replace(/\/+$/, "");
+                  setMonitorStreamUrls(prev => ({ ...prev, preview: `${baseUrl}/mjpeg?Input=Preview` }));
+                  setMonitorIframeMode(prev => ({ ...prev, preview: false }));
+                  toast({ title: "Vídeo NDI Ativado", description: "Carregando stream MJPEG do vMix Preview." });
+                }}
+                className="text-[8px] px-2 py-0.5 rounded transition-all flex items-center gap-1"
+                style={{
+                  backgroundColor: monitorStreamUrls.preview?.includes("mjpeg") ? "#dc262620" : "#ffffff08",
+                  color: monitorStreamUrls.preview?.includes("mjpeg") ? "#dc2626" : "#666",
+                  border: `1px solid ${monitorStreamUrls.preview?.includes("mjpeg") ? "#dc262640" : "#ffffff10"}`,
+                }}
+                title="Ativar Live Preview (vMix NDI/MJPEG)"
+              >
+                <Monitor size={10} /> LIVE
+              </button>
+              <button
+                onClick={() => {
                   setMonitorIframeMode(prev => ({ ...prev, preview: !prev.preview }));
                   if (!monitorIframeMode.preview) setMonitorStreamUrls(prev => ({ ...prev, preview: "" }));
                 }}
@@ -1917,11 +1976,11 @@ export default function VmixPage() {
                 }}
                 className="text-[8px] px-1.5 py-0.5 rounded transition-all"
                 style={{
-                  backgroundColor: monitorStreamUrls.preview ? "#3b82f620" : "#ffffff08",
-                  color: monitorStreamUrls.preview ? "#3b82f6" : "#666",
-                  border: `1px solid ${monitorStreamUrls.preview ? "#3b82f640" : "#ffffff10"}`,
+                  backgroundColor: monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f620" : "#ffffff08",
+                  color: monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f640" : "#ffffff10"}`,
                 }}
-                title="Configurar URL de stream (MJPEG/HLS)"
+                title="Configurar URL de stream manual (HLS/NDI Bridge)"
               >
                 📡
               </button>
@@ -2030,6 +2089,23 @@ export default function VmixPage() {
             <div className="ml-auto flex gap-1">
               <button
                 onClick={() => {
+                  const baseUrl = savedUrl.replace(/\/+$/, "");
+                  setMonitorStreamUrls(prev => ({ ...prev, output: `${baseUrl}/mjpeg` }));
+                  setMonitorIframeMode(prev => ({ ...prev, output: false }));
+                  toast({ title: "Vídeo NDI Ativado", description: "Carregando stream MJPEG do vMix Output." });
+                }}
+                className="text-[8px] px-2 py-0.5 rounded transition-all flex items-center gap-1"
+                style={{
+                  backgroundColor: monitorStreamUrls.output?.includes("mjpeg") ? "#dc262620" : "#ffffff08",
+                  color: monitorStreamUrls.output?.includes("mjpeg") ? "#dc2626" : "#666",
+                  border: `1px solid ${monitorStreamUrls.output?.includes("mjpeg") ? "#dc262640" : "#ffffff10"}`,
+                }}
+                title="Ativar Live Output (vMix NDI/MJPEG)"
+              >
+                <Monitor size={10} /> LIVE
+              </button>
+              <button
+                onClick={() => {
                   setMonitorIframeMode(prev => ({ ...prev, output: !prev.output }));
                   if (!monitorIframeMode.output) setMonitorStreamUrls(prev => ({ ...prev, output: "" }));
                 }}
@@ -2051,11 +2127,11 @@ export default function VmixPage() {
                 }}
                 className="text-[8px] px-1.5 py-0.5 rounded transition-all"
                 style={{
-                  backgroundColor: monitorStreamUrls.output ? "#3b82f620" : "#ffffff08",
-                  color: monitorStreamUrls.output ? "#3b82f6" : "#666",
-                  border: `1px solid ${monitorStreamUrls.output ? "#3b82f640" : "#ffffff10"}`,
+                  backgroundColor: monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f620" : "#ffffff08",
+                  color: monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f640" : "#ffffff10"}`,
                 }}
-                title="Configurar URL de stream (MJPEG/HLS)"
+                title="Configurar URL de stream manual (HLS/NDI Bridge)"
               >
                 📡
               </button>
