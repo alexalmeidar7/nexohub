@@ -946,8 +946,25 @@ export default function VmixPage() {
     }).filter((cmd) => cmd.fn);
   }, []);
 
+  const resolveInputKey = useCallback((inputKey: string | undefined): string | undefined => {
+    if (!inputKey || !inputKey.includes("-")) return inputKey;
+    const exists = inputs.some(i => i.key === inputKey);
+    if (exists) return inputKey;
+    
+    const mapped = inputMapping[inputKey];
+    if (mapped) {
+      const fallback = inputs.find(i => i.title === mapped.title);
+      if (fallback) return fallback.key;
+    }
+    return inputKey;
+  }, [inputs, inputMapping]);
+
   const runCommandsUnified = useCallback(async (cmds: any[], label: string) => {
-    const normalized = normalizeCommands(cmds);
+    const normalized = normalizeCommands(cmds).map(cmd => ({
+      ...cmd,
+      input: resolveInputKey(cmd.input)
+    }));
+    
     if (!normalized.length) return;
 
     const batchLabel = `[${label}] ${normalized.length} cmd(s)`;
