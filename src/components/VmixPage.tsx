@@ -2070,6 +2070,23 @@ export default function VmixPage() {
             <div className="ml-auto flex gap-1">
               <button
                 onClick={() => {
+                  const baseUrl = savedUrl.replace(/\/+$/, "");
+                  setMonitorStreamUrls(prev => ({ ...prev, output: `${baseUrl}/mjpeg` }));
+                  setMonitorIframeMode(prev => ({ ...prev, output: false }));
+                  toast({ title: "Vídeo NDI Ativado", description: "Carregando stream MJPEG do vMix Output." });
+                }}
+                className="text-[8px] px-2 py-0.5 rounded transition-all flex items-center gap-1"
+                style={{
+                  backgroundColor: monitorStreamUrls.output?.includes("mjpeg") ? "#dc262620" : "#ffffff08",
+                  color: monitorStreamUrls.output?.includes("mjpeg") ? "#dc2626" : "#666",
+                  border: `1px solid ${monitorStreamUrls.output?.includes("mjpeg") ? "#dc262640" : "#ffffff10"}`,
+                }}
+                title="Ativar Live Output (vMix NDI/MJPEG)"
+              >
+                <Monitor size={10} /> LIVE
+              </button>
+              <button
+                onClick={() => {
                   setMonitorIframeMode(prev => ({ ...prev, output: !prev.output }));
                   if (!monitorIframeMode.output) setMonitorStreamUrls(prev => ({ ...prev, output: "" }));
                 }}
@@ -2091,11 +2108,11 @@ export default function VmixPage() {
                 }}
                 className="text-[8px] px-1.5 py-0.5 rounded transition-all"
                 style={{
-                  backgroundColor: monitorStreamUrls.output ? "#3b82f620" : "#ffffff08",
-                  color: monitorStreamUrls.output ? "#3b82f6" : "#666",
-                  border: `1px solid ${monitorStreamUrls.output ? "#3b82f640" : "#ffffff10"}`,
+                  backgroundColor: monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f620" : "#ffffff08",
+                  color: monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f640" : "#ffffff10"}`,
                 }}
-                title="Configurar URL de stream (MJPEG/HLS)"
+                title="Configurar URL de stream manual (HLS/NDI Bridge)"
               >
                 📡
               </button>
