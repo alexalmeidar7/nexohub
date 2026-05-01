@@ -961,56 +961,91 @@ export default function CortesVideoPage() {
           )}
         </div>
 
-        {/* Result */}
-        {result && (
-          <div className="space-y-4" ref={resultRef}>
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="p-4 flex justify-center">
-                <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: result.is_local && format === "reel" ? 320 : 640 }}>
-                  {result.is_local && result.blob_url ? (
-                    <video src={result.blob_url} controls autoPlay className="w-full bg-black" style={{ aspectRatio: format === "reel" ? "9 / 16" : "16 / 9" }} />
-                  ) : (
-                    <iframe src={result.clip_embed_url} title="Clip preview" className="w-full aspect-video"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                  )}
-                </div>
-              </div>
+        {/* Result List */}
+        {results.length > 0 && (
+          <div className="space-y-6 mt-8" ref={resultRef}>
+            <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
+              <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                <Scissors size={14} className="text-red-500" /> Downloads Disponíveis
+              </h4>
+              <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">{results.length} arquivo(s) gerado(s)</span>
             </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {results.map((res, idx) => (
+                <div key={idx} className="rounded-xl overflow-hidden border transition-all hover:shadow-lg" 
+                  style={{ 
+                    backgroundColor: "var(--layout-page-bg, #ffffff)", 
+                    borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.05)"
+                  }}>
+                  {/* Miniature/Header */}
+                  <div className="relative group aspect-video bg-black overflow-hidden">
+                    {res.is_local && res.blob_url ? (
+                      <video src={res.blob_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    ) : (
+                      <img src={res.thumbnail_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="thumbnail" />
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                      <button 
+                        onClick={() => {
+                          // Simple preview swap logic if needed, or just download
+                          handleDownloadRes(res);
+                        }}
+                        className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white border border-white/30"
+                      >
+                        <Download size={20} />
+                      </button>
+                    </div>
+                    <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-[10px] font-mono text-white backdrop-blur-sm">
+                      {formatDuration(res.duration)}
+                    </div>
+                  </div>
 
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
-                <div className="flex items-center gap-2">
-                  <Play size={14} />
-                  <span className="text-sm font-bold">Trecho gerado com sucesso!</span>
+                  <div className="p-3">
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="truncate">
+                        <div className="text-[11px] font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          {res.is_local ? res.file_name : `Download YouTube #${idx + 1}`}
+                        </div>
+                        <div className="text-[9px] opacity-50 font-mono">
+                          {res.is_local ? "Processado Localmente" : "Processado no Servidor"}
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDownloadRes(res)}
+                        className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                        style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                        title="Baixar"
+                      >
+                        <Download size={14} />
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {!res.is_local && res.share_url && (
+                        <button 
+                          onClick={() => copyToClipboard(res.share_url!)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-bold bg-gray-100 hover:bg-gray-200 transition-colors"
+                          style={{ color: "#333" }}
+                        >
+                          <Copy size={10} /> Link
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-[10px] mt-0.5" style={{ opacity: 0.7 }}>Duração: {formatDuration(result.duration)}</p>
-              </div>
-              <div className="p-4 flex flex-wrap gap-2">
-                <button onClick={handleDownload}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "#dc2626", color: "#fff" }}>
-                  <Download size={12} /> Baixar Vídeo (.mp4)
-                </button>
-                {!result.is_local && result.share_url && (
-                  <>
-                    <button onClick={() => copyToClipboard(result.share_url!)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                      style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}>
-                      <Copy size={12} /> Copiar Link com Tempo
-                    </button>
-                    <button onClick={() => copyToClipboard(result.clip_embed_url!)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                      style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "#fff" }}>
-                      <Copy size={12} /> Copiar Embed
-                    </button>
-                    <a href={result.share_url} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                      style={{ backgroundColor: "#16a34a", color: "#fff" }}>
-                      <ExternalLink size={12} /> Abrir no YouTube
-                    </a>
-                  </>
-                )}
-              </div>
+              ))}
+            </div>
+            
+            <div className="flex justify-center pt-4">
+              <button 
+                onClick={() => setResults([])}
+                className="text-[10px] font-bold opacity-40 hover:opacity-100 transition-opacity flex items-center gap-1"
+                style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+              >
+                Limpar todos os downloads
+              </button>
             </div>
           </div>
         )}
