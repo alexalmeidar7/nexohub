@@ -1523,6 +1523,7 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
           <div className="h-10 rounded bg-white/5" />
         </div>
       </div>
+      </div>
     </div>
   );
 
