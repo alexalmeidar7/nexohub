@@ -897,23 +897,7 @@ export default function VmixPage() {
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
 
-    let effectiveInput = input;
-    
-    // Resolve input if it's a GUID and not found in current inputs
-    if (input && input.includes("-")) { // Simple check for UUID/GUID
-      const exists = inputs.some(i => i.key === input);
-      if (!exists) {
-        // Look up by title from our mapping
-        const mapped = inputMapping[input];
-        if (mapped) {
-          const fallback = inputs.find(i => i.title === mapped.title);
-          if (fallback) {
-            console.log(`Input ${input} not found, falling back to ${fallback.title} (Key: ${fallback.key})`);
-            effectiveInput = fallback.key;
-          }
-        }
-      }
-    }
+    const effectiveInput = resolveInputKey(input);
 
     const cmdLabel = `${fn}${effectiveInput ? ` Input=${effectiveInput}` : ""}${value ? ` Value=${value}` : ""}`;
     try {
