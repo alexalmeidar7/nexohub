@@ -94,7 +94,7 @@ function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[], inputMapp
   return line;
 }
 
-export default function PresetCommandEditor({ open, onClose, programaId, programaNome, programaHorario, userId, inputs, onRunCommands }: Props) {
+export default function PresetCommandEditor({ open, onClose, programaId, programaNome, programaHorario, userId, inputs, onRunCommands, inputMapping }: Props) {
   const { toast } = useToast();
   const [commands, setCommands] = useState<PresetCommand[]>([]);
   const [loading, setLoading] = useState(true);
