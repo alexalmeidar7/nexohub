@@ -739,6 +739,9 @@ export default function VmixPage() {
       setConnected(true);
       const ndiCount = parsedInputs.filter(isNdiInput).length;
       toast({ title: "Conectado!", description: `${ndiCount} fontes NDI detectadas (modo ${effectiveMode === "direct" ? "direto" : "proxy"}).` });
+      
+      // Auto-scan NDI sources from network patterns
+      setTimeout(() => scanNdiSources(), 1000);
     } catch (err) {
       setConnected(false);
       const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
