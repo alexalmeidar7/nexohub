@@ -1070,8 +1070,12 @@ export default function VmixPage() {
     const machines = new Set<string>();
     inputs.forEach(inp => {
       if (isNdiInput(inp)) {
-        const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
-        if (match) machines.add(match[1]);
+        // Match machine name: NDI (MACHINE (Source)) or NDI - MACHINE
+        const title = inp.title || "";
+        const match = title.match(/(?:NDI\s*[\(-]?\s*)?([A-Z0-9_-]+)/i);
+        if (match && match[1] && match[1].length > 2) {
+          machines.add(match[1]);
+        }
       }
     });
     return Array.from(machines);
