@@ -298,7 +298,7 @@ export default function CortesVideoPage() {
     if (localUrl) URL.revokeObjectURL(localUrl);
     setLocalFile(file);
     setLocalUrl(URL.createObjectURL(file));
-    setResult(null);
+    setResults([]);
   };
 
   const handleCutLocal = async () => {
@@ -311,7 +311,6 @@ export default function CortesVideoPage() {
       setErrorDetails(null);
       setShowErrorDetails(false);
       setProgress(0);
-      setResult(null);
       
       const ffmpeg = await loadFfmpeg();
       
