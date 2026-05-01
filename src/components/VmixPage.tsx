@@ -205,6 +205,7 @@ export default function VmixPage() {
     try { const s = localStorage.getItem("vmix_monitor_iframe"); return s ? JSON.parse(s) : { preview: false, output: false }; } catch { return { preview: false, output: false }; }
   });
   const [monitorsCollapsed, setMonitorsCollapsed] = useState(true);
+  const [showStudioSelector, setShowStudioSelector] = useState(false);
 
   // Command log panel
   interface VmixLogEntry { id: number; time: string; command: string; status: "ok" | "error" | "pending"; detail: string; source: "local" | "server" | "scheduler"; }
@@ -1800,28 +1801,46 @@ export default function VmixPage() {
         {/* URL section */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
           <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: connected ? "#22c55e" : "#666", boxShadow: connected ? "0 0 6px #22c55e60" : "none" }} />
-          <input
-            type="text"
-            value={vmixUrl}
-            onChange={e => setVmixUrl(e.target.value)}
-            placeholder="http://SEU_IP_PUBLICO:8088"
-            className="w-52 px-3 py-1.5 rounded text-xs outline-none transition-all focus:ring-1 focus:ring-white/10"
-            style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
-          />
-          <button onClick={saveUrl} className="px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200 hover:scale-[1.02]"
-            style={{ backgroundColor: "#ffffff08", border: "1px solid #ffffff10" }}
-          >
-            Salvar
-          </button>
-          <button
-            onClick={connectToVmix}
-            disabled={connecting}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200"
-            style={{ backgroundColor: connected ? "#22c55e18" : "#ffffff08", border: `1px solid ${connected ? "#22c55e30" : "#ffffff10"}` }}
-          >
-            {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} style={{ color: connected ? "#22c55e" : "#666" }} />}
-            {connected ? "Conectado" : "Conectar"}
-          </button>
+          
+          {connected && selectedConnectionId ? (
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Conectado a</span>
+              <span className="text-xs font-bold text-white uppercase">{studioName}</span>
+              <div className="w-px h-3 bg-white/10 mx-1" />
+              <button 
+                onClick={() => setShowStudioSelector(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-all hover:bg-blue-500/10"
+              >
+                <Monitor size={12} />
+                Trocar Estúdio
+              </button>
+            </div>
+          ) : (
+            <>
+              <input
+                type="text"
+                value={vmixUrl}
+                onChange={e => setVmixUrl(e.target.value)}
+                placeholder="http://SEU_IP_PUBLICO:8088"
+                className="w-52 px-3 py-1.5 rounded text-xs outline-none transition-all focus:ring-1 focus:ring-white/10"
+                style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
+              />
+              <button onClick={saveUrl} className="px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200 hover:scale-[1.02]"
+                style={{ backgroundColor: "#ffffff08", border: "1px solid #ffffff10" }}
+              >
+                Salvar
+              </button>
+              <button
+                onClick={connectToVmix}
+                disabled={connecting}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200"
+                style={{ backgroundColor: connected ? "#22c55e18" : "#ffffff08", border: `1px solid ${connected ? "#22c55e30" : "#ffffff10"}` }}
+              >
+                {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} style={{ color: connected ? "#22c55e" : "#666" }} />}
+                {connected ? "Conectado" : "Conectar"}
+              </button>
+            </>
+          )}
         </div>
         {/* GO LIVE / RECORD section */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
@@ -2898,7 +2917,60 @@ export default function VmixPage() {
         </div>
       </div>
 
-      {/* Instruction Dialog REMOVED */}
+      {/* ── Studio Selector Dialog ── */}
+      <Dialog open={showStudioSelector} onOpenChange={setShowStudioSelector}>
+        <DialogContent className="bg-[#1e1e24] border-[#ffffff10] text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">Trocar Estúdio</DialogTitle>
+            <DialogDescription className="text-white/40">
+              Selecione qual estúdio você deseja controlar agora.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3 mt-2 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+            {vmixConnections.map((conn) => (
+              <div 
+                key={conn.id}
+                onClick={() => {
+                  handleSelectConnection(conn);
+                  setShowStudioSelector(false);
+                  // Trigger connection automatically after selection
+                  setTimeout(() => connectToVmix(), 300);
+                }}
+                className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                  selectedConnectionId === conn.id 
+                    ? "bg-blue-600/20 border-blue-500/50" 
+                    : "bg-white/5 border-white/5 hover:bg-white/10"
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-3 h-3 rounded-full ${selectedConnectionId === conn.id ? "bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)] animate-pulse" : "bg-white/10"}`} />
+                  <div>
+                    <p className="text-sm font-bold text-white/90">{conn.name || "Estúdio sem nome"}</p>
+                    <p className="text-[10px] text-white/30 font-mono mt-0.5">{conn.url}</p>
+                  </div>
+                </div>
+                {selectedConnectionId === conn.id && <CheckCircle size={16} className="text-blue-500" />}
+              </div>
+            ))}
+            
+            {vmixConnections.length === 0 && (
+              <div className="text-center py-10 text-white/20">
+                <Monitor size={32} className="mx-auto mb-2 opacity-20" />
+                <p className="text-xs">Nenhum estúdio salvo encontrado.</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="mt-4 border-t border-white/5 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowStudioSelector(false)} 
+              className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white/70"
+            >
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
