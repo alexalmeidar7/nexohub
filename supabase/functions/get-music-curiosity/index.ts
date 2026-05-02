@@ -60,10 +60,10 @@ Deno.serve(async (req) => {
     const artistaTrim = artista.trim();
     const musicaTrim = musica.trim();
 
-    // 0) Verifica exceções e flag de IA habilitada
+    // 0) Verifica exceções e flag de IA habilitada + Cota Mensal
     const { data: settings } = await supabase
       .from("user_settings")
-      .select("infomusic_excecoes, infomusic_ai_enabled")
+      .select("infomusic_excecoes, infomusic_ai_enabled, infomusic_ai_monthly_count, infomusic_ai_last_reset")
       .eq("user_id", userId)
       .maybeSingle();
 
