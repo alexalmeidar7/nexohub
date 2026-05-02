@@ -500,6 +500,18 @@ serve(async (req) => {
     if (broadcastConfig.ticker) tickerParts.push(broadcastConfig.ticker);
     const ticker = tickerParts.join("  •  ");
 
+    // ── Music curiosity manual override ──
+    // The dashbord sets music_curiosity_manual (text) and music_curiosity_manual_until (ISO timestamp)
+    let curiosidade = "";
+    const manualCuriosityText = (settingsRes.data?.dashboard_items as any)?.music_curiosity_manual;
+    const manualCuriosityUntil = (settingsRes.data?.dashboard_items as any)?.music_curiosity_manual_until;
+    if (manualCuriosityText && manualCuriosityUntil) {
+      const untilMs = new Date(manualCuriosityUntil).getTime();
+      if (Number.isFinite(untilMs) && Date.now() < untilMs) {
+        curiosidade = manualCuriosityText;
+      }
+    }
+
     const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
     let logoPatrocinador = BLANK_LOGO_URL;
     if (sponsorLogos.length > 0) {
