@@ -102,20 +102,24 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const loadData = async (targetUserId = dataUserId) => {
     if (!targetUserId) return;
-    const [, { data: lData }, { data: pData }] = await Promise.all([
-      supabase.rpc("cleanup_comercial"),
-      supabase.from("logos_patrocinadores").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
-      supabase.from("programas").select("id, nome, estudio, horario_inicio").eq("user_id", targetUserId).eq("ativo", true),
-    ]);
+    setLoading(true);
+    try {
+      const [, { data: lData }, { data: pData }] = await Promise.all([
+        supabase.rpc("cleanup_comercial"),
+        supabase.from("logos_patrocinadores").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
+        supabase.from("programas").select("id, nome, estudio, horario_inicio").eq("user_id", targetUserId).eq("ativo", true),
+      ]);
 
-    const all = (lData || []) as Logo[];
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 180);
+      const all = (lData || []) as Logo[];
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 180);
 
-    setLogos(all.filter((l) => !l.excluido));
-    setExcludedLogos(all.filter((l) => l.excluido && l.excluido_at && new Date(l.excluido_at) > cutoff));
-    setProgramas(pData || []);
-    setLoading(false);
+      setLogos(all.filter((l) => !l.excluido));
+      setExcludedLogos(all.filter((l) => l.excluido && l.excluido_at && new Date(l.excluido_at) > cutoff));
+      setProgramas(pData || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

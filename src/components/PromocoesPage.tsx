@@ -155,12 +155,16 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
 
   const loadData = async (targetUserId = dataUserId) => {
     if (!targetUserId) return;
-    const [, { data }] = await Promise.all([
-      supabase.rpc("cleanup_comercial"),
-      supabase.from("promocoes").select("*").eq("user_id", targetUserId).order("data_inicio"),
-    ]);
-    setItems(data || []);
-    setLoading(false);
+    setLoading(true);
+    try {
+      const [, { data }] = await Promise.all([
+        supabase.rpc("cleanup_comercial"),
+        supabase.from("promocoes").select("*").eq("user_id", targetUserId).order("data_inicio"),
+      ]);
+      setItems(data || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

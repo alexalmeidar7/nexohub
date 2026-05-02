@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Scissors, Download, Clock, Link2, Loader2, Play, Copy, ExternalLink, Upload, Youtube, FileVideo, Plus, Trash2 } from "lucide-react";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -128,6 +129,12 @@ export default function CortesVideoPage() {
 
   const sourceReady = mode === "youtube" ? !!videoId : !!localFile;
   const canCut = sourceReady && duration > 0 && duration <= 600;
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Fetch YouTube title
   useEffect(() => {
@@ -564,6 +571,8 @@ export default function CortesVideoPage() {
 
   const now = new Date();
   const currentTimeStr = `${pad(now.getHours())}:${pad(now.getMinutes())} • ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+
+  if (loading) return <ModulePageSkeleton variant="list" />;
 
   return (
     <div className="animate-fade-in">

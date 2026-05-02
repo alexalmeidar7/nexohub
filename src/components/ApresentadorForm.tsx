@@ -78,10 +78,13 @@ export default function ApresentadorForm() {
 
   const load = async () => {
     setLoadingList(true);
-    const list = await getApresentadores();
-    list.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
-    setApresentadores(list);
-    setLoadingList(false);
+    try {
+      const list = await getApresentadores();
+      list.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+      setApresentadores(list);
+    } finally {
+      setLoadingList(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
