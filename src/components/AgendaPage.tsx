@@ -1991,7 +1991,7 @@ export default function AgendaPage() {
           </div>
             {/* Próximos Feriados Section */}
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "linear-gradient(135deg, #ef4444, #b91c1c)", color: "#ffffff" }}>
+              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #ef4444), color-mix(in srgb, var(--layout-accent-color, #ef4444) 80%, black 20%))", color: "#ffffff" }}>
                 <div className="flex items-center gap-1.5">
                   <Star size={12} className="fill-white" />
                   Próximos Feriados
