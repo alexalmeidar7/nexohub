@@ -572,6 +572,8 @@ export default function CortesVideoPage() {
   const now = new Date();
   const currentTimeStr = `${pad(now.getHours())}:${pad(now.getMinutes())} • ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
 
+  if (loading) return <ModulePageSkeleton variant="list" />;
+
   return (
     <div className="animate-fade-in">
       <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
