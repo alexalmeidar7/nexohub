@@ -328,7 +328,7 @@ export default function InfoMusicSection() {
                           style={{ color: "var(--layout-accent-color, #2563eb)" }}
                           title="Enviar manualmente para o XML"
                         >
-                          <Save size={14} />
+                          <Send size={14} />
                         </button>
                       </td>
                       <td className="px-3 py-2 align-top text-right">
