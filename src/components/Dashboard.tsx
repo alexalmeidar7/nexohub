@@ -1135,7 +1135,8 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
             <Tooltip>
               <TooltipTrigger asChild>
                 <span 
-                  className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50 cursor-help"
+                  className="text-[8px] font-black text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm cursor-help"
+                  style={{ backgroundColor: "var(--layout-accent-color, #ef4444)", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-accent-color, #ef4444) 50%, transparent)" }}
                   onClick={(e) => { e.stopPropagation(); onExportFeriados(); }}
                 >
                   Feriado
