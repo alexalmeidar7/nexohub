@@ -407,133 +407,186 @@ export default function CenariosEstudioPage() {
           />
         ))}
 
-      {/* Saved templates gallery (always visible when there are saved templates) */}
+      {/* Saved templates gallery (organized by program) */}
       {(() => {
         const savedTemplates = grupos.filter((t) => {
           const a = t.tvs.find((tv) => tv.posicao === 0);
           return !!a?.imagem_url;
         });
+        
         if (savedTemplates.length === 0) return null;
+
+        // Group templates by program
+        const templatesByProgram: Record<string, { nome: string, templates: Grupo[] }> = {};
+        const unlinkedTemplates: Grupo[] = [];
+
+        savedTemplates.forEach(t => {
+          if (t.programa_ids.length === 0) {
+            unlinkedTemplates.push(t);
+          } else {
+            t.programa_ids.forEach(pid => {
+              const prog = programas.find(p => p.id === pid);
+              if (prog) {
+                if (!templatesByProgram[pid]) {
+                  templatesByProgram[pid] = { nome: prog.nome, templates: [] };
+                }
+                // Avoid duplicates if a template is already added for this program
+                if (!templatesByProgram[pid].templates.find(existing => existing.id === t.id)) {
+                  templatesByProgram[pid].templates.push(t);
+                }
+              }
+            });
+          }
+        });
+
+        const renderTemplateCard = (t: Grupo) => {
+          const a = t.tvs.find((tv) => tv.posicao === 0);
+          const url = a?.imagem_url || "";
+          const linkedNames = t.programa_ids
+            .map((pid) => programas.find((p) => p.id === pid)?.nome)
+            .filter(Boolean) as string[];
+
+          return (
+            <Card 
+              key={t.id} 
+              className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+              style={{
+                ...layoutCardStyle,
+                border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent)",
+              }}
+            >
+              <div
+                className="w-full relative overflow-hidden bg-black"
+                style={{ aspectRatio: "16/9" }}
+              >
+                {/* Sub-grid Preview Overlay */}
+                <div 
+                  className="absolute inset-0 grid gap-[1px] opacity-30"
+                  style={{
+                    gridTemplateColumns: `repeat(${t.cols}, 1fr)`,
+                    gridTemplateRows: `repeat(${t.rows}, 1fr)`,
+                  }}
+                >
+                  {Array.from({ length: t.rows * t.cols }).map((_, i) => (
+                    <div key={i} className="border-[0.5px] border-white/20" />
+                  ))}
+                </div>
+
+                <div
+                  className="absolute inset-0 transition-transform duration-500 group-hover:scale-110"
+                  style={{
+                    backgroundImage: `url(${url})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                />
+                
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+
+                {/* Floating Actions */}
+                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-9 w-9 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
+                    onClick={() => setEditingIds((prev) => new Set(prev).add(t.id))}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    className="h-9 w-9 rounded-full shadow-lg"
+                    onClick={() => removeGrupo(t.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Grid Badge */}
+                <div className="absolute bottom-3 left-3">
+                  <Badge className="bg-white/10 backdrop-blur-md border-white/20 text-white text-[10px] font-mono">
+                    {t.rows}×{t.cols} GRID
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="p-4">
+                <div className="mb-3">
+                  <h5 className="font-bold text-sm truncate" style={layoutText}>{t.nome}</h5>
+                  <p className="text-[10px] mt-0.5 font-medium uppercase tracking-tight opacity-50" style={layoutText}>
+                    {t.rows * t.cols} TV{t.rows * t.cols !== 1 ? "s" : ""} em layout
+                  </p>
+                </div>
+                
+                <div className="min-h-[24px]">
+                  {linkedNames.length === 0 ? (
+                    <span className="text-[10px] italic opacity-40 font-medium" style={layoutText}>
+                      Nenhum programa vinculado
+                    </span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {linkedNames.slice(0, 3).map((nome, i) => (
+                        <Badge 
+                          key={i} 
+                          variant="secondary" 
+                          className="text-[9px] px-1.5 py-0 rounded-md font-bold h-5"
+                          style={{ ...layoutAccentSoft, color: "var(--layout-accent-color, #2563eb)", border: "none" }}
+                        >
+                          {nome}
+                        </Badge>
+                      ))}
+                      {linkedNames.length > 3 && (
+                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 rounded-md h-5 opacity-50">
+                          +{linkedNames.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          );
+        };
+
         return (
-          <div className="space-y-4">
+          <div className="space-y-10">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-bold uppercase tracking-widest opacity-60 flex items-center gap-2" style={layoutText}>
                 <LayoutGrid className="h-4 w-4" /> Templates Disponíveis
               </h4>
             </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {savedTemplates.map((t) => {
-                const a = t.tvs.find((tv) => tv.posicao === 0);
-                const url = a?.imagem_url || "";
-                const linkedNames = t.programa_ids
-                  .map((pid) => programas.find((p) => p.id === pid)?.nome)
-                  .filter(Boolean) as string[];
-                
-                return (
-                  <Card 
-                    key={t.id} 
-                    className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-                    style={{
-                      ...layoutCardStyle,
-                      border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent)",
-                    }}
-                  >
-                    <div
-                      className="w-full relative overflow-hidden bg-black"
-                      style={{ aspectRatio: "16/9" }}
-                    >
-                      {/* Sub-grid Preview Overlay */}
-                      <div 
-                        className="absolute inset-0 grid gap-[1px] opacity-30"
-                        style={{
-                          gridTemplateColumns: `repeat(${t.cols}, 1fr)`,
-                          gridTemplateRows: `repeat(${t.rows}, 1fr)`,
-                        }}
-                      >
-                        {Array.from({ length: t.rows * t.cols }).map((_, i) => (
-                          <div key={i} className="border-[0.5px] border-white/20" />
-                        ))}
-                      </div>
 
-                      <div
-                        className="absolute inset-0 transition-transform duration-500 group-hover:scale-110"
-                        style={{
-                          backgroundImage: `url(${url})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                      />
-                      
-                      {/* Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+            {Object.entries(templatesByProgram).map(([pid, { nome, templates }]) => (
+              <div key={pid} className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border/40" />
+                  <Badge variant="outline" className="px-3 py-1 border-primary/30 bg-primary/5 text-primary font-bold text-[11px] uppercase tracking-wider rounded-lg">
+                    {nome}
+                  </Badge>
+                  <div className="h-px flex-1 bg-border/40" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {templates.map(renderTemplateCard)}
+                </div>
+              </div>
+            ))}
 
-                      {/* Floating Actions */}
-                      <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
-                        <Button
-                          size="icon"
-                          variant="secondary"
-                          className="h-9 w-9 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
-                          onClick={() => setEditingIds((prev) => new Set(prev).add(t.id))}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          className="h-9 w-9 rounded-full shadow-lg"
-                          onClick={() => removeGrupo(t.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      {/* Grid Badge */}
-                      <div className="absolute bottom-3 left-3">
-                        <Badge className="bg-white/10 backdrop-blur-md border-white/20 text-white text-[10px] font-mono">
-                          {t.rows}×{t.cols} GRID
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="p-4">
-                      <div className="mb-3">
-                        <h5 className="font-bold text-sm truncate" style={layoutText}>{t.nome}</h5>
-                        <p className="text-[10px] mt-0.5 font-medium uppercase tracking-tight opacity-50" style={layoutText}>
-                          {t.rows * t.cols} TV{t.rows * t.cols !== 1 ? "s" : ""} em layout
-                        </p>
-                      </div>
-                      
-                      <div className="min-h-[24px]">
-                        {linkedNames.length === 0 ? (
-                          <span className="text-[10px] italic opacity-40 font-medium" style={layoutText}>
-                            Nenhum programa vinculado
-                          </span>
-                        ) : (
-                          <div className="flex flex-wrap gap-1.5">
-                            {linkedNames.slice(0, 3).map((nome, i) => (
-                              <Badge 
-                                key={i} 
-                                variant="secondary" 
-                                className="text-[9px] px-1.5 py-0 rounded-md font-bold h-5"
-                                style={{ ...layoutAccentSoft, color: "var(--layout-accent-color, #2563eb)", border: "none" }}
-                              >
-                                {nome}
-                              </Badge>
-                            ))}
-                            {linkedNames.length > 3 && (
-                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 rounded-md h-5 opacity-50">
-                                +{linkedNames.length - 3}
-                              </Badge>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
+            {unlinkedTemplates.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border/40" />
+                  <Badge variant="outline" className="px-3 py-1 border-muted-foreground/30 bg-muted/5 text-muted-foreground font-bold text-[11px] uppercase tracking-wider rounded-lg">
+                    Templates sem Programa
+                  </Badge>
+                  <div className="h-px flex-1 bg-border/40" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {unlinkedTemplates.map(renderTemplateCard)}
+                </div>
+              </div>
+            )}
           </div>
         );
       })()}
