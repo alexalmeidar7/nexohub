@@ -157,6 +157,20 @@ export default function InfoMusicSection() {
               ? "Habilitado: novas músicas geram curiosidade pela IA e são salvas no banco por 90 dias."
               : "Desabilitado: o sistema apenas consulta o banco de curiosidades já cadastradas (90 dias). Nada novo será gerado pela IA."}
           </p>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="flex-1 h-1.5 rounded-full bg-black/5 overflow-hidden">
+              <div 
+                className="h-full transition-all duration-500" 
+                style={{ 
+                  width: `${Math.min(100, (monthlyQuota.count / monthlyQuota.limit) * 100)}%`,
+                  backgroundColor: monthlyQuota.count >= monthlyQuota.limit ? "#ef4444" : "var(--layout-accent-color, #2563eb)"
+                }}
+              />
+            </div>
+            <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: monthlyQuota.count >= monthlyQuota.limit ? "#ef4444" : "var(--layout-page-text, #1a1a1a)" }}>
+              {monthlyQuota.count} / {monthlyQuota.limit} gerações/mês
+            </span>
+          </div>
         </div>
         <button
           onClick={toggleAi}
