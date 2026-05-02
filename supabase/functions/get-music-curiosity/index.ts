@@ -60,10 +60,10 @@ Deno.serve(async (req) => {
     const artistaTrim = artista.trim();
     const musicaTrim = musica.trim();
 
-    // 0) Verifica exceções e flag de IA habilitada
+    // 0) Verifica exceções e flag de IA habilitada + Cota Mensal
     const { data: settings } = await supabase
       .from("user_settings")
-      .select("infomusic_excecoes, infomusic_ai_enabled")
+      .select("infomusic_excecoes, infomusic_ai_enabled, infomusic_ai_monthly_count, infomusic_ai_last_reset")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -113,12 +113,34 @@ Deno.serve(async (req) => {
         .then(() => {});
     }
 
-    // 1.5) Se IA está desabilitada, retorna vazio sem gerar
+    // 1.5) Verifica cota mensal e flag IA habilitada
     if (!aiEnabled) {
       return new Response(
         JSON.stringify({ curiosidade: "", skipped: true, reason: "ai_disabled" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
+    }
+
+    // Lógica de reset mensal da cota
+    const now = new Date();
+    const lastReset = settings?.infomusic_ai_last_reset ? new Date(settings.infomusic_ai_last_reset) : now;
+    const isNewMonth = now.getMonth() !== lastReset.getMonth() || now.getFullYear() !== lastReset.getFullYear();
+    
+    let currentMonthlyCount = isNewMonth ? 0 : (settings?.infomusic_ai_monthly_count || 0);
+    
+    if (currentMonthlyCount >= 20) {
+      return new Response(
+        JSON.stringify({ curiosidade: "", skipped: true, reason: "monthly_quota_exceeded" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Se mudou o mês, já reseta no banco para garantir
+    if (isNewMonth) {
+      await supabase
+        .from("user_settings")
+        .update({ infomusic_ai_monthly_count: 0, infomusic_ai_last_reset: now.toISOString() })
+        .eq("user_id", userId);
     }
 
     // 2) Generate via Lovable AI
@@ -178,9 +200,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3) Save to global cache (6 months expiration)
+    // 3) Save to global cache (6 months expiration) + Increment User Quota
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + 6);
+
+    // Increment count in DB
+    await supabase
+      .from("user_settings")
+      .update({ infomusic_ai_monthly_count: currentMonthlyCount + 1 })
+      .eq("user_id", userId);
 
     await supabase
       .from("infomusic")
@@ -194,7 +222,7 @@ Deno.serve(async (req) => {
       .select()
       .maybeSingle();
 
-    return new Response(JSON.stringify({ curiosidade, cached: false }), {
+    return new Response(JSON.stringify({ curiosidade, cached: false, quota_used: currentMonthlyCount + 1 }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

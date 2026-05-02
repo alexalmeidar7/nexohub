@@ -26,17 +26,20 @@ export default function InfoMusicSection() {
   const [aiEnabled, setAiEnabled] = useState(true);
   const [togglingAi, setTogglingAi] = useState(false);
 
+  const [monthlyQuota, setMonthlyQuota] = useState({ count: 0, limit: 20 });
+
   const loadExcecoes = async () => {
     if (!user) return;
     const { data } = await supabase
       .from("user_settings")
-      .select("infomusic_excecoes, infomusic_ai_enabled")
+      .select("infomusic_excecoes, infomusic_ai_enabled, infomusic_ai_monthly_count")
       .eq("user_id", user.id)
       .maybeSingle();
     const v = (data?.infomusic_excecoes || "") as string;
     setExcecoes(v);
     setExcecoesInitial(v);
     setAiEnabled((data as { infomusic_ai_enabled?: boolean })?.infomusic_ai_enabled !== false);
+    setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
   };
 
   const toggleAi = async () => {
@@ -98,6 +101,9 @@ export default function InfoMusicSection() {
       });
       if (error) throw error;
       if ((data as { error?: string })?.error) throw new Error((data as { error?: string }).error);
+      if (!(data as { cached?: boolean }).cached) {
+        setMonthlyQuota(prev => ({ ...prev, count: prev.count + 1 }));
+      }
       toast.success((data as { cached?: boolean }).cached ? "Curiosidade do cache" : "Curiosidade gerada pela IA");
       setTestArtista("");
       setTestMusica("");
@@ -131,7 +137,7 @@ export default function InfoMusicSection() {
           Toda vez que uma nova música começar a tocar, o sistema consulta a tabela <strong>InfoMusic</strong>. 
           Se não houver curiosidade salva, a IA (Gemini Pro) gera um texto de até 5 linhas com uma curiosidade real sobre a música ou o artista. 
           A curiosidade é exibida no XML <code className="px-1 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>&lt;curiosidade&gt;</code> entre os <strong>10s e 25s</strong> da música. 
-          Cada curiosidade fica salva por <strong>90 dias</strong> e depois é excluída automaticamente.
+          Cada curiosidade fica salva por <strong>6 meses</strong> e depois é excluída automaticamente. A cota é de <strong>20 gerações mensais</strong> por usuário.
         </p>
       </div>
 
@@ -148,9 +154,23 @@ export default function InfoMusicSection() {
           </div>
           <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
             {aiEnabled
-              ? "Habilitado: novas músicas geram curiosidade pela IA e são salvas no banco por 90 dias."
-              : "Desabilitado: o sistema apenas consulta o banco de curiosidades já cadastradas (90 dias). Nada novo será gerado pela IA."}
+              ? `Habilitado: novas músicas geram curiosidade pela IA (limite de 20/mês).`
+              : "Desabilitado: o sistema apenas consulta o banco de curiosidades já cadastradas (6 meses). Nada novo será gerado pela IA."}
           </p>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="flex-1 h-1.5 rounded-full bg-black/5 overflow-hidden">
+              <div 
+                className="h-full transition-all duration-500" 
+                style={{ 
+                  width: `${Math.min(100, (monthlyQuota.count / monthlyQuota.limit) * 100)}%`,
+                  backgroundColor: monthlyQuota.count >= monthlyQuota.limit ? "#ef4444" : "var(--layout-accent-color, #2563eb)"
+                }}
+              />
+            </div>
+            <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: monthlyQuota.count >= monthlyQuota.limit ? "#ef4444" : "var(--layout-page-text, #1a1a1a)" }}>
+              {monthlyQuota.count} / {monthlyQuota.limit} gerações/mês
+            </span>
+          </div>
         </div>
         <button
           onClick={toggleAi}
