@@ -178,10 +178,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3) Save to cache scoped to this user
+    // 3) Save to global cache (6 months expiration)
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 6);
+
     await supabase
       .from("infomusic")
-      .insert({ user_id: userId, artista: artistaTrim, musica: musicaTrim, curiosidade })
+      .insert({ 
+        user_id: userId, 
+        artista: artistaTrim, 
+        musica: musicaTrim, 
+        curiosidade,
+        expires_at: expiresAt.toISOString()
+      })
       .select()
       .maybeSingle();
 
