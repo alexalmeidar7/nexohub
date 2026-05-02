@@ -378,13 +378,6 @@ export default function PrevisaoTempo() {
 
       {/* Loading skeleton */}
       {loading && <ModulePageSkeleton variant="list" />}
-                <div className="h-10 w-10 mx-auto rounded-full bg-[var(--layout-header-bg)]/5" />
-                <div className="h-4 w-16 mx-auto rounded bg-[var(--layout-header-bg)]/5" />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {weather && (
         <>
