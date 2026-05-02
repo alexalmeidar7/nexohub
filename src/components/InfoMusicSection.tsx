@@ -137,7 +137,7 @@ export default function InfoMusicSection() {
           Toda vez que uma nova música começar a tocar, o sistema consulta a tabela <strong>InfoMusic</strong>. 
           Se não houver curiosidade salva, a IA (Gemini Pro) gera um texto de até 5 linhas com uma curiosidade real sobre a música ou o artista. 
           A curiosidade é exibida no XML <code className="px-1 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>&lt;curiosidade&gt;</code> entre os <strong>10s e 25s</strong> da música. 
-          Cada curiosidade fica salva por <strong>90 dias</strong> e depois é excluída automaticamente.
+          Cada curiosidade fica salva por <strong>6 meses</strong> e depois é excluída automaticamente. A cota é de <strong>20 gerações mensais</strong> por usuário.
         </p>
       </div>
 
