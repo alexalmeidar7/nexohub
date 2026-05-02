@@ -148,7 +148,7 @@ export default function PrevisaoTempo() {
   }, []);
 
   const fetchWeatherByCoords = useCallback(async (lat: number, lon: number, name: string, silent = false) => {
-    if (!silent) { setLoading(true); setError(""); setWeather(null); }
+    if (!silent) { setLoading(true); setError(""); }
     try {
       const { data: resp, error: fnErr } = await supabase.functions.invoke("fetch-weather", {
         body: { action: "forecast", lat, lon, forecast_days: 6 },
