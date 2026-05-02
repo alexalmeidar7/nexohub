@@ -101,6 +101,9 @@ export default function InfoMusicSection() {
       });
       if (error) throw error;
       if ((data as { error?: string })?.error) throw new Error((data as { error?: string }).error);
+      if (!(data as { cached?: boolean }).cached) {
+        setMonthlyQuota(prev => ({ ...prev, count: prev.count + 1 }));
+      }
       toast.success((data as { cached?: boolean }).cached ? "Curiosidade do cache" : "Curiosidade gerada pela IA");
       setTestArtista("");
       setTestMusica("");
