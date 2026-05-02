@@ -3,6 +3,7 @@ import { Search, Droplets, CloudRain, Thermometer, Star, Sparkles, MapPin, Wind 
 import XmlLinkRow from "./XmlLinkRow";
 import { WeatherIcon } from "./WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 interface WeatherData {
   city: string;
