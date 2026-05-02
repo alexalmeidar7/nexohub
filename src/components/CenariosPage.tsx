@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react";
-import { MonitorPlay, Tv, Loader2 } from "lucide-react";
+import { MonitorPlay, Tv } from "lucide-react";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
 const CenariosEstudioPage = lazy(() => import("./CenariosEstudioPage"));
