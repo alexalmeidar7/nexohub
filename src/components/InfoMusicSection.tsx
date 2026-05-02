@@ -318,6 +318,19 @@ export default function InfoMusicSection() {
                       <td className="px-3 py-2 align-top font-mono text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                         {new Date(r.created_at).toLocaleDateString("pt-BR")}
                       </td>
+                      <td className="px-3 py-2 align-top text-center">
+                        <button 
+                          onClick={() => {
+                            window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: r.curiosidade } }));
+                            toast.success("Enviado para o XML!");
+                          }}
+                          className="p-1 rounded-lg hover:bg-black/5 transition-colors"
+                          style={{ color: "var(--layout-accent-color, #2563eb)" }}
+                          title="Enviar manualmente para o XML"
+                        >
+                          <Save size={14} />
+                        </button>
+                      </td>
                       <td className="px-3 py-2 align-top text-right">
                         <button onClick={() => handleDelete(r.id)} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: "#dc2626" }}>
                           <Trash2 size={13} />
