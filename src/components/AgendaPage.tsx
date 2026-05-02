@@ -1937,7 +1937,7 @@ export default function AgendaPage() {
                 .agenda-calendar .rdp-day_today.rdp-day_selected { background-color: var(--layout-header-bg, #1a1a1a) !important; color: var(--layout-header-text, #ffffff) !important; }
                 .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; font-weight: bold; }
                 .agenda-calendar .is-feriado-day { position: relative; }
-                .agenda-calendar .is-feriado-day::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background-color: #ef4444; }
+                .agenda-calendar .is-feriado-day::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background-color: var(--layout-accent-color, #ef4444); }
               `}</style>
               <TooltipProvider>
                 <Calendar
