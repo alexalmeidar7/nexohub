@@ -113,12 +113,34 @@ Deno.serve(async (req) => {
         .then(() => {});
     }
 
-    // 1.5) Se IA está desabilitada, retorna vazio sem gerar
+    // 1.5) Verifica cota mensal e flag IA habilitada
     if (!aiEnabled) {
       return new Response(
         JSON.stringify({ curiosidade: "", skipped: true, reason: "ai_disabled" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
+    }
+
+    // Lógica de reset mensal da cota
+    const now = new Date();
+    const lastReset = settings?.infomusic_ai_last_reset ? new Date(settings.infomusic_ai_last_reset) : now;
+    const isNewMonth = now.getMonth() !== lastReset.getMonth() || now.getFullYear() !== lastReset.getFullYear();
+    
+    let currentMonthlyCount = isNewMonth ? 0 : (settings?.infomusic_ai_monthly_count || 0);
+    
+    if (currentMonthlyCount >= 20) {
+      return new Response(
+        JSON.stringify({ curiosidade: "", skipped: true, reason: "monthly_quota_exceeded" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Se mudou o mês, já reseta no banco para garantir
+    if (isNewMonth) {
+      await supabase
+        .from("user_settings")
+        .update({ infomusic_ai_monthly_count: 0, infomusic_ai_last_reset: now.toISOString() })
+        .eq("user_id", userId);
     }
 
     // 2) Generate via Lovable AI
