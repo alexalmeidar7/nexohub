@@ -240,6 +240,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const curiosityShownAtRef = useRef<number | null>(null);
   const curiosityKeyRef = useRef<string>("");
   const [, forceCuriosityTick] = useState(0);
+  const manualCuriosityRef = useRef<string | null>(null);
 
   const [sourceMode, setSourceModeState] = useState<SourceMode>("online");
   const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
@@ -905,21 +906,40 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const displayArtista = isBreak ? "" : (useFallback ? "no ar agora" : (music?.artista || "Interprete"));
   const displayCover = isBreak ? null : (useFallback ? presenterFallback!.foto : (music?.capa || ""));
 
+  // Listen for manual curiosity sends from the settings table
+  useEffect(() => {
+    const handler = (e: any) => {
+      const text = e.detail?.text;
+      if (text) {
+        manualCuriosityRef.current = text;
+        curiosityShownAtRef.current = Date.now();
+        setCuriosidade(text);
+        forceCuriosityTick(n => n + 1);
+      }
+    };
+    window.addEventListener("manual-music-curiosity" as any, handler);
+    return () => window.removeEventListener("manual-music-curiosity" as any, handler);
+  }, []);
+
   // ===== Info Music: fetch IA-generated curiosity when song changes =====
   useEffect(() => {
     if (isBreak || !music?.titulo || !music?.artista || !dataUserId) {
       setCuriosidade("");
       curiosidadeFetchedKeyRef.current = "";
+      manualCuriosityRef.current = null;
       return;
     }
     const key = `${dataUserId}::${music.artista}::${music.titulo}`.toLowerCase();
     if (curiosidadeFetchedKeyRef.current === key) return;
     curiosidadeFetchedKeyRef.current = key;
+    
+    // Clear previous curiosity and reset manual flag for new song
     setCuriosidade("");
+    manualCuriosityRef.current = null;
+    
     let cancelled = false;
     (async () => {
       try {
-        // Skip silently when there is no valid session — the function requires auth
         const { data: sess } = await supabase.auth.getSession();
         if (!sess?.session?.access_token) return;
         if (cancelled) return;
@@ -929,7 +949,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         if (cancelled) return;
         if (error) { console.warn("curiosity error", error); return; }
         const txt = (data as { curiosidade?: string })?.curiosidade;
-        if (txt) setCuriosidade(txt);
+        
+        // Only set if user hasn't sent a manual one in the meantime
+        if (txt && !manualCuriosityRef.current) setCuriosidade(txt);
       } catch (e) {
         console.warn("curiosity fetch failed", e);
       }

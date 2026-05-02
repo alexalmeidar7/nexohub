@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save } from "lucide-react";
+import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -303,6 +303,7 @@ export default function InfoMusicSection() {
                     <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Música</th>
                     <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Curiosidade</th>
                     <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Inserção</th>
+                    <th className="text-center px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Enviar</th>
                     <th className="px-3 py-2"></th>
                   </tr>
                 </thead>
@@ -316,6 +317,32 @@ export default function InfoMusicSection() {
                       </td>
                       <td className="px-3 py-2 align-top font-mono text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                         {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="px-3 py-2 align-top text-center">
+                        <button 
+                          onClick={async () => {
+                            try {
+                              const until = new Date(Date.now() + 30_000).toISOString();
+                              await supabase.from("user_settings").update({
+                                dashboard_items: {
+                                  ...((await supabase.from("user_settings").select("dashboard_items").eq("user_id", user?.id).maybeSingle()).data?.dashboard_items as any || {}),
+                                  music_curiosity_manual: r.curiosidade,
+                                  music_curiosity_manual_until: until
+                                }
+                              }).eq("user_id", user?.id);
+                              
+                              window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: r.curiosidade } }));
+                              toast.success("Enviado para o vMix!");
+                            } catch (e) {
+                              toast.error("Erro ao enviar");
+                            }
+                          }}
+                          className="p-1 rounded-lg hover:bg-black/5 transition-colors"
+                          style={{ color: "var(--layout-accent-color, #2563eb)" }}
+                          title="Enviar manualmente para o XML"
+                        >
+                          <Send size={14} />
+                        </button>
                       </td>
                       <td className="px-3 py-2 align-top text-right">
                         <button onClick={() => handleDelete(r.id)} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: "#dc2626" }}>
