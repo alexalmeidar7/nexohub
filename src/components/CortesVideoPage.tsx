@@ -129,6 +129,12 @@ export default function CortesVideoPage() {
 
   const sourceReady = mode === "youtube" ? !!videoId : !!localFile;
   const canCut = sourceReady && duration > 0 && duration <= 600;
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Fetch YouTube title
   useEffect(() => {
