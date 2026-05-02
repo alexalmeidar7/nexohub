@@ -240,6 +240,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const curiosityShownAtRef = useRef<number | null>(null);
   const curiosityKeyRef = useRef<string>("");
   const [, forceCuriosityTick] = useState(0);
+  const manualCuriosityRef = useRef<string | null>(null);
 
   const [sourceMode, setSourceModeState] = useState<SourceMode>("online");
   const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
