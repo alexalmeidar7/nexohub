@@ -29,10 +29,11 @@ Deno.serve(async (req) => {
     });
     const { data: userData, error: userErr } = await userClient.auth.getUser();
     if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Return 200 with skip flag to avoid breaking the UI when session expired
+      return new Response(
+        JSON.stringify({ ok: false, curiosidade: "", skipped: true, reason: "not_authenticated" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
     const authUserId = userData.user.id;
 
