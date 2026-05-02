@@ -88,25 +88,29 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 1) Cache lookup scoped to this user (cleanup expired first, also scoped)
-    await supabase
-      .from("infomusic")
-      .delete()
-      .eq("user_id", userId)
-      .lt("expires_at", new Date().toISOString());
-
+    // 1) Global cache lookup (check if anyone has this music/artist curiosity)
     const { data: cached } = await supabase
       .from("infomusic")
       .select("curiosidade")
-      .eq("user_id", userId)
       .ilike("artista", artistaTrim)
       .ilike("musica", musicaTrim)
+      .gt("expires_at", new Date().toISOString())
+      .limit(1)
       .maybeSingle();
 
     if (cached?.curiosidade) {
       return new Response(JSON.stringify({ curiosidade: cached.curiosidade, cached: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Optional: cleanup expired records periodically (e.g. 5% of requests)
+    if (Math.random() < 0.05) {
+      void supabase
+        .from("infomusic")
+        .delete()
+        .lt("expires_at", new Date().toISOString())
+        .then(() => {});
     }
 
     // 1.5) Se IA está desabilitada, retorna vazio sem gerar
@@ -174,10 +178,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3) Save to cache scoped to this user
+    // 3) Save to global cache (6 months expiration)
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 6);
+
     await supabase
       .from("infomusic")
-      .insert({ user_id: userId, artista: artistaTrim, musica: musicaTrim, curiosidade })
+      .insert({ 
+        user_id: userId, 
+        artista: artistaTrim, 
+        musica: musicaTrim, 
+        curiosidade,
+        expires_at: expiresAt.toISOString()
+      })
       .select()
       .maybeSingle();
 
