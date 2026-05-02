@@ -1142,7 +1142,7 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
                   Feriado
                 </span>
               </TooltipTrigger>
-              <TooltipContent side="top" className="bg-red-600 text-white border-red-500">
+              <TooltipContent side="top" className="text-white border-none" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
                 <p className="text-[10px] font-bold">{feriadoHoje}</p>
                 <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : ""}</p>
                 <p className="text-[8px] mt-1 italic border-t border-white/20 pt-1">Clique para exportar feriados</p>
