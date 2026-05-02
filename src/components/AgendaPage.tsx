@@ -1980,7 +1980,7 @@ export default function AgendaPage() {
                         {getFeriadoNome(selectedDate)}
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent className="bg-red-600 text-white border-red-500">
+                    <TooltipContent className="text-white border-none" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
                       <p className="text-[10px] font-bold">{getFeriadoNome(selectedDate)}</p>
                       <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
                     </TooltipContent>
