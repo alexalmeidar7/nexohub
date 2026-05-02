@@ -377,27 +377,7 @@ export default function PrevisaoTempo() {
       {error && <p className="text-sm font-medium" style={{ color: "#dc2626" }}>{error}</p>}
 
       {/* Loading skeleton */}
-      {loading && (
-        <div className="animate-pulse space-y-6">
-          <div className="rounded-2xl p-6" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a) 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)" }}>
-            <div className="flex items-center justify-between mb-6">
-              <div className="space-y-3">
-                <div className="h-6 w-36 rounded-lg bg-white/10" />
-                <div className="h-3 w-24 rounded bg-white/5" />
-              </div>
-              <div className="h-16 w-16 rounded-full bg-white/10" />
-            </div>
-            <div className="h-14 w-32 rounded-lg bg-white/15 mb-6" />
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 rounded-xl bg-white/8" />
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="rounded-xl p-5 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
-                <div className="h-3 w-14 mx-auto rounded bg-[var(--layout-header-bg)]/8" />
+      {loading && <ModulePageSkeleton variant="list" />}
                 <div className="h-10 w-10 mx-auto rounded-full bg-[var(--layout-header-bg)]/5" />
                 <div className="h-4 w-16 mx-auto rounded bg-[var(--layout-header-bg)]/5" />
               </div>
