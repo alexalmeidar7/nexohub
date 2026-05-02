@@ -1959,7 +1959,7 @@ export default function AgendaPage() {
                             <TooltipTrigger asChild>
                               <span className="cursor-help w-full h-full flex items-center justify-center">{content}</span>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="bg-red-600 text-white border-red-500 z-[100]">
+                            <TooltipContent side="top" className="text-white border-none z-[100]" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
                               <p className="text-[10px] font-bold">{feriado}</p>
                               <p className="text-[9px] opacity-90">{format(date, "dd/MM")}</p>
                             </TooltipContent>
