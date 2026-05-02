@@ -380,16 +380,19 @@ export default function ProgramaForm() {
 
   const load = async () => {
     setLoadingData(true);
-    const [ap, pg] = await Promise.all([getApresentadores(), getProgramas()]);
-    setApresentadores(ap);
-    pg.sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
-    setProgramas(pg);
-    const allEstudios = Array.from(new Set(pg.map(p => p.estudio).filter(Boolean)));
-    setEstudios(prev => {
-      const merged = Array.from(new Set([...prev, ...allEstudios]));
-      return merged.sort();
-    });
-    setLoadingData(false);
+    try {
+      const [ap, pg] = await Promise.all([getApresentadores(), getProgramas()]);
+      setApresentadores(ap);
+      pg.sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
+      setProgramas(pg);
+      const allEstudios = Array.from(new Set(pg.map(p => p.estudio).filter(Boolean)));
+      setEstudios(prev => {
+        const merged = Array.from(new Set([...prev, ...allEstudios]));
+        return merged.sort();
+      });
+    } finally {
+      setLoadingData(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
