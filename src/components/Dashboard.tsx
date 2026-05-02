@@ -1124,7 +1124,7 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
       .dashboard-calendar .has-event-dot { position: relative; }
       .dashboard-calendar .has-event-dot::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 2px; height: 2px; background: var(--layout-accent-color, #2563eb); border-radius: 50%; }
       .dashboard-calendar .is-feriado-dot { position: relative; }
-      .dashboard-calendar .is-feriado-dot::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; background: #ef4444; border-radius: 50%; }
+      .dashboard-calendar .is-feriado-dot::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; background: var(--layout-accent-color, #ef4444); border-radius: 50%; }
       .dashboard-calendar .rdp-day_today { border: 1px solid var(--layout-accent-color, #2563eb); font-weight: bold; }
     `}</style>
     <div className="flex items-center justify-between mb-2 shrink-0">
@@ -1135,13 +1135,14 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
             <Tooltip>
               <TooltipTrigger asChild>
                 <span 
-                  className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50 cursor-help"
+                  className="text-[8px] font-black text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm cursor-help"
+                  style={{ backgroundColor: "var(--layout-accent-color, #ef4444)", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-accent-color, #ef4444) 50%, transparent)" }}
                   onClick={(e) => { e.stopPropagation(); onExportFeriados(); }}
                 >
                   Feriado
                 </span>
               </TooltipTrigger>
-              <TooltipContent side="top" className="bg-red-600 text-white border-red-500">
+              <TooltipContent side="top" className="text-white border-none" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
                 <p className="text-[10px] font-bold">{feriadoHoje}</p>
                 <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : ""}</p>
                 <p className="text-[8px] mt-1 italic border-t border-white/20 pt-1">Clique para exportar feriados</p>
@@ -1177,15 +1178,21 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="p-1.5 rounded-lg bg-red-500/15 border border-red-500/30 mb-1 cursor-help">
+                <div 
+                  className="p-1.5 rounded-lg mb-1 cursor-help"
+                  style={{ 
+                    backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #ef4444) 15%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--layout-accent-color, #ef4444) 30%, transparent)"
+                  }}
+                >
                   <div className="flex items-center gap-1">
-                    <Star size={9} className="text-red-500 fill-red-500" />
-                    <p className="text-[9px] font-black text-red-500 uppercase tracking-tight">Feriado Nacional</p>
+                    <Star size={9} style={{ color: "var(--layout-accent-color, #ef4444)", fill: "var(--layout-accent-color, #ef4444)" }} />
+                    <p className="text-[9px] font-black uppercase tracking-tight" style={{ color: "var(--layout-accent-color, #ef4444)" }}>Feriado Nacional</p>
                   </div>
-                  <p className="text-[10px] font-bold text-red-400 leading-tight mt-0.5">{feriadoHoje}</p>
+                  <p className="text-[10px] font-bold leading-tight mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-accent-color, #ef4444) 80%, white 20%)" }}>{feriadoHoje}</p>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="right" className="bg-red-600 text-white border-red-500">
+              <TooltipContent side="right" className="text-white border-none" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
                 <p className="text-[10px] font-bold">{feriadoHoje}</p>
                 <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
               </TooltipContent>

@@ -1937,7 +1937,7 @@ export default function AgendaPage() {
                 .agenda-calendar .rdp-day_today.rdp-day_selected { background-color: var(--layout-header-bg, #1a1a1a) !important; color: var(--layout-header-text, #ffffff) !important; }
                 .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; font-weight: bold; }
                 .agenda-calendar .is-feriado-day { position: relative; }
-                .agenda-calendar .is-feriado-day::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background-color: #ef4444; }
+                .agenda-calendar .is-feriado-day::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background-color: var(--layout-accent-color, #ef4444); }
               `}</style>
               <TooltipProvider>
                 <Calendar
@@ -1959,7 +1959,7 @@ export default function AgendaPage() {
                             <TooltipTrigger asChild>
                               <span className="cursor-help w-full h-full flex items-center justify-center">{content}</span>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="bg-red-600 text-white border-red-500 z-[100]">
+                            <TooltipContent side="top" className="text-white border-none z-[100]" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
                               <p className="text-[10px] font-bold">{feriado}</p>
                               <p className="text-[9px] opacity-90">{format(date, "dd/MM")}</p>
                             </TooltipContent>
@@ -1975,12 +1975,12 @@ export default function AgendaPage() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5 cursor-help" style={{ color: "#ef4444" }}>
-                        <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                      <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5 cursor-help" style={{ color: "var(--layout-accent-color, #ef4444)" }}>
+                        <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }} />
                         {getFeriadoNome(selectedDate)}
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent className="bg-red-600 text-white border-red-500">
+                    <TooltipContent className="text-white border-none" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
                       <p className="text-[10px] font-bold">{getFeriadoNome(selectedDate)}</p>
                       <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
                     </TooltipContent>
@@ -1991,7 +1991,7 @@ export default function AgendaPage() {
           </div>
             {/* Próximos Feriados Section */}
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "linear-gradient(135deg, #ef4444, #b91c1c)", color: "#ffffff" }}>
+              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #ef4444), color-mix(in srgb, var(--layout-accent-color, #ef4444) 80%, black 20%))", color: "#ffffff" }}>
                 <div className="flex items-center gap-1.5">
                   <Star size={12} className="fill-white" />
                   Próximos Feriados
@@ -2005,21 +2005,33 @@ export default function AgendaPage() {
                   .map((f, idx) => (
                     <div 
                       key={idx} 
-                      className="p-2 rounded-lg flex items-center justify-between group transition-colors hover:bg-red-50"
-                      style={{ border: "1px solid rgba(239, 68, 68, 0.1)" }}
+                      className="p-2 rounded-lg flex items-center justify-between group transition-colors"
+                      style={{ 
+                        backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #ef4444) 4%, var(--layout-page-bg, #ffffff))",
+                        border: "1px solid color-mix(in srgb, var(--layout-accent-color, #ef4444) 15%, transparent)"
+                      }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-md bg-red-100 flex flex-col items-center justify-center shrink-0">
-                          <span className="text-[11px] font-black text-red-600 leading-none">{format(f.date, "dd")}</span>
-                          <span className="text-[7px] font-bold text-red-400 uppercase tracking-tighter">{format(f.date, "MMM", { locale: ptBR }).replace('.', '')}</span>
+                        <div 
+                          className="w-10 h-10 rounded-md flex flex-col items-center justify-center shrink-0"
+                          style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #ef4444) 12%, transparent)" }}
+                        >
+                          <span className="text-[11px] font-black leading-none" style={{ color: "var(--layout-accent-color, #ef4444)" }}>{format(f.date, "dd")}</span>
+                          <span className="text-[7px] font-bold uppercase tracking-tighter opacity-70" style={{ color: "var(--layout-accent-color, #ef4444)" }}>{format(f.date, "MMM", { locale: ptBR }).replace('.', '')}</span>
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[11px] font-bold text-gray-800 truncate leading-tight">{f.nome}</p>
-                          <p className="text-[9px] font-semibold text-red-500 uppercase tracking-wider">Nacional</p>
+                          <p className="text-[11px] font-bold truncate leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{f.nome}</p>
+                          <p className="text-[9px] font-semibold uppercase tracking-wider opacity-60" style={{ color: "var(--layout-accent-color, #ef4444)" }}>Nacional</p>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 group-hover:bg-red-200 group-hover:text-red-700 transition-colors uppercase">
+                        <span 
+                          className="text-[9px] font-bold px-1.5 py-0.5 rounded transition-colors uppercase"
+                          style={{ 
+                            backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
+                            color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)"
+                          }}
+                        >
                           {format(f.date, "EEEE", { locale: ptBR }).split('-')[0]}
                         </span>
                       </div>
