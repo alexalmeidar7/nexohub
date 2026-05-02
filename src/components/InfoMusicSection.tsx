@@ -154,8 +154,8 @@ export default function InfoMusicSection() {
           </div>
           <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
             {aiEnabled
-              ? "Habilitado: novas músicas geram curiosidade pela IA e são salvas no banco por 90 dias."
-              : "Desabilitado: o sistema apenas consulta o banco de curiosidades já cadastradas (90 dias). Nada novo será gerado pela IA."}
+              ? `Habilitado: novas músicas geram curiosidade pela IA (limite de 20/mês).`
+              : "Desabilitado: o sistema apenas consulta o banco de curiosidades já cadastradas (6 meses). Nada novo será gerado pela IA."}
           </p>
           <div className="mt-2 flex items-center gap-3">
             <div className="flex-1 h-1.5 rounded-full bg-black/5 overflow-hidden">
