@@ -1186,10 +1186,10 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
                   }}
                 >
                   <div className="flex items-center gap-1">
-                    <Star size={9} className="text-red-500 fill-red-500" />
-                    <p className="text-[9px] font-black text-red-500 uppercase tracking-tight">Feriado Nacional</p>
+                    <Star size={9} style={{ color: "var(--layout-accent-color, #ef4444)", fill: "var(--layout-accent-color, #ef4444)" }} />
+                    <p className="text-[9px] font-black uppercase tracking-tight" style={{ color: "var(--layout-accent-color, #ef4444)" }}>Feriado Nacional</p>
                   </div>
-                  <p className="text-[10px] font-bold text-red-400 leading-tight mt-0.5">{feriadoHoje}</p>
+                  <p className="text-[10px] font-bold leading-tight mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-accent-color, #ef4444) 80%, white 20%)" }}>{feriadoHoje}</p>
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right" className="bg-red-600 text-white border-red-500">
