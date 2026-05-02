@@ -600,6 +600,7 @@ serve(async (req) => {
     lines.push(`    <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`    <ticker>${esc(ticker)}</ticker>`);
     lines.push(`    <insert_live>${esc(insertLiveUrl)}</insert_live>`);
+    lines.push(`    <curiosidade>${esc(curiosidade)}</curiosidade>`);
     lines.push("  </dados>");
     lines.push("</items>");
 
