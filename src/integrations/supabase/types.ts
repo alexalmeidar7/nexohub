@@ -1631,6 +1631,8 @@ export type Database = {
           dashboard_items: Json | null
           id: string
           infomusic_ai_enabled: boolean
+          infomusic_ai_last_reset: string | null
+          infomusic_ai_monthly_count: number | null
           infomusic_excecoes: string | null
           music_source_mode: string
           music_xml_url: string | null
@@ -1651,6 +1653,8 @@ export type Database = {
           dashboard_items?: Json | null
           id?: string
           infomusic_ai_enabled?: boolean
+          infomusic_ai_last_reset?: string | null
+          infomusic_ai_monthly_count?: number | null
           infomusic_excecoes?: string | null
           music_source_mode?: string
           music_xml_url?: string | null
@@ -1671,6 +1675,8 @@ export type Database = {
           dashboard_items?: Json | null
           id?: string
           infomusic_ai_enabled?: boolean
+          infomusic_ai_last_reset?: string | null
+          infomusic_ai_monthly_count?: number | null
           infomusic_excecoes?: string | null
           music_source_mode?: string
           music_xml_url?: string | null
