@@ -444,17 +444,19 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   useEffect(() => {
+    // Only redirect if initial loading is complete and modules are loaded
+    if (initialLoading || (!enabledModules && !planModules)) return;
+
     if (
       currentPage !== "dashboard" &&
       currentPage !== "configuracoes" &&
       currentPage !== "playerconfig" &&
       currentPage !== "fans" &&
-      
       !isModuleEnabled(currentPage)
     ) {
       setCurrentPage("dashboard");
     }
-  }, [currentPage, enabledModules, planModules]);
+  }, [currentPage, initialLoading, enabledModules, planModules]);
 
   const toggleMenu = (label: string) => {
     setExpandedMenus(prev => {
