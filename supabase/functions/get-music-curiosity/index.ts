@@ -200,9 +200,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3) Save to global cache (6 months expiration)
+    // 3) Save to global cache (6 months expiration) + Increment User Quota
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + 6);
+
+    // Increment count in DB
+    await supabase
+      .from("user_settings")
+      .update({ infomusic_ai_monthly_count: currentMonthlyCount + 1 })
+      .eq("user_id", userId);
 
     await supabase
       .from("infomusic")
@@ -216,7 +222,7 @@ Deno.serve(async (req) => {
       .select()
       .maybeSingle();
 
-    return new Response(JSON.stringify({ curiosidade, cached: false }), {
+    return new Response(JSON.stringify({ curiosidade, cached: false, quota_used: currentMonthlyCount + 1 }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
