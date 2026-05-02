@@ -1192,7 +1192,7 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
                   <p className="text-[10px] font-bold leading-tight mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-accent-color, #ef4444) 80%, white 20%)" }}>{feriadoHoje}</p>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="right" className="bg-red-600 text-white border-red-500">
+              <TooltipContent side="right" className="text-white border-none" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
                 <p className="text-[10px] font-bold">{feriadoHoje}</p>
                 <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
               </TooltipContent>
