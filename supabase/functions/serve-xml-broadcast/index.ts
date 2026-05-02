@@ -338,7 +338,7 @@ serve(async (req) => {
         .maybeSingle(),
       supabase
         .from("user_settings")
-        .select("cenario_config, weather_lat, weather_lon, weather_city")
+        .select("cenario_config, weather_lat, weather_lon, weather_city, dashboard_items")
         .eq("user_id", dataOwnerId)
         .maybeSingle(),
       supabase
