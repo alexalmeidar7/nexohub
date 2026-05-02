@@ -1178,7 +1178,13 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="p-1.5 rounded-lg bg-red-500/15 border border-red-500/30 mb-1 cursor-help">
+                <div 
+                  className="p-1.5 rounded-lg mb-1 cursor-help"
+                  style={{ 
+                    backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #ef4444) 15%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--layout-accent-color, #ef4444) 30%, transparent)"
+                  }}
+                >
                   <div className="flex items-center gap-1">
                     <Star size={9} className="text-red-500 fill-red-500" />
                     <p className="text-[9px] font-black text-red-500 uppercase tracking-tight">Feriado Nacional</p>
