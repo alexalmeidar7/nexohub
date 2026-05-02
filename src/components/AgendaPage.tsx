@@ -2005,21 +2005,33 @@ export default function AgendaPage() {
                   .map((f, idx) => (
                     <div 
                       key={idx} 
-                      className="p-2 rounded-lg flex items-center justify-between group transition-colors hover:bg-red-50"
-                      style={{ border: "1px solid rgba(239, 68, 68, 0.1)" }}
+                      className="p-2 rounded-lg flex items-center justify-between group transition-colors"
+                      style={{ 
+                        backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #ef4444) 4%, var(--layout-page-bg, #ffffff))",
+                        border: "1px solid color-mix(in srgb, var(--layout-accent-color, #ef4444) 15%, transparent)"
+                      }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-md bg-red-100 flex flex-col items-center justify-center shrink-0">
-                          <span className="text-[11px] font-black text-red-600 leading-none">{format(f.date, "dd")}</span>
-                          <span className="text-[7px] font-bold text-red-400 uppercase tracking-tighter">{format(f.date, "MMM", { locale: ptBR }).replace('.', '')}</span>
+                        <div 
+                          className="w-10 h-10 rounded-md flex flex-col items-center justify-center shrink-0"
+                          style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #ef4444) 12%, transparent)" }}
+                        >
+                          <span className="text-[11px] font-black leading-none" style={{ color: "var(--layout-accent-color, #ef4444)" }}>{format(f.date, "dd")}</span>
+                          <span className="text-[7px] font-bold uppercase tracking-tighter opacity-70" style={{ color: "var(--layout-accent-color, #ef4444)" }}>{format(f.date, "MMM", { locale: ptBR }).replace('.', '')}</span>
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[11px] font-bold text-gray-800 truncate leading-tight">{f.nome}</p>
-                          <p className="text-[9px] font-semibold text-red-500 uppercase tracking-wider">Nacional</p>
+                          <p className="text-[11px] font-bold truncate leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{f.nome}</p>
+                          <p className="text-[9px] font-semibold uppercase tracking-wider opacity-60" style={{ color: "var(--layout-accent-color, #ef4444)" }}>Nacional</p>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 group-hover:bg-red-200 group-hover:text-red-700 transition-colors uppercase">
+                        <span 
+                          className="text-[9px] font-bold px-1.5 py-0.5 rounded transition-colors uppercase"
+                          style={{ 
+                            backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
+                            color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)"
+                          }}
+                        >
                           {format(f.date, "EEEE", { locale: ptBR }).split('-')[0]}
                         </span>
                       </div>
