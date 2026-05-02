@@ -1975,8 +1975,8 @@ export default function AgendaPage() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5 cursor-help" style={{ color: "#ef4444" }}>
-                        <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                      <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5 cursor-help" style={{ color: "var(--layout-accent-color, #ef4444)" }}>
+                        <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }} />
                         {getFeriadoNome(selectedDate)}
                       </div>
                     </TooltipTrigger>
