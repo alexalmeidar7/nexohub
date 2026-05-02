@@ -320,9 +320,22 @@ export default function InfoMusicSection() {
                       </td>
                       <td className="px-3 py-2 align-top text-center">
                         <button 
-                          onClick={() => {
-                            window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: r.curiosidade } }));
-                            toast.success("Enviado para o XML!");
+                          onClick={async () => {
+                            try {
+                              const until = new Date(Date.now() + 30_000).toISOString();
+                              await supabase.from("user_settings").update({
+                                dashboard_items: {
+                                  ...((await supabase.from("user_settings").select("dashboard_items").eq("user_id", user?.id).maybeSingle()).data?.dashboard_items as any || {}),
+                                  music_curiosity_manual: r.curiosidade,
+                                  music_curiosity_manual_until: until
+                                }
+                              }).eq("user_id", user?.id);
+                              
+                              window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: r.curiosidade } }));
+                              toast.success("Enviado para o vMix!");
+                            } catch (e) {
+                              toast.error("Erro ao enviar");
+                            }
                           }}
                           className="p-1 rounded-lg hover:bg-black/5 transition-colors"
                           style={{ color: "var(--layout-accent-color, #2563eb)" }}
