@@ -54,11 +54,7 @@ export default function CenariosPage() {
       </div>
 
       <Suspense
-        fallback={
-          <div className="flex items-center justify-center py-20 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando...
-          </div>
-        }
+        fallback={<ModulePageSkeleton />}
       >
         {tab === "interativo" ? <CenarioInterativoPage /> : <CenariosEstudioPage />}
       </Suspense>
