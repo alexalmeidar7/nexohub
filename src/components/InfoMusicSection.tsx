@@ -26,17 +26,20 @@ export default function InfoMusicSection() {
   const [aiEnabled, setAiEnabled] = useState(true);
   const [togglingAi, setTogglingAi] = useState(false);
 
+  const [monthlyQuota, setMonthlyQuota] = useState({ count: 0, limit: 20 });
+
   const loadExcecoes = async () => {
     if (!user) return;
     const { data } = await supabase
       .from("user_settings")
-      .select("infomusic_excecoes, infomusic_ai_enabled")
+      .select("infomusic_excecoes, infomusic_ai_enabled, infomusic_ai_monthly_count")
       .eq("user_id", user.id)
       .maybeSingle();
     const v = (data?.infomusic_excecoes || "") as string;
     setExcecoes(v);
     setExcecoesInitial(v);
     setAiEnabled((data as { infomusic_ai_enabled?: boolean })?.infomusic_ai_enabled !== false);
+    setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
   };
 
   const toggleAi = async () => {
