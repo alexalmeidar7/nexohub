@@ -470,6 +470,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       if (plainUrl) return plainUrl[1];
       return null;
     };
+    
+    const extractMeta = (s: string, tag: string): string | null => {
+      const regex = new RegExp(`\\[${tag}:(.*?)\\]`, "i");
+      const match = s.match(regex);
+      return match ? match[1].trim().replace(/\\n/g, "\n") : null;
+    };
 
     let parsedEstudio = "";
     let parsedPrograma = "";
@@ -492,7 +498,23 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (partes) { const nome = partes[1].trim(); const cargo = partes[2].trim(); let instagram = partes[3].trim(); if (instagram && !instagram.startsWith("@")) instagram = `@${instagram}`; if (nome) parsedParticipantes.push({ nome, cargo, instagram }); }
         else if (cleaned) parsedParticipantes.push({ nome: cleaned, cargo: "", instagram: "" });
       } else if (secaoAtual === "escalada") { const item = cleaned.replace(/\*$/, "").trim(); if (item) parsedEscalada.push(item); }
-      else if (secaoAtual === "blocos" && blocoAtual) { if (!cleaned) continue; const url = extractUrl(linha); blocoAtual.push({ titulo: url ? "" : cleaned, imagemUrl: "", escalada: false, link: url || undefined }); }
+      else if (secaoAtual === "blocos" && blocoAtual) { 
+        if (!cleaned) continue; 
+        const url = extractUrl(linha);
+        const resumo = extractMeta(linha, "RESUMO");
+        const texto = extractMeta(linha, "TEXTO");
+        let finalTitle = cleaned.replace(/\[RESUMO:.*?\]/gi, "").replace(/\[TEXTO:.*?\]/gi, "").trim();
+        if (url) finalTitle = ""; 
+
+        blocoAtual.push({ 
+          titulo: finalTitle, 
+          imagemUrl: "", 
+          escalada: false, 
+          link: url || undefined,
+          resumo: resumo || undefined,
+          texto_materia: texto || undefined
+        }); 
+      }
     }
     if (blocoAtual && blocoAtual.length > 0) parsedBlocos.push({ noticias: blocoAtual });
     if (parsedEstudio) { const matched = estudios.find(e => e.toLowerCase() === parsedEstudio.toLowerCase()); if (matched) setEstudio(matched); else { setEstudio(parsedEstudio); toast.info(`Estúdio "${parsedEstudio}" não encontrado na lista`); } }

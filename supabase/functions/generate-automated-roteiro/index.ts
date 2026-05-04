@@ -179,17 +179,21 @@ Retorne APENAS um JSON válido com a seguinte estrutura:
   "escalada": [{"titulo": "...", "imagemUrl": "..."}],
   "blocos": [
     {
-      "noticias": [{"titulo": "...", "imagemUrl": "...", "link": "..."}]
+      "noticias": [{"titulo": "...", "imagemUrl": "...", "link": "...", "resumo": "...", "texto_materia": "..."}]
     }
   ]
 }
 
 Regras:
+- producao_ai_habilitada: ${producao_ai_habilitada}
+- Se producao_ai_habilitada for TRUE: O campo "texto_materia" deve ser um texto JORNALÍSTICO COMPLETO para ser lido no TP (Teleprompter), contendo INÍCIO, MEIO e CONCLUSÃO da história. Deve ser elaborado e fluído, pronto para locução.
+- Se producao_ai_habilitada for FALSE: O campo "texto_materia" deve vir VAZIO.
+- "resumo" deve ser um resumo curto (2-3 linhas).
 - Use APENAS notícias da lista acima (não invente)
 - Mantenha os links e imagens originais
 - Selecione as notícias mais relevantes conforme as instruções
 - A escalada deve ter as manchetes mais importantes
-- Se as instruções mencionam temas específicos, agrupe por tema nos blocos`;
+- Se as instruções mencionam temas específicos, agrupe por tema nos blocos.`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
