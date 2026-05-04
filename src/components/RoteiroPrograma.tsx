@@ -78,7 +78,7 @@ export default function RoteiroPrograma() {
     return text.trim();
   };
 
-  const fetchLinkMeta = async (url: string): Promise<{ titulo: string; imagemUrl: string } | null> => {
+  const fetchLinkMeta = async (url: string): Promise<{ titulo: string; imagemUrl: string; resumo: string } | null> => {
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", { body: { url } });
       if (!error && data?.ok && data.content) {
@@ -97,7 +97,14 @@ export default function RoteiroPrograma() {
         let titulo = rawTitulo.includes("|") ? rawTitulo.split("|")[0].trim() : rawTitulo;
         if (titulo.includes(" - ")) titulo = titulo.split(" - ")[0].trim();
         const imagemUrl = getMetaContent("og:image") || getMetaContent("twitter:image");
-        if (titulo || imagemUrl) return { titulo, imagemUrl };
+        let resumo = getMetaContent("og:description") || getMetaContent("twitter:description") || getMetaContent("description");
+        if (!resumo) {
+          const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
+          if (pMatches) {
+            resumo = pMatches[0].replace(/<[^>]+>/g, "").trim().slice(0, 300);
+          }
+        }
+        if (titulo || imagemUrl || resumo) return { titulo, imagemUrl, resumo };
       }
     } catch {}
     return null;
@@ -182,6 +189,7 @@ export default function RoteiroPrograma() {
         if (meta) {
           if (meta.titulo) parsedBlocos[bi].noticias[ni].titulo = meta.titulo;
           if (meta.imagemUrl) parsedBlocos[bi].noticias[ni].imagemUrl = meta.imagemUrl;
+          if (meta.resumo) parsedBlocos[bi].noticias[ni].resumo = meta.resumo;
         }
       }
     }
