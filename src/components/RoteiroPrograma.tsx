@@ -97,7 +97,13 @@ export default function RoteiroPrograma() {
         let titulo = rawTitulo.includes("|") ? rawTitulo.split("|")[0].trim() : rawTitulo;
         if (titulo.includes(" - ")) titulo = titulo.split(" - ")[0].trim();
         const imagemUrl = getMetaContent("og:image") || getMetaContent("twitter:image");
-        const resumo = getMetaContent("og:description") || getMetaContent("twitter:description") || getMetaContent("description");
+        let resumo = getMetaContent("og:description") || getMetaContent("twitter:description") || getMetaContent("description");
+        if (!resumo) {
+          const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
+          if (pMatches) {
+            resumo = pMatches[0].replace(/<[^>]+>/g, "").trim().slice(0, 300);
+          }
+        }
         if (titulo || imagemUrl || resumo) return { titulo, imagemUrl, resumo };
       }
     } catch {}
