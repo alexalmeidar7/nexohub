@@ -1211,7 +1211,7 @@ export default function AgendaPage() {
   return (
     <div className="animate-fade-in">
       <Dialog open={viewEventDialogOpen} onOpenChange={setViewEventDialogOpen}>
-        <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none" }}>
+        <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none", color: "var(--layout-page-text, #1a1a1a)" }}>
           {viewingEvent && (
             <div className="flex flex-col">
               <div className="px-6 py-5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a) 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)", color: "var(--layout-header-text, #ffffff)" }}>
@@ -1220,43 +1220,43 @@ export default function AgendaPage() {
                     <CalendarIcon size={20} />
                   </div>
                   <div>
-                    <DialogTitle className="text-base font-bold m-0">{viewingEvent.programa?.nome || "Evento"}</DialogTitle>
+                    <DialogTitle className="text-base font-bold m-0" style={{ color: "var(--layout-header-text, #ffffff)" }}>{viewingEvent.programa?.nome || "Evento"}</DialogTitle>
                     <p className="text-[10px] mt-0.5 opacity-70">Informações detalhadas do evento</p>
                   </div>
                 </div>
               </div>
-              <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto agenda-dialog-scroll">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-50">Data</p>
-                    <p className="text-xs font-semibold flex items-center gap-1.5">
-                      <CalendarIcon size={12} className="text-[var(--layout-accent-color)]" />
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Data</p>
+                    <p className="text-xs font-semibold flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <CalendarIcon size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
                       {format(new Date(viewingEvent.data + "T12:00:00"), "dd/MM/yyyy")}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-50">Horário</p>
-                    <p className="text-xs font-semibold flex items-center gap-1.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Horário</p>
+                    <div className="text-xs font-semibold flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                       {viewingEvent.tipo_evento === "gravacao" ? (
                         <>
-                          <Star size={12} className="text-[var(--layout-accent-color)]" />
+                          <Star size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
                           🎬 {viewingEvent.horario_gravacao || ""} {viewingEvent.horario_gravacao_fim ? `- ${viewingEvent.horario_gravacao_fim}` : ""} (Gravação)
                         </>
                       ) : (
                         <>
-                          <CalendarIcon size={12} className="text-[var(--layout-accent-color)]" />
+                          <CalendarIcon size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
                           {viewingEvent.programa ? `${viewingEvent.programa.horario_inicio} - ${viewingEvent.programa.horario_fim}` : "N/A"}
                         </>
                       )}
-                    </p>
+                    </div>
                   </div>
                 </div>
 
                 {viewingEvent.local && (
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-50">Local</p>
-                    <p className="text-xs font-semibold flex items-center gap-1.5">
-                      <MapPin size={12} className="text-[var(--layout-accent-color)]" />
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Local</p>
+                    <p className="text-xs font-semibold flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <MapPin size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
                       {viewingEvent.local}
                     </p>
                   </div>
@@ -1264,14 +1264,14 @@ export default function AgendaPage() {
 
                 {viewingEvent.descricao && (
                   <div className="space-y-1 p-3 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)" }}>
-                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-50 mb-1">Descrição</p>
-                    <p className="text-xs leading-relaxed">{viewingEvent.descricao}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Descrição</p>
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{viewingEvent.descricao}</p>
                   </div>
                 )}
 
                 {viewingEvent.participantes && viewingEvent.participantes.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-50 flex items-center gap-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                       <Users size={12} /> Participantes ({viewingEvent.participantes.length})
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -1279,7 +1279,11 @@ export default function AgendaPage() {
                         <div
                           key={i}
                           className="rounded-lg px-2.5 py-1.5 text-xs flex items-center gap-2"
-                          style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
+                          style={{ 
+                            backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", 
+                            border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
+                            color: "var(--layout-page-text, #1a1a1a)"
+                          }}
                         >
                           <span className="font-semibold">{p.nome}</span>
                           {p.instagram && (
@@ -1294,9 +1298,33 @@ export default function AgendaPage() {
                   </div>
                 )}
 
+                {viewingEvent.artes_urls && viewingEvent.artes_urls.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                      <ImageIcon size={12} /> Artes do Evento ({viewingEvent.artes_urls.length})
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {viewingEvent.artes_urls.map((url, i) => (
+                        <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-black/10">
+                          <img src={url} alt={`Arte ${i + 1}`} className="w-full h-full object-cover" />
+                          <a 
+                            href={url} 
+                            download 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                          >
+                            <Download size={16} />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-2 pt-2">
                   <Button 
-                    className="flex-1 h-9 text-xs font-bold rounded-xl"
+                    className="flex-1 h-9 text-xs font-bold rounded-xl shadow-lg transition-transform active:scale-95"
                     style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#ffffff" }}
                     onClick={() => { setViewEventDialogOpen(false); startEdit(viewingEvent); }}
                   >
@@ -1305,7 +1333,12 @@ export default function AgendaPage() {
                   <Button 
                     variant="outline"
                     className="h-9 w-9 p-0 rounded-xl border-destructive text-destructive hover:bg-destructive/10"
-                    onClick={() => { setViewEventDialogOpen(false); handleDelete(viewingEvent.id); }}
+                    onClick={() => { 
+                      if (confirm("Tem certeza que deseja excluir este evento?")) {
+                        setViewEventDialogOpen(false); 
+                        handleDelete(viewingEvent.id); 
+                      }
+                    }}
                   >
                     <Trash2 size={14} />
                   </Button>
