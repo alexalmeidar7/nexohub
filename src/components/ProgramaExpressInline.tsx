@@ -32,6 +32,7 @@ interface NewsItem {
   titulo: string;
   imagemUrl: string;
   resumo?: string;
+  texto_materia?: string; // Journalistic style text for TP
   escalada: boolean;
   link?: string;
 }
@@ -213,6 +214,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [pasteText, setPasteText] = useState("");
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
+  const [configuracoes, setConfiguracoes] = useState<{ producao_ai_habilitada: boolean }>({ producao_ai_habilitada: true });
 
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
@@ -336,7 +338,16 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
         const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
         const autoTickerTitulos = blocos.flatMap(b => b.noticias.filter(n => n.titulo.trim()).map(n => n.titulo.trim())).join("  •  ");
-        await supabase.from("roteiros").update({ programa_nome: pNome, estudio, titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${pNome}`, subtitulo: `express_xml::${urlData.publicUrl}`, conteudo_html: html, participantes: blocosJson, tickertitulos: autoTickerTitulos } as any).eq("id", editingId);
+        await supabase.from("roteiros").update({ 
+          programa_nome: pNome, 
+          estudio, 
+          titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${pNome}`, 
+          subtitulo: `express_xml::${urlData.publicUrl}`, 
+          conteudo_html: html, 
+          participantes: blocosJson, 
+          tickertitulos: autoTickerTitulos,
+          configuracoes: configuracoes as any
+        } as any).eq("id", editingId);
         setLastAutoSaved(Date.now());
       } catch (e) { console.error("Auto-save error:", e); }
       setAutoSaving(false);
