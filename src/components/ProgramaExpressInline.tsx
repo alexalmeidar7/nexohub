@@ -214,7 +214,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [pasteText, setPasteText] = useState("");
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
-  const [configuracoes, setConfiguracoes] = useState<{ producao_ai_habilitada: boolean }>({ producao_ai_habilitada: true });
+  const [configuracoes, setConfiguracoes] = useState<{ producao_ai_habilitada: boolean; prompt_ai: string }>({ producao_ai_habilitada: true, prompt_ai: "" });
 
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
@@ -826,28 +826,48 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       {afterHeader}
       <div className="p-6 space-y-5">
         {/* Toggle Produção Texto AI */}
-        <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 15%, transparent)" }}>
-          <div className="flex items-center gap-2">
-            <Bot size={14} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
-            <div>
-              <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Produção de Texto Jornalístico (AI)</p>
-              <p className="text-[9px] opacity-60">Habilite para que a AI escreva matérias completas para o TP</p>
+        <div className="flex flex-col p-3 rounded-xl gap-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 15%, transparent)" }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bot size={14} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+              <div>
+                <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Produção de Texto Jornalístico (AI)</p>
+                <p className="text-[9px] opacity-60">Habilite para que a AI escreva matérias completas para o TP</p>
+              </div>
             </div>
+            <button 
+              onClick={() => {
+                const newValue = !configuracoes.producao_ai_habilitada;
+                setConfiguracoes(prev => ({ ...prev, producao_ai_habilitada: newValue }));
+                toast.info(newValue ? "Produção de texto AI habilitada" : "Produção de texto AI desabilitada");
+              }}
+              className="relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none"
+              style={{ backgroundColor: configuracoes.producao_ai_habilitada ? "#3b82f6" : "#cbd5e1" }}
+            >
+              <span 
+                className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                style={{ transform: configuracoes.producao_ai_habilitada ? "translateX(22px)" : "translateX(2px)" }}
+              />
+            </button>
           </div>
-          <button 
-            onClick={() => {
-              const newValue = !configuracoes.producao_ai_habilitada;
-              setConfiguracoes({ producao_ai_habilitada: newValue });
-              toast.info(newValue ? "Produção de texto AI habilitada" : "Produção de texto AI desabilitada");
-            }}
-            className="relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none"
-            style={{ backgroundColor: configuracoes.producao_ai_habilitada ? "#3b82f6" : "#cbd5e1" }}
-          >
-            <span 
-              className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-              style={{ transform: configuracoes.producao_ai_habilitada ? "translateX(22px)" : "translateX(2px)" }}
-            />
-          </button>
+
+          {configuracoes.producao_ai_habilitada && (
+            <div className="space-y-1.5 pt-2" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 10%, transparent)" }}>
+              <label className="text-[10px] font-semibold flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                <MessageSquare size={12} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+                Instruções personalizadas para a AI (Prompt)
+              </label>
+              <textarea
+                value={configuracoes.prompt_ai || ""}
+                onChange={e => setConfiguracoes(prev => ({ ...prev, prompt_ai: e.target.value }))}
+                placeholder="Ex: Escreva em um tom sério, focado em fatos, com frases curtas para facilitar a leitura no TP..."
+                className="w-full px-3 py-2 rounded-lg text-[10px] outline-none resize-none border"
+                rows={3}
+                style={inputStyle}
+              />
+              <p className="text-[8px] opacity-50">O prompt acima orienta a AI sobre como estruturar o texto da matéria.</p>
+            </div>
+          )}
         </div>
 
         {/* Paste Script */}
