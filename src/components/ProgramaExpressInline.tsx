@@ -803,6 +803,31 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       {afterHeader}
       <div className="p-6 space-y-5">
+        {/* Toggle Produção Texto AI */}
+        <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 15%, transparent)" }}>
+          <div className="flex items-center gap-2">
+            <Bot size={14} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+            <div>
+              <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Produção de Texto Jornalístico (AI)</p>
+              <p className="text-[9px] opacity-60">Habilite para que a AI escreva matérias completas para o TP</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => {
+              const newValue = !configuracoes.producao_ai_habilitada;
+              setConfiguracoes({ producao_ai_habilitada: newValue });
+              toast.info(newValue ? "Produção de texto AI habilitada" : "Produção de texto AI desabilitada");
+            }}
+            className="relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none"
+            style={{ backgroundColor: configuracoes.producao_ai_habilitada ? "#3b82f6" : "#cbd5e1" }}
+          >
+            <span 
+              className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+              style={{ transform: configuracoes.producao_ai_habilitada ? "translateX(22px)" : "translateX(2px)" }}
+            />
+          </button>
+        </div>
+
         {/* Paste Script */}
         {showPastePopup && (
           <div className="rounded-xl p-3 space-y-2" style={{ border: "2px solid var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
