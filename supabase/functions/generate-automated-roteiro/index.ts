@@ -102,7 +102,7 @@ serve(async (req) => {
       });
     }
 
-    const { automacao_id } = await req.json();
+    const { automacao_id, producao_ai_habilitada = true } = await req.json();
     if (!automacao_id) {
       return new Response(JSON.stringify({ error: "automacao_id obrigatório" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -179,17 +179,21 @@ Retorne APENAS um JSON válido com a seguinte estrutura:
   "escalada": [{"titulo": "...", "imagemUrl": "..."}],
   "blocos": [
     {
-      "noticias": [{"titulo": "...", "imagemUrl": "...", "link": "..."}]
+      "noticias": [{"titulo": "...", "imagemUrl": "...", "link": "...", "resumo": "...", "texto_materia": "..."}]
     }
   ]
 }
 
 Regras:
+- producao_ai_habilitada: ${producao_ai_habilitada}
+- Se producao_ai_habilitada for TRUE: O campo "texto_materia" deve ser um texto JORNALÍSTICO COMPLETO para ser lido no TP (Teleprompter), contendo INÍCIO, MEIO e CONCLUSÃO da história. Deve ser elaborado e fluído, pronto para locução.
+- Se producao_ai_habilitada for FALSE: O campo "texto_materia" deve vir VAZIO.
+- "resumo" deve ser um resumo curto (2-3 linhas).
 - Use APENAS notícias da lista acima (não invente)
 - Mantenha os links e imagens originais
 - Selecione as notícias mais relevantes conforme as instruções
 - A escalada deve ter as manchetes mais importantes
-- Se as instruções mencionam temas específicos, agrupe por tema nos blocos`;
+- Se as instruções mencionam temas específicos, agrupe por tema nos blocos.`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -255,11 +259,18 @@ Regras:
       roteiro.blocos.forEach((bloco, bi) => {
         pasteText += `BLOCO ${bi + 1}:\n`;
         (bloco.noticias || []).forEach((n: any) => {
+          let line = "";
           if (n.link) {
-            pasteText += `- ${n.link}\n`;
+            line = `- ${n.link}`;
           } else {
-            pasteText += `- ${n.titulo}\n`;
+            line = `- ${n.titulo}`;
           }
+          
+          // Adicionar metadados para o parser capturar resumo e texto_materia
+          if (n.resumo) line += ` [RESUMO:${n.resumo.replace(/\n/g, " ")}]`;
+          if (n.texto_materia) line += ` [TEXTO:${n.texto_materia.replace(/\n/g, "\\n")}]`;
+          
+          pasteText += `${line}\n`;
         });
         pasteText += "\n";
       });

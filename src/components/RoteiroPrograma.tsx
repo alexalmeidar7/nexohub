@@ -275,6 +275,7 @@ export default function RoteiroPrograma() {
             xml += `    <noticia ordem="${ni + 1}">\n`;
             xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
             xml += `      <resumo>${escXml(n.resumo || "")}</resumo>\n`;
+            xml += `      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n`;
             xml += `      <imagem>${escXml(n.imagemUrl || "")}</imagem>\n`;
             xml += `      <escalada>${n.escalada || false}</escalada>\n`;
             xml += `    </noticia>\n`;

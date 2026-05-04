@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2, MessageSquare, FileText, HelpCircle, Video, ImagePlus, Upload } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2, MessageSquare, FileText, HelpCircle, Video, ImagePlus, Upload, Bot } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -32,6 +32,7 @@ interface NewsItem {
   titulo: string;
   imagemUrl: string;
   resumo?: string;
+  texto_materia?: string; // Journalistic style text for TP
   escalada: boolean;
   link?: string;
 }
@@ -213,6 +214,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [pasteText, setPasteText] = useState("");
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
+  const [configuracoes, setConfiguracoes] = useState<{ producao_ai_habilitada: boolean }>({ producao_ai_habilitada: true });
 
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
@@ -297,6 +299,15 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           apoioVideos: editData.podcastData.apoioVideos?.length ? editData.podcastData.apoioVideos : [""],
         });
       }
+      const loadConfig = async () => {
+        if (editData.roteiroId) {
+          const { data } = await supabase.from("roteiros").select("configuracoes").eq("id", editData.roteiroId).single();
+          if (data?.configuracoes) {
+            setConfiguracoes(data.configuracoes as any);
+          }
+        }
+      };
+      loadConfig();
       setInitialized(true);
     }
   }, [editData, initialized]);
@@ -336,7 +347,16 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
         const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
         const autoTickerTitulos = blocos.flatMap(b => b.noticias.filter(n => n.titulo.trim()).map(n => n.titulo.trim())).join("  •  ");
-        await supabase.from("roteiros").update({ programa_nome: pNome, estudio, titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${pNome}`, subtitulo: `express_xml::${urlData.publicUrl}`, conteudo_html: html, participantes: blocosJson, tickertitulos: autoTickerTitulos } as any).eq("id", editingId);
+        await supabase.from("roteiros").update({ 
+          programa_nome: pNome, 
+          estudio, 
+          titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${pNome}`, 
+          subtitulo: `express_xml::${urlData.publicUrl}`, 
+          conteudo_html: html, 
+          participantes: blocosJson, 
+          tickertitulos: autoTickerTitulos,
+          configuracoes: configuracoes as any
+        } as any).eq("id", editingId);
         setLastAutoSaved(Date.now());
       } catch (e) { console.error("Auto-save error:", e); }
       setAutoSaving(false);
@@ -450,6 +470,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       if (plainUrl) return plainUrl[1];
       return null;
     };
+    
+    const extractMeta = (s: string, tag: string): string | null => {
+      const regex = new RegExp(`\\[${tag}:(.*?)\\]`, "i");
+      const match = s.match(regex);
+      return match ? match[1].trim().replace(/\\n/g, "\n") : null;
+    };
 
     let parsedEstudio = "";
     let parsedPrograma = "";
@@ -472,7 +498,23 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (partes) { const nome = partes[1].trim(); const cargo = partes[2].trim(); let instagram = partes[3].trim(); if (instagram && !instagram.startsWith("@")) instagram = `@${instagram}`; if (nome) parsedParticipantes.push({ nome, cargo, instagram }); }
         else if (cleaned) parsedParticipantes.push({ nome: cleaned, cargo: "", instagram: "" });
       } else if (secaoAtual === "escalada") { const item = cleaned.replace(/\*$/, "").trim(); if (item) parsedEscalada.push(item); }
-      else if (secaoAtual === "blocos" && blocoAtual) { if (!cleaned) continue; const url = extractUrl(linha); blocoAtual.push({ titulo: url ? "" : cleaned, imagemUrl: "", escalada: false, link: url || undefined }); }
+      else if (secaoAtual === "blocos" && blocoAtual) { 
+        if (!cleaned) continue; 
+        const url = extractUrl(linha);
+        const resumo = extractMeta(linha, "RESUMO");
+        const texto = extractMeta(linha, "TEXTO");
+        let finalTitle = cleaned.replace(/\[RESUMO:.*?\]/gi, "").replace(/\[TEXTO:.*?\]/gi, "").trim();
+        if (url) finalTitle = ""; 
+
+        blocoAtual.push({ 
+          titulo: finalTitle, 
+          imagemUrl: "", 
+          escalada: false, 
+          link: url || undefined,
+          resumo: resumo || undefined,
+          texto_materia: texto || undefined
+        }); 
+      }
     }
     if (blocoAtual && blocoAtual.length > 0) parsedBlocos.push({ noticias: blocoAtual });
     if (parsedEstudio) { const matched = estudios.find(e => e.toLowerCase() === parsedEstudio.toLowerCase()); if (matched) setEstudio(matched); else { setEstudio(parsedEstudio); toast.info(`Estúdio "${parsedEstudio}" não encontrado na lista`); } }
@@ -619,7 +661,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       xml += `  </roteiro>\n`;
     } else {
       if (escaladaList.length > 0) { xml += `  <escalada>\n`; escaladaList.forEach((e, i) => { xml += `    <item ordem="${i + 1}">\n      <titulo>${escXml(e.titulo)}</titulo>\n      <imagem>${escXml(e.imagemUrl)}</imagem>\n    </item>\n`; }); xml += `  </escalada>\n`; }
-      blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; (b?.noticias || []).forEach((n, ni) => { if (!n?.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <resumo>${escXml(n.resumo || "")}</resumo>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
+      blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; (b?.noticias || []).forEach((n, ni) => { if (!n?.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <resumo>${escXml(n.resumo || "")}</resumo>\n      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
     }
     xml += `</programaExpress>`;
     return xml;
@@ -649,7 +691,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (podcastData.concluindo) html += `<p><strong>Concluindo:</strong> ${podcastData.concluindo}</p>`;
       } else {
         if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
-        blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<div data-news-item="true" style="margin-bottom:12px;"><p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.resumo) html += `<p style="margin-top:4px;font-size:0.9em;opacity:0.9;">${n.resumo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p></div>`; }); });
+        blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<div data-news-item="true" style="margin-bottom:12px;"><p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.resumo) html += `<p style="margin-top:4px;font-size:0.9em;opacity:0.9;">${n.resumo}</p>`; if (n.texto_materia) html += `<div style="margin-top:8px;padding:8px;background:#f8fafc;border-left:4px solid #3b82f6;font-size:0.95em;line-height:1.6;">${n.texto_materia.replace(/\n/g, "<br/>")}</div>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p></div>`; }); });
       }
 
       const blocosJson = isPodcast
@@ -783,6 +825,31 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       {afterHeader}
       <div className="p-6 space-y-5">
+        {/* Toggle Produção Texto AI */}
+        <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 15%, transparent)" }}>
+          <div className="flex items-center gap-2">
+            <Bot size={14} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+            <div>
+              <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Produção de Texto Jornalístico (AI)</p>
+              <p className="text-[9px] opacity-60">Habilite para que a AI escreva matérias completas para o TP</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => {
+              const newValue = !configuracoes.producao_ai_habilitada;
+              setConfiguracoes({ producao_ai_habilitada: newValue });
+              toast.info(newValue ? "Produção de texto AI habilitada" : "Produção de texto AI desabilitada");
+            }}
+            className="relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none"
+            style={{ backgroundColor: configuracoes.producao_ai_habilitada ? "#3b82f6" : "#cbd5e1" }}
+          >
+            <span 
+              className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+              style={{ transform: configuracoes.producao_ai_habilitada ? "translateX(22px)" : "translateX(2px)" }}
+            />
+          </button>
+        </div>
+
         {/* Paste Script */}
         {showPastePopup && (
           <div className="rounded-xl p-3 space-y-2" style={{ border: "2px solid var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>

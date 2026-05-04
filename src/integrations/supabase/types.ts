@@ -1249,6 +1249,7 @@ export type Database = {
       roteiros: {
         Row: {
           apresentador_editado: boolean | null
+          configuracoes: Json | null
           conteudo_html: string
           created_at: string
           data_programa: string
@@ -1271,6 +1272,7 @@ export type Database = {
         }
         Insert: {
           apresentador_editado?: boolean | null
+          configuracoes?: Json | null
           conteudo_html?: string
           created_at?: string
           data_programa?: string
@@ -1293,6 +1295,7 @@ export type Database = {
         }
         Update: {
           apresentador_editado?: boolean | null
+          configuracoes?: Json | null
           conteudo_html?: string
           created_at?: string
           data_programa?: string
