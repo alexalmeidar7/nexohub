@@ -354,6 +354,8 @@ export default function AgendaPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [filterLocal, setFilterLocal] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewEventDialogOpen, setViewEventDialogOpen] = useState(false);
+  const [viewingEvent, setViewingEvent] = useState<Evento | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [historyDateFilter, setHistoryDateFilter] = useState<Date | undefined>(undefined);
   const [pastEventDetail, setPastEventDetail] = useState<Evento | null>(null);
@@ -1208,6 +1210,112 @@ export default function AgendaPage() {
 
   return (
     <div className="animate-fade-in">
+      <Dialog open={viewEventDialogOpen} onOpenChange={setViewEventDialogOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none" }}>
+          {viewingEvent && (
+            <div className="flex flex-col">
+              <div className="px-6 py-5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a) 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)", color: "var(--layout-header-text, #ffffff)" }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                    <CalendarIcon size={20} />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-base font-bold m-0">{viewingEvent.programa?.nome || "Evento"}</DialogTitle>
+                    <p className="text-[10px] mt-0.5 opacity-70">Informações detalhadas do evento</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-50">Data</p>
+                    <p className="text-xs font-semibold flex items-center gap-1.5">
+                      <CalendarIcon size={12} className="text-[var(--layout-accent-color)]" />
+                      {format(new Date(viewingEvent.data + "T12:00:00"), "dd/MM/yyyy")}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-50">Horário</p>
+                    <p className="text-xs font-semibold flex items-center gap-1.5">
+                      {viewingEvent.tipo_evento === "gravacao" ? (
+                        <>
+                          <Star size={12} className="text-[var(--layout-accent-color)]" />
+                          🎬 {viewingEvent.horario_gravacao || ""} {viewingEvent.horario_gravacao_fim ? `- ${viewingEvent.horario_gravacao_fim}` : ""} (Gravação)
+                        </>
+                      ) : (
+                        <>
+                          <CalendarIcon size={12} className="text-[var(--layout-accent-color)]" />
+                          {viewingEvent.programa ? `${viewingEvent.programa.horario_inicio} - ${viewingEvent.programa.horario_fim}` : "N/A"}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {viewingEvent.local && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-50">Local</p>
+                    <p className="text-xs font-semibold flex items-center gap-1.5">
+                      <MapPin size={12} className="text-[var(--layout-accent-color)]" />
+                      {viewingEvent.local}
+                    </p>
+                  </div>
+                )}
+
+                {viewingEvent.descricao && (
+                  <div className="space-y-1 p-3 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)" }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-50 mb-1">Descrição</p>
+                    <p className="text-xs leading-relaxed">{viewingEvent.descricao}</p>
+                  </div>
+                )}
+
+                {viewingEvent.participantes && viewingEvent.participantes.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-50 flex items-center gap-1">
+                      <Users size={12} /> Participantes ({viewingEvent.participantes.length})
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {viewingEvent.participantes.map((p, i) => (
+                        <div
+                          key={i}
+                          className="rounded-lg px-2.5 py-1.5 text-xs flex items-center gap-2"
+                          style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
+                        >
+                          <span className="font-semibold">{p.nome}</span>
+                          {p.instagram && (
+                            <span className="flex items-center gap-0.5 opacity-60 text-[10px]">
+                              <Instagram size={10} />
+                              @{p.instagram.replace('@', '')}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    className="flex-1 h-9 text-xs font-bold rounded-xl"
+                    style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#ffffff" }}
+                    onClick={() => { setViewEventDialogOpen(false); startEdit(viewingEvent); }}
+                  >
+                    <Pencil size={14} className="mr-1.5" /> Editar Evento
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="h-9 w-9 p-0 rounded-xl border-destructive text-destructive hover:bg-destructive/10"
+                    onClick={() => { setViewEventDialogOpen(false); handleDelete(viewingEvent.id); }}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
@@ -2094,47 +2202,68 @@ export default function AgendaPage() {
                 {weekEvents.map(({ dateStr, date, events: dayEvents }) => {
                   const isToday = isSameDay(date, now);
                   const feriadoNome = getFeriadoNome(date);
-                  return (
-                    <button
-                      type="button"
-                      key={dateStr}
-                      onClick={() => setSelectedDate(date)}
-                      className="text-left rounded-lg p-1.5 flex flex-col gap-1 hover:shadow-sm transition-all"
-                      style={{
-                        backgroundColor: feriadoNome 
-                          ? "rgba(239, 68, 68, 0.04)" 
-                          : isToday
-                          ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
-                          : "rgba(13,4,70,0.03)",
-                        border: feriadoNome
-                          ? "1px solid rgba(239, 68, 68, 0.2)"
-                          : `1px solid color-mix(in srgb, var(--layout-border-color, #333333) ${isToday ? 50 : 20}%, transparent)`,
-                        minHeight: 80,
-                      }}
-                    >
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-icon-color, #888888)" }}>
-                          {format(date, "EEE", { locale: ptBR }).substring(0, 3)}
-                        </span>
-                        <span className="text-[10px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                          {format(date, "dd/MM")}
-                        </span>
-                      </div>
-                      <div className="flex-1 flex flex-col justify-center">
-                        <span className="text-[11px] font-black text-center" style={{ color: feriadoNome ? "#ef4444" : "var(--layout-accent-color, #2563eb)" }}>
-                          {dayEvents.length}
-                        </span>
-                        <span className="text-[7px] uppercase font-bold text-center opacity-60">
-                          Evento{dayEvents.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      {feriadoNome && (
-                        <div className="text-[7px] font-bold text-red-500 uppercase truncate text-center mt-1">
-                          Feriado
+                    return (
+                      <div
+                        key={dateStr}
+                        onClick={() => setSelectedDate(date)}
+                        className="text-left rounded-lg p-1.5 flex flex-col gap-1 hover:shadow-md transition-all cursor-pointer group"
+                        style={{
+                          backgroundColor: feriadoNome 
+                            ? "rgba(239, 68, 68, 0.04)" 
+                            : isToday
+                            ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
+                            : "rgba(13,4,70,0.03)",
+                          border: feriadoNome
+                            ? "1px solid rgba(239, 68, 68, 0.2)"
+                            : `1px solid color-mix(in srgb, var(--layout-border-color, #333333) ${isToday ? 50 : 20}%, transparent)`,
+                          minHeight: 80,
+                        }}
+                      >
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-icon-color, #888888)" }}>
+                            {format(date, "EEE", { locale: ptBR }).substring(0, 3)}
+                          </span>
+                          <span className="text-[10px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                            {format(date, "dd/MM")}
+                          </span>
                         </div>
-                      )}
-                    </button>
-                  );
+                        <div className="flex-1 flex flex-col justify-center">
+                          <span className="text-[11px] font-black text-center transition-transform group-hover:scale-110" style={{ color: feriadoNome ? "#ef4444" : "var(--layout-accent-color, #2563eb)" }}>
+                            {dayEvents.length}
+                          </span>
+                          <span className="text-[7px] uppercase font-bold text-center opacity-60">
+                            Evento{dayEvents.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        {dayEvents.length > 0 && (
+                          <div className="mt-auto pt-1 flex flex-col gap-0.5">
+                            {dayEvents.slice(0, 2).map(e => (
+                              <div 
+                                key={e.id} 
+                                onClick={(clickEvt) => {
+                                  clickEvt.stopPropagation();
+                                  setViewingEvent(e);
+                                  setViewEventDialogOpen(true);
+                                }}
+                                className="text-[7px] font-semibold truncate px-1 rounded bg-white/40 border border-black/5 hover:bg-white/80 transition-colors"
+                              >
+                                {e.programa?.nome || "Evento"}
+                              </div>
+                            ))}
+                            {dayEvents.length > 2 && (
+                              <div className="text-[6px] font-bold text-center opacity-40">
+                                + {dayEvents.length - 2} mais
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {feriadoNome && (
+                          <div className="text-[7px] font-bold text-red-500 uppercase truncate text-center mt-1">
+                            Feriado
+                          </div>
+                        )}
+                      </div>
+                    );
                 })}
               </div>
             </div>
@@ -2191,9 +2320,12 @@ export default function AgendaPage() {
                         {dayEvents.map((evt) => (
                           <div
                             key={evt.id}
-                            className="rounded-lg px-3 py-2 cursor-pointer hover:shadow-sm transition-shadow"
+                            className="rounded-lg px-3 py-2 cursor-pointer hover:shadow-sm transition-all border border-transparent hover:border-[var(--layout-accent-color)]"
                             style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
-                            onClick={() => { setSelectedDate(date); }}
+                            onClick={() => { 
+                              setViewingEvent(evt);
+                              setViewEventDialogOpen(true);
+                            }}
                           >
                             <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                               {evt.programa?.nome || "Programa removido"}
