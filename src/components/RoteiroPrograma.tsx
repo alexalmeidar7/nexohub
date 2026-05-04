@@ -183,6 +183,7 @@ export default function RoteiroPrograma() {
         if (meta) {
           if (meta.titulo) parsedBlocos[bi].noticias[ni].titulo = meta.titulo;
           if (meta.imagemUrl) parsedBlocos[bi].noticias[ni].imagemUrl = meta.imagemUrl;
+          if (meta.resumo) parsedBlocos[bi].noticias[ni].resumo = meta.resumo;
         }
       }
     }
