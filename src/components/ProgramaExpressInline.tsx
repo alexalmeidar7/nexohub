@@ -604,7 +604,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     if (!url.startsWith("http")) return;
     setFetchingLink(`${bi}-${ni}`);
     try {
-      const { data, error } = await supabase.functions.invoke("fetch-rss", { body: { url } });
+      const { data, error } = await supabase.functions.invoke("fetch-rss", { 
+        body: { 
+          url,
+          generate_journalistic_text: configuracoes.producao_ai_habilitada,
+          custom_prompt: configuracoes.prompt_ai
+        } 
+      });
       if (!error && data?.ok && data.content) {
         const html = data.content as string;
         const getMetaContent = (property: string): string => {
@@ -635,6 +641,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (title) updateNoticia(bi, ni, "titulo", decodeFull(title));
         if (image) updateNoticia(bi, ni, "imagemUrl", decodeFull(image));
         if (summary) updateNoticia(bi, ni, "resumo", decodeFull(summary));
+        if (data.journalisticText) updateNoticia(bi, ni, "texto_materia", data.journalisticText);
+        
         updateNoticia(bi, ni, "link", url);
         if (title) toast.success("Dados extraídos do link!"); else toast.warning("Link carregado, mas não foi possível extrair o título");
       } else { toast.error("Não foi possível acessar o link"); }
