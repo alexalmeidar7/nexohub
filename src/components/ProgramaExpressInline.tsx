@@ -1428,8 +1428,24 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         <input value={noticia.titulo} onChange={e => onUpdate(bi, ni, "titulo", e.target.value)} placeholder="Título da matéria" className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
-        <div className="flex items-center gap-1 mb-1"><FileText size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Texto / Resumo</span>{editedFields?.has(`noticia-${bi}-${ni}-resumo`) && <EditedCheck />}</div>
-        <textarea value={noticia.resumo || ""} onChange={e => onUpdate(bi, ni, "resumo", e.target.value)} placeholder="Texto ou resumo da notícia" className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[10px] outline-none resize-y" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} rows={2} />
+        <div className="flex items-center gap-1 mb-1">
+          <FileText size={10} style={{ color: "var(--layout-icon-color)" }} />
+          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Texto / Resumo</span>
+          {editedFields?.has(`noticia-${bi}-${ni}-resumo`) && <EditedCheck />}
+        </div>
+        <textarea 
+          value={noticia.resumo || ""} 
+          onChange={e => onUpdate(bi, ni, "resumo", e.target.value)} 
+          onBlur={() => {
+            if (!noticia.texto_materia && noticia.link) {
+              onFetchLink(bi, ni, noticia.link);
+            }
+          }}
+          placeholder="Texto ou resumo da notícia" 
+          className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[10px] outline-none resize-y" 
+          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
+          rows={2} 
+        />
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
         <div className="flex items-center gap-1 mb-1"><Image size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL Imagem</span>{editedFields?.has(`noticia-${bi}-${ni}-imagemUrl`) && <EditedCheck />}</div>
