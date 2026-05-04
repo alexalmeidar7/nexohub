@@ -502,6 +502,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
     if (editingId) markEdited(`noticia-${bi}-${ni}-${field}`);
+    
+    // Auto-fetch if title looks like a URL
+    if (field === "titulo" && typeof value === "string" && value.trim().startsWith("http") && !value.trim().includes(" ")) {
+      fetchFromLink(bi, ni, value.trim());
+    }
+
     setBlocos(prev => {
       const noticiaAnterior = prev[bi]?.noticias[ni];
       const updated = prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, [field]: value } : n) } : b);
