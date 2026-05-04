@@ -31,6 +31,7 @@ const BLOCK_COLORS = [
 interface NewsItem {
   titulo: string;
   imagemUrl: string;
+  resumo?: string;
   escalada: boolean;
   link?: string;
 }
@@ -572,9 +573,20 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         let title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
         if (title.includes(" - ")) title = title.split(" - ")[0].trim();
         const image = getMetaContent("og:image") || getMetaContent("twitter:image");
+        
+        // Extract summary/description
+        let summary = getMetaContent("og:description") || getMetaContent("twitter:description") || getMetaContent("description");
+        if (!summary) {
+          const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
+          if (pMatches) {
+            summary = pMatches[0].replace(/<[^>]+>/g, "").trim().slice(0, 300);
+          }
+        }
+
         const decodeFull = (v: string) => { let s = v; for (let i = 0; i < 3; i++) { const d = decodeHtmlEntities(s); if (d === s) break; s = d; } return s; };
         if (title) updateNoticia(bi, ni, "titulo", decodeFull(title));
         if (image) updateNoticia(bi, ni, "imagemUrl", decodeFull(image));
+        if (summary) updateNoticia(bi, ni, "resumo", decodeFull(summary));
         updateNoticia(bi, ni, "link", url);
         if (title) toast.success("Dados extraídos do link!"); else toast.warning("Link carregado, mas não foi possível extrair o título");
       } else { toast.error("Não foi possível acessar o link"); }
@@ -601,7 +613,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       xml += `  </roteiro>\n`;
     } else {
       if (escaladaList.length > 0) { xml += `  <escalada>\n`; escaladaList.forEach((e, i) => { xml += `    <item ordem="${i + 1}">\n      <titulo>${escXml(e.titulo)}</titulo>\n      <imagem>${escXml(e.imagemUrl)}</imagem>\n    </item>\n`; }); xml += `  </escalada>\n`; }
-      blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; (b?.noticias || []).forEach((n, ni) => { if (!n?.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
+      blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; (b?.noticias || []).forEach((n, ni) => { if (!n?.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <resumo>${escXml(n.resumo || "")}</resumo>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
     }
     xml += `</programaExpress>`;
     return xml;
@@ -631,7 +643,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (podcastData.concluindo) html += `<p><strong>Concluindo:</strong> ${podcastData.concluindo}</p>`;
       } else {
         if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
-        blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
+        blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<div data-news-item="true" style="margin-bottom:12px;"><p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.resumo) html += `<p style="margin-top:4px;font-size:0.9em;opacity:0.9;">${n.resumo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p></div>`; }); });
       }
 
       const blocosJson = isPodcast
@@ -1305,6 +1317,10 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       <div className="w-full min-w-0 max-w-full overflow-hidden">
         <div className="flex items-center gap-1 mb-1"><Type size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Título / Tarja</span>{editedFields?.has(`noticia-${bi}-${ni}-titulo`) && <EditedCheck />}</div>
         <input value={noticia.titulo} onChange={e => onUpdate(bi, ni, "titulo", e.target.value)} placeholder="Título da matéria" className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
+      </div>
+      <div className="w-full min-w-0 max-w-full overflow-hidden">
+        <div className="flex items-center gap-1 mb-1"><FileText size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Texto / Resumo</span>{editedFields?.has(`noticia-${bi}-${ni}-resumo`) && <EditedCheck />}</div>
+        <textarea value={noticia.resumo || ""} onChange={e => onUpdate(bi, ni, "resumo", e.target.value)} placeholder="Texto ou resumo da notícia" className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[10px] outline-none resize-y" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} rows={2} />
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
         <div className="flex items-center gap-1 mb-1"><Image size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL Imagem</span>{editedFields?.has(`noticia-${bi}-${ni}-imagemUrl`) && <EditedCheck />}</div>

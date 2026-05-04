@@ -49,7 +49,7 @@ export function extractRoteiroHtml(html: string): string {
   const div = document.createElement("div");
   div.innerHTML = html;
 
-  const rows = div.querySelectorAll("tr[data-pergunta], table tr");
+  const rows = div.querySelectorAll("tr[data-pergunta], table tr, p[data-news-item]");
   const blocks: string[] = [];
 
   const labelStyle = "display:block;font-size:0.45em;opacity:0.5;letter-spacing:3px;margin-bottom:0.35em;font-weight:400";
@@ -88,6 +88,16 @@ export function extractRoteiroHtml(html: string): string {
       const parts: string[] = [];
       if (elemento) parts.push(`<span style="${labelStyle}">${elemento.toUpperCase()}</span>`);
       if (descricaoHtml) parts.push(`<span style="${contentStyle}">${descricaoHtml}</span>`);
+      
+      // If there's a summary/resumo column in the row (e.g. from ProgramaExpress)
+      // but standard TP rows only have 2 or 3 columns usually.
+      // For NxHub scripts, we might have extra data.
+      if (cells.length >= 4) {
+        const resumoText = (cells[3]?.textContent || "").trim();
+        if (resumoText) {
+          parts.push(`<div style="display:block;margin-top:0.4em;font-size:0.8em;opacity:0.85;line-height:1.4">${resumoText}</div>`);
+        }
+      }
 
       if (parts.length > 0) {
         blocks.push(`<div style="${blockStyle}">${parts.join("")}</div>`);

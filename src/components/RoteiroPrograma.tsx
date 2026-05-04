@@ -266,6 +266,7 @@ export default function RoteiroPrograma() {
             if (!n.titulo) return;
             xml += `    <noticia ordem="${ni + 1}">\n`;
             xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
+            xml += `      <resumo>${escXml(n.resumo || "")}</resumo>\n`;
             xml += `      <imagem>${escXml(n.imagemUrl || "")}</imagem>\n`;
             xml += `      <escalada>${n.escalada || false}</escalada>\n`;
             xml += `    </noticia>\n`;
@@ -441,11 +442,12 @@ export default function RoteiroPrograma() {
               xml += `  <bloco numero="${bi + 1}">\n`;
               (b.noticias || []).forEach((n: any, ni: number) => {
                 if (!n.titulo) return;
-                xml += `    <noticia ordem="${ni + 1}">\n`;
-                xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
-                xml += `      <imagem>${escXml(n.imagemUrl || "")}</imagem>\n`;
-                xml += `      <escalada>${n.escalada || false}</escalada>\n`;
-                xml += `    </noticia>\n`;
+            xml += `    <noticia ordem="${ni + 1}">\n`;
+            xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
+            xml += `      <resumo>${escXml(n.resumo || "")}</resumo>\n`;
+            xml += `      <imagem>${escXml(n.imagemUrl || "")}</imagem>\n`;
+            xml += `      <escalada>${n.escalada || false}</escalada>\n`;
+            xml += `    </noticia>\n`;
               });
               xml += `  </bloco>\n`;
             });
