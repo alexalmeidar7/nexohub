@@ -868,12 +868,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               <textarea
                 value={configuracoes.prompt_ai || ""}
                 onChange={e => setConfiguracoes(prev => ({ ...prev, prompt_ai: e.target.value }))}
-                onBlur={async () => {
+                onBlur={() => {
                   if (editingId) {
-                    await supabase.from("roteiros").update({
+                    supabase.from("roteiros").update({
                       configuracoes: configuracoes as any
-                    }).eq("id", editingId);
-                    toast.success("Prompt atualizado!");
+                    }).eq("id", editingId).then(({ error }) => {
+                      if (!error) toast.success("Prompt atualizado!");
+                    });
                   }
                 }}
                 placeholder="Ex: Escreva em um tom sério, focado em fatos, com frases curtas para facilitar a leitura no TP..."
