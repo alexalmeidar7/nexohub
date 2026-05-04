@@ -153,9 +153,13 @@ export default function PromocoesKiosk() {
       }
 
       const today = new Date().toISOString().split("T")[0];
-      const activePromos = (data.promocoes || []).filter((p: any) => p.data_inicio <= today && p.data_fim >= today);
+      const activePromos = (data.promocoes || []).filter((p: any) => 
+        p.data_inicio && p.data_fim && p.data_inicio <= today && p.data_fim >= today
+      );
       setPromocoes(activePromos);
-      const activeTestemunhais = (data.testemunhais || []).filter((t: any) => t.data_inicio <= today && t.data_fim >= today);
+      const activeTestemunhais = (data.testemunhais || []).filter((t: any) => 
+        t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
+      );
       setTestemunhais(activeTestemunhais);
 
       if (data.tela_promo_config) {
@@ -195,9 +199,13 @@ export default function PromocoesKiosk() {
       }
 
       const today = new Date().toISOString().split("T")[0];
-      const activePromos = (promoData || []).filter((p: any) => p.data_inicio <= today && p.data_fim >= today);
+      const activePromos = (promoData || []).filter((p: any) => 
+        p.data_inicio && p.data_fim && p.data_inicio <= today && p.data_fim >= today
+      );
       setPromocoes(activePromos);
-      const activeTestemunhais = (testData || []).filter((t: any) => t.data_inicio <= today && t.data_fim >= today);
+      const activeTestemunhais = (testData || []).filter((t: any) => 
+        t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
+      );
       setTestemunhais(activeTestemunhais);
 
       const mapped = (progsData || []).map((p: any) => ({
@@ -307,8 +315,12 @@ export default function PromocoesKiosk() {
   );
 
   const todayDateNow = new Date().toISOString().split("T")[0];
-  const banners = promocoes.filter(p => p.imagem_url && p.data_inicio <= todayDateNow && p.data_fim >= todayDateNow);
-  const botoes = promocoes.filter(p => p.botao_url && p.data_inicio <= todayDateNow && p.data_fim >= todayDateNow);
+  const banners = promocoes.filter(p => 
+    p.imagem_url && p.data_inicio && p.data_fim && p.data_inicio <= todayDateNow && p.data_fim >= todayDateNow
+  );
+  const botoes = promocoes.filter(p => 
+    p.botao_url && p.data_inicio && p.data_fim && p.data_inicio <= todayDateNow && p.data_fim >= todayDateNow
+  );
 
   const scrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
