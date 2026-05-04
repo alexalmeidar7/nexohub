@@ -303,11 +303,23 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (editData.roteiroId) {
           const { data } = await supabase.from("roteiros").select("configuracoes").eq("id", editData.roteiroId).single();
           if (data?.configuracoes) {
-            setConfiguracoes(data.configuracoes as any);
+            const config = data.configuracoes as any;
+            setConfiguracoes(config);
+            // Also update the draft in case user switches roteiros
+            if (config.prompt_ai) {
+              localStorage.setItem("programa_express_prompt_ai_draft", config.prompt_ai);
+            }
           }
         }
       };
       loadConfig();
+      setInitialized(true);
+    } else if (!initialized) {
+      // For new scripts, load the last used prompt from localStorage
+      const draft = localStorage.getItem("programa_express_prompt_ai_draft");
+      if (draft) {
+        setConfiguracoes(prev => ({ ...prev, prompt_ai: draft }));
+      }
       setInitialized(true);
     }
   }, [editData, initialized]);
@@ -867,13 +879,18 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               </label>
               <textarea
                 value={configuracoes.prompt_ai || ""}
-                onChange={e => setConfiguracoes(prev => ({ ...prev, prompt_ai: e.target.value }))}
-                onBlur={async () => {
+                onChange={e => {
+                  const val = e.target.value;
+                  setConfiguracoes(prev => ({ ...prev, prompt_ai: val }));
+                  localStorage.setItem("programa_express_prompt_ai_draft", val);
+                }}
+                onBlur={() => {
                   if (editingId) {
-                    await supabase.from("roteiros").update({
+                    supabase.from("roteiros").update({
                       configuracoes: configuracoes as any
-                    }).eq("id", editingId);
-                    toast.success("Prompt atualizado!");
+                    }).eq("id", editingId).then(({ error }) => {
+                      if (!error) toast.success("Prompt atualizado!");
+                    });
                   }
                 }}
                 placeholder="Ex: Escreva em um tom sério, focado em fatos, com frases curtas para facilitar a leitura no TP..."
