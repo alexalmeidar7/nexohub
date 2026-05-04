@@ -860,6 +860,14 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               <textarea
                 value={configuracoes.prompt_ai || ""}
                 onChange={e => setConfiguracoes(prev => ({ ...prev, prompt_ai: e.target.value }))}
+                onBlur={async () => {
+                  if (editingId) {
+                    await supabase.from("roteiros").update({
+                      configuracoes: configuracoes as any
+                    }).eq("id", editingId);
+                    toast.success("Prompt atualizado!");
+                  }
+                }}
                 placeholder="Ex: Escreva em um tom sério, focado em fatos, com frases curtas para facilitar a leitura no TP..."
                 className="w-full px-3 py-2 rounded-lg text-[10px] outline-none resize-none border"
                 rows={3}
