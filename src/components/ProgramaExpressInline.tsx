@@ -867,7 +867,11 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               </label>
               <textarea
                 value={configuracoes.prompt_ai || ""}
-                onChange={e => setConfiguracoes(prev => ({ ...prev, prompt_ai: e.target.value }))}
+                onChange={e => {
+                  const val = e.target.value;
+                  setConfiguracoes(prev => ({ ...prev, prompt_ai: val }));
+                  localStorage.setItem("programa_express_prompt_ai_draft", val);
+                }}
                 onBlur={() => {
                   if (editingId) {
                     supabase.from("roteiros").update({
