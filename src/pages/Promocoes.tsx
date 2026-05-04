@@ -288,10 +288,14 @@ export default function PromocoesKiosk() {
       .trim()
       .toUpperCase();
 
-  const todayDate = new Date().toISOString().split("T")[0];
+  const todayDateStr = new Date().toISOString().split("T")[0];
   const programIdsWithTestemunhais = new Set(
     testemunhais
-      .filter(t => t.programa_id && t.data_inicio <= todayDate && t.data_fim >= todayDate)
+      .filter(t => 
+        t.programa_id && 
+        t.data_inicio && t.data_fim && 
+        t.data_inicio <= todayDateStr && t.data_fim >= todayDateStr
+      )
       .map(t => t.programa_id)
   );
 
