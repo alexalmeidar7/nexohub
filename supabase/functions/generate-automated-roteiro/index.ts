@@ -102,7 +102,7 @@ serve(async (req) => {
       });
     }
 
-    const { automacao_id } = await req.json();
+    const { automacao_id, producao_ai_habilitada = true } = await req.json();
     if (!automacao_id) {
       return new Response(JSON.stringify({ error: "automacao_id obrigatório" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -255,11 +255,18 @@ Regras:
       roteiro.blocos.forEach((bloco, bi) => {
         pasteText += `BLOCO ${bi + 1}:\n`;
         (bloco.noticias || []).forEach((n: any) => {
+          let line = "";
           if (n.link) {
-            pasteText += `- ${n.link}\n`;
+            line = `- ${n.link}`;
           } else {
-            pasteText += `- ${n.titulo}\n`;
+            line = `- ${n.titulo}`;
           }
+          
+          // Adicionar metadados para o parser capturar resumo e texto_materia
+          if (n.resumo) line += ` [RESUMO:${n.resumo.replace(/\n/g, " ")}]`;
+          if (n.texto_materia) line += ` [TEXTO:${n.texto_materia.replace(/\n/g, "\\n")}]`;
+          
+          pasteText += `${line}\n`;
         });
         pasteText += "\n";
       });

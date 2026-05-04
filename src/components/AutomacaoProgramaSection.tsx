@@ -140,8 +140,12 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro 
   const handleGenerate = async (automacaoId: string) => {
     setGenerating(automacaoId);
     try {
+      const producao_ai = localStorage.getItem("producao_ai_habilitada") !== "false";
       const { data, error } = await supabase.functions.invoke("generate-automated-roteiro", {
-        body: { automacao_id: automacaoId },
+        body: { 
+          automacao_id: automacaoId,
+          producao_ai_habilitada: producao_ai
+        },
       });
       if (error) throw error;
       if (data?.error) {
