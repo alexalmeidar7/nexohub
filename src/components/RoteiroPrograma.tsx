@@ -78,7 +78,7 @@ export default function RoteiroPrograma() {
     return text.trim();
   };
 
-  const fetchLinkMeta = async (url: string): Promise<{ titulo: string; imagemUrl: string } | null> => {
+  const fetchLinkMeta = async (url: string): Promise<{ titulo: string; imagemUrl: string; resumo: string } | null> => {
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", { body: { url } });
       if (!error && data?.ok && data.content) {
@@ -97,7 +97,8 @@ export default function RoteiroPrograma() {
         let titulo = rawTitulo.includes("|") ? rawTitulo.split("|")[0].trim() : rawTitulo;
         if (titulo.includes(" - ")) titulo = titulo.split(" - ")[0].trim();
         const imagemUrl = getMetaContent("og:image") || getMetaContent("twitter:image");
-        if (titulo || imagemUrl) return { titulo, imagemUrl };
+        const resumo = getMetaContent("og:description") || getMetaContent("twitter:description") || getMetaContent("description");
+        if (titulo || imagemUrl || resumo) return { titulo, imagemUrl, resumo };
       }
     } catch {}
     return null;
