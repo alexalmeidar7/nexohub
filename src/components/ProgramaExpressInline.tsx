@@ -604,7 +604,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     if (!url.startsWith("http")) return;
     setFetchingLink(`${bi}-${ni}`);
     try {
-      const { data, error } = await supabase.functions.invoke("fetch-rss", { body: { url } });
+      const { data, error } = await supabase.functions.invoke("fetch-rss", { 
+        body: { 
+          url,
+          generate_journalistic_text: configuracoes.producao_ai_habilitada,
+          custom_prompt: configuracoes.prompt_ai
+        } 
+      });
       if (!error && data?.ok && data.content) {
         const html = data.content as string;
         const getMetaContent = (property: string): string => {
@@ -635,6 +641,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (title) updateNoticia(bi, ni, "titulo", decodeFull(title));
         if (image) updateNoticia(bi, ni, "imagemUrl", decodeFull(image));
         if (summary) updateNoticia(bi, ni, "resumo", decodeFull(summary));
+        if (data.journalisticText) updateNoticia(bi, ni, "texto_materia", data.journalisticText);
+        
         updateNoticia(bi, ni, "link", url);
         if (title) toast.success("Dados extraídos do link!"); else toast.warning("Link carregado, mas não foi possível extrair o título");
       } else { toast.error("Não foi possível acessar o link"); }
@@ -860,6 +868,14 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               <textarea
                 value={configuracoes.prompt_ai || ""}
                 onChange={e => setConfiguracoes(prev => ({ ...prev, prompt_ai: e.target.value }))}
+                onBlur={async () => {
+                  if (editingId) {
+                    await supabase.from("roteiros").update({
+                      configuracoes: configuracoes as any
+                    }).eq("id", editingId);
+                    toast.success("Prompt atualizado!");
+                  }
+                }}
                 placeholder="Ex: Escreva em um tom sério, focado em fatos, com frases curtas para facilitar a leitura no TP..."
                 className="w-full px-3 py-2 rounded-lg text-[10px] outline-none resize-none border"
                 rows={3}
@@ -1412,8 +1428,24 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         <input value={noticia.titulo} onChange={e => onUpdate(bi, ni, "titulo", e.target.value)} placeholder="Título da matéria" className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
-        <div className="flex items-center gap-1 mb-1"><FileText size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Texto / Resumo</span>{editedFields?.has(`noticia-${bi}-${ni}-resumo`) && <EditedCheck />}</div>
-        <textarea value={noticia.resumo || ""} onChange={e => onUpdate(bi, ni, "resumo", e.target.value)} placeholder="Texto ou resumo da notícia" className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[10px] outline-none resize-y" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} rows={2} />
+        <div className="flex items-center gap-1 mb-1">
+          <FileText size={10} style={{ color: "var(--layout-icon-color)" }} />
+          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Texto / Resumo</span>
+          {editedFields?.has(`noticia-${bi}-${ni}-resumo`) && <EditedCheck />}
+        </div>
+        <textarea 
+          value={noticia.resumo || ""} 
+          onChange={e => onUpdate(bi, ni, "resumo", e.target.value)} 
+          onBlur={() => {
+            if (!noticia.texto_materia && noticia.link) {
+              onFetchLink(bi, ni, noticia.link);
+            }
+          }}
+          placeholder="Texto ou resumo da notícia" 
+          className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[10px] outline-none resize-y" 
+          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
+          rows={2} 
+        />
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
         <div className="flex items-center gap-1 mb-1"><Image size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL Imagem</span>{editedFields?.has(`noticia-${bi}-${ni}-imagemUrl`) && <EditedCheck />}</div>
