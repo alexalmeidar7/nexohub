@@ -511,6 +511,14 @@ serve(async (req) => {
         curiosidade = manualCuriosityText;
       }
     }
+    
+    // ── Music details ──
+    const musicData = (settingsRes.data?.dashboard_items as any)?.musicData;
+    const musicaAtual = musicData?.musica || "";
+    const artistaAtual = musicData?.artista || "";
+    const musicaTexto = musicaAtual && artistaAtual ? `${musicaAtual} - ${artistaAtual}` : (musicaAtual || artistaAtual || "");
+    const deezerArtistImg = musicData?.deezer_artist_img || "";
+
 
     const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
     let logoPatrocinador = BLANK_LOGO_URL;
@@ -601,6 +609,8 @@ serve(async (req) => {
     lines.push(`    <ticker>${esc(ticker)}</ticker>`);
     lines.push(`    <insert_live>${esc(insertLiveUrl)}</insert_live>`);
     lines.push(`    <curiosidade>${esc(curiosidade)}</curiosidade>`);
+    lines.push(`    <musica_atual>${esc(musicaTexto)}</musica_atual>`);
+    lines.push(`    <deezer_artist_img>${esc(deezerArtistImg)}</deezer_artist_img>`);
     lines.push("  </dados>");
     lines.push("</items>");
 
