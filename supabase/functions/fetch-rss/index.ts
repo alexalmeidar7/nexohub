@@ -199,7 +199,9 @@ Deno.serve(async (req) => {
             ? custom_prompt 
             : "Você é um redator sênior de telejornalismo especializado em grandes reportagens.";
           
-          const systemPrompt = `${baseSystemPrompt}
+          const systemPrompt = (custom_prompt && custom_prompt.trim().length > 5)
+            ? custom_prompt
+            : `${baseSystemPrompt}
             
             REQUISITOS OBRIGATÓRIOS:
             1. O texto DEVE ter no MÍNIMO 5 parágrafos longos.

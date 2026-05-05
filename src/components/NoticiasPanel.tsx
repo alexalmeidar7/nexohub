@@ -549,14 +549,21 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
     setLoadingReading(true);
     setReadingPopup({ ...item, body: "" });
     try {
+      const { data: profile } = await supabase.from("profiles").select("journalistic_prompt").eq("user_id", user?.id).single();
+      const customPrompt = profile?.journalistic_prompt;
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       if (supabaseUrl && supabaseKey) {
         const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
-          body: JSON.stringify({ url: item.link }),
-          signal: AbortSignal.timeout(15000),
+          body: JSON.stringify({ 
+            url: item.link,
+            generate_journalistic_text: true,
+            custom_prompt: customPrompt
+          }),
+          signal: AbortSignal.timeout(30000),
         });
         const data = await res.json();
         if (data.content) {
@@ -593,7 +600,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
               body = pMatches.slice(0, 8).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 3000);
             }
           }
-          setReadingPopup({ title, link: item.link, thumbnail, body, journalisticText: body });
+          setReadingPopup({ title, link: item.link, thumbnail, body, journalisticText: data.journalisticText || body });
         }
       }
     } catch (err) {

@@ -54,16 +54,24 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
     if (item.body) return item.body;
     if (!item.link) return "";
     try {
+      const { data: profile } = await supabase.from("profiles").select("journalistic_prompt").single();
+      const customPrompt = profile?.journalistic_prompt;
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       if (!supabaseUrl || !supabaseKey) return "";
       const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
-        body: JSON.stringify({ url: item.link }),
-        signal: AbortSignal.timeout(15000),
+        body: JSON.stringify({ 
+          url: item.link,
+          generate_journalistic_text: true,
+          custom_prompt: customPrompt
+        }),
+        signal: AbortSignal.timeout(30000),
       });
       const data = await res.json();
+      if (data.journalisticText) return data.journalisticText;
       if (data.content) {
         const html = data.content;
         const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
