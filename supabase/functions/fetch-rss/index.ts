@@ -276,24 +276,44 @@ Deno.serve(async (req) => {
 
           journalisticText = generatedContent
             .replace(/\[?(INÍCIO|DESENVOLVIMENTO|CONCLUSÃO|INTRODUÇÃO|FECHAMENTO|CORPO)\]?:?/gi, "")
-            .replace(/^Compartilhar matéria:?/gi, "")
+            .replace(/^\s*(Compartilhar matéria|Compartilhar notícia|Leia mais|Veja também):?\s*/gi, "")
             .trim();
           
-          // Fix &quot; entities and other HTML entities that might leak from content
-          const htmlEntitiesMap: Record<string, string> = {
-            "&quot;": '"',
-            "&amp;": "&",
-            "&lt;": "<",
-            "&gt;": ">",
-            "&nbsp;": " ",
-            "&apos;": "'",
-            "&#39;": "'",
+          // Improved HTML entity decoding
+          const decodeEntities = (text: string) => {
+            return text
+              .replace(/&quot;/g, '"')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/&apos;|&#39;/g, "'")
+              .replace(/&ã;/g, 'ã')
+              .replace(/&ẽ;/g, 'ẽ')
+              .replace(/&ĩ;/g, 'ĩ')
+              .replace(/&õ;/g, 'õ')
+              .replace(/&ũ;/g, 'ũ')
+              .replace(/&á;/g, 'á')
+              .replace(/&é;/g, 'é')
+              .replace(/&í;/g, 'í')
+              .replace(/&ó;/g, 'ó')
+              .replace(/&ú;/g, 'ú')
+              .replace(/&à;/g, 'à')
+              .replace(/&è;/g, 'è')
+              .replace(/&ì;/g, 'ì')
+              .replace(/&ò;/g, 'ò')
+              .replace(/&ù;/g, 'ù')
+              .replace(/&â;/g, 'â')
+              .replace(/&ê;/g, 'ê')
+              .replace(/&î;/g, 'î')
+              .replace(/&ô;/g, 'ô')
+              .replace(/&û;/g, 'û')
+              .replace(/&ç;/g, 'ç')
+              .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
+              .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
           };
           
-          Object.keys(htmlEntitiesMap).forEach(entity => {
-            const regex = new RegExp(entity, 'g');
-            journalisticText = journalisticText!.replace(regex, htmlEntitiesMap[entity]);
-          });
+          journalisticText = decodeEntities(journalisticText);
 
           if (!journalisticText || journalisticText.length < 50) {
              journalisticText = contentToProcess.length > 100 ? contentToProcess.slice(0, 5000) : "O conteúdo extraído do link foi insuficiente para gerar uma matéria completa automaticamente. Por favor, insira o texto manualmente ou tente outro link.";
