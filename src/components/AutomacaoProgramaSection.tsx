@@ -388,7 +388,6 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
           </div>
         )}
       </div>
-      </div>
 
       {/* Seção de Configuração de Produção de Texto AI movida para baixo */}
       {!hideAiProductionConfig && (
@@ -406,15 +405,8 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
                 const isHabilitada = localStorage.getItem("producao_ai_habilitada") !== "false";
                 const newValue = !isHabilitada;
                 localStorage.setItem("producao_ai_habilitada", String(newValue));
-                // Dispara evento para outros componentes se necessário
                 window.dispatchEvent(new Event('storage'));
                 toast.info(newValue ? "Produção de texto AI habilitada" : "Produção de texto AI desabilitada");
-                // Força re-render se necessário via estado local ou similar, 
-                // aqui apenas atualizamos o storage e informamos o usuário.
-                // Como não temos um estado global formal aqui, o próximo load pegará o valor correto.
-                // Mas para feedback visual imediato, precisaríamos de um useState.
-                // Vou adicionar um pequeno hack de refresh ou confiar no próximo ciclo.
-                // Melhor adicionar um estado local.
                 setLoading(true);
                 setTimeout(() => setLoading(false), 50);
               }}
@@ -428,7 +420,9 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
             </button>
           </div>
         </div>
+      )}
     </div>
   );
 }
+
 
