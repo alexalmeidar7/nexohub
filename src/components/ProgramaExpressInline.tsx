@@ -626,6 +626,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     // Auto-fetch if title looks like a URL
     if (field === "titulo" && typeof value === "string" && value.trim().startsWith("http") && !value.trim().includes(" ")) {
       fetchFromLink(bi, ni, value.trim());
+      // Clear title so it doesn't stay as the URL
+      value = "";
     }
 
     setBlocos(prev => {
