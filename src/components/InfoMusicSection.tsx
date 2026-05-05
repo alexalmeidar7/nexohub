@@ -290,8 +290,6 @@ export default function InfoMusicSection() {
         </div>
       </div>
 
-      </div>
-
       {nowPlaying && (
         <div className="rounded-xl p-4 overflow-hidden relative group" style={{
           backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 94%, var(--layout-accent-color, #2563eb))",
