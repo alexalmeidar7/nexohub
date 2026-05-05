@@ -699,6 +699,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const fetchFromLink = async (bi: number, ni: number, url: string, forceReprocess = false) => {
     if (!url || !url.startsWith("http")) return;
     setFetchingLink(`${bi}-${ni}`);
+    
+    // Clear field to show progress if we're going to generate journalistic text
+    if (forceReprocess || configuracoes.producao_ai_habilitada) {
+      updateNoticia(bi, ni, "texto_materia", "");
+    }
+    
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", { 
         body: { 
