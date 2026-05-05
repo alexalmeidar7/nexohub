@@ -127,6 +127,12 @@ export default function RoteiroPrograma() {
       return null;
     };
 
+    const extractMeta = (s: string, tag: string): string | null => {
+      const regex = new RegExp(`\\[${tag}:(.*?)\\]`, "i");
+      const match = s.match(regex);
+      return match ? match[1].trim().replace(/\\n/g, "\n") : null;
+    };
+
     const parsedParticipantes: any[] = [];
     const parsedEscalada: any[] = [];
     const parsedBlocos: any[] = [];
