@@ -137,17 +137,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`Auth event: ${event}`);
+      
       if (event === "SIGNED_OUT") {
+        const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
         if (manualSignOutRef.current) {
           manualSignOutRef.current = false;
           void updateAuth(null);
           return;
         }
-        // Ignore involuntary SIGNED_OUT — keep the user logged in.
-        // updateAuth handles silent refresh when called with null.
+
+        // If 'keep connected' is on and it wasn't a manual sign out, try to recover
+        if (keepConnected && lastGoodSessionRef.current) {
+          console.warn("Auth: Unexpected signed out event but 'keep connected' is active. Attempting to restore session.");
+          void updateAuth(lastGoodSessionRef.current);
+          return;
+        }
+        
         void updateAuth(null);
         return;
       }
+      
+      if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
+        lastGoodSessionRef.current = session;
+      }
+      
       void updateAuth(session);
     });
 
