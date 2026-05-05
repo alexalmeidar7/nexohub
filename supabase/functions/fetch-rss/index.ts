@@ -161,18 +161,41 @@ Deno.serve(async (req) => {
     let journalisticText = null;
     if (generate_journalistic_text) {
       try {
-        // Simple heuristic to extract main text from HTML
-        const cleanText = text
+        // Improved heuristic to extract main text from HTML
+        // Remove known non-content tags
+        let cleanText = text
           .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "")
           .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")
+          .replace(/<nav[^>]*>([\s\S]*?)<\/nav>/gi, "")
+          .replace(/<footer[^>]*>([\s\S]*?)<\/footer>/gi, "")
+          .replace(/<header[^>]*>([\s\S]*?)<\/header>/gi, "")
+          .replace(/<aside[^>]*>([\s\S]*?)<\/aside>/gi, "");
+
+        // Try to find the article body first
+        const articleMatch = cleanText.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+        const mainMatch = cleanText.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
+        const contentMatch = cleanText.match(/<div[^>]+(?:class|id)=["'](?:article-body|content|entry-content|post-body|story-body)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+        
+        let contentToProcess = articleMatch?.[1] || mainMatch?.[1] || contentMatch?.[1] || cleanText;
+
+        // Clean up and limit
+        contentToProcess = contentToProcess
           .replace(/<[^>]+>/g, " ")
           .replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 4000);
+          .trim();
+
+        // If we extracted something very small from article/main, fallback to full text
+        if (contentToProcess.length < 500 && cleanText.length > contentToProcess.length) {
+          contentToProcess = cleanText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        }
+
+        contentToProcess = contentToProcess.slice(0, 10000); // Send more context to AI if available
 
         const openAIKey = Deno.env.get("OPENAI_API_KEY");
-        if (openAIKey && cleanText.length > 200) {
-          const systemPrompt = custom_prompt || "Você é um redator de notícias para telejornalismo. Escreva um texto para ser lido no Teleprompter (TP), com introdução, desenvolvimento e conclusão.";
+        if (openAIKey && contentToProcess.length > 200) {
+          const systemPrompt = (custom_prompt && custom_prompt.trim().length > 5) 
+            ? custom_prompt 
+            : "Você é um redator de notícias especializado em telejornalismo. Sua tarefa é transformar o conteúdo bruto de um link em uma matéria completa e estruturada para ser lida no Teleprompter (TP). A matéria deve ter obrigatoriamente um início (lead impactante), meio (detalhamento dos fatos principais) e uma conclusão (fechamento ou desdobramentos). O tom deve ser profissional e adequado para leitura em voz alta.";
           
           const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -184,7 +207,7 @@ Deno.serve(async (req) => {
               model: "gpt-4o-mini",
               messages: [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: `Com base no seguinte conteúdo da notícia, escreva o texto jornalístico:\n\n${cleanText}` }
+                { role: "user", content: `Analise o conteúdo abaixo e escreva uma matéria completa para o Teleprompter (TP), seguindo rigorosamente as instruções do sistema e o estilo jornalístico:\n\nCONTÉUDO:\n${contentToProcess}` }
               ],
               temperature: 0.7,
             }),
