@@ -593,8 +593,19 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     toast.success(editingId ? "Roteiro atualizado!" : "Roteiro importado com sucesso!");
     if (parsedBlocos.length > 0) {
       const linksToFetch: { bi: number; ni: number; url: string }[] = [];
-      parsedBlocos.forEach((b, bi) => { b.noticias.forEach((n, ni) => { if (n.link && n.link.startsWith("http")) linksToFetch.push({ bi, ni, url: n.link }); }); });
-      if (linksToFetch.length > 0) { toast.info(`Buscando dados de ${linksToFetch.length} links...`); linksToFetch.forEach(({ bi, ni, url }) => fetchFromLink(bi, ni, url)); }
+      parsedBlocos.forEach((b, bi) => { 
+        b.noticias.forEach((n, ni) => { 
+          // Only fetch if we don't already have substantial content
+          const hasContent = (n.texto_materia && n.texto_materia.length > 200) || (n.resumo && n.resumo.length > 200);
+          if (n.link && n.link.startsWith("http") && !hasContent) {
+            linksToFetch.push({ bi, ni, url: n.link }); 
+          }
+        }); 
+      });
+      if (linksToFetch.length > 0) { 
+        toast.info(`Buscando dados de ${linksToFetch.length} links...`); 
+        linksToFetch.forEach(({ bi, ni, url }) => fetchFromLink(bi, ni, url)); 
+      }
     }
   };
 
