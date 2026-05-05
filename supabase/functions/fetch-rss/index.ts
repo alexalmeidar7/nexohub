@@ -238,9 +238,11 @@ Deno.serve(async (req) => {
             const hasInicio = /IN[ÍI]CIO|INTRODU[ÇC][ÃA]O/i.test(generatedContent);
             const hasDesenv = /DESENVOLVIMENTO|CORPO/i.test(generatedContent);
             const hasConcl = /CONCLUS[ÃA]O|FECHAMENTO/i.test(generatedContent);
-            const isLongEnough = generatedContent.length >= 1200; // Realistic minimum for 3-5 paragraphs
+            const paragraphs = generatedContent.split(/\n\s*\n/).filter(p => p.trim().length > 50);
+            const isLongEnough = generatedContent.length >= 1500; 
+            const hasMinParagraphs = paragraphs.length >= 5;
             
-            if (hasInicio && hasDesenv && hasConcl && isLongEnough) {
+            if (hasInicio && hasDesenv && hasConcl && isLongEnough && hasMinParagraphs) {
               isValid = true;
             } else {
               attempts++;
