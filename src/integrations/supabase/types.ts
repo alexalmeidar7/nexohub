@@ -993,6 +993,7 @@ export type Database = {
           estado: string | null
           event_types_config: Json | null
           id: string
+          journalistic_prompt: string | null
           nome: string | null
           pais: string | null
           sexo: string | null
@@ -1008,6 +1009,7 @@ export type Database = {
           estado?: string | null
           event_types_config?: Json | null
           id?: string
+          journalistic_prompt?: string | null
           nome?: string | null
           pais?: string | null
           sexo?: string | null
@@ -1023,6 +1025,7 @@ export type Database = {
           estado?: string | null
           event_types_config?: Json | null
           id?: string
+          journalistic_prompt?: string | null
           nome?: string | null
           pais?: string | null
           sexo?: string | null
