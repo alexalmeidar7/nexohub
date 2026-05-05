@@ -513,11 +513,18 @@ serve(async (req) => {
     }
     
     // ── Music details ──
-    const musicData = (settingsRes.data?.dashboard_items as any)?.musicData;
-    const musicaAtual = musicData?.musica || "";
-    const artistaAtual = musicData?.artista || "";
+    const dashboard = settingsRes.data?.dashboard_items as any || {};
+    const musicData = dashboard.musicData || {};
+    
+    // Support both nested musicData (legacy/manual) and flat keys from useGlobalMusicSync
+    const musicaAtual = musicData.musica || dashboard.music_current_title || "";
+    const artistaAtual = musicData.artista || dashboard.music_current_artist || "";
     const musicaTexto = musicaAtual && artistaAtual ? `${musicaAtual} - ${artistaAtual}` : (musicaAtual || artistaAtual || "");
-    const deezerArtistImg = musicData?.deezer_artist_img || "";
+    const deezerArtistImgRaw = musicData.deezer_artist_img || dashboard.music_deezer_artist_img || "";
+    const artistSlug = (artistaAtual || "unknown").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+    const deezerArtistImg = deezerArtistImgRaw 
+      ? await ensurePngImageUrl(supabase, deezerArtistImgRaw, `broadcast/${dataOwnerId}/artist-${artistSlug}.png`, 512)
+      : "";
 
 
     const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
