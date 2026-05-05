@@ -473,6 +473,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         };
         if (title) updateNoticia(bi, ni, "titulo", decodeFull(title));
         if (image) updateNoticia(bi, ni, "imagemUrl", decodeFull(image));
+        if (summary) updateNoticia(bi, ni, "resumo", decodeFull(summary));
         updateNoticia(bi, ni, "link", url);
         if (title) toast.success("Dados extraídos do link!");
         else toast.warning("Link carregado, mas não foi possível extrair o título");
