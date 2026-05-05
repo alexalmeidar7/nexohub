@@ -1511,9 +1511,9 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           {editedFields?.has(`noticia-${bi}-${ni}-texto_materia`) && <EditedCheck />}
         </div>
         <textarea 
-          value={isFetching ? "Processando matéria completa por IA..." : noticia.texto_materia || ""} 
+          value={noticia.texto_materia || ""} 
           onChange={e => onUpdate(bi, ni, "texto_materia", e.target.value)} 
-          placeholder={linkInput ? "Processando matéria..." : "Aguardando link para gerar matéria completa (TP)..."}
+          placeholder={isFetching ? "Processando matéria completa por IA..." : linkInput ? "Gerando conteúdo..." : "Aguardando link para gerar matéria completa (TP)..."}
           className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none resize-y" 
           rows={6} 
           style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
