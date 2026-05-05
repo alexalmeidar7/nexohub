@@ -309,24 +309,71 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           if (data?.configuracoes) {
             const config = data.configuracoes as any;
             setConfiguracoes(config);
-            // Also update the draft in case user switches roteiros
             if (config.prompt_ai) {
               localStorage.setItem("programa_express_prompt_ai_draft", config.prompt_ai);
             }
           }
         }
       };
+
+      const loadTemplates = async () => {
+        if (user) {
+          const { data } = await supabase.from("prompt_templates").select("id, name, content").order("name");
+          if (data) setPromptTemplates(data);
+        }
+      };
+
       loadConfig();
+      loadTemplates();
       setInitialized(true);
     } else if (!initialized) {
-      // For new scripts, load the last used prompt from localStorage
       const draft = localStorage.getItem("programa_express_prompt_ai_draft");
       if (draft) {
         setConfiguracoes(prev => ({ ...prev, prompt_ai: draft }));
       }
+      if (user) {
+        supabase.from("prompt_templates").select("id, name, content").order("name").then(({ data }) => {
+          if (data) setPromptTemplates(data);
+        });
+      }
       setInitialized(true);
     }
-  }, [editData, initialized]);
+  }, [editData, initialized, user]);
+
+  const savePromptAsTemplate = async () => {
+    if (!templateName.trim() || !configuracoes.prompt_ai.trim() || !user) return;
+    setSavingTemplate(true);
+    try {
+      const { data, error } = await supabase.from("prompt_templates").insert({
+        user_id: user.id,
+        name: templateName.trim(),
+        content: configuracoes.prompt_ai
+      }).select().single();
+
+      if (error) throw error;
+      setPromptTemplates(prev => [...prev, data]);
+      setTemplateName("");
+      setShowSaveTemplate(false);
+      toast.success("Prompt salvo com sucesso!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao salvar prompt");
+    }
+    setSavingTemplate(false);
+  };
+
+  const deleteTemplate = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase.from("prompt_templates").delete().eq("id", id);
+      if (error) throw error;
+      setPromptTemplates(prev => prev.filter(t => t.id !== id));
+      toast.success("Prompt removido");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao remover prompt");
+    }
+  };
 
   // Store initial data snapshot for edit tracking
   useEffect(() => {
