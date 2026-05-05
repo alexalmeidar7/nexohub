@@ -201,14 +201,12 @@ Deno.serve(async (req) => {
             
             DIRETRIZES DE ESCRITA (RÍGIDAS):
             1. O texto DEVE ser uma matéria jornalística COMPLETA e EXTENSA.
-            2. Estrutura obrigatória em 3 partes:
-               - [INÍCIO]: Lead com o fato principal.
-               - [DESENVOLVIMENTO]: Contexto, detalhes, dados e impacto.
-               - [CONCLUSÃO]: Fechamento e próximos passos.
-            3. EXTENSÃO MÍNIMA: 5 a 8 parágrafos longos (mínimo de 3000 caracteres no total). 
-            4. ESTILO: Teleprompter (frases diretas, tom sério).
+            2. Estrutura obrigatória: [INÍCIO], [DESENVOLVIMENTO] (mínimo 3 parágrafos) e [CONCLUSÃO].
+            3. EXTENSÃO MÍNIMA: 3000 caracteres. Se o conteúdo bruto for curto, use seu conhecimento geral para expandir o contexto do assunto.
+            4. REQUISITO DE PARÁGRAFOS: Você DEVE escrever pelo menos 5 parágrafos longos e detalhados.
+            5. ESTILO: Teleprompter (frases diretas, tom sério).
             
-            ATENÇÃO: Se você enviar um resumo curto ou apenas uma frase, o sistema rejeitará sua resposta. Escreva pelo menos 600 palavras.
+            IMPORTANTE: Se você enviar um texto curto, o sistema entrará em loop de erro. Escreva uma matéria de fôlego, como um especial de TV.
             
             Responda obrigatoriamente usando os marcadores [INÍCIO], [DESENVOLVIMENTO] e [CONCLUSÃO].`;
           
@@ -217,6 +215,7 @@ Deno.serve(async (req) => {
           let isValid = false;
 
           while (attempts < 3 && !isValid) {
+            console.log(`AI Attempt ${attempts + 1} for URL: ${url}`);
             const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
               method: "POST",
               headers: {
@@ -227,30 +226,39 @@ Deno.serve(async (req) => {
                 model: "gpt-4o", 
                 messages: [
                   { role: "system", content: systemPrompt },
-                  { role: "user", content: `Escreva uma matéria JORNALÍSTICA COMPLETA E MUITO DETALHADA (MÍNIMO 5 PARÁGRAFOS) baseada neste conteúdo: ${contentToProcess}` }
+                  { role: "user", content: `Escreva uma matéria JORNALÍSTICA COMPLETA, DETALHADA E EXTENSA (MÍNIMO 5 PARÁGRAFOS E 3000 CARACTERES) baseada neste conteúdo. NÃO RESUMA, EXPANDA: ${contentToProcess}` }
                 ],
-                temperature: 0.7,
+                temperature: 0.8,
               }),
             });
 
             const aiData = await aiResponse.json();
             generatedContent = aiData.choices?.[0]?.message?.content || "";
             
+            // Log for debugging (only in edge function logs)
+            console.log(`Generated length: ${generatedContent.length}`);
+
             const paragraphs = generatedContent.split(/\n\s*\n/).filter(p => p.trim().length > 60);
             const isLongEnough = generatedContent.length >= 1500; 
             const hasMinParagraphs = paragraphs.length >= 5;
             
             if (isLongEnough && hasMinParagraphs) {
               isValid = true;
+              console.log("Validation passed.");
             } else {
               attempts++;
-              console.log(`AI validation failed (Attempt ${attempts}): length=${generatedContent.length}, paragraphs=${paragraphs.length}`);
+              console.log(`Validation failed: length=${generatedContent.length}, paragraphs=${paragraphs.length}`);
             }
           }
 
           journalisticText = generatedContent
             .replace(/\[?(INÍCIO|DESENVOLVIMENTO|CONCLUSÃO|INTRODUÇÃO|FECHAMENTO|CORPO)\]?:?/gi, "")
             .trim();
+          
+          // Final fallback to ensure something substantial is returned if AI fails
+          if (!journalisticText || journalisticText.length < 200) {
+             journalisticText = generatedContent || "Erro na geração do texto extenso. Por favor, tente buscar o link novamente.";
+          }
         }
       } catch (e) {
         console.error("AI Generation error:", e);
