@@ -195,53 +195,92 @@ Regras:
 - A escalada deve ter as manchetes mais importantes
 - Se as instruções mencionam temas específicos, agrupe por tema nos blocos.`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash",
-        messages: [
-          { role: "system", content: "Você é um produtor experiente de telejornal/radiojornal brasileiro. Responda APENAS com JSON válido." },
-          { role: "user", content: aiPrompt },
-        ],
-      }),
-    });
+    let roteiro: { escalada: any[]; blocos: any[] } = { escalada: [], blocos: [] };
+    let attempts = 0;
+    const maxAttempts = 3;
+    let isValid = false;
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errText);
+    while (attempts < maxAttempts && !isValid) {
+      attempts++;
+      console.log(`AI Attempt ${attempts} for Automated Roteiro...`);
 
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido, tente novamente em alguns minutos" }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA insuficientes" }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      return new Response(JSON.stringify({ error: "Erro ao gerar roteiro com IA" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.0-flash",
+          messages: [
+            { role: "system", content: "Você é um produtor experiente de telejornal/radiojornal brasileiro. Responda APENAS com JSON válido." },
+            { role: "user", content: aiPrompt },
+          ],
+          temperature: 0.7,
+        }),
       });
-    }
 
-    const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content || "";
+      if (!aiResponse.ok) {
+        const errText = await aiResponse.text();
+        console.error("AI gateway error:", aiResponse.status, errText);
+        if (attempts === maxAttempts) {
+          return new Response(JSON.stringify({ error: "Erro ao gerar roteiro com IA após múltiplas tentativas" }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        continue;
+      }
 
-    let roteiro: { escalada: any[]; blocos: any[] };
-    try {
-      const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```/g, "").trim();
-      roteiro = JSON.parse(cleaned);
-    } catch {
-      console.error("Failed to parse AI response:", rawContent);
-      return new Response(JSON.stringify({ error: "Não foi possível interpretar a resposta da IA" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const aiData = await aiResponse.json();
+      const rawContent = aiData.choices?.[0]?.message?.content || "";
+
+      try {
+        const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```/g, "").trim();
+        roteiro = JSON.parse(cleaned);
+
+        if (!producao_ai_habilitada) {
+          isValid = true;
+          break;
+        }
+
+        // Validate "texto_materia" for each news item
+        let allNewsValid = true;
+        let totalItems = 0;
+        
+        for (const bloco of (roteiro.blocos || [])) {
+          for (const n of (bloco.noticias || [])) {
+            totalItems++;
+            const text = n.texto_materia || "";
+            const charCount = text.length;
+            const paragraphCount = text.split(/\n\s*\n/).filter(p => p.trim().length > 100).length;
+
+            console.log(`Item check: ${charCount} chars, ${paragraphCount} paragraphs`);
+            
+            if (charCount < 1500 || paragraphCount < 5) {
+              allNewsValid = false;
+              console.log(`Validation failed for item: ${n.titulo.slice(0, 30)}...`);
+              break;
+            }
+          }
+          if (!allNewsValid) break;
+        }
+
+        if (allNewsValid && totalItems > 0) {
+          isValid = true;
+          console.log("All news items passed validation.");
+        } else if (totalItems === 0) {
+          console.log("No news items found in AI response.");
+        } else {
+          console.log(`Attempt ${attempts} failed validation requirements.`);
+        }
+      } catch (e) {
+        console.error(`Failed to parse AI response on attempt ${attempts}:`, rawContent);
+        if (attempts === maxAttempts) {
+          return new Response(JSON.stringify({ error: "Não foi possível interpretar a resposta da IA após múltiplas tentativas" }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
     }
 
     // Build paste-format text
