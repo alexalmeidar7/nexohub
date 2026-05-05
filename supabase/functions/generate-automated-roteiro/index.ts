@@ -186,10 +186,10 @@ Retorne APENAS um JSON válido com a seguinte estrutura:
 
 Regras:
 - producao_ai_habilitada: ${producao_ai_habilitada}
-- Se producao_ai_habilitada for TRUE: O campo "texto_materia" deve ser um texto JORNALÍSTICO COMPLETO para ser lido no TP (Teleprompter), contendo INÍCIO, MEIO e CONCLUSÃO da história. Deve ser elaborado e fluído, pronto para locução.
+- Se producao_ai_habilitada for TRUE: O campo "texto_materia" DEVE ser uma matéria jornalística COMPLETA e EXTENSA para ser lida no TP (Teleprompter), contendo obrigatoriamente INÍCIO, DESENVOLVIMENTO (mínimo 3 parágrafos detalhados) e CONCLUSÃO. O texto deve ter no mínimo 5 parágrafos densos e 1500 caracteres para cada notícia. Se as informações da notícia original forem curtas, EXPANDA com contexto, dados gerais ou explicações adicionais sobre o assunto. O tom deve ser sério, profissional e direto para teletransmissão.
 - Se producao_ai_habilitada for FALSE: O campo "texto_materia" deve vir VAZIO.
 - "resumo" deve ser um resumo curto (2-3 linhas).
-- Use APENAS notícias da lista acima (não invente)
+- Use APENAS notícias da lista acima (não invente manchetes)
 - Mantenha os links e imagens originais
 - Selecione as notícias mais relevantes conforme as instruções
 - A escalada deve ter as manchetes mais importantes
@@ -202,7 +202,7 @@ Regras:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.0-flash",
         messages: [
           { role: "system", content: "Você é um produtor experiente de telejornal/radiojornal brasileiro. Responda APENAS com JSON válido." },
           { role: "user", content: aiPrompt },
