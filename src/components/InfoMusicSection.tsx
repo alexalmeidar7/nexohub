@@ -290,6 +290,64 @@ export default function InfoMusicSection() {
         </div>
       </div>
 
+      </div>
+
+      {nowPlaying && (
+        <div className="rounded-xl p-4 overflow-hidden relative group" style={{
+          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 94%, var(--layout-accent-color, #2563eb))",
+          border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)",
+        }}>
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="relative shrink-0">
+              {nowPlaying.capa ? (
+                <img 
+                  src={nowPlaying.capa} 
+                  alt={nowPlaying.artista} 
+                  className="w-16 h-16 rounded-lg object-cover shadow-lg border border-white/20"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-lg bg-black/10 flex items-center justify-center border border-dashed border-black/20">
+                  <Music size={24} className="opacity-20" />
+                </div>
+              )}
+              <div className="absolute -bottom-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-white animate-pulse" title="No ar agora" />
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 border border-green-500/20">
+                  No Ar Agora
+                </span>
+              </div>
+              <h3 className="text-sm font-bold truncate leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                {nowPlaying.musica}
+              </h3>
+              <p className="text-xs font-medium truncate opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                {nowPlaying.artista}
+              </p>
+              {nowPlaying.curiosity && (
+                <div className="mt-2 text-[11px] italic leading-tight opacity-60 line-clamp-2">
+                  "{nowPlaying.curiosity}"
+                </div>
+              )}
+            </div>
+            
+            <button 
+              onClick={loadExcecoes}
+              className="p-2 rounded-full hover:bg-black/5 transition-colors shrink-0"
+              title="Atualizar música"
+            >
+              <RefreshCw size={14} className="opacity-40" />
+            </button>
+          </div>
+          
+          {/* Background Decorative Element */}
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 opacity-[0.03] pointer-events-none">
+            <Music size={120} />
+          </div>
+        </div>
+      )}
+
       <div>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
