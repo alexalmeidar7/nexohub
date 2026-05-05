@@ -440,11 +440,12 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
-            body: JSON.stringify({ url }),
-            signal: AbortSignal.timeout(15000),
+            body: JSON.stringify({ url, generate_journalistic_text: true }),
+            signal: AbortSignal.timeout(20000),
           });
           const data = await res.json();
           if (data.content) html = data.content;
+          if (data.journalisticText) body = data.journalisticText;
         }
         if (!html) {
           const res = await fetch(`${PROXY}${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
@@ -454,21 +455,23 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
         if (titleMatch) title = decodeHtmlEntities(titleMatch[1].trim());
         const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
         if (ogImageMatch) thumbnail = ogImageMatch[1];
-        // Extract article body from <article> or og:description or <p> tags
-        const ogDescMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
-        const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
-        if (articleMatch) {
-          body = articleMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 2000);
-        } else if (ogDescMatch) {
-          body = decodeHtmlEntities(ogDescMatch[1]);
-        } else {
-          // Fallback: extract text from <p> tags
-          const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
-          if (pMatches) {
-            body = pMatches.slice(0, 5).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 2000);
+        // Extract article body from <article> or og:description or <p> tags if not already fetched
+        if (!body) {
+          const ogDescMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
+          const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+          if (articleMatch) {
+            body = articleMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 3000);
+          } else if (ogDescMatch) {
+            body = decodeHtmlEntities(ogDescMatch[1]);
+          } else {
+            // Fallback: extract text from <p> tags
+            const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
+            if (pMatches) {
+              body = pMatches.slice(0, 15).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 3000);
+            }
           }
         }
-        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail, body, journalisticText: body }]);
+        setNoticiasAvulsas(prev => [{ title, link: url, thumbnail, body, journalisticText: body }, ...prev]);
       } catch {
         setNoticiasAvulsas(prev => [...prev, { title, link: url }]);
       }
