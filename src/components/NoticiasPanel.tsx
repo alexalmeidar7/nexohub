@@ -564,6 +564,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           body: JSON.stringify({ 
             url: item.link,
             generate_journalistic_text: true,
+            generate_summary: true,
             custom_prompt: customPrompt
           }),
           signal: AbortSignal.timeout(30000),
