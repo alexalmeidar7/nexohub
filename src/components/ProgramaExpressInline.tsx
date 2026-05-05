@@ -215,10 +215,11 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
   const [configuracoes, setConfiguracoes] = useState<{ producao_ai_habilitada: boolean; prompt_ai: string }>(() => {
-    const saved = localStorage.getItem("producao_ai_habilitada");
+    const savedHab = localStorage.getItem("producao_ai_habilitada");
+    const savedPrompt = localStorage.getItem("programa_express_prompt_ai_draft");
     return { 
-      producao_ai_habilitada: saved !== null ? saved !== "false" : true, 
-      prompt_ai: "" 
+      producao_ai_habilitada: savedHab !== null ? savedHab !== "false" : true, 
+      prompt_ai: savedPrompt || "" 
     };
   });
   const [promptTemplates, setPromptTemplates] = useState<{ id: string; name: string; content: string }[]>([]);
@@ -1480,15 +1481,10 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         <textarea 
           value={noticia.texto_materia || ""} 
           onChange={e => onUpdate(bi, ni, "texto_materia", e.target.value)} 
-          onBlur={() => {
-            if (!noticia.texto_materia && noticia.link) {
-              onFetchLink(bi, ni, noticia.link);
-            }
-          }}
-          placeholder="Texto jornalístico completo para leitura no Teleprompter..." 
-          className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[10px] outline-none resize-y" 
-          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box", minHeight: "120px" }} 
-          rows={8} 
+          placeholder="Aguardando link para gerar matéria completa (TP)..."
+          className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none resize-y" 
+          rows={6} 
+          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
         />
       </div>
 
