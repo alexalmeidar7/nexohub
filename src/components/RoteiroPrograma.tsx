@@ -127,6 +127,12 @@ export default function RoteiroPrograma() {
       return null;
     };
 
+    const extractMeta = (s: string, tag: string): string | null => {
+      const regex = new RegExp(`\\[${tag}:(.*?)\\]`, "i");
+      const match = s.match(regex);
+      return match ? match[1].trim().replace(/\\n/g, "\n") : null;
+    };
+
     const parsedParticipantes: any[] = [];
     const parsedEscalada: any[] = [];
     const parsedBlocos: any[] = [];
@@ -165,7 +171,18 @@ export default function RoteiroPrograma() {
         if (item) parsedEscalada.push({ titulo: item, imagemUrl: "" });
       } else if (secaoAtual === "blocos" && blocoAtual) {
         const url = extractUrl(linha);
-        blocoAtual.push({ titulo: url ? "" : cleaned, imagemUrl: "", escalada: false, link: url || undefined });
+        const resumo = extractMeta(linha, "RESUMO");
+        const texto = extractMeta(linha, "TEXTO");
+        let finalTitle = cleaned.replace(/\[RESUMO:.*?\]/gi, "").replace(/\[TEXTO:.*?\]/gi, "").trim();
+        if (url) finalTitle = "";
+        blocoAtual.push({ 
+          titulo: finalTitle, 
+          imagemUrl: "", 
+          escalada: false, 
+          link: url || undefined,
+          resumo: resumo || undefined,
+          texto_materia: texto || undefined
+        });
       }
     }
     if (blocoAtual && blocoAtual.length > 0) parsedBlocos.push({ noticias: blocoAtual });
