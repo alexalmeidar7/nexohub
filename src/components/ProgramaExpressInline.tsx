@@ -634,9 +634,14 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (!finalUrl.startsWith("http")) {
           finalUrl = "https://" + finalUrl;
         }
+        
+        // Immediate visual feedback that we are processing
+        setBlocos(prev => prev.map((b, i) => i === bi ? { 
+          ...b, 
+          noticias: b.noticias.map((n, j) => j === ni ? { ...n, titulo: "", texto_materia: "" } : n) 
+        } : b));
+        
         fetchFromLink(bi, ni, finalUrl);
-        // Clear title so it doesn't stay as the URL
-        setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, titulo: "" } : n) } : b));
         return;
       }
     }
@@ -692,7 +697,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const toggleCollapse = (bi: number) => { setCollapsedBlocos(prev => { const n = new Set(prev); if (n.has(bi)) n.delete(bi); else n.add(bi); return n; }); };
 
   const fetchFromLink = async (bi: number, ni: number, url: string, forceReprocess = false) => {
-    if (!url.startsWith("http")) return;
+    if (!url || !url.startsWith("http")) return;
     setFetchingLink(`${bi}-${ni}`);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", { 
@@ -745,8 +750,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           updateNoticia(bi, ni, "resumo", decodeFull(summary));
         }
         
-        if (data.journalisticText && (forceReprocess || !hasSubstantialText)) {
+        if (data.journalisticText) {
           updateNoticia(bi, ni, "texto_materia", data.journalisticText);
+        } else if (configuracoes.producao_ai_habilitada && !data.journalisticText) {
+          console.warn("AI failed to return journalistic text despite being enabled.");
         }
         
         updateNoticia(bi, ni, "link", url);
@@ -1481,16 +1488,20 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
             onChange={e => {
               const val = e.target.value;
               setLinkInput(val);
-              // Auto-trigger fetch if it's a URL and we don't have text yet
-              if (val.trim().startsWith("http") && (!noticia.texto_materia || noticia.texto_materia === "Aguardando link para gerar matéria completa (TP)...")) {
-                // Debounce a bit or handle paste
-                setTimeout(() => handlePasteLink(val.trim()), 100);
+              // Auto-trigger fetch if it's a URL
+              if (val.trim().startsWith("http")) {
+                // Check if it's a new URL
+                if (val.trim() !== noticia.link) {
+                  setTimeout(() => handlePasteLink(val.trim()), 300);
+                }
               }
             }} 
             onPaste={e => { 
               const t = e.clipboardData.getData("text"); 
-              setTimeout(() => handlePasteLink(t), 50); 
-            }} 
+              if (t && t.startsWith("http")) {
+                setTimeout(() => handlePasteLink(t.trim()), 50); 
+              }
+            }}
             placeholder="Cole o link da matéria" 
             className="block w-full min-w-0 max-w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none" 
             style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
@@ -1521,9 +1532,9 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         <textarea 
           value={noticia.texto_materia || ""} 
           onChange={e => onUpdate(bi, ni, "texto_materia", e.target.value)} 
-          placeholder={isFetching ? "Aguarde, a IA está analisando o link e gerando o texto jornalístico..." : linkInput ? "Gerando conteúdo..." : "Aguardando link para gerar matéria completa (TP)..."}
-          className={`block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none resize-y transition-all ${isFetching ? 'ring-1 ring-blue-400 bg-blue-50/50' : ''}`} 
-          rows={6} 
+          placeholder={isFetching ? "Aguarde, a IA está analisando o link e gerando o texto jornalístico..." : "O texto da matéria completa aparecerá aqui automaticamente após colar o link."}
+          className={`block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none resize-y transition-all ${isFetching ? 'ring-2 ring-blue-500 bg-blue-50/80 shadow-inner' : ''}`} 
+          rows={10} 
           style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
         />
       </div>
