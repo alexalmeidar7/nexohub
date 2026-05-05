@@ -234,15 +234,17 @@ Deno.serve(async (req) => {
             const aiData = await aiResponse.json();
             generatedContent = aiData.choices?.[0]?.message?.content || "";
             
+            const paragraphs = generatedContent.split(/\n\s*\n/).filter(p => p.trim().length > 40);
             const hasInicio = /IN[ÍI]CIO|INTRODU[ÇC][ÃA]O/i.test(generatedContent);
             const hasConcl = /CONCLUS[ÃA]O|FECHAMENTO/i.test(generatedContent);
-            const isLongEnough = generatedContent.length > 600;
+            const isLongEnough = generatedContent.length > 800;
+            const hasMinParagraphs = paragraphs.length >= 3;
             
-            if (hasInicio && hasConcl && isLongEnough) {
+            if (hasInicio && hasConcl && isLongEnough && hasMinParagraphs) {
               isValid = true;
             } else {
               attempts++;
-              console.log(`Validation failed (Attempt ${attempts}): length=${generatedContent.length}`);
+              console.log(`Validation failed (Attempt ${attempts}): length=${generatedContent.length}, paragraphs=${paragraphs.length}`);
             }
           }
 
