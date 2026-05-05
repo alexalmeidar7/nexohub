@@ -102,7 +102,7 @@ serve(async (req) => {
       });
     }
 
-    const { automacao_id, producao_ai_habilitada = true } = await req.json();
+    const { automacao_id, producao_ai_habilitada = true, producao_ai_prompt = "" } = await req.json();
     if (!automacao_id) {
       return new Response(JSON.stringify({ error: "automacao_id obrigatório" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
