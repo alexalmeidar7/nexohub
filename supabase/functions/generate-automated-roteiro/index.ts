@@ -176,7 +176,7 @@ ${newsListText}
 
 Retorne APENAS um JSON válido com a seguinte estrutura:
 {
-  "escalada": [{"titulo": "...", "imagemUrl": "..."}],
+  "escalada": [{"titulo": "...", "imagemUrl": "...", "resumo": "..."}],
   "blocos": [
     {
       "noticias": [{"titulo": "...", "imagemUrl": "...", "link": "...", "resumo": "...", "texto_materia": "..."}]
