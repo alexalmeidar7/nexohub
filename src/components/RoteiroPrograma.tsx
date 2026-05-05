@@ -703,7 +703,6 @@ export default function RoteiroPrograma() {
               <AutomacaoProgramaSection
                 programas={programas}
                 onGenerateRoteiro={(text) => setExternalPasteText(text)}
-                hideAiProductionConfig={true}
               />
             </Suspense>
             {historicoSlot}
