@@ -1048,7 +1048,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                 <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
                   {noticiasAvulsas.map((item, idx) => (
                     <div key={idx} draggable
-                      onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: "Avulsa", title: item.title, imageUrl: item.thumbnail || "" })); }}
+                      onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: "Avulsa", title: item.title, imageUrl: item.thumbnail || "", link: item.link || "", body: item.body || "", journalisticText: item.journalisticText || item.body || "" })); }}
                       className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
                     >
                       <GripVertical size={10} className="shrink-0 opacity-20" />
