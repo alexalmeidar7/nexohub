@@ -401,6 +401,23 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
     setBlocos(prev => {
+      const noticia = prev[bi].noticias[ni];
+      
+      // Se estiver marcando como escalada, adiciona o resumo à lista de escaladas
+      if (field === "escalada" && value === true) {
+        const textToUse = noticia.resumo || noticia.titulo;
+        if (textToUse && !escaladaList.includes(textToUse)) {
+          setEscaladaList(current => [...current, textToUse]);
+        }
+      } 
+      // Se estiver desmarcando, removemos da lista se o texto for exatamente igual
+      else if (field === "escalada" && value === false) {
+        const textToRemove = noticia.resumo || noticia.titulo;
+        if (textToRemove) {
+          setEscaladaList(current => current.filter(item => item !== textToRemove));
+        }
+      }
+
       const copy = prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, [field]: value } : n) } : b);
       return copy;
     });
