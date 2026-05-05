@@ -101,7 +101,12 @@ export default function InfoMusicSection() {
   };
 
   useEffect(() => { load(); }, []);
-  useEffect(() => { loadExcecoes(); }, [user]);
+  useEffect(() => { 
+    loadExcecoes();
+    // Auto refresh every 5 seconds to keep "Now Playing" updated
+    const interval = setInterval(loadExcecoes, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleTest = async () => {
     if (!testArtista.trim() || !testMusica.trim()) {
