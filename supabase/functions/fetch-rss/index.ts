@@ -268,8 +268,8 @@ Deno.serve(async (req) => {
              journalisticText = "O conteúdo extraído do link foi insuficiente ou a IA não conseguiu gerar o texto. Tente outro link ou cole o texto manualmente.";
           }
         } else if (!openAIKey) {
-          console.error("OPENAI_API_KEY is missing in environment variables.");
-          journalisticText = "ERRO: OPENAI_API_KEY não configurada. O administrador precisa configurar a chave de API.";
+          console.warn("OPENAI_API_KEY is missing. Returning raw text as fallback.");
+          journalisticText = contentToProcess.slice(0, 5000);
         } else {
           console.warn("Content too short to process:", contentToProcess.length);
           journalisticText = "O conteúdo deste link é muito curto para gerar uma matéria completa. Tente um link com mais texto.";
