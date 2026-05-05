@@ -627,7 +627,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
               <Zap size={20} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
-              {editingId ? "Editar Programa Express" : "Programa Express"}
+              {editingId ? "Monte seu Roteiro" : "Monte seu Roteiro"}
             </DialogTitle>
             <button
               onClick={() => setShowPastePopup(true)}
