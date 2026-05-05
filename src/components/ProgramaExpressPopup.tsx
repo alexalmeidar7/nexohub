@@ -437,7 +437,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setFetchingLink(key);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", {
-        body: { url },
+        body: { url, generate_summary: true },
       });
       if (!error && data?.ok && data.content) {
         const html = data.content as string;
