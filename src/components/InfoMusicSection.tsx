@@ -362,17 +362,16 @@ export default function InfoMusicSection() {
                           title="Enviar manualmente para o XML"
                         >
                           <Send size={14} />
-                        </button>
-                      </td>
+                         </button>
+                       </td>
+                       <td className="px-3 py-2 align-top text-right">
+                         <button onClick={() => handleDelete(r.id)} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: "#dc2626" }}>
+                           <Trash2 size={13} />
+                         </button>
+                       </td>
+                     </tr>
                     );
                   })}
-                      <td className="px-3 py-2 align-top text-right">
-                        <button onClick={() => handleDelete(r.id)} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: "#dc2626" }}>
-                          <Trash2 size={13} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
                 </tbody>
               </table>
             </div>
