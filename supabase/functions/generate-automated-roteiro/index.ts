@@ -261,7 +261,7 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES ADICIONAIS DO USUÁRIO: ${producao_ai_p
 
             console.log(`Item check: ${charCount} chars, ${paragraphCount} paragraphs`);
 
-            if (charCount < 800 || paragraphCount < 3) {
+            if (charCount < 1000 || paragraphCount < 3) {
               allNewsValid = false;
               console.log(`Validation failed for item: ${(n.titulo || "").slice(0, 30)}...`);
               break;
