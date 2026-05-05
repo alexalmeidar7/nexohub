@@ -560,6 +560,9 @@ export default function RoteiroPrograma() {
                 });
                 // Scroll to top to see the edit form
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Force sync with parent component's scroll ref if possible
+                const dashboardContent = document.querySelector('.overflow-y-auto.flex-1');
+                if (dashboardContent) dashboardContent.scrollTo({ top: 0, behavior: 'smooth' });
               }}
             />
           ) : (
