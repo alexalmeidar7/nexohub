@@ -16,21 +16,39 @@ serve(async (req) => {
       });
     }
 
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ text }), {
+
+    // Simple local "improvement" if no API keys are found
+    const fallbackImprovement = (t: string) => {
+      return t
+        .replace(/\s+/g, " ")
+        .replace(/\n\s*\n/g, "\n\n")
+        .trim();
+    };
+
+    if (!OPENAI_API_KEY && !LOVABLE_API_KEY) {
+      console.log("No API keys found, using local fallback improvement");
+      return new Response(JSON.stringify({ improvedText: fallbackImprovement(text) }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const apiUrl = OPENAI_API_KEY 
+      ? "https://api.openai.com/v1/chat/completions" 
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+    
+    const apiKey = OPENAI_API_KEY || LOVABLE_API_KEY;
+    const model = OPENAI_API_KEY ? "gpt-4o-mini" : "google/gemini-2.5-flash-lite";
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model,
         messages: [
           { role: "system", content: "Você é um revisor de texto profissional brasileiro. Melhore a clareza, gramática e fluidez do texto mantendo o significado original. Retorne APENAS o texto melhorado, sem explicações." },
           { role: "user", content: text },
@@ -39,16 +57,16 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      console.error("AI gateway error:", response.status);
-      return new Response(JSON.stringify({ text }), {
+      console.error("AI service error:", response.status);
+      return new Response(JSON.stringify({ improvedText: fallbackImprovement(text) }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await response.json();
-    const improved = data.choices?.[0]?.message?.content?.trim() || text;
+    const improved = data.choices?.[0]?.message?.content?.trim() || fallbackImprovement(text);
 
-    return new Response(JSON.stringify({ text: improved }), {
+    return new Response(JSON.stringify({ improvedText: improved }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
