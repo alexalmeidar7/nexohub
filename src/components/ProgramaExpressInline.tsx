@@ -1464,7 +1464,25 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-1.5 items-center w-full min-w-0 max-w-full overflow-hidden">
         <div className="relative min-w-0 max-w-full overflow-hidden">
           <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-icon-color, #888)" }} />
-          <input value={linkInput} onChange={e => setLinkInput(e.target.value)} onPaste={e => { const t = e.clipboardData.getData("text"); setTimeout(() => handlePasteLink(t), 50); }} placeholder="Cole o link da matéria" className="block w-full min-w-0 max-w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
+          <input 
+            value={linkInput} 
+            onChange={e => {
+              const val = e.target.value;
+              setLinkInput(val);
+              // Auto-trigger fetch if it's a URL and we don't have text yet
+              if (val.trim().startsWith("http") && (!noticia.texto_materia || noticia.texto_materia === "Aguardando link para gerar matéria completa (TP)...")) {
+                // Debounce a bit or handle paste
+                setTimeout(() => handlePasteLink(val.trim()), 100);
+              }
+            }} 
+            onPaste={e => { 
+              const t = e.clipboardData.getData("text"); 
+              setTimeout(() => handlePasteLink(t), 50); 
+            }} 
+            placeholder="Cole o link da matéria" 
+            className="block w-full min-w-0 max-w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none" 
+            style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
+          />
         </div>
         <button onClick={() => handlePasteLink(linkInput)} disabled={isFetching || !linkInput} className="btn-skyglass-accent px-3.5 py-1.5 text-[11px] disabled:opacity-30 shrink-0">
           {isFetching ? <Loader2 size={12} className="animate-spin" /> : <><Search size={11} /> Buscar</>}
@@ -1481,9 +1499,9 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           {editedFields?.has(`noticia-${bi}-${ni}-texto_materia`) && <EditedCheck />}
         </div>
         <textarea 
-          value={noticia.texto_materia || ""} 
+          value={isFetching ? "Processando matéria completa por IA..." : noticia.texto_materia || ""} 
           onChange={e => onUpdate(bi, ni, "texto_materia", e.target.value)} 
-          placeholder="Aguardando link para gerar matéria completa (TP)..."
+          placeholder={linkInput ? "Processando matéria..." : "Aguardando link para gerar matéria completa (TP)..."}
           className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none resize-y" 
           rows={6} 
           style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
