@@ -299,7 +299,7 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES PERSONALIZADAS DO USUÁRIO (SIGA À RIS
     if (roteiro.escalada && roteiro.escalada.length > 0) {
       pasteText += "ESCALADA:\n";
       roteiro.escalada.forEach((e, i) => {
-        pasteText += `${i + 1}. ${e.titulo}\n`;
+        pasteText += `${i + 1}. ${e.resumo || e.titulo}\n`;
       });
       pasteText += "\n";
     }
