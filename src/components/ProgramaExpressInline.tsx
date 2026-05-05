@@ -1424,7 +1424,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   inputStyle: React.CSSProperties; fetchingLink: string | null;
   onUpdate: (bi: number, ni: number, field: keyof NewsItem, value: any) => void;
   onRemove: (bi: number, ni: number) => void;
-  onFetchLink: (bi: number, ni: number, url: string) => void;
+  onFetchLink: (bi: number, ni: number, url: string, force?: boolean) => void;
   canRemove: boolean;
   editedFields?: Set<string>;
 }) {
