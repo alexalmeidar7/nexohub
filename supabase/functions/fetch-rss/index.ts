@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { url } = await req.json();
+    const { url, generate_journalistic_text, custom_prompt } = await req.json();
     if (!url) {
       return new Response(JSON.stringify({ error: "URL is required" }), {
         status: 400,
@@ -149,7 +149,6 @@ Deno.serve(async (req) => {
           ? fetchErr.message
           : "Falha ao buscar feed";
 
-      // Retorna 200 para evitar quebra de fluxo no frontend em feeds intermitentes/lentos
       return new Response(JSON.stringify({ content: "", error: msg, ok: false }), {
         headers: responseHeaders,
       });
@@ -159,7 +158,51 @@ Deno.serve(async (req) => {
     const buffer = await response.arrayBuffer();
     const text = pickBestDecodedText(buffer, contentType);
 
-    return new Response(JSON.stringify({ content: text, ok: true }), {
+    let journalisticText = null;
+    if (generate_journalistic_text) {
+      try {
+        // Simple heuristic to extract main text from HTML
+        const cleanText = text
+          .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "")
+          .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 4000);
+
+        const openAIKey = Deno.env.get("OPENAI_API_KEY");
+        if (openAIKey && cleanText.length > 200) {
+          const systemPrompt = custom_prompt || "Você é um redator de notícias para telejornalismo. Escreva um texto para ser lido no Teleprompter (TP), com introdução, desenvolvimento e conclusão.";
+          
+          const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${openAIKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: `Com base no seguinte conteúdo da notícia, escreva o texto jornalístico:\n\n${cleanText}` }
+              ],
+              temperature: 0.7,
+            }),
+          });
+
+          const aiData = await aiResponse.json();
+          journalisticText = aiData.choices?.[0]?.message?.content;
+        }
+      } catch (e) {
+        console.error("AI Generation error:", e);
+      }
+    }
+
+    return new Response(JSON.stringify({ 
+      content: text, 
+      journalisticText, 
+      ok: true 
+    }), {
       headers: responseHeaders,
     });
   } catch (error) {
