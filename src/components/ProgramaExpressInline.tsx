@@ -1562,7 +1562,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       <div className="w-full min-w-0 max-w-full overflow-hidden">
         <div className="flex items-center gap-1 mb-1">
           <FileText size={10} style={{ color: "var(--layout-icon-color)" }} />
-          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Texto / Resumo</span>
+          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Texto matéria</span>
           {editedFields?.has(`noticia-${bi}-${ni}-resumo`) && <EditedCheck />}
         </div>
         <textarea 
