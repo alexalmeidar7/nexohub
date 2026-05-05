@@ -243,52 +243,6 @@ export default function InfoMusicSection() {
         </div>
       </div>
 
-      <div className="rounded-xl p-4 space-y-3" style={{
-        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
-        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
-      }}>
-        <div className="flex items-center gap-2">
-          <RefreshCw size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-          <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            Testar / Pré-gerar curiosidade
-          </h4>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <input
-            type="text"
-            placeholder="Nome do artista"
-            value={testArtista}
-            onChange={e => setTestArtista(e.target.value)}
-            className="px-3 py-2 rounded-lg text-xs outline-none"
-            style={{
-              backgroundColor: "var(--layout-page-bg, #fff)",
-              color: "var(--layout-page-text, #1a1a1a)",
-              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
-            }}
-          />
-          <input
-            type="text"
-            placeholder="Nome da música"
-            value={testMusica}
-            onChange={e => setTestMusica(e.target.value)}
-            className="px-3 py-2 rounded-lg text-xs outline-none"
-            style={{
-              backgroundColor: "var(--layout-page-bg, #fff)",
-              color: "var(--layout-page-text, #1a1a1a)",
-              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
-            }}
-          />
-          <button
-            onClick={handleTest}
-            disabled={testing}
-            className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-50 inline-flex items-center justify-center gap-2"
-            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
-          >
-            {testing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-            Gerar
-          </button>
-        </div>
-      </div>
 
       {nowPlaying && (
         <div className="rounded-xl p-4 overflow-hidden relative group" style={{
