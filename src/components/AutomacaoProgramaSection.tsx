@@ -428,7 +428,7 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
             </button>
           </div>
         </div>
-      )}
-
+    </div>
   );
 }
+
