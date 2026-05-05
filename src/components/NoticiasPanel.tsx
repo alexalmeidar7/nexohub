@@ -14,6 +14,7 @@ interface NewsItem {
   link: string;
   thumbnail?: string;
   body?: string;
+  journalisticText?: string;
 }
 
 interface Portal {
@@ -467,7 +468,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             body = pMatches.slice(0, 5).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 2000);
           }
         }
-        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail, body }]);
+        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail, body, journalisticText: body }]);
       } catch {
         setNoticiasAvulsas(prev => [...prev, { title, link: url }]);
       }
@@ -589,7 +590,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
               body = pMatches.slice(0, 8).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 3000);
             }
           }
-          setReadingPopup({ title, link: item.link, thumbnail, body });
+          setReadingPopup({ title, link: item.link, thumbnail, body, journalisticText: body });
         }
       }
     } catch (err) {
@@ -998,7 +999,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                             <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
                               {news.map((item, idx) => (
                                 <div key={idx} draggable
-                                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: site.name, title: item.title, imageUrl: item.thumbnail || "", link: item.link || "" })); }}
+                                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: site.name, title: item.title, imageUrl: item.thumbnail || "", link: item.link || "", body: item.body || "", journalisticText: item.journalisticText || item.body || "" })); }}
                                   className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
                                 >
                                   <GripVertical size={10} className="shrink-0 opacity-20" />
@@ -1047,7 +1048,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                 <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
                   {noticiasAvulsas.map((item, idx) => (
                     <div key={idx} draggable
-                      onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: "Avulsa", title: item.title, imageUrl: item.thumbnail || "" })); }}
+                      onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: "Avulsa", title: item.title, imageUrl: item.thumbnail || "", link: item.link || "", body: item.body || "", journalisticText: item.journalisticText || item.body || "" })); }}
                       className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
                     >
                       <GripVertical size={10} className="shrink-0 opacity-20" />

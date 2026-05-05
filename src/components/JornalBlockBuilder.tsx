@@ -14,6 +14,7 @@ export interface JornalNewsItem {
   title: string;
   imageUrl: string;
   body?: string;
+  journalisticText?: string;
   link?: string;
 }
 
@@ -131,7 +132,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
               body = await fetchBodyForItem(item);
               setFetchingBody(null);
             }
-            setBlocks(prev => ({ ...prev, [blockNum]: [...(prev[blockNum] || []), { ...item, body }] }));
+            setBlocks(prev => ({ ...prev, [blockNum]: [...(prev[blockNum] || []), { ...item, body, journalisticText: item.journalisticText || body }] }));
           }
           dragItem.current = null;
           return;
@@ -180,7 +181,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
     const { blockNum, index } = editingItem;
     setBlocks(prev => {
       const updated = [...prev[blockNum]];
-      updated[index] = { ...updated[index], title: editTitle, imageUrl: editImageUrl, body: editBody };
+      updated[index] = { ...updated[index], title: editTitle, imageUrl: editImageUrl, body: editBody, journalisticText: editBody };
       return { ...prev, [blockNum]: updated };
     });
     setEditingItem(null);
@@ -310,12 +311,17 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
                       <GripVertical size={12} className="shrink-0 mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }} />
                       <div className="flex-1 min-w-0">
                         <p className="font-bold line-clamp-2 leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{n.title}</p>
-                        {n.body && (
+                        {n.journalisticText && (
+                          <p className="line-clamp-3 mt-0.5 leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)", fontSize: "10px" }}>
+                            {n.journalisticText}
+                          </p>
+                        )}
+                        {!n.journalisticText && n.body && (
                           <p className="line-clamp-3 mt-0.5 leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)", fontSize: "10px" }}>
                             {n.body}
                           </p>
                         )}
-                        {!n.body && n.link && (
+                        {!n.journalisticText && !n.body && n.link && (
                           <p className="mt-0.5 italic" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)", fontSize: "10px" }}>
                             Texto não disponível
                           </p>
