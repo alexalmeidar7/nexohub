@@ -328,32 +328,9 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           if (!data || data === "stopped") return false;
           if (isPlaceholderTrack(data)) return false;
           lastLocalSyncAtRef.current = Date.now();
-          fetchCoverAsync(data);
+          fetchCoverAndArtistImg(data);
           applyMusicData(data);
-          localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
-          return true;
-        } catch {
-          // keep online source running
-          return false;
-        }
-      };
-
-      const syncOnline = async (): Promise<"ok" | "stopped" | "skip"> => {
-        if (!useOnline || !url) return "skip";
-
-        // When online is NOT stopped, respect local source grace period
-        const localSourceHealthy = !onlineStoppedRef.current
-          && useLocal
-          && !!localFileName
-          && lastLocalSyncAtRef.current > 0
-          && Date.now() - lastLocalSyncAtRef.current < LOCAL_SOURCE_GRACE_MS;
-
-        if (localSourceHealthy) return "skip";
-
-        const text = await fetchXmlFromUrl(url);
-        if (!text) return "skip";
-
-        const data = parseXml(text);
+...
         if (data === "stopped") {
           onlineStoppedRef.current = true;
           return "stopped";
@@ -361,7 +338,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         if (!data) return "skip";
 
         onlineStoppedRef.current = false;
-        fetchCoverAsync(data);
+        fetchCoverAndArtistImg(data);
         applyMusicData(data);
         localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
         return "ok";
