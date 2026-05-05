@@ -13,7 +13,6 @@ function isPlaceholderTrack(data: { titulo?: string; artista?: string }) {
   return (titulo === "" || titulo === "sem título" || titulo === "sem titulo") && (artista === "" || artista === "desconhecido");
 }
 
-/** Returns parsed data, or "stopped" if the XML is valid but has no track, or null on parse error */
 function parseXml(xmlStr: string): { titulo: string; artista: string; duracao: number; capa: string } | "stopped" | null {
   try {
     const parser = new DOMParser();
@@ -76,10 +75,6 @@ function getCurrentProgram(
   return "";
 }
 
-/**
- * Polls the user's XML music source every 3s, keeps localStorage in sync,
- * and records song changes to musicas_tocadas for history.
- */
 export function useGlobalMusicSync(enabled: boolean = true) {
   const { user } = useAuth();
   const coverCacheRef = useRef<Record<string, string>>({});
@@ -127,8 +122,6 @@ export function useGlobalMusicSync(enabled: boolean = true) {
 
         if (!error) {
           lastRecordedRef.current = key;
-        } else {
-          console.warn("[MusicSync] History insert error:", error.message);
         }
       } catch (e) {
         console.warn("[MusicSync] History error:", e);
@@ -144,18 +137,16 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
 
       if (songChanged) {
-        // Guard: if localStorage was updated very recently (< 5s) with a different song,
-        // another source (e.g. MusicaNoAr local file monitor) likely has fresher data — skip
         const existingStartStr = localStorage.getItem(MUSIC_START_KEY);
         if (existingStartStr && prev) {
           const age = Date.now() - parseInt(existingStartStr, 10);
-          if (age < 5000) return; // recent update — don't overwrite
+          if (age < 5000) return;
         }
 
         const now = Date.now();
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
         localStorage.setItem(MUSIC_START_KEY, now.toString());
-        // Persist start time to DB for cross-session/device continuity
+        
         (async () => {
           try {
             await mergeUserDashboardItems(user.id, {
@@ -168,7 +159,6 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         })();
       } else if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
-        // Persist cover to DB so public users get it too
         (async () => {
           try {
             await mergeUserDashboardItems(user.id, { music_current_cover: data.capa });
@@ -186,7 +176,6 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       
       const fetchAll = async () => {
         try {
-          // 1. Fetch album cover from iTunes if missing
           if (!data.capa) {
             if (coverCacheRef.current[cacheKey]) {
               data.capa = coverCacheRef.current[cacheKey];
@@ -204,7 +193,6 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             }
           }
 
-          // 2. Fetch artist image from Deezer
           let artistImg = "";
           if (data.artista && data.artista !== "Desconhecido") {
             const { data: artistRes } = await supabase.functions.invoke("fetch-artist-image", {
@@ -215,7 +203,6 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             }
           }
 
-          // 3. Update UI and DB if we have new info
           const curRaw = localStorage.getItem(MUSIC_DATA_KEY);
           if (!curRaw) return;
 
@@ -223,12 +210,10 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           const sameTrack = cur.titulo === data.titulo && cur.artista === data.artista;
           if (!sameTrack) return;
 
-          // Always update localStorage if we have new data
           if (data.capa && cur.capa !== data.capa) {
             localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...cur, capa: data.capa }));
           }
 
-          // Always push to DB so public screens/XML have it
           if (user?.id) {
             void mergeUserDashboardItems(user.id, {
               music_current_title: data.titulo,
@@ -246,19 +231,12 @@ export function useGlobalMusicSync(enabled: boolean = true) {
     };
 
     const fetchXmlFromUrl = async (url: string): Promise<string | null> => {
-      // Reset direct fetch flag every 20 cycles (~60s) to retry CORS
-      if (fetchCountRef.current % 20 === 0) {
-        directFetchOkRef.current = null;
-      }
+      if (fetchCountRef.current % 20 === 0) directFetchOkRef.current = null;
 
-      // Try direct fetch first
       if (directFetchOkRef.current !== false) {
         try {
           const directRes = await fetch(buildFreshUrl(url), {
-            headers: {
-              "Cache-Control": "no-cache, no-store, max-age=0",
-              Pragma: "no-cache",
-            },
+            headers: { "Cache-Control": "no-cache, no-store, max-age=0", Pragma: "no-cache" },
             signal: AbortSignal.timeout(4000),
             cache: "no-store",
           });
@@ -271,26 +249,20 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         }
       }
 
-      // Fallback to edge function
       try {
         const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
           body: { url },
         });
-        if (!rssError && rssData?.content) {
-          return rssData.content;
-        }
-        console.warn("[MusicSync] Edge fetch-rss failed:", rssError?.message);
+        if (!rssError && rssData?.content) return rssData.content;
       } catch (e) {
         console.warn("[MusicSync] Edge fetch-rss exception:", e);
       }
-
       return null;
     };
 
     const fetchAndSync = async () => {
       fetchCountRef.current++;
 
-      // Cache settings to avoid re-fetching every poll
       if (!settingsFetchedRef.current) {
         const { data: settings } = await supabase
           .from("user_settings")
@@ -330,7 +302,28 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           lastLocalSyncAtRef.current = Date.now();
           fetchCoverAndArtistImg(data);
           applyMusicData(data);
-...
+          localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      const syncOnline = async (): Promise<"ok" | "stopped" | "skip"> => {
+        if (!useOnline || !url) return "skip";
+
+        const localSourceHealthy = !onlineStoppedRef.current
+          && useLocal
+          && !!localFileName
+          && lastLocalSyncAtRef.current > 0
+          && Date.now() - lastLocalSyncAtRef.current < LOCAL_SOURCE_GRACE_MS;
+
+        if (localSourceHealthy) return "skip";
+
+        const text = await fetchXmlFromUrl(url);
+        if (!text) return "skip";
+
+        const data = parseXml(text);
         if (data === "stopped") {
           onlineStoppedRef.current = true;
           return "stopped";
@@ -344,15 +337,9 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         return "ok";
       };
 
-      // Run online FIRST so we can detect STOPPED before local runs
       const onlineResult = await syncOnline();
-
-      // If online is STOPPED, try local — it might have fresher data
-      // If online is OK, still try local (it will be skipped if same data)
       const localSynced = await syncLocalFromStorage();
 
-      // If online is STOPPED and local also didn't provide real data,
-      // clear stale music from localStorage so UI shows "Aguardando"
       if (onlineResult === "stopped" && !localSynced) {
         const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
         const prevStart = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
@@ -366,29 +353,10 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           }
         }
       }
-
-      // If no configured source, still keep history from current canonical localStorage
-      if ((!useOnline || !url) && (!useLocal || !localFileName)) {
-        try {
-          const raw = localStorage.getItem(MUSIC_DATA_KEY);
-          if (!raw) return;
-          const localMusic = JSON.parse(raw) as { titulo?: string; artista?: string };
-          const titulo = normalizeMusicText(localMusic?.titulo || "");
-          const artista = normalizeMusicText(localMusic?.artista || "") || "Desconhecido";
-          if (titulo && titulo !== "Sem título") {
-            void recordToHistory(titulo, artista);
-          }
-        } catch {}
-        return;
-      }
-
     };
 
-    // Start immediately, poll every 3s
     fetchAndSync();
     const interval = setInterval(fetchAndSync, 2000);
-
-    // Refresh cached settings every 15s in case user changes sources
     const urlRefresh = setInterval(() => { settingsFetchedRef.current = false; }, 15000);
 
     return () => { clearInterval(interval); clearInterval(urlRefresh); };
