@@ -460,6 +460,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         let title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
         if (title.includes(" - ")) title = title.split(" - ")[0].trim();
         const image = getMetaContent("og:image") || getMetaContent("twitter:image");
+        const summary = data.summary;
 
         const decodeFull = (v: string) => {
           let s = v;
