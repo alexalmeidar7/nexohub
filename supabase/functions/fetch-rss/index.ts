@@ -201,11 +201,11 @@ Deno.serve(async (req) => {
             
             ESTRUTURA OBRIGATÓRIA DO TEXTO (NÃO PODE FALTAR NENHUMA PARTE):
             - [INÍCIO]: Lead impactante, situando o espectador no tempo e espaço. Deve ter pelo menos 2 frases.
-            - [DESENVOLVIMENTO]: Corpo da matéria. Explique todos os detalhes, contexto histórico, dados e declarações. Esta seção DEVE ter pelo menos 3 parágrafos robustos.
+            - [DESENVOLVIMENTO]: Corpo da matéria. Explique todos os detalhes, contexto histórico, dados e declarações. Esta seção DEVE ter pelo menos 3 a 5 parágrafos robustos.
             - [CONCLUSÃO]: Encerramento com as próximas etapas, consequências ou um fechamento reflexivo. Deve ter pelo menos 2 frases.
             
             REGRAS CRÍTICAS:
-            1. EXTENSÃO: O texto final DEVE ter no mínimo 2000 caracteres. Textos curtos serão rejeitados.
+            1. EXTENSÃO: O texto final DEVE ter no mínimo 2500 caracteres e obrigatoriamente entre 5 e 8 parágrafos. Textos curtos serão rejeitados.
             2. PROFUNDIDADE: Não faça um resumo. Transforme cada informação do conteúdo bruto em uma narrativa jornalística fluida.
             3. TOM: Jornalístico profissional, pronto para locução.
             
