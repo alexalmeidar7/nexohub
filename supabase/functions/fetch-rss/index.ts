@@ -201,16 +201,17 @@ Deno.serve(async (req) => {
             : "Você é um redator sênior de telejornalismo especializado em grandes reportagens.";
           
           const systemPrompt = (custom_prompt && custom_prompt.trim().length > 5)
-            ? `${custom_prompt}\n\nREQUISITOS ADICIONAIS OBRIGATÓRIOS:\n1. O texto DEVE ser separado em parágrafos usando quebras de linha duplas (duas vezes a tecla Enter).\n2. Crie parágrafos curtos e diretos (máximo 4 linhas por parágrafo).\n3. Não use texto em bloco único.\n4. Não inicie o texto com frases como 'Compartilhar matéria' ou metadados similares.\n5. Retorne APENAS o conteúdo jornalístico.`
+            ? `${custom_prompt}\n\nREQUISITOS ADICIONAIS OBRIGATÓRIOS:\n1. O texto DEVE ser separado em parágrafos usando quebras de linha duplas (duas vezes a tecla Enter).\n2. Crie parágrafos curtos e diretos (máximo 4 linhas por parágrafo).\n3. Não use texto em bloco único.\n4. Não inicie o texto com frases como 'Compartilhar matéria', 'Leia mais', ou metadados similares.\n5. O texto deve ser uma narrativa jornalística fluida, coerente e envolvente, contando uma história completa com início, meio e fim.\n6. NÃO use entidades HTML (como &quot;, &amp;, etc), use caracteres normais e aspas comuns.\n7. Utilize uma linguagem rica e variada, evitando repetições e tornando o texto interessante para quem ouve.\n8. Retorne APENAS o conteúdo jornalístico.`
             : `${baseSystemPrompt}
             
             REQUISITOS OBRIGATÓRIOS:
             1. O texto DEVE ter no MÍNIMO 5 parágrafos.
             2. Cada parágrafo deve ser separado por duas quebras de linha (Enter duas vezes).
-            3. Use tom jornalístico profissional para Teleprompter.
-            4. Crie parágrafos curtos para facilitar a leitura.
-            5. Não inicie o texto com 'Compartilhar matéria'.
-            6. Retorne APENAS o texto jornalístico, sem introduções ou metadados.`;
+            3. Use tom jornalístico profissional e narrativo, contando uma história coerente e fluida.
+            4. Crie parágrafos curtos para facilitar a leitura no Teleprompter.
+            5. Não inicie o texto com 'Compartilhar matéria' ou metadados.
+            6. NÃO use entidades HTML como &quot;, use aspas normais (").
+            7. Retorne APENAS o texto jornalístico, sem introduções ou comentários adicionais.`;
           
           let attempts = 0;
           let generatedContent = "";
@@ -231,7 +232,7 @@ Deno.serve(async (req) => {
                   model: "gpt-4o-mini",
                   messages: [
                     { role: "system", content: systemPrompt },
-                    { role: "user", content: `COM BASE NESTE CONTEÚDO: ${contentToProcess}\n\nRETORNE UM JSON NO FORMATO: {"materia": "texto da materia aqui", "resumo": "resumo de 1-2 frases aqui"}` }
+                    { role: "user", content: `COM BASE NESTE CONTEÚDO: ${contentToProcess}\n\nEscreva uma matéria jornalística completa e envolvente. RETORNE UM JSON NO FORMATO: {"materia": "texto da materia aqui", "resumo": "resumo de 1-2 frases aqui"}` }
                   ],
                   response_format: { type: "json_object" },
                   temperature: 0.7,
@@ -279,41 +280,42 @@ Deno.serve(async (req) => {
             .replace(/^\s*(Compartilhar matéria|Compartilhar notícia|Leia mais|Veja também):?\s*/gi, "")
             .trim();
           
-          // Improved HTML entity decoding
-          const decodeEntities = (text: string) => {
-            return text
-              .replace(/&quot;/g, '"')
-              .replace(/&amp;/g, '&')
-              .replace(/&lt;/g, '<')
-              .replace(/&gt;/g, '>')
-              .replace(/&nbsp;/g, ' ')
-              .replace(/&apos;|&#39;/g, "'")
-              .replace(/&ã;/g, 'ã')
-              .replace(/&ẽ;/g, 'ẽ')
-              .replace(/&ĩ;/g, 'ĩ')
-              .replace(/&õ;/g, 'õ')
-              .replace(/&ũ;/g, 'ũ')
-              .replace(/&á;/g, 'á')
-              .replace(/&é;/g, 'é')
-              .replace(/&í;/g, 'í')
-              .replace(/&ó;/g, 'ó')
-              .replace(/&ú;/g, 'ú')
-              .replace(/&à;/g, 'à')
-              .replace(/&è;/g, 'è')
-              .replace(/&ì;/g, 'ì')
-              .replace(/&ò;/g, 'ò')
-              .replace(/&ù;/g, 'ù')
-              .replace(/&â;/g, 'â')
-              .replace(/&ê;/g, 'ê')
-              .replace(/&î;/g, 'î')
-              .replace(/&ô;/g, 'ô')
-              .replace(/&û;/g, 'û')
-              .replace(/&ç;/g, 'ç')
-              .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
-              .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+          // Improved HTML entity decoding (handles nested entities like &amp;quot;)
+          const decodeEntities = (text: string): string => {
+            if (!text) return "";
+            let decoded = text;
+            let previous;
+            
+            // Loop to handle double encoding
+            do {
+              previous = decoded;
+              decoded = decoded
+                .replace(/&quot;/g, '"')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&apos;|&#39;/g, "'")
+                .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
+                .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+            } while (decoded !== previous);
+
+            // Specific cleanup for common remaining issues
+            return decoded
+              .replace(/&[a-z0-9#]+;/gi, (match) => {
+                const entities: Record<string, string> = {
+                  '&atilde;': 'ã', '&otilde;': 'õ', '&aacute;': 'á', '&eacute;': 'é', '&iacute;': 'í', 
+                  '&oacute;': 'ó', '&uacute;': 'ú', '&acirc;': 'â', '&ecirc;': 'ê', '&ocirc;': 'ô', 
+                  '&ccedil;': 'ç', '&Agrave;': 'À', '&Egrave;': 'È', '&Igrave;': 'Ì', '&Ograve;': 'Ò', 
+                  '&Ugrave;': 'Ù', '&agrave;': 'à', '&egrave;': 'è', '&ìgrave;': 'ì', '&ograve;': 'ò', 
+                  '&ugrave;': 'ù'
+                };
+                return entities[match.toLowerCase()] || match;
+              });
           };
           
           journalisticText = decodeEntities(journalisticText);
+          if (summary) summary = decodeEntities(summary);
           
           // Ensure double newlines for paragraphs if not present
           if (journalisticText && !journalisticText.includes("\n\n") && journalisticText.includes("\n")) {
