@@ -192,8 +192,10 @@ Deno.serve(async (req) => {
         contentToProcess = contentToProcess.slice(0, 10000); // Send more context to AI if available
 
         const openAIKey = Deno.env.get("OPENAI_API_KEY");
-        if (openAIKey && cleanText.length > 200) {
-          const systemPrompt = custom_prompt || "Você é um redator de notícias para telejornalismo. Escreva um texto para ser lido no Teleprompter (TP), com introdução, desenvolvimento e conclusão.";
+        if (openAIKey && contentToProcess.length > 200) {
+          const systemPrompt = (custom_prompt && custom_prompt.trim().length > 5) 
+            ? custom_prompt 
+            : "Você é um redator de notícias especializado em telejornalismo. Sua tarefa é transformar o conteúdo bruto de um link em uma matéria completa e estruturada para ser lida no Teleprompter (TP). A matéria deve ter obrigatoriamente um início (lead impactante), meio (detalhamento dos fatos principais) e uma conclusão (fechamento ou desdobramentos). O tom deve ser profissional e adequado para leitura em voz alta.";
           
           const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
