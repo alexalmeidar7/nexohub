@@ -195,21 +195,22 @@ Deno.serve(async (req) => {
         if (openAIKey && contentToProcess.length > 200) {
           const baseSystemPrompt = (custom_prompt && custom_prompt.trim().length > 5) 
             ? custom_prompt 
-            : "Você é um redator sênior de telejornalismo com 20 anos de experiência em grandes emissoras. Sua especialidade é escrever matérias profundas, completas e envolventes para o Teleprompter.";
+            : "Você é um redator sênior de telejornalismo especializado em grandes reportagens.";
           
           const systemPrompt = `${baseSystemPrompt}
             
-            ESTRUTURA OBRIGATÓRIA DO TEXTO (NÃO PODE FALTAR NENHUMA PARTE):
-            - [INÍCIO]: Lead impactante, situando o espectador no tempo e espaço. Deve ter pelo menos 2 frases.
-            - [DESENVOLVIMENTO]: Corpo da matéria. Explique todos os detalhes, contexto histórico, dados e declarações. Esta seção DEVE ter pelo menos 3 a 5 parágrafos robustos.
-            - [CONCLUSÃO]: Encerramento com as próximas etapas, consequências ou um fechamento reflexivo. Deve ter pelo menos 2 frases.
+            DIRETRIZES DE ESCRITA (RÍGIDAS):
+            1. O texto DEVE ser uma matéria jornalística COMPLETA e EXTENSA.
+            2. Estrutura obrigatória em 3 partes:
+               - [INÍCIO]: Lead com o fato principal.
+               - [DESENVOLVIMENTO]: Contexto, detalhes, dados e impacto.
+               - [CONCLUSÃO]: Fechamento e próximos passos.
+            3. EXTENSÃO MÍNIMA: 5 a 8 parágrafos longos (mínimo de 3000 caracteres no total). 
+            4. ESTILO: Teleprompter (frases diretas, tom sério).
             
-            REGRAS CRÍTICAS:
-            1. EXTENSÃO: O texto final DEVE ter no mínimo 2500 caracteres e obrigatoriamente entre 5 e 8 parágrafos. Textos curtos serão rejeitados.
-            2. PROFUNDIDADE: Não faça um resumo. Transforme cada informação do conteúdo bruto em uma narrativa jornalística fluida.
-            3. TOM: Jornalístico profissional, pronto para locução.
+            ATENÇÃO: Se você enviar um resumo curto ou apenas uma frase, o sistema rejeitará sua resposta. Escreva pelo menos 600 palavras.
             
-            IMPORTANTE: Responda obrigatoriamente usando os marcadores [INÍCIO], [DESENVOLVIMENTO] e [CONCLUSÃO] para que o sistema valide a estrutura.`;
+            Responda obrigatoriamente usando os marcadores [INÍCIO], [DESENVOLVIMENTO] e [CONCLUSÃO].`;
           
           let attempts = 0;
           let generatedContent = "";
@@ -226,27 +227,24 @@ Deno.serve(async (req) => {
                 model: "gpt-4o", 
                 messages: [
                   { role: "system", content: systemPrompt },
-                  { role: "user", content: `ESCREVA UMA MATÉRIA JORNALÍSTICA LONGA E COMPLETA (MÍNIMO 2000 CARACTERES) baseada neste conteúdo: ${contentToProcess}` }
+                  { role: "user", content: `Escreva uma matéria JORNALÍSTICA COMPLETA E MUITO DETALHADA (MÍNIMO 5 PARÁGRAFOS) baseada neste conteúdo: ${contentToProcess}` }
                 ],
-                temperature: 0.8,
+                temperature: 0.7,
               }),
             });
 
             const aiData = await aiResponse.json();
             generatedContent = aiData.choices?.[0]?.message?.content || "";
             
-            const hasInicio = /IN[ÍI]CIO|INTRODU[ÇC][ÃA]O/i.test(generatedContent);
-            const hasDesenv = /DESENVOLVIMENTO|CORPO/i.test(generatedContent);
-            const hasConcl = /CONCLUS[ÃA]O|FECHAMENTO/i.test(generatedContent);
-            const paragraphs = generatedContent.split(/\n\s*\n/).filter(p => p.trim().length > 50);
+            const paragraphs = generatedContent.split(/\n\s*\n/).filter(p => p.trim().length > 60);
             const isLongEnough = generatedContent.length >= 1500; 
             const hasMinParagraphs = paragraphs.length >= 5;
             
-            if (hasInicio && hasDesenv && hasConcl && isLongEnough && hasMinParagraphs) {
+            if (isLongEnough && hasMinParagraphs) {
               isValid = true;
             } else {
               attempts++;
-              console.log(`AI failed to follow instructions (Attempt ${attempts}). Length: ${generatedContent.length}. Sections: I:${hasInicio} D:${hasDesenv} C:${hasConcl}`);
+              console.log(`AI validation failed (Attempt ${attempts}): length=${generatedContent.length}, paragraphs=${paragraphs.length}`);
             }
           }
 
