@@ -623,11 +623,22 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
     if (editingId) markEdited(`noticia-${bi}-${ni}-${field}`);
     
-    // Auto-fetch if title looks like a URL
-    if (field === "titulo" && typeof value === "string" && value.trim().startsWith("http") && !value.trim().includes(" ")) {
-      fetchFromLink(bi, ni, value.trim());
-      // Don't keep the URL as the title
-      return;
+    // Improved auto-fetch link detection (domains, parameters, multiple formats)
+    if (field === "titulo" && typeof value === "string") {
+      const trimmed = value.trim();
+      // Match full URL or domain-like string (e.g. google.com, subdomain.site.com.br/path)
+      const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?(\?.*)?$/i;
+      
+      if (urlPattern.test(trimmed) && !trimmed.includes(" ")) {
+        let finalUrl = trimmed;
+        if (!finalUrl.startsWith("http")) {
+          finalUrl = "https://" + finalUrl;
+        }
+        fetchFromLink(bi, ni, finalUrl);
+        // Clear title so it doesn't stay as the URL
+        setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, titulo: "" } : n) } : b));
+        return;
+      }
     }
 
     setBlocos(prev => {
