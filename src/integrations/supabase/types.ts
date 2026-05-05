@@ -738,6 +738,7 @@ export type Database = {
           artista: string
           created_at: string
           curiosidade: string
+          deezer_artist_img: string | null
           expires_at: string
           id: string
           musica: string
@@ -747,6 +748,7 @@ export type Database = {
           artista: string
           created_at?: string
           curiosidade: string
+          deezer_artist_img?: string | null
           expires_at?: string
           id?: string
           musica: string
@@ -756,6 +758,7 @@ export type Database = {
           artista?: string
           created_at?: string
           curiosidade?: string
+          deezer_artist_img?: string | null
           expires_at?: string
           id?: string
           musica?: string
@@ -1673,6 +1676,7 @@ export type Database = {
           infomusic_ai_last_reset: string | null
           infomusic_ai_monthly_count: number | null
           infomusic_excecoes: string | null
+          last_manual_curiosity_id: string | null
           music_source_mode: string
           music_xml_url: string | null
           shopping_active: boolean
@@ -1695,6 +1699,7 @@ export type Database = {
           infomusic_ai_last_reset?: string | null
           infomusic_ai_monthly_count?: number | null
           infomusic_excecoes?: string | null
+          last_manual_curiosity_id?: string | null
           music_source_mode?: string
           music_xml_url?: string | null
           shopping_active?: boolean
@@ -1717,6 +1722,7 @@ export type Database = {
           infomusic_ai_last_reset?: string | null
           infomusic_ai_monthly_count?: number | null
           infomusic_excecoes?: string | null
+          last_manual_curiosity_id?: string | null
           music_source_mode?: string
           music_xml_url?: string | null
           shopping_active?: boolean
@@ -1731,7 +1737,15 @@ export type Database = {
           weather_lat?: number | null
           weather_lon?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_last_manual_curiosity_id_fkey"
+            columns: ["last_manual_curiosity_id"]
+            isOneToOne: false
+            referencedRelation: "infomusic"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vmix_connections: {
         Row: {
