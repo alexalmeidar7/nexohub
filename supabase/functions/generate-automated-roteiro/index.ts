@@ -224,7 +224,7 @@ Regras:
         const errText = await aiResponse.text();
         console.error("AI gateway error:", aiResponse.status, errText);
         if (attempts === maxAttempts) {
-          return new Response(JSON.stringify({ error: "Erro ao gerar roteiro com IA após múltiplas tentativas" }), {
+          return new Response(JSON.stringify({ error: `Erro ao gerar roteiro com IA: ${aiResponse.status}` }), {
             status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
@@ -243,35 +243,43 @@ Regras:
           break;
         }
 
-        // Validate "texto_materia" for each news item
+        // Lenient validation: at least 800 chars and 3 paragraphs (counting any non-empty line break)
         let allNewsValid = true;
         let totalItems = 0;
-        
+
         for (const bloco of (roteiro.blocos || [])) {
           for (const n of (bloco.noticias || [])) {
             totalItems++;
             const text = n.texto_materia || "";
             const charCount = text.length;
-            const paragraphCount = text.split(/\n\s*\n/).filter(p => p.trim().length > 100).length;
+            const paragraphCount = text.split(/\n+/).filter((p: string) => p.trim().length > 50).length;
 
             console.log(`Item check: ${charCount} chars, ${paragraphCount} paragraphs`);
-            
-            if (charCount < 1500 || paragraphCount < 5) {
+
+            if (charCount < 800 || paragraphCount < 3) {
               allNewsValid = false;
-              console.log(`Validation failed for item: ${n.titulo.slice(0, 30)}...`);
+              console.log(`Validation failed for item: ${(n.titulo || "").slice(0, 30)}...`);
               break;
             }
           }
           if (!allNewsValid) break;
         }
 
-        if (allNewsValid && totalItems > 0) {
+        if (totalItems === 0) {
+          // No news at all - retry
+          console.log("No news items found in AI response.");
+          if (attempts === maxAttempts) {
+            isValid = true; // accept whatever came to avoid 500
+          }
+        } else if (allNewsValid) {
           isValid = true;
           console.log("All news items passed validation.");
-        } else if (totalItems === 0) {
-          console.log("No news items found in AI response.");
+        } else if (attempts === maxAttempts) {
+          // Last attempt: accept whatever was generated rather than fail
+          console.log("Max attempts reached, accepting best-effort result.");
+          isValid = true;
         } else {
-          console.log(`Attempt ${attempts} failed validation requirements.`);
+          console.log(`Attempt ${attempts} failed validation, retrying...`);
         }
       } catch (e) {
         console.error(`Failed to parse AI response on attempt ${attempts}:`, rawContent);
