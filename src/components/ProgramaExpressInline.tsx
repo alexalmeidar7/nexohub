@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2, MessageSquare, FileText, HelpCircle, Video, ImagePlus, Upload, Bot, Save, List } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2, MessageSquare, FileText, HelpCircle, Video, ImagePlus, Upload, Bot, Save, List, RefreshCw } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -699,6 +699,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const fetchFromLink = async (bi: number, ni: number, url: string, forceReprocess = false) => {
     if (!url || !url.startsWith("http")) return;
     setFetchingLink(`${bi}-${ni}`);
+    
+    // Clear field to show progress if we're going to generate journalistic text
+    if (forceReprocess || configuracoes.producao_ai_habilitada) {
+      updateNoticia(bi, ni, "texto_materia", "");
+    }
+    
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", { 
         body: { 
@@ -752,8 +758,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         
         if (data.journalisticText) {
           updateNoticia(bi, ni, "texto_materia", data.journalisticText);
+          if (data.journalisticText.includes("ERRO:")) {
+            toast.error("Erro na geração da IA", { description: data.journalisticText });
+          }
         } else if (configuracoes.producao_ai_habilitada && !data.journalisticText) {
           console.warn("AI failed to return journalistic text despite being enabled.");
+          toast.warning("A IA não retornou o texto jornalístico. Tente reprocessar.");
         }
         
         updateNoticia(bi, ni, "link", url);
@@ -1451,9 +1461,15 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   const isFetching = fetchingLink === `${bi}-${ni}`;
 
   const handlePasteLink = (url: string) => { setLinkInput(url); if (url.startsWith("http")) onFetchLink(bi, ni, url); };
-  const prevTituloRef = useState({ val: noticia.titulo })[0];
-  if (noticia.titulo && !prevTituloRef.val && !collapsed) { setTimeout(() => setCollapsed(true), 300); }
-  prevTituloRef.val = noticia.titulo;
+  const prevTituloRef = useRef(noticia.titulo);
+  
+  useEffect(() => {
+    if (noticia.titulo && !prevTituloRef.current && !collapsed && !isFetching) {
+      const timer = setTimeout(() => setCollapsed(true), 3000); // Increased time to 3s and only if not fetching
+      return () => clearTimeout(timer);
+    }
+    prevTituloRef.current = noticia.titulo;
+  }, [noticia.titulo, collapsed, isFetching]);
 
   if (collapsed && noticia.titulo) {
     return (
@@ -1519,6 +1535,17 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         <div className="flex items-center gap-2 mb-1">
           <FileText size={10} style={{ color: "var(--layout-icon-color)" }} />
           <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Matéria Completa (TP)</span>
+          
+          {noticia.link && !isFetching && (
+            <button 
+              onClick={() => onFetchLink(bi, ni, noticia.link!, true)}
+              className="ml-auto text-[9px] flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-200 text-blue-500 hover:bg-blue-50 transition-colors"
+              title="Gerar texto novamente usando IA"
+            >
+              <RefreshCw size={9} /> Reprocessar
+            </button>
+          )}
+
           {isFetching && (
             <div className="flex-1 flex items-center gap-2">
               <div className="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden relative">
