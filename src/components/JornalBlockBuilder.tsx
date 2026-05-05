@@ -187,8 +187,34 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
   };
 
   const handleImproveText = async () => {
-    // AI disabled
-    return;
+    setAiImproving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("improve-text", {
+        body: { text: editBody }
+      });
+
+      if (error) throw error;
+      
+      if (data?.improvedText) {
+        setOriginalBody(editBody);
+        setEditBody(data.improvedText);
+      }
+    } catch (err: any) {
+      console.error("Erro ao melhorar texto:", err);
+      // Fallback: If OpenAI key is missing or any error occurs, 
+      // we still have the original text, but we can try a simple local "cleanup"
+      // to not leave the user with nothing.
+      const localImproved = editBody
+        .replace(/\n\s*\n/g, '\n\n') // Normalize paragraphs
+        .trim();
+      
+      if (localImproved !== editBody) {
+        setOriginalBody(editBody);
+        setEditBody(localImproved);
+      }
+    } finally {
+      setAiImproving(false);
+    }
   };
 
   const undoAiText = () => {
