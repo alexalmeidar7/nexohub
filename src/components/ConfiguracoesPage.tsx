@@ -968,6 +968,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
 }
 
 function EventTypesConfigSection() {
+  const { user } = useAuth();
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
