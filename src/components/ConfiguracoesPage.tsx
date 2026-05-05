@@ -956,6 +956,11 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       {(section === "all" || section === "empresa") && <CollapsibleBox title="Personalizar Tipos de Eventos" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
         <EventTypesConfigSection />
       </CollapsibleBox>}
+      
+      {/* Box 7: Prompt Jornalístico */}
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Diretrizes de Produção de Texto Jornalístico (AI)" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
+        <JournalisticPromptSection />
+      </CollapsibleBox>}
         </div>
       </div>
     </div>
@@ -1073,6 +1078,78 @@ function EventTypesConfigSection() {
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           {saving ? "Salvando..." : "Salvar Configurações de Eventos"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function JournalisticPromptSection() {
+  const { user } = useAuth();
+  const [prompt, setPrompt] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("journalistic_prompt")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.journalistic_prompt) {
+          setPrompt(data.journalistic_prompt);
+        }
+        setLoading(false);
+      });
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ journalistic_prompt: prompt })
+      .eq("user_id", user.id);
+    
+    setSaving(false);
+    if (error) {
+      toast.error("Erro ao salvar diretrizes.");
+    } else {
+      toast.success("Diretrizes jornalísticas salvas!");
+    }
+  };
+
+  if (loading) return <div className="flex justify-center py-4"><Loader2 className="animate-spin" size={20} /></div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
+        <p className="text-[10px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+          Configure as instruções que a IA deve seguir ao gerar ou melhorar textos de matérias jornalísticas. 
+          Use para definir tom de voz, estrutura, duração e estilo.
+        </p>
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          rows={6}
+          placeholder="Ex: Você é um redator sênior de telejornalismo. Escreva textos diretos, use linguagem clara e garanta pelo menos 5 parágrafos densos..."
+          className="w-full px-4 py-3 outline-none transition-colors text-sm resize-none"
+          style={inputStyle}
+          onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
+          onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+        />
+      </div>
+      
+      <div className="flex justify-end">
+        <button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-50"
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          {saving ? "Salvando..." : "Salvar Diretrizes"}
         </button>
       </div>
     </div>
