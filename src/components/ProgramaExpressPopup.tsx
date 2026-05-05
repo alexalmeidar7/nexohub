@@ -29,6 +29,7 @@ interface NewsItem {
   imagemUrl: string;
   escalada: boolean;
   link?: string;
+  resumo?: string;
 }
 
 interface Bloco {
