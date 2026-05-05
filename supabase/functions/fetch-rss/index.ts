@@ -195,15 +195,20 @@ Deno.serve(async (req) => {
         if (openAIKey && contentToProcess.length > 200) {
           const baseSystemPrompt = (custom_prompt && custom_prompt.trim().length > 5) 
             ? custom_prompt 
-            : "Você é um redator de notícias especializado em telejornalismo.";
+            : "Você é um redator sênior de telejornalismo especializado em roteiros para Teleprompter.";
           
-          const systemPrompt = `${baseSystemPrompt} 
-            OBRIGATÓRIO: O texto DEVE conter explicitamente três partes:
-            1. INÍCIO (Lead impactante)
-            2. DESENVOLVIMENTO (Detalhes dos fatos)
-            3. CONCLUSÃO (Fechamento)
+          const systemPrompt = `${baseSystemPrompt}
             
-            Formate a resposta com as marcações [INÍCIO], [DESENVOLVIMENTO] e [CONCLUSÃO] antes de cada seção para verificação.`;
+            DIRETRIZES OBRIGATÓRIAS:
+            1. O texto DEVE ser uma matéria COMPLETA e DETALHADA para ser lida no ar.
+            2. Estrutura rígida:
+               - [INÍCIO]: Lead impactante contextualizando o assunto.
+               - [DESENVOLVIMENTO]: Explicação detalhada dos fatos, dados e informações relevantes.
+               - [CONCLUSÃO]: Fechamento da matéria com desdobramentos ou síntese.
+            3. EXTENSÃO: O texto final deve ter uma extensão considerável (mínimo de 3 a 5 parágrafos). NÃO escreva apenas um resumo ou uma frase curta.
+            4. ESTILO: Frases curtas, tom profissional, pronto para leitura em voz alta.
+            
+            Responda incluindo os marcadores [INÍCIO], [DESENVOLVIMENTO] e [CONCLUSÃO].`;
           
           let attempts = 0;
           let generatedContent = "";
@@ -217,10 +222,10 @@ Deno.serve(async (req) => {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                model: "gpt-4o-mini",
+                model: "gpt-4o", 
                 messages: [
                   { role: "system", content: systemPrompt },
-                  { role: "user", content: `Transforme o conteúdo abaixo em uma matéria completa para o TP (mínimo 3 parágrafos):\n\n${contentToProcess}` }
+                  { role: "user", content: `Escreva uma matéria JORNALÍSTICA COMPLETA E DETALHADA com base no conteúdo abaixo. O texto deve ser pronto para leitura no TP:\n\nCONTEÚDO BRUTO:\n${contentToProcess}` }
                 ],
                 temperature: 0.7,
               }),
@@ -229,24 +234,20 @@ Deno.serve(async (req) => {
             const aiData = await aiResponse.json();
             generatedContent = aiData.choices?.[0]?.message?.content || "";
             
-            // Check for explicit sections
-            const hasInicio = generatedContent.toUpperCase().includes("INÍCIO") || generatedContent.toUpperCase().includes("INTRODUÇÃO");
-            const hasDesenv = generatedContent.toUpperCase().includes("DESENVOLVIMENTO") || generatedContent.length > 500;
-            const hasConcl = generatedContent.toUpperCase().includes("CONCLUSÃO") || generatedContent.toUpperCase().includes("FECHAMENTO");
+            const hasInicio = /IN[ÍI]CIO|INTRODU[ÇC][ÃA]O/i.test(generatedContent);
+            const hasConcl = /CONCLUS[ÃA]O|FECHAMENTO/i.test(generatedContent);
+            const isLongEnough = generatedContent.length > 600;
             
-            if (hasInicio && hasDesenv && hasConcl && generatedContent.length > 300) {
+            if (hasInicio && hasConcl && isLongEnough) {
               isValid = true;
             } else {
               attempts++;
-              console.log(`AI validation failed (attempt ${attempts}). Missing sections or too short.`);
+              console.log(`Validation failed (Attempt ${attempts}): length=${generatedContent.length}`);
             }
           }
 
-          // Clean up markers for final output
           journalisticText = generatedContent
-            .replace(/\[?INÍCIO\]?:?/gi, "")
-            .replace(/\[?DESENVOLVIMENTO\]?:?/gi, "")
-            .replace(/\[?CONCLUSÃO\]?:?/gi, "")
+            .replace(/\[?(INÍCIO|DESENVOLVIMENTO|CONCLUSÃO|INTRODUÇÃO|FECHAMENTO)\]?:?/gi, "")
             .trim();
         }
       } catch (e) {
