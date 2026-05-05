@@ -201,15 +201,16 @@ Deno.serve(async (req) => {
             : "Você é um redator sênior de telejornalismo especializado em grandes reportagens.";
           
           const systemPrompt = (custom_prompt && custom_prompt.trim().length > 5)
-            ? `${custom_prompt}\n\nREQUISITOS ADICIONAIS OBRIGATÓRIOS:\n1. O texto DEVE ser separado em parágrafos usando quebras de linha duplas (duas vezes a tecla Enter).\n2. Não use texto em bloco único.\n3. Não inicie o texto com frases como 'Compartilhar matéria' ou metadados similares.\n4. Retorne APENAS o conteúdo jornalístico.`
+            ? `${custom_prompt}\n\nREQUISITOS ADICIONAIS OBRIGATÓRIOS:\n1. O texto DEVE ser separado em parágrafos usando quebras de linha duplas (duas vezes a tecla Enter).\n2. Crie parágrafos curtos e diretos (máximo 4 linhas por parágrafo).\n3. Não use texto em bloco único.\n4. Não inicie o texto com frases como 'Compartilhar matéria' ou metadados similares.\n5. Retorne APENAS o conteúdo jornalístico.`
             : `${baseSystemPrompt}
             
             REQUISITOS OBRIGATÓRIOS:
-            1. O texto DEVE ter no MÍNIMO 5 parágrafos longos.
-            2. Cada parágrafo deve ser denso e SEPARADO por duas quebras de linha.
+            1. O texto DEVE ter no MÍNIMO 5 parágrafos.
+            2. Cada parágrafo deve ser separado por duas quebras de linha (Enter duas vezes).
             3. Use tom jornalístico profissional para Teleprompter.
-            4. Não inicie o texto com 'Compartilhar matéria'.
-            5. Retorne APENAS o texto jornalístico, sem introduções ou metadados.`;
+            4. Crie parágrafos curtos para facilitar a leitura.
+            5. Não inicie o texto com 'Compartilhar matéria'.
+            6. Retorne APENAS o texto jornalístico, sem introduções ou metadados.`;
           
           let attempts = 0;
           let generatedContent = "";
