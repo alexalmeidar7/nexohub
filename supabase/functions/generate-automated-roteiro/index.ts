@@ -319,8 +319,8 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES ADICIONAIS DO USUÁRIO: ${producao_ai_p
           }
           
           // Adicionar metadados para o parser capturar resumo e texto_materia
-          if (n.resumo) line += ` [RESUMO:${n.resumo.replace(/\n/g, " ")}]`;
-          if (n.texto_materia) line += ` [TEXTO:${n.texto_materia.replace(/\n/g, "\\n")}]`;
+          if (n.resumo) line += ` [RESUMO:${n.resumo.replace(/\n/g, " ").replace(/\[/g, "(").replace(/\]/g, ")")}]`;
+          if (n.texto_materia) line += ` [TEXTO:${n.texto_materia.replace(/\n/g, "\\n").replace(/\[/g, "(").replace(/\]/g, ")")}]`;
           
           pasteText += `${line}\n`;
         });
