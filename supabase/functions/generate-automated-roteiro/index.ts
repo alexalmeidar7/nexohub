@@ -186,8 +186,12 @@ Retorne APENAS um JSON válido com a seguinte estrutura:
 
 Regras:
 - producao_ai_habilitada: ${producao_ai_habilitada}
-- Se producao_ai_habilitada for TRUE: O campo "texto_materia" DEVE ser uma matéria jornalística COMPLETA e EXTENSA para ser lida no TP (Teleprompter), contendo obrigatoriamente INÍCIO, DESENVOLVIMENTO e CONCLUSÃO. 
-${producao_ai_prompt ? `REGRAS DO USUÁRIO PARA O TEXTO: ${producao_ai_prompt}` : 'O texto deve ter no mínimo 3 parágrafos detalhados e 800 caracteres para cada notícia. Se as informações da notícia original forem curtas, EXPANDA com contexto, dados gerais ou explicações adicionais sobre o assunto. O tom deve ser sério e profissional.'}
+- Se producao_ai_habilitada for TRUE: O campo "texto_materia" DEVE ser uma matéria jornalística COMPLETA e EXTENSA para ser lida no TP (Teleprompter).
+  * OBRIGATÓRIO: Mínimo de 3 parágrafos detalhados e pelo menos 1000 caracteres por notícia.
+  * ESTRUTURA: Início (lead), Desenvolvimento (detalhes e contexto) e Conclusão.
+  * EXPANSÃO: Se a notícia original for curta, use seu conhecimento para expandir com contexto histórico, dados relacionados, ou explicações sobre o impacto do ocorrido. Não economize palavras.
+  * TOM: Profissional, sério e adequado para telejornalismo.
+${producao_ai_prompt ? `  * INSTRUÇÕES ADICIONAIS DO USUÁRIO: ${producao_ai_prompt}` : ""}
 - Se producao_ai_habilitada for FALSE: O campo "texto_materia" deve vir VAZIO.
 - "resumo" deve ser um resumo curto (2-3 linhas).
 - Use APENAS notícias da lista acima (não invente manchetes)
