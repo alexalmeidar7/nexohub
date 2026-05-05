@@ -177,10 +177,10 @@ Deno.serve(async (req) => {
         });
       }
       if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos esgotados no Lovable AI" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ ok: false, curiosidade: "", skipped: true, reason: "ai_credits_exhausted" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
       const t = await aiResp.text();
       console.error("AI error", aiResp.status, t);
