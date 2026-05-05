@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2, MessageSquare, FileText, HelpCircle, Video, ImagePlus, Upload, Bot } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2, MessageSquare, FileText, HelpCircle, Video, ImagePlus, Upload, Bot, Save, List } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -215,6 +215,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
   const [configuracoes, setConfiguracoes] = useState<{ producao_ai_habilitada: boolean; prompt_ai: string }>({ producao_ai_habilitada: true, prompt_ai: "" });
+  const [promptTemplates, setPromptTemplates] = useState<{ id: string; name: string; content: string }[]>([]);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
@@ -305,24 +309,71 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           if (data?.configuracoes) {
             const config = data.configuracoes as any;
             setConfiguracoes(config);
-            // Also update the draft in case user switches roteiros
             if (config.prompt_ai) {
               localStorage.setItem("programa_express_prompt_ai_draft", config.prompt_ai);
             }
           }
         }
       };
+
+      const loadTemplates = async () => {
+        if (user) {
+          const { data } = await supabase.from("prompt_templates").select("id, name, content").order("name");
+          if (data) setPromptTemplates(data);
+        }
+      };
+
       loadConfig();
+      loadTemplates();
       setInitialized(true);
     } else if (!initialized) {
-      // For new scripts, load the last used prompt from localStorage
       const draft = localStorage.getItem("programa_express_prompt_ai_draft");
       if (draft) {
         setConfiguracoes(prev => ({ ...prev, prompt_ai: draft }));
       }
+      if (user) {
+        supabase.from("prompt_templates").select("id, name, content").order("name").then(({ data }) => {
+          if (data) setPromptTemplates(data);
+        });
+      }
       setInitialized(true);
     }
-  }, [editData, initialized]);
+  }, [editData, initialized, user]);
+
+  const savePromptAsTemplate = async () => {
+    if (!templateName.trim() || !configuracoes.prompt_ai.trim() || !user) return;
+    setSavingTemplate(true);
+    try {
+      const { data, error } = await supabase.from("prompt_templates").insert({
+        user_id: user.id,
+        name: templateName.trim(),
+        content: configuracoes.prompt_ai
+      }).select().single();
+
+      if (error) throw error;
+      setPromptTemplates(prev => [...prev, data]);
+      setTemplateName("");
+      setShowSaveTemplate(false);
+      toast.success("Prompt salvo com sucesso!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao salvar prompt");
+    }
+    setSavingTemplate(false);
+  };
+
+  const deleteTemplate = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase.from("prompt_templates").delete().eq("id", id);
+      if (error) throw error;
+      setPromptTemplates(prev => prev.filter(t => t.id !== id));
+      toast.success("Prompt removido");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao remover prompt");
+    }
+  };
 
   // Store initial data snapshot for edit tracking
   useEffect(() => {
@@ -872,11 +923,75 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </div>
 
           {configuracoes.producao_ai_habilitada && (
-            <div className="space-y-1.5 pt-2" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 10%, transparent)" }}>
-              <label className="text-[10px] font-semibold flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                <MessageSquare size={12} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
-                Instruções personalizadas para a AI (Prompt)
-              </label>
+            <div className="space-y-2 pt-2" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 10%, transparent)" }}>
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-semibold flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  <MessageSquare size={12} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+                  Instruções personalizadas para a AI (Prompt)
+                </label>
+                
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setShowSaveTemplate(!showSaveTemplate)}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold hover:opacity-80 transition-all"
+                    style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 15%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}
+                    title="Salvar prompt como modelo"
+                  >
+                    <Save size={10} /> {showSaveTemplate ? "Cancelar" : "Salvar modelo"}
+                  </button>
+                </div>
+              </div>
+
+              {showSaveTemplate && (
+                <div className="flex gap-1 items-center animate-in fade-in slide-in-from-top-1 duration-200">
+                  <input 
+                    value={templateName}
+                    onChange={e => setTemplateName(e.target.value)}
+                    placeholder="Nome do modelo..."
+                    className="flex-1 px-2 py-1 rounded text-[9px] outline-none border"
+                    style={inputStyle}
+                  />
+                  <button 
+                    onClick={savePromptAsTemplate}
+                    disabled={savingTemplate || !templateName.trim()}
+                    className="px-3 py-1 rounded text-[9px] font-bold text-white disabled:opacity-50"
+                    style={{ backgroundColor: "#10b981" }}
+                  >
+                    {savingTemplate ? <Loader2 size={10} className="animate-spin" /> : "Confirmar"}
+                  </button>
+                </div>
+              )}
+
+              {promptTemplates.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1">
+                  {promptTemplates.map(t => (
+                    <div 
+                      key={t.id}
+                      onClick={() => {
+                        setConfiguracoes(prev => ({ ...prev, prompt_ai: t.content }));
+                        localStorage.setItem("programa_express_prompt_ai_draft", t.content);
+                        toast.success(`Modelo "${t.name}" aplicado`);
+                      }}
+                      className="group flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-semibold cursor-pointer border transition-all hover:border-blue-400"
+                      style={{ 
+                        backgroundColor: configuracoes.prompt_ai === t.content ? "rgba(59,130,246,0.1)" : "transparent",
+                        borderColor: configuracoes.prompt_ai === t.content ? "#3b82f6" : "rgba(0,0,0,0.1)",
+                        color: configuracoes.prompt_ai === t.content ? "#3b82f6" : "inherit"
+                      }}
+                    >
+                      <List size={8} />
+                      {t.name}
+                      <button 
+                        onClick={(e) => deleteTemplate(t.id, e)}
+                        className="opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity ml-1"
+                      >
+                        <XIcon size={8} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <textarea
                 value={configuracoes.prompt_ai || ""}
                 onChange={e => {
