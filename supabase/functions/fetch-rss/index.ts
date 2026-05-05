@@ -314,6 +314,11 @@ Deno.serve(async (req) => {
           };
           
           journalisticText = decodeEntities(journalisticText);
+          
+          // Ensure double newlines for paragraphs if not present
+          if (journalisticText && !journalisticText.includes("\n\n") && journalisticText.includes("\n")) {
+            journalisticText = journalisticText.split("\n").filter(p => p.trim().length > 0).join("\n\n");
+          }
 
           if (!journalisticText || journalisticText.length < 50) {
              journalisticText = contentToProcess.length > 100 ? contentToProcess.slice(0, 5000) : "O conteúdo extraído do link foi insuficiente para gerar uma matéria completa automaticamente. Por favor, insira o texto manualmente ou tente outro link.";
