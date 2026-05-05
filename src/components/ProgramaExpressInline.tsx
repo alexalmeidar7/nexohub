@@ -1451,9 +1451,15 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   const isFetching = fetchingLink === `${bi}-${ni}`;
 
   const handlePasteLink = (url: string) => { setLinkInput(url); if (url.startsWith("http")) onFetchLink(bi, ni, url); };
-  const prevTituloRef = useState({ val: noticia.titulo })[0];
-  if (noticia.titulo && !prevTituloRef.val && !collapsed) { setTimeout(() => setCollapsed(true), 300); }
-  prevTituloRef.val = noticia.titulo;
+  const prevTituloRef = useRef(noticia.titulo);
+  
+  useEffect(() => {
+    if (noticia.titulo && !prevTituloRef.current && !collapsed && !isFetching) {
+      const timer = setTimeout(() => setCollapsed(true), 3000); // Increased time to 3s and only if not fetching
+      return () => clearTimeout(timer);
+    }
+    prevTituloRef.current = noticia.titulo;
+  }, [noticia.titulo, collapsed, isFetching]);
 
   if (collapsed && noticia.titulo) {
     return (
