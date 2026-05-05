@@ -199,23 +199,23 @@ Deno.serve(async (req) => {
           
           const systemPrompt = `${baseSystemPrompt}
             
-            DIRETRIZES DE ESCRITA (RÍGIDAS):
-            1. O texto DEVE ser uma matéria jornalística COMPLETA e EXTENSA.
-            2. Estrutura obrigatória: [INÍCIO], [DESENVOLVIMENTO] (mínimo 3 parágrafos) e [CONCLUSÃO].
-            3. EXTENSÃO MÍNIMA: 3000 caracteres. Se o conteúdo bruto for curto, use seu conhecimento geral para expandir o contexto do assunto.
-            4. REQUISITO DE PARÁGRAFOS: Você DEVE escrever pelo menos 5 parágrafos longos e detalhados.
-            5. ESTILO: Teleprompter (frases diretas, tom sério).
+            REQUISITOS OBRIGATÓRIOS (NÃO NEGOCIÁVEIS):
+            1. O texto DEVE ter no MÍNIMO 5 parágrafos longos.
+            2. Cada parágrafo deve ser denso, com pelo menos 3 a 4 frases cada.
+            3. O texto total deve ter uma extensão significativa (mínimo 2000-3000 caracteres).
+            4. Se a notícia original for curta, EXPANDA com contexto histórico, implicações futuras ou dados correlacionados.
+            5. Use tom jornalístico profissional para Teleprompter.
             
-            IMPORTANTE: Se você enviar um texto curto, o sistema entrará em loop de erro. Escreva uma matéria de fôlego, como um especial de TV.
-            
-            Responda obrigatoriamente usando os marcadores [INÍCIO], [DESENVOLVIMENTO] e [CONCLUSÃO].`;
+            AVISO: Se você enviar um texto com menos de 5 parágrafos, sua resposta será REJEITADA. Capriche na extensão.`;
           
           let attempts = 0;
           let generatedContent = "";
           let isValid = false;
 
-          while (attempts < 3 && !isValid) {
-            console.log(`AI Attempt ${attempts + 1} for URL: ${url}`);
+          while (attempts < 5 && !isValid) {
+            attempts++;
+            console.log(`AI Attempt ${attempts} for URL: ${url}`);
+            
             const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
               method: "POST",
               headers: {
@@ -226,28 +226,32 @@ Deno.serve(async (req) => {
                 model: "gpt-4o", 
                 messages: [
                   { role: "system", content: systemPrompt },
-                  { role: "user", content: `Escreva uma matéria JORNALÍSTICA COMPLETA, DETALHADA E EXTENSA (MÍNIMO 5 PARÁGRAFOS E 3000 CARACTERES) baseada neste conteúdo. NÃO RESUMA, EXPANDA: ${contentToProcess}` }
+                  { role: "user", content: `ESCREVA UMA MATÉRIA COMPLETA (MÍNIMO 5 PARÁGRAFOS DENSOS). NÃO RESUMA. EXPANDA O CONTEÚDO: ${contentToProcess}` }
                 ],
-                temperature: 0.8,
+                temperature: 0.7,
               }),
             });
 
             const aiData = await aiResponse.json();
             generatedContent = aiData.choices?.[0]?.message?.content || "";
             
-            // Log for debugging (only in edge function logs)
-            console.log(`Generated length: ${generatedContent.length}`);
+            // Validação de parágrafos: divide por quebras de linha duplas e filtra parágrafos vazios ou muito curtos
+            const paragraphList = generatedContent
+              .split(/\n\s*\n/)
+              .map(p => p.trim())
+              .filter(p => p.length > 100); // Garante que o parágrafo tenha substância
 
-            const paragraphs = generatedContent.split(/\n\s*\n/).filter(p => p.trim().length > 60);
-            const isLongEnough = generatedContent.length >= 1500; 
-            const hasMinParagraphs = paragraphs.length >= 5;
-            
-            if (isLongEnough && hasMinParagraphs) {
+            const paragraphCount = paragraphList.length;
+            const totalChars = generatedContent.length;
+
+            console.log(`Attempt ${attempts}: Parsed ${paragraphCount} paragraphs, ${totalChars} characters.`);
+
+            if (paragraphCount >= 5 && totalChars > 1500) {
               isValid = true;
-              console.log("Validation passed.");
+              console.log("Validation successful.");
             } else {
-              attempts++;
-              console.log(`Validation failed: length=${generatedContent.length}, paragraphs=${paragraphs.length}`);
+              console.log(`Validation failed (paragraphs: ${paragraphCount}, chars: ${totalChars}). Retrying...`);
+              // No próximo loop, o prompt já é enfático, mas podemos tentar ajustar a temperatura levemente se necessário
             }
           }
 
