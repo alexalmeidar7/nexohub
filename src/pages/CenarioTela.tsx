@@ -1605,9 +1605,9 @@ export default function CenarioTela() {
                               {/* Presenter/Music details at bottom */}
                               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: `${vhToPx(1.2)}${vu}`, background: "linear-gradient(transparent, rgba(0,0,0,0.9))", zIndex: 3 }}>
                                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: `${vhToPx(0.2)}${vu}` }}>
-                                  <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}` }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}`, width: "100%", justifyContent: "center" }}>
                                     <Mic size={Number(vhToPx(1.2))} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
-                                    <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
+                                    <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.1)}${vu}`, color: "#fff", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "normal", textShadow: "0 2px 8px rgba(0,0,0,1)", textAlign: "center", lineHeight: 1.2 }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
                                   </div>
                                   {currentProgram?.apresentadorInstagram && (
                                     <span style={{ fontSize: `${vhToPx(0.9)}${vu}`, color: accentColor, fontWeight: 600, opacity: 0.9, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
