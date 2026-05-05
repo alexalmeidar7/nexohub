@@ -186,12 +186,13 @@ Retorne APENAS um JSON válido com a seguinte estrutura:
 
 Regras:
 - producao_ai_habilitada: ${producao_ai_habilitada}
-- Se producao_ai_habilitada for TRUE: O campo "texto_materia" DEVE ser uma matéria jornalística COMPLETA e EXTENSA para ser lida no TP (Teleprompter).
-  * OBRIGATÓRIO: Mínimo de 3 parágrafos detalhados e pelo menos 1000 caracteres por notícia.
-  * ESTRUTURA: Início (lead), Desenvolvimento (detalhes e contexto) e Conclusão.
-  * EXPANSÃO: Se a notícia original for curta, use seu conhecimento para expandir com contexto histórico, dados relacionados, ou explicações sobre o impacto do ocorrido. Não economize palavras.
+- Se producao_ai_habilitada for TRUE: O campo "texto_materia" DEVE ser uma matéria jornalística COMPLETA, DETALHADA e EXTENSA para ser lida no TP (Teleprompter).
+  * OBRIGATÓRIO: Mínimo de 5 parágrafos densos e pelo menos 1500 caracteres por notícia.
+  * PROIBIDO: Não retorne apenas resumos ou textos curtos. O usuário exige um texto completo.
+  * ESTRUTURA: Início (lead), Desenvolvimento (múltiplos parágrafos com detalhes e contexto) e Conclusão.
+  * EXPANSÃO: Se a notícia original for curta, use seu conhecimento para expandir o assunto com contexto histórico, explicações ou impacto do ocorrido. Não economize palavras.
   * TOM: Profissional, sério e adequado para telejornalismo.
-${producao_ai_prompt ? `  * INSTRUÇÕES ADICIONAIS DO USUÁRIO: ${producao_ai_prompt}` : ""}
+${producao_ai_prompt ? `  * INSTRUÇÕES PERSONALIZADAS DO USUÁRIO (SIGA À RISCA): ${producao_ai_prompt}` : ""}
 - Se producao_ai_habilitada for FALSE: O campo "texto_materia" deve vir VAZIO.
 - "resumo" deve ser um resumo curto (2-3 linhas).
 - Use APENAS notícias da lista acima (não invente manchetes)
@@ -248,7 +249,7 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES ADICIONAIS DO USUÁRIO: ${producao_ai_p
           break;
         }
 
-        // Lenient validation: at least 800 chars and 3 paragraphs (counting any non-empty line break)
+        // Strict validation for full text
         let allNewsValid = true;
         let totalItems = 0;
 
@@ -261,7 +262,7 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES ADICIONAIS DO USUÁRIO: ${producao_ai_p
 
             console.log(`Item check: ${charCount} chars, ${paragraphCount} paragraphs`);
 
-            if (charCount < 1000 || paragraphCount < 3) {
+            if (charCount < 1500 || paragraphCount < 4) {
               allNewsValid = false;
               console.log(`Validation failed for item: ${(n.titulo || "").slice(0, 30)}...`);
               break;
@@ -271,16 +272,12 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES ADICIONAIS DO USUÁRIO: ${producao_ai_p
         }
 
         if (totalItems === 0) {
-          // No news at all - retry
           console.log("No news items found in AI response.");
-          if (attempts === maxAttempts) {
-            isValid = true; // accept whatever came to avoid 500
-          }
+          if (attempts === maxAttempts) isValid = true;
         } else if (allNewsValid) {
           isValid = true;
           console.log("All news items passed validation.");
         } else if (attempts === maxAttempts) {
-          // Last attempt: accept whatever was generated rather than fail
           console.log("Max attempts reached, accepting best-effort result.");
           isValid = true;
         } else {
@@ -318,7 +315,6 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES ADICIONAIS DO USUÁRIO: ${producao_ai_p
             line = `- ${n.titulo}`;
           }
           
-          // Adicionar metadados para o parser capturar resumo e texto_materia
           if (n.resumo) line += ` [RESUMO:${n.resumo.replace(/\n/g, " ").replace(/\[/g, "(").replace(/\]/g, ")")}]`;
           if (n.texto_materia) line += ` [TEXTO:${n.texto_materia.replace(/\n/g, "\\n").replace(/\[/g, "(").replace(/\]/g, ")")}]`;
           
