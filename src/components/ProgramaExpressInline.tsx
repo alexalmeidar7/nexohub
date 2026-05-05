@@ -680,14 +680,14 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const removeBloco = (bi: number) => { setBlocos(prev => prev.filter((_, i) => i !== bi)); setCollapsedBlocos(prev => { const n = new Set(prev); n.delete(bi); return n; }); };
   const toggleCollapse = (bi: number) => { setCollapsedBlocos(prev => { const n = new Set(prev); if (n.has(bi)) n.delete(bi); else n.add(bi); return n; }); };
 
-  const fetchFromLink = async (bi: number, ni: number, url: string) => {
+  const fetchFromLink = async (bi: number, ni: number, url: string, forceReprocess = false) => {
     if (!url.startsWith("http")) return;
     setFetchingLink(`${bi}-${ni}`);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", { 
         body: { 
           url,
-          generate_journalistic_text: configuracoes.producao_ai_habilitada,
+          generate_journalistic_text: forceReprocess ? true : configuracoes.producao_ai_habilitada,
           custom_prompt: configuracoes.prompt_ai
         } 
       });
@@ -722,24 +722,25 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const hasSubstantialText = (existingNoticia?.texto_materia && existingNoticia.texto_materia.length > 200) || 
                                   (existingNoticia?.resumo && existingNoticia.resumo.length > 200);
 
-        if (title && (!existingNoticia?.titulo || existingNoticia.titulo.length < 5)) {
+        if (title && (forceReprocess || !existingNoticia?.titulo || existingNoticia.titulo.length < 5)) {
           updateNoticia(bi, ni, "titulo", decodeFull(title));
         }
         
-        if (image && !existingNoticia?.imagemUrl) {
+        if (image && (forceReprocess || !existingNoticia?.imagemUrl)) {
           updateNoticia(bi, ni, "imagemUrl", decodeFull(image));
         }
         
-        if (summary && !hasSubstantialText) {
+        if (summary && (forceReprocess || !hasSubstantialText)) {
           updateNoticia(bi, ni, "resumo", decodeFull(summary));
         }
         
-        if (data.journalisticText && !hasSubstantialText) {
+        if (data.journalisticText && (forceReprocess || !hasSubstantialText)) {
           updateNoticia(bi, ni, "texto_materia", data.journalisticText);
         }
         
         updateNoticia(bi, ni, "link", url);
-        if (title) toast.success("Dados extraídos do link!"); else toast.warning("Link carregado, mas não foi possível extrair o título");
+        if (title) toast.success(forceReprocess ? "Matéria reprocessada com sucesso!" : "Dados extraídos do link!"); 
+        else toast.warning("Link carregado, mas não foi possível extrair o título");
       } else { toast.error("Não foi possível acessar o link"); }
     } catch { toast.error("Não foi possível extrair dados do link"); }
     setFetchingLink(null);
@@ -1423,7 +1424,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   inputStyle: React.CSSProperties; fetchingLink: string | null;
   onUpdate: (bi: number, ni: number, field: keyof NewsItem, value: any) => void;
   onRemove: (bi: number, ni: number) => void;
-  onFetchLink: (bi: number, ni: number, url: string) => void;
+  onFetchLink: (bi: number, ni: number, url: string, force?: boolean) => void;
   canRemove: boolean;
   editedFields?: Set<string>;
 }) {
