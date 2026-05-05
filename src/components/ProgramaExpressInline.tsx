@@ -751,7 +751,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         }
         
         if (data.journalisticText) {
-          onUpdate(bi, ni, "texto_materia", data.journalisticText);
+          updateNoticia(bi, ni, "texto_materia", data.journalisticText);
         } else if (configuracoes.producao_ai_habilitada && !data.journalisticText) {
           console.warn("AI failed to return journalistic text despite being enabled.");
         }
