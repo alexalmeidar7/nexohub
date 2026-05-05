@@ -338,7 +338,7 @@ serve(async (req) => {
         .maybeSingle(),
       supabase
         .from("user_settings")
-        .select("cenario_config, weather_lat, weather_lon, weather_city, dashboard_items")
+        .select("cenario_config, weather_lat, weather_lon, weather_city, dashboard_items, last_manual_curiosity_id")
         .eq("user_id", dataOwnerId)
         .maybeSingle(),
       supabase
@@ -503,12 +503,19 @@ serve(async (req) => {
     // ── Music curiosity manual override ──
     // The dashbord sets music_curiosity_manual (text) and music_curiosity_manual_until (ISO timestamp)
     let curiosidade = "";
+    let deezerArtistImg = "";
     const manualCuriosityText = (settingsRes.data?.dashboard_items as any)?.music_curiosity_manual;
     const manualCuriosityUntil = (settingsRes.data?.dashboard_items as any)?.music_curiosity_manual_until;
+    const manualCuriosityImg = (settingsRes.data?.dashboard_items as any)?.music_curiosity_manual_img;
+    
     if (manualCuriosityText && manualCuriosityUntil) {
       const untilMs = new Date(manualCuriosityUntil).getTime();
       if (Number.isFinite(untilMs) && Date.now() < untilMs) {
         curiosidade = manualCuriosityText;
+        if (manualCuriosityImg) {
+          const artistSlug = "manual_artist_" + Math.random().toString(36).substring(7);
+          deezerArtistImg = await ensurePngImageUrl(supabase, manualCuriosityImg, `broadcast/${dataOwnerId}/artist-${artistSlug}.png`, 512);
+        }
       }
     }
 
@@ -536,18 +543,26 @@ serve(async (req) => {
     }
     
     // ── Music details ──
+    if (!deezerArtistImg) {
+      const dashboard = settingsRes.data?.dashboard_items as any || {};
+      const musicData = dashboard.musicData || {};
+      
+      // Support both nested musicData (legacy/manual) and flat keys from useGlobalMusicSync
+      const musicaAtual = musicData.musica || dashboard.music_current_title || "";
+      const artistaAtual = musicData.artista || dashboard.music_current_artist || "";
+      const deezerArtistImgRaw = musicData.deezer_artist_img || dashboard.music_deezer_artist_img || "";
+      const artistSlug = (artistaAtual || "unknown").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+      
+      if (deezerArtistImgRaw) {
+        deezerArtistImg = await ensurePngImageUrl(supabase, deezerArtistImgRaw, `broadcast/${dataOwnerId}/artist-${artistSlug}.png`, 512);
+      }
+    }
+    
     const dashboard = settingsRes.data?.dashboard_items as any || {};
     const musicData = dashboard.musicData || {};
-    
-    // Support both nested musicData (legacy/manual) and flat keys from useGlobalMusicSync
     const musicaAtual = musicData.musica || dashboard.music_current_title || "";
     const artistaAtual = musicData.artista || dashboard.music_current_artist || "";
     const musicaTexto = musicaAtual && artistaAtual ? `${musicaAtual} - ${artistaAtual}` : (musicaAtual || artistaAtual || "");
-    const deezerArtistImgRaw = musicData.deezer_artist_img || dashboard.music_deezer_artist_img || "";
-    const artistSlug = (artistaAtual || "unknown").replace(/[^a-z0-9]/gi, "_").toLowerCase();
-    const deezerArtistImg = deezerArtistImgRaw 
-      ? await ensurePngImageUrl(supabase, deezerArtistImgRaw, `broadcast/${dataOwnerId}/artist-${artistSlug}.png`, 512)
-      : "";
 
 
     const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
