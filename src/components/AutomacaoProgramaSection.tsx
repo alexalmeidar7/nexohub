@@ -48,6 +48,7 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [promptAi, setPromptAi] = useState(localStorage.getItem("producao_ai_prompt") || "");
 
   // Form state
   const [formProgramaId, setFormProgramaId] = useState("");
