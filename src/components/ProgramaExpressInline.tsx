@@ -288,10 +288,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   }, []);
 
   useEffect(() => {
-    if (editData && !initialized) {
+    if (editData) {
       console.log("Loading editData:", editData);
-      setEstudio(editData.estudio);
-      setProgramaId(editData.programaId);
+      setEstudio(editData.estudio || "");
+      setProgramaId(editData.programaId || "");
       setBlocos(Array.isArray(editData.blocos) && editData.blocos.length > 0 ? editData.blocos.map(b => ({ ...b, noticias: Array.isArray(b?.noticias) ? b.noticias : [{ titulo: "", imagemUrl: "", escalada: false }] })) : [{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
       setParticipantes(editData.participantes || []);
       setEscaladaList(editData.escaladaList || []);
@@ -341,7 +341,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       }
       setInitialized(true);
     }
-  }, [editData, initialized, user]);
+  }, [editData, user]);
 
   const savePromptAsTemplate = async () => {
     if (!templateName.trim() || !configuracoes.prompt_ai.trim() || !user) return;
