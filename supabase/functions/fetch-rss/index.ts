@@ -244,7 +244,15 @@ Deno.serve(async (req) => {
               }
 
               const aiData = await aiResponse.json();
-              generatedContent = aiData.choices?.[0]?.message?.content || "";
+              const rawContent = aiData.choices?.[0]?.message?.content || "";
+              
+              try {
+                const parsed = JSON.parse(rawContent);
+                generatedContent = parsed.materia || "";
+                summary = parsed.resumo || "";
+              } catch {
+                generatedContent = rawContent;
+              }
               
               const paragraphList = generatedContent
                 .split(/\n\s*\n/)
