@@ -517,9 +517,9 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
     if (!user) return;
     if (escaladaNews.some(e => e.title === sn.title && e.portal === sn.portal)) return;
     const { data } = await supabase.from("escalada_news").insert({
-      user_id: user.id, portal: sn.portal, title: sn.title, image_url: sn.imageUrl,
+      user_id: user.id, portal: sn.portal, title: sn.title, image_url: sn.imageUrl, resumo: sn.resumo,
     }).select().single();
-    if (data) setEscaladaNews(prev => [...prev, { id: data.id, portal: data.portal, title: data.title, imageUrl: data.image_url || "" }]);
+    if (data) setEscaladaNews(prev => [...prev, { id: data.id, portal: data.portal, title: data.title, imageUrl: data.image_url || "", resumo: data.resumo || "" }]);
   };
 
   const removeFromEscalada = async (index: number) => {
