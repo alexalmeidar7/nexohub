@@ -34,6 +34,7 @@ interface SelectedNews {
   portal: string;
   title: string;
   imageUrl: string;
+  resumo?: string;
 }
 
 interface EscaladaNews {
@@ -41,6 +42,7 @@ interface EscaladaNews {
   portal: string;
   title: string;
   imageUrl: string;
+  resumo?: string;
 }
 
 interface SelectedCotacao {
