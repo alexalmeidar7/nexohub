@@ -43,6 +43,17 @@ export default function InfoMusicSection() {
     setAiEnabled((data as { infomusic_ai_enabled?: boolean })?.infomusic_ai_enabled !== false);
     setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
     setLastManualId(data?.last_manual_curiosity_id || null);
+    
+    // Parse now playing data from dashboard_items
+    const di = data?.dashboard_items as any;
+    if (di?.music_current_title || di?.music_current_artist) {
+      setNowPlaying({
+        musica: di.music_current_title || "Sem título",
+        artista: di.music_current_artist || "Desconhecido",
+        capa: di.music_current_cover || "",
+        curiosity: di.music_current_curiosity
+      });
+    }
   };
 
   const toggleAi = async () => {
