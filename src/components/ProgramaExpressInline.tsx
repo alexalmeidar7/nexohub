@@ -758,8 +758,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         
         if (data.journalisticText) {
           updateNoticia(bi, ni, "texto_materia", data.journalisticText);
+          if (data.journalisticText.includes("ERRO:")) {
+            toast.error("Erro na geração da IA", { description: data.journalisticText });
+          }
         } else if (configuracoes.producao_ai_habilitada && !data.journalisticText) {
           console.warn("AI failed to return journalistic text despite being enabled.");
+          toast.warning("A IA não retornou o texto jornalístico. Tente reprocessar.");
         }
         
         updateNoticia(bi, ni, "link", url);
