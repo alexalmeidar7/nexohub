@@ -511,6 +511,29 @@ serve(async (req) => {
         curiosidade = manualCuriosityText;
       }
     }
+
+    // If no manual override, try the current music curiosity from DB
+    if (!curiosidade) {
+      const dashboard = settingsRes.data?.dashboard_items as any || {};
+      const musicData = dashboard.musicData || {};
+      const musicaAtual = musicData.musica || dashboard.music_current_title || "";
+      const artistaAtual = musicData.artista || dashboard.music_current_artist || "";
+      
+      if (musicaAtual && artistaAtual) {
+        const { data: info } = await supabase
+          .from("infomusic")
+          .select("curiosidade")
+          .ilike("artista", artistaAtual.trim())
+          .ilike("musica", musicaAtual.trim())
+          .gt("expires_at", new Date().toISOString())
+          .limit(1)
+          .maybeSingle();
+        
+        if (info?.curiosidade) {
+          curiosidade = info.curiosidade;
+        }
+      }
+    }
     
     // ── Music details ──
     const dashboard = settingsRes.data?.dashboard_items as any || {};
