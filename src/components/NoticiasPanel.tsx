@@ -14,6 +14,7 @@ interface NewsItem {
   link: string;
   thumbnail?: string;
   body?: string;
+  journalisticText?: string;
 }
 
 interface Portal {
