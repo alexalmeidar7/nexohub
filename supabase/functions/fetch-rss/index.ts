@@ -195,26 +195,27 @@ Deno.serve(async (req) => {
         if (openAIKey && contentToProcess.length > 200) {
           const baseSystemPrompt = (custom_prompt && custom_prompt.trim().length > 5) 
             ? custom_prompt 
-            : "Você é um redator sênior de telejornalismo especializado em roteiros para Teleprompter.";
+            : "Você é um redator sênior de telejornalismo com 20 anos de experiência em grandes emissoras. Sua especialidade é escrever matérias profundas, completas e envolventes para o Teleprompter.";
           
           const systemPrompt = `${baseSystemPrompt}
             
-            DIRETRIZES OBRIGATÓRIAS:
-            1. O texto DEVE ser uma matéria COMPLETA e DETALHADA para ser lida no ar.
-            2. Estrutura rígida:
-               - [INÍCIO]: Lead impactante contextualizando o assunto.
-               - [DESENVOLVIMENTO]: Explicação detalhada dos fatos, dados e informações relevantes.
-               - [CONCLUSÃO]: Fechamento da matéria com desdobramentos ou síntese.
-            3. EXTENSÃO: O texto final deve ter uma extensão considerável (mínimo de 3 a 5 parágrafos). NÃO escreva apenas um resumo ou uma frase curta.
-            4. ESTILO: Frases curtas, tom profissional, pronto para leitura em voz alta.
+            ESTRUTURA OBRIGATÓRIA DO TEXTO (NÃO PODE FALTAR NENHUMA PARTE):
+            - [INÍCIO]: Lead impactante, situando o espectador no tempo e espaço. Deve ter pelo menos 2 frases.
+            - [DESENVOLVIMENTO]: Corpo da matéria. Explique todos os detalhes, contexto histórico, dados e declarações. Esta seção DEVE ter pelo menos 3 parágrafos robustos.
+            - [CONCLUSÃO]: Encerramento com as próximas etapas, consequências ou um fechamento reflexivo. Deve ter pelo menos 2 frases.
             
-            Responda incluindo os marcadores [INÍCIO], [DESENVOLVIMENTO] e [CONCLUSÃO].`;
+            REGRAS CRÍTICAS:
+            1. EXTENSÃO: O texto final DEVE ter no mínimo 2000 caracteres. Textos curtos serão rejeitados.
+            2. PROFUNDIDADE: Não faça um resumo. Transforme cada informação do conteúdo bruto em uma narrativa jornalística fluida.
+            3. TOM: Jornalístico profissional, pronto para locução.
+            
+            IMPORTANTE: Responda obrigatoriamente usando os marcadores [INÍCIO], [DESENVOLVIMENTO] e [CONCLUSÃO] para que o sistema valide a estrutura.`;
           
           let attempts = 0;
           let generatedContent = "";
           let isValid = false;
 
-          while (attempts < 2 && !isValid) {
+          while (attempts < 3 && !isValid) {
             const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
               method: "POST",
               headers: {
@@ -225,31 +226,30 @@ Deno.serve(async (req) => {
                 model: "gpt-4o", 
                 messages: [
                   { role: "system", content: systemPrompt },
-                  { role: "user", content: `Escreva uma matéria JORNALÍSTICA COMPLETA E DETALHADA com base no conteúdo abaixo. O texto deve ser pronto para leitura no TP:\n\nCONTEÚDO BRUTO:\n${contentToProcess}` }
+                  { role: "user", content: `ESCREVA UMA MATÉRIA JORNALÍSTICA LONGA E COMPLETA (MÍNIMO 2000 CARACTERES) baseada neste conteúdo: ${contentToProcess}` }
                 ],
-                temperature: 0.7,
+                temperature: 0.8,
               }),
             });
 
             const aiData = await aiResponse.json();
             generatedContent = aiData.choices?.[0]?.message?.content || "";
             
-            const paragraphs = generatedContent.split(/\n\s*\n/).filter(p => p.trim().length > 40);
             const hasInicio = /IN[ÍI]CIO|INTRODU[ÇC][ÃA]O/i.test(generatedContent);
+            const hasDesenv = /DESENVOLVIMENTO|CORPO/i.test(generatedContent);
             const hasConcl = /CONCLUS[ÃA]O|FECHAMENTO/i.test(generatedContent);
-            const isLongEnough = generatedContent.length > 800;
-            const hasMinParagraphs = paragraphs.length >= 3;
+            const isLongEnough = generatedContent.length >= 1200; // Realistic minimum for 3-5 paragraphs
             
-            if (hasInicio && hasConcl && isLongEnough && hasMinParagraphs) {
+            if (hasInicio && hasDesenv && hasConcl && isLongEnough) {
               isValid = true;
             } else {
               attempts++;
-              console.log(`Validation failed (Attempt ${attempts}): length=${generatedContent.length}, paragraphs=${paragraphs.length}`);
+              console.log(`AI failed to follow instructions (Attempt ${attempts}). Length: ${generatedContent.length}. Sections: I:${hasInicio} D:${hasDesenv} C:${hasConcl}`);
             }
           }
 
           journalisticText = generatedContent
-            .replace(/\[?(INÍCIO|DESENVOLVIMENTO|CONCLUSÃO|INTRODUÇÃO|FECHAMENTO)\]?:?/gi, "")
+            .replace(/\[?(INÍCIO|DESENVOLVIMENTO|CONCLUSÃO|INTRODUÇÃO|FECHAMENTO|CORPO)\]?:?/gi, "")
             .trim();
         }
       } catch (e) {
