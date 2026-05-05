@@ -1474,27 +1474,37 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       <div className="w-full min-w-0 max-w-full overflow-hidden">
         <div className="flex items-center gap-1 mb-1">
           <FileText size={10} style={{ color: "var(--layout-icon-color)" }} />
-          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Matéria (TP) / Resumo</span>
+          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Matéria Completa (TP)</span>
           {editedFields?.has(`noticia-${bi}-${ni}-texto_materia`) && <EditedCheck />}
         </div>
         <textarea 
-          value={noticia.texto_materia || noticia.resumo || ""} 
-          onChange={e => {
-            if (noticia.texto_materia !== undefined || (noticia.resumo && noticia.resumo.length > 200)) {
-              onUpdate(bi, ni, "texto_materia", e.target.value);
-            } else {
-              onUpdate(bi, ni, "resumo", e.target.value);
-            }
-          }} 
+          value={noticia.texto_materia || ""} 
+          onChange={e => onUpdate(bi, ni, "texto_materia", e.target.value)} 
           onBlur={() => {
-            if (!noticia.texto_materia && !noticia.resumo && noticia.link) {
+            if (!noticia.texto_materia && noticia.link) {
               onFetchLink(bi, ni, noticia.link);
             }
           }}
-          placeholder="Texto completo da matéria para o TP ou resumo" 
+          placeholder="Texto jornalístico completo para leitura no Teleprompter..." 
+          className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[10px] outline-none resize-y" 
+          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box", minHeight: "120px" }} 
+          rows={8} 
+        />
+      </div>
+
+      <div className="w-full min-w-0 max-w-full overflow-hidden">
+        <div className="flex items-center gap-1 mb-1">
+          <List size={10} style={{ color: "var(--layout-icon-color)" }} />
+          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Resumo</span>
+          {editedFields?.has(`noticia-${bi}-${ni}-resumo`) && <EditedCheck />}
+        </div>
+        <textarea 
+          value={noticia.resumo || ""} 
+          onChange={e => onUpdate(bi, ni, "resumo", e.target.value)} 
+          placeholder="Resumo curto da notícia..." 
           className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[10px] outline-none resize-y" 
           style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
-          rows={noticia.texto_materia ? 6 : 3} 
+          rows={3} 
         />
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
