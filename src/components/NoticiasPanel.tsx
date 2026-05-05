@@ -467,7 +467,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             body = pMatches.slice(0, 5).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 2000);
           }
         }
-        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail, body }]);
+        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail, body, journalisticText: body }]);
       } catch {
         setNoticiasAvulsas(prev => [...prev, { title, link: url }]);
       }
@@ -589,7 +589,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
               body = pMatches.slice(0, 8).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 3000);
             }
           }
-          setReadingPopup({ title, link: item.link, thumbnail, body });
+          setReadingPopup({ title, link: item.link, thumbnail, body, journalisticText: body });
         }
       }
     } catch (err) {
