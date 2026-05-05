@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
         const openAIKey = Deno.env.get("OPENAI_API_KEY");
         console.log(`OpenAI Key present: ${!!openAIKey}, Content length: ${contentToProcess.length}`);
 
-        if (openAIKey && contentToProcess.length > 200) {
+        if (openAIKey && contentToProcess.length > 50) {
           const baseSystemPrompt = (custom_prompt && custom_prompt.trim().length > 5) 
             ? custom_prompt 
             : "Você é um redator sênior de telejornalismo especializado em grandes reportagens.";
@@ -264,15 +264,15 @@ Deno.serve(async (req) => {
             .replace(/\[?(INÍCIO|DESENVOLVIMENTO|CONCLUSÃO|INTRODUÇÃO|FECHAMENTO|CORPO)\]?:?/gi, "")
             .trim();
           
-          if (!journalisticText || journalisticText.length < 100) {
-             journalisticText = "O conteúdo extraído do link foi insuficiente ou a IA não conseguiu gerar o texto. Tente outro link ou cole o texto manualmente.";
+          if (!journalisticText || journalisticText.length < 50) {
+             journalisticText = contentToProcess.length > 100 ? contentToProcess.slice(0, 5000) : "O conteúdo extraído do link foi insuficiente para gerar uma matéria completa automaticamente. Por favor, insira o texto manualmente ou tente outro link.";
           }
         } else if (!openAIKey) {
           console.warn("OPENAI_API_KEY is missing. Returning raw text as fallback.");
           journalisticText = contentToProcess.slice(0, 5000);
         } else {
           console.warn("Content too short to process:", contentToProcess.length);
-          journalisticText = "O conteúdo deste link é muito curto para gerar uma matéria completa. Tente um link com mais texto.";
+          journalisticText = contentToProcess.length > 50 ? contentToProcess : "O conteúdo deste link é muito curto para gerar uma matéria completa. Tente um link com mais texto.";
         }
       } catch (e) {
         console.error("AI Generation error:", e);
