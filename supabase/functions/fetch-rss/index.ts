@@ -193,28 +193,61 @@ Deno.serve(async (req) => {
 
         const openAIKey = Deno.env.get("OPENAI_API_KEY");
         if (openAIKey && contentToProcess.length > 200) {
-          const systemPrompt = (custom_prompt && custom_prompt.trim().length > 5) 
+          const baseSystemPrompt = (custom_prompt && custom_prompt.trim().length > 5) 
             ? custom_prompt 
-            : "Você é um redator de notícias especializado em telejornalismo. Sua tarefa é transformar o conteúdo bruto de um link em uma matéria completa e estruturada para ser lida no Teleprompter (TP). A matéria deve ter obrigatoriamente um início (lead impactante), meio (detalhamento dos fatos principais) e uma conclusão (fechamento ou desdobramentos). O tom deve ser profissional e adequado para leitura em voz alta.";
+            : "Você é um redator de notícias especializado em telejornalismo.";
           
-          const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${openAIKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "gpt-4o-mini",
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: `Analise o conteúdo abaixo e escreva uma matéria completa para o Teleprompter (TP), seguindo rigorosamente as instruções do sistema e o estilo jornalístico:\n\nCONTÉUDO:\n${contentToProcess}` }
-              ],
-              temperature: 0.7,
-            }),
-          });
+          const systemPrompt = `${baseSystemPrompt} 
+            OBRIGATÓRIO: O texto DEVE conter explicitamente três partes:
+            1. INÍCIO (Lead impactante)
+            2. DESENVOLVIMENTO (Detalhes dos fatos)
+            3. CONCLUSÃO (Fechamento)
+            
+            Formate a resposta com as marcações [INÍCIO], [DESENVOLVIMENTO] e [CONCLUSÃO] antes de cada seção para verificação.`;
+          
+          let attempts = 0;
+          let generatedContent = "";
+          let isValid = false;
 
-          const aiData = await aiResponse.json();
-          journalisticText = aiData.choices?.[0]?.message?.content;
+          while (attempts < 2 && !isValid) {
+            const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${openAIKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: `Transforme o conteúdo abaixo em uma matéria completa para o TP (mínimo 3 parágrafos):\n\n${contentToProcess}` }
+                ],
+                temperature: 0.7,
+              }),
+            });
+
+            const aiData = await aiResponse.json();
+            generatedContent = aiData.choices?.[0]?.message?.content || "";
+            
+            // Check for explicit sections
+            const hasInicio = generatedContent.toUpperCase().includes("INÍCIO") || generatedContent.toUpperCase().includes("INTRODUÇÃO");
+            const hasDesenv = generatedContent.toUpperCase().includes("DESENVOLVIMENTO") || generatedContent.length > 500;
+            const hasConcl = generatedContent.toUpperCase().includes("CONCLUSÃO") || generatedContent.toUpperCase().includes("FECHAMENTO");
+            
+            if (hasInicio && hasDesenv && hasConcl && generatedContent.length > 300) {
+              isValid = true;
+            } else {
+              attempts++;
+              console.log(`AI validation failed (attempt ${attempts}). Missing sections or too short.`);
+            }
+          }
+
+          // Clean up markers for final output
+          journalisticText = generatedContent
+            .replace(/\[?INÍCIO\]?:?/gi, "")
+            .replace(/\[?DESENVOLVIMENTO\]?:?/gi, "")
+            .replace(/\[?CONCLUSÃO\]?:?/gi, "")
+            .trim();
         }
       } catch (e) {
         console.error("AI Generation error:", e);
