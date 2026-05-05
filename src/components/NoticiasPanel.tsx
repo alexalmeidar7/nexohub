@@ -492,8 +492,10 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
 
   const addToSelected = async (portal: string, news: NewsItem) => {
     if (!user) return;
-    const item: SelectedNews = { portal, title: news.title, imageUrl: news.thumbnail || "" };
-    const { data } = await supabase.from("selected_news").insert({ user_id: user.id, portal, title: news.title, image_url: news.thumbnail || "" }).select().single();
+    const item: SelectedNews = { portal, title: news.title, imageUrl: news.thumbnail || "", resumo: news.resumo };
+    const { data } = await supabase.from("selected_news").insert({ 
+      user_id: user.id, portal, title: news.title, image_url: news.thumbnail || "", resumo: news.resumo 
+    }).select().single();
     if (data) setSelectedNews(prev => [...prev, { ...item, id: data.id }]);
   };
 
