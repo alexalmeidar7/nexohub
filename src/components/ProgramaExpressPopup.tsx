@@ -1053,7 +1053,21 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         <div className="flex items-center gap-1 mb-1">
           <Type size={10} style={{ color: "var(--layout-icon-color)" }} />
           <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Título / Tarja</span>
+      </div>
+      
+      <div className="w-full min-w-0 max-w-full overflow-hidden">
+        <div className="flex items-center gap-1 mb-1">
+          <Type size={10} style={{ color: "var(--layout-icon-color)" }} />
+          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Resumo (p/ Escalada)</span>
         </div>
+        <textarea
+          value={noticia.resumo || ""}
+          onChange={e => onUpdate(bi, ni, "resumo", e.target.value)}
+          placeholder="Resumo curto para a escalada..."
+          className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none h-12 resize-none"
+          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
+        />
+      </div>
         <input
           value={noticia.titulo}
           onChange={e => onUpdate(bi, ni, "titulo", e.target.value)}
