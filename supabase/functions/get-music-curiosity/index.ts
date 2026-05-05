@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { artista, musica, userId: requestedUserId } = await req.json();
+    const { artista, musica, userId: requestedUserId, deezerArtistImg } = await req.json();
     if (!artista || !musica || typeof artista !== "string" || typeof musica !== "string") {
       return new Response(JSON.stringify({ error: "artista e musica são obrigatórios" }), {
         status: 400,
@@ -217,6 +217,7 @@ Deno.serve(async (req) => {
         artista: artistaTrim, 
         musica: musicaTrim, 
         curiosidade,
+        deezer_artist_img: deezerArtistImg || null,
         expires_at: expiresAt.toISOString()
       })
       .select()

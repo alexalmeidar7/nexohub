@@ -9,6 +9,7 @@ interface InfoMusicRow {
   artista: string;
   musica: string;
   curiosidade: string;
+  deezer_artist_img?: string;
   created_at: string;
   expires_at: string;
 }
@@ -25,14 +26,14 @@ export default function InfoMusicSection() {
   const [savingExcecoes, setSavingExcecoes] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [togglingAi, setTogglingAi] = useState(false);
-
+  const [lastManualId, setLastManualId] = useState<string | null>(null);
   const [monthlyQuota, setMonthlyQuota] = useState({ count: 0, limit: 20 });
 
   const loadExcecoes = async () => {
     if (!user) return;
     const { data } = await supabase
       .from("user_settings")
-      .select("infomusic_excecoes, infomusic_ai_enabled, infomusic_ai_monthly_count")
+      .select("infomusic_excecoes, infomusic_ai_enabled, infomusic_ai_monthly_count, last_manual_curiosity_id")
       .eq("user_id", user.id)
       .maybeSingle();
     const v = (data?.infomusic_excecoes || "") as string;
@@ -40,6 +41,7 @@ export default function InfoMusicSection() {
     setExcecoesInitial(v);
     setAiEnabled((data as { infomusic_ai_enabled?: boolean })?.infomusic_ai_enabled !== false);
     setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
+    setLastManualId(data?.last_manual_curiosity_id || null);
   };
 
   const toggleAi = async () => {
@@ -302,34 +304,52 @@ export default function InfoMusicSection() {
                     <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Artista</th>
                     <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Música</th>
                     <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Curiosidade</th>
-                    <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Inserção</th>
+                    <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Data/Hora</th>
                     <th className="text-center px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Enviar</th>
                     <th className="px-3 py-2"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r, i) => (
-                    <tr key={r.id} style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined }}>
-                      <td className="px-3 py-2 font-semibold align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{r.artista}</td>
-                      <td className="px-3 py-2 align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{r.musica}</td>
-                      <td className="px-3 py-2 align-top" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 75%, transparent)", maxWidth: 480 }}>
-                        <div className="line-clamp-3 leading-relaxed">{r.curiosidade}</div>
-                      </td>
-                      <td className="px-3 py-2 align-top font-mono text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
-                        {new Date(r.created_at).toLocaleDateString("pt-BR")}
-                      </td>
+                  {rows.map((r, i) => {
+                    const isLastManual = r.id === lastManualId;
+                    return (
+                      <tr key={r.id} style={{ 
+                        borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined,
+                        backgroundColor: isLastManual ? "rgba(var(--layout-accent-color-rgb, 37, 99, 235), 0.1)" : undefined
+                      }}>
+                        <td className="px-3 py-2 font-semibold align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          <div className="flex flex-col gap-1">
+                            {r.deezer_artist_img && (
+                              <img src={r.deezer_artist_img} alt={r.artista} className="w-8 h-8 rounded-full object-cover border border-white/10" />
+                            )}
+                            {r.artista}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{r.musica}</td>
+                        <td className="px-3 py-2 align-top" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 75%, transparent)", maxWidth: 480 }}>
+                          <div className="line-clamp-3 leading-relaxed">{r.curiosidade}</div>
+                        </td>
+                        <td className="px-3 py-2 align-top font-mono text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                          {new Date(r.created_at).toLocaleString("pt-BR")}
+                        </td>
                       <td className="px-3 py-2 align-top text-center">
                         <button 
                           onClick={async () => {
                             try {
                               const until = new Date(Date.now() + 30_000).toISOString();
+                              const currentDashboard = (await supabase.from("user_settings").select("dashboard_items").eq("user_id", user?.id).maybeSingle()).data?.dashboard_items as any || {};
+                              
                               await supabase.from("user_settings").update({
+                                last_manual_curiosity_id: r.id,
                                 dashboard_items: {
-                                  ...((await supabase.from("user_settings").select("dashboard_items").eq("user_id", user?.id).maybeSingle()).data?.dashboard_items as any || {}),
+                                  ...currentDashboard,
                                   music_curiosity_manual: r.curiosidade,
-                                  music_curiosity_manual_until: until
+                                  music_curiosity_manual_until: until,
+                                  music_curiosity_manual_img: r.deezer_artist_img || ""
                                 }
                               }).eq("user_id", user?.id);
+                              
+                              setLastManualId(r.id);
                               
                               window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: r.curiosidade } }));
                               toast.success("Enviado para o vMix!");
@@ -342,15 +362,16 @@ export default function InfoMusicSection() {
                           title="Enviar manualmente para o XML"
                         >
                           <Send size={14} />
-                        </button>
-                      </td>
-                      <td className="px-3 py-2 align-top text-right">
-                        <button onClick={() => handleDelete(r.id)} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: "#dc2626" }}>
-                          <Trash2 size={13} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                         </button>
+                       </td>
+                       <td className="px-3 py-2 align-top text-right">
+                         <button onClick={() => handleDelete(r.id)} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: "#dc2626" }}>
+                           <Trash2 size={13} />
+                         </button>
+                       </td>
+                     </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
