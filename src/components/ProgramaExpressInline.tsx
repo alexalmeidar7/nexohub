@@ -715,10 +715,25 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         }
 
         const decodeFull = (v: string) => { let s = v; for (let i = 0; i < 3; i++) { const d = decodeHtmlEntities(s); if (d === s) break; s = d; } return s; };
-        if (title) updateNoticia(bi, ni, "titulo", decodeFull(title));
-        if (image) updateNoticia(bi, ni, "imagemUrl", decodeFull(image));
-        if (summary) updateNoticia(bi, ni, "resumo", decodeFull(summary));
-        if (data.journalisticText) updateNoticia(bi, ni, "texto_materia", data.journalisticText);
+        const existingNoticia = blocos[bi]?.noticias[ni];
+        const hasSubstantialText = (existingNoticia?.texto_materia && existingNoticia.texto_materia.length > 200) || 
+                                  (existingNoticia?.resumo && existingNoticia.resumo.length > 200);
+
+        if (title && (!existingNoticia?.titulo || existingNoticia.titulo.length < 5)) {
+          updateNoticia(bi, ni, "titulo", decodeFull(title));
+        }
+        
+        if (image && !existingNoticia?.imagemUrl) {
+          updateNoticia(bi, ni, "imagemUrl", decodeFull(image));
+        }
+        
+        if (summary && !hasSubstantialText) {
+          updateNoticia(bi, ni, "resumo", decodeFull(summary));
+        }
+        
+        if (data.journalisticText && !hasSubstantialText) {
+          updateNoticia(bi, ni, "texto_materia", data.journalisticText);
+        }
         
         updateNoticia(bi, ni, "link", url);
         if (title) toast.success("Dados extraídos do link!"); else toast.warning("Link carregado, mas não foi possível extrair o título");
