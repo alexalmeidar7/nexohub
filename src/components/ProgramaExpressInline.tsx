@@ -281,9 +281,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Load edit data
   useEffect(() => {
     if (editData && !initialized) {
+      console.log("Loading editData:", editData);
       setEstudio(editData.estudio);
       setProgramaId(editData.programaId);
       setBlocos(Array.isArray(editData.blocos) && editData.blocos.length > 0 ? editData.blocos.map(b => ({ ...b, noticias: Array.isArray(b?.noticias) ? b.noticias : [{ titulo: "", imagemUrl: "", escalada: false }] })) : [{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
@@ -303,7 +303,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           apoioVideos: editData.podcastData.apoioVideos?.length ? editData.podcastData.apoioVideos : [""],
         });
       }
-      const loadConfig = async () => {
+      
+      const loadConfigAndTemplates = async () => {
         if (editData.roteiroId) {
           const { data } = await supabase.from("roteiros").select("configuracoes").eq("id", editData.roteiroId).single();
           if (data?.configuracoes) {
@@ -314,17 +315,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             }
           }
         }
-      };
-
-      const loadTemplates = async () => {
         if (user) {
           const { data } = await supabase.from("prompt_templates").select("id, name, content").order("name");
           if (data) setPromptTemplates(data);
         }
       };
 
-      loadConfig();
-      loadTemplates();
+      loadConfigAndTemplates();
       setInitialized(true);
     } else if (!initialized) {
       const draft = localStorage.getItem("programa_express_prompt_ai_draft");
