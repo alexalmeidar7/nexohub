@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { url, generate_journalistic_text, custom_prompt } = await req.json();
+    const { url, generate_journalistic_text, custom_prompt, generate_summary } = await req.json();
     if (!url) {
       return new Response(JSON.stringify({ error: "URL is required" }), {
         status: 400,
@@ -159,7 +159,8 @@ Deno.serve(async (req) => {
     const text = pickBestDecodedText(buffer, contentType);
 
     let journalisticText = null;
-    if (generate_journalistic_text) {
+    let summary = null;
+    if (generate_journalistic_text || generate_summary) {
       try {
         // Improved heuristic to extract main text from HTML
         // Remove known non-content tags
@@ -229,8 +230,9 @@ Deno.serve(async (req) => {
                   model: "gpt-4o-mini",
                   messages: [
                     { role: "system", content: systemPrompt },
-                    { role: "user", content: `ESCREVA UMA MATÉRIA COMPLETA (MÍNIMO 5 PARÁGRAFOS DENSOS) PARA TELEPROMPTER BASEADA NESTE CONTEÚDO: ${contentToProcess}` }
+                    { role: "user", content: `COM BASE NESTE CONTEÚDO: ${contentToProcess}\n\nRETORNE UM JSON NO FORMATO: {"materia": "texto da materia aqui", "resumo": "resumo de 1-2 frases aqui"}` }
                   ],
+                  response_format: { type: "json_object" },
                   temperature: 0.7,
                 }),
               });
@@ -242,7 +244,15 @@ Deno.serve(async (req) => {
               }
 
               const aiData = await aiResponse.json();
-              generatedContent = aiData.choices?.[0]?.message?.content || "";
+              const rawContent = aiData.choices?.[0]?.message?.content || "";
+              
+              try {
+                const parsed = JSON.parse(rawContent);
+                generatedContent = parsed.materia || "";
+                summary = parsed.resumo || "";
+              } catch {
+                generatedContent = rawContent;
+              }
               
               const paragraphList = generatedContent
                 .split(/\n\s*\n/)
@@ -301,8 +311,9 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       content: text, 
-      journalisticText, 
-      ok: true 
+      journalisticText,
+      summary,
+      ok: true
     }), {
       headers: responseHeaders,
     });

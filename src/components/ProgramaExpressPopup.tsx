@@ -29,6 +29,7 @@ interface NewsItem {
   imagemUrl: string;
   escalada: boolean;
   link?: string;
+  resumo?: string;
 }
 
 interface Bloco {
@@ -400,6 +401,23 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
     setBlocos(prev => {
+      const noticia = prev[bi].noticias[ni];
+      
+      // Se estiver marcando como escalada, adiciona o resumo à lista de escaladas
+      if (field === "escalada" && value === true) {
+        const textToUse = noticia.resumo || noticia.titulo;
+        if (textToUse && !escaladaList.includes(textToUse)) {
+          setEscaladaList(current => [...current, textToUse]);
+        }
+      } 
+      // Se estiver desmarcando, removemos da lista se o texto for exatamente igual
+      else if (field === "escalada" && value === false) {
+        const textToRemove = noticia.resumo || noticia.titulo;
+        if (textToRemove) {
+          setEscaladaList(current => current.filter(item => item !== textToRemove));
+        }
+      }
+
       const copy = prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, [field]: value } : n) } : b);
       return copy;
     });
@@ -436,7 +454,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setFetchingLink(key);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", {
-        body: { url },
+        body: { url, generate_summary: true },
       });
       if (!error && data?.ok && data.content) {
         const html = data.content as string;
@@ -459,6 +477,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         let title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
         if (title.includes(" - ")) title = title.split(" - ")[0].trim();
         const image = getMetaContent("og:image") || getMetaContent("twitter:image");
+        const summary = data.summary;
 
         const decodeFull = (v: string) => {
           let s = v;
@@ -471,6 +490,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         };
         if (title) updateNoticia(bi, ni, "titulo", decodeFull(title));
         if (image) updateNoticia(bi, ni, "imagemUrl", decodeFull(image));
+        if (summary) updateNoticia(bi, ni, "resumo", decodeFull(summary));
         updateNoticia(bi, ni, "link", url);
         if (title) toast.success("Dados extraídos do link!");
         else toast.warning("Link carregado, mas não foi possível extrair o título");
@@ -1033,7 +1053,21 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         <div className="flex items-center gap-1 mb-1">
           <Type size={10} style={{ color: "var(--layout-icon-color)" }} />
           <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Título / Tarja</span>
+      </div>
+      
+      <div className="w-full min-w-0 max-w-full overflow-hidden">
+        <div className="flex items-center gap-1 mb-1">
+          <Type size={10} style={{ color: "var(--layout-icon-color)" }} />
+          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Resumo (p/ Escalada)</span>
         </div>
+        <textarea
+          value={noticia.resumo || ""}
+          onChange={e => onUpdate(bi, ni, "resumo", e.target.value)}
+          placeholder="Resumo curto para a escalada..."
+          className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none h-12 resize-none"
+          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
+        />
+      </div>
         <input
           value={noticia.titulo}
           onChange={e => onUpdate(bi, ni, "titulo", e.target.value)}

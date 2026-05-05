@@ -176,7 +176,7 @@ ${newsListText}
 
 Retorne APENAS um JSON válido com a seguinte estrutura:
 {
-  "escalada": [{"titulo": "...", "imagemUrl": "..."}],
+  "escalada": [{"titulo": "...", "imagemUrl": "...", "resumo": "..."}],
   "blocos": [
     {
       "noticias": [{"titulo": "...", "imagemUrl": "...", "link": "...", "resumo": "...", "texto_materia": "..."}]
@@ -198,7 +198,7 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES PERSONALIZADAS DO USUÁRIO (SIGA À RIS
 - Use APENAS notícias da lista acima (não invente manchetes)
 - Mantenha os links e imagens originais
 - Selecione as notícias mais relevantes conforme as instruções
-- A escalada deve ter as manchetes mais importantes
+- A escalada deve ter as manchetes mais importantes. No campo "resumo" da escalada, coloque o texto que será lido pelo apresentador. Se o resumo da notícia for bom, use-o na escalada.
 - Se as instruções mencionam temas específicos, agrupe por tema nos blocos.`;
 
     let roteiro: { escalada: any[]; blocos: any[] } = { escalada: [], blocos: [] };
@@ -299,7 +299,7 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES PERSONALIZADAS DO USUÁRIO (SIGA À RIS
     if (roteiro.escalada && roteiro.escalada.length > 0) {
       pasteText += "ESCALADA:\n";
       roteiro.escalada.forEach((e, i) => {
-        pasteText += `${i + 1}. ${e.titulo}\n`;
+        pasteText += `${i + 1}. ${e.resumo || e.titulo}\n`;
       });
       pasteText += "\n";
     }

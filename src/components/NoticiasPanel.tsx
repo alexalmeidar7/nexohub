@@ -15,6 +15,7 @@ interface NewsItem {
   thumbnail?: string;
   body?: string;
   journalisticText?: string;
+  resumo?: string;
 }
 
 interface Portal {
@@ -34,6 +35,7 @@ interface SelectedNews {
   portal: string;
   title: string;
   imageUrl: string;
+  resumo?: string;
 }
 
 interface EscaladaNews {
@@ -41,6 +43,7 @@ interface EscaladaNews {
   portal: string;
   title: string;
   imageUrl: string;
+  resumo?: string;
 }
 
 interface SelectedCotacao {
@@ -489,8 +492,10 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
 
   const addToSelected = async (portal: string, news: NewsItem) => {
     if (!user) return;
-    const item: SelectedNews = { portal, title: news.title, imageUrl: news.thumbnail || "" };
-    const { data } = await supabase.from("selected_news").insert({ user_id: user.id, portal, title: news.title, image_url: news.thumbnail || "" }).select().single();
+    const item: SelectedNews = { portal, title: news.title, imageUrl: news.thumbnail || "", resumo: news.resumo };
+    const { data } = await supabase.from("selected_news").insert({ 
+      user_id: user.id, portal, title: news.title, image_url: news.thumbnail || "", resumo: news.resumo 
+    }).select().single();
     if (data) setSelectedNews(prev => [...prev, { ...item, id: data.id }]);
   };
 
@@ -512,9 +517,9 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
     if (!user) return;
     if (escaladaNews.some(e => e.title === sn.title && e.portal === sn.portal)) return;
     const { data } = await supabase.from("escalada_news").insert({
-      user_id: user.id, portal: sn.portal, title: sn.title, image_url: sn.imageUrl,
+      user_id: user.id, portal: sn.portal, title: sn.title, image_url: sn.imageUrl, resumo: sn.resumo,
     }).select().single();
-    if (data) setEscaladaNews(prev => [...prev, { id: data.id, portal: data.portal, title: data.title, imageUrl: data.image_url || "" }]);
+    if (data) setEscaladaNews(prev => [...prev, { id: data.id, portal: data.portal, title: data.title, imageUrl: data.image_url || "", resumo: data.resumo || "" }]);
   };
 
   const removeFromEscalada = async (index: number) => {
@@ -561,6 +566,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           body: JSON.stringify({ 
             url: item.link,
             generate_journalistic_text: true,
+            generate_summary: true,
             custom_prompt: customPrompt
           }),
           signal: AbortSignal.timeout(30000),
@@ -600,7 +606,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
               body = pMatches.slice(0, 8).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 3000);
             }
           }
-          setReadingPopup({ title, link: item.link, thumbnail, body, journalisticText: data.journalisticText || body });
+          setReadingPopup({ title, link: item.link, thumbnail, body, journalisticText: data.journalisticText || body, resumo: data.summary });
         }
       }
     } catch (err) {

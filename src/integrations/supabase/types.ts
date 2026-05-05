@@ -679,6 +679,7 @@ export type Database = {
           id: string
           image_url: string | null
           portal: string
+          resumo: string | null
           title: string
           user_id: string
         }
@@ -687,6 +688,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal: string
+          resumo?: string | null
           title: string
           user_id: string
         }
@@ -695,6 +697,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal?: string
+          resumo?: string | null
           title?: string
           user_id?: string
         }
@@ -1381,6 +1384,7 @@ export type Database = {
           id: string
           image_url: string | null
           portal: string
+          resumo: string | null
           title: string
           user_id: string
         }
@@ -1389,6 +1393,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal: string
+          resumo?: string | null
           title: string
           user_id: string
         }
@@ -1397,6 +1402,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal?: string
+          resumo?: string | null
           title?: string
           user_id?: string
         }
