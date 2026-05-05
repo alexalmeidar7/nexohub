@@ -511,6 +511,14 @@ serve(async (req) => {
         curiosidade = manualCuriosityText;
       }
     }
+    
+    // ── Music details ──
+    const musicData = (settingsRes.data?.dashboard_items as any)?.musicData;
+    const musicaAtual = musicData?.musica || "";
+    const artistaAtual = musicData?.artista || "";
+    const musicaTexto = musicaAtual && artistaAtual ? `${musicaAtual} - ${artistaAtual}` : (musicaAtual || artistaAtual || "");
+    const deezerArtistImg = musicData?.deezer_artist_img || "";
+
 
     const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
     let logoPatrocinador = BLANK_LOGO_URL;
