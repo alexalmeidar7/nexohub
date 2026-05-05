@@ -604,7 +604,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
               body = pMatches.slice(0, 8).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 3000);
             }
           }
-          setReadingPopup({ title, link: item.link, thumbnail, body, journalisticText: data.journalisticText || body });
+          setReadingPopup({ title, link: item.link, thumbnail, body, journalisticText: data.journalisticText || body, resumo: data.summary });
         }
       }
     } catch (err) {
