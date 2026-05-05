@@ -182,37 +182,8 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
 
   return (
     <div className="px-6 pt-4 pb-2">
-      {/* Seção de Configuração de Produção de Texto AI */}
-      {!hideAiProductionConfig && (
-        <div className="mb-4 rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bot size={14} className="text-blue-500" />
-              <div>
-                <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Produção de Texto Jornalístico (AI)</p>
-                <p className="text-[9px] opacity-60">Habilite para que a AI escreva matérias completas para o TP</p>
-              </div>
-            </div>
-            <button 
-              onClick={async () => {
-                const newValue = !((window as any).producao_ai_habilitada ?? true);
-                (window as any).producao_ai_habilitada = newValue;
-                toast.info(newValue ? "Produção de texto AI habilitada" : "Produção de texto AI desabilitada");
-                localStorage.setItem("producao_ai_habilitada", String(newValue));
-              }}
-              className="relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none"
-              style={{ backgroundColor: (localStorage.getItem("producao_ai_habilitada") !== "false") ? "#3b82f6" : "#cbd5e1" }}
-            >
-              <span 
-                className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                style={{ transform: (localStorage.getItem("producao_ai_habilitada") !== "false") ? "translateX(22px)" : "translateX(2px)" }}
-              />
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="rounded-xl p-3" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
+
         <div className="flex items-center gap-2 mb-2">
           <Bot size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
           <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Automatização de Programa</p>
@@ -417,6 +388,41 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
           </div>
         )}
       </div>
+
+      {/* Seção de Configuração de Produção de Texto AI movida para baixo */}
+      {!hideAiProductionConfig && (
+        <div className="mt-4 rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bot size={14} className="text-blue-500" />
+              <div>
+                <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Produção de Texto Jornalístico (AI)</p>
+                <p className="text-[9px] opacity-60">Habilite para que a AI escreva matérias completas para o TP</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => {
+                const isHabilitada = localStorage.getItem("producao_ai_habilitada") !== "false";
+                const newValue = !isHabilitada;
+                localStorage.setItem("producao_ai_habilitada", String(newValue));
+                window.dispatchEvent(new Event('storage'));
+                toast.info(newValue ? "Produção de texto AI habilitada" : "Produção de texto AI desabilitada");
+                setLoading(true);
+                setTimeout(() => setLoading(false), 50);
+              }}
+              className="relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none"
+              style={{ backgroundColor: (localStorage.getItem("producao_ai_habilitada") !== "false") ? "#3b82f6" : "#cbd5e1" }}
+            >
+              <span 
+                className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                style={{ transform: (localStorage.getItem("producao_ai_habilitada") !== "false") ? "translateX(22px)" : "translateX(2px)" }}
+              />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+
