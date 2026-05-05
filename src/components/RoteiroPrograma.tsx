@@ -521,7 +521,47 @@ export default function RoteiroPrograma() {
             )}
           </div>
           {activeTab === "historico" ? (
-            <HistoricoTable historico={historico} />
+            <HistoricoTable 
+              historico={historico} 
+              onEdit={(r) => {
+                let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = []; let editPodcastData: any = undefined;
+                try { 
+                  const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; 
+                  if (parsed && parsed.blocos) { 
+                    blocos = parsed.blocos; 
+                    editParticipantes = parsed.participantes || []; 
+                    editEscaladaList = parsed.escaladaList || []; 
+                    editPodcastData = parsed.podcastData || undefined; 
+                  } else { 
+                    blocos = Array.isArray(parsed) ? parsed : []; 
+                  } 
+                } catch { 
+                  blocos = []; 
+                }
+                const prog = programas.find(p => p.nome === r.programa_nome);
+                let existingXmlPath: string | undefined;
+                if (r.subtitulo?.startsWith("express_xml::")) {
+                  try {
+                    const xmlUrl = r.subtitulo.replace("express_xml::", "");
+                    const urlObj = new URL(xmlUrl);
+                    const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
+                    if (pathMatch) existingXmlPath = pathMatch[1];
+                  } catch {}
+                }
+                setExpressEditData({ 
+                  roteiroId: r.id, 
+                  estudio: r.estudio || "", 
+                  programaId: prog?.id || "", 
+                  blocos, 
+                  participantes: editParticipantes, 
+                  escaladaList: editEscaladaList, 
+                  existingXmlPath, 
+                  podcastData: editPodcastData 
+                });
+                // Scroll to top to see the edit form
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
           ) : (
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {historico.map((r, idx) => {
