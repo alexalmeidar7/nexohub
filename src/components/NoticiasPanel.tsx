@@ -1202,8 +1202,10 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                 <Loader2 size={20} className="animate-spin" style={{ color: "#2ec1f7" }} />
                 <span className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Carregando conteúdo...</span>
               </div>
-            ) : readingPopup.body ? (
-              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{readingPopup.body}</p>
+            ) : (readingPopup.journalisticText || readingPopup.body) ? (
+              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                {readingPopup.journalisticText || readingPopup.body}
+              </p>
             ) : (
               <p className="text-sm italic" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Conteúdo da matéria não disponível. Clique no link acima para ler no site original.</p>
             )}
