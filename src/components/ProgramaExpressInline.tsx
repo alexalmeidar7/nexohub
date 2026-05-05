@@ -215,6 +215,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
   const [configuracoes, setConfiguracoes] = useState<{ producao_ai_habilitada: boolean; prompt_ai: string }>({ producao_ai_habilitada: true, prompt_ai: "" });
+  const [promptTemplates, setPromptTemplates] = useState<{ id: string; name: string; content: string }[]>([]);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
