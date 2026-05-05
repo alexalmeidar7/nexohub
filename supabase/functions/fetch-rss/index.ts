@@ -201,17 +201,17 @@ Deno.serve(async (req) => {
             : "Você é um redator sênior de telejornalismo especializado em grandes reportagens.";
           
           const systemPrompt = (custom_prompt && custom_prompt.trim().length > 5)
-            ? `${custom_prompt}\n\nREQUISITOS ADICIONAIS OBRIGATÓRIOS:\n1. O texto DEVE ser separado em parágrafos usando quebras de linha duplas (duas vezes a tecla Enter).\n2. Crie parágrafos curtos e diretos (máximo 4 linhas por parágrafo).\n3. Não use texto em bloco único.\n4. Não inicie o texto com frases como 'Compartilhar matéria' ou metadados similares.\n5. O texto deve ser uma narrativa jornalística fluida, coerente e envolvente, como uma história.\n6. NÃO use entidades HTML (como &quot;, &amp;, etc), use caracteres normais.\n7. Retorne APENAS o conteúdo jornalístico.`
+            ? `${custom_prompt}\n\nREQUISITOS ADICIONAIS OBRIGATÓRIOS:\n1. O texto DEVE ser separado em parágrafos usando quebras de linha duplas (duas vezes a tecla Enter).\n2. Crie parágrafos curtos e diretos (máximo 4 linhas por parágrafo).\n3. Não use texto em bloco único.\n4. Não inicie o texto com frases como 'Compartilhar matéria', 'Leia mais', ou metadados similares.\n5. O texto deve ser uma narrativa jornalística fluida, coerente e envolvente, contando uma história completa com início, meio e fim.\n6. NÃO use entidades HTML (como &quot;, &amp;, etc), use caracteres normais e aspas comuns.\n7. Utilize uma linguagem rica e variada, evitando repetições e tornando o texto interessante para quem ouve.\n8. Retorne APENAS o conteúdo jornalístico.`
             : `${baseSystemPrompt}
             
             REQUISITOS OBRIGATÓRIOS:
             1. O texto DEVE ter no MÍNIMO 5 parágrafos.
             2. Cada parágrafo deve ser separado por duas quebras de linha (Enter duas vezes).
-            3. Use tom jornalístico profissional e narrativo, contando uma história coerente.
-            4. Crie parágrafos curtos para facilitar a leitura.
-            5. Não inicie o texto com 'Compartilhar matéria'.
+            3. Use tom jornalístico profissional e narrativo, contando uma história coerente e fluida.
+            4. Crie parágrafos curtos para facilitar a leitura no Teleprompter.
+            5. Não inicie o texto com 'Compartilhar matéria' ou metadados.
             6. NÃO use entidades HTML como &quot;, use aspas normais (").
-            7. Retorne APENAS o texto jornalístico, sem introduções ou metadados.`;
+            7. Retorne APENAS o texto jornalístico, sem introduções ou comentários adicionais.`;
           
           let attempts = 0;
           let generatedContent = "";
