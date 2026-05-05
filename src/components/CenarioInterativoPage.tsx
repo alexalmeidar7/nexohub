@@ -2875,12 +2875,12 @@ export default function CenarioInterativoPage() {
                                        </div>
                                          <div style={{ minHeight: 0 }}>
                                            <div className="flex flex-col items-center justify-center" style={{ gap: `${pvh(0.2)}px`, padding: `${pvh(0.5)}px` }}>
-                                             <div className="flex items-center" style={{ gap: `${pvh(0.4)}px` }}>
-                                               <Mic size={pvh(1.2)} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
-                                               <span className="font-bold text-white text-center" style={{ fontSize: `${pvh(1.3)}px`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,1)" }}>
-                                                 {currentProgram?.apresentador || currentProgram?.nome || ""}
-                                               </span>
-                                             </div>
+                                              <div className="flex items-center justify-center w-full" style={{ gap: `${pvh(0.4)}px` }}>
+                                                <Mic size={pvh(1.2)} style={{ opacity: 0.9, flexShrink: 0, color: "#fff" }} />
+                                                <span className="font-bold text-white text-center" style={{ fontSize: `${pvh(1.1)}px`, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "normal", textShadow: "0 2px 8px rgba(0,0,0,1)", lineHeight: 1.2 }}>
+                                                  {currentProgram?.apresentador || currentProgram?.nome || ""}
+                                                </span>
+                                              </div>
                                              {currentProgram?.apresentadorInstagram && (
                                                <span className="font-semibold" style={{ fontSize: `${pvh(0.9)}px`, color: "var(--layout-accent-color)", opacity: 0.9, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
                                                  {currentProgram.apresentadorInstagram}
