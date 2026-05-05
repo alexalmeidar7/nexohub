@@ -186,18 +186,65 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
     <div className="px-6 pt-4 pb-2">
       <div className="rounded-xl p-3" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
 
-        <div className="flex items-center gap-2 mb-2">
-          <Bot size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-          <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Automatização de Programa</p>
-          {!showForm && (
-            <button
-              onClick={() => { resetForm(); setShowForm(true); }}
-              className="text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 hover:opacity-80 transition ml-auto"
-              style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}
-            >
-              <Plus size={10} /> Nova Automação
-            </button>
-          )}
+        <div className="flex flex-col gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <Bot size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+            <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Automatização de Programa</p>
+            {!showForm && (
+              <button
+                onClick={() => { resetForm(); setShowForm(true); }}
+                className="text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 hover:opacity-80 transition ml-auto"
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}
+              >
+                <Plus size={10} /> Nova Automação
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 p-2.5 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}>
+            <div className="flex items-center gap-2 min-w-fit">
+              <button 
+                onClick={() => {
+                  const isHabilitada = localStorage.getItem("producao_ai_habilitada") !== "false";
+                  const newValue = !isHabilitada;
+                  localStorage.setItem("producao_ai_habilitada", String(newValue));
+                  window.dispatchEvent(new Event('storage'));
+                  toast.info(newValue ? "Produção de texto AI habilitada" : "Produção de texto AI desabilitada");
+                  setLoading(true);
+                  setTimeout(() => setLoading(false), 50);
+                }}
+                className="relative inline-flex h-4 w-8 items-center rounded-full transition-colors focus:outline-none"
+                style={{ backgroundColor: (localStorage.getItem("producao_ai_habilitada") !== "false") ? "#3b82f6" : "#cbd5e1" }}
+              >
+                <span 
+                  className="inline-block h-3 w-3 transform rounded-full bg-white transition-transform"
+                  style={{ transform: (localStorage.getItem("producao_ai_habilitada") !== "false") ? "translateX(16px)" : "translateX(2px)" }}
+                />
+              </button>
+              <div className="flex flex-col">
+                <p className="text-[10px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Produção de Texto Jornalístico (AI)</p>
+                <p className="text-[8px] opacity-60">Escrever matérias completas para o TP</p>
+              </div>
+            </div>
+
+            <div className="flex-1 flex items-center gap-2 h-7">
+              <input
+                type="text"
+                value={promptAi}
+                onChange={(e) => {
+                  setPromptAi(e.target.value);
+                  localStorage.setItem("producao_ai_prompt", e.target.value);
+                }}
+                placeholder="Ex: Tom formal, mínimo 4 parágrafos, foco em economia..."
+                className="flex-1 h-full px-2.5 rounded-md text-[10px] outline-none"
+                style={{ 
+                  backgroundColor: "rgba(255,255,255,0.7)", 
+                  border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
+                  color: "var(--layout-page-text, #1a1a1a)"
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         {automacoes.length > 0 && !showForm && (
