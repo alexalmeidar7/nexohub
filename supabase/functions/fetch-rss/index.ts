@@ -200,14 +200,15 @@ Deno.serve(async (req) => {
             : "Você é um redator sênior de telejornalismo especializado em grandes reportagens.";
           
           const systemPrompt = (custom_prompt && custom_prompt.trim().length > 5)
-            ? `${custom_prompt}\n\nREQUISITOS ADICIONAIS:\n1. O texto DEVE obrigatoriamente ser separado em parágrafos usando quebras de linha duplas (duas vezes a tecla Enter).\n2. Não use texto em bloco único.\n3. Retorne APENAS o conteúdo jornalístico.`
+            ? `${custom_prompt}\n\nREQUISITOS ADICIONAIS OBRIGATÓRIOS:\n1. O texto DEVE ser separado em parágrafos usando quebras de linha duplas (duas vezes a tecla Enter).\n2. Não use texto em bloco único.\n3. Não inicie o texto com frases como 'Compartilhar matéria' ou metadados similares.\n4. Retorne APENAS o conteúdo jornalístico.`
             : `${baseSystemPrompt}
             
             REQUISITOS OBRIGATÓRIOS:
             1. O texto DEVE ter no MÍNIMO 5 parágrafos longos.
             2. Cada parágrafo deve ser denso e SEPARADO por duas quebras de linha.
             3. Use tom jornalístico profissional para Teleprompter.
-            4. Retorne APENAS o texto jornalístico, sem introduções ou metadados.`;
+            4. Não inicie o texto com 'Compartilhar matéria'.
+            5. Retorne APENAS o texto jornalístico, sem introduções ou metadados.`;
           
           let attempts = 0;
           let generatedContent = "";
@@ -264,8 +265,25 @@ Deno.serve(async (req) => {
 
           journalisticText = generatedContent
             .replace(/\[?(INÍCIO|DESENVOLVIMENTO|CONCLUSÃO|INTRODUÇÃO|FECHAMENTO|CORPO)\]?:?/gi, "")
+            .replace(/^Compartilhar matéria:?/gi, "")
             .trim();
           
+          // Fix &quot; entities and other HTML entities that might leak from content
+          const htmlEntitiesMap: Record<string, string> = {
+            "&quot;": '"',
+            "&amp;": "&",
+            "&lt;": "<",
+            "&gt;": ">",
+            "&nbsp;": " ",
+            "&apos;": "'",
+            "&#39;": "'",
+          };
+          
+          Object.keys(htmlEntitiesMap).forEach(entity => {
+            const regex = new RegExp(entity, 'g');
+            journalisticText = journalisticText!.replace(regex, htmlEntitiesMap[entity]);
+          });
+
           if (!journalisticText || journalisticText.length < 50) {
              journalisticText = contentToProcess.length > 100 ? contentToProcess.slice(0, 5000) : "O conteúdo extraído do link foi insuficiente para gerar uma matéria completa automaticamente. Por favor, insira o texto manualmente ou tente outro link.";
           }
