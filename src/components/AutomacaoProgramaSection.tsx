@@ -146,7 +146,8 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
       const { data, error } = await supabase.functions.invoke("generate-automated-roteiro", {
         body: { 
           automacao_id: automacaoId,
-          producao_ai_habilitada: producao_ai
+          producao_ai_habilitada: producao_ai,
+          producao_ai_prompt: promptAi
         },
       });
       if (error) throw error;
