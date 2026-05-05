@@ -961,8 +961,11 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       {(section === "all" || section === "empresa") && <CollapsibleBox title="Diretrizes de Produção de Texto Jornalístico (AI)" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
         <JournalisticPromptSection />
       </CollapsibleBox>}
-
-function EventTypesConfigSection() {
+        </div>
+      </div>
+    </div>
+  );
+}
   const { user } = useAuth();
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
