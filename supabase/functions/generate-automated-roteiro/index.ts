@@ -315,7 +315,7 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES PERSONALIZADAS DO USUÁRIO (SIGA À RIS
             line = `- ${n.titulo}`;
           }
           
-          if (n.resumo) line += ` [RESUMO:${n.resumo.replace(/\n/g, " ").replace(/\[/g, "(").replace(/\]/g, ")")}]`;
+          if (n.resumo) line += ` [RESUMO:${n.resumo.replace(/\n/g, "\\n").replace(/\[/g, "(").replace(/\]/g, ")")}]`;
           if (n.texto_materia) line += ` [TEXTO:${n.texto_materia.replace(/\n/g, "\\n").replace(/\[/g, "(").replace(/\]/g, ")")}]`;
           
           pasteText += `${line}\n`;
