@@ -1,11 +1,14 @@
 import { useMemo } from "react";
 import { format, subDays, isAfter } from "date-fns";
 
+import { Pencil } from "lucide-react";
+
 interface Props {
   historico: any[];
+  onEdit?: (roteiro: any) => void;
 }
 
-export default function HistoricoTable({ historico }: Props) {
+export default function HistoricoTable({ historico, onEdit }: Props) {
   const rows = useMemo(() => {
     const cutoff = subDays(new Date(), 30);
     return historico
@@ -64,12 +67,13 @@ export default function HistoricoTable({ historico }: Props) {
             <th style={headerStyle}>Estúdio</th>
             <th style={headerStyle}>Título</th>
             <th style={headerStyle}>Participantes</th>
+            <th style={headerStyle}>Ações</th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={6} style={{ ...cellStyle, textAlign: "center", padding: "20px", opacity: 0.6 }}>
+              <td colSpan={7} style={{ ...cellStyle, textAlign: "center", padding: "20px", opacity: 0.6 }}>
                 Nenhum roteiro nos últimos 30 dias.
               </td>
             </tr>
@@ -87,6 +91,16 @@ export default function HistoricoTable({ historico }: Props) {
                 <td style={cellStyle}>{r.estudio || "—"}</td>
                 <td style={cellStyle}>{(r.titulo || "").replace("[AUTO]", "").trim() || "—"}</td>
                 <td style={cellStyle}>{getParticipantes(r) || "—"}</td>
+                <td style={cellStyle}>
+                  <button 
+                    onClick={() => onEdit?.(r)}
+                    className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" 
+                    style={{ backgroundColor: "rgba(38,143,250,0.08)" }} 
+                    title="Editar"
+                  >
+                    <Pencil size={10} style={{ color: "var(--layout-icon-color, #888888)" }} />
+                  </button>
+                </td>
               </tr>
             );
           })}
