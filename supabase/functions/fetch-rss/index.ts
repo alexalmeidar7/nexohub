@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { url, generate_journalistic_text, custom_prompt } = await req.json();
+    const { url, generate_journalistic_text, custom_prompt, generate_summary } = await req.json();
     if (!url) {
       return new Response(JSON.stringify({ error: "URL is required" }), {
         status: 400,
