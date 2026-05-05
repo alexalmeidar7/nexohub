@@ -479,13 +479,31 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       if (dataUserId) {
         (async () => {
           try {
-            await mergeUserDashboardItems(dataUserId, {
+            const patch: Record<string, any> = {
               music_start_time: now,
               music_current_title: data.titulo,
               music_current_artist: data.artista,
               music_current_cover: data.capa || "",
+            };
+
+            // Trigger curiosity generation for local source too
+            const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
+              body: { 
+                artista: data.artista, 
+                musica: data.titulo, 
+                userId: dataUserId,
+                deezerArtistImg: data.capa 
+              },
             });
-          } catch {}
+
+            if (curData?.curiosidade) {
+              patch.music_current_curiosity = curData.curiosidade;
+            }
+
+            await mergeUserDashboardItems(dataUserId, patch);
+          } catch (e) {
+            console.warn("[MusicaNoAr] Error generating curiosity/merging:", e);
+          }
         })();
       }
       // Track which source detected the change first

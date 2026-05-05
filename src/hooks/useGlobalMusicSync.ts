@@ -149,13 +149,31 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         
         (async () => {
           try {
-            await mergeUserDashboardItems(user.id, {
+            const patch: Record<string, any> = {
               music_start_time: now,
               music_current_title: data.titulo,
               music_current_artist: data.artista,
               music_current_cover: data.capa || "",
+            };
+            
+            // Trigger curiosity generation via Edge Function call if music changes
+            const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
+              body: { 
+                artista: data.artista, 
+                musica: data.titulo, 
+                userId: user.id,
+                deezerArtistImg: data.capa // Use current cover as artist img hint
+              },
             });
-          } catch {}
+
+            if (curData?.curiosidade) {
+              patch.music_current_curiosity = curData.curiosidade;
+            }
+
+            await mergeUserDashboardItems(user.id, patch);
+          } catch (e) {
+            console.warn("[MusicSync] Error generating curiosity/merging:", e);
+          }
         })();
       } else if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
