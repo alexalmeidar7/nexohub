@@ -1525,6 +1525,17 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         <div className="flex items-center gap-2 mb-1">
           <FileText size={10} style={{ color: "var(--layout-icon-color)" }} />
           <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Matéria Completa (TP)</span>
+          
+          {noticia.link && !isFetching && (
+            <button 
+              onClick={() => onFetchLink(bi, ni, noticia.link!, true)}
+              className="ml-auto text-[9px] flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-200 text-blue-500 hover:bg-blue-50 transition-colors"
+              title="Gerar texto novamente usando IA"
+            >
+              <RefreshCw size={9} /> Reprocessar
+            </button>
+          )}
+
           {isFetching && (
             <div className="flex-1 flex items-center gap-2">
               <div className="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden relative">
