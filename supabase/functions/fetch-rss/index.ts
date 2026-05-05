@@ -159,7 +159,8 @@ Deno.serve(async (req) => {
     const text = pickBestDecodedText(buffer, contentType);
 
     let journalisticText = null;
-    if (generate_journalistic_text) {
+    let summary = null;
+    if (generate_journalistic_text || generate_summary) {
       try {
         // Improved heuristic to extract main text from HTML
         // Remove known non-content tags
