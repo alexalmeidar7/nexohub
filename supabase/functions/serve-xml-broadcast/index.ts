@@ -609,6 +609,8 @@ serve(async (req) => {
     lines.push(`    <ticker>${esc(ticker)}</ticker>`);
     lines.push(`    <insert_live>${esc(insertLiveUrl)}</insert_live>`);
     lines.push(`    <curiosidade>${esc(curiosidade)}</curiosidade>`);
+    lines.push(`    <musica_atual>${esc(musicaTexto)}</musica_atual>`);
+    lines.push(`    <deezer_artist_img>${esc(deezerArtistImg)}</deezer_artist_img>`);
     lines.push("  </dados>");
     lines.push("</items>");
 
