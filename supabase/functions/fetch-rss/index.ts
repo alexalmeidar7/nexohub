@@ -311,8 +311,9 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       content: text, 
-      journalisticText, 
-      ok: true 
+      journalisticText,
+      summary,
+      ok: true
     }), {
       headers: responseHeaders,
     });
