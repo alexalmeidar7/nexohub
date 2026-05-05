@@ -1511,9 +1511,9 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           {isFetching && (
             <div className="flex-1 flex items-center gap-2">
               <div className="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden relative">
-                <div className="absolute inset-0 bg-blue-500 animate-[progress_2s_ease-in-out_infinite]" style={{ width: "30%" }}></div>
+                <div className="absolute inset-0 bg-blue-500 animate-pulse" style={{ width: "100%" }}></div>
               </div>
-              <span className="text-[9px] text-blue-500 animate-pulse font-bold whitespace-nowrap">IA PROCESSANDO...</span>
+              <span className="text-[9px] text-blue-500 animate-pulse font-bold whitespace-nowrap uppercase">Gerando TP...</span>
             </div>
           )}
           {editedFields?.has(`noticia-${bi}-${ni}-texto_materia`) && <EditedCheck />}
