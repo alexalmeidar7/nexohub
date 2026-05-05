@@ -1505,16 +1505,24 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         <input value={noticia.titulo} onChange={e => onUpdate(bi, ni, "titulo", e.target.value)} placeholder="Título da matéria" className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
-        <div className="flex items-center gap-1 mb-1">
+        <div className="flex items-center gap-2 mb-1">
           <FileText size={10} style={{ color: "var(--layout-icon-color)" }} />
           <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Matéria Completa (TP)</span>
+          {isFetching && (
+            <div className="flex-1 flex items-center gap-2">
+              <div className="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden relative">
+                <div className="absolute inset-0 bg-blue-500 animate-pulse" style={{ width: "100%" }}></div>
+              </div>
+              <span className="text-[9px] text-blue-500 animate-pulse font-bold whitespace-nowrap uppercase">Gerando TP...</span>
+            </div>
+          )}
           {editedFields?.has(`noticia-${bi}-${ni}-texto_materia`) && <EditedCheck />}
         </div>
         <textarea 
           value={noticia.texto_materia || ""} 
           onChange={e => onUpdate(bi, ni, "texto_materia", e.target.value)} 
-          placeholder={isFetching ? "Processando matéria completa por IA..." : linkInput ? "Gerando conteúdo..." : "Aguardando link para gerar matéria completa (TP)..."}
-          className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none resize-y" 
+          placeholder={isFetching ? "Aguarde, a IA está analisando o link e gerando o texto jornalístico..." : linkInput ? "Gerando conteúdo..." : "Aguardando link para gerar matéria completa (TP)..."}
+          className={`block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none resize-y transition-all ${isFetching ? 'ring-1 ring-blue-400 bg-blue-50/50' : ''}`} 
           rows={6} 
           style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
         />
