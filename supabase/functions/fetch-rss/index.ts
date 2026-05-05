@@ -192,6 +192,8 @@ Deno.serve(async (req) => {
         contentToProcess = contentToProcess.slice(0, 10000); // Send more context to AI if available
 
         const openAIKey = Deno.env.get("OPENAI_API_KEY");
+        console.log(`OpenAI Key present: ${!!openAIKey}, Content length: ${contentToProcess.length}`);
+
         if (openAIKey && contentToProcess.length > 200) {
           const baseSystemPrompt = (custom_prompt && custom_prompt.trim().length > 5) 
             ? custom_prompt 
@@ -199,59 +201,62 @@ Deno.serve(async (req) => {
           
           const systemPrompt = `${baseSystemPrompt}
             
-            REQUISITOS OBRIGATÓRIOS (NÃO NEGOCIÁVEIS):
+            REQUISITOS OBRIGATÓRIOS:
             1. O texto DEVE ter no MÍNIMO 5 parágrafos longos.
-            2. Cada parágrafo deve ser denso, com pelo menos 3 a 4 frases cada.
-            3. O texto total deve ter uma extensão significativa (mínimo 2000-3000 caracteres).
-            4. Se a notícia original for curta, EXPANDA com contexto histórico, implicações futuras ou dados correlacionados.
-            5. Use tom jornalístico profissional para Teleprompter.
-            
-            AVISO: Se você enviar um texto com menos de 5 parágrafos, sua resposta será REJEITADA. Capriche na extensão.`;
+            2. Cada parágrafo deve ser denso.
+            3. Use tom jornalístico profissional para Teleprompter.
+            4. Retorne APENAS o texto jornalístico, sem introduções ou metadados.`;
           
           let attempts = 0;
           let generatedContent = "";
           let isValid = false;
 
-          while (attempts < 5 && !isValid) {
+          while (attempts < 3 && !isValid) {
             attempts++;
             console.log(`AI Attempt ${attempts} for URL: ${url}`);
             
-            const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${openAIKey}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                model: "gpt-4o", 
-                messages: [
-                  { role: "system", content: systemPrompt },
-                  { role: "user", content: `ESCREVA UMA MATÉRIA COMPLETA (MÍNIMO 5 PARÁGRAFOS DENSOS). NÃO RESUMA. EXPANDA O CONTEÚDO: ${contentToProcess}` }
-                ],
-                temperature: 0.7,
-              }),
-            });
+            try {
+              const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${openAIKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  model: "gpt-4o-mini",
+                  messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: `ESCREVA UMA MATÉRIA COMPLETA (MÍNIMO 5 PARÁGRAFOS DENSOS) PARA TELEPROMPTER BASEADA NESTE CONTEÚDO: ${contentToProcess}` }
+                  ],
+                  temperature: 0.7,
+                }),
+              });
 
-            const aiData = await aiResponse.json();
-            generatedContent = aiData.choices?.[0]?.message?.content || "";
-            
-            // Validação de parágrafos: divide por quebras de linha duplas e filtra parágrafos vazios ou muito curtos
-            const paragraphList = generatedContent
-              .split(/\n\s*\n/)
-              .map(p => p.trim())
-              .filter(p => p.length > 100); // Garante que o parágrafo tenha substância
+              if (!aiResponse.ok) {
+                const errText = await aiResponse.text();
+                console.error(`OpenAI API error (${aiResponse.status}): ${errText}`);
+                break;
+              }
 
-            const paragraphCount = paragraphList.length;
-            const totalChars = generatedContent.length;
+              const aiData = await aiResponse.json();
+              generatedContent = aiData.choices?.[0]?.message?.content || "";
+              
+              const paragraphList = generatedContent
+                .split(/\n\s*\n/)
+                .map(p => p.trim())
+                .filter(p => p.length > 80);
 
-            console.log(`Attempt ${attempts}: Parsed ${paragraphCount} paragraphs, ${totalChars} characters.`);
+              const paragraphCount = paragraphList.length;
+              const totalChars = generatedContent.length;
 
-            if (paragraphCount >= 5 && totalChars > 1500) {
-              isValid = true;
-              console.log("Validation successful.");
-            } else {
-              console.log(`Validation failed (paragraphs: ${paragraphCount}, chars: ${totalChars}). Retrying...`);
-              // No próximo loop, o prompt já é enfático, mas podemos tentar ajustar a temperatura levemente se necessário
+              console.log(`Attempt ${attempts}: Parsed ${paragraphCount} paragraphs, ${totalChars} characters.`);
+
+              if (paragraphCount >= 4 || totalChars > 1200) { 
+                isValid = true;
+              }
+            } catch (aiErr) {
+              console.error("Fetch to OpenAI failed:", aiErr);
+              break;
             }
           }
 
@@ -259,10 +264,15 @@ Deno.serve(async (req) => {
             .replace(/\[?(INÍCIO|DESENVOLVIMENTO|CONCLUSÃO|INTRODUÇÃO|FECHAMENTO|CORPO)\]?:?/gi, "")
             .trim();
           
-          // Final fallback to ensure something substantial is returned if AI fails
-          if (!journalisticText || journalisticText.length < 200) {
-             journalisticText = generatedContent || "Erro na geração do texto extenso. Por favor, tente buscar o link novamente.";
+          if (!journalisticText || journalisticText.length < 100) {
+             journalisticText = "O conteúdo extraído do link foi insuficiente ou a IA não conseguiu gerar o texto. Tente outro link ou cole o texto manualmente.";
           }
+        } else if (!openAIKey) {
+          console.error("OPENAI_API_KEY is missing in environment variables.");
+          journalisticText = "ERRO: OPENAI_API_KEY não configurada. O administrador precisa configurar a chave de API.";
+        } else {
+          console.warn("Content too short to process:", contentToProcess.length);
+          journalisticText = "O conteúdo deste link é muito curto para gerar uma matéria completa. Tente um link com mais texto.";
         }
       } catch (e) {
         console.error("AI Generation error:", e);
