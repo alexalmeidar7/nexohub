@@ -181,43 +181,68 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       }
     };
 
-    const fetchCoverAsync = (data: { titulo: string; artista: string; capa: string }) => {
-      if (data.capa) return;
+    const fetchCoverAndArtistImg = (data: { titulo: string; artista: string; capa: string }) => {
       const cacheKey = `${data.artista}-${data.titulo}`;
-      if (coverCacheRef.current[cacheKey]) {
-        data.capa = coverCacheRef.current[cacheKey];
-        return;
-      }
-      const fetchCover = async () => {
+      
+      const fetchAll = async () => {
         try {
-          const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
-          const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(3000) });
-          const itunesData = await itunesRes.json();
-          if (itunesData.results?.length > 0) {
-            const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
-            if (cover) {
-              coverCacheRef.current[cacheKey] = cover;
-              const curRaw = localStorage.getItem(MUSIC_DATA_KEY);
-              if (!curRaw) return;
-
-              const cur = JSON.parse(curRaw) as { titulo?: string; artista?: string; capa?: string };
-              const sameTrack = cur.titulo === data.titulo && cur.artista === data.artista;
-              if (!sameTrack || cur.capa === cover) return;
-
-              localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...cur, capa: cover }));
-
-              if (user?.id) {
-                void mergeUserDashboardItems(user.id, {
-                  music_current_title: data.titulo,
-                  music_current_artist: data.artista,
-                  music_current_cover: cover,
-                }).catch(() => {});
+          // 1. Fetch album cover from iTunes if missing
+          if (!data.capa) {
+            if (coverCacheRef.current[cacheKey]) {
+              data.capa = coverCacheRef.current[cacheKey];
+            } else {
+              const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
+              const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(3000) });
+              const itunesData = await itunesRes.json();
+              if (itunesData.results?.length > 0) {
+                const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
+                if (cover) {
+                  data.capa = cover;
+                  coverCacheRef.current[cacheKey] = cover;
+                }
               }
             }
           }
-        } catch {}
+
+          // 2. Fetch artist image from Deezer
+          let artistImg = "";
+          if (data.artista && data.artista !== "Desconhecido") {
+            const { data: artistRes } = await supabase.functions.invoke("fetch-artist-image", {
+              body: { artist: data.artista },
+            });
+            if (artistRes?.ok && artistRes?.url) {
+              artistImg = artistRes.url;
+            }
+          }
+
+          // 3. Update UI and DB if we have new info
+          const curRaw = localStorage.getItem(MUSIC_DATA_KEY);
+          if (!curRaw) return;
+
+          const cur = JSON.parse(curRaw);
+          const sameTrack = cur.titulo === data.titulo && cur.artista === data.artista;
+          if (!sameTrack) return;
+
+          // Always update localStorage if we have new data
+          if (data.capa && cur.capa !== data.capa) {
+            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...cur, capa: data.capa }));
+          }
+
+          // Always push to DB so public screens/XML have it
+          if (user?.id) {
+            void mergeUserDashboardItems(user.id, {
+              music_current_title: data.titulo,
+              music_current_artist: data.artista,
+              music_current_cover: data.capa || "",
+              music_deezer_artist_img: artistImg || "",
+            }).catch(() => {});
+          }
+        } catch (e) {
+          console.warn("[MusicSync] fetchAll error:", e);
+        }
       };
-      void fetchCover();
+      
+      void fetchAll();
     };
 
     const fetchXmlFromUrl = async (url: string): Promise<string | null> => {
