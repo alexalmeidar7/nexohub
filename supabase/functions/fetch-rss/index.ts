@@ -200,12 +200,12 @@ Deno.serve(async (req) => {
             : "Você é um redator sênior de telejornalismo especializado em grandes reportagens.";
           
           const systemPrompt = (custom_prompt && custom_prompt.trim().length > 5)
-            ? custom_prompt
+            ? `${custom_prompt}\n\nREQUISITOS ADICIONAIS:\n1. O texto DEVE obrigatoriamente ser separado em parágrafos usando quebras de linha duplas (duas vezes a tecla Enter).\n2. Não use texto em bloco único.\n3. Retorne APENAS o conteúdo jornalístico.`
             : `${baseSystemPrompt}
             
             REQUISITOS OBRIGATÓRIOS:
             1. O texto DEVE ter no MÍNIMO 5 parágrafos longos.
-            2. Cada parágrafo deve ser denso.
+            2. Cada parágrafo deve ser denso e SEPARADO por duas quebras de linha.
             3. Use tom jornalístico profissional para Teleprompter.
             4. Retorne APENAS o texto jornalístico, sem introduções ou metadados.`;
           
