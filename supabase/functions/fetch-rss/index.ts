@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
               model: "gpt-4o-mini",
               messages: [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: `Com base no seguinte conteúdo da notícia, escreva o texto jornalístico:\n\n${cleanText}` }
+                { role: "user", content: `Analise o conteúdo abaixo e escreva uma matéria completa para o Teleprompter (TP), seguindo rigorosamente as instruções do sistema e o estilo jornalístico:\n\nCONTÉUDO:\n${contentToProcess}` }
               ],
               temperature: 0.7,
             }),
