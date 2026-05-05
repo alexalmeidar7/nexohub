@@ -230,8 +230,9 @@ Deno.serve(async (req) => {
                   model: "gpt-4o-mini",
                   messages: [
                     { role: "system", content: systemPrompt },
-                    { role: "user", content: `ESCREVA UMA MATÉRIA COMPLETA (MÍNIMO 5 PARÁGRAFOS DENSOS) PARA TELEPROMPTER BASEADA NESTE CONTEÚDO: ${contentToProcess}` }
+                    { role: "user", content: `COM BASE NESTE CONTEÚDO: ${contentToProcess}\n\nRETORNE UM JSON NO FORMATO: {"materia": "texto da materia aqui", "resumo": "resumo de 1-2 frases aqui"}` }
                   ],
+                  response_format: { type: "json_object" },
                   temperature: 0.7,
                 }),
               });
