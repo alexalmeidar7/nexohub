@@ -29,6 +29,7 @@ export default function InfoMusicSection() {
   const [lastManualId, setLastManualId] = useState<string | null>(null);
   const [monthlyQuota, setMonthlyQuota] = useState({ count: 0, limit: 20 });
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string; capa: string; curiosity?: string } | null>(null);
+  const [lastTrackKey, setLastTrackKey] = useState<string>("");
 
   const loadExcecoes = async () => {
     if (!user) return;
@@ -46,13 +47,20 @@ export default function InfoMusicSection() {
     
     // Parse now playing data from dashboard_items
     const di = data?.dashboard_items as any;
-    if (di?.music_current_title || di?.music_current_artist) {
-      setNowPlaying({
-        musica: di.music_current_title || "Sem título",
-        artista: di.music_current_artist || "Desconhecido",
-        capa: di.music_current_cover || "",
-        curiosity: di.music_current_curiosity
-      });
+    const currentTrackKey = `${di?.music_current_title || ""}-${di?.music_current_artist || ""}`;
+    
+    if (currentTrackKey !== lastTrackKey) {
+      if (di?.music_current_title || di?.music_current_artist) {
+        setNowPlaying({
+          musica: di.music_current_title || "Sem título",
+          artista: di.music_current_artist || "Desconhecido",
+          capa: di.music_current_cover || "",
+          curiosity: di.music_current_curiosity
+        });
+        setLastTrackKey(currentTrackKey);
+        // Also reload the list when music changes to show the new curiosity
+        load();
+      }
     }
   };
 
