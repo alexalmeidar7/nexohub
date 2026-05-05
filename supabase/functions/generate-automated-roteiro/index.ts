@@ -198,7 +198,7 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES PERSONALIZADAS DO USUÁRIO (SIGA À RIS
 - Use APENAS notícias da lista acima (não invente manchetes)
 - Mantenha os links e imagens originais
 - Selecione as notícias mais relevantes conforme as instruções
-- A escalada deve ter as manchetes mais importantes
+- A escalada deve ter as manchetes mais importantes. No campo "resumo" da escalada, coloque o texto que será lido pelo apresentador. Se o resumo da notícia for bom, use-o na escalada.
 - Se as instruções mencionam temas específicos, agrupe por tema nos blocos.`;
 
     let roteiro: { escalada: any[]; blocos: any[] } = { escalada: [], blocos: [] };
