@@ -1892,9 +1892,9 @@ export default function CenarioTela() {
                             className="absolute flex flex-col items-center text-center w-[90%] rounded-[3vh]"
                             style={{
                               opacity: i === currentChatMessageIdx ? 1 : 0,
-                              transform: `translateY(${i === currentChatMessageIdx ? '0' : '20px'})`,
+                              transform: `translateY(${i === currentChatMessageIdx ? '0' : (i < currentChatMessageIdx ? '-30px' : '30px')}) scale(${i === currentChatMessageIdx ? 1 : 0.95})`,
                               visibility: i === currentChatMessageIdx ? 'visible' : 'hidden',
-                              transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                              transition: 'opacity 1s ease, transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 1.2s',
                               background: 'rgba(0, 0, 0, 0.5)',
                               backdropFilter: 'blur(20px)',
                               WebkitBackdropFilter: 'blur(20px)',
