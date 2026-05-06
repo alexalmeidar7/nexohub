@@ -1051,9 +1051,6 @@ export default function CenarioInterativoPage() {
             console.error("Error fetching chat in preview:", err);
           }
         }
-            console.error("Error fetching chat in preview:", err);
-          }
-        }
       } else {
         setCurrentProgram(null);
         setSponsorLogos([]);
