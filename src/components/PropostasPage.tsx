@@ -197,8 +197,8 @@ export default function PropostasPage() {
     switch (status) {
       case "rascunho": return <Badge variant="outline">Rascunho</Badge>;
       case "arte_final": return <Badge className="bg-orange-500">Arte Final</Badge>;
-      case "aprovacao": return <Badge className="bg-blue-500">Aprovação</Badge>;
-      case "concluido": return <Badge className="bg-green-600 text-white">Aprovado</Badge>;
+      case "aprovacao": return <Badge style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}>Aprovação</Badge>;
+      case "concluido": return <Badge style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}>Aprovado</Badge>;
     }
   };
 
@@ -214,7 +214,10 @@ export default function PropostasPage() {
           <div className="flex items-center gap-2">
             <Popover>
               <PopoverTrigger asChild>
-                <Button className="btn-skyglass-accent h-9 text-xs">
+                <Button 
+                  className="h-9 text-xs"
+                  style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}
+                >
                   <Plus size={14} className="mr-1" />
                   NOVA PROPOSTA
                   <ChevronDown size={14} className="ml-1 opacity-50" />
@@ -361,7 +364,7 @@ export default function PropostasPage() {
       </Dialog>
 
       {isLoading ? (
-        <div className="flex justify-center p-12"><Loader2 className="animate-spin text-sky-500" /></div>
+        <div className="flex justify-center p-12"><Loader2 className="animate-spin" style={{ color: "var(--layout-accent-hex, #0ea5e9)" }} /></div>
       ) : selectedMockup ? (
         <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-4 md:p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex flex-col items-center relative overflow-hidden group/overlay">
           <div className="absolute top-4 right-4 z-20 flex gap-2">
@@ -605,14 +608,19 @@ export default function PropostasPage() {
                   };
                   saveMockup();
                 }} 
-                className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl border-sky-500 text-sky-500 hover:bg-sky-50"
+                className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl"
+                style={{ borderColor: "var(--layout-accent-hex, #0ea5e9)", color: "var(--layout-accent-hex, #0ea5e9)" }}
               >
                 SALVAR ALTERAÇÕES NO MOCKUP
               </Button>
               <Button variant="outline" onClick={() => setSelectedMockup(null)} className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl">
                 CANCELAR
               </Button>
-              <Button onClick={handleCreateProposta} className="h-12 px-10 btn-skyglass-accent font-bold uppercase text-[11px] shadow-xl">
+              <Button 
+                onClick={handleCreateProposta} 
+                className="h-12 px-10 font-bold uppercase text-[11px] shadow-xl"
+                style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}
+              >
                 <Send size={16} className="mr-2" />
                 SALVAR E ENVIAR PARA ARTE FINAL
               </Button>
@@ -671,7 +679,7 @@ export default function PropostasPage() {
 
                 {p.status === "aprovacao" && (
                   <div className="pt-2 border-t">
-                    <Button onClick={() => handleApprove(p.id)} className="w-full h-8 text-[10px] font-bold bg-green-600 hover:bg-green-700">
+                    <Button onClick={() => handleApprove(p.id)} className="w-full h-8 text-[10px] font-bold" style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}>
                       <Check size={12} className="mr-1" /> APROVAR PROPOSTA
                     </Button>
                   </div>
@@ -736,7 +744,7 @@ export default function PropostasPage() {
                       <Button onClick={downloadPDF} className="w-full text-xs h-9" variant="secondary">
                         <Download size={14} className="mr-2" /> Baixar PDF
                       </Button>
-                      <Button onClick={shareWhatsApp} className="w-full text-xs h-9 bg-green-600 hover:bg-green-700">
+                      <Button onClick={shareWhatsApp} className="w-full text-xs h-9" style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}>
                         <MessageSquare size={14} className="mr-2" /> Enviar WhatsApp
                       </Button>
                     </div>
