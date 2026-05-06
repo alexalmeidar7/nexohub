@@ -24,6 +24,30 @@ export default function PropostasPage() {
   const [tempMockup, setTempMockup] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
   const [uploadingArt, setUploadingArt] = useState(false);
+  const [customBg, setCustomBg] = useState<string | null>(null);
+  const [uploadingBg, setUploadingBg] = useState(false);
+
+  const handleUploadBg = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBg(true);
+    const fileName = `custom_bg_${Date.now()}.${file.name.split('.').pop()}`;
+    const path = `backgrounds/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage.from("comercial").upload(path, file);
+
+    if (uploadError) {
+      toast.error("Erro ao enviar imagem de fundo");
+      setUploadingBg(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from("comercial").getPublicUrl(path);
+    setCustomBg(publicUrl);
+    setUploadingBg(false);
+    toast.success("Imagem de fundo aplicada!");
+  };
 
   useEffect(() => {
     fetchData();
