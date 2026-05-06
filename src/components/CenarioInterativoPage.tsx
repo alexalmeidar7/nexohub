@@ -1181,9 +1181,11 @@ export default function CenarioInterativoPage() {
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSaveRef = useRef<string>("");
   const pendingSaveRef = useRef<(() => Promise<void>) | null>(null);
+  const isRemoteUpdateRef = useRef(false);
+
   useEffect(() => {
     if (!user?.id || !loaded) return;
-    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    
     const configWithTabs = {
       ...config,
       _activeTab: activeTab,
@@ -1192,6 +1194,16 @@ export default function CenarioInterativoPage() {
       _screenRotation: externalRotation,
     };
     const serialized = JSON.stringify(configWithTabs);
+
+    // Se a mudança veio de outro dispositivo via broadcast, não salvamos novamente no banco
+    if (isRemoteUpdateRef.current) {
+      console.log("Cenário: Ignorando salvamento de atualização remota");
+      isRemoteUpdateRef.current = false;
+      prevSaveRef.current = serialized;
+      return;
+    }
+
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
     if (serialized === prevSaveRef.current) { pendingSaveRef.current = null; return; }
     const doSave = async () => {
       prevSaveRef.current = serialized;
