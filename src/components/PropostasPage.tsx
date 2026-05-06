@@ -886,7 +886,7 @@ export default function PropostasPage() {
                       )}
 
                       {item.type === 'text' && (
-                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any, background: 'none', backgroundColor: 'transparent' }}>
+                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any, background: 'none !important', backgroundColor: 'transparent !important' }}>
                           <textarea 
                             value={item.content}
                             onChange={(e) => {
@@ -913,7 +913,8 @@ export default function PropostasPage() {
                               appearance: 'none',
                               WebkitAppearance: 'none',
                               position: 'relative',
-                              zIndex: 1
+                              zIndex: 1,
+                              resize: 'none'
                             }}
                           />
                         </div>
