@@ -781,6 +781,31 @@ export default function PropostasPage() {
                                     </div>
                                   </div>
                                   <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase opacity-50">Cor do Fundo</label>
+                                    <div className="flex gap-2">
+                                      <input 
+                                        type="color"
+                                        value={item.style.backgroundColor || "#ffffff"}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.backgroundColor = e.target.value;
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="flex-1 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
+                                      />
+                                      <button 
+                                        onClick={() => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.backgroundColor = 'transparent';
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="px-2 bg-slate-800 rounded text-[10px] uppercase font-bold"
+                                      >
+                                        Transp.
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
                                     <label className="text-[10px] font-bold uppercase opacity-50">Cor do Texto</label>
                                     <div className="flex gap-2">
                                       <input 
