@@ -212,6 +212,18 @@ export default function PropostasPage() {
 
                     <div className="space-y-4">
                       <p className="text-[10px] font-bold uppercase text-slate-400">Preencha as informações</p>
+                      
+                      {/* Cliente Field (Sempre presente) */}
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] font-bold uppercase text-slate-500">Nome do Cliente</Label>
+                        <Input 
+                          value={formData.cliente || ""} 
+                          onChange={e => setFormData({...formData, cliente: e.target.value})}
+                          placeholder="Digite o nome do cliente..."
+                          className="text-xs h-9"
+                        />
+                      </div>
+
                       {(selectedMockup?.fields as any[] || []).map((f: any) => (
                         <div key={f.name} className="space-y-1.5">
                           <Label className="text-[10px] font-bold uppercase text-slate-500">{f.label}</Label>
