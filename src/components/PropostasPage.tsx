@@ -318,7 +318,7 @@ export default function PropostasPage() {
               <div 
                 className="absolute inset-0 w-full h-full"
                 style={{ 
-                  backgroundImage: "url('/mockup-bg-v4.png')",
+                  backgroundImage: `url('${customBg || '/mockup-bg-v4.png'}')`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 }}
