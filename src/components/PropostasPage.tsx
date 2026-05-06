@@ -1056,8 +1056,8 @@ export default function PropostasPage() {
                         <div style={{ 
                           padding: `${item.style.padding || 0}vw`, 
                           textAlign: item.style.textAlign as any, 
-                          background: 'transparent',
-                          backgroundColor: 'transparent',
+                          background: item.style.backgroundColor === 'transparent' ? 'none' : (item.style.backgroundColor || 'none'),
+                          backgroundColor: item.style.backgroundColor || 'transparent',
                           borderRadius: `${item.style.borderRadius || 0}px`,
                           border: 'none',
                           boxShadow: 'none'
