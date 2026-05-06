@@ -20,6 +20,7 @@ export default function PropostasPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProposta, setSelectedProposta] = useState<any>(null);
   const [selectedMockup, setSelectedMockup] = useState<any>(null);
+  const [isEditingMockup, setIsEditingMockup] = useState(false);
   const [isNamingProject, setIsCreatingProject] = useState(false);
   const [tempMockup, setTempMockup] = useState<any>(null);
   const [formData, setFormData] = useState<any>({
@@ -229,7 +230,7 @@ export default function PropostasPage() {
                   {mockups.map(m => (
                     <button 
                       key={m.id} 
-                      onClick={() => { setTempMockup(m); setIsCreatingProject(true); }}
+                      onClick={() => { setTempMockup(m); setIsCreatingProject(true); setIsEditingMockup(false); }}
                       className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all hover:bg-sky-500/10 text-left"
                       style={{ color: "var(--layout-widget-text, #1a1a1a)" }}
                       onMouseEnter={(e) => {
@@ -279,6 +280,7 @@ export default function PropostasPage() {
                         };
                         setMockups([...mockups, newMockup]);
                         setSelectedMockup(newMockup);
+                        setIsEditingMockup(true);
                         setOverlayY(5);
                         setCustomBg(null);
                       }
@@ -297,6 +299,7 @@ export default function PropostasPage() {
                       key={m.id} 
                       onClick={() => { 
                         setSelectedMockup(m);
+                        setIsEditingMockup(true);
                         setOverlayY(m.config?.overlayY || 5);
                         setCustomBg(m.image_url);
                       }}
@@ -646,14 +649,16 @@ export default function PropostasPage() {
               >
                 CANCELAR
               </Button>
-              <Button 
-                onClick={handleCreateProposta} 
-                className="h-12 px-10 font-bold uppercase text-[11px] shadow-xl"
-                style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}
-              >
-                <Send size={16} className="mr-2" />
-                SALVAR E ENVIAR PARA ARTE FINAL
-              </Button>
+              {!isEditingMockup && (
+                <Button 
+                  onClick={handleCreateProposta} 
+                  className="h-12 px-10 font-bold uppercase text-[11px] shadow-xl"
+                  style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}
+                >
+                  <Send size={16} className="mr-2" />
+                  SALVAR E ENVIAR PARA ARTE FINAL
+                </Button>
+              )}
             </div>
           </div>
         </div>
