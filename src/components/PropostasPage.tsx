@@ -620,8 +620,12 @@ export default function PropostasPage() {
               <Button 
                 variant="outline" 
                 onClick={() => setSelectedMockup(null)} 
-                className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl"
-                style={{ borderColor: "var(--layout-border-color, #e2e8f0)", color: "var(--layout-widget-text, #1a1a1a)" }}
+                className="h-12 px-6 font-bold uppercase text-[11px] shadow-xl"
+                style={{ 
+                  backgroundColor: "var(--layout-widget-bg, #ffffff)",
+                  borderColor: "var(--layout-border-color, #e2e8f0)",
+                  color: "var(--layout-widget-text, #1a1a1a)"
+                }}
               >
                 CANCELAR
               </Button>
