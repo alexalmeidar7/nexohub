@@ -33,6 +33,7 @@ export default function PropostasPage() {
   const [proposalItems, setProposalItems] = useState<any[]>([]);
   const [editingDigital, setEditingDigital] = useState<{ id: string, type: 'digital_1' | 'digital_2' } | null>(null);
   const [resizingItem, setResizingItem] = useState<{ id: string, startWidth: number, startX: number } | null>(null);
+  const [resizingHeight, setResizingHeight] = useState<{ id: string, startHeight: number, startY: number } | null>(null);
   const [draggingItem, setDraggingItem] = useState<{ id: string, startX: number, startY: number, initialLeft: number, initialTop: number } | null>(null);
 
 
