@@ -1189,7 +1189,6 @@ export default function CenarioInterativoPage() {
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSaveRef = useRef<string>("");
   const pendingSaveRef = useRef<(() => Promise<void>) | null>(null);
-  const isRemoteUpdateRef = useRef(false);
 
   useEffect(() => {
     if (!user?.id || !loaded) return;
