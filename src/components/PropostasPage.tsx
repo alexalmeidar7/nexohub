@@ -800,12 +800,13 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="DESCRIÇÃO DA PROPOSTA..."
-                            className="bg-transparent border-none w-full min-h-[2vw] outline-none placeholder:text-white/20 resize-none shadow-none"
+                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none"
                             style={{ 
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
                               fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                              fontSize: `${item.style.fontSizeVw || 1.0}vw`,
+                              height: item.style.height ? `${item.style.height}vw` : 'auto'
                             }}
                           />
                         </div>
