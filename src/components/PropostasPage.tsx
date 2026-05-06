@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown, Layout, Type, List, Pencil, DollarSign, GripVertical, AlignLeft, AlignCenter, AlignRight, Settings2, Type as TypeIcon, Copy, ClipboardCheck } from "lucide-react";
+import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown, Layout, Type, List, Pencil, DollarSign, GripVertical, AlignLeft, AlignCenter, AlignRight, Settings2, Type as TypeIcon, Copy, ClipboardCheck, Bold, Italic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -648,7 +648,9 @@ export default function PropostasPage() {
                                       fontSizeVw: item.style.fontSizeVw,
                                       color: item.style.color,
                                       textAlign: item.style.textAlign,
-                                      padding: item.style.padding
+                                      padding: item.style.padding,
+                                      fontWeight: item.style.fontWeight,
+                                      fontStyle: item.style.fontStyle
                                     });
                                     toast.success("Estilo copiado!");
                                   }}
@@ -676,6 +678,31 @@ export default function PropostasPage() {
                                   disabled={!copiedStyle}
                                 >
                                   <ClipboardCheck size={12} />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase opacity-50">Estilo do Texto</label>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => {
+                                    const newItems = [...proposalItems];
+                                    newItems[index].style.fontWeight = item.style.fontWeight === 'bold' ? 'normal' : 'bold';
+                                    setProposalItems(newItems);
+                                  }}
+                                  className={`flex-1 p-1.5 rounded flex justify-center ${item.style.fontWeight === 'bold' ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
+                                >
+                                  <Bold size={14} />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const newItems = [...proposalItems];
+                                    newItems[index].style.fontStyle = item.style.fontStyle === 'italic' ? 'normal' : 'italic';
+                                    setProposalItems(newItems);
+                                  }}
+                                  className={`flex-1 p-1.5 rounded flex justify-center ${item.style.fontStyle === 'italic' ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
+                                >
+                                  <Italic size={14} />
                                 </button>
                               </div>
                             </div>
@@ -827,7 +854,9 @@ export default function PropostasPage() {
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
                               fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.2}vw`
+                              fontSize: `${item.style.fontSizeVw || 1.2}vw`,
+                              fontWeight: item.style.fontWeight || 'black',
+                              fontStyle: item.style.fontStyle || 'normal'
                             }}
                           />
                         </div>
@@ -849,7 +878,9 @@ export default function PropostasPage() {
                               textAlign: item.style.textAlign as any,
                               fontFamily: item.style.fontFamily || 'Inter',
                               fontSize: `${item.style.fontSizeVw || 1.0}vw`,
-                              height: item.style.height ? `${item.style.height}vw` : 'auto'
+                              height: item.style.height ? `${item.style.height}vw` : 'auto',
+                              fontWeight: item.style.fontWeight || 'normal',
+                              fontStyle: item.style.fontStyle || 'normal'
                             }}
                           />
                         </div>
@@ -869,7 +900,9 @@ export default function PropostasPage() {
                             style={{ 
                               color: item.style.color,
                               fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                              fontSize: `${item.style.fontSizeVw || 1.0}vw`,
+                              fontWeight: item.style.fontWeight || 'normal',
+                              fontStyle: item.style.fontStyle || 'normal'
                             }}
                           />
                           <input 
@@ -884,7 +917,9 @@ export default function PropostasPage() {
                             style={{ 
                               color: item.style.color,
                               fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                              fontSize: `${item.style.fontSizeVw || 1.0}vw`,
+                              fontWeight: item.style.fontWeight || 'normal',
+                              fontStyle: item.style.fontStyle || 'normal'
                             }}
                           />
                           <input 
@@ -900,7 +935,9 @@ export default function PropostasPage() {
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
                               fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                              fontSize: `${item.style.fontSizeVw || 1.0}vw`,
+                              fontWeight: item.style.fontWeight || 'normal',
+                              fontStyle: item.style.fontStyle || 'normal'
                             }}
                           />
                         </div>
@@ -917,8 +954,10 @@ export default function PropostasPage() {
                               <Pencil size={14} className="inline mr-2 opacity-50" />
                               <span style={{ 
                                 fontFamily: item.style.fontFamily || 'Inter',
-                                fontSize: `${item.style.fontSizeVw || 1.0}vw`
-                              }} className="font-medium uppercase">
+                                fontSize: `${item.style.fontSizeVw || 1.0}vw`,
+                                fontWeight: item.style.fontWeight || 'medium',
+                                fontStyle: item.style.fontStyle || 'normal'
+                              }} className="uppercase">
                                 {item.content || (item.type === 'digital_1' ? 'ENTREGA DIGITAL 1' : 'ENTREGA DIGITAL 2')}
                               </span>
                             </div>
@@ -930,7 +969,9 @@ export default function PropostasPage() {
                         <div className="flex items-center gap-[0.3vw] bg-transparent w-full" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
                           <span className="font-black" style={{ 
                             color: item.style.color,
-                            fontSize: `${(item.style.fontSizeVw || 1.8) * 0.8}vw` 
+                            fontSize: `${(item.style.fontSizeVw || 1.8) * 0.8}vw`,
+                            fontWeight: item.style.fontWeight || 'black',
+                            fontStyle: item.style.fontStyle || 'normal'
                           }}>R$</span>
                           <input 
                             type="number"
@@ -946,7 +987,9 @@ export default function PropostasPage() {
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
                               fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.8}vw`
+                              fontSize: `${item.style.fontSizeVw || 1.8}vw`,
+                              fontWeight: item.style.fontWeight || 'black',
+                              fontStyle: item.style.fontStyle || 'normal'
                             }}
                           />
                         </div>
