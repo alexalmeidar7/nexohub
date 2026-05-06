@@ -46,7 +46,10 @@ export default function PropostasPage() {
       user_id: user.id,
       mockup_id: selectedMockup.id,
       title: formData.cliente ? `Proposta - ${formData.cliente}` : "Nova Proposta",
-      data: formData,
+      data: {
+        ...formData,
+        cliente: formData.cliente || "Cliente Não Informado"
+      },
       status: "arte_final"
     }).select().single();
 
