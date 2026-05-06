@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown, Layout, Type, List, Pencil, DollarSign, GripVertical, AlignLeft, AlignCenter, AlignRight, Settings2, Type as TypeIcon } from "lucide-react";
+import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown, Layout, Type, List, Pencil, DollarSign, GripVertical, AlignLeft, AlignCenter, AlignRight, Settings2, Type as TypeIcon, Copy, ClipboardCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -35,6 +35,8 @@ export default function PropostasPage() {
   const [resizingItem, setResizingItem] = useState<{ id: string, startWidth: number, startX: number } | null>(null);
   const [resizingHeight, setResizingHeight] = useState<{ id: string, startHeight: number, startY: number } | null>(null);
   const [draggingItem, setDraggingItem] = useState<{ id: string, startX: number, startY: number, initialLeft: number, initialTop: number } | null>(null);
+  const [copiedStyle, setCopiedStyle] = useState<any>(null);
+
 
 
   const [isDragging, setIsDragging] = useState(false);
@@ -635,7 +637,48 @@ export default function PropostasPage() {
                               <Settings2 size={12} />
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-48 p-3 space-y-3 bg-slate-900 border-slate-700 text-white">
+                          <PopoverContent className="w-56 p-3 space-y-4 bg-slate-900 border-slate-700 text-white">
+                            <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2">
+                              <span className="text-[10px] font-bold uppercase opacity-50">Estilo do Item</span>
+                              <div className="flex gap-1">
+                                <button 
+                                  onClick={() => {
+                                    setCopiedStyle({
+                                      fontFamily: item.style.fontFamily,
+                                      fontSizeVw: item.style.fontSizeVw,
+                                      color: item.style.color,
+                                      textAlign: item.style.textAlign,
+                                      padding: item.style.padding
+                                    });
+                                    toast.success("Estilo copiado!");
+                                  }}
+                                  className="p-1.5 hover:bg-slate-800 rounded transition-colors text-white"
+                                  title="Copiar Estilo"
+                                >
+                                  <Copy size={12} />
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    if (!copiedStyle) {
+                                      toast.error("Nenhum estilo copiado");
+                                      return;
+                                    }
+                                    const newItems = [...proposalItems];
+                                    newItems[index].style = {
+                                      ...newItems[index].style,
+                                      ...copiedStyle
+                                    };
+                                    setProposalItems(newItems);
+                                    toast.success("Estilo aplicado!");
+                                  }}
+                                  className={`p-1.5 hover:bg-slate-800 rounded transition-colors ${!copiedStyle ? 'opacity-30 cursor-not-allowed' : 'text-sky-400'}`}
+                                  title="Colar Estilo"
+                                  disabled={!copiedStyle}
+                                >
+                                  <ClipboardCheck size={12} />
+                                </button>
+                              </div>
+                            </div>
                             <div className="space-y-1">
                               <label className="text-[10px] font-bold uppercase opacity-50">Alinhamento</label>
                               <div className="flex gap-1">
