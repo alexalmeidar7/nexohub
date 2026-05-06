@@ -167,6 +167,22 @@ export default function CenarioTela() {
   const presenceShownRef = useRef(false);
   const [backendHealth, setBackendHealth] = useState<"online" | "slow" | "offline">("online");
 
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === "undefined") return "home";
+    return new URLSearchParams(window.location.search).get("tab") || "home";
+  });
+
+  const [currentChatMessageIdx, setCurrentChatMessageIdx] = useState(0);
+
+  useEffect(() => {
+    if (activeTab === "chat" && mockMessages.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentChatMessageIdx((prev) => (prev + 1) % mockMessages.length);
+      }, 6000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
+
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
     if (!effectiveUserId) return;
@@ -198,10 +214,6 @@ export default function CenarioTela() {
     connect();
     return () => { destroyed = true; if (ch) supabase.removeChannel(ch); };
   }, [effectiveUserId]);
-  const [activeTab, setActiveTab] = useState(() => {
-    if (typeof window === "undefined") return "home";
-    return new URLSearchParams(window.location.search).get("tab") || "home";
-  });
   const [weatherSubTab, setWeatherSubTab] = useState(() => {
     if (typeof window === "undefined") return "today";
     return new URLSearchParams(window.location.search).get("weatherSubTab") || "today";
@@ -1861,37 +1873,84 @@ export default function CenarioTela() {
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {!config.chat.bgImage && !config.home.bgGradient && !config.home.bgImage && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.4)" }} />}
                 <div className="relative z-10 flex flex-col h-full" style={{ padding: `${vhToPx(3)}${vu}` }}>
-                  {config.chat.enabled ? (<>
-                    <div className="flex justify-end mb-1"><MessageCircle size={48} className="drop-shadow-lg" style={{ color: accentColor }} /></div>
-                    <div style={{ marginBottom: `${vhToPx(2)}${vu}` }}>
-                      <div className="font-extrabold leading-tight" style={{ fontSize: `${vhToPx(4)}${vu}`, textShadow: "0 2px 10px rgba(0,0,0,1)" }}>mensagens</div>
-                      <div className="font-bold" style={{ fontSize: `${vhToPx(2.5)}${vu}`, color: accentColor }}>chat</div>
-                    </div>
-                    <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "transparent", border: "none" }}>
-                      {(() => {
-                        const ytUrl = config.chat.youtubeVideoUrl || "";
-                        let videoId = "";
-                        const m1 = ytUrl.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
-                        const m2 = ytUrl.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
-                        const m3 = ytUrl.match(/\/live\/([a-zA-Z0-9_-]{11})/);
-                        videoId = m1?.[1] || m2?.[1] || m3?.[1] || "";
-                        if (videoId) {
-                          return (
-                            <iframe
-                              src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${window.location.hostname}&dark_theme=1`}
-                              className="w-full h-full border-0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
+                  {config.chat.enabled ? (
+                    <div className="flex-1 flex flex-col items-center justify-center relative">
+                      {/* Header for Chat */}
+                      <div className="absolute top-0 right-0 flex flex-col items-end">
+                        <div className="flex items-center gap-2 mb-1">
+                          <MessageCircle size={vhToPx(3.5)} className="drop-shadow-lg" style={{ color: accentColor }} />
+                          <div className="font-extrabold leading-tight" style={{ fontSize: `${vhToPx(3.5)}${vu}`, textShadow: "0 2px 10px rgba(0,0,0,1)" }}>mensagens</div>
+                        </div>
+                        <div className="font-bold uppercase tracking-[0.2em]" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor }}>chat ao vivo</div>
+                      </div>
+
+                      {/* Single Message Display */}
+                      <div className="w-full flex items-center justify-center px-[5%]">
+                        {mockMessages.map((m, i) => (
+                          <div
+                            key={i}
+                            className="absolute flex flex-col items-center text-center w-[90%]"
+                            style={{
+                              opacity: i === currentChatMessageIdx ? 1 : 0,
+                              transform: `translateY(${i === currentChatMessageIdx ? '0' : '20px'})`,
+                              visibility: i === currentChatMessageIdx ? 'visible' : 'hidden',
+                              transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                            }}
+                          >
+                            {/* User Avatar Circle */}
+                            <div 
+                              className="rounded-full flex items-center justify-center mb-6 shadow-2xl border-4"
+                              style={{ 
+                                width: vhToPx(12), 
+                                height: vhToPx(12), 
+                                background: accentRgba(0.2), 
+                                borderColor: accentRgba(0.5),
+                                backdropFilter: 'blur(10px)'
+                              }}
+                            >
+                              <span className="font-black" style={{ fontSize: vhToPx(5), color: '#fff' }}>
+                                {m.user.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+
+                            {/* User Name */}
+                            <div 
+                              className="font-black uppercase tracking-widest mb-2" 
+                              style={{ 
+                                fontSize: `${vhToPx(2.2)}${vu}`, 
+                                color: accentColor,
+                                textShadow: '0 2px 8px rgba(0,0,0,0.5)'
+                              }}
+                            >
+                              {m.user}
+                            </div>
+
+                            {/* Message Text */}
+                            <div 
+                              className="font-bold leading-[1.2] px-4" 
+                              style={{ 
+                                fontSize: `${vhToPx(4.5)}${vu}`, 
+                                color: '#fff',
+                                textShadow: '0 4px 15px rgba(0,0,0,0.8)',
+                                maxWidth: '100%'
+                              }}
+                            >
+                              "{m.text}"
+                            </div>
+
+                            {/* Decorative line */}
+                            <div 
+                              className="mt-8 h-[2px] rounded-full" 
+                              style={{ 
+                                width: vhToPx(10), 
+                                background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)` 
+                              }} 
                             />
-                          );
-                        }
-                        return (
-                          <div className="flex-1 flex items-center justify-center h-full" style={{ fontSize: `${vhToPx(1.8)}${vu}`, opacity: 1, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>
-                            Insira a URL da live para carregar o chat
                           </div>
-                        );
-                      })()}
+                        ))}
+                      </div>
                     </div>
-                  </>) : (
+                  ) : (
                     <div className="flex-1 flex items-center justify-center opacity-100" style={{ fontSize: `${vhToPx(1.8)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>Chat desativado</div>
                   )}
                 </div>
