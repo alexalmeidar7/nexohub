@@ -587,8 +587,10 @@ export default function PropostasPage() {
                       const mockupData = {
                         name: selectedMockup.name,
                         image_url: customBg || selectedMockup.image_url,
-                        // Removendo 'config' que não existe no banco e usando 'fields' se necessário
-                        // Por enquanto, salvamos apenas o que a tabela suporta
+                        config: { 
+                          ...(selectedMockup.config || {}),
+                          overlayY 
+                        }
                       };
 
                       console.log("Salvando mockup:", mockupData);
