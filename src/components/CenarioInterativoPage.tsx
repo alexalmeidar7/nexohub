@@ -1041,36 +1041,43 @@ export default function CenarioInterativoPage() {
         .eq("user_id", user.id)
         .maybeSingle();
 
+      let finalConfig = { ...defaultConfig };
+      let finalActiveTab = 'home';
+      let finalWeatherTab = 'today';
+      let finalCurrencyTab: "moedas" | "bolsas" = 'moedas';
+      let finalRotation = 0;
+
       if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
-        const savedConfig = (data as any).cenario_config as Partial<CenarioConfig> & {
-          _activeTab?: string;
-          _weatherSubTab?: string;
-          _currencySubTab?: "moedas" | "bolsas";
-          _screenRotation?: number;
-        };
-        const merged = { ...defaultConfig, ...savedConfig };
-        setConfig(merged);
-        if (savedConfig._activeTab) setActiveTab(savedConfig._activeTab);
-        if (savedConfig._weatherSubTab) setWeatherSubTab(savedConfig._weatherSubTab);
-        if (savedConfig._currencySubTab) setCurrencySubTab(savedConfig._currencySubTab);
-        if (typeof savedConfig._screenRotation === "number") setExternalRotation(savedConfig._screenRotation);
+        const savedConfig = (data as any).cenario_config as any;
+        finalConfig = { ...defaultConfig, ...savedConfig };
+        if (savedConfig._activeTab) finalActiveTab = savedConfig._activeTab;
+        if (savedConfig._weatherSubTab) finalWeatherTab = savedConfig._weatherSubTab;
+        if (savedConfig._currencySubTab) finalCurrencyTab = savedConfig._currencySubTab;
+        if (typeof savedConfig._screenRotation === "number") finalRotation = savedConfig._screenRotation;
+        
+        setConfig(finalConfig);
+        setActiveTab(finalActiveTab);
+        setWeatherSubTab(finalWeatherTab);
+        setCurrencySubTab(finalCurrencyTab);
+        setExternalRotation(finalRotation);
+
         try {
-          localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
-        } catch {
-          // silent
-        }
+          localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(finalConfig));
+        } catch { /* silent */ }
       } else {
         applyCachedConfig();
+        // Se aplicou cache, os estados já foram atualizados via setConfig no applyCachedConfig
       }
 
-      const initialConfigWithTabs = {
-        ...merged,
-        _activeTab: savedConfig._activeTab || 'home',
-        _weatherSubTab: savedConfig._weatherSubTab || 'today',
-        _currencySubTab: savedConfig._currencySubTab || 'moedas',
-        _screenRotation: savedConfig._screenRotation || 0,
-      };
-      prevSaveRef.current = JSON.stringify(initialConfigWithTabs);
+      // Inicializa o prevSaveRef para evitar salvamento imediato no mount
+      const initialSerialized = JSON.stringify({
+        ...finalConfig,
+        _activeTab: finalActiveTab,
+        _weatherSubTab: finalWeatherTab,
+        _currencySubTab: finalCurrencyTab,
+        _screenRotation: finalRotation,
+      });
+      prevSaveRef.current = initialSerialized;
       setLoaded(true);
     })();
   }, [user?.id]);
