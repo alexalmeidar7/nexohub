@@ -338,9 +338,13 @@ export default function BroadcastPage() {
         }
       }
     };
-    const interval = setInterval(refreshActiveProgram, 60000);
-    return () => clearInterval(interval);
-  }, [user, activeProgramaId]);
+    const interval = setInterval(refreshActiveProgram, 30000);
+    const logoRefreshInterval = setInterval(loadInitialData, 30000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(logoRefreshInterval);
+    };
+  }, [user, activeProgramaId, loadInitialData]);
 
   // Compose ticker from sources
   const composedTicker = useMemo(() => {
