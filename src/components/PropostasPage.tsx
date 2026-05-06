@@ -648,7 +648,9 @@ export default function PropostasPage() {
                                       fontSizeVw: item.style.fontSizeVw,
                                       color: item.style.color,
                                       textAlign: item.style.textAlign,
-                                      padding: item.style.padding
+                                      padding: item.style.padding,
+                                      fontWeight: item.style.fontWeight,
+                                      fontStyle: item.style.fontStyle
                                     });
                                     toast.success("Estilo copiado!");
                                   }}
