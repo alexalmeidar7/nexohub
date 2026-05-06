@@ -185,25 +185,64 @@ export default function PropostasPage() {
               <ChevronDown size={14} className="ml-1 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[300px] p-2" align="end">
-            <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 px-2">Escolha um mockup para começar:</p>
-            <div className="grid grid-cols-1 gap-1">
+          <PopoverContent className="w-[260px] p-1.5" align="end" style={{ backgroundColor: "var(--layout-widget-bg, #ffffff)", border: "1px solid var(--layout-border-color, #e2e8f0)" }}>
+            <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 px-2 pt-1">Selecione um mockup:</p>
+            <div className="flex flex-col gap-0.5">
               {mockups.map(m => (
                 <button 
                   key={m.id} 
-                  onClick={() => { setSelectedMockup(m); setFormData({}); }}
-                  className="flex items-center gap-3 p-2 hover:bg-slate-100 rounded-lg transition-all text-left"
+                  onClick={() => { setTempMockup(m); setIsCreatingProject(true); }}
+                  className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all hover:bg-sky-500/10 text-left"
+                  style={{ color: "var(--layout-widget-text, #1a1a1a)" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "var(--layout-accent-hex, #0ea5e9)22";
+                    e.currentTarget.style.color = "var(--layout-accent-hex, #0ea5e9)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "var(--layout-widget-text, #1a1a1a)";
+                  }}
                 >
-                  <div className="w-12 h-8 rounded overflow-hidden border bg-slate-200">
-                    <img src={m.image_url} className="w-full h-full object-cover" />
-                  </div>
                   <span className="text-[11px] font-bold uppercase truncate">{m.name}</span>
+                  <Plus size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               ))}
             </div>
           </PopoverContent>
         </Popover>
       </div>
+
+      <Dialog open={isNamingProject} onOpenChange={setIsCreatingProject}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold uppercase">Nome do Projeto</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase text-slate-500">Dê um nome para sua proposta</Label>
+              <Input 
+                placeholder="Ex: Campanha de Inverno - Cliente X" 
+                value={formData.projeto || ""}
+                onChange={e => setFormData({...formData, projeto: e.target.value})}
+                autoFocus
+              />
+            </div>
+            <Button 
+              className="w-full btn-skyglass-accent h-10 text-xs font-bold" 
+              onClick={() => {
+                if (!formData.projeto) {
+                  toast.error("Por favor, digite um nome para o projeto");
+                  return;
+                }
+                setSelectedMockup(tempMockup);
+                setIsCreatingProject(false);
+              }}
+            >
+              INICIAR EDIÇÃO
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {isLoading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-sky-500" /></div>
