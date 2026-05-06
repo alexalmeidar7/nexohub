@@ -682,6 +682,31 @@ export default function PropostasPage() {
                               </div>
                             </div>
                             <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase opacity-50">Estilo do Texto</label>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => {
+                                    const newItems = [...proposalItems];
+                                    newItems[index].style.fontWeight = item.style.fontWeight === 'bold' ? 'normal' : 'bold';
+                                    setProposalItems(newItems);
+                                  }}
+                                  className={`flex-1 p-1.5 rounded flex justify-center ${item.style.fontWeight === 'bold' ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
+                                >
+                                  <Bold size={14} />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const newItems = [...proposalItems];
+                                    newItems[index].style.fontStyle = item.style.fontStyle === 'italic' ? 'normal' : 'italic';
+                                    setProposalItems(newItems);
+                                  }}
+                                  className={`flex-1 p-1.5 rounded flex justify-center ${item.style.fontStyle === 'italic' ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
+                                >
+                                  <Italic size={14} />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
                               <label className="text-[10px] font-bold uppercase opacity-50">Alinhamento</label>
                               <div className="flex gap-1">
                                 {(['left', 'center', 'right'] as const).map((align) => (
