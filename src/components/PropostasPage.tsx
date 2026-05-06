@@ -20,6 +20,8 @@ export default function PropostasPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProposta, setSelectedProposta] = useState<any>(null);
   const [selectedMockup, setSelectedMockup] = useState<any>(null);
+  const [isNamingProject, setIsCreatingProject] = useState(false);
+  const [tempMockup, setTempMockup] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
   const [uploadingArt, setUploadingArt] = useState(false);
 
