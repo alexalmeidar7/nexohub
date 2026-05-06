@@ -1037,7 +1037,7 @@ export default function CenarioInterativoPage() {
             const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
             const day = dayNames[now.getDay()];
             const time = now.toTimeString().slice(0, 5);
-            const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${user.id}&day=${encodeURIComponent(day)}&time=${time}`;
+            const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${user.id}&day=${encodeURIComponent(day)}&time=${time}&_t=${Date.now()}`;
             const resp = await fetch(baseUrl, {
               headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
             });
@@ -1048,6 +1048,9 @@ export default function CenarioInterativoPage() {
               }
             }
           } catch (err) {
+            console.error("Error fetching chat in preview:", err);
+          }
+        }
             console.error("Error fetching chat in preview:", err);
           }
         }

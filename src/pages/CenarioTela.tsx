@@ -1113,7 +1113,7 @@ export default function CenarioTela() {
           const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
           const day = dayNames[now.getDay()];
           const time = now.toTimeString().slice(0, 5);
-          const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${effectiveUserId}&day=${encodeURIComponent(day)}&time=${time}&_t=${Date.now()}`;
+          const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${effectiveUserId}&day=${encodeURIComponent(day)}&time=${time}&_cache=0&_t=${Date.now()}`;
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 6000);
           const resp = await fetch(baseUrl, {
