@@ -3152,9 +3152,9 @@ export default function CenarioInterativoPage() {
                                       className="absolute flex flex-col items-center text-center w-[90%] rounded-[3vh]"
                                       style={{
                                         opacity: i === previewChatMessageIdx ? 1 : 0,
-                                        transform: `translateY(${i === previewChatMessageIdx ? '0' : '20px'})`,
+                                        transform: `translateY(${i === previewChatMessageIdx ? '0' : (i < previewChatMessageIdx ? '-30px' : '30px')}) scale(${i === previewChatMessageIdx ? 1 : 0.95})`,
                                         visibility: i === previewChatMessageIdx ? 'visible' : 'hidden',
-                                        transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                                        transition: 'opacity 1s ease, transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 1.2s',
                                         background: 'rgba(0, 0, 0, 0.5)',
                                         backdropFilter: 'blur(20px)',
                                         WebkitBackdropFilter: 'blur(20px)',
@@ -3171,9 +3171,17 @@ export default function CenarioInterativoPage() {
                                           height: pvh(12), 
                                           background: "rgba(255,255,255,0.1)", 
                                           borderColor: "var(--layout-accent-color, #444)",
+                                          opacity: i === previewChatMessageIdx ? 1 : 0,
+                                          transform: i === previewChatMessageIdx ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(-20px)',
+                                          transition: 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s'
                                         }}
                                       >
-                                        <span className="font-black" style={{ fontSize: pvh(5), color: '#fff' }}>
+                                        <span className="font-black" style={{ 
+                                          fontSize: pvh(5), 
+                                          color: '#fff',
+                                          opacity: i === previewChatMessageIdx ? 1 : 0,
+                                          transition: 'opacity 0.5s ease 0.4s'
+                                        }}>
                                           {m.user.charAt(0).toUpperCase()}
                                         </span>
                                       </div>
@@ -3184,7 +3192,10 @@ export default function CenarioInterativoPage() {
                                         style={{ 
                                           fontSize: `${pvh(2.2)}px`, 
                                           color: "var(--layout-accent-color, #444)",
-                                          textShadow: '0 2px 8px rgba(0,0,0,0.5)'
+                                          textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                                          opacity: i === previewChatMessageIdx ? 1 : 0,
+                                          transform: i === previewChatMessageIdx ? 'translateY(0)' : 'translateY(10px)',
+                                          transition: 'all 0.6s ease 0.5s'
                                         }}
                                       >
                                         {m.user}
@@ -3197,7 +3208,10 @@ export default function CenarioInterativoPage() {
                                           fontSize: `${pvh(4.5)}px`, 
                                           color: '#fff',
                                           textShadow: '0 4px 15px rgba(0,0,0,0.8)',
-                                          maxWidth: '100%'
+                                          maxWidth: '100%',
+                                          opacity: i === previewChatMessageIdx ? 1 : 0,
+                                          transform: i === previewChatMessageIdx ? 'translateY(0)' : 'translateY(15px)',
+                                          transition: 'all 0.7s ease 0.7s'
                                         }}
                                       >
                                         "{m.text}"
