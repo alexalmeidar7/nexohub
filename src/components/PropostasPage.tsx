@@ -781,6 +781,31 @@ export default function PropostasPage() {
                                     </div>
                                   </div>
                                   <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase opacity-50">Cor do Fundo</label>
+                                    <div className="flex gap-2">
+                                      <input 
+                                        type="color"
+                                        value={item.style.backgroundColor || "#ffffff"}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.backgroundColor = e.target.value;
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="flex-1 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
+                                      />
+                                      <button 
+                                        onClick={() => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.backgroundColor = 'transparent';
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="px-2 bg-slate-800 rounded text-[10px] uppercase font-bold"
+                                      >
+                                        Transp.
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
                                     <label className="text-[10px] font-bold uppercase opacity-50">Cor do Texto</label>
                                     <div className="flex gap-2">
                                       <input 
@@ -985,7 +1010,13 @@ export default function PropostasPage() {
                       )}
 
                       {item.type === 'text' && (
-                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any, background: 'none !important', backgroundColor: 'transparent !important' }}>
+                        <div style={{ 
+                          padding: `${item.style.padding || 0.5}vw`, 
+                          textAlign: item.style.textAlign as any, 
+                          background: item.style.backgroundColor === 'transparent' ? 'none !important' : (item.style.backgroundColor || 'none'),
+                          backgroundColor: item.style.backgroundColor || 'transparent',
+                          borderRadius: `${item.style.borderRadius || 0}px`
+                        }}>
                           <textarea 
                             value={item.content}
                             onChange={(e) => {
@@ -993,6 +1024,7 @@ export default function PropostasPage() {
                               newItems[index].content = e.target.value;
                               setProposalItems(newItems);
                             }}
+                            readOnly={item.locked}
                             placeholder="DESCRIÇÃO DA PROPOSTA..."
                             className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent selection:bg-sky-500/30 text-current !ring-0 !ring-offset-0 !outline-none !border-0 !border-transparent !bg-transparent !bg-none !shadow-none"
                             style={{ 
@@ -1013,7 +1045,8 @@ export default function PropostasPage() {
                               WebkitAppearance: 'none',
                               position: 'relative',
                               zIndex: 1,
-                              resize: 'none'
+                              resize: 'none',
+                              cursor: item.locked ? 'not-allowed' : 'text'
                             }}
                           />
                         </div>
