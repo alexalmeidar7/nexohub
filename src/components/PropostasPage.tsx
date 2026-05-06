@@ -954,8 +954,10 @@ export default function PropostasPage() {
                               <Pencil size={14} className="inline mr-2 opacity-50" />
                               <span style={{ 
                                 fontFamily: item.style.fontFamily || 'Inter',
-                                fontSize: `${item.style.fontSizeVw || 1.0}vw`
-                              }} className="font-medium uppercase">
+                                fontSize: `${item.style.fontSizeVw || 1.0}vw`,
+                                fontWeight: item.style.fontWeight || 'medium',
+                                fontStyle: item.style.fontStyle || 'normal'
+                              }} className="uppercase">
                                 {item.content || (item.type === 'digital_1' ? 'ENTREGA DIGITAL 1' : 'ENTREGA DIGITAL 2')}
                               </span>
                             </div>
