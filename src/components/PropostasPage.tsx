@@ -36,6 +36,8 @@ export default function PropostasPage() {
   const [resizingHeight, setResizingHeight] = useState<{ id: string, startHeight: number, startY: number } | null>(null);
   const [draggingItem, setDraggingItem] = useState<{ id: string, startX: number, startY: number, initialLeft: number, initialTop: number } | null>(null);
   const [copiedStyle, setCopiedStyle] = useState<any>(null);
+  const [namingSection, setNamingSection] = useState<{ id: string, content: string } | null>(null);
+
 
 
 
@@ -660,15 +662,10 @@ export default function PropostasPage() {
                                 >
                                   {item.locked ? <Lock size={12} /> : <Unlock size={12} />}
                                 </button>
-                                {item.type === 'section' && (
+                                 {item.type === 'section' && (
                                   <button 
                                     onClick={() => {
-                                      const name = prompt("Nome da seção (deixe vazio para apenas a linha):", item.content || "");
-                                      if (name !== null) {
-                                        const newItems = [...proposalItems];
-                                        newItems[index].content = name;
-                                        setProposalItems(newItems);
-                                      }
+                                      setNamingSection({ id: item.id, content: item.content || "" });
                                     }}
                                     className="p-1.5 hover:bg-slate-800 rounded transition-colors text-white"
                                     title="Nomear Seção"
@@ -834,6 +831,35 @@ export default function PropostasPage() {
                               ) : (
                                 <>
                                   <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase opacity-50">Título (Fonte e Tamanho)</label>
+                                    <div className="flex gap-2">
+                                      <select 
+                                        value={item.style.fontFamily || 'Inter'}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.fontFamily = e.target.value;
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="flex-1 bg-slate-800 border-none text-[11px] rounded p-1.5 focus:ring-1 focus:ring-sky-500"
+                                      >
+                                        {['Inter', 'Roboto', 'Montserrat', 'Open Sans', 'Poppins', 'Playfair Display', 'Oswald'].map(f => (
+                                          <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                                        ))}
+                                      </select>
+                                      <input 
+                                        type="number"
+                                        min="0.5" max="5" step="0.1"
+                                        value={item.style.fontSizeVw || 1.2}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.fontSizeVw = parseFloat(e.target.value);
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="w-12 bg-slate-800 text-[11px] rounded px-1 border-none"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
                                     <label className="text-[10px] font-bold uppercase opacity-50">Cantos Arredondados (px)</label>
                                     <input 
                                       type="range" min="0" max="100" step="1"
@@ -983,29 +1009,30 @@ export default function PropostasPage() {
                       {item.type === 'section' && (
                         <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
                           <div 
-                            className="w-full transition-all"
+                            className="w-full transition-all relative"
                             style={{ 
                               height: item.style.height ? `${item.style.height}vw` : '0.2vw',
                               backgroundColor: item.style.backgroundColor || '#ffffff',
                               borderRadius: `${item.style.borderRadius || 0}px`,
                               border: item.style.borderWidth ? `${item.style.borderWidth}px solid ${item.style.borderColor || 'transparent'}` : 'none'
                             }}
-                          />
-                          {item.content && (
-                            <div 
-                              className="mt-1 font-black uppercase"
-                              style={{ 
-                                color: item.style.color,
-                                fontFamily: item.style.fontFamily || 'Inter',
-                                fontSize: `${item.style.fontSizeVw || 1.2}vw`,
-                                textAlign: item.style.textAlign as any,
-                                fontWeight: item.style.fontWeight || 'black',
-                                fontStyle: item.style.fontStyle || 'normal'
-                              }}
-                            >
-                              {item.content}
-                            </div>
-                          )}
+                          >
+                            {item.content && (
+                              <div 
+                                className="absolute top-1 left-2 font-black uppercase whitespace-nowrap"
+                                style={{ 
+                                  color: item.style.color,
+                                  fontFamily: item.style.fontFamily || 'Inter',
+                                  fontSize: `${item.style.fontSizeVw || 1.2}vw`,
+                                  fontWeight: item.style.fontWeight || 'black',
+                                  fontStyle: item.style.fontStyle || 'normal',
+                                  transform: 'translateY(-120%)'
+                                }}
+                              >
+                                {item.content}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
 
@@ -1201,7 +1228,42 @@ export default function PropostasPage() {
                   </DialogContent>
                 </Dialog>
 
+                <Dialog open={!!namingSection} onOpenChange={() => setNamingSection(null)}>
+                  <DialogContent className="bg-white p-6 max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle className="uppercase font-black text-slate-800">
+                        Nome da Seção
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <Input 
+                        placeholder="Ex: Entrega Comercial"
+                        value={namingSection?.content || ''}
+                        onChange={(e) => setNamingSection(prev => prev ? { ...prev, content: e.target.value } : null)}
+                        autoFocus
+                      />
+                      <Button 
+                        onClick={() => {
+                          if (namingSection) {
+                            const newItems = [...proposalItems];
+                            const idx = newItems.findIndex(i => i.id === namingSection.id);
+                            if (idx !== -1) {
+                              newItems[idx].content = namingSection.content;
+                              setProposalItems(newItems);
+                            }
+                            setNamingSection(null);
+                          }
+                        }}
+                        className="w-full bg-sky-500 text-white font-bold uppercase h-11"
+                      >
+                        Aplicar Nome
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
                 <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] px-[5%] text-white hidden">
+
                   <div className="space-y-[1vw] relative group">
 ...
                     <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
