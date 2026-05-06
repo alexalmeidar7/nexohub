@@ -169,71 +169,138 @@ export default function PropostasPage() {
               NOVA PROPOSTA
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-w-[95vw] w-[1300px] h-[90vh] flex flex-col p-0 overflow-hidden">
+            <DialogHeader className="p-4 border-b">
               <DialogTitle>Criar Proposta - Passo {step}</DialogTitle>
             </DialogHeader>
             
-            {step === 1 && (
-              <div className="space-y-4 pt-2">
-                <p className="text-xs font-semibold">Selecione o Mockup:</p>
-                <div className="grid grid-cols-2 gap-4">
-                  {mockups.map(m => (
-                    <div 
-                      key={m.id} 
-                      onClick={() => { setSelectedMockup(m); setStep(2); }}
-                      className="group relative cursor-pointer overflow-hidden rounded-xl border transition-all hover:border-sky-500 hover:shadow-lg"
-                    >
-                      <img src={m.image_url} alt={m.name} className="h-40 w-full object-cover transition-transform group-hover:scale-105" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
-                        <p className="text-[10px] font-bold text-white uppercase">{m.name}</p>
+            <div className="flex-1 flex overflow-hidden">
+              {step === 1 ? (
+                <div className="flex-1 p-6 overflow-y-auto">
+                  <p className="text-xs font-semibold mb-4 uppercase text-slate-500">Selecione o Mockup base para sua proposta:</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {mockups.map(m => (
+                      <div 
+                        key={m.id} 
+                        onClick={() => { setSelectedMockup(m); setStep(2); }}
+                        className="group relative cursor-pointer overflow-hidden rounded-xl border transition-all hover:border-sky-500 hover:shadow-lg"
+                      >
+                        <div className="aspect-video relative overflow-hidden">
+                          <img src={m.image_url} alt={m.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                        </div>
+                        <div className="p-3 bg-white">
+                          <p className="text-[10px] font-bold text-slate-700 uppercase truncate">{m.name}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {step === 2 && selectedMockup && (
-              <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-right-4">
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                  <img src={selectedMockup.image_url} className="w-16 h-16 rounded object-cover border" />
-                  <div>
-                    <p className="text-xs font-bold uppercase">{selectedMockup.name}</p>
-                    <button onClick={() => setStep(1)} className="text-[10px] text-sky-600 font-semibold hover:underline">Trocar mockup</button>
+                    ))}
                   </div>
                 </div>
-                
-                <div className="grid grid-cols-1 gap-4">
-                  {(selectedMockup.fields as any[]).map((f: any) => (
-                    <div key={f.name} className="space-y-1.5">
-                      <Label className="text-[11px] font-bold uppercase text-slate-500">{f.label}</Label>
-                      {f.type === "textarea" ? (
-                        <Textarea 
-                          value={formData[f.name] || ""} 
-                          onChange={e => setFormData({...formData, [f.name]: e.target.value})}
-                          placeholder={`Digite o ${f.label.toLowerCase()}...`}
-                          className="text-xs"
-                        />
-                      ) : (
-                        <Input 
-                          type={f.type} 
-                          value={formData[f.name] || ""} 
-                          onChange={e => setFormData({...formData, [f.name]: e.target.value})}
-                          placeholder={`Digite o ${f.label.toLowerCase()}...`}
-                          className="text-xs"
-                        />
-                      )}
+              ) : (
+                <>
+                  {/* Left Panel: Form */}
+                  <div className="w-[350px] border-r bg-slate-50 p-6 flex flex-col gap-6 overflow-y-auto animate-in slide-in-from-left-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold uppercase text-sky-600">Mockup Selecionado</p>
+                      <div className="flex items-center justify-between p-2 bg-white rounded border">
+                        <span className="text-[11px] font-bold truncate pr-2 uppercase">{selectedMockup?.name}</span>
+                        <Button variant="ghost" size="sm" onClick={() => setStep(1)} className="h-6 px-2 text-[9px] font-bold">TROCAR</Button>
+                      </div>
                     </div>
-                  ))}
-                </div>
-                
-                <Button onClick={handleCreateProposta} className="w-full btn-skyglass-accent">
-                  <Send size={14} className="mr-2" />
-                  Enviar para Arte Final
-                </Button>
-              </div>
-            )}
+
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Preencha as informações</p>
+                      {(selectedMockup?.fields as any[] || []).map((f: any) => (
+                        <div key={f.name} className="space-y-1.5">
+                          <Label className="text-[10px] font-bold uppercase text-slate-500">{f.label}</Label>
+                          {f.type === "textarea" ? (
+                            <Textarea 
+                              value={formData[f.name] || ""} 
+                              onChange={e => setFormData({...formData, [f.name]: e.target.value})}
+                              placeholder={`Digite o ${f.label.toLowerCase()}...`}
+                              className="text-xs min-h-[80px]"
+                            />
+                          ) : (
+                            <Input 
+                              type={f.type} 
+                              value={formData[f.name] || ""} 
+                              onChange={e => setFormData({...formData, [f.name]: e.target.value})}
+                              placeholder={`Digite o ${f.label.toLowerCase()}...`}
+                              className="text-xs h-9"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-auto pt-6 border-t">
+                      <Button onClick={handleCreateProposta} className="w-full btn-skyglass-accent h-10 text-[11px] font-bold">
+                        <Send size={14} className="mr-2" />
+                        ENVIAR PARA ARTE FINAL
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Right Panel: Canvas (Live Preview) */}
+                  <div className="flex-1 bg-slate-200 p-8 flex items-center justify-center overflow-auto">
+                    <div 
+                      className="bg-white shadow-2xl relative overflow-hidden flex-shrink-0"
+                      style={{ 
+                        width: "1920px", 
+                        height: "1080px", 
+                        transform: "scale(0.4)", // Adjusted scale to fit in most views while maintaining high-res aspect
+                        transformOrigin: "center center"
+                      }}
+                    >
+                      {/* Background Mockup */}
+                      <img 
+                        src={selectedMockup?.image_url} 
+                        className="absolute inset-0 w-full h-full object-cover"
+                        alt="Mockup Preview"
+                      />
+
+                      {/* Content Overlay - This would be styled according to the mockup design */}
+                      <div className="absolute inset-0 p-24 flex flex-col text-white pointer-events-none">
+                        <div className="mt-auto max-w-[800px] space-y-8 drop-shadow-2xl">
+                          {formData.cliente && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                              <p className="text-2xl font-bold uppercase tracking-[0.2em] text-sky-400">PROPOSTA PARA</p>
+                              <h1 className="text-8xl font-black uppercase leading-tight">{formData.cliente}</h1>
+                            </div>
+                          )}
+                          
+                          <div className="flex gap-16 pt-8 animate-in fade-in slide-in-from-bottom-4 delay-150 duration-500">
+                            {formData.vendedor && (
+                              <div>
+                                <p className="text-lg font-bold text-sky-400 uppercase tracking-widest">CONSULTOR</p>
+                                <p className="text-3xl font-bold uppercase">{formData.vendedor}</p>
+                              </div>
+                            )}
+                            {formData.valor && (
+                              <div>
+                                <p className="text-lg font-bold text-sky-400 uppercase tracking-widest">INVESTIMENTO</p>
+                                <p className="text-3xl font-bold uppercase">R$ {parseFloat(formData.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {formData.observacoes && (
+                            <div className="pt-8 border-t border-white/20 animate-in fade-in delay-300 duration-500">
+                              <p className="text-lg font-bold text-sky-400 uppercase tracking-widest mb-2">DETALHES</p>
+                              <p className="text-2xl opacity-90 leading-relaxed max-w-[900px]">{formData.observacoes}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Guide/Resolution indicator */}
+                      <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-[20px] font-bold backdrop-blur-md">
+                        1920 x 1080
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>
