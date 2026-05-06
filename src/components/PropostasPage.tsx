@@ -366,9 +366,12 @@ export default function PropostasPage() {
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold truncate pr-2">{p.title}</h3>
-                  <button onClick={() => setSelectedProposta(p)} className="p-1.5 rounded-full hover:bg-slate-100"><Eye size={14} /></button>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setSelectedProposta(p)} className="p-1.5 rounded-full hover:bg-slate-100" title="Visualizar"><Eye size={14} /></button>
+                    <button onClick={() => handleDeleteProposta(p.id)} className="p-1.5 rounded-full hover:bg-red-50 text-red-500" title="Excluir"><Trash2 size={14} /></button>
+                  </div>
                 </div>
-                
+
                 {p.status === "arte_final" && (
                   <div className="pt-2 border-t">
                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Ação: Enviar Arte Final</p>
