@@ -116,84 +116,91 @@ export default function BroadcastPage() {
   }, [data.locutor_override, user]);
 
   // Load data
+  const loadInitialData = useCallback(async () => {
+    if (!user) return;
+    
+    // Empresa config (logo + socials)
+    const { data: emp } = await supabase
+      .from("empresa_config")
+      .select("logo, nome, instagram, facebook, youtube, site, telefone_participacao")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (emp?.logo) setEmpresaLogo(emp.logo);
+
+    // Build social list from empresa_config
+    const socials: SocialItem[] = [];
+    if (emp?.instagram) socials.push({ tipo: "instagram", valor: extractHandle(emp.instagram), icon: <Instagram size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.png" });
+    if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.png" });
+    if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.png" });
+    if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.png" });
+    if (emp?.telefone_participacao) {
+      socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/whatsapp.png" });
+      setWhatsappNumber(emp.telefone_participacao);
+    }
+    setEmpresaSocials(socials);
+
+    // All programs (for linking assunto background)
+    const { data: allProgs } = await supabase
+      .from("programas")
+      .select("id, nome")
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .order("nome");
+    if (allProgs) setAllProgramas(allProgs);
+
+    // Current program – match by time AND day of week
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const nowTime = `${hh}:${mm}:00`;
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const todayName = dayNames[now.getDay()];
+
+    const { data: progs } = await supabase
+      .from("programas")
+      .select("id, nome, selo, capa, thumb, apresentadores_ids, apresentador_id, dias_semana")
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .lte("horario_inicio", nowTime)
+      .gte("horario_fim", nowTime)
+      .contains("dias_semana", [todayName]);
+
+    const prog = progs?.find(() => true);
+    if (prog) {
+      setActiveProgramaId(prog.id);
+      setProgramaNome(prog.nome);
+      const logoUrl = prog.selo || null;
+      if (logoUrl) setProgramaLogo(logoUrl);
+
+      const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
+      if (apIds.length > 0) {
+        const { data: ap } = await supabase.from("apresentadores").select("nome, foto, instagram, cargo").in("id", apIds).limit(1).maybeSingle();
+        if (ap) {
+          setLocutorNome(ap.nome);
+          if (ap.foto) setLocutorFoto(ap.foto);
+          if (ap.instagram) setLocutorInstagram(ap.instagram);
+          if (ap.cargo) setLocutorCargo(ap.cargo);
+        }
+      }
+
+      // Fetch sponsor logos for this program
+      const { data: logos } = await supabase
+        .from("logos_patrocinadores")
+        .select("nome, logo_url")
+        .eq("user_id", user.id)
+        .eq("programa_id", prog.id)
+        .eq("ativo", true)
+        .eq("excluido", false);
+      if (logos && logos.length > 0) setSponsorLogos(logos);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
     (async () => {
-      // Empresa config (logo + socials)
-      const { data: emp } = await supabase
-        .from("empresa_config")
-        .select("logo, nome, instagram, facebook, youtube, site, telefone_participacao")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (emp?.logo) setEmpresaLogo(emp.logo);
-
-      // Build social list from empresa_config
-      const socials: SocialItem[] = [];
-      if (emp?.instagram) socials.push({ tipo: "instagram", valor: extractHandle(emp.instagram), icon: <Instagram size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.png" });
-      if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.png" });
-      if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.png" });
-      if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.png" });
-      if (emp?.telefone_participacao) {
-        socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/whatsapp.png" });
-        setWhatsappNumber(emp.telefone_participacao);
-      }
-      setEmpresaSocials(socials);
-
-      // All programs (for linking assunto background)
-      const { data: allProgs } = await supabase
-        .from("programas")
-        .select("id, nome")
-        .eq("user_id", user.id)
-        .eq("ativo", true)
-        .order("nome");
-      if (allProgs) setAllProgramas(allProgs);
-
-      // Current program – match by time AND day of week
+      await loadInitialData();
       const now = new Date();
-      const hh = String(now.getHours()).padStart(2, "0");
-      const mm = String(now.getMinutes()).padStart(2, "0");
-      const nowTime = `${hh}:${mm}:00`;
-      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-      const todayName = dayNames[now.getDay()];
-
-      const { data: progs } = await supabase
-        .from("programas")
-        .select("id, nome, selo, capa, thumb, apresentadores_ids, apresentador_id, dias_semana")
-        .eq("user_id", user.id)
-        .eq("ativo", true)
-        .lte("horario_inicio", nowTime)
-        .gte("horario_fim", nowTime)
-        .contains("dias_semana", [todayName]);
-
-      const prog = progs?.find(() => true);
-      if (prog) {
-        setActiveProgramaId(prog.id);
-        setProgramaNome(prog.nome);
-        const logoUrl = prog.selo || null;
-        if (logoUrl) setProgramaLogo(logoUrl);
-
-        const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
-        if (apIds.length > 0) {
-          const { data: ap } = await supabase.from("apresentadores").select("nome, foto, instagram, cargo").in("id", apIds).limit(1).maybeSingle();
-          if (ap) {
-            setLocutorNome(ap.nome);
-            if (ap.foto) setLocutorFoto(ap.foto);
-            if (ap.instagram) setLocutorInstagram(ap.instagram);
-            if (ap.cargo) setLocutorCargo(ap.cargo);
-          }
-        }
-
-        // Fetch sponsor logos for this program
-        const { data: logos } = await supabase
-          .from("logos_patrocinadores")
-          .select("nome, logo_url")
-          .eq("user_id", user.id)
-          .eq("programa_id", prog.id)
-          .eq("ativo", true)
-          .eq("excluido", false);
-        if (logos && logos.length > 0) setSponsorLogos(logos);
-      }
 
       // Fetch today's LIVE event art (artes_urls[4] = INSERT LIVE)
       const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -331,9 +338,13 @@ export default function BroadcastPage() {
         }
       }
     };
-    const interval = setInterval(refreshActiveProgram, 60000);
-    return () => clearInterval(interval);
-  }, [user, activeProgramaId]);
+    const interval = setInterval(refreshActiveProgram, 30000);
+    const logoRefreshInterval = setInterval(loadInitialData, 30000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(logoRefreshInterval);
+    };
+  }, [user, activeProgramaId, loadInitialData]);
 
   // Compose ticker from sources
   const composedTicker = useMemo(() => {
