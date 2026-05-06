@@ -831,6 +831,35 @@ export default function PropostasPage() {
                               ) : (
                                 <>
                                   <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase opacity-50">Título (Fonte e Tamanho)</label>
+                                    <div className="flex gap-2">
+                                      <select 
+                                        value={item.style.fontFamily || 'Inter'}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.fontFamily = e.target.value;
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="flex-1 bg-slate-800 border-none text-[11px] rounded p-1.5 focus:ring-1 focus:ring-sky-500"
+                                      >
+                                        {['Inter', 'Roboto', 'Montserrat', 'Open Sans', 'Poppins', 'Playfair Display', 'Oswald'].map(f => (
+                                          <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                                        ))}
+                                      </select>
+                                      <input 
+                                        type="number"
+                                        min="0.5" max="5" step="0.1"
+                                        value={item.style.fontSizeVw || 1.2}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.fontSizeVw = parseFloat(e.target.value);
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="w-12 bg-slate-800 text-[11px] rounded px-1 border-none"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
                                     <label className="text-[10px] font-bold uppercase opacity-50">Cantos Arredondados (px)</label>
                                     <input 
                                       type="range" min="0" max="100" step="1"
