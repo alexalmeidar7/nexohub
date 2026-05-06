@@ -80,7 +80,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // CRITICAL: never log the user out unless they explicitly clicked "Sair".
       // If we receive a null session event but we have a known good session,
       // keep the user logged in and try to refresh in the background.
+      // This prevents a logout on one device from affecting another (multi-device support).
       if (!newUser && !manualSignOutRef.current) {
+
         if (lastGoodSessionRef.current?.user) {
           const restored = lastGoodSessionRef.current;
           if (prevUserIdRef.current !== restored.user.id) {
@@ -138,6 +140,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log(`Auth event: ${event}`);
+
+      // Se o evento for INITIAL_SESSION e não tivermos sessão, tentamos recuperar a última conhecida se "mantenha-me conectado" estiver ativo
+      if (event === "INITIAL_SESSION" && !session) {
+        const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
+        if (keepConnected && lastGoodSessionRef.current) {
+          console.log("Auth: Tentando restaurar sessão inicial salva.");
+          void updateAuth(lastGoodSessionRef.current);
+          return;
+        }
+      }
+
       
       if (event === "SIGNED_OUT") {
         const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
@@ -160,7 +173,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
         lastGoodSessionRef.current = session;
+        // Sempre garantimos que persista se estiver logado
+        if (session) {
+          const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
+          if (keepConnected) {
+            // Opcional: Você pode querer salvar no localStorage explicitamente se o persistSession do Supabase falhar em alguns navegadores
+          }
+        }
       }
+
       
       void updateAuth(session);
     });

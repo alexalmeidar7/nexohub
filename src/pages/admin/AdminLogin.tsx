@@ -43,10 +43,14 @@ export default function AdminLogin() {
     setSubmitting(true);
     setError("");
 
+    // Garantir que a flag de "mantenha-me conectado" seja respeitada para administradores também
+    localStorage.setItem("nexohub_keep_connected", "true");
+
     const { error: authError } = await supabase.auth.signInWithPassword({
       email,
       password: pass,
     });
+
 
     if (authError) {
       setError(authError.message);
