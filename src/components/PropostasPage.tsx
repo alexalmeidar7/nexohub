@@ -849,15 +849,18 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="NOME DA SEÇÃO (OPCIONAL)"
-                            className="bg-transparent border-none outline-none w-full font-black uppercase placeholder:text-white/20"
-                            style={{ 
-                              color: item.style.color, 
-                              textAlign: item.style.textAlign as any,
-                              fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.2}vw`,
-                              fontWeight: item.style.fontWeight || 'black',
-                              fontStyle: item.style.fontStyle || 'normal'
-                            }}
+                             className="bg-transparent border-none outline-none w-full font-black uppercase placeholder:text-white/20 focus:ring-0 focus-visible:ring-0 shadow-none focus:bg-transparent"
+                             style={{ 
+                               color: item.style.color, 
+                               textAlign: item.style.textAlign as any,
+                               fontFamily: item.style.fontFamily || 'Inter',
+                               fontSize: `${item.style.fontSizeVw || 1.2}vw`,
+                               fontWeight: item.style.fontWeight || 'black',
+                               fontStyle: item.style.fontStyle || 'normal',
+                               background: 'transparent',
+                               border: 'none',
+                               boxShadow: 'none'
+                             }}
                           />
                         </div>
                       )}
@@ -893,7 +896,7 @@ export default function PropostasPage() {
                         <div className="flex gap-[0.8vw] items-center bg-transparent" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
                           <input 
                             placeholder="QNT"
-                            className="bg-transparent border-none outline-none w-[3vw] text-center"
+                            className="bg-transparent border-none outline-none w-[3vw] text-center focus:ring-0 shadow-none focus:bg-transparent"
                             value={item.content.qty}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
@@ -905,12 +908,13 @@ export default function PropostasPage() {
                               fontFamily: item.style.fontFamily || 'Inter',
                               fontSize: `${item.style.fontSizeVw || 1.0}vw`,
                               fontWeight: item.style.fontWeight || 'normal',
-                              fontStyle: item.style.fontStyle || 'normal'
+                              fontStyle: item.style.fontStyle || 'normal',
+                              background: 'transparent'
                             }}
                           />
                           <input 
                             placeholder="TEMPO"
-                            className="bg-transparent border-none outline-none w-[5vw] text-center"
+                            className="bg-transparent border-none outline-none w-[5vw] text-center focus:ring-0 shadow-none focus:bg-transparent"
                             value={item.content.time}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
@@ -922,12 +926,13 @@ export default function PropostasPage() {
                               fontFamily: item.style.fontFamily || 'Inter',
                               fontSize: `${item.style.fontSizeVw || 1.0}vw`,
                               fontWeight: item.style.fontWeight || 'normal',
-                              fontStyle: item.style.fontStyle || 'normal'
+                              fontStyle: item.style.fontStyle || 'normal',
+                              background: 'transparent'
                             }}
                           />
                           <input 
                             placeholder="DESCRIÇÃO"
-                            className="bg-transparent border-none outline-none flex-1"
+                            className="bg-transparent border-none outline-none flex-1 focus:ring-0 shadow-none focus:bg-transparent"
                             value={item.content.desc}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
@@ -940,7 +945,8 @@ export default function PropostasPage() {
                               fontFamily: item.style.fontFamily || 'Inter',
                               fontSize: `${item.style.fontSizeVw || 1.0}vw`,
                               fontWeight: item.style.fontWeight || 'normal',
-                              fontStyle: item.style.fontStyle || 'normal'
+                              fontStyle: item.style.fontStyle || 'normal',
+                              background: 'transparent'
                             }}
                           />
                         </div>
@@ -985,14 +991,15 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="0,00"
-                            className="bg-transparent border-none outline-none w-full font-black placeholder:text-white/20"
+                            className="bg-transparent border-none outline-none w-full font-black placeholder:text-white/20 focus:ring-0 shadow-none focus:bg-transparent"
                             style={{ 
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
                               fontFamily: item.style.fontFamily || 'Inter',
                               fontSize: `${item.style.fontSizeVw || 1.8}vw`,
                               fontWeight: item.style.fontWeight || 'black',
-                              fontStyle: item.style.fontStyle || 'normal'
+                              fontStyle: item.style.fontStyle || 'normal',
+                              background: 'transparent'
                             }}
                           />
                         </div>
