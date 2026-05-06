@@ -3241,7 +3241,7 @@ export default function CenarioInterativoPage() {
                                       <div 
                                         className="font-bold leading-[1.2] px-4" 
                                         style={{ 
-                                          fontSize: `${pvh(4.5)}px`, 
+                                          fontSize: `${pvh(3.2)}px`, 
                                           color: '#fff',
                                           textShadow: '0 4px 15px rgba(0,0,0,0.8)',
                                           maxWidth: '100%',

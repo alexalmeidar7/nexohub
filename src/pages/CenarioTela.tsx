@@ -1976,7 +1976,7 @@ export default function CenarioTela() {
                             <div 
                               className="font-bold leading-[1.2] px-4" 
                               style={{ 
-                                fontSize: `${vhToPx(4.5)}${vu}`, 
+                                fontSize: `${vhToPx(3.2)}${vu}`, 
                                 color: '#fff',
                                 textShadow: '0 4px 15px rgba(0,0,0,0.8)',
                                 maxWidth: '100%',
