@@ -24,6 +24,30 @@ export default function PropostasPage() {
   const [tempMockup, setTempMockup] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
   const [uploadingArt, setUploadingArt] = useState(false);
+  const [customBg, setCustomBg] = useState<string | null>(null);
+  const [uploadingBg, setUploadingBg] = useState(false);
+
+  const handleUploadBg = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBg(true);
+    const fileName = `custom_bg_${Date.now()}.${file.name.split('.').pop()}`;
+    const path = `backgrounds/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage.from("comercial").upload(path, file);
+
+    if (uploadError) {
+      toast.error("Erro ao enviar imagem de fundo");
+      setUploadingBg(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from("comercial").getPublicUrl(path);
+    setCustomBg(publicUrl);
+    setUploadingBg(false);
+    toast.success("Imagem de fundo aplicada!");
+  };
 
   useEffect(() => {
     fetchData();
@@ -275,13 +299,30 @@ export default function PropostasPage() {
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-sky-500" /></div>
       ) : selectedMockup ? (
         <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-4 md:p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex flex-col items-center relative overflow-hidden">
-          <button 
-            onClick={() => setSelectedMockup(null)} 
-            className="absolute top-4 right-4 z-20 p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all"
-            title="Cancelar edição"
-          >
-            <X size={20} />
-          </button>
+          <div className="absolute top-4 right-4 z-20 flex gap-2">
+            <Label 
+              htmlFor="bg-upload" 
+              className="p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all cursor-pointer flex items-center justify-center"
+              title="Trocar imagem de fundo"
+            >
+              {uploadingBg ? <Loader2 size={20} className="animate-spin" /> : <Upload size={20} />}
+              <input 
+                id="bg-upload" 
+                type="file" 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleUploadBg} 
+                disabled={uploadingBg}
+              />
+            </Label>
+            <button 
+              onClick={() => setSelectedMockup(null)} 
+              className="p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all"
+              title="Cancelar edição"
+            >
+              <X size={20} />
+            </button>
+          </div>
 
           <div className="w-full max-w-[1400px] mx-auto flex flex-col items-center">
             <div 
@@ -294,7 +335,7 @@ export default function PropostasPage() {
               <div 
                 className="absolute inset-0 w-full h-full"
                 style={{ 
-                  backgroundImage: "url('/mockup-bg-v4.png')",
+                  backgroundImage: `url('${customBg || '/mockup-bg-v4.png'}')`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 }}
