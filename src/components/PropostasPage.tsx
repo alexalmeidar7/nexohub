@@ -40,6 +40,8 @@ export default function PropostasPage() {
   const [startY, setStartY] = useState(0);
   const [startOverlayY, setStartOverlayY] = useState(5);
   const [uploadingArt, setUploadingArt] = useState(false);
+  const [editingItemStyle, setEditingItemStyle] = useState<string | null>(null);
+
   const [customBg, setCustomBg] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
 
