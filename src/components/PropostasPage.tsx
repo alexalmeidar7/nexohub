@@ -1228,7 +1228,42 @@ export default function PropostasPage() {
                   </DialogContent>
                 </Dialog>
 
+                <Dialog open={!!namingSection} onOpenChange={() => setNamingSection(null)}>
+                  <DialogContent className="bg-white p-6 max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle className="uppercase font-black text-slate-800">
+                        Nome da Seção
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <Input 
+                        placeholder="Ex: Entrega Comercial"
+                        value={namingSection?.content || ''}
+                        onChange={(e) => setNamingSection(prev => prev ? { ...prev, content: e.target.value } : null)}
+                        autoFocus
+                      />
+                      <Button 
+                        onClick={() => {
+                          if (namingSection) {
+                            const newItems = [...proposalItems];
+                            const idx = newItems.findIndex(i => i.id === namingSection.id);
+                            if (idx !== -1) {
+                              newItems[idx].content = namingSection.content;
+                              setProposalItems(newItems);
+                            }
+                            setNamingSection(null);
+                          }
+                        }}
+                        className="w-full bg-sky-500 text-white font-bold uppercase h-11"
+                      >
+                        Aplicar Nome
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
                 <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] px-[5%] text-white hidden">
+
                   <div className="space-y-[1vw] relative group">
 ...
                     <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
