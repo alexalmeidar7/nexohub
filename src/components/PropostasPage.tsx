@@ -23,6 +23,10 @@ export default function PropostasPage() {
   const [isNamingProject, setIsCreatingProject] = useState(false);
   const [tempMockup, setTempMockup] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
+  const [overlayY, setOverlayY] = useState(5); // % from top
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [startOverlayY, setStartOverlayY] = useState(5);
   const [uploadingArt, setUploadingArt] = useState(false);
   const [customBg, setCustomBg] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
@@ -298,7 +302,7 @@ export default function PropostasPage() {
       {isLoading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-sky-500" /></div>
       ) : selectedMockup ? (
-        <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-4 md:p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex flex-col items-center relative overflow-hidden">
+        <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-4 md:p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex flex-col items-center relative overflow-hidden group/overlay">
           <div className="absolute top-4 right-4 z-20 flex gap-2">
             <Label 
               htmlFor="bg-upload" 
@@ -342,8 +346,28 @@ export default function PropostasPage() {
               />
 
               {/* Editable Overlay */}
-              <div className="absolute inset-0 p-[5%] flex flex-col pointer-events-auto">
-                <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] text-white">
+              <div 
+                className="absolute inset-0 flex flex-col pointer-events-auto cursor-ns-resize"
+                style={{ paddingTop: `${overlayY}%` }}
+                onMouseDown={(e) => {
+                  if (e.target === e.currentTarget) {
+                    setIsDragging(true);
+                    setStartY(e.clientY);
+                    setStartOverlayY(overlayY);
+                  }
+                }}
+                onMouseMove={(e) => {
+                  if (isDragging) {
+                    const deltaY = (e.clientY - startY);
+                    const containerHeight = e.currentTarget.clientHeight || 1000;
+                    const newY = Math.max(0, Math.min(60, startOverlayY + (deltaY / containerHeight) * 100));
+                    setOverlayY(newY);
+                  }
+                }}
+                onMouseUp={() => setIsDragging(false)}
+                onMouseLeave={() => setIsDragging(false)}
+              >
+                <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] px-[5%] text-white">
                   <div className="space-y-[1vw]">
                     <textarea 
                       value={formData.descricao || ""} 
