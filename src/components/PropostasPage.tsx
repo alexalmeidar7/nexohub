@@ -878,7 +878,9 @@ export default function PropostasPage() {
                               textAlign: item.style.textAlign as any,
                               fontFamily: item.style.fontFamily || 'Inter',
                               fontSize: `${item.style.fontSizeVw || 1.0}vw`,
-                              height: item.style.height ? `${item.style.height}vw` : 'auto'
+                              height: item.style.height ? `${item.style.height}vw` : 'auto',
+                              fontWeight: item.style.fontWeight || 'normal',
+                              fontStyle: item.style.fontStyle || 'normal'
                             }}
                           />
                         </div>
