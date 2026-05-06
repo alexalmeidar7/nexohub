@@ -736,9 +736,9 @@ export default function PropostasPage() {
                         </button>
                       </div>
 
-                      {/* Resize Handle */}
+                      {/* Resize Handle Width */}
                       <div 
-                        className="absolute -right-1 -bottom-1 w-3 h-3 cursor-nwse-resize opacity-0 group-hover/item:opacity-100 bg-sky-500 rounded-full z-50"
+                        className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
                         onMouseDown={(e) => {
                           e.stopPropagation();
                           const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
@@ -750,6 +750,23 @@ export default function PropostasPage() {
                           });
                         }}
                       />
+
+                      {/* Resize Handle Height (Only for Text fields) */}
+                      {item.type === 'text' && (
+                        <div 
+                          className="absolute left-0 right-0 -bottom-1 h-2 cursor-ns-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
+                            if (!rect) return;
+                            setResizingHeight({
+                              id: item.id,
+                              startHeight: typeof item.style.height === 'number' ? item.style.height : 5,
+                              startY: ((e.clientY - rect.top) / rect.height) * 100
+                            });
+                          }}
+                        />
+                      )}
 
 
                       {item.type === 'section' && (
