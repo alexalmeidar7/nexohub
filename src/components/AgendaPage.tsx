@@ -360,6 +360,8 @@ export default function AgendaPage() {
   const [historyDateFilter, setHistoryDateFilter] = useState<Date | undefined>(undefined);
   const [pastEventDetail, setPastEventDetail] = useState<Evento | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [pastMonthFilter, setPastMonthFilter] = useState<string>("todos");
+
 
   // Form
   const [formProgramaId, setFormProgramaId] = useState("");
