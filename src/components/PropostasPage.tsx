@@ -876,7 +876,7 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="DESCRIÇÃO DA PROPOSTA..."
-                            className="bg-transparent border-0 w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent selection:bg-sky-500/30"
+                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent selection:bg-sky-500/30 text-current"
                             style={{ 
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
@@ -892,7 +892,9 @@ export default function PropostasPage() {
                               boxShadow: 'none',
                               outline: 'none',
                               appearance: 'none',
-                              WebkitAppearance: 'none'
+                              WebkitAppearance: 'none',
+                              position: 'relative',
+                              zIndex: 1
                             }}
                           />
                         </div>
