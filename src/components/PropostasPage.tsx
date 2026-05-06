@@ -752,7 +752,8 @@ export default function PropostasPage() {
                         image_url: customBg || selectedMockup.image_url,
                         config: { 
                           ...(selectedMockup.config || {}),
-                          overlayY 
+                          overlayY,
+                          proposalItems 
                         }
                       };
 
