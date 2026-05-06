@@ -969,7 +969,9 @@ export default function PropostasPage() {
                         <div className="flex items-center gap-[0.3vw] bg-transparent w-full" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
                           <span className="font-black" style={{ 
                             color: item.style.color,
-                            fontSize: `${(item.style.fontSizeVw || 1.8) * 0.8}vw` 
+                            fontSize: `${(item.style.fontSizeVw || 1.8) * 0.8}vw`,
+                            fontWeight: item.style.fontWeight || 'black',
+                            fontStyle: item.style.fontStyle || 'normal'
                           }}>R$</span>
                           <input 
                             type="number"
@@ -985,7 +987,9 @@ export default function PropostasPage() {
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
                               fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.8}vw`
+                              fontSize: `${item.style.fontSizeVw || 1.8}vw`,
+                              fontWeight: item.style.fontWeight || 'black',
+                              fontStyle: item.style.fontStyle || 'normal'
                             }}
                           />
                         </div>
