@@ -205,44 +205,100 @@ export default function PropostasPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-bold uppercase" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Propostas Comerciais</h2>
-          <p className="text-[11px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Crie e gerencie suas propostas</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="text-sm font-bold uppercase" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Propostas Comerciais</h2>
+            <p className="text-[11px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Crie e gerencie suas propostas</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button className="btn-skyglass-accent h-9 text-xs">
+                  <Plus size={14} className="mr-1" />
+                  NOVA PROPOSTA
+                  <ChevronDown size={14} className="ml-1 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[260px] p-1.5" align="start" style={{ backgroundColor: "var(--layout-widget-bg, #ffffff)", border: "1px solid var(--layout-border-color, #e2e8f0)" }}>
+                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 px-2 pt-1">Selecione um mockup:</p>
+                <div className="flex flex-col gap-0.5">
+                  {mockups.map(m => (
+                    <button 
+                      key={m.id} 
+                      onClick={() => { setTempMockup(m); setIsCreatingProject(true); }}
+                      className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all hover:bg-sky-500/10 text-left"
+                      style={{ color: "var(--layout-widget-text, #1a1a1a)" }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "var(--layout-accent-hex, #0ea5e9)22";
+                        e.currentTarget.style.color = "var(--layout-accent-hex, #0ea5e9)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "var(--layout-widget-text, #1a1a1a)";
+                      }}
+                    >
+                      <span className="text-[11px] font-bold uppercase truncate">{m.name}</span>
+                      <Plus size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-9 text-xs bg-white">
+                  MOCKUPS
+                  <ChevronDown size={14} className="ml-1 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[260px] p-1.5" align="start" style={{ backgroundColor: "var(--layout-widget-bg, #ffffff)", border: "1px solid var(--layout-border-color, #e2e8f0)" }}>
+                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 px-2 pt-1">Gerenciar Mockups:</p>
+                <div className="flex flex-col gap-0.5">
+                  <button 
+                    onClick={() => {
+                      const name = prompt("Nome do novo mockup:");
+                      if (name) {
+                        const newMockup = { 
+                          id: `temp-${Date.now()}`, 
+                          name, 
+                          image_url: '/mockup-bg-v5.png',
+                          config: { overlayY: 5 }
+                        };
+                        setMockups([...mockups, newMockup]);
+                        setSelectedMockup(newMockup);
+                        setOverlayY(5);
+                        setCustomBg(null);
+                      }
+                    }}
+                    className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all hover:bg-sky-500/10 text-left w-full"
+                    style={{ color: "var(--layout-widget-text, #1a1a1a)" }}
+                  >
+                    <span className="text-[11px] font-bold uppercase">Criar Novo Mockup</span>
+                    <Plus size={12} />
+                  </button>
+                  <div className="border-t my-1 border-slate-100" />
+                  {mockups.map(m => (
+                    <button 
+                      key={m.id} 
+                      onClick={() => { 
+                        setSelectedMockup(m);
+                        setOverlayY(m.config?.overlayY || 5);
+                        setCustomBg(m.image_url);
+                      }}
+                      className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all hover:bg-sky-500/10 text-left"
+                      style={{ color: "var(--layout-widget-text, #1a1a1a)" }}
+                    >
+                      <span className="text-[11px] font-bold uppercase truncate">{m.name}</span>
+                      <span className="text-[9px] opacity-50 uppercase">Editar</span>
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
-        
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button className="btn-skyglass-accent h-9 text-xs">
-              <Plus size={14} className="mr-1" />
-              NOVA PROPOSTA
-              <ChevronDown size={14} className="ml-1 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[260px] p-1.5" align="end" style={{ backgroundColor: "var(--layout-widget-bg, #ffffff)", border: "1px solid var(--layout-border-color, #e2e8f0)" }}>
-            <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 px-2 pt-1">Selecione um mockup:</p>
-            <div className="flex flex-col gap-0.5">
-              {mockups.map(m => (
-                <button 
-                  key={m.id} 
-                  onClick={() => { setTempMockup(m); setIsCreatingProject(true); }}
-                  className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all hover:bg-sky-500/10 text-left"
-                  style={{ color: "var(--layout-widget-text, #1a1a1a)" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "var(--layout-accent-hex, #0ea5e9)22";
-                    e.currentTarget.style.color = "var(--layout-accent-hex, #0ea5e9)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.color = "var(--layout-widget-text, #1a1a1a)";
-                  }}
-                >
-                  <span className="text-[11px] font-bold uppercase truncate">{m.name}</span>
-                  <Plus size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
       </div>
 
       <Dialog open={isNamingProject} onOpenChange={setIsCreatingProject}>
