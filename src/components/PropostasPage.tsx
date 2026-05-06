@@ -621,8 +621,9 @@ export default function PropostasPage() {
                       {/* Controls */}
                       <div className="absolute -top-8 left-0 opacity-0 group-hover/item:opacity-100 transition-opacity flex gap-1 z-50 bg-black/60 p-1 rounded-t-lg">
                         <div 
-                          className="p-1 bg-sky-500 rounded cursor-move"
+                          className={`p-1 bg-sky-500 rounded cursor-move ${item.locked ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
                           onMouseDown={(e) => {
+                            if (item.locked) return;
                             e.stopPropagation();
                             const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
                             if (!rect) return;
