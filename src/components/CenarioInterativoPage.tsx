@@ -796,22 +796,17 @@ export default function CenarioInterativoPage() {
   }, []);
 
   const handleTabChange = (tab: string) => {
+    if (tab === activeTab) return;
     setActiveTab(tab);
-    // Mirror to external screen
-    cenarioBcRef.current?.postMessage({ type: "tab-change", tab, subTab: weatherSubTab, currencySubTab });
-    rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab, subTab: weatherSubTab, currencySubTab } });
+    // Mirroring to other devices happens via the main save useEffect
   };
   const handleWeatherSubTabChange = (sub: string) => {
+    if (sub === weatherSubTab) return;
     setWeatherSubTab(sub);
-    // Mirror subtab change to external screen
-    cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "weather", subTab: sub, currencySubTab });
-    rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "weather", subTab: sub, currencySubTab } });
   };
   const handleCurrencySubTabChange = (sub: "moedas" | "bolsas") => {
+    if (sub === currencySubTab) return;
     setCurrencySubTab(sub);
-    // Mirror subtab change to external screen
-    cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "currency", subTab: weatherSubTab, currencySubTab: sub });
-    rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "currency", subTab: weatherSubTab, currencySubTab: sub } });
   };
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
   const [trafficCitySuggestions, setTrafficCitySuggestions] = useState<any[]>([]);
