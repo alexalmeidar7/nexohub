@@ -642,6 +642,22 @@ export default function PropostasPage() {
                             <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2">
                               <span className="text-[10px] font-bold uppercase opacity-50">Estilo do Item</span>
                               <div className="flex gap-1">
+                                {item.type === 'section' && (
+                                  <button 
+                                    onClick={() => {
+                                      const name = prompt("Nome da seção (deixe vazio para apenas a linha):", item.content || "");
+                                      if (name !== null) {
+                                        const newItems = [...proposalItems];
+                                        newItems[index].content = name;
+                                        setProposalItems(newItems);
+                                      }
+                                    }}
+                                    className="p-1.5 hover:bg-slate-800 rounded transition-colors text-white"
+                                    title="Nomear Seção"
+                                  >
+                                    <TypeIcon size={12} />
+                                  </button>
+                                )}
                                 <button 
                                   onClick={() => {
                                     setCopiedStyle({
@@ -822,8 +838,8 @@ export default function PropostasPage() {
                         }}
                       />
 
-                      {/* Resize Handle Height (Only for Text fields) */}
-                      {item.type === 'text' && (
+                      {/* Resize Handle Height (Only for Text fields or Sections) */}
+                      {(item.type === 'text' || item.type === 'section') && (
                         <div 
                           className="absolute left-0 right-0 -bottom-1 h-2 cursor-ns-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
                           onMouseDown={(e) => {
@@ -832,7 +848,7 @@ export default function PropostasPage() {
                             if (!rect) return;
                             setResizingHeight({
                               id: item.id,
-                              startHeight: typeof item.style.height === 'number' ? item.style.height : 5,
+                              startHeight: typeof item.style.height === 'number' ? item.style.height : (item.type === 'section' ? 0.2 : 5),
                               startY: ((e.clientY - rect.top) / rect.height) * 100
                             });
                           }}
@@ -841,28 +857,30 @@ export default function PropostasPage() {
 
 
                       {item.type === 'section' && (
-                        <div className="border-b border-white/30" style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
-                          <input 
-                            value={item.content}
-                            onChange={(e) => {
-                              const newItems = [...proposalItems];
-                              newItems[index].content = e.target.value;
-                              setProposalItems(newItems);
+                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
+                          <div 
+                            className="w-full transition-all"
+                            style={{ 
+                              height: item.style.height ? `${item.style.height}vw` : '0.2vw',
+                              backgroundColor: item.style.color || '#ffffff',
+                              borderRadius: '100px'
                             }}
-                            placeholder="NOME DA SEÇÃO (OPCIONAL)"
-                             className="bg-transparent border-none outline-none w-full font-black uppercase placeholder:text-white/20 focus:ring-0 focus-visible:ring-0 shadow-none focus:bg-transparent"
-                             style={{ 
-                               color: item.style.color, 
-                               textAlign: item.style.textAlign as any,
-                               fontFamily: item.style.fontFamily || 'Inter',
-                               fontSize: `${item.style.fontSizeVw || 1.2}vw`,
-                               fontWeight: item.style.fontWeight || 'black',
-                               fontStyle: item.style.fontStyle || 'normal',
-                               background: 'transparent',
-                               border: 'none',
-                               boxShadow: 'none'
-                             }}
                           />
+                          {item.content && (
+                            <div 
+                              className="mt-1 font-black uppercase"
+                              style={{ 
+                                color: item.style.color,
+                                fontFamily: item.style.fontFamily || 'Inter',
+                                fontSize: `${item.style.fontSizeVw || 1.2}vw`,
+                                textAlign: item.style.textAlign as any,
+                                fontWeight: item.style.fontWeight || 'black',
+                                fontStyle: item.style.fontStyle || 'normal'
+                              }}
+                            >
+                              {item.content}
+                            </div>
+                          )}
                         </div>
                       )}
 
