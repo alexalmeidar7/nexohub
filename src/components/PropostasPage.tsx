@@ -921,22 +921,24 @@ export default function PropostasPage() {
                       </div>
 
                       {/* Resize Handle Width */}
-                      <div 
-                        className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
-                          if (!rect) return;
-                          setResizingItem({
-                            id: item.id,
-                            startWidth: item.style.width,
-                            startX: ((e.clientX - rect.left) / rect.width) * 100
-                          });
-                        }}
-                      />
+                      {!item.locked && (
+                        <div 
+                          className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
+                            if (!rect) return;
+                            setResizingItem({
+                              id: item.id,
+                              startWidth: item.style.width,
+                              startX: ((e.clientX - rect.left) / rect.width) * 100
+                            });
+                          }}
+                        />
+                      )}
 
                       {/* Resize Handle Height (Only for Text fields or Sections) */}
-                      {(item.type === 'text' || item.type === 'section') && (
+                      {(item.type === 'text' || item.type === 'section') && !item.locked && (
                         <div 
                           className="absolute left-0 right-0 -bottom-1 h-2 cursor-ns-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
                           onMouseDown={(e) => {
