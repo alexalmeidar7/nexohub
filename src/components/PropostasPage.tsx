@@ -876,7 +876,7 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="DESCRIÇÃO DA PROPOSTA..."
-                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent selection:bg-sky-500/30 text-current"
+                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent selection:bg-sky-500/30 text-current !ring-0 !ring-offset-0 !outline-none !border-0 !border-transparent"
                             style={{ 
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
