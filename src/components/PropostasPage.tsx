@@ -582,32 +582,39 @@ export default function PropostasPage() {
                 variant="outline" 
                 onClick={() => {
                   const saveMockup = async () => {
-                    const isNew = selectedMockup.id.toString().startsWith('temp-');
-                    const mockupData = {
-                      name: selectedMockup.name,
-                      image_url: customBg || selectedMockup.image_url,
-                      config: { 
-                        ...(selectedMockup.config || {}),
-                        overlayY 
-                      }
-                    };
+                    try {
+                      const isNew = selectedMockup.id.toString().startsWith('temp-');
+                      const mockupData = {
+                        name: selectedMockup.name,
+                        image_url: customBg || selectedMockup.image_url,
+                        // Removendo 'config' que não existe no banco e usando 'fields' se necessário
+                        // Por enquanto, salvamos apenas o que a tabela suporta
+                      };
 
-                    if (isNew) {
-                      const { data, error } = await supabase.from("comercial_mockups").insert(mockupData).select().single();
-                      if (!error) {
-                        toast.success("Mockup criado com sucesso!");
-                        fetchData();
+                      console.log("Salvando mockup:", mockupData);
+
+                      if (isNew) {
+                        const { data, error } = await supabase.from("comercial_mockups").insert(mockupData).select().single();
+                        if (!error) {
+                          toast.success("Mockup criado com sucesso!");
+                          fetchData();
+                        } else {
+                          console.error("Erro insert mockup:", error);
+                          toast.error(`Erro ao criar mockup: ${error.message}`);
+                        }
                       } else {
-                        toast.error("Erro ao criar mockup");
+                        const { error } = await supabase.from("comercial_mockups").update(mockupData).eq("id", selectedMockup.id);
+                        if (!error) {
+                          toast.success("Mockup atualizado com sucesso!");
+                          fetchData();
+                        } else {
+                          console.error("Erro update mockup:", error);
+                          toast.error(`Erro ao atualizar mockup: ${error.message}`);
+                        }
                       }
-                    } else {
-                      const { error } = await supabase.from("comercial_mockups").update(mockupData).eq("id", selectedMockup.id);
-                      if (!error) {
-                        toast.success("Mockup atualizado com sucesso!");
-                        fetchData();
-                      } else {
-                        toast.error("Erro ao atualizar mockup");
-                      }
+                    } catch (err) {
+                      console.error("Erro inesperado:", err);
+                      toast.error("Erro inesperado ao salvar");
                     }
                   };
                   saveMockup();
