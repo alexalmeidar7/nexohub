@@ -875,7 +875,7 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="DESCRIÇÃO DA PROPOSTA..."
-                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent"
+                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0"
                             style={{ 
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
@@ -885,8 +885,11 @@ export default function PropostasPage() {
                               fontWeight: item.style.fontWeight || 'normal',
                               fontStyle: item.style.fontStyle || 'normal',
                               background: 'transparent',
+                              backgroundColor: 'transparent',
                               border: 'none',
-                              boxShadow: 'none'
+                              boxShadow: 'none',
+                              outline: 'none',
+                              appearance: 'none'
                             }}
                           />
                         </div>
