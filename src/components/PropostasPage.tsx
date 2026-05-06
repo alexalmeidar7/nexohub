@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown, Layout, Type, List, Pencil, DollarSign, GripVertical } from "lucide-react";
+import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown, Layout, Type, List, Pencil, DollarSign, GripVertical, AlignLeft, AlignCenter, AlignRight, Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -40,6 +40,8 @@ export default function PropostasPage() {
   const [startY, setStartY] = useState(0);
   const [startOverlayY, setStartOverlayY] = useState(5);
   const [uploadingArt, setUploadingArt] = useState(false);
+  const [editingItemStyle, setEditingItemStyle] = useState<string | null>(null);
+
   const [customBg, setCustomBg] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
 
@@ -519,8 +521,11 @@ export default function PropostasPage() {
                         fontSize: 14, 
                         fontWeight: "400",
                         width: type === 'value' ? 15 : 40,
+                        height: 'auto',
                         left: Math.max(0, Math.min(90, x)),
-                        top: Math.max(0, Math.min(90, y))
+                        top: Math.max(0, Math.min(90, y)),
+                        textAlign: 'left',
+                        padding: 0.5,
                       }
                     };
                     setProposalItems([...proposalItems, newItem]);
@@ -610,6 +615,61 @@ export default function PropostasPage() {
                         >
                           <GripVertical size={12} className="text-white" />
                         </div>
+                        <Popover open={editingItemStyle === item.id} onOpenChange={(open) => setEditingItemStyle(open ? item.id : null)}>
+                          <PopoverTrigger asChild>
+                            <button className="p-1 bg-slate-600 rounded text-white">
+                              <Settings2 size={12} />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-3 space-y-3 bg-slate-900 border-slate-700 text-white">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase opacity-50">Alinhamento</label>
+                              <div className="flex gap-1">
+                                {(['left', 'center', 'right'] as const).map((align) => (
+                                  <button
+                                    key={align}
+                                    onClick={() => {
+                                      const newItems = [...proposalItems];
+                                      newItems[index].style.textAlign = align;
+                                      setProposalItems(newItems);
+                                    }}
+                                    className={`flex-1 p-1.5 rounded flex justify-center ${item.style.textAlign === align ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
+                                  >
+                                    {align === 'left' && <AlignLeft size={14} />}
+                                    {align === 'center' && <AlignCenter size={14} />}
+                                    {align === 'right' && <AlignRight size={14} />}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase opacity-50">Espaçamento (vw)</label>
+                              <input 
+                                type="range" min="0" max="5" step="0.1"
+                                value={item.style.padding || 0.5}
+                                onChange={(e) => {
+                                  const newItems = [...proposalItems];
+                                  newItems[index].style.padding = parseFloat(e.target.value);
+                                  setProposalItems(newItems);
+                                }}
+                                className="w-full accent-sky-500"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase opacity-50">Cor do Texto</label>
+                              <input 
+                                type="color"
+                                value={item.style.color || "#ffffff"}
+                                onChange={(e) => {
+                                  const newItems = [...proposalItems];
+                                  newItems[index].style.color = e.target.value;
+                                  setProposalItems(newItems);
+                                }}
+                                className="w-full h-8 bg-transparent cursor-pointer"
+                              />
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                         <button 
                           onClick={() => setProposalItems(proposalItems.filter(i => i.id !== item.id))}
                           className="p-1 bg-red-500 rounded text-white"
@@ -620,7 +680,7 @@ export default function PropostasPage() {
 
                       {/* Resize Handle */}
                       <div 
-                        className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
+                        className="absolute -right-1 -bottom-1 w-3 h-3 cursor-nwse-resize opacity-0 group-hover/item:opacity-100 bg-sky-500 rounded-full z-50"
                         onMouseDown={(e) => {
                           e.stopPropagation();
                           const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
@@ -633,8 +693,9 @@ export default function PropostasPage() {
                         }}
                       />
 
+
                       {item.type === 'section' && (
-                        <div className="py-1 border-b border-white/30">
+                        <div className="border-b border-white/30" style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
                           <input 
                             value={item.content}
                             onChange={(e) => {
@@ -644,27 +705,29 @@ export default function PropostasPage() {
                             }}
                             placeholder="NOME DA SEÇÃO (OPCIONAL)"
                             className="bg-transparent border-none outline-none w-full font-black uppercase text-[1.2vw] placeholder:text-white/20"
-                            style={{ color: item.style.color }}
+                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
                           />
                         </div>
                       )}
 
                       {item.type === 'text' && (
-                        <textarea 
-                          value={item.content}
-                          onChange={(e) => {
-                            const newItems = [...proposalItems];
-                            newItems[index].content = e.target.value;
-                            setProposalItems(newItems);
-                          }}
-                          placeholder="DESCRIÇÃO DA PROPOSTA..."
-                          className="bg-transparent border-none w-full min-h-[2vw] outline-none text-[1vw] placeholder:text-white/20 resize-none shadow-none"
-                          style={{ color: item.style.color }}
-                        />
+                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
+                          <textarea 
+                            value={item.content}
+                            onChange={(e) => {
+                              const newItems = [...proposalItems];
+                              newItems[index].content = e.target.value;
+                              setProposalItems(newItems);
+                            }}
+                            placeholder="DESCRIÇÃO DA PROPOSTA..."
+                            className="bg-transparent border-none w-full min-h-[2vw] outline-none text-[1vw] placeholder:text-white/20 resize-none shadow-none"
+                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
+                          />
+                        </div>
                       )}
 
                       {item.type === 'commercial_line' && (
-                        <div className="flex gap-[0.8vw] items-center bg-transparent">
+                        <div className="flex gap-[0.8vw] items-center bg-transparent" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
                           <input 
                             placeholder="QNT"
                             className="bg-transparent border-none outline-none w-[3vw] text-center text-[1vw]"
@@ -674,6 +737,7 @@ export default function PropostasPage() {
                               newItems[index].content.qty = e.target.value;
                               setProposalItems(newItems);
                             }}
+                            style={{ color: item.style.color }}
                           />
                           <input 
                             placeholder="TEMPO"
@@ -684,6 +748,7 @@ export default function PropostasPage() {
                               newItems[index].content.time = e.target.value;
                               setProposalItems(newItems);
                             }}
+                            style={{ color: item.style.color }}
                           />
                           <input 
                             placeholder="DESCRIÇÃO"
@@ -694,26 +759,30 @@ export default function PropostasPage() {
                               newItems[index].content.desc = e.target.value;
                               setProposalItems(newItems);
                             }}
+                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
                           />
                         </div>
                       )}
 
                       {(item.type === 'digital_1' || item.type === 'digital_2') && (
-                        <button 
-                          onClick={() => setEditingDigital({ id: item.id, type: item.type })}
-                          className="flex items-center gap-2 bg-transparent w-full transition-all group/digital text-left"
-                        >
-                          <div className="text-white">
-                            <Pencil size={14} className="inline mr-2 opacity-50" />
-                            <span className="text-[1vw] font-medium">
-                              {item.content || (item.type === 'digital_1' ? 'ENTREGA DIGITAL 1' : 'ENTREGA DIGITAL 2')}
-                            </span>
-                          </div>
-                        </button>
+                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
+                          <button 
+                            onClick={() => setEditingDigital({ id: item.id, type: item.type })}
+                            className="flex items-center gap-2 bg-transparent w-full transition-all group/digital"
+                            style={{ justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}
+                          >
+                            <div style={{ color: item.style.color, textAlign: item.style.textAlign as any }}>
+                              <Pencil size={14} className="inline mr-2 opacity-50" />
+                              <span className="text-[1vw] font-medium uppercase">
+                                {item.content || (item.type === 'digital_1' ? 'ENTREGA DIGITAL 1' : 'ENTREGA DIGITAL 2')}
+                              </span>
+                            </div>
+                          </button>
+                        </div>
                       )}
 
                       {item.type === 'value' && (
-                        <div className="flex items-center gap-[0.3vw] bg-transparent w-full">
+                        <div className="flex items-center gap-[0.3vw] bg-transparent w-full" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
                           <span className="text-[1.5vw] font-black" style={{ color: item.style.color }}>R$</span>
                           <input 
                             type="number"
@@ -725,7 +794,7 @@ export default function PropostasPage() {
                             }}
                             placeholder="0,00"
                             className="bg-transparent border-none outline-none w-full font-black text-[1.8vw] placeholder:text-white/20"
-                            style={{ color: item.style.color }}
+                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
                           />
                         </div>
                       )}
