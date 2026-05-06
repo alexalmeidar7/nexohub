@@ -748,8 +748,13 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="NOME DA SEÇÃO (OPCIONAL)"
-                            className="bg-transparent border-none outline-none w-full font-black uppercase text-[1.2vw] placeholder:text-white/20"
-                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
+                            className="bg-transparent border-none outline-none w-full font-black uppercase placeholder:text-white/20"
+                            style={{ 
+                              color: item.style.color, 
+                              textAlign: item.style.textAlign as any,
+                              fontFamily: item.style.fontFamily || 'Inter',
+                              fontSize: `${item.style.fontSizeVw || 1.2}vw`
+                            }}
                           />
                         </div>
                       )}
@@ -764,8 +769,13 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="DESCRIÇÃO DA PROPOSTA..."
-                            className="bg-transparent border-none w-full min-h-[2vw] outline-none text-[1vw] placeholder:text-white/20 resize-none shadow-none"
-                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
+                            className="bg-transparent border-none w-full min-h-[2vw] outline-none placeholder:text-white/20 resize-none shadow-none"
+                            style={{ 
+                              color: item.style.color, 
+                              textAlign: item.style.textAlign as any,
+                              fontFamily: item.style.fontFamily || 'Inter',
+                              fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                            }}
                           />
                         </div>
                       )}
@@ -774,36 +784,49 @@ export default function PropostasPage() {
                         <div className="flex gap-[0.8vw] items-center bg-transparent" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
                           <input 
                             placeholder="QNT"
-                            className="bg-transparent border-none outline-none w-[3vw] text-center text-[1vw]"
+                            className="bg-transparent border-none outline-none w-[3vw] text-center"
                             value={item.content.qty}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
                               newItems[index].content.qty = e.target.value;
                               setProposalItems(newItems);
                             }}
-                            style={{ color: item.style.color }}
+                            style={{ 
+                              color: item.style.color,
+                              fontFamily: item.style.fontFamily || 'Inter',
+                              fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                            }}
                           />
                           <input 
                             placeholder="TEMPO"
-                            className="bg-transparent border-none outline-none w-[5vw] text-center text-[1vw]"
+                            className="bg-transparent border-none outline-none w-[5vw] text-center"
                             value={item.content.time}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
                               newItems[index].content.time = e.target.value;
                               setProposalItems(newItems);
                             }}
-                            style={{ color: item.style.color }}
+                            style={{ 
+                              color: item.style.color,
+                              fontFamily: item.style.fontFamily || 'Inter',
+                              fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                            }}
                           />
                           <input 
                             placeholder="DESCRIÇÃO"
-                            className="bg-transparent border-none outline-none flex-1 text-[1vw]"
+                            className="bg-transparent border-none outline-none flex-1"
                             value={item.content.desc}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
                               newItems[index].content.desc = e.target.value;
                               setProposalItems(newItems);
                             }}
-                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
+                            style={{ 
+                              color: item.style.color, 
+                              textAlign: item.style.textAlign as any,
+                              fontFamily: item.style.fontFamily || 'Inter',
+                              fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                            }}
                           />
                         </div>
                       )}
@@ -817,7 +840,10 @@ export default function PropostasPage() {
                           >
                             <div style={{ color: item.style.color, textAlign: item.style.textAlign as any }}>
                               <Pencil size={14} className="inline mr-2 opacity-50" />
-                              <span className="text-[1vw] font-medium uppercase">
+                              <span style={{ 
+                                fontFamily: item.style.fontFamily || 'Inter',
+                                fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                              }} className="font-medium uppercase">
                                 {item.content || (item.type === 'digital_1' ? 'ENTREGA DIGITAL 1' : 'ENTREGA DIGITAL 2')}
                               </span>
                             </div>
@@ -827,7 +853,10 @@ export default function PropostasPage() {
 
                       {item.type === 'value' && (
                         <div className="flex items-center gap-[0.3vw] bg-transparent w-full" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
-                          <span className="text-[1.5vw] font-black" style={{ color: item.style.color }}>R$</span>
+                          <span className="font-black" style={{ 
+                            color: item.style.color,
+                            fontSize: `${(item.style.fontSizeVw || 1.8) * 0.8}vw` 
+                          }}>R$</span>
                           <input 
                             type="number"
                             value={item.content} 
@@ -837,8 +866,13 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="0,00"
-                            className="bg-transparent border-none outline-none w-full font-black text-[1.8vw] placeholder:text-white/20"
-                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
+                            className="bg-transparent border-none outline-none w-full font-black placeholder:text-white/20"
+                            style={{ 
+                              color: item.style.color, 
+                              textAlign: item.style.textAlign as any,
+                              fontFamily: item.style.fontFamily || 'Inter',
+                              fontSize: `${item.style.fontSizeVw || 1.8}vw`
+                            }}
                           />
                         </div>
                       )}
