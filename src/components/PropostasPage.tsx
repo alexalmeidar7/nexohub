@@ -275,8 +275,10 @@ export default function PropostasPage() {
                         setCustomBg(null);
                       }
                     }}
-                    className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all hover:bg-sky-500/10 text-left w-full"
+                    className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all text-left w-full"
                     style={{ color: "var(--layout-widget-text, #1a1a1a)" }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--layout-accent-hex, #0ea5e9)22"}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
                   >
                     <span className="text-[11px] font-bold uppercase">Criar Novo Mockup</span>
                     <Plus size={12} />
@@ -290,8 +292,10 @@ export default function PropostasPage() {
                         setOverlayY(m.config?.overlayY || 5);
                         setCustomBg(m.image_url);
                       }}
-                      className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all hover:bg-sky-500/10 text-left"
+                      className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all text-left"
                       style={{ color: "var(--layout-widget-text, #1a1a1a)" }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--layout-accent-hex, #0ea5e9)22"}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
                     >
                       <span className="text-[11px] font-bold uppercase truncate">{m.name}</span>
                       <span className="text-[9px] opacity-50 uppercase">Editar</span>
@@ -613,7 +617,12 @@ export default function PropostasPage() {
               >
                 SALVAR ALTERAÇÕES NO MOCKUP
               </Button>
-              <Button variant="outline" onClick={() => setSelectedMockup(null)} className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl">
+              <Button 
+                variant="outline" 
+                onClick={() => setSelectedMockup(null)} 
+                className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl"
+                style={{ borderColor: "var(--layout-border-color, #e2e8f0)", color: "var(--layout-widget-text, #1a1a1a)" }}
+              >
                 CANCELAR
               </Button>
               <Button 
