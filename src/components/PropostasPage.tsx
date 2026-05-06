@@ -643,6 +643,38 @@ export default function PropostasPage() {
                               </div>
                             </div>
                             <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase opacity-50">Fonte</label>
+                              <select 
+                                value={item.style.fontFamily || 'Inter'}
+                                onChange={(e) => {
+                                  const newItems = [...proposalItems];
+                                  newItems[index].style.fontFamily = e.target.value;
+                                  setProposalItems(newItems);
+                                }}
+                                className="w-full bg-slate-800 border-none text-[11px] rounded p-1.5 focus:ring-1 focus:ring-sky-500"
+                              >
+                                {['Inter', 'Roboto', 'Montserrat', 'Open Sans', 'Poppins', 'Playfair Display', 'Oswald'].map(f => (
+                                  <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase opacity-50">Tamanho (vw)</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="range" min="0.5" max="5" step="0.1"
+                                  value={item.style.fontSizeVw || (item.type === 'value' ? 1.8 : 1.0)}
+                                  onChange={(e) => {
+                                    const newItems = [...proposalItems];
+                                    newItems[index].style.fontSizeVw = parseFloat(e.target.value);
+                                    setProposalItems(newItems);
+                                  }}
+                                  className="flex-1 accent-sky-500"
+                                />
+                                <span className="text-[10px] w-8 text-right">{(item.style.fontSizeVw || (item.type === 'value' ? 1.8 : 1.0)).toFixed(1)}</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
                               <label className="text-[10px] font-bold uppercase opacity-50">Espaçamento (vw)</label>
                               <input 
                                 type="range" min="0" max="5" step="0.1"
@@ -657,16 +689,28 @@ export default function PropostasPage() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-[10px] font-bold uppercase opacity-50">Cor do Texto</label>
-                              <input 
-                                type="color"
-                                value={item.style.color || "#ffffff"}
-                                onChange={(e) => {
-                                  const newItems = [...proposalItems];
-                                  newItems[index].style.color = e.target.value;
-                                  setProposalItems(newItems);
-                                }}
-                                className="w-full h-8 bg-transparent cursor-pointer"
-                              />
+                              <div className="flex gap-2">
+                                <input 
+                                  type="color"
+                                  value={item.style.color || "#ffffff"}
+                                  onChange={(e) => {
+                                    const newItems = [...proposalItems];
+                                    newItems[index].style.color = e.target.value;
+                                    setProposalItems(newItems);
+                                  }}
+                                  className="flex-1 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
+                                />
+                                <input 
+                                  type="text"
+                                  value={item.style.color || "#ffffff"}
+                                  onChange={(e) => {
+                                    const newItems = [...proposalItems];
+                                    newItems[index].style.color = e.target.value;
+                                    setProposalItems(newItems);
+                                  }}
+                                  className="w-16 bg-slate-800 text-[10px] rounded px-1 border-none uppercase"
+                                />
+                              </div>
                             </div>
                           </PopoverContent>
                         </Popover>
