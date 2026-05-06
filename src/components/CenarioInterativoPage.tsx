@@ -3149,12 +3149,18 @@ export default function CenarioInterativoPage() {
                                   {mockMessages.map((m, i) => (
                                     <div
                                       key={i}
-                                      className="absolute flex flex-col items-center text-center w-[90%]"
+                                      className="absolute flex flex-col items-center text-center w-[90%] rounded-[3vh]"
                                       style={{
                                         opacity: i === previewChatMessageIdx ? 1 : 0,
                                         transform: `translateY(${i === previewChatMessageIdx ? '0' : '20px'})`,
                                         visibility: i === previewChatMessageIdx ? 'visible' : 'hidden',
                                         transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                                        background: 'rgba(0, 0, 0, 0.5)',
+                                        backdropFilter: 'blur(20px)',
+                                        WebkitBackdropFilter: 'blur(20px)',
+                                        padding: `${pvh(4)}px`,
+                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
                                       }}
                                     >
                                       {/* User Avatar Circle */}
@@ -3165,7 +3171,6 @@ export default function CenarioInterativoPage() {
                                           height: pvh(12), 
                                           background: "rgba(255,255,255,0.1)", 
                                           borderColor: "var(--layout-accent-color, #444)",
-                                          backdropFilter: 'blur(10px)'
                                         }}
                                       >
                                         <span className="font-black" style={{ fontSize: pvh(5), color: '#fff' }}>
