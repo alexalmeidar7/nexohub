@@ -1048,6 +1048,43 @@ export default function AgendaPage() {
     return days;
   }, [eventos, filterLocal, now]);
 
+  // Past events from the last 6 months
+  const pastEvents = useMemo(() => {
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    
+    const sixMonthsAgo = new Date(today);
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    
+    const days: { dateStr: string; date: Date; events: Evento[] }[] = [];
+    
+    // We'll iterate backwards from yesterday to 6 months ago
+    const tempDate = new Date(today);
+    tempDate.setDate(tempDate.getDate() - 1);
+    
+    while (tempDate >= sixMonthsAgo) {
+      const ds = format(tempDate, "yyyy-MM-dd");
+      const monthStr = format(tempDate, "MMMM", { locale: ptBR });
+      
+      const dayEvents = eventos.filter((e) => {
+        const matchLocal = filterLocal === "todos" || e.local === filterLocal;
+        const matchMonth = pastMonthFilter === "todos" || monthStr.toLowerCase() === pastMonthFilter.toLowerCase();
+        
+        // Use eventMatchesDate to handle recurring events as well in history
+        const isMatch = matchLocal && matchMonth && eventMatchesDate(e, ds);
+        return isMatch;
+      });
+      
+      if (dayEvents.length > 0) {
+        days.push({ dateStr: ds, date: new Date(tempDate), events: dayEvents });
+      }
+      
+      tempDate.setDate(tempDate.getDate() - 1);
+    }
+    return days;
+  }, [eventos, filterLocal, pastMonthFilter, now]);
+
+
   // Week view: Monday to Sunday of the currently selected week
   const weekEvents = useMemo(() => {
     const ref = selectedDate ? new Date(selectedDate) : now;
