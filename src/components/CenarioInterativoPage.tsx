@@ -1283,59 +1283,19 @@ export default function CenarioInterativoPage() {
   }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab, externalRotation]);
 
   const updateHome = (partial: Partial<HomeConfig>) => {
-    setConfig(c => {
-      const next = { ...c, home: { ...c.home, ...partial } };
-      rtDrawChannelRef.current?.send({
-        type: "broadcast",
-        event: "config-update",
-        payload: { config: next }
-      });
-      return next;
-    });
+    setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
   };
   const updateWeather = (partial: Partial<WeatherConfig>) => {
-    setConfig(c => {
-      const next = { ...c, weather: { ...c.weather, ...partial } };
-      rtDrawChannelRef.current?.send({
-        type: "broadcast",
-        event: "config-update",
-        payload: { config: next }
-      });
-      return next;
-    });
+    setConfig(c => ({ ...c, weather: { ...c.weather, ...partial } }));
   };
   const updateTraffic = (partial: Partial<TrafficConfig>) => {
-    setConfig(c => {
-      const next = { ...c, traffic: { ...c.traffic, ...partial } };
-      rtDrawChannelRef.current?.send({
-        type: "broadcast",
-        event: "config-update",
-        payload: { config: next }
-      });
-      return next;
-    });
+    setConfig(c => ({ ...c, traffic: { ...c.traffic, ...partial } }));
   };
   const updateCurrency = (partial: Partial<CurrencyConfig>) => {
-    setConfig(c => {
-      const next = { ...c, currency: { ...c.currency, ...partial } };
-      rtDrawChannelRef.current?.send({
-        type: "broadcast",
-        event: "config-update",
-        payload: { config: next }
-      });
-      return next;
-    });
+    setConfig(c => ({ ...c, currency: { ...c.currency, ...partial } }));
   };
   const updateChat = (partial: Partial<ChatConfig>) => {
-    setConfig(c => {
-      const next = { ...c, chat: { ...c.chat, ...partial } };
-      rtDrawChannelRef.current?.send({
-        type: "broadcast",
-        event: "config-update",
-        payload: { config: next }
-      });
-      return next;
-    });
+    setConfig(c => ({ ...c, chat: { ...c.chat, ...partial } }));
   };
 
   const getElPos = useCallback((id: string): ElementPosition => {
