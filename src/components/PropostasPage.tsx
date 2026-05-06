@@ -900,7 +900,9 @@ export default function PropostasPage() {
                             style={{ 
                               color: item.style.color,
                               fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                              fontSize: `${item.style.fontSizeVw || 1.0}vw`,
+                              fontWeight: item.style.fontWeight || 'normal',
+                              fontStyle: item.style.fontStyle || 'normal'
                             }}
                           />
                           <input 
