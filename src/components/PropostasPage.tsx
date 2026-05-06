@@ -18,7 +18,6 @@ export default function PropostasPage() {
   const [propostas, setPropostas] = useState<any[]>([]);
   const [mockups, setMockups] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
   const [selectedProposta, setSelectedProposta] = useState<any>(null);
   const [selectedMockup, setSelectedMockup] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
@@ -207,100 +206,99 @@ export default function PropostasPage() {
       {isLoading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-sky-500" /></div>
       ) : selectedMockup ? (
-        <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex items-center justify-center relative overflow-hidden">
+        <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-4 md:p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex flex-col items-center relative overflow-hidden">
           <button 
             onClick={() => setSelectedMockup(null)} 
-            className="absolute top-4 right-4 z-10 p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all"
+            className="absolute top-4 right-4 z-20 p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all"
             title="Cancelar edição"
           >
             <X size={20} />
           </button>
 
-          <div 
-            className="bg-white shadow-2xl relative overflow-hidden flex-shrink-0"
-            style={{ 
-              width: "1920px", 
-              height: "1080px", 
-              transform: "scale(0.35)", 
-              transformOrigin: "center center"
-            }}
-          >
-            {/* Background Mockup */}
-            <img 
-              src={selectedMockup?.image_url} 
-              className="absolute inset-0 w-full h-full object-cover"
-              alt="Mockup Preview"
-            />
+          <div className="w-full max-w-[1400px] mx-auto flex flex-col items-center">
+            <div 
+              className="bg-white shadow-2xl relative overflow-hidden w-full h-auto"
+              style={{ 
+                aspectRatio: "1920 / 1080",
+              }}
+            >
+              {/* Background Mockup */}
+              <img 
+                src={selectedMockup?.image_url} 
+                className="absolute inset-0 w-full h-full object-cover"
+                alt="Mockup Preview"
+              />
 
-            {/* Editable Overlay */}
-            <div className="absolute inset-0 p-20 flex flex-col pointer-events-auto">
-              <div className="mb-12">
-                <p className="text-xl font-bold uppercase tracking-[0.2em] text-sky-400 mb-2">PROPOSTA PARA</p>
-                <input 
-                  type="text"
-                  value={formData.cliente || ""} 
-                  onChange={e => setFormData({...formData, cliente: e.target.value})}
-                  placeholder="DIGITE O CLIENTE..."
-                  className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-6xl font-black uppercase leading-tight text-white border-none outline-none w-full p-2 rounded transition-all placeholder:text-white/30"
-                />
-              </div>
-
-              <div className="grid grid-cols-4 gap-8 h-full pb-20 text-white">
-                <div className="space-y-4">
-                  <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">01. DESCRIÇÃO</p>
-                  <textarea 
-                    value={formData.descricao || ""} 
-                    onChange={e => setFormData({...formData, descricao: e.target.value})}
-                    placeholder="Descrição da proposta..."
-                    className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-lg opacity-90 leading-relaxed text-white border-none outline-none w-full h-full p-2 rounded transition-all placeholder:text-white/30 resize-none"
+              {/* Editable Overlay */}
+              <div className="absolute inset-0 p-[5%] flex flex-col pointer-events-auto">
+                <div className="mb-[2%]">
+                  <p className="text-[1.2vw] font-bold uppercase tracking-[0.2em] text-sky-400 mb-[0.5%]">PROPOSTA PARA</p>
+                  <input 
+                    type="text"
+                    value={formData.cliente || ""} 
+                    onChange={e => setFormData({...formData, cliente: e.target.value})}
+                    placeholder="DIGITE O CLIENTE..."
+                    className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-[3.5vw] font-black uppercase leading-tight text-white border-none outline-none w-full p-[0.5%] rounded transition-all placeholder:text-white/30"
                   />
                 </div>
 
-                <div className="space-y-4">
-                  <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">02. ENTREGA COMERCIAL</p>
-                  <textarea 
-                    value={formData.entrega_comercial || ""} 
-                    onChange={e => setFormData({...formData, entrega_comercial: e.target.value})}
-                    placeholder="Qtd | Tempo | Descrição..."
-                    className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-lg opacity-90 leading-relaxed text-white border-none outline-none w-full h-full p-2 rounded transition-all placeholder:text-white/30 resize-none"
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">03. ENTREGA DIGITAL</p>
-                  <textarea 
-                    value={formData.entrega_digital || ""} 
-                    onChange={e => setFormData({...formData, entrega_digital: e.target.value})}
-                    placeholder="Redes sociais, apps..."
-                    className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-lg opacity-90 leading-relaxed text-white border-none outline-none w-full h-full p-2 rounded transition-all placeholder:text-white/30 resize-none"
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">04. INVESTIMENTO</p>
-                  <div className="flex items-center gap-2 bg-black/10 p-2 rounded">
-                    <span className="text-2xl font-bold text-white">R$</span>
-                    <input 
-                      type="number"
-                      value={formData.valor || ""} 
-                      onChange={e => setFormData({...formData, valor: e.target.value})}
-                      placeholder="0,00"
-                      className="bg-transparent text-4xl font-black text-white border-none outline-none w-full placeholder:text-white/30"
+                <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] text-white">
+                  <div className="space-y-[1vw]">
+                    <p className="text-[0.8vw] font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-[0.5vw]">01. DESCRIÇÃO</p>
+                    <textarea 
+                      value={formData.descricao || ""} 
+                      onChange={e => setFormData({...formData, descricao: e.target.value})}
+                      placeholder="Descrição da proposta..."
+                      className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-[1vw] opacity-90 leading-relaxed text-white border-none outline-none w-full h-[15vw] p-[0.5vw] rounded transition-all placeholder:text-white/30 resize-none"
                     />
+                  </div>
+
+                  <div className="space-y-[1vw]">
+                    <p className="text-[0.8vw] font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-[0.5vw]">02. ENTREGA COMERCIAL</p>
+                    <textarea 
+                      value={formData.entrega_comercial || ""} 
+                      onChange={e => setFormData({...formData, entrega_comercial: e.target.value})}
+                      placeholder="Qtd | Tempo | Descrição..."
+                      className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-[1vw] opacity-90 leading-relaxed text-white border-none outline-none w-full h-[15vw] p-[0.5vw] rounded transition-all placeholder:text-white/30 resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-[1vw]">
+                    <p className="text-[0.8vw] font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-[0.5vw]">03. ENTREGA DIGITAL</p>
+                    <textarea 
+                      value={formData.entrega_digital || ""} 
+                      onChange={e => setFormData({...formData, entrega_digital: e.target.value})}
+                      placeholder="Redes sociais, apps..."
+                      className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-[1vw] opacity-90 leading-relaxed text-white border-none outline-none w-full h-[15vw] p-[0.5vw] rounded transition-all placeholder:text-white/30 resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-[1vw]">
+                    <p className="text-[0.8vw] font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-[0.5vw]">04. INVESTIMENTO</p>
+                    <div className="flex items-center gap-[0.5vw] bg-black/10 p-[0.5vw] rounded">
+                      <span className="text-[1.5vw] font-bold text-white">R$</span>
+                      <input 
+                        type="number"
+                        value={formData.valor || ""} 
+                        onChange={e => setFormData({...formData, valor: e.target.value})}
+                        placeholder="0,00"
+                        className="bg-transparent text-[2vw] font-black text-white border-none outline-none w-full placeholder:text-white/30"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div className="absolute bottom-8 right-8 z-10 flex gap-3">
-            <Button variant="outline" onClick={() => setSelectedMockup(null)} className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl">
-              CANCELAR
-            </Button>
-            <Button onClick={handleCreateProposta} className="h-12 px-10 btn-skyglass-accent font-bold uppercase text-[11px] shadow-xl">
-              <Send size={16} className="mr-2" />
-              SALVAR E ENVIAR PARA ARTE FINAL
-            </Button>
+
+            <div className="w-full flex justify-end gap-3 mt-6">
+              <Button variant="outline" onClick={() => setSelectedMockup(null)} className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl">
+                CANCELAR
+              </Button>
+              <Button onClick={handleCreateProposta} className="h-12 px-10 btn-skyglass-accent font-bold uppercase text-[11px] shadow-xl">
+                <Send size={16} className="mr-2" />
+                SALVAR E ENVIAR PARA ARTE FINAL
+              </Button>
+            </div>
           </div>
         </div>
       ) : propostas.length === 0 ? (
@@ -377,7 +375,6 @@ export default function PropostasPage() {
         </div>
       )}
 
-      {/* Details / Preview Modal */}
       <Dialog open={!!selectedProposta} onOpenChange={(open) => !open && setSelectedProposta(null)}>
         <DialogContent className="max-w-4xl max-h-[95vh] flex flex-col p-0">
           {selectedProposta && (
