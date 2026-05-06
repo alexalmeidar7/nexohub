@@ -449,6 +449,15 @@ export default function PropostasPage() {
                         );
                       })}
                     </div>
+                    <div className="pt-6 border-t">
+                      <Button 
+                        onClick={() => handleDeleteProposta(selectedProposta.id)} 
+                        variant="ghost" 
+                        className="w-full text-red-500 hover:text-red-700 hover:bg-red-50 text-[10px] font-bold uppercase h-8"
+                      >
+                        <Trash2 size={12} className="mr-2" /> Excluir permanentemente
+                      </Button>
+                    </div>
                   </div>
 
                   {selectedProposta.status === "concluido" && (
