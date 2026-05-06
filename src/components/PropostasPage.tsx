@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown } from "lucide-react";
+import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown, Layout, Type, List, Pencil, DollarSign, GripVertical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -30,6 +30,9 @@ export default function PropostasPage() {
     valorStyle: { color: "#ffffff", fontSize: 14, fontWeight: "900" },
   });
   const [overlayY, setOverlayY] = useState(5); // % from top
+  const [proposalItems, setProposalItems] = useState<any[]>([]);
+  const [editingDigital, setEditingDigital] = useState<{ id: string, type: 'digital_1' | 'digital_2' } | null>(null);
+
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
   const [startOverlayY, setStartOverlayY] = useState(5);
@@ -382,6 +385,70 @@ export default function PropostasPage() {
         <div className="flex justify-center p-12"><Loader2 className="animate-spin" style={{ color: "var(--layout-accent-hex, #0ea5e9)" }} /></div>
       ) : selectedMockup ? (
         <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-4 md:p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex flex-col items-center relative overflow-hidden group/overlay">
+          {/* Mockup Toolbar */}
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-3 p-3 bg-white/90 backdrop-blur shadow-2xl rounded-2xl border border-white/50">
+            <div 
+              draggable 
+              onDragStart={(e) => e.dataTransfer.setData("type", "section")}
+              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
+              title="CRIAR SEÇÃO"
+            >
+              <Layout size={20} />
+              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">CRIAR SEÇÃO</span>
+            </div>
+            <div 
+              draggable 
+              onDragStart={(e) => e.dataTransfer.setData("type", "text")}
+              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
+              title="CAMPO DE TEXTO"
+            >
+              <Type size={20} />
+              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">CAMPO DE TEXTO</span>
+            </div>
+            <div 
+              draggable 
+              onDragStart={(e) => e.dataTransfer.setData("type", "commercial_line")}
+              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
+              title="LINHA COMERCIAL"
+            >
+              <List size={20} />
+              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">LINHA COMERCIAL</span>
+            </div>
+            <div 
+              draggable 
+              onDragStart={(e) => e.dataTransfer.setData("type", "digital_1")}
+              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
+              title="DIGITAL 1"
+            >
+              <div className="relative">
+                <Layout size={20} />
+                <Pencil size={10} className="absolute -bottom-1 -right-1" />
+              </div>
+              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">DIGITAL 1</span>
+            </div>
+            <div 
+              draggable 
+              onDragStart={(e) => e.dataTransfer.setData("type", "digital_2")}
+              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
+              title="DIGITAL 2"
+            >
+              <div className="relative">
+                <Layout size={20} className="opacity-70" />
+                <Pencil size={10} className="absolute -bottom-1 -right-1" />
+              </div>
+              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">DIGITAL 2</span>
+            </div>
+            <div 
+              draggable 
+              onDragStart={(e) => e.dataTransfer.setData("type", "value")}
+              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
+              title="VALOR"
+            >
+              <DollarSign size={20} />
+              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">VALOR</span>
+            </div>
+          </div>
+
           <div className="absolute top-4 right-4 z-20 flex gap-2">
             <Label 
               htmlFor="bg-upload" 
