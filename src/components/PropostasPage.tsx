@@ -867,7 +867,7 @@ export default function PropostasPage() {
                       )}
 
                       {item.type === 'text' && (
-                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
+                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any, background: 'none', backgroundColor: 'transparent' }}>
                           <textarea 
                             value={item.content}
                             onChange={(e) => {
@@ -876,7 +876,7 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="DESCRIÇÃO DA PROPOSTA..."
-                            className="bg-transparent border-0 w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent"
+                            className="bg-transparent border-0 w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent selection:bg-sky-500/30"
                             style={{ 
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
