@@ -46,7 +46,10 @@ export default function PropostasPage() {
       user_id: user.id,
       mockup_id: selectedMockup.id,
       title: formData.cliente ? `Proposta - ${formData.cliente}` : "Nova Proposta",
-      data: formData,
+      data: {
+        ...formData,
+        cliente: formData.cliente || "Cliente Não Informado"
+      },
       status: "arte_final"
     }).select().single();
 
@@ -209,6 +212,18 @@ export default function PropostasPage() {
 
                     <div className="space-y-4">
                       <p className="text-[10px] font-bold uppercase text-slate-400">Preencha as informações</p>
+                      
+                      {/* Cliente Field (Sempre presente) */}
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] font-bold uppercase text-slate-500">Nome do Cliente</Label>
+                        <Input 
+                          value={formData.cliente || ""} 
+                          onChange={e => setFormData({...formData, cliente: e.target.value})}
+                          placeholder="Digite o nome do cliente..."
+                          className="text-xs h-9"
+                        />
+                      </div>
+
                       {(selectedMockup?.fields as any[] || []).map((f: any) => (
                         <div key={f.name} className="space-y-1.5">
                           <Label className="text-[10px] font-bold uppercase text-slate-500">{f.label}</Label>
@@ -258,37 +273,41 @@ export default function PropostasPage() {
                         alt="Mockup Preview"
                       />
 
-                      {/* Content Overlay - This would be styled according to the mockup design */}
-                      <div className="absolute inset-0 p-24 flex flex-col text-white pointer-events-none">
-                        <div className="mt-auto max-w-[800px] space-y-8 drop-shadow-2xl">
-                          {formData.cliente && (
-                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                              <p className="text-2xl font-bold uppercase tracking-[0.2em] text-sky-400">PROPOSTA PARA</p>
-                              <h1 className="text-8xl font-black uppercase leading-tight">{formData.cliente}</h1>
-                            </div>
-                          )}
-                          
-                          <div className="flex gap-16 pt-8 animate-in fade-in slide-in-from-bottom-4 delay-150 duration-500">
-                            {formData.vendedor && (
-                              <div>
-                                <p className="text-lg font-bold text-sky-400 uppercase tracking-widest">CONSULTOR</p>
-                                <p className="text-3xl font-bold uppercase">{formData.vendedor}</p>
-                              </div>
-                            )}
-                            {formData.valor && (
-                              <div>
-                                <p className="text-lg font-bold text-sky-400 uppercase tracking-widest">INVESTIMENTO</p>
-                                <p className="text-3xl font-bold uppercase">R$ {parseFloat(formData.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                              </div>
-                            )}
+                      {/* Content Overlay - Adjusted for the new 4-column structure */}
+                      <div className="absolute inset-0 p-20 flex flex-col text-white pointer-events-none">
+                        <div className="flex justify-between items-start mb-12">
+                           <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                              <p className="text-xl font-bold uppercase tracking-[0.2em] text-sky-400">PROPOSTA PARA</p>
+                              <h1 className="text-6xl font-black uppercase leading-tight">{formData.cliente || "CLIENTE"}</h1>
+                           </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-8 h-full pb-20">
+                          {/* Col 1: Descrição */}
+                          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 delay-75">
+                            <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">01. DESCRIÇÃO</p>
+                            <p className="text-lg opacity-90 leading-relaxed whitespace-pre-wrap">{formData.descricao}</p>
                           </div>
 
-                          {formData.observacoes && (
-                            <div className="pt-8 border-t border-white/20 animate-in fade-in delay-300 duration-500">
-                              <p className="text-lg font-bold text-sky-400 uppercase tracking-widest mb-2">DETALHES</p>
-                              <p className="text-2xl opacity-90 leading-relaxed max-w-[900px]">{formData.observacoes}</p>
-                            </div>
-                          )}
+                          {/* Col 2: Entrega Comercial */}
+                          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 delay-150">
+                            <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">02. ENTREGA COMERCIAL</p>
+                            <p className="text-lg opacity-90 leading-relaxed whitespace-pre-wrap">{formData.entrega_comercial}</p>
+                          </div>
+
+                          {/* Col 3: Entrega Digital */}
+                          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 delay-300">
+                            <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">03. ENTREGA DIGITAL</p>
+                            <p className="text-lg opacity-90 leading-relaxed whitespace-pre-wrap">{formData.entrega_digital}</p>
+                          </div>
+
+                          {/* Col 4: Valor */}
+                          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 delay-500">
+                            <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">04. INVESTIMENTO</p>
+                            {formData.valor && (
+                              <p className="text-4xl font-black text-white">R$ {parseFloat(formData.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            )}
+                          </div>
                         </div>
                       </div>
 
