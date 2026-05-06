@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2 } from "lucide-react";
+import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
 
@@ -19,7 +20,6 @@ export default function PropostasPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedProposta, setSelectedProposta] = useState<any>(null);
-  const [step, setStep] = useState(1);
   const [selectedMockup, setSelectedMockup] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
   const [uploadingArt, setUploadingArt] = useState(false);
@@ -57,16 +57,10 @@ export default function PropostasPage() {
       toast.error("Erro ao criar proposta");
     } else {
       toast.success("Proposta enviada para Arte Final!");
-      setIsCreating(false);
-      resetForm();
+      setSelectedMockup(null);
+      setFormData({});
       fetchData();
     }
-  };
-
-  const resetForm = () => {
-    setStep(1);
-    setSelectedMockup(null);
-    setFormData({});
   };
 
   const handleUploadArt = async (e: React.ChangeEvent<HTMLInputElement>, propostaId: string) => {
@@ -181,174 +175,38 @@ export default function PropostasPage() {
           <h2 className="text-sm font-bold uppercase" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Propostas Comerciais</h2>
           <p className="text-[11px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Crie e gerencie suas propostas</p>
         </div>
-        <Dialog open={isCreating} onOpenChange={(open) => { setIsCreating(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
+        
+        <Popover>
+          <PopoverTrigger asChild>
             <Button className="btn-skyglass-accent h-9 text-xs">
               <Plus size={14} className="mr-1" />
               NOVA PROPOSTA
+              <ChevronDown size={14} className="ml-1 opacity-50" />
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-[95vw] w-[1300px] h-[90vh] flex flex-col p-0 overflow-hidden">
-            <DialogHeader className="p-4 border-b">
-              <DialogTitle>Criar Proposta - Passo {step}</DialogTitle>
-            </DialogHeader>
-            
-            <div className="flex-1 flex overflow-hidden">
-              {step === 1 ? (
-                <div className="flex-1 p-6 overflow-y-auto">
-                  <p className="text-xs font-semibold mb-4 uppercase text-slate-500">Selecione o Mockup base para sua proposta:</p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {mockups.map(m => (
-                      <div 
-                        key={m.id} 
-                        onClick={() => { setSelectedMockup(m); setStep(2); }}
-                        className="group relative cursor-pointer overflow-hidden rounded-xl border transition-all hover:border-sky-500 hover:shadow-lg"
-                      >
-                        <div className="aspect-video relative overflow-hidden">
-                          <img src={m.image_url} alt={m.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                        </div>
-                        <div className="p-3 bg-white">
-                          <p className="text-[10px] font-bold text-slate-700 uppercase truncate">{m.name}</p>
-                        </div>
-                      </div>
-                    ))}
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-2" align="end">
+            <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 px-2">Escolha um mockup para começar:</p>
+            <div className="grid grid-cols-1 gap-1">
+              {mockups.map(m => (
+                <button 
+                  key={m.id} 
+                  onClick={() => { setSelectedMockup(m); setFormData({}); }}
+                  className="flex items-center gap-3 p-2 hover:bg-slate-100 rounded-lg transition-all text-left"
+                >
+                  <div className="w-12 h-8 rounded overflow-hidden border bg-slate-200">
+                    <img src={m.image_url} className="w-full h-full object-cover" />
                   </div>
-                </div>
-              ) : (
-                <>
-                  {/* Left Panel: Form */}
-                  <div className="w-[350px] border-r bg-slate-50 p-6 flex flex-col gap-6 overflow-y-auto animate-in slide-in-from-left-4">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-bold uppercase text-sky-600">Mockup Selecionado</p>
-                      <div className="flex items-center justify-between p-2 bg-white rounded border">
-                        <span className="text-[11px] font-bold truncate pr-2 uppercase">{selectedMockup?.name}</span>
-                        <Button variant="ghost" size="sm" onClick={() => setStep(1)} className="h-6 px-2 text-[9px] font-bold">TROCAR</Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <p className="text-[10px] font-bold uppercase text-slate-400">Preencha as informações</p>
-                      
-                      {/* Cliente Field (Sempre presente) */}
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-bold uppercase text-slate-500">Nome do Cliente</Label>
-                        <Input 
-                          value={formData.cliente || ""} 
-                          onChange={e => setFormData({...formData, cliente: e.target.value})}
-                          placeholder="Digite o nome do cliente..."
-                          className="text-xs h-9"
-                        />
-                      </div>
-
-                      {(selectedMockup?.fields as any[] || []).map((f: any) => (
-                        <div key={f.name} className="space-y-1.5">
-                          <Label className="text-[10px] font-bold uppercase text-slate-500">{f.label}</Label>
-                          {f.type === "textarea" ? (
-                            <Textarea 
-                              value={formData[f.name] || ""} 
-                              onChange={e => setFormData({...formData, [f.name]: e.target.value})}
-                              placeholder={`Digite o ${f.label.toLowerCase()}...`}
-                              className="text-xs min-h-[80px]"
-                            />
-                          ) : (
-                            <Input 
-                              type={f.type} 
-                              value={formData[f.name] || ""} 
-                              onChange={e => setFormData({...formData, [f.name]: e.target.value})}
-                              placeholder={`Digite o ${f.label.toLowerCase()}...`}
-                              className="text-xs h-9"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-auto pt-6 border-t">
-                      <Button onClick={handleCreateProposta} className="w-full btn-skyglass-accent h-10 text-[11px] font-bold">
-                        <Send size={14} className="mr-2" />
-                        ENVIAR PARA ARTE FINAL
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Right Panel: Canvas (Live Preview) */}
-                  <div className="flex-1 bg-slate-200 p-8 flex items-center justify-center overflow-auto">
-                    <div 
-                      className="bg-white shadow-2xl relative overflow-hidden flex-shrink-0"
-                      style={{ 
-                        width: "1920px", 
-                        height: "1080px", 
-                        transform: "scale(0.4)", // Adjusted scale to fit in most views while maintaining high-res aspect
-                        transformOrigin: "center center"
-                      }}
-                    >
-                      {/* Background Mockup */}
-                      <img 
-                        src={selectedMockup?.image_url} 
-                        className="absolute inset-0 w-full h-full object-cover"
-                        alt="Mockup Preview"
-                      />
-
-                      {/* Content Overlay - Adjusted for the new 4-column structure */}
-                      <div className="absolute inset-0 p-20 flex flex-col text-white pointer-events-none">
-                        <div className="flex justify-between items-start mb-12">
-                           <div className="animate-in fade-in slide-in-from-left-4 duration-500">
-                              <p className="text-xl font-bold uppercase tracking-[0.2em] text-sky-400">PROPOSTA PARA</p>
-                              <h1 className="text-6xl font-black uppercase leading-tight">{formData.cliente || "CLIENTE"}</h1>
-                           </div>
-                        </div>
-
-                        <div className="grid grid-cols-4 gap-8 h-full pb-20">
-                          {/* Col 1: Descrição */}
-                          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 delay-75">
-                            <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">01. DESCRIÇÃO</p>
-                            <p className="text-lg opacity-90 leading-relaxed whitespace-pre-wrap">{formData.descricao}</p>
-                          </div>
-
-                          {/* Col 2: Entrega Comercial */}
-                          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 delay-150">
-                            <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">02. ENTREGA COMERCIAL</p>
-                            <p className="text-lg opacity-90 leading-relaxed whitespace-pre-wrap">{formData.entrega_comercial}</p>
-                          </div>
-
-                          {/* Col 3: Entrega Digital */}
-                          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 delay-300">
-                            <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">03. ENTREGA DIGITAL</p>
-                            <p className="text-lg opacity-90 leading-relaxed whitespace-pre-wrap">{formData.entrega_digital}</p>
-                          </div>
-
-                          {/* Col 4: Valor */}
-                          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 delay-500">
-                            <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">04. INVESTIMENTO</p>
-                            {formData.valor && (
-                              <p className="text-4xl font-black text-white">R$ {parseFloat(formData.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Guide/Resolution indicator */}
-                      <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-[20px] font-bold backdrop-blur-md">
-                        1920 x 1080
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
+                  <span className="text-[11px] font-bold uppercase truncate">{m.name}</span>
+                </button>
+              ))}
             </div>
-          </DialogContent>
-        </Dialog>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-sky-500" /></div>
-      ) : propostas.length === 0 && !selectedMockup ? (
-        <div className="rounded-xl p-12 text-center border bg-slate-50/50">
-          <FileText size={40} className="mx-auto mb-4 text-slate-300" />
-          <p className="text-sm font-semibold text-slate-500">Nenhuma proposta cadastrada</p>
-          <p className="text-xs text-slate-400 mt-1">Clique em "NOVA PROPOSTA" para começar seu fluxo</p>
-        </div>
-      ) : selectedMockup && !isCreating ? (
+      ) : selectedMockup ? (
         <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex items-center justify-center relative overflow-hidden">
           <button 
             onClick={() => setSelectedMockup(null)} 
@@ -376,7 +234,6 @@ export default function PropostasPage() {
 
             {/* Editable Overlay */}
             <div className="absolute inset-0 p-20 flex flex-col pointer-events-auto">
-              {/* Cliente Input Overlay */}
               <div className="mb-12">
                 <p className="text-xl font-bold uppercase tracking-[0.2em] text-sky-400 mb-2">PROPOSTA PARA</p>
                 <input 
@@ -388,8 +245,7 @@ export default function PropostasPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-4 gap-8 h-full pb-20">
-                {/* Col 1: Descrição */}
+              <div className="grid grid-cols-4 gap-8 h-full pb-20 text-white">
                 <div className="space-y-4">
                   <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">01. DESCRIÇÃO</p>
                   <textarea 
@@ -400,7 +256,6 @@ export default function PropostasPage() {
                   />
                 </div>
 
-                {/* Col 2: Entrega Comercial */}
                 <div className="space-y-4">
                   <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">02. ENTREGA COMERCIAL</p>
                   <textarea 
@@ -411,7 +266,6 @@ export default function PropostasPage() {
                   />
                 </div>
 
-                {/* Col 3: Entrega Digital */}
                 <div className="space-y-4">
                   <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">03. ENTREGA DIGITAL</p>
                   <textarea 
@@ -422,7 +276,6 @@ export default function PropostasPage() {
                   />
                 </div>
 
-                {/* Col 4: Valor */}
                 <div className="space-y-4">
                   <p className="text-sm font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-2">04. INVESTIMENTO</p>
                   <div className="flex items-center gap-2 bg-black/10 p-2 rounded">
@@ -441,14 +294,20 @@ export default function PropostasPage() {
           </div>
           
           <div className="absolute bottom-8 right-8 z-10 flex gap-3">
-            <Button variant="outline" onClick={() => setSelectedMockup(null)} className="h-12 px-6 font-bold uppercase text-[11px] bg-white">
+            <Button variant="outline" onClick={() => setSelectedMockup(null)} className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl">
               CANCELAR
             </Button>
-            <Button onClick={handleCreateProposta} className="h-12 px-10 btn-skyglass-accent font-bold uppercase text-[11px]">
+            <Button onClick={handleCreateProposta} className="h-12 px-10 btn-skyglass-accent font-bold uppercase text-[11px] shadow-xl">
               <Send size={16} className="mr-2" />
               SALVAR E ENVIAR PARA ARTE FINAL
             </Button>
           </div>
+        </div>
+      ) : propostas.length === 0 ? (
+        <div className="rounded-xl p-12 text-center border bg-slate-50/50">
+          <FileText size={40} className="mx-auto mb-4 text-slate-300" />
+          <p className="text-sm font-semibold text-slate-500">Nenhuma proposta cadastrada</p>
+          <p className="text-xs text-slate-400 mt-1">Clique em "NOVA PROPOSTA" e escolha um mockup para começar</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -551,15 +410,6 @@ export default function PropostasPage() {
                         );
                       })}
                     </div>
-                    <div className="pt-6 border-t">
-                      <Button 
-                        onClick={() => handleDeleteProposta(selectedProposta.id)} 
-                        variant="ghost" 
-                        className="w-full text-red-500 hover:text-red-700 hover:bg-red-50 text-[10px] font-bold uppercase h-8"
-                      >
-                        <Trash2 size={12} className="mr-2" /> Excluir permanentemente
-                      </Button>
-                    </div>
                   </div>
 
                   {selectedProposta.status === "concluido" && (
@@ -576,6 +426,16 @@ export default function PropostasPage() {
                       </Button>
                     </div>
                   )}
+
+                  <div className="pt-6 border-t">
+                    <Button 
+                      onClick={() => handleDeleteProposta(selectedProposta.id)} 
+                      variant="ghost" 
+                      className="w-full text-red-500 hover:text-red-700 hover:bg-red-50 text-[10px] font-bold uppercase h-8"
+                    >
+                      <Trash2 size={12} className="mr-2" /> Excluir permanentemente
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="flex-1 bg-slate-100 rounded-xl flex items-center justify-center p-8 overflow-hidden relative">
@@ -584,14 +444,12 @@ export default function PropostasPage() {
                     className="relative bg-white shadow-2xl"
                     style={{ width: "400px", aspectRatio: "1/1.414" }}
                   >
-                    {/* Background: Mockup if no art, or Final Art if available */}
                     <img 
                       src={selectedProposta.final_art_url || selectedProposta.mockup?.image_url} 
                       className="w-full h-full object-cover"
                       crossOrigin="anonymous"
                     />
                     
-                    {/* Overlay dynamic fields if it's the draft/preview stage or if requested */}
                     {!selectedProposta.final_art_url && (
                       <div className="absolute inset-0 p-8 flex flex-col justify-center items-center text-center">
                         <div className="bg-white/90 p-6 rounded-lg shadow-lg border">
