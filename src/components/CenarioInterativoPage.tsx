@@ -820,20 +820,21 @@ export default function CenarioInterativoPage() {
   const [savedFlash, setSavedFlash] = useState(false);
   const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>([]);
   const [previewChatMessageIdx, setPreviewChatMessageIdx] = useState(0);
   const previewDisplayedMessagesRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
-    if (activeTab === "chat" && mockMessages.length > 0) {
+    if (activeTab === "chat" && chatMessages.length > 0) {
       const interval = setInterval(() => {
         setPreviewChatMessageIdx((prevIdx) => {
-          const availableIndices = mockMessages
+          const availableIndices = chatMessages
             .map((_, index) => index)
             .filter((index) => !previewDisplayedMessagesRef.current.has(index));
 
           if (availableIndices.length === 0) {
             previewDisplayedMessagesRef.current.clear();
-            return (prevIdx + 1) % mockMessages.length;
+            return (prevIdx + 1) % chatMessages.length;
           }
 
           const nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
@@ -843,7 +844,7 @@ export default function CenarioInterativoPage() {
       }, 6000);
       return () => clearInterval(interval);
     }
-  }, [activeTab]);
+  }, [activeTab, chatMessages.length]);
   const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; apresentadorInstagram?: string; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
   const [presenterIdx, setPresenterIdx] = useState(0);
   const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
@@ -1028,6 +1029,27 @@ export default function CenarioInterativoPage() {
           setNextProgram({ nome: np.nome, selo: np.selo, horario_inicio: np.horario_inicio, horario_fim: np.horario_fim });
         } else {
           setNextProgram(null);
+        }
+        // Fetch chat data if enabled
+        if (config.chat?.enabled && config.chat?.youtubeVideoUrl) {
+          try {
+            const now = new Date();
+            const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            const day = dayNames[now.getDay()];
+            const time = now.toTimeString().slice(0, 5);
+            const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${user.id}&day=${encodeURIComponent(day)}&time=${time}`;
+            const resp = await fetch(baseUrl, {
+              headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+            });
+            if (resp.ok) {
+              const json = await resp.json();
+              if (json?.youtubeChatMessages) {
+                setChatMessages(json.youtubeChatMessages);
+              }
+            }
+          } catch (err) {
+            console.error("Error fetching chat in preview:", err);
+          }
         }
       } else {
         setCurrentProgram(null);
@@ -3160,7 +3182,7 @@ export default function CenarioInterativoPage() {
 
                                 {/* Single Message Display Preview */}
                                 <div className="w-full flex items-center justify-center px-[5%]">
-                                  {mockMessages.map((m, i) => (
+                                  {chatMessages.length > 0 ? chatMessages.map((m, i) => (
                                     <div
                                       key={i}
                                       className="absolute flex flex-col items-center text-center w-[90%] rounded-[3vh]"
@@ -3231,7 +3253,9 @@ export default function CenarioInterativoPage() {
                                         "{m.text}"
                                       </div>
                                     </div>
-                                  ))}
+                                  )) : (
+                                    <div className="opacity-50 text-xs">Aguardando mensagens do chat...</div>
+                                  )}
                                 </div>
                               </div>
                             ) : (
