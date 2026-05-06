@@ -525,12 +525,32 @@ export default function CenarioInterativoPage() {
     }).on("broadcast", { event: "config-update" }, ({ payload }: any) => {
       if (payload?.config && typeof payload.config === "object") {
         isRemoteUpdateRef.current = true;
-        setConfig(prev => ({ ...prev, ...(payload.config as Partial<CenarioConfig>) }));
-        // Sync tabs/rotation if they were part of the update, but don't trigger a save back
-        if (payload.config._activeTab) setActiveTab(payload.config._activeTab);
-        if (payload.config._weatherSubTab) setWeatherSubTab(payload.config._weatherSubTab);
-        if (payload.config._currencySubTab) setCurrencySubTab(payload.config._currencySubTab);
-        if (typeof payload.config._screenRotation === 'number') setExternalRotation(payload.config._screenRotation);
+        
+        // Prevent infinite loop by checking if the tab actually changed
+        if (payload.config._activeTab && payload.config._activeTab !== activeTabRef.current) {
+          setActiveTab(payload.config._activeTab);
+        }
+        
+        if (payload.config._weatherSubTab && payload.config._weatherSubTab !== weatherSubTabRef.current) {
+          setWeatherSubTab(payload.config._weatherSubTab);
+        }
+        
+        if (payload.config._currencySubTab && payload.config._currencySubTab !== currencySubTabRef.current) {
+          setCurrencySubTab(payload.config._currencySubTab);
+        }
+        
+        if (typeof payload.config._screenRotation === 'number' && payload.config._screenRotation !== externalRotationRef.current) {
+          setExternalRotation(payload.config._screenRotation);
+        }
+
+        // Merge main config
+        setConfig(prev => {
+          // Deep check to see if config actually changed to avoid unnecessary re-renders
+          const currentConfigStr = JSON.stringify(prev);
+          const newConfigStr = JSON.stringify({ ...prev, ...(payload.config as Partial<CenarioConfig>) });
+          if (currentConfigStr === newConfigStr) return prev;
+          return { ...prev, ...(payload.config as Partial<CenarioConfig>) };
+        });
       }
     }).subscribe();
     rtDrawChannelRef.current = ch;
