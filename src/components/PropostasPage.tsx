@@ -894,7 +894,7 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="DESCRIÇÃO DA PROPOSTA..."
-                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent selection:bg-sky-500/30 text-current !ring-0 !ring-offset-0 !outline-none !border-0 !border-transparent"
+                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent selection:bg-sky-500/30 text-current !ring-0 !ring-offset-0 !outline-none !border-0 !border-transparent !bg-transparent !bg-none !shadow-none"
                             style={{ 
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
@@ -903,12 +903,12 @@ export default function PropostasPage() {
                               height: item.style.height ? `${item.style.height}vw` : 'auto',
                               fontWeight: item.style.fontWeight || 'normal',
                               fontStyle: item.style.fontStyle || 'normal',
-                              background: 'none',
-                              backgroundColor: 'transparent',
-                              border: 'none',
-                              borderWidth: '0',
-                              boxShadow: 'none',
-                              outline: 'none',
+                              background: 'none !important',
+                              backgroundColor: 'transparent !important',
+                              border: 'none !important',
+                              borderWidth: '0 !important',
+                              boxShadow: 'none !important',
+                              outline: 'none !important',
                               appearance: 'none',
                               WebkitAppearance: 'none',
                               position: 'relative',
