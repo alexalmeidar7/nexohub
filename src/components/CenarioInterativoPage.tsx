@@ -333,6 +333,7 @@ export default function CenarioInterativoPage() {
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
   const [satelliteZoom, setSatelliteZoom] = useState(6);
+  const isRemoteUpdateRef = useRef(false);
 
   /* ─── Preview Drawing ─── */
   const [previewDrawActive, setPreviewDrawActive] = useState(false);
