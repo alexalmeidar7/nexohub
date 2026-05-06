@@ -841,28 +841,30 @@ export default function PropostasPage() {
 
 
                       {item.type === 'section' && (
-                        <div className="border-b border-white/30" style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
-                          <input 
-                            value={item.content}
-                            onChange={(e) => {
-                              const newItems = [...proposalItems];
-                              newItems[index].content = e.target.value;
-                              setProposalItems(newItems);
+                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
+                          <div 
+                            className="w-full transition-all"
+                            style={{ 
+                              height: item.style.height ? `${item.style.height}vw` : '0.2vw',
+                              backgroundColor: item.style.color || '#ffffff',
+                              borderRadius: '100px'
                             }}
-                            placeholder="NOME DA SEÇÃO (OPCIONAL)"
-                             className="bg-transparent border-none outline-none w-full font-black uppercase placeholder:text-white/20 focus:ring-0 focus-visible:ring-0 shadow-none focus:bg-transparent"
-                             style={{ 
-                               color: item.style.color, 
-                               textAlign: item.style.textAlign as any,
-                               fontFamily: item.style.fontFamily || 'Inter',
-                               fontSize: `${item.style.fontSizeVw || 1.2}vw`,
-                               fontWeight: item.style.fontWeight || 'black',
-                               fontStyle: item.style.fontStyle || 'normal',
-                               background: 'transparent',
-                               border: 'none',
-                               boxShadow: 'none'
-                             }}
                           />
+                          {item.content && (
+                            <div 
+                              className="mt-1 font-black uppercase"
+                              style={{ 
+                                color: item.style.color,
+                                fontFamily: item.style.fontFamily || 'Inter',
+                                fontSize: `${item.style.fontSizeVw || 1.2}vw`,
+                                textAlign: item.style.textAlign as any,
+                                fontWeight: item.style.fontWeight || 'black',
+                                fontStyle: item.style.fontStyle || 'normal'
+                              }}
+                            >
+                              {item.content}
+                            </div>
+                          )}
                         </div>
                       )}
 
