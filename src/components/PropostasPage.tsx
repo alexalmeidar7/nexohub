@@ -991,14 +991,15 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="0,00"
-                            className="bg-transparent border-none outline-none w-full font-black placeholder:text-white/20"
+                            className="bg-transparent border-none outline-none w-full font-black placeholder:text-white/20 focus:ring-0 shadow-none focus:bg-transparent"
                             style={{ 
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
                               fontFamily: item.style.fontFamily || 'Inter',
                               fontSize: `${item.style.fontSizeVw || 1.8}vw`,
                               fontWeight: item.style.fontWeight || 'black',
-                              fontStyle: item.style.fontStyle || 'normal'
+                              fontStyle: item.style.fontStyle || 'normal',
+                              background: 'transparent'
                             }}
                           />
                         </div>
