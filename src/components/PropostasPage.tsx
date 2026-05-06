@@ -302,7 +302,7 @@ export default function PropostasPage() {
       {isLoading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-sky-500" /></div>
       ) : selectedMockup ? (
-        <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-4 md:p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex flex-col items-center relative overflow-hidden">
+        <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-4 md:p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex flex-col items-center relative overflow-hidden group/overlay">
           <div className="absolute top-4 right-4 z-20 flex gap-2">
             <Label 
               htmlFor="bg-upload" 
