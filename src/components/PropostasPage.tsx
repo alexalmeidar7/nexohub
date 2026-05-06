@@ -35,6 +35,8 @@ export default function PropostasPage() {
   const [resizingItem, setResizingItem] = useState<{ id: string, startWidth: number, startX: number } | null>(null);
   const [resizingHeight, setResizingHeight] = useState<{ id: string, startHeight: number, startY: number } | null>(null);
   const [draggingItem, setDraggingItem] = useState<{ id: string, startX: number, startY: number, initialLeft: number, initialTop: number } | null>(null);
+  const [copiedStyle, setCopiedStyle] = useState<any>(null);
+
 
 
   const [isDragging, setIsDragging] = useState(false);
