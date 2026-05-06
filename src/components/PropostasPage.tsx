@@ -615,6 +615,61 @@ export default function PropostasPage() {
                         >
                           <GripVertical size={12} className="text-white" />
                         </div>
+                        <Popover open={editingItemStyle === item.id} onOpenChange={(open) => setEditingItemStyle(open ? item.id : null)}>
+                          <PopoverTrigger asChild>
+                            <button className="p-1 bg-slate-600 rounded text-white">
+                              <Settings2 size={12} />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-3 space-y-3 bg-slate-900 border-slate-700 text-white">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase opacity-50">Alinhamento</label>
+                              <div className="flex gap-1">
+                                {(['left', 'center', 'right'] as const).map((align) => (
+                                  <button
+                                    key={align}
+                                    onClick={() => {
+                                      const newItems = [...proposalItems];
+                                      newItems[index].style.textAlign = align;
+                                      setProposalItems(newItems);
+                                    }}
+                                    className={`flex-1 p-1.5 rounded flex justify-center ${item.style.textAlign === align ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
+                                  >
+                                    {align === 'left' && <AlignLeft size={14} />}
+                                    {align === 'center' && <AlignCenter size={14} />}
+                                    {align === 'right' && <AlignRight size={14} />}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase opacity-50">Espaçamento (vw)</label>
+                              <input 
+                                type="range" min="0" max="5" step="0.1"
+                                value={item.style.padding || 0.5}
+                                onChange={(e) => {
+                                  const newItems = [...proposalItems];
+                                  newItems[index].style.padding = parseFloat(e.target.value);
+                                  setProposalItems(newItems);
+                                }}
+                                className="w-full accent-sky-500"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase opacity-50">Cor do Texto</label>
+                              <input 
+                                type="color"
+                                value={item.style.color || "#ffffff"}
+                                onChange={(e) => {
+                                  const newItems = [...proposalItems];
+                                  newItems[index].style.color = e.target.value;
+                                  setProposalItems(newItems);
+                                }}
+                                className="w-full h-8 bg-transparent cursor-pointer"
+                              />
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                         <button 
                           onClick={() => setProposalItems(proposalItems.filter(i => i.id !== item.id))}
                           className="p-1 bg-red-500 rounded text-white"
@@ -625,7 +680,7 @@ export default function PropostasPage() {
 
                       {/* Resize Handle */}
                       <div 
-                        className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
+                        className="absolute -right-1 -bottom-1 w-3 h-3 cursor-nwse-resize opacity-0 group-hover/item:opacity-100 bg-sky-500 rounded-full z-50"
                         onMouseDown={(e) => {
                           e.stopPropagation();
                           const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
@@ -637,6 +692,7 @@ export default function PropostasPage() {
                           });
                         }}
                       />
+
 
                       {item.type === 'section' && (
                         <div className="py-1 border-b border-white/30">
