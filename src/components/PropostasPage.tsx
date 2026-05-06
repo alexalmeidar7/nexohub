@@ -642,6 +642,22 @@ export default function PropostasPage() {
                             <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2">
                               <span className="text-[10px] font-bold uppercase opacity-50">Estilo do Item</span>
                               <div className="flex gap-1">
+                                {item.type === 'section' && (
+                                  <button 
+                                    onClick={() => {
+                                      const name = prompt("Nome da seção (deixe vazio para apenas a linha):", item.content || "");
+                                      if (name !== null) {
+                                        const newItems = [...proposalItems];
+                                        newItems[index].content = name;
+                                        setProposalItems(newItems);
+                                      }
+                                    }}
+                                    className="p-1.5 hover:bg-slate-800 rounded transition-colors text-white"
+                                    title="Nomear Seção"
+                                  >
+                                    <TypeIcon size={12} />
+                                  </button>
+                                )}
                                 <button 
                                   onClick={() => {
                                     setCopiedStyle({
