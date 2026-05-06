@@ -577,6 +577,7 @@ export default function PropostasPage() {
                 }}
                 onMouseUp={() => {
                   setResizingItem(null);
+                  setResizingHeight(null);
                   setDraggingItem(null);
                 }}
               >
