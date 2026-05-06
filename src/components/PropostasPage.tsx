@@ -545,6 +545,18 @@ export default function PropostasPage() {
                         : item
                     ));
                   }
+                  if (resizingHeight) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const currentY = ((e.clientY - rect.top) / rect.height) * 100;
+                    const deltaY = currentY - resizingHeight.startY;
+                    const newHeight = Math.max(2, resizingHeight.startHeight + deltaY);
+                    
+                    setProposalItems(prev => prev.map(item => 
+                      item.id === resizingHeight.id 
+                        ? { ...item, style: { ...item.style, height: newHeight } }
+                        : item
+                    ));
+                  }
                   if (draggingItem) {
                     const rect = e.currentTarget.getBoundingClientRect();
                     const currentX = ((e.clientX - rect.left) / rect.width) * 100;
