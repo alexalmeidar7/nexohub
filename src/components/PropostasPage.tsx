@@ -251,7 +251,15 @@ export default function PropostasPage() {
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-9 text-xs bg-white">
+                <Button 
+                  variant="outline" 
+                  className="h-9 text-xs"
+                  style={{ 
+                    backgroundColor: "var(--layout-widget-bg, #ffffff)",
+                    borderColor: "var(--layout-border-color, #e2e8f0)",
+                    color: "var(--layout-widget-text, #1a1a1a)"
+                  }}
+                >
                   MOCKUPS
                   <ChevronDown size={14} className="ml-1 opacity-50" />
                 </Button>
