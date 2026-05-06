@@ -33,6 +33,7 @@ export default function PropostasPage() {
   const [proposalItems, setProposalItems] = useState<any[]>([]);
   const [editingDigital, setEditingDigital] = useState<{ id: string, type: 'digital_1' | 'digital_2' } | null>(null);
   const [resizingItem, setResizingItem] = useState<{ id: string, startWidth: number, startX: number } | null>(null);
+  const [resizingHeight, setResizingHeight] = useState<{ id: string, startHeight: number, startY: number } | null>(null);
   const [draggingItem, setDraggingItem] = useState<{ id: string, startX: number, startY: number, initialLeft: number, initialTop: number } | null>(null);
 
 
@@ -521,7 +522,7 @@ export default function PropostasPage() {
                         fontSize: 14, 
                         fontWeight: "400",
                         width: type === 'value' ? 15 : 40,
-                        height: 'auto',
+                        height: type === 'text' ? 5 : 'auto',
                         left: Math.max(0, Math.min(90, x)),
                         top: Math.max(0, Math.min(90, y)),
                         textAlign: 'left',
@@ -541,6 +542,18 @@ export default function PropostasPage() {
                     setProposalItems(prev => prev.map(item => 
                       item.id === resizingItem.id 
                         ? { ...item, style: { ...item.style, width: newWidth } }
+                        : item
+                    ));
+                  }
+                  if (resizingHeight) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const currentY = ((e.clientY - rect.top) / rect.height) * 100;
+                    const deltaY = currentY - resizingHeight.startY;
+                    const newHeight = Math.max(2, resizingHeight.startHeight + deltaY);
+                    
+                    setProposalItems(prev => prev.map(item => 
+                      item.id === resizingHeight.id 
+                        ? { ...item, style: { ...item.style, height: newHeight } }
                         : item
                     ));
                   }
@@ -564,6 +577,7 @@ export default function PropostasPage() {
                 }}
                 onMouseUp={() => {
                   setResizingItem(null);
+                  setResizingHeight(null);
                   setDraggingItem(null);
                 }}
               >
@@ -722,9 +736,9 @@ export default function PropostasPage() {
                         </button>
                       </div>
 
-                      {/* Resize Handle */}
+                      {/* Resize Handle Width */}
                       <div 
-                        className="absolute -right-1 -bottom-1 w-3 h-3 cursor-nwse-resize opacity-0 group-hover/item:opacity-100 bg-sky-500 rounded-full z-50"
+                        className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
                         onMouseDown={(e) => {
                           e.stopPropagation();
                           const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
@@ -736,6 +750,23 @@ export default function PropostasPage() {
                           });
                         }}
                       />
+
+                      {/* Resize Handle Height (Only for Text fields) */}
+                      {item.type === 'text' && (
+                        <div 
+                          className="absolute left-0 right-0 -bottom-1 h-2 cursor-ns-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
+                            if (!rect) return;
+                            setResizingHeight({
+                              id: item.id,
+                              startHeight: typeof item.style.height === 'number' ? item.style.height : 5,
+                              startY: ((e.clientY - rect.top) / rect.height) * 100
+                            });
+                          }}
+                        />
+                      )}
 
 
                       {item.type === 'section' && (
@@ -769,12 +800,13 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="DESCRIÇÃO DA PROPOSTA..."
-                            className="bg-transparent border-none w-full min-h-[2vw] outline-none placeholder:text-white/20 resize-none shadow-none"
+                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none"
                             style={{ 
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
                               fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                              fontSize: `${item.style.fontSizeVw || 1.0}vw`,
+                              height: item.style.height ? `${item.style.height}vw` : 'auto'
                             }}
                           />
                         </div>
