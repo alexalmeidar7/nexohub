@@ -647,6 +647,18 @@ export default function PropostasPage() {
                             <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2">
                               <span className="text-[10px] font-bold uppercase opacity-50">Estilo do Item</span>
                               <div className="flex gap-1">
+                                <button
+                                  onClick={() => {
+                                    const newItems = [...proposalItems];
+                                    newItems[index].locked = !newItems[index].locked;
+                                    setProposalItems(newItems);
+                                    toast.success(newItems[index].locked ? "Item bloqueado!" : "Item desbloqueado!");
+                                  }}
+                                  className={`p-1.5 hover:bg-slate-800 rounded transition-colors ${item.locked ? 'text-amber-400' : 'text-white'}`}
+                                  title={item.locked ? "Desbloquear Item" : "Bloquear Item"}
+                                >
+                                  {item.locked ? <Lock size={12} /> : <Unlock size={12} />}
+                                </button>
                                 {item.type === 'section' && (
                                   <button 
                                     onClick={() => {
@@ -672,7 +684,11 @@ export default function PropostasPage() {
                                       textAlign: item.style.textAlign,
                                       padding: item.style.padding,
                                       fontWeight: item.style.fontWeight,
-                                      fontStyle: item.style.fontStyle
+                                      fontStyle: item.style.fontStyle,
+                                      borderRadius: item.style.borderRadius,
+                                      backgroundColor: item.style.backgroundColor,
+                                      borderColor: item.style.borderColor,
+                                      borderWidth: item.style.borderWidth
                                     });
                                     toast.success("Estilo copiado!");
                                   }}
