@@ -376,6 +376,30 @@ export type Database = {
           },
         ]
       }
+      comercial_mockups: {
+        Row: {
+          created_at: string | null
+          fields: Json | null
+          id: string
+          image_url: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          fields?: Json | null
+          id?: string
+          image_url?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          fields?: Json | null
+          id?: string
+          image_url?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
       comercial_preroll: {
         Row: {
           active: boolean
@@ -453,6 +477,50 @@ export type Database = {
           youtube_url?: string | null
         }
         Relationships: []
+      }
+      comercial_propostas: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          final_art_url: string | null
+          id: string
+          mockup_id: string | null
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          final_art_url?: string | null
+          id?: string
+          mockup_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          final_art_url?: string | null
+          id?: string
+          mockup_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comercial_propostas_mockup_id_fkey"
+            columns: ["mockup_id"]
+            isOneToOne: false
+            referencedRelation: "comercial_mockups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_enquete_categories: {
         Row: {
