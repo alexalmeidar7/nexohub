@@ -780,26 +780,42 @@ export default function PropostasPage() {
                                   <div className="space-y-1">
                                     <label className="text-[10px] font-bold uppercase opacity-50">Cor do Fundo</label>
                                     <div className="flex gap-2">
-                                      <input 
-                                        type="color"
-                                        value={item.style.backgroundColor || "#ffffff"}
-                                        onChange={(e) => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.backgroundColor = e.target.value;
-                                          setProposalItems(newItems);
-                                        }}
-                                        className="flex-1 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
-                                      />
-                                      <button 
-                                        onClick={() => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.backgroundColor = 'transparent';
-                                          setProposalItems(newItems);
-                                        }}
-                                        className="px-2 bg-slate-800 rounded text-[10px] uppercase font-bold"
-                                      >
-                                        Transp.
-                                      </button>
+                                      <div className="flex-1 flex gap-1 bg-slate-800 p-1 rounded">
+                                        <button 
+                                          onClick={() => {
+                                            const newItems = [...proposalItems];
+                                            newItems[index].style.backgroundColor = 'transparent';
+                                            setProposalItems(newItems);
+                                          }}
+                                          className={`flex-1 text-[9px] uppercase font-bold py-1 rounded transition-colors ${item.style.backgroundColor === 'transparent' ? 'bg-sky-500 text-white' : 'hover:bg-slate-700 text-slate-400'}`}
+                                        >
+                                          Transp.
+                                        </button>
+                                        <button 
+                                          onClick={() => {
+                                            const newItems = [...proposalItems];
+                                            if (item.style.backgroundColor === 'transparent') {
+                                              newItems[index].style.backgroundColor = '#ffffff';
+                                            }
+                                            setProposalItems(newItems);
+                                          }}
+                                          className={`flex-1 text-[9px] uppercase font-bold py-1 rounded transition-colors ${item.style.backgroundColor !== 'transparent' ? 'bg-sky-500 text-white' : 'hover:bg-slate-700 text-slate-400'}`}
+                                        >
+                                          Colorido
+                                        </button>
+                                      </div>
+                                      {item.style.backgroundColor !== 'transparent' && (
+                                        <input 
+                                          type="color"
+                                          value={item.style.backgroundColor || "#ffffff"}
+                                          onChange={(e) => {
+                                            const newItems = [...proposalItems];
+                                            newItems[index].style.backgroundColor = e.target.value;
+                                            setProposalItems(newItems);
+                                          }}
+                                          className="w-10 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
+                                        />
+                                      )}
                                     </div>
                                   </div>
                                   <div className="space-y-1">
