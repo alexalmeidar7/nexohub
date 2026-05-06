@@ -3121,24 +3121,77 @@ export default function CenarioInterativoPage() {
                       {activeTab === "chat" && (
                         <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                           {!config.chat.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)" }} />}
-                          <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.25), transparent)" }} />
+                          <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.1), transparent)" }} />
                           <div className="relative z-10 flex flex-col h-full" style={{ padding: `${pvh(3)}px` }}>
-                            {config.chat.enabled ? (<>
-                              <div className="flex justify-end mb-1"><MessageCircle size={pvh(3)} className="drop-shadow-lg" style={{ color: "var(--layout-accent-color, #444)" }} /></div>
-                              <div style={{ marginBottom: `${pvh(2)}px` }}>
-                                <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: `${pvh(4)}px` }}>mensagens</div>
-                                <div className="font-bold" style={{ fontSize: `${pvh(2.5)}px`, color: "var(--layout-accent-color, #444)" }}>chat</div>
-                              </div>
-                              <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)", padding: `${pvh(2)}px` }}>
-                                <div className="font-bold opacity-70" style={{ fontSize: `${pvh(1.6)}px`, marginBottom: `${pvh(1)}px` }}>mensagens aqui</div>
-                                {mockMessages.map((m, i) => (
-                                  <div key={i} className={`rounded-lg cenario-anim-row-${Math.min(i + 1, 8)}`} style={{ padding: `${pvh(1)}px ${pvh(1.5)}px`, marginBottom: `${pvh(0.8)}px`, background: "rgba(255,255,255,0.08)", fontSize: `${pvh(1.6)}px` }}>
-                                    <span className="font-bold">{m.user}: </span>
-                                    <span className="opacity-80">{m.text}</span>
+                            {config.chat.enabled ? (
+                              <div className="flex-1 flex flex-col items-center justify-center relative">
+                                {/* Header for Chat */}
+                                <div className="absolute top-0 right-0 flex flex-col items-end">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <MessageCircle size={pvh(3.5)} className="drop-shadow-lg" style={{ color: "var(--layout-accent-color, #444)" }} />
+                                    <div className="font-extrabold leading-tight" style={{ fontSize: `${pvh(3.5)}px`, textShadow: "0 2px 10px rgba(0,0,0,1)" }}>mensagens</div>
                                   </div>
-                                ))}
+                                  <div className="font-bold uppercase tracking-[0.2em]" style={{ fontSize: `${pvh(1.8)}px`, color: "var(--layout-accent-color, #444)" }}>chat ao vivo</div>
+                                </div>
+
+                                {/* Single Message Display Preview */}
+                                <div className="w-full flex items-center justify-center px-[5%]">
+                                  {mockMessages.map((m, i) => (
+                                    <div
+                                      key={i}
+                                      className="absolute flex flex-col items-center text-center w-[90%]"
+                                      style={{
+                                        opacity: i === previewChatMessageIdx ? 1 : 0,
+                                        transform: `translateY(${i === previewChatMessageIdx ? '0' : '20px'})`,
+                                        visibility: i === previewChatMessageIdx ? 'visible' : 'hidden',
+                                        transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                                      }}
+                                    >
+                                      {/* User Avatar Circle */}
+                                      <div 
+                                        className="rounded-full flex items-center justify-center mb-6 shadow-2xl border-4"
+                                        style={{ 
+                                          width: pvh(12), 
+                                          height: pvh(12), 
+                                          background: "rgba(255,255,255,0.1)", 
+                                          borderColor: "var(--layout-accent-color, #444)",
+                                          backdropFilter: 'blur(10px)'
+                                        }}
+                                      >
+                                        <span className="font-black" style={{ fontSize: pvh(5), color: '#fff' }}>
+                                          {m.user.charAt(0).toUpperCase()}
+                                        </span>
+                                      </div>
+
+                                      {/* User Name */}
+                                      <div 
+                                        className="font-black uppercase tracking-widest mb-2" 
+                                        style={{ 
+                                          fontSize: `${pvh(2.2)}px`, 
+                                          color: "var(--layout-accent-color, #444)",
+                                          textShadow: '0 2px 8px rgba(0,0,0,0.5)'
+                                        }}
+                                      >
+                                        {m.user}
+                                      </div>
+
+                                      {/* Message Text */}
+                                      <div 
+                                        className="font-bold leading-[1.2] px-4" 
+                                        style={{ 
+                                          fontSize: `${pvh(4.5)}px`, 
+                                          color: '#fff',
+                                          textShadow: '0 4px 15px rgba(0,0,0,0.8)',
+                                          maxWidth: '100%'
+                                        }}
+                                      >
+                                        "{m.text}"
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                            </>) : (
+                            ) : (
                               <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${pvh(1.8)}px` }}>Chat desativado</div>
                             )}
                           </div>
