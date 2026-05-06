@@ -155,16 +155,6 @@ const mockMessages = [
 ];
 
 export default function CenarioTela() {
-  const [currentChatMessageIdx, setCurrentChatMessageIdx] = useState(0);
-
-  useEffect(() => {
-    if (activeTab === "chat" && mockMessages.length > 0) {
-      const interval = setInterval(() => {
-        setCurrentChatMessageIdx((prev) => (prev + 1) % mockMessages.length);
-      }, 6000);
-      return () => clearInterval(interval);
-    }
-  }, [activeTab, mockMessages.length]);
   const { user } = useAuth();
   usePageTitle("NexoHub - Cenário Interativo");
   const uidFromUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("uid") : null;
@@ -176,6 +166,22 @@ export default function CenarioTela() {
   const [showConnectedMsg, setShowConnectedMsg] = useState(false);
   const presenceShownRef = useRef(false);
   const [backendHealth, setBackendHealth] = useState<"online" | "slow" | "offline">("online");
+
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === "undefined") return "home";
+    return new URLSearchParams(window.location.search).get("tab") || "home";
+  });
+
+  const [currentChatMessageIdx, setCurrentChatMessageIdx] = useState(0);
+
+  useEffect(() => {
+    if (activeTab === "chat" && mockMessages.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentChatMessageIdx((prev) => (prev + 1) % mockMessages.length);
+      }, 6000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
@@ -208,10 +214,6 @@ export default function CenarioTela() {
     connect();
     return () => { destroyed = true; if (ch) supabase.removeChannel(ch); };
   }, [effectiveUserId]);
-  const [activeTab, setActiveTab] = useState(() => {
-    if (typeof window === "undefined") return "home";
-    return new URLSearchParams(window.location.search).get("tab") || "home";
-  });
   const [weatherSubTab, setWeatherSubTab] = useState(() => {
     if (typeof window === "undefined") return "today";
     return new URLSearchParams(window.location.search).get("weatherSubTab") || "today";

@@ -820,6 +820,16 @@ export default function CenarioInterativoPage() {
   const [savedFlash, setSavedFlash] = useState(false);
   const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [previewChatMessageIdx, setPreviewChatMessageIdx] = useState(0);
+
+  useEffect(() => {
+    if (activeTab === "chat" && mockMessages.length > 0) {
+      const interval = setInterval(() => {
+        setPreviewChatMessageIdx((prev) => (prev + 1) % mockMessages.length);
+      }, 6000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
   const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; apresentadorInstagram?: string; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
   const [presenterIdx, setPresenterIdx] = useState(0);
   const [musicData, setMusicData] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
