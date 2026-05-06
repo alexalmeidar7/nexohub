@@ -409,6 +409,7 @@ export default function PropostasPage() {
                   </div>
                 </div>
               </div>
+            </div>
 
             <div className="w-full flex justify-end gap-3 mt-6">
               <Button variant="outline" onClick={() => setSelectedMockup(null)} className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl">
