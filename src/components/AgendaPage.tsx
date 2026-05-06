@@ -1016,6 +1016,17 @@ export default function AgendaPage() {
 
   const selectedPrograma = programas.find((p) => p.id === formProgramaId);
 
+  const pastMonths = useMemo(() => {
+    const months = new Set<string>();
+    const today = new Date(now);
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      months.add(format(d, "MMMM", { locale: ptBR }));
+    }
+    return Array.from(months);
+  }, [now]);
+
+
   // Upcoming events for the next 7 days
   const upcomingEvents = useMemo(() => {
     const today = now;
