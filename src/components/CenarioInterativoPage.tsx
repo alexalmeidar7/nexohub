@@ -539,7 +539,7 @@ export default function CenarioInterativoPage() {
           setCurrencySubTab(payload.config._currencySubTab);
         }
         
-        if (typeof payload.config._screenRotation === 'number' && payload.config._screenRotation !== externalRotationRef.current) {
+        if (typeof payload.config._screenRotation === 'number' && payload.config._screenRotation !== externalRotation) {
           setExternalRotation(payload.config._screenRotation);
         }
 
