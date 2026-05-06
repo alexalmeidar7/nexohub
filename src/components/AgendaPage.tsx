@@ -360,6 +360,8 @@ export default function AgendaPage() {
   const [historyDateFilter, setHistoryDateFilter] = useState<Date | undefined>(undefined);
   const [pastEventDetail, setPastEventDetail] = useState<Evento | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [pastMonthFilter, setPastMonthFilter] = useState<string>("todos");
+
 
   // Form
   const [formProgramaId, setFormProgramaId] = useState("");
@@ -1014,6 +1016,17 @@ export default function AgendaPage() {
 
   const selectedPrograma = programas.find((p) => p.id === formProgramaId);
 
+  const pastMonths = useMemo(() => {
+    const months = new Set<string>();
+    const today = new Date(now);
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      months.add(format(d, "MMMM", { locale: ptBR }));
+    }
+    return Array.from(months);
+  }, [now]);
+
+
   // Upcoming events for the next 7 days
   const upcomingEvents = useMemo(() => {
     const today = now;
@@ -1045,6 +1058,43 @@ export default function AgendaPage() {
     }
     return days;
   }, [eventos, filterLocal, now]);
+
+  // Past events from the last 6 months
+  const pastEvents = useMemo(() => {
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    
+    const sixMonthsAgo = new Date(today);
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    
+    const days: { dateStr: string; date: Date; events: Evento[] }[] = [];
+    
+    // We'll iterate backwards from yesterday to 6 months ago
+    const tempDate = new Date(today);
+    tempDate.setDate(tempDate.getDate() - 1);
+    
+    while (tempDate >= sixMonthsAgo) {
+      const ds = format(tempDate, "yyyy-MM-dd");
+      const monthStr = format(tempDate, "MMMM", { locale: ptBR });
+      
+      const dayEvents = eventos.filter((e) => {
+        const matchLocal = filterLocal === "todos" || e.local === filterLocal;
+        const matchMonth = pastMonthFilter === "todos" || monthStr.toLowerCase() === pastMonthFilter.toLowerCase();
+        
+        // Use eventMatchesDate to handle recurring events as well in history
+        const isMatch = matchLocal && matchMonth && eventMatchesDate(e, ds);
+        return isMatch;
+      });
+      
+      if (dayEvents.length > 0) {
+        days.push({ dateStr: ds, date: new Date(tempDate), events: dayEvents });
+      }
+      
+      tempDate.setDate(tempDate.getDate() - 1);
+    }
+    return days;
+  }, [eventos, filterLocal, pastMonthFilter, now]);
+
 
   // Week view: Monday to Sunday of the currently selected week
   const weekEvents = useMemo(() => {
@@ -2384,6 +2434,96 @@ export default function AgendaPage() {
                 )}
               </div>
             </div>
+
+            {/* Past Events */}
+            <div className="rounded-xl overflow-hidden mt-4" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
+                <div className="flex items-center gap-2">
+                  <History size={14} />
+                  <span>Eventos Passados (6 meses)</span>
+                </div>
+                <Select value={pastMonthFilter} onValueChange={setPastMonthFilter}>
+                  <SelectTrigger className="h-7 w-[130px] text-[10px] bg-white/10 border-white/20 text-white hover:bg-white/20 transition-colors">
+                    <SelectValue placeholder="Filtrar por mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os meses</SelectItem>
+                    {pastMonths.map(month => (
+                      <SelectItem key={month} value={month.toLowerCase()}>
+                        {month.charAt(0).toUpperCase() + month.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="p-3 space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
+                {pastEvents.length === 0 ? (
+                  <p className="text-xs py-4 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                    Nenhum evento passado encontrado para o filtro selecionado.
+                  </p>
+                ) : (
+                  pastEvents.map(({ dateStr, date, events: dayEvents }) => (
+                    <div key={dateStr}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDate(date)}
+                        className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 w-full hover:opacity-80 transition-opacity cursor-pointer"
+                        style={{ color: "var(--layout-icon-color, #888888)" }}
+                      >
+                        <CalendarIcon size={10} />
+                        {format(date, "EEEE, dd/MM", { locale: ptBR })}
+                        <span className="ml-auto text-[9px] font-normal px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                          {dayEvents.length}
+                        </span>
+                      </button>
+                      <div className="space-y-1.5">
+                        {dayEvents.map((evt) => (
+                          <div
+                            key={evt.id}
+                            className="rounded-lg px-3 py-2 cursor-pointer hover:shadow-sm transition-all border border-transparent hover:border-[var(--layout-accent-color)] opacity-75 grayscale-[0.3]"
+                            style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
+                            onClick={() => { 
+                              setViewingEvent(evt);
+                              setViewEventDialogOpen(true);
+                            }}
+                          >
+                            <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                              {evt.programa?.nome || "Programa removido"}
+                            </p>
+                            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                              {evt.programa ? (
+                                evt.tipo_evento === "gravacao" && evt.horario_gravacao
+                                  ? `🎬 ${evt.horario_gravacao} (gravação)`
+                                  : `${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
+                              ) : ""}
+                              {evt.local ? ` • ${evt.local}` : ""}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {evt.status === "concluido" && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700">
+                                  CONCLUÍDO
+                                </span>
+                              )}
+                              {evt.status === "cancelado" && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">
+                                  CANCELADO
+                                </span>
+                              )}
+                              {evt.recorrencia !== "unico" && (
+                                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                                  🔁 {recorrenciaLabels[evt.recorrencia]}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
           </div>
         </div>
 
