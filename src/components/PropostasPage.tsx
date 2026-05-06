@@ -213,33 +213,60 @@ export default function PropostasPage() {
       </div>
 
       <Dialog open={isNamingProject} onOpenChange={setIsCreatingProject}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="text-sm font-bold uppercase">Nome do Projeto</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase text-slate-500">Dê um nome para sua proposta</Label>
-              <Input 
-                placeholder="Ex: Campanha de Inverno - Cliente X" 
-                value={formData.projeto || ""}
-                onChange={e => setFormData({...formData, projeto: e.target.value})}
-                autoFocus
-              />
+        <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl rounded-2xl">
+          <div className="p-8 space-y-6" style={{ backgroundColor: "var(--layout-widget-bg, #ffffff)" }}>
+            <div className="space-y-2 text-center">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)15" }}>
+                <FileText size={24} style={{ color: "var(--layout-accent-hex, #0ea5e9)" }} />
+              </div>
+              <DialogTitle className="text-lg font-black uppercase tracking-tight" style={{ color: "var(--layout-widget-text, #1a1a1a)" }}>
+                Nomear Nova Proposta
+              </DialogTitle>
+              <p className="text-xs opacity-60" style={{ color: "var(--layout-widget-text, #1a1a1a)" }}>
+                Identifique seu projeto para facilitar o gerenciamento posterior.
+              </p>
             </div>
-            <Button 
-              className="w-full btn-skyglass-accent h-10 text-xs font-bold" 
-              onClick={() => {
-                if (!formData.projeto) {
-                  toast.error("Por favor, digite um nome para o projeto");
-                  return;
-                }
-                setSelectedMockup(tempMockup);
-                setIsCreatingProject(false);
-              }}
-            >
-              INICIAR EDIÇÃO
-            </Button>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold uppercase tracking-wider opacity-70" style={{ color: "var(--layout-widget-text, #1a1a1a)" }}>Título do Projeto</Label>
+                <Input 
+                  placeholder="Ex: Campanha Verão 2024 - Cliente XPTO" 
+                  value={formData.projeto || ""}
+                  onChange={e => setFormData({...formData, projeto: e.target.value})}
+                  className="h-12 text-sm bg-slate-500/5 border-slate-200 focus:ring-0 focus:ring-offset-0 focus:border-sky-500 transition-all"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button 
+                  variant="ghost" 
+                  className="flex-1 h-11 text-[11px] font-bold uppercase" 
+                  onClick={() => setIsCreatingProject(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  className="flex-[2] h-11 text-[11px] font-bold uppercase shadow-lg transition-transform active:scale-95" 
+                  style={{ 
+                    backgroundColor: "var(--layout-accent-hex, #0ea5e9)",
+                    color: "white" 
+                  }}
+                  onClick={() => {
+                    if (!formData.projeto) {
+                      toast.error("Por favor, digite um nome para o projeto");
+                      return;
+                    }
+                    setSelectedMockup(tempMockup);
+                    setIsCreatingProject(false);
+                  }}
+                >
+                  <Check size={16} className="mr-2" />
+                  Iniciar Edição
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
