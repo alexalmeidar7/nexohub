@@ -571,6 +571,44 @@ export default function PropostasPage() {
             </div>
 
             <div className="w-full flex justify-end gap-3 mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  const saveMockup = async () => {
+                    const isNew = selectedMockup.id.toString().startsWith('temp-');
+                    const mockupData = {
+                      name: selectedMockup.name,
+                      image_url: customBg || selectedMockup.image_url,
+                      config: { 
+                        ...(selectedMockup.config || {}),
+                        overlayY 
+                      }
+                    };
+
+                    if (isNew) {
+                      const { data, error } = await supabase.from("comercial_mockups").insert(mockupData).select().single();
+                      if (!error) {
+                        toast.success("Mockup criado com sucesso!");
+                        fetchData();
+                      } else {
+                        toast.error("Erro ao criar mockup");
+                      }
+                    } else {
+                      const { error } = await supabase.from("comercial_mockups").update(mockupData).eq("id", selectedMockup.id);
+                      if (!error) {
+                        toast.success("Mockup atualizado com sucesso!");
+                        fetchData();
+                      } else {
+                        toast.error("Erro ao atualizar mockup");
+                      }
+                    }
+                  };
+                  saveMockup();
+                }} 
+                className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl border-sky-500 text-sky-500 hover:bg-sky-50"
+              >
+                SALVAR ALTERAÇÕES NO MOCKUP
+              </Button>
               <Button variant="outline" onClick={() => setSelectedMockup(null)} className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl">
                 CANCELAR
               </Button>
