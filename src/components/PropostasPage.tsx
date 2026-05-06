@@ -290,71 +290,60 @@ export default function PropostasPage() {
                 aspectRatio: "1920 / 1080",
               }}
             >
-              {/* Background Mockup */}
-              <img 
-                src={selectedMockup?.image_url} 
-                className="absolute inset-0 w-full h-full object-cover"
-                alt="Mockup Preview"
+              {/* Fundo da Proposta - Imagem Default e Temporária */}
+              <div 
+                className="absolute inset-0 w-full h-full bg-slate-900"
+                style={{ 
+                  backgroundImage: `url('/src/assets/ignore2.png')`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
               />
 
               {/* Editable Overlay */}
               <div className="absolute inset-0 p-[5%] flex flex-col pointer-events-auto">
-                <div className="mb-[2%]">
-                  <p className="text-[1.2vw] font-bold uppercase tracking-[0.2em] text-sky-400 mb-[0.5%]">PROPOSTA PARA</p>
-                  <input 
-                    type="text"
-                    value={formData.cliente || ""} 
-                    onChange={e => setFormData({...formData, cliente: e.target.value})}
-                    placeholder="DIGITE O CLIENTE..."
-                    className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-[3.5vw] font-black uppercase leading-tight text-white border-none outline-none w-full p-[0.5%] rounded transition-all placeholder:text-white/30"
-                  />
-                </div>
-
                 <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] text-white">
                   <div className="space-y-[1vw]">
-                    <p className="text-[0.8vw] font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-[0.5vw]">01. DESCRIÇÃO</p>
                     <textarea 
                       value={formData.descricao || ""} 
                       onChange={e => setFormData({...formData, descricao: e.target.value})}
-                      placeholder="Descrição da proposta..."
-                      className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-[1vw] opacity-90 leading-relaxed text-white border-none outline-none w-full h-[15vw] p-[0.5vw] rounded transition-all placeholder:text-white/30 resize-none"
+                      placeholder="01 DESCRIÇÃO"
+                      className="bg-black/40 hover:bg-black/60 focus:bg-black/70 text-[1.1vw] font-bold leading-relaxed text-white border-2 border-white/20 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/80 shadow-2xl resize-none"
                     />
                   </div>
 
                   <div className="space-y-[1vw]">
-                    <p className="text-[0.8vw] font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-[0.5vw]">02. ENTREGA COMERCIAL</p>
                     <textarea 
                       value={formData.entrega_comercial || ""} 
                       onChange={e => setFormData({...formData, entrega_comercial: e.target.value})}
-                      placeholder="Qtd | Tempo | Descrição..."
-                      className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-[1vw] opacity-90 leading-relaxed text-white border-none outline-none w-full h-[15vw] p-[0.5vw] rounded transition-all placeholder:text-white/30 resize-none"
+                      placeholder="02 ENTREGA COMERCIAL"
+                      className="bg-black/40 hover:bg-black/60 focus:bg-black/70 text-[1.1vw] font-bold leading-relaxed text-white border-2 border-white/20 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/80 shadow-2xl resize-none"
                     />
                   </div>
 
                   <div className="space-y-[1vw]">
-                    <p className="text-[0.8vw] font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-[0.5vw]">03. ENTREGA DIGITAL</p>
                     <textarea 
                       value={formData.entrega_digital || ""} 
                       onChange={e => setFormData({...formData, entrega_digital: e.target.value})}
-                      placeholder="Redes sociais, apps..."
-                      className="bg-black/10 hover:bg-black/20 focus:bg-white/20 text-[1vw] opacity-90 leading-relaxed text-white border-none outline-none w-full h-[15vw] p-[0.5vw] rounded transition-all placeholder:text-white/30 resize-none"
+                      placeholder="03 ENTREGA DIGITAL"
+                      className="bg-black/40 hover:bg-black/60 focus:bg-black/70 text-[1.1vw] font-bold leading-relaxed text-white border-2 border-white/20 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/80 shadow-2xl resize-none"
                     />
                   </div>
 
                   <div className="space-y-[1vw]">
-                    <p className="text-[0.8vw] font-bold text-sky-400 uppercase tracking-widest border-b border-sky-400/30 pb-[0.5vw]">04. INVESTIMENTO</p>
-                    <div className="flex items-center gap-[0.5vw] bg-black/10 p-[0.5vw] rounded">
-                      <span className="text-[1.5vw] font-bold text-white">R$</span>
+                    <div className="flex items-center gap-[0.5vw] bg-black/40 p-[1vw] rounded-xl border-2 border-white/20 shadow-2xl">
+                      <span className="text-[1.8vw] font-black text-white">R$</span>
                       <input 
                         type="number"
                         value={formData.valor || ""} 
                         onChange={e => setFormData({...formData, valor: e.target.value})}
-                        placeholder="0,00"
-                        className="bg-transparent text-[2vw] font-black text-white border-none outline-none w-full placeholder:text-white/30"
+                        placeholder="04 INVESTIMENTO"
+                        className="bg-transparent text-[2.2vw] font-black text-white border-none outline-none w-full placeholder:text-white/80"
                       />
                     </div>
                   </div>
                 </div>
+              </div>
               </div>
             </div>
 
