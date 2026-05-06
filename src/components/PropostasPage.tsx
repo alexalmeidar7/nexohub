@@ -346,8 +346,28 @@ export default function PropostasPage() {
               />
 
               {/* Editable Overlay */}
-              <div className="absolute inset-0 p-[5%] flex flex-col pointer-events-auto">
-                <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] text-white">
+              <div 
+                className="absolute inset-0 flex flex-col pointer-events-auto cursor-ns-resize"
+                style={{ paddingTop: `${overlayY}%` }}
+                onMouseDown={(e) => {
+                  if (e.target === e.currentTarget) {
+                    setIsDragging(true);
+                    setStartY(e.clientY);
+                    setStartOverlayY(overlayY);
+                  }
+                }}
+                onMouseMove={(e) => {
+                  if (isDragging) {
+                    const deltaY = (e.clientY - startY);
+                    const containerHeight = e.currentTarget.clientHeight || 1000;
+                    const newY = Math.max(0, Math.min(60, startOverlayY + (deltaY / containerHeight) * 100));
+                    setOverlayY(newY);
+                  }
+                }}
+                onMouseUp={() => setIsDragging(false)}
+                onMouseLeave={() => setIsDragging(false)}
+              >
+                <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] px-[5%] text-white">
                   <div className="space-y-[1vw]">
                     <textarea 
                       value={formData.descricao || ""} 
@@ -389,7 +409,6 @@ export default function PropostasPage() {
                   </div>
                 </div>
               </div>
-            </div>
 
             <div className="w-full flex justify-end gap-3 mt-6">
               <Button variant="outline" onClick={() => setSelectedMockup(null)} className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl">
