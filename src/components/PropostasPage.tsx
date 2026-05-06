@@ -506,14 +506,60 @@ export default function PropostasPage() {
                   e.preventDefault();
                   const type = e.dataTransfer.getData("type");
                   if (type) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    
                     const newItem = {
                       id: `item-${Date.now()}`,
                       type,
                       content: type === 'commercial_line' ? { qty: '', time: '', desc: '' } : '',
-                      style: { color: "#ffffff", fontSize: 14, fontWeight: "400" }
+                      style: { 
+                        color: "#ffffff", 
+                        fontSize: 14, 
+                        fontWeight: "400",
+                        width: type === 'value' ? 15 : 40,
+                        left: Math.max(0, Math.min(90, x)),
+                        top: Math.max(0, Math.min(90, y))
+                      }
                     };
                     setProposalItems([...proposalItems, newItem]);
                   }
+                }}
+                onMouseMove={(e) => {
+                  if (resizingItem) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const currentX = ((e.clientX - rect.left) / rect.width) * 100;
+                    const deltaX = currentX - resizingItem.startX;
+                    const newWidth = Math.max(5, resizingItem.startWidth + deltaX);
+                    
+                    setProposalItems(prev => prev.map(item => 
+                      item.id === resizingItem.id 
+                        ? { ...item, style: { ...item.style, width: newWidth } }
+                        : item
+                    ));
+                  }
+                  if (draggingItem) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const currentX = ((e.clientX - rect.left) / rect.width) * 100;
+                    const currentY = ((e.clientY - rect.top) / rect.height) * 100;
+                    const deltaX = currentX - draggingItem.startX;
+                    const deltaY = currentY - draggingItem.startY;
+                    
+                    setProposalItems(prev => prev.map(item => 
+                      item.id === draggingItem.id 
+                        ? { ...item, style: { 
+                            ...item.style, 
+                            left: Math.max(0, Math.min(100 - (item.style.width || 0), draggingItem.initialLeft + deltaX)),
+                            top: Math.max(0, Math.min(100, draggingItem.initialTop + deltaY))
+                          }}
+                        : item
+                    ));
+                  }
+                }}
+                onMouseUp={() => {
+                  setResizingItem(null);
+                  setDraggingItem(null);
                 }}
               >
                 <div 
@@ -527,26 +573,68 @@ export default function PropostasPage() {
                   <GripVertical size={16} className="text-sky-500 rotate-90" />
                 </div>
 
-                <div className="w-full h-full pb-[10%] px-[5%] text-white space-y-4 overflow-y-auto custom-scrollbar">
+                <div className="w-full h-full relative">
                   {proposalItems.length === 0 && (
-                    <div className="h-full flex items-center justify-center border-2 border-dashed border-white/20 rounded-2xl">
+                    <div className="h-full flex items-center justify-center border-2 border-dashed border-white/20 rounded-2xl mx-[5%]">
                       <p className="text-white/40 text-[1.5vw] font-bold uppercase">Arraste as ferramentas para aqui</p>
                     </div>
                   )}
                   
                   {proposalItems.map((item, index) => (
-                    <div key={item.id} className="relative group/item">
-                      <div className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity flex flex-col gap-1">
+                    <div 
+                      key={item.id} 
+                      className="absolute group/item"
+                      style={{ 
+                        left: `${item.style.left}%`, 
+                        top: `${item.style.top}%`,
+                        width: `${item.style.width}%`,
+                        zIndex: draggingItem?.id === item.id ? 50 : 10
+                      }}
+                    >
+                      {/* Controls */}
+                      <div className="absolute -top-8 left-0 opacity-0 group-hover/item:opacity-100 transition-opacity flex gap-1 z-50 bg-black/60 p-1 rounded-t-lg">
+                        <div 
+                          className="p-1 bg-sky-500 rounded cursor-move"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
+                            if (!rect) return;
+                            setDraggingItem({
+                              id: item.id,
+                              startX: ((e.clientX - rect.left) / rect.width) * 100,
+                              startY: ((e.clientY - rect.top) / rect.height) * 100,
+                              initialLeft: item.style.left,
+                              initialTop: item.style.top
+                            });
+                          }}
+                        >
+                          <GripVertical size={12} className="text-white" />
+                        </div>
                         <button 
                           onClick={() => setProposalItems(proposalItems.filter(i => i.id !== item.id))}
-                          className="p-1.5 bg-red-500 rounded-lg text-white"
+                          className="p-1 bg-red-500 rounded text-white"
                         >
                           <Trash2 size={12} />
                         </button>
                       </div>
 
+                      {/* Resize Handle */}
+                      <div 
+                        className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
+                          if (!rect) return;
+                          setResizingItem({
+                            id: item.id,
+                            startWidth: item.style.width,
+                            startX: ((e.clientX - rect.left) / rect.width) * 100
+                          });
+                        }}
+                      />
+
                       {item.type === 'section' && (
-                        <div className="py-2 border-b border-white/30">
+                        <div className="py-1 border-b border-white/30">
                           <input 
                             value={item.content}
                             onChange={(e) => {
@@ -570,16 +658,16 @@ export default function PropostasPage() {
                             setProposalItems(newItems);
                           }}
                           placeholder="DESCRIÇÃO DA PROPOSTA..."
-                          className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-[1vw] w-full min-h-[5vw] outline-none text-[1vw] placeholder:text-white/20 resize-none"
+                          className="bg-transparent border-none w-full min-h-[2vw] outline-none text-[1vw] placeholder:text-white/20 resize-none shadow-none"
                           style={{ color: item.style.color }}
                         />
                       )}
 
                       {item.type === 'commercial_line' && (
-                        <div className="flex gap-[1vw] items-center bg-white/5 backdrop-blur-sm p-[0.8vw] rounded-xl border border-white/10">
+                        <div className="flex gap-[0.8vw] items-center bg-transparent">
                           <input 
                             placeholder="QNT"
-                            className="bg-transparent border-b border-white/20 outline-none w-[4vw] text-center text-[1vw]"
+                            className="bg-transparent border-none outline-none w-[3vw] text-center text-[1vw]"
                             value={item.content.qty}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
@@ -589,7 +677,7 @@ export default function PropostasPage() {
                           />
                           <input 
                             placeholder="TEMPO"
-                            className="bg-transparent border-b border-white/20 outline-none w-[6vw] text-center text-[1vw]"
+                            className="bg-transparent border-none outline-none w-[5vw] text-center text-[1vw]"
                             value={item.content.time}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
@@ -599,7 +687,7 @@ export default function PropostasPage() {
                           />
                           <input 
                             placeholder="DESCRIÇÃO"
-                            className="bg-transparent border-b border-white/20 outline-none flex-1 text-[1vw]"
+                            className="bg-transparent border-none outline-none flex-1 text-[1vw]"
                             value={item.content.desc}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
@@ -613,22 +701,19 @@ export default function PropostasPage() {
                       {(item.type === 'digital_1' || item.type === 'digital_2') && (
                         <button 
                           onClick={() => setEditingDigital({ id: item.id, type: item.type })}
-                          className="flex items-center gap-3 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/50 p-[1vw] rounded-xl w-full transition-all group/digital"
+                          className="flex items-center gap-2 bg-transparent w-full transition-all group/digital text-left"
                         >
-                          <div className="p-2 bg-sky-500 rounded-lg text-white">
-                            <Pencil size={16} />
-                          </div>
-                          <div className="text-left">
-                            <span className="text-[0.8vw] font-bold opacity-50 uppercase">{item.type === 'digital_1' ? 'Entrega Digital 1' : 'Entrega Digital 2'}</span>
-                            <p className="text-[1vw] font-medium truncate max-w-[20vw]">
-                              {item.content || 'Clique para descrever a entrega digital'}
-                            </p>
+                          <div className="text-white">
+                            <Pencil size={14} className="inline mr-2 opacity-50" />
+                            <span className="text-[1vw] font-medium">
+                              {item.content || (item.type === 'digital_1' ? 'ENTREGA DIGITAL 1' : 'ENTREGA DIGITAL 2')}
+                            </span>
                           </div>
                         </button>
                       )}
 
                       {item.type === 'value' && (
-                        <div className="flex items-center gap-[0.5vw] bg-white/5 backdrop-blur-sm p-[1vw] rounded-xl border border-white/10 w-fit">
+                        <div className="flex items-center gap-[0.3vw] bg-transparent w-full">
                           <span className="text-[1.5vw] font-black" style={{ color: item.style.color }}>R$</span>
                           <input 
                             type="number"
@@ -639,7 +724,7 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="0,00"
-                            className="bg-transparent border-none outline-none w-[10vw] font-black text-[1.8vw] placeholder:text-white/20"
+                            className="bg-transparent border-none outline-none w-full font-black text-[1.8vw] placeholder:text-white/20"
                             style={{ color: item.style.color }}
                           />
                         </div>
@@ -647,6 +732,7 @@ export default function PropostasPage() {
                     </div>
                   ))}
                 </div>
+
 
                 <Dialog open={!!editingDigital} onOpenChange={() => setEditingDigital(null)}>
                   <DialogContent className="bg-white p-6">
