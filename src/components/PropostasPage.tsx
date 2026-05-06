@@ -22,7 +22,12 @@ export default function PropostasPage() {
   const [selectedMockup, setSelectedMockup] = useState<any>(null);
   const [isNamingProject, setIsCreatingProject] = useState(false);
   const [tempMockup, setTempMockup] = useState<any>(null);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<any>({
+    descricaoStyle: { color: "#ffffff", fontSize: 14, fontWeight: "700" },
+    entregaComercialStyle: { color: "#ffffff", fontSize: 14, fontWeight: "700" },
+    entregaDigitalStyle: { color: "#ffffff", fontSize: 14, fontWeight: "700" },
+    valorStyle: { color: "#ffffff", fontSize: 14, fontWeight: "900" },
+  });
   const [overlayY, setOverlayY] = useState(5); // % from top
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -368,43 +373,141 @@ export default function PropostasPage() {
                 onMouseLeave={() => setIsDragging(false)}
               >
                 <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] px-[5%] text-white">
-                  <div className="space-y-[1vw]">
+                  <div className="space-y-[1vw] relative group">
                     <textarea 
                       value={formData.descricao || ""} 
                       onChange={e => setFormData({...formData, descricao: e.target.value})}
                       placeholder="01 DESCRIÇÃO"
-                      className="bg-black/40 hover:bg-black/60 focus:bg-black/70 text-[1.1vw] font-bold leading-relaxed text-white border-2 border-white/20 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/80 shadow-2xl resize-none"
+                      className="bg-transparent hover:bg-white/5 focus:bg-white/10 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none border-none"
+                      style={{ 
+                        color: formData.descricaoStyle?.color || "#ffffff",
+                        fontSize: `${(formData.descricaoStyle?.fontSize || 14) / 14}vw`,
+                        fontWeight: formData.descricaoStyle?.fontWeight || "700"
+                      }}
                     />
+                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
+                      <input 
+                        type="color" 
+                        value={formData.descricaoStyle?.color || "#ffffff"} 
+                        onChange={(e) => setFormData({...formData, descricaoStyle: {...formData.descricaoStyle, color: e.target.value}})}
+                        className="w-5 h-5 cursor-pointer bg-transparent border-none"
+                      />
+                      <select 
+                        value={formData.descricaoStyle?.fontSize || 14}
+                        onChange={(e) => setFormData({...formData, descricaoStyle: {...formData.descricaoStyle, fontSize: parseInt(e.target.value)}})}
+                        className="bg-transparent text-[10px] text-white border border-white/20 rounded"
+                      >
+                        {[10, 12, 14, 16, 18, 20, 24, 28, 32].map(s => <option key={s} value={s} className="bg-slate-800">{s}px</option>)}
+                      </select>
+                      <button 
+                        onClick={() => setFormData({...formData, descricaoStyle: {...formData.descricaoStyle, fontWeight: formData.descricaoStyle?.fontWeight === "900" ? "400" : "900"}})}
+                        className="bg-transparent text-[10px] text-white border border-white/20 rounded px-1"
+                      >
+                        B
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="space-y-[1vw]">
+                  <div className="space-y-[1vw] relative group">
                     <textarea 
                       value={formData.entrega_comercial || ""} 
                       onChange={e => setFormData({...formData, entrega_comercial: e.target.value})}
                       placeholder="02 ENTREGA COMERCIAL"
-                      className="bg-black/40 hover:bg-black/60 focus:bg-black/70 text-[1.1vw] font-bold leading-relaxed text-white border-2 border-white/20 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/80 shadow-2xl resize-none"
+                      className="bg-transparent hover:bg-white/5 focus:bg-white/10 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none border-none"
+                      style={{ 
+                        color: formData.entregaComercialStyle?.color || "#ffffff",
+                        fontSize: `${(formData.entregaComercialStyle?.fontSize || 14) / 14}vw`,
+                        fontWeight: formData.entregaComercialStyle?.fontWeight || "700"
+                      }}
                     />
+                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
+                      <input 
+                        type="color" 
+                        value={formData.entregaComercialStyle?.color || "#ffffff"} 
+                        onChange={(e) => setFormData({...formData, entregaComercialStyle: {...formData.entregaComercialStyle, color: e.target.value}})}
+                        className="w-5 h-5 cursor-pointer bg-transparent border-none"
+                      />
+                      <select 
+                        value={formData.entregaComercialStyle?.fontSize || 14}
+                        onChange={(e) => setFormData({...formData, entregaComercialStyle: {...formData.entregaComercialStyle, fontSize: parseInt(e.target.value)}})}
+                        className="bg-transparent text-[10px] text-white border border-white/20 rounded"
+                      >
+                        {[10, 12, 14, 16, 18, 20, 24, 28, 32].map(s => <option key={s} value={s} className="bg-slate-800">{s}px</option>)}
+                      </select>
+                      <button 
+                        onClick={() => setFormData({...formData, entregaComercialStyle: {...formData.entregaComercialStyle, fontWeight: formData.entregaComercialStyle?.fontWeight === "900" ? "400" : "900"}})}
+                        className="bg-transparent text-[10px] text-white border border-white/20 rounded px-1"
+                      >
+                        B
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="space-y-[1vw]">
+                  <div className="space-y-[1vw] relative group">
                     <textarea 
                       value={formData.entrega_digital || ""} 
                       onChange={e => setFormData({...formData, entrega_digital: e.target.value})}
                       placeholder="03 ENTREGA DIGITAL"
-                      className="bg-black/40 hover:bg-black/60 focus:bg-black/70 text-[1.1vw] font-bold leading-relaxed text-white border-2 border-white/20 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/80 shadow-2xl resize-none"
+                      className="bg-transparent hover:bg-white/5 focus:bg-white/10 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none border-none"
+                      style={{ 
+                        color: formData.entregaDigitalStyle?.color || "#ffffff",
+                        fontSize: `${(formData.entregaDigitalStyle?.fontSize || 14) / 14}vw`,
+                        fontWeight: formData.entregaDigitalStyle?.fontWeight || "700"
+                      }}
                     />
+                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
+                      <input 
+                        type="color" 
+                        value={formData.entregaDigitalStyle?.color || "#ffffff"} 
+                        onChange={(e) => setFormData({...formData, entregaDigitalStyle: {...formData.entregaDigitalStyle, color: e.target.value}})}
+                        className="w-5 h-5 cursor-pointer bg-transparent border-none"
+                      />
+                      <select 
+                        value={formData.entregaDigitalStyle?.fontSize || 14}
+                        onChange={(e) => setFormData({...formData, entregaDigitalStyle: {...formData.entregaDigitalStyle, fontSize: parseInt(e.target.value)}})}
+                        className="bg-transparent text-[10px] text-white border border-white/20 rounded"
+                      >
+                        {[10, 12, 14, 16, 18, 20, 24, 28, 32].map(s => <option key={s} value={s} className="bg-slate-800">{s}px</option>)}
+                      </select>
+                      <button 
+                        onClick={() => setFormData({...formData, entregaDigitalStyle: {...formData.entregaDigitalStyle, fontWeight: formData.entregaDigitalStyle?.fontWeight === "900" ? "400" : "900"}})}
+                        className="bg-transparent text-[10px] text-white border border-white/20 rounded px-1"
+                      >
+                        B
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="space-y-[1vw]">
-                    <div className="flex items-center gap-[0.5vw] bg-black/40 p-[1vw] rounded-xl border-2 border-white/20 shadow-2xl">
-                      <span className="text-[1.8vw] font-black text-white">R$</span>
+                  <div className="space-y-[1vw] relative group">
+                    <div className="flex items-center gap-[0.5vw] bg-transparent p-[1vw] rounded-xl border-none">
+                      <span className="text-[1.8vw] font-black" style={{ color: formData.valorStyle?.color || "#ffffff" }}>R$</span>
                       <input 
                         type="number"
                         value={formData.valor || ""} 
                         onChange={e => setFormData({...formData, valor: e.target.value})}
                         placeholder="04 INVESTIMENTO"
-                        className="bg-transparent text-[2.2vw] font-black text-white border-none outline-none w-full placeholder:text-white/80"
+                        className="bg-transparent border-none outline-none w-full placeholder:text-white/40"
+                        style={{ 
+                          color: formData.valorStyle?.color || "#ffffff",
+                          fontSize: `${(formData.valorStyle?.fontSize || 14) / 14 * 2.2}vw`,
+                          fontWeight: formData.valorStyle?.fontWeight || "900"
+                        }}
                       />
+                    </div>
+                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
+                      <input 
+                        type="color" 
+                        value={formData.valorStyle?.color || "#ffffff"} 
+                        onChange={(e) => setFormData({...formData, valorStyle: {...formData.valorStyle, color: e.target.value}})}
+                        className="w-5 h-5 cursor-pointer bg-transparent border-none"
+                      />
+                      <select 
+                        value={formData.valorStyle?.fontSize || 14}
+                        onChange={(e) => setFormData({...formData, valorStyle: {...formData.valorStyle, fontSize: parseInt(e.target.value)}})}
+                        className="bg-transparent text-[10px] text-white border border-white/20 rounded"
+                      >
+                        {[10, 12, 14, 16, 18, 20, 24, 28, 32].map(s => <option key={s} value={s} className="bg-slate-800">{s}px</option>)}
+                      </select>
                     </div>
                   </div>
                 </div>
