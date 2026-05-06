@@ -294,7 +294,7 @@ export default function PropostasPage() {
               <div 
                 className="absolute inset-0 w-full h-full bg-slate-900"
                 style={{ 
-                  backgroundImage: "url('/mockup-bg-latest.png')",
+                  backgroundImage: "url('/mockup-bg-v4.png')",
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 }}
@@ -498,7 +498,7 @@ export default function PropostasPage() {
                     style={{ width: "400px", aspectRatio: "1/1.414" }}
                   >
                     <img 
-                      src={selectedProposta.final_art_url || "/mockup-bg-latest.png"} 
+                      src={selectedProposta.final_art_url || "/mockup-bg-v4.png"} 
                       className="w-full h-full object-cover"
                       crossOrigin="anonymous"
                     />
