@@ -662,15 +662,10 @@ export default function PropostasPage() {
                                 >
                                   {item.locked ? <Lock size={12} /> : <Unlock size={12} />}
                                 </button>
-                                {item.type === 'section' && (
+                                 {item.type === 'section' && (
                                   <button 
                                     onClick={() => {
-                                      const name = prompt("Nome da seção (deixe vazio para apenas a linha):", item.content || "");
-                                      if (name !== null) {
-                                        const newItems = [...proposalItems];
-                                        newItems[index].content = name;
-                                        setProposalItems(newItems);
-                                      }
+                                      setNamingSection({ id: item.id, content: item.content || "" });
                                     }}
                                     className="p-1.5 hover:bg-slate-800 rounded transition-colors text-white"
                                     title="Nomear Seção"
