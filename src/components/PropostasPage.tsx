@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare } from "lucide-react";
+import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -102,6 +102,22 @@ export default function PropostasPage() {
       }
     }
     setUploadingArt(false);
+  };
+
+  const handleDeleteProposta = async (propostaId: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta proposta? Esta ação não pode ser desfeita.")) return;
+
+    const { error } = await supabase.from("comercial_propostas").delete().eq("id", propostaId);
+
+    if (error) {
+      toast.error("Erro ao excluir proposta");
+    } else {
+      toast.success("Proposta excluída com sucesso");
+      fetchData();
+      if (selectedProposta?.id === propostaId) {
+        setSelectedProposta(null);
+      }
+    }
   };
 
   const handleApprove = async (propostaId: string) => {
@@ -350,9 +366,12 @@ export default function PropostasPage() {
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold truncate pr-2">{p.title}</h3>
-                  <button onClick={() => setSelectedProposta(p)} className="p-1.5 rounded-full hover:bg-slate-100"><Eye size={14} /></button>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setSelectedProposta(p)} className="p-1.5 rounded-full hover:bg-slate-100" title="Visualizar"><Eye size={14} /></button>
+                    <button onClick={() => handleDeleteProposta(p.id)} className="p-1.5 rounded-full hover:bg-red-50 text-red-500" title="Excluir"><Trash2 size={14} /></button>
+                  </div>
                 </div>
-                
+
                 {p.status === "arte_final" && (
                   <div className="pt-2 border-t">
                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Ação: Enviar Arte Final</p>
@@ -429,6 +448,15 @@ export default function PropostasPage() {
                           </div>
                         );
                       })}
+                    </div>
+                    <div className="pt-6 border-t">
+                      <Button 
+                        onClick={() => handleDeleteProposta(selectedProposta.id)} 
+                        variant="ghost" 
+                        className="w-full text-red-500 hover:text-red-700 hover:bg-red-50 text-[10px] font-bold uppercase h-8"
+                      >
+                        <Trash2 size={12} className="mr-2" /> Excluir permanentemente
+                      </Button>
                     </div>
                   </div>
 
