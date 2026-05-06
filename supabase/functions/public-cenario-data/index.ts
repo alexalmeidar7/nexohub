@@ -219,8 +219,54 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Skip musicas_tocadas fallback query to reduce DB load
-    // (it was a third DB round-trip that rarely provided value)
+    // ─── YouTube Chat data: scrape live chat if URL is provided ───
+    let youtubeChatMessages: { user: string; text: string; avatar?: string }[] = [];
+    const cenarioConfig = (settings as any)?.cenario_config as any;
+    const ytUrl = cenarioConfig?.chat?.youtubeVideoUrl;
+
+    if (ytUrl) {
+      try {
+        const m1 = ytUrl.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+        const m2 = ytUrl.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+        const m3 = ytUrl.match(/\/live\/([a-zA-Z0-9_-]{11})/);
+        const videoId = m1?.[1] || m2?.[1] || m3?.[1];
+
+        if (videoId) {
+          // Scrape the initial HTML of the video page to get live chat data
+          // This is a lightweight way to get the most recent messages without OAuth
+          const ytResp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
+            },
+            signal: AbortSignal.timeout(4000),
+          });
+
+          if (ytResp.ok) {
+            const html = await ytResp.text();
+            // Look for liveChatRenderer in the page source
+            const chatMatch = html.match(/\"liveChatRenderer\":(\{.*?\})\},\"/);
+            if (chatMatch) {
+              // Note: Parsing complex JSON via regex is risky, but we just need a few fields
+              // We'll try to find message actions
+              const actions = html.match(/\"addChatItemAction\":\{.*?\"text\":\"(.*?)\".*?\"authorName\":\{.*?\"simpleText\":\"(.*?)\"/g);
+              if (actions) {
+                youtubeChatMessages = actions.slice(-15).map(act => {
+                  const msgMatch = act.match(/\"text\":\"(.*?)\"/);
+                  const authorMatch = act.match(/\"simpleText\":\"(.*?)\"/);
+                  return {
+                    user: authorMatch ? authorMatch[1] : "Usuário",
+                    text: msgMatch ? msgMatch[1] : ""
+                  };
+                }).filter(m => m.text);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("YouTube chat fetch error:", err);
+      }
+    }
 
     // Find next program
     let nextProgram: { nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null = null;
@@ -246,6 +292,7 @@ Deno.serve(async (req) => {
       musicStartTime,
       accentColor,
       musicXmlUrl: (settings as any)?.music_xml_url || null,
+      youtubeChatMessages: youtubeChatMessages.length > 0 ? youtubeChatMessages : null,
     };
 
     // Store in cache

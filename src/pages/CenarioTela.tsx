@@ -146,9 +146,10 @@ type PublicCenarioPayload = {
   musicStartTime?: number | null;
   accentColor?: string | null;
   musicXmlUrl?: string | null;
+  youtubeChatMessages?: { user: string; text: string; avatar?: string }[] | null;
 };
 
-const mockMessages = [
+const defaultMessages = [
   { user: "João Silva", text: "Boa tarde! 🎉" },
   { user: "Maria", text: "Excelente programa hoje!" },
   { user: "Carlos", text: "Manda salve pra galera!" },
@@ -176,16 +177,16 @@ export default function CenarioTela() {
   const displayedMessagesRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
-    if (activeTab === "chat" && mockMessages.length > 0) {
+    if (activeTab === "chat" && chatMessages.length > 0) {
       const interval = setInterval(() => {
         setCurrentChatMessageIdx((prevIdx) => {
-          const availableIndices = mockMessages
+          const availableIndices = chatMessages
             .map((_, index) => index)
             .filter((index) => !displayedMessagesRef.current.has(index));
 
           if (availableIndices.length === 0) {
             displayedMessagesRef.current.clear();
-            return (prevIdx + 1) % mockMessages.length;
+            return (prevIdx + 1) % chatMessages.length;
           }
 
           const nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
@@ -195,7 +196,7 @@ export default function CenarioTela() {
       }, 6000);
       return () => clearInterval(interval);
     }
-  }, [activeTab]);
+  }, [activeTab, chatMessages.length]);
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
@@ -663,6 +664,11 @@ export default function CenarioTela() {
         const result = await fetchViaEdgeFunction(effectiveUserId);
         if (result?.cenario_config) applyConfig(result.cenario_config);
         if (result?.accentColor) setAccentColor(result.accentColor);
+        if (result?.youtubeChatMessages && result.youtubeChatMessages.length > 0) {
+          setChatMessages(result.youtubeChatMessages);
+        } else if (!result?.youtubeChatMessages) {
+          setChatMessages(defaultMessages);
+        }
         if (result?.currentProgram) {
           setCurrentProgram(result.currentProgram);
           setSponsorLogos(result.sponsorLogos || []);
@@ -764,6 +770,11 @@ export default function CenarioTela() {
           const result = await fetchViaEdgeFunction(effectiveUserId);
           if (result?.cenario_config) applyConfig(result.cenario_config);
           if (result?.accentColor) setAccentColor(result.accentColor);
+          if (result?.youtubeChatMessages && result.youtubeChatMessages.length > 0) {
+            setChatMessages(result.youtubeChatMessages);
+          } else if (!result?.youtubeChatMessages) {
+            setChatMessages(defaultMessages);
+          }
           if (result?.currentProgram) {
             setCurrentProgram(result.currentProgram);
             setSponsorLogos(result.sponsorLogos || []);
@@ -1900,7 +1911,7 @@ export default function CenarioTela() {
 
                       {/* Single Message Display */}
                       <div className="w-full flex items-center justify-center px-[5%]">
-                        {mockMessages.map((m, i) => (
+                        {chatMessages.map((m, i) => (
                           <div
                             key={i}
                             className="absolute flex flex-col items-center text-center w-[90%] rounded-[3vh]"
