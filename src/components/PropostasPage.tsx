@@ -942,8 +942,9 @@ export default function PropostasPage() {
                             className="w-full transition-all"
                             style={{ 
                               height: item.style.height ? `${item.style.height}vw` : '0.2vw',
-                              backgroundColor: item.style.color || '#ffffff',
-                              borderRadius: '100px'
+                              backgroundColor: item.style.backgroundColor || '#ffffff',
+                              borderRadius: `${item.style.borderRadius || 0}px`,
+                              border: item.style.borderWidth ? `${item.style.borderWidth}px solid ${item.style.borderColor || 'transparent'}` : 'none'
                             }}
                           />
                           {item.content && (
