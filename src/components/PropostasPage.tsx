@@ -822,8 +822,8 @@ export default function PropostasPage() {
                         }}
                       />
 
-                      {/* Resize Handle Height (Only for Text fields) */}
-                      {item.type === 'text' && (
+                      {/* Resize Handle Height (Only for Text fields or Sections) */}
+                      {(item.type === 'text' || item.type === 'section') && (
                         <div 
                           className="absolute left-0 right-0 -bottom-1 h-2 cursor-ns-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
                           onMouseDown={(e) => {
@@ -832,7 +832,7 @@ export default function PropostasPage() {
                             if (!rect) return;
                             setResizingHeight({
                               id: item.id,
-                              startHeight: typeof item.style.height === 'number' ? item.style.height : 5,
+                              startHeight: typeof item.style.height === 'number' ? item.style.height : (item.type === 'section' ? 0.2 : 5),
                               startY: ((e.clientY - rect.top) / rect.height) * 100
                             });
                           }}
