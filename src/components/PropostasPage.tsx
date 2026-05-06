@@ -703,118 +703,193 @@ export default function PropostasPage() {
                                 </button>
                               </div>
                             </div>
-                            <div className="space-y-1">
-                              <label className="text-[10px] font-bold uppercase opacity-50">Estilo do Texto</label>
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() => {
-                                    const newItems = [...proposalItems];
-                                    newItems[index].style.fontWeight = item.style.fontWeight === 'bold' ? 'normal' : 'bold';
-                                    setProposalItems(newItems);
-                                  }}
-                                  className={`flex-1 p-1.5 rounded flex justify-center ${item.style.fontWeight === 'bold' ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
-                                >
-                                  <Bold size={14} />
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    const newItems = [...proposalItems];
-                                    newItems[index].style.fontStyle = item.style.fontStyle === 'italic' ? 'normal' : 'italic';
-                                    setProposalItems(newItems);
-                                  }}
-                                  className={`flex-1 p-1.5 rounded flex justify-center ${item.style.fontStyle === 'italic' ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
-                                >
-                                  <Italic size={14} />
-                                </button>
+                            <div className="space-y-4">
+                              {item.type !== 'section' ? (
+                                <>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase opacity-50">Estilo do Texto</label>
+                                    <div className="flex gap-1">
+                                      <button
+                                        onClick={() => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.fontWeight = item.style.fontWeight === 'bold' ? 'normal' : 'bold';
+                                          setProposalItems(newItems);
+                                        }}
+                                        className={`flex-1 p-1.5 rounded flex justify-center ${item.style.fontWeight === 'bold' ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
+                                      >
+                                        <Bold size={14} />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.fontStyle = item.style.fontStyle === 'italic' ? 'normal' : 'italic';
+                                          setProposalItems(newItems);
+                                        }}
+                                        className={`flex-1 p-1.5 rounded flex justify-center ${item.style.fontStyle === 'italic' ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
+                                      >
+                                        <Italic size={14} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase opacity-50">Fonte</label>
+                                    <select 
+                                      value={item.style.fontFamily || 'Inter'}
+                                      onChange={(e) => {
+                                        const newItems = [...proposalItems];
+                                        newItems[index].style.fontFamily = e.target.value;
+                                        setProposalItems(newItems);
+                                      }}
+                                      className="w-full bg-slate-800 border-none text-[11px] rounded p-1.5 focus:ring-1 focus:ring-sky-500"
+                                    >
+                                      {['Inter', 'Roboto', 'Montserrat', 'Open Sans', 'Poppins', 'Playfair Display', 'Oswald'].map(f => (
+                                        <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase opacity-50">Tamanho (vw)</label>
+                                    <div className="flex items-center gap-2">
+                                      <input 
+                                        type="range" min="0.5" max="5" step="0.1"
+                                        value={item.style.fontSizeVw || (item.type === 'value' ? 1.8 : 1.0)}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.fontSizeVw = parseFloat(e.target.value);
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="flex-1 accent-sky-500"
+                                      />
+                                      <span className="text-[10px] w-8 text-right">{(item.style.fontSizeVw || (item.type === 'value' ? 1.8 : 1.0)).toFixed(1)}</span>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase opacity-50">Cor do Texto</label>
+                                    <div className="flex gap-2">
+                                      <input 
+                                        type="color"
+                                        value={item.style.color || "#ffffff"}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.color = e.target.value;
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="flex-1 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
+                                      />
+                                      <input 
+                                        type="text"
+                                        value={item.style.color || "#ffffff"}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.color = e.target.value;
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="w-16 bg-slate-800 text-[10px] rounded px-1 border-none uppercase"
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase opacity-50">Cantos Arredondados (px)</label>
+                                    <input 
+                                      type="range" min="0" max="100" step="1"
+                                      value={item.style.borderRadius || 0}
+                                      onChange={(e) => {
+                                        const newItems = [...proposalItems];
+                                        newItems[index].style.borderRadius = parseInt(e.target.value);
+                                        setProposalItems(newItems);
+                                      }}
+                                      className="w-full accent-sky-500"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase opacity-50">Cor do Fundo</label>
+                                    <div className="flex gap-2">
+                                      <input 
+                                        type="color"
+                                        value={item.style.backgroundColor || "#ffffff"}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.backgroundColor = e.target.value;
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="flex-1 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
+                                      />
+                                      <button 
+                                        onClick={() => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.backgroundColor = 'transparent';
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="px-2 bg-slate-800 rounded text-[10px] uppercase font-bold"
+                                      >
+                                        Transp.
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase opacity-50">Borda (Cor e Espessura)</label>
+                                    <div className="flex gap-2">
+                                      <input 
+                                        type="color"
+                                        value={item.style.borderColor || "transparent"}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.borderColor = e.target.value;
+                                          if (!item.style.borderWidth) newItems[index].style.borderWidth = 1;
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="flex-1 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
+                                      />
+                                      <input 
+                                        type="number"
+                                        min="0" max="20"
+                                        value={item.style.borderWidth || 0}
+                                        onChange={(e) => {
+                                          const newItems = [...proposalItems];
+                                          newItems[index].style.borderWidth = parseInt(e.target.value);
+                                          setProposalItems(newItems);
+                                        }}
+                                        className="w-12 bg-slate-800 text-[11px] rounded px-1 border-none"
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                              
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase opacity-50">Alinhamento</label>
+                                <div className="flex gap-1">
+                                  {(['left', 'center', 'right'] as const).map((align) => (
+                                    <button
+                                      key={align}
+                                      onClick={() => {
+                                        const newItems = [...proposalItems];
+                                        newItems[index].style.textAlign = align;
+                                        setProposalItems(newItems);
+                                      }}
+                                      className={`flex-1 p-1.5 rounded flex justify-center ${item.style.textAlign === align ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
+                                    >
+                                      {align === 'left' && <AlignLeft size={14} />}
+                                      {align === 'center' && <AlignCenter size={14} />}
+                                      {align === 'right' && <AlignRight size={14} />}
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[10px] font-bold uppercase opacity-50">Alinhamento</label>
-                              <div className="flex gap-1">
-                                {(['left', 'center', 'right'] as const).map((align) => (
-                                  <button
-                                    key={align}
-                                    onClick={() => {
-                                      const newItems = [...proposalItems];
-                                      newItems[index].style.textAlign = align;
-                                      setProposalItems(newItems);
-                                    }}
-                                    className={`flex-1 p-1.5 rounded flex justify-center ${item.style.textAlign === align ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
-                                  >
-                                    {align === 'left' && <AlignLeft size={14} />}
-                                    {align === 'center' && <AlignCenter size={14} />}
-                                    {align === 'right' && <AlignRight size={14} />}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[10px] font-bold uppercase opacity-50">Fonte</label>
-                              <select 
-                                value={item.style.fontFamily || 'Inter'}
-                                onChange={(e) => {
-                                  const newItems = [...proposalItems];
-                                  newItems[index].style.fontFamily = e.target.value;
-                                  setProposalItems(newItems);
-                                }}
-                                className="w-full bg-slate-800 border-none text-[11px] rounded p-1.5 focus:ring-1 focus:ring-sky-500"
-                              >
-                                {['Inter', 'Roboto', 'Montserrat', 'Open Sans', 'Poppins', 'Playfair Display', 'Oswald'].map(f => (
-                                  <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[10px] font-bold uppercase opacity-50">Tamanho (vw)</label>
-                              <div className="flex items-center gap-2">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase opacity-50">Espaçamento (vw)</label>
                                 <input 
-                                  type="range" min="0.5" max="5" step="0.1"
-                                  value={item.style.fontSizeVw || (item.type === 'value' ? 1.8 : 1.0)}
+                                  type="range" min="0" max="5" step="0.1"
+                                  value={item.style.padding || 0.5}
                                   onChange={(e) => {
                                     const newItems = [...proposalItems];
-                                    newItems[index].style.fontSizeVw = parseFloat(e.target.value);
+                                    newItems[index].style.padding = parseFloat(e.target.value);
                                     setProposalItems(newItems);
                                   }}
-                                  className="flex-1 accent-sky-500"
-                                />
-                                <span className="text-[10px] w-8 text-right">{(item.style.fontSizeVw || (item.type === 'value' ? 1.8 : 1.0)).toFixed(1)}</span>
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[10px] font-bold uppercase opacity-50">Espaçamento (vw)</label>
-                              <input 
-                                type="range" min="0" max="5" step="0.1"
-                                value={item.style.padding || 0.5}
-                                onChange={(e) => {
-                                  const newItems = [...proposalItems];
-                                  newItems[index].style.padding = parseFloat(e.target.value);
-                                  setProposalItems(newItems);
-                                }}
-                                className="w-full accent-sky-500"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[10px] font-bold uppercase opacity-50">Cor do Texto</label>
-                              <div className="flex gap-2">
-                                <input 
-                                  type="color"
-                                  value={item.style.color || "#ffffff"}
-                                  onChange={(e) => {
-                                    const newItems = [...proposalItems];
-                                    newItems[index].style.color = e.target.value;
-                                    setProposalItems(newItems);
-                                  }}
-                                  className="flex-1 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
-                                />
-                                <input 
-                                  type="text"
-                                  value={item.style.color || "#ffffff"}
-                                  onChange={(e) => {
-                                    const newItems = [...proposalItems];
-                                    newItems[index].style.color = e.target.value;
-                                    setProposalItems(newItems);
-                                  }}
-                                  className="w-16 bg-slate-800 text-[10px] rounded px-1 border-none uppercase"
+                                  className="w-full accent-sky-500"
                                 />
                               </div>
                             </div>
