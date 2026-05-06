@@ -1222,6 +1222,9 @@ export default function CenarioInterativoPage() {
     };
     const serialized = JSON.stringify(configWithTabs);
 
+    // If it's the same as what we already have, don't do anything
+    if (serialized === prevSaveRef.current) return;
+
     // Se a mudança veio de outro dispositivo via broadcast, não salvamos novamente no banco
     if (isRemoteUpdateRef.current) {
       console.log("Cenário: Ignorando salvamento de atualização remota");
@@ -1231,38 +1234,51 @@ export default function CenarioInterativoPage() {
     }
 
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    if (serialized === prevSaveRef.current) { pendingSaveRef.current = null; return; }
+    
     const doSave = async () => {
+      // Check again if still different before actual DB call
+      if (serialized === prevSaveRef.current) {
+        pendingSaveRef.current = null;
+        return;
+      }
+
       prevSaveRef.current = serialized;
       pendingSaveRef.current = null;
       setSaving(true);
-      const payload = { user_id: user.id, cenario_config: configWithTabs } as any;
-      const { error } = await supabase
-        .from("user_settings")
-        .upsert(payload, { onConflict: "user_id" });
+      
+      try {
+        const payload = { user_id: user.id, cenario_config: configWithTabs } as any;
+        const { error } = await supabase
+          .from("user_settings")
+          .upsert(payload, { onConflict: "user_id" });
 
-      if (error) {
-        console.error("Erro ao salvar cenário:", error);
-      } else {
-        setSavedFlash(true);
-        if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
-        savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
+        if (error) {
+          console.error("Erro ao salvar cenário:", error);
+        } else {
+          setSavedFlash(true);
+          if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
+          savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
 
-        // Notifica todas as telas conectadas sobre a mudança de configuração
-        rtDrawChannelRef.current?.send({
-          type: "broadcast",
-          event: "config-update",
-          payload: { config: configWithTabs }
-        });
+          // Notifica todas as telas conectadas sobre a mudança de configuração
+          // Usamos o objeto serializado para garantir consistência
+          rtDrawChannelRef.current?.send({
+            type: "broadcast",
+            event: "config-update",
+            payload: { config: configWithTabs }
+          });
+        }
+      } catch (err) {
+        console.error("Critical save error:", err);
+      } finally {
+        setSaving(false);
       }
-      setSaving(false);
     };
+    
     pendingSaveRef.current = doSave;
-    saveTimeout.current = setTimeout(doSave, 800);
+    saveTimeout.current = setTimeout(doSave, 1500); // Increased debounce to 1.5s
+    
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
-      // Flush pending save on unmount so data is never lost
-      if (pendingSaveRef.current) { pendingSaveRef.current(); }
     };
   }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab, externalRotation]);
 
