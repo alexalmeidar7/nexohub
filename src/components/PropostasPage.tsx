@@ -604,13 +604,14 @@ export default function PropostasPage() {
                   {proposalItems.map((item, index) => (
                     <div 
                       key={item.id} 
-                      className="absolute group/item bg-transparent border-none shadow-none"
+                      className="absolute group/item border-none shadow-none"
                       style={{ 
                         left: `${item.style.left}%`, 
                         top: `${item.style.top}%`,
                         width: `${item.style.width}%`,
                         zIndex: draggingItem?.id === item.id ? 50 : 10,
-                        backgroundColor: 'transparent'
+                        backgroundColor: 'transparent',
+                        background: 'none'
                       }}
                     >
                       {/* Controls */}
