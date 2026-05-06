@@ -525,12 +525,32 @@ export default function CenarioInterativoPage() {
     }).on("broadcast", { event: "config-update" }, ({ payload }: any) => {
       if (payload?.config && typeof payload.config === "object") {
         isRemoteUpdateRef.current = true;
-        setConfig(prev => ({ ...prev, ...(payload.config as Partial<CenarioConfig>) }));
-        // Sync tabs/rotation if they were part of the update, but don't trigger a save back
-        if (payload.config._activeTab) setActiveTab(payload.config._activeTab);
-        if (payload.config._weatherSubTab) setWeatherSubTab(payload.config._weatherSubTab);
-        if (payload.config._currencySubTab) setCurrencySubTab(payload.config._currencySubTab);
-        if (typeof payload.config._screenRotation === 'number') setExternalRotation(payload.config._screenRotation);
+        
+        // Prevent infinite loop by checking if the tab actually changed
+        if (payload.config._activeTab && payload.config._activeTab !== activeTabRef.current) {
+          setActiveTab(payload.config._activeTab);
+        }
+        
+        if (payload.config._weatherSubTab && payload.config._weatherSubTab !== weatherSubTabRef.current) {
+          setWeatherSubTab(payload.config._weatherSubTab);
+        }
+        
+        if (payload.config._currencySubTab && payload.config._currencySubTab !== currencySubTabRef.current) {
+          setCurrencySubTab(payload.config._currencySubTab);
+        }
+        
+        if (typeof payload.config._screenRotation === 'number' && payload.config._screenRotation !== externalRotation) {
+          setExternalRotation(payload.config._screenRotation);
+        }
+
+        // Merge main config
+        setConfig(prev => {
+          // Deep check to see if config actually changed to avoid unnecessary re-renders
+          const currentConfigStr = JSON.stringify(prev);
+          const newConfigStr = JSON.stringify({ ...prev, ...(payload.config as Partial<CenarioConfig>) });
+          if (currentConfigStr === newConfigStr) return prev;
+          return { ...prev, ...(payload.config as Partial<CenarioConfig>) };
+        });
       }
     }).subscribe();
     rtDrawChannelRef.current = ch;
@@ -776,22 +796,17 @@ export default function CenarioInterativoPage() {
   }, []);
 
   const handleTabChange = (tab: string) => {
+    if (tab === activeTab) return;
     setActiveTab(tab);
-    // Mirror to external screen
-    cenarioBcRef.current?.postMessage({ type: "tab-change", tab, subTab: weatherSubTab, currencySubTab });
-    rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab, subTab: weatherSubTab, currencySubTab } });
+    // Mirroring to other devices happens via the main save useEffect
   };
   const handleWeatherSubTabChange = (sub: string) => {
+    if (sub === weatherSubTab) return;
     setWeatherSubTab(sub);
-    // Mirror subtab change to external screen
-    cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "weather", subTab: sub, currencySubTab });
-    rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "weather", subTab: sub, currencySubTab } });
   };
   const handleCurrencySubTabChange = (sub: "moedas" | "bolsas") => {
+    if (sub === currencySubTab) return;
     setCurrencySubTab(sub);
-    // Mirror subtab change to external screen
-    cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "currency", subTab: weatherSubTab, currencySubTab: sub });
-    rtDrawChannelRef.current?.send({ type: "broadcast", event: "tab-change", payload: { tab: "currency", subTab: weatherSubTab, currencySubTab: sub } });
   };
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
   const [trafficCitySuggestions, setTrafficCitySuggestions] = useState<any[]>([]);
@@ -1202,6 +1217,9 @@ export default function CenarioInterativoPage() {
     };
     const serialized = JSON.stringify(configWithTabs);
 
+    // If it's the same as what we already have, don't do anything
+    if (serialized === prevSaveRef.current) return;
+
     // Se a mudança veio de outro dispositivo via broadcast, não salvamos novamente no banco
     if (isRemoteUpdateRef.current) {
       console.log("Cenário: Ignorando salvamento de atualização remota");
@@ -1211,95 +1229,68 @@ export default function CenarioInterativoPage() {
     }
 
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    if (serialized === prevSaveRef.current) { pendingSaveRef.current = null; return; }
+    
     const doSave = async () => {
+      // Check again if still different before actual DB call
+      if (serialized === prevSaveRef.current) {
+        pendingSaveRef.current = null;
+        return;
+      }
+
       prevSaveRef.current = serialized;
       pendingSaveRef.current = null;
       setSaving(true);
-      const payload = { user_id: user.id, cenario_config: configWithTabs } as any;
-      const { error } = await supabase
-        .from("user_settings")
-        .upsert(payload, { onConflict: "user_id" });
+      
+      try {
+        const payload = { user_id: user.id, cenario_config: configWithTabs } as any;
+        const { error } = await supabase
+          .from("user_settings")
+          .upsert(payload, { onConflict: "user_id" });
 
-      if (error) {
-        console.error("Erro ao salvar cenário:", error);
-      } else {
-        setSavedFlash(true);
-        if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
-        savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
+        if (error) {
+          console.error("Erro ao salvar cenário:", error);
+        } else {
+          setSavedFlash(true);
+          if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
+          savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
 
-        // Notifica todas as telas conectadas sobre a mudança de configuração
-        rtDrawChannelRef.current?.send({
-          type: "broadcast",
-          event: "config-update",
-          payload: { config: configWithTabs }
-        });
+          // Notifica todas as telas conectadas sobre a mudança de configuração
+          // Usamos o objeto serializado para garantir consistência
+          rtDrawChannelRef.current?.send({
+            type: "broadcast",
+            event: "config-update",
+            payload: { config: configWithTabs }
+          });
+        }
+      } catch (err) {
+        console.error("Critical save error:", err);
+      } finally {
+        setSaving(false);
       }
-      setSaving(false);
     };
+    
     pendingSaveRef.current = doSave;
-    saveTimeout.current = setTimeout(doSave, 800);
+    saveTimeout.current = setTimeout(doSave, 1500); // Increased debounce to 1.5s
+    
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
-      // Flush pending save on unmount so data is never lost
-      if (pendingSaveRef.current) { pendingSaveRef.current(); }
     };
   }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab, externalRotation]);
 
   const updateHome = (partial: Partial<HomeConfig>) => {
-    setConfig(c => {
-      const next = { ...c, home: { ...c.home, ...partial } };
-      rtDrawChannelRef.current?.send({
-        type: "broadcast",
-        event: "config-update",
-        payload: { config: next }
-      });
-      return next;
-    });
+    setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
   };
   const updateWeather = (partial: Partial<WeatherConfig>) => {
-    setConfig(c => {
-      const next = { ...c, weather: { ...c.weather, ...partial } };
-      rtDrawChannelRef.current?.send({
-        type: "broadcast",
-        event: "config-update",
-        payload: { config: next }
-      });
-      return next;
-    });
+    setConfig(c => ({ ...c, weather: { ...c.weather, ...partial } }));
   };
   const updateTraffic = (partial: Partial<TrafficConfig>) => {
-    setConfig(c => {
-      const next = { ...c, traffic: { ...c.traffic, ...partial } };
-      rtDrawChannelRef.current?.send({
-        type: "broadcast",
-        event: "config-update",
-        payload: { config: next }
-      });
-      return next;
-    });
+    setConfig(c => ({ ...c, traffic: { ...c.traffic, ...partial } }));
   };
   const updateCurrency = (partial: Partial<CurrencyConfig>) => {
-    setConfig(c => {
-      const next = { ...c, currency: { ...c.currency, ...partial } };
-      rtDrawChannelRef.current?.send({
-        type: "broadcast",
-        event: "config-update",
-        payload: { config: next }
-      });
-      return next;
-    });
+    setConfig(c => ({ ...c, currency: { ...c.currency, ...partial } }));
   };
   const updateChat = (partial: Partial<ChatConfig>) => {
-    setConfig(c => {
-      const next = { ...c, chat: { ...c.chat, ...partial } };
-      rtDrawChannelRef.current?.send({
-        type: "broadcast",
-        event: "config-update",
-        payload: { config: next }
-      });
-      return next;
-    });
+    setConfig(c => ({ ...c, chat: { ...c.chat, ...partial } }));
   };
 
   const getElPos = useCallback((id: string): ElementPosition => {
