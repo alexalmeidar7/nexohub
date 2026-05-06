@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown, Layout, Type, List, Pencil, DollarSign, GripVertical, AlignLeft, AlignCenter, AlignRight, Settings2, Type as TypeIcon, Copy, ClipboardCheck, Bold, Italic } from "lucide-react";
+import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown, Layout, Type, List, Pencil, DollarSign, GripVertical, AlignLeft, AlignCenter, AlignRight, Settings2, Type as TypeIcon, Copy, ClipboardCheck, Bold, Italic, Lock, Unlock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -571,7 +571,7 @@ export default function PropostasPage() {
                     const deltaY = currentY - draggingItem.startY;
                     
                     setProposalItems(prev => prev.map(item => 
-                      item.id === draggingItem.id 
+                      item.id === draggingItem.id && !item.locked 
                         ? { ...item, style: { 
                             ...item.style, 
                             left: Math.max(0, Math.min(100 - (item.style.width || 0), draggingItem.initialLeft + deltaX)),
@@ -621,8 +621,9 @@ export default function PropostasPage() {
                       {/* Controls */}
                       <div className="absolute -top-8 left-0 opacity-0 group-hover/item:opacity-100 transition-opacity flex gap-1 z-50 bg-black/60 p-1 rounded-t-lg">
                         <div 
-                          className="p-1 bg-sky-500 rounded cursor-move"
+                          className={`p-1 bg-sky-500 rounded cursor-move ${item.locked ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
                           onMouseDown={(e) => {
+                            if (item.locked) return;
                             e.stopPropagation();
                             const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
                             if (!rect) return;
@@ -647,6 +648,18 @@ export default function PropostasPage() {
                             <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2">
                               <span className="text-[10px] font-bold uppercase opacity-50">Estilo do Item</span>
                               <div className="flex gap-1">
+                                <button
+                                  onClick={() => {
+                                    const newItems = [...proposalItems];
+                                    newItems[index].locked = !newItems[index].locked;
+                                    setProposalItems(newItems);
+                                    toast.success(newItems[index].locked ? "Item bloqueado!" : "Item desbloqueado!");
+                                  }}
+                                  className={`p-1.5 hover:bg-slate-800 rounded transition-colors ${item.locked ? 'text-amber-400' : 'text-white'}`}
+                                  title={item.locked ? "Desbloquear Item" : "Bloquear Item"}
+                                >
+                                  {item.locked ? <Lock size={12} /> : <Unlock size={12} />}
+                                </button>
                                 {item.type === 'section' && (
                                   <button 
                                     onClick={() => {
@@ -672,7 +685,11 @@ export default function PropostasPage() {
                                       textAlign: item.style.textAlign,
                                       padding: item.style.padding,
                                       fontWeight: item.style.fontWeight,
-                                      fontStyle: item.style.fontStyle
+                                      fontStyle: item.style.fontStyle,
+                                      borderRadius: item.style.borderRadius,
+                                      backgroundColor: item.style.backgroundColor,
+                                      borderColor: item.style.borderColor,
+                                      borderWidth: item.style.borderWidth
                                     });
                                     toast.success("Estilo copiado!");
                                   }}
@@ -904,22 +921,24 @@ export default function PropostasPage() {
                       </div>
 
                       {/* Resize Handle Width */}
-                      <div 
-                        className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
-                          if (!rect) return;
-                          setResizingItem({
-                            id: item.id,
-                            startWidth: item.style.width,
-                            startX: ((e.clientX - rect.left) / rect.width) * 100
-                          });
-                        }}
-                      />
+                      {!item.locked && (
+                        <div 
+                          className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
+                            if (!rect) return;
+                            setResizingItem({
+                              id: item.id,
+                              startWidth: item.style.width,
+                              startX: ((e.clientX - rect.left) / rect.width) * 100
+                            });
+                          }}
+                        />
+                      )}
 
                       {/* Resize Handle Height (Only for Text fields or Sections) */}
-                      {(item.type === 'text' || item.type === 'section') && (
+                      {(item.type === 'text' || item.type === 'section') && !item.locked && (
                         <div 
                           className="absolute left-0 right-0 -bottom-1 h-2 cursor-ns-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
                           onMouseDown={(e) => {
