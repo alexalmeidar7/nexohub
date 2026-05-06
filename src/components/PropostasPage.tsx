@@ -521,14 +521,18 @@ export default function PropostasPage() {
                       content: type === 'commercial_line' ? { qty: '', time: '', desc: '' } : '',
                       style: { 
                         color: "#ffffff", 
-                        fontSize: 14, 
+                        fontSizeVw: 1.2,
                         fontWeight: "400",
                         width: type === 'value' ? 15 : 40,
-                        height: type === 'text' ? 5 : 'auto',
+                        height: type === 'text' ? 5 : (type === 'section' ? 2 : 'auto'),
                         left: Math.max(0, Math.min(90, x)),
                         top: Math.max(0, Math.min(90, y)),
                         textAlign: 'left',
                         padding: 0.5,
+                        borderRadius: 0,
+                        backgroundColor: type === 'section' ? '#ffffff' : 'transparent',
+                        borderColor: 'transparent',
+                        borderWidth: 0,
                       }
                     };
                     setProposalItems([...proposalItems, newItem]);
