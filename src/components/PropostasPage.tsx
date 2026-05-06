@@ -23,9 +23,9 @@ export default function PropostasPage() {
   const [isNamingProject, setIsCreatingProject] = useState(false);
   const [tempMockup, setTempMockup] = useState<any>(null);
   const [formData, setFormData] = useState<any>({
-    descricaoStyle: { color: "#ffffff", fontSize: 14, fontWeight: "700" },
-    entregaComercialStyle: { color: "#ffffff", fontSize: 14, fontWeight: "700" },
-    entregaDigitalStyle: { color: "#ffffff", fontSize: 14, fontWeight: "700" },
+    descricaoStyle: { color: "#ffffff", fontSize: 12, fontWeight: "400" },
+    entregaComercialStyle: { color: "#ffffff", fontSize: 12, fontWeight: "400" },
+    entregaDigitalStyle: { color: "#ffffff", fontSize: 12, fontWeight: "400" },
     valorStyle: { color: "#ffffff", fontSize: 14, fontWeight: "900" },
   });
   const [overlayY, setOverlayY] = useState(5); // % from top
@@ -381,8 +381,8 @@ export default function PropostasPage() {
                       className="bg-transparent outline-none focus:outline-none focus:ring-0 hover:bg-transparent border-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none shadow-none"
                       style={{ 
                         color: formData.descricaoStyle?.color || "#ffffff",
-                        fontSize: `${(formData.descricaoStyle?.fontSize || 14) / 14}vw`,
-                        fontWeight: formData.descricaoStyle?.fontWeight || "700"
+                        fontSize: `${(formData.descricaoStyle?.fontSize || 12) / 14}vw`,
+                        fontWeight: formData.descricaoStyle?.fontWeight || "400"
                       }}
                     />
                     <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
@@ -416,8 +416,8 @@ export default function PropostasPage() {
                       className="bg-transparent outline-none focus:outline-none focus:ring-0 hover:bg-transparent border-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none shadow-none"
                       style={{ 
                         color: formData.entregaComercialStyle?.color || "#ffffff",
-                        fontSize: `${(formData.entregaComercialStyle?.fontSize || 14) / 14}vw`,
-                        fontWeight: formData.entregaComercialStyle?.fontWeight || "700"
+                        fontSize: `${(formData.entregaComercialStyle?.fontSize || 12) / 14}vw`,
+                        fontWeight: formData.entregaComercialStyle?.fontWeight || "400"
                       }}
                     />
                     <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
@@ -451,8 +451,8 @@ export default function PropostasPage() {
                       className="bg-transparent outline-none focus:outline-none focus:ring-0 hover:bg-transparent border-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none shadow-none"
                       style={{ 
                         color: formData.entregaDigitalStyle?.color || "#ffffff",
-                        fontSize: `${(formData.entregaDigitalStyle?.fontSize || 14) / 14}vw`,
-                        fontWeight: formData.entregaDigitalStyle?.fontWeight || "700"
+                        fontSize: `${(formData.entregaDigitalStyle?.fontSize || 12) / 14}vw`,
+                        fontWeight: formData.entregaDigitalStyle?.fontWeight || "400"
                       }}
                     />
                     <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
