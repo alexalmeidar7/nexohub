@@ -571,7 +571,7 @@ export default function PropostasPage() {
                     const deltaY = currentY - draggingItem.startY;
                     
                     setProposalItems(prev => prev.map(item => 
-                      item.id === draggingItem.id 
+                      item.id === draggingItem.id && !item.locked 
                         ? { ...item, style: { 
                             ...item.style, 
                             left: Math.max(0, Math.min(100 - (item.style.width || 0), draggingItem.initialLeft + deltaX)),
