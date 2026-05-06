@@ -104,6 +104,22 @@ export default function PropostasPage() {
     setUploadingArt(false);
   };
 
+  const handleDeleteProposta = async (propostaId: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta proposta? Esta ação não pode ser desfeita.")) return;
+
+    const { error } = await supabase.from("comercial_propostas").delete().eq("id", propostaId);
+
+    if (error) {
+      toast.error("Erro ao excluir proposta");
+    } else {
+      toast.success("Proposta excluída com sucesso");
+      fetchData();
+      if (selectedProposta?.id === propostaId) {
+        setSelectedProposta(null);
+      }
+    }
+  };
+
   const handleApprove = async (propostaId: string) => {
     const { error } = await supabase.from("comercial_propostas").update({
       status: "concluido"
