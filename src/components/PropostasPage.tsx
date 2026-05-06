@@ -86,6 +86,7 @@ export default function PropostasPage() {
       title: formData.projeto || (formData.cliente ? `Proposta - ${formData.cliente}` : "Nova Proposta"),
       data: {
         ...formData,
+        proposalItems,
         cliente: formData.cliente || "Cliente Não Informado"
       },
       status: "arte_final"
@@ -285,6 +286,7 @@ export default function PropostasPage() {
                         setSelectedMockup(newMockup);
                         setIsEditingMockup(true);
                         setOverlayY(5);
+                        setProposalItems([]);
                         setCustomBg(null);
                       }
                     }}
@@ -304,6 +306,7 @@ export default function PropostasPage() {
                         setSelectedMockup(m);
                         setIsEditingMockup(true);
                         setOverlayY(m.config?.overlayY || 5);
+                        setProposalItems(m.config?.proposalItems || []);
                         setCustomBg(m.image_url);
                       }}
                       className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all text-left"
