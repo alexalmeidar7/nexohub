@@ -333,6 +333,7 @@ export default function CenarioInterativoPage() {
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
   const [satelliteZoom, setSatelliteZoom] = useState(6);
+  const isRemoteUpdateRef = useRef(false);
 
   /* ─── Preview Drawing ─── */
   const [previewDrawActive, setPreviewDrawActive] = useState(false);
@@ -523,7 +524,13 @@ export default function CenarioInterativoPage() {
       if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
     }).on("broadcast", { event: "config-update" }, ({ payload }: any) => {
       if (payload?.config && typeof payload.config === "object") {
+        isRemoteUpdateRef.current = true;
         setConfig(prev => ({ ...prev, ...(payload.config as Partial<CenarioConfig>) }));
+        // Sync tabs/rotation if they were part of the update, but don't trigger a save back
+        if (payload.config._activeTab) setActiveTab(payload.config._activeTab);
+        if (payload.config._weatherSubTab) setWeatherSubTab(payload.config._weatherSubTab);
+        if (payload.config._currencySubTab) setCurrencySubTab(payload.config._currencySubTab);
+        if (typeof payload.config._screenRotation === 'number') setExternalRotation(payload.config._screenRotation);
       }
     }).subscribe();
     rtDrawChannelRef.current = ch;
@@ -1035,28 +1042,43 @@ export default function CenarioInterativoPage() {
         .eq("user_id", user.id)
         .maybeSingle();
 
+      let finalConfig = { ...defaultConfig };
+      let finalActiveTab = 'home';
+      let finalWeatherTab = 'today';
+      let finalCurrencyTab: "moedas" | "bolsas" = 'moedas';
+      let finalRotation = 0;
+
       if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
-        const savedConfig = (data as any).cenario_config as Partial<CenarioConfig> & {
-          _activeTab?: string;
-          _weatherSubTab?: string;
-          _currencySubTab?: "moedas" | "bolsas";
-          _screenRotation?: number;
-        };
-        const merged = { ...defaultConfig, ...savedConfig };
-        setConfig(merged);
-        if (savedConfig._activeTab) setActiveTab(savedConfig._activeTab);
-        if (savedConfig._weatherSubTab) setWeatherSubTab(savedConfig._weatherSubTab);
-        if (savedConfig._currencySubTab) setCurrencySubTab(savedConfig._currencySubTab);
-        if (typeof savedConfig._screenRotation === "number") setExternalRotation(savedConfig._screenRotation);
+        const savedConfig = (data as any).cenario_config as any;
+        finalConfig = { ...defaultConfig, ...savedConfig };
+        if (savedConfig._activeTab) finalActiveTab = savedConfig._activeTab;
+        if (savedConfig._weatherSubTab) finalWeatherTab = savedConfig._weatherSubTab;
+        if (savedConfig._currencySubTab) finalCurrencyTab = savedConfig._currencySubTab;
+        if (typeof savedConfig._screenRotation === "number") finalRotation = savedConfig._screenRotation;
+        
+        setConfig(finalConfig);
+        setActiveTab(finalActiveTab);
+        setWeatherSubTab(finalWeatherTab);
+        setCurrencySubTab(finalCurrencyTab);
+        setExternalRotation(finalRotation);
+
         try {
-          localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
-        } catch {
-          // silent
-        }
+          localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(finalConfig));
+        } catch { /* silent */ }
       } else {
         applyCachedConfig();
+        // Se aplicou cache, os estados já foram atualizados via setConfig no applyCachedConfig
       }
 
+      // Inicializa o prevSaveRef para evitar salvamento imediato no mount
+      const initialSerialized = JSON.stringify({
+        ...finalConfig,
+        _activeTab: finalActiveTab,
+        _weatherSubTab: finalWeatherTab,
+        _currencySubTab: finalCurrencyTab,
+        _screenRotation: finalRotation,
+      });
+      prevSaveRef.current = initialSerialized;
       setLoaded(true);
     })();
   }, [user?.id]);
@@ -1167,9 +1189,10 @@ export default function CenarioInterativoPage() {
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSaveRef = useRef<string>("");
   const pendingSaveRef = useRef<(() => Promise<void>) | null>(null);
+
   useEffect(() => {
     if (!user?.id || !loaded) return;
-    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    
     const configWithTabs = {
       ...config,
       _activeTab: activeTab,
@@ -1178,6 +1201,16 @@ export default function CenarioInterativoPage() {
       _screenRotation: externalRotation,
     };
     const serialized = JSON.stringify(configWithTabs);
+
+    // Se a mudança veio de outro dispositivo via broadcast, não salvamos novamente no banco
+    if (isRemoteUpdateRef.current) {
+      console.log("Cenário: Ignorando salvamento de atualização remota");
+      isRemoteUpdateRef.current = false;
+      prevSaveRef.current = serialized;
+      return;
+    }
+
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
     if (serialized === prevSaveRef.current) { pendingSaveRef.current = null; return; }
     const doSave = async () => {
       prevSaveRef.current = serialized;
