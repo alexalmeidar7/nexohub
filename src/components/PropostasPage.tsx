@@ -23,6 +23,10 @@ export default function PropostasPage() {
   const [isNamingProject, setIsCreatingProject] = useState(false);
   const [tempMockup, setTempMockup] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
+  const [overlayY, setOverlayY] = useState(5); // % from top
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [startOverlayY, setStartOverlayY] = useState(5);
   const [uploadingArt, setUploadingArt] = useState(false);
   const [customBg, setCustomBg] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
