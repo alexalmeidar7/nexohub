@@ -292,7 +292,7 @@ export default function PropostasPage() {
             >
               {/* Fundo da Proposta - Imagem Default e Temporária */}
               <div 
-                className="absolute inset-0 w-full h-full bg-slate-900"
+                className="absolute inset-0 w-full h-full"
                 style={{ 
                   backgroundImage: "url('/mockup-bg-v4.png')",
                   backgroundSize: 'cover',
