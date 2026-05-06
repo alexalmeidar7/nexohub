@@ -207,30 +207,28 @@ export default function PropostasPage() {
       {isLoading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-sky-500" /></div>
       ) : selectedMockup ? (
-        <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex items-center justify-center relative overflow-hidden">
+        <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-4 md:p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex flex-col items-center relative overflow-hidden">
           <button 
             onClick={() => setSelectedMockup(null)} 
-            className="absolute top-4 right-4 z-10 p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all"
+            className="absolute top-4 right-4 z-20 p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all"
             title="Cancelar edição"
           >
             <X size={20} />
           </button>
 
-          <div 
-            className="bg-white shadow-2xl relative overflow-hidden flex-shrink-0"
-            style={{ 
-              width: "1920px", 
-              height: "1080px", 
-              transform: "scale(0.35)", 
-              transformOrigin: "center center"
-            }}
-          >
-            {/* Background Mockup */}
-            <img 
-              src={selectedMockup?.image_url} 
-              className="absolute inset-0 w-full h-full object-cover"
-              alt="Mockup Preview"
-            />
+          <div className="w-full max-w-[1400px] mx-auto flex flex-col items-center">
+            <div 
+              className="bg-white shadow-2xl relative overflow-hidden w-full h-auto"
+              style={{ 
+                aspectRatio: "1920 / 1080",
+              }}
+            >
+              {/* Background Mockup */}
+              <img 
+                src={selectedMockup?.image_url} 
+                className="absolute inset-0 w-full h-full object-cover"
+                alt="Mockup Preview"
+              />
 
             {/* Editable Overlay */}
             <div className="absolute inset-0 p-20 flex flex-col pointer-events-auto">
