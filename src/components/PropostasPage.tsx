@@ -935,7 +935,9 @@ export default function PropostasPage() {
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
                               fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.0}vw`
+                              fontSize: `${item.style.fontSizeVw || 1.0}vw`,
+                              fontWeight: item.style.fontWeight || 'normal',
+                              fontStyle: item.style.fontStyle || 'normal'
                             }}
                           />
                         </div>
