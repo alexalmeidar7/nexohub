@@ -378,7 +378,7 @@ export default function PropostasPage() {
                       value={formData.descricao || ""} 
                       onChange={e => setFormData({...formData, descricao: e.target.value})}
                       placeholder="01 DESCRIÇÃO"
-                      className="bg-transparent hover:bg-white/5 focus:bg-white/10 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none border-none"
+                      className="bg-transparent outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none border-none"
                       style={{ 
                         color: formData.descricaoStyle?.color || "#ffffff",
                         fontSize: `${(formData.descricaoStyle?.fontSize || 14) / 14}vw`,
@@ -413,7 +413,7 @@ export default function PropostasPage() {
                       value={formData.entrega_comercial || ""} 
                       onChange={e => setFormData({...formData, entrega_comercial: e.target.value})}
                       placeholder="02 ENTREGA COMERCIAL"
-                      className="bg-transparent hover:bg-white/5 focus:bg-white/10 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none border-none"
+                      className="bg-transparent outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none border-none"
                       style={{ 
                         color: formData.entregaComercialStyle?.color || "#ffffff",
                         fontSize: `${(formData.entregaComercialStyle?.fontSize || 14) / 14}vw`,
@@ -448,7 +448,7 @@ export default function PropostasPage() {
                       value={formData.entrega_digital || ""} 
                       onChange={e => setFormData({...formData, entrega_digital: e.target.value})}
                       placeholder="03 ENTREGA DIGITAL"
-                      className="bg-transparent hover:bg-white/5 focus:bg-white/10 outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none border-none"
+                      className="bg-transparent outline-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none border-none"
                       style={{ 
                         color: formData.entregaDigitalStyle?.color || "#ffffff",
                         fontSize: `${(formData.entregaDigitalStyle?.fontSize || 14) / 14}vw`,
