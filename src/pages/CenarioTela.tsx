@@ -1889,12 +1889,18 @@ export default function CenarioTela() {
                         {mockMessages.map((m, i) => (
                           <div
                             key={i}
-                            className="absolute flex flex-col items-center text-center w-[90%]"
+                            className="absolute flex flex-col items-center text-center w-[90%] rounded-[3vh]"
                             style={{
                               opacity: i === currentChatMessageIdx ? 1 : 0,
                               transform: `translateY(${i === currentChatMessageIdx ? '0' : '20px'})`,
                               visibility: i === currentChatMessageIdx ? 'visible' : 'hidden',
                               transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                              background: 'rgba(0, 0, 0, 0.5)',
+                              backdropFilter: 'blur(20px)',
+                              WebkitBackdropFilter: 'blur(20px)',
+                              padding: `${vhToPx(4)}${vu}`,
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
                             }}
                           >
                             {/* User Avatar Circle */}
@@ -1905,7 +1911,6 @@ export default function CenarioTela() {
                                 height: vhToPx(12), 
                                 background: accentRgba(0.2), 
                                 borderColor: accentRgba(0.5),
-                                backdropFilter: 'blur(10px)'
                               }}
                             >
                               <span className="font-black" style={{ fontSize: vhToPx(5), color: '#fff' }}>
@@ -1937,15 +1942,6 @@ export default function CenarioTela() {
                             >
                               "{m.text}"
                             </div>
-
-                            {/* Decorative line */}
-                            <div 
-                              className="mt-8 h-[2px] rounded-full" 
-                              style={{ 
-                                width: vhToPx(10), 
-                                background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)` 
-                              }} 
-                            />
                           </div>
                         ))}
                       </div>
