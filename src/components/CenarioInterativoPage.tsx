@@ -1031,17 +1031,24 @@ export default function CenarioInterativoPage() {
           setNextProgram(null);
         }
         // Fetch chat data if enabled
-        if (cenarioConfig?.chat?.enabled && cenarioConfig?.chat?.youtubeVideoUrl) {
-          const result = await fetchViaEdgeFunction(user.id);
-          if (result?.youtubeChatMessages) {
-            setChatMessages(result.youtubeChatMessages);
-          }
-        }
-        // Fetch chat data if enabled
         if (config.chat?.enabled && config.chat?.youtubeVideoUrl) {
-          const result = await fetchViaEdgeFunction(user.id);
-          if (result?.youtubeChatMessages) {
-            setChatMessages(result.youtubeChatMessages);
+          try {
+            const now = new Date();
+            const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            const day = dayNames[now.getDay()];
+            const time = now.toTimeString().slice(0, 5);
+            const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${user.id}&day=${encodeURIComponent(day)}&time=${time}`;
+            const resp = await fetch(baseUrl, {
+              headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+            });
+            if (resp.ok) {
+              const json = await resp.json();
+              if (json?.youtubeChatMessages) {
+                setChatMessages(json.youtubeChatMessages);
+              }
+            }
+          } catch (err) {
+            console.error("Error fetching chat in preview:", err);
           }
         }
       } else {
