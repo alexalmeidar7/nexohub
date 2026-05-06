@@ -523,7 +523,13 @@ export default function CenarioInterativoPage() {
       if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
     }).on("broadcast", { event: "config-update" }, ({ payload }: any) => {
       if (payload?.config && typeof payload.config === "object") {
+        isRemoteUpdateRef.current = true;
         setConfig(prev => ({ ...prev, ...(payload.config as Partial<CenarioConfig>) }));
+        // Sync tabs/rotation if they were part of the update, but don't trigger a save back
+        if (payload.config._activeTab) setActiveTab(payload.config._activeTab);
+        if (payload.config._weatherSubTab) setWeatherSubTab(payload.config._weatherSubTab);
+        if (payload.config._currencySubTab) setCurrencySubTab(payload.config._currencySubTab);
+        if (typeof payload.config._screenRotation === 'number') setExternalRotation(payload.config._screenRotation);
       }
     }).subscribe();
     rtDrawChannelRef.current = ch;
