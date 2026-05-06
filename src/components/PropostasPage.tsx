@@ -299,13 +299,30 @@ export default function PropostasPage() {
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-sky-500" /></div>
       ) : selectedMockup ? (
         <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-4 md:p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex flex-col items-center relative overflow-hidden">
-          <button 
-            onClick={() => setSelectedMockup(null)} 
-            className="absolute top-4 right-4 z-20 p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all"
-            title="Cancelar edição"
-          >
-            <X size={20} />
-          </button>
+          <div className="absolute top-4 right-4 z-20 flex gap-2">
+            <Label 
+              htmlFor="bg-upload" 
+              className="p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all cursor-pointer flex items-center justify-center"
+              title="Trocar imagem de fundo"
+            >
+              {uploadingBg ? <Loader2 size={20} className="animate-spin" /> : <Upload size={20} />}
+              <input 
+                id="bg-upload" 
+                type="file" 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleUploadBg} 
+                disabled={uploadingBg}
+              />
+            </Label>
+            <button 
+              onClick={() => setSelectedMockup(null)} 
+              className="p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all"
+              title="Cancelar edição"
+            >
+              <X size={20} />
+            </button>
+          </div>
 
           <div className="w-full max-w-[1400px] mx-auto flex flex-col items-center">
             <div 
