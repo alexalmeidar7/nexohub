@@ -1063,6 +1063,14 @@ export default function CenarioInterativoPage() {
         applyCachedConfig();
       }
 
+      const initialConfigWithTabs = {
+        ...merged,
+        _activeTab: savedConfig._activeTab || 'home',
+        _weatherSubTab: savedConfig._weatherSubTab || 'today',
+        _currencySubTab: savedConfig._currencySubTab || 'moedas',
+        _screenRotation: savedConfig._screenRotation || 0,
+      };
+      prevSaveRef.current = JSON.stringify(initialConfigWithTabs);
       setLoaded(true);
     })();
   }, [user?.id]);
