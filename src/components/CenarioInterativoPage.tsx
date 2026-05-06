@@ -1037,6 +1037,13 @@ export default function CenarioInterativoPage() {
             setChatMessages(result.youtubeChatMessages);
           }
         }
+        // Fetch chat data if enabled
+        if (config.chat?.enabled && config.chat?.youtubeVideoUrl) {
+          const result = await fetchViaEdgeFunction(user.id);
+          if (result?.youtubeChatMessages) {
+            setChatMessages(result.youtubeChatMessages);
+          }
+        }
       } else {
         setCurrentProgram(null);
         setSponsorLogos([]);

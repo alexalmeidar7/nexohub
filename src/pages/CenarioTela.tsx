@@ -156,6 +156,7 @@ const defaultMessages = [
 ];
 
 export default function CenarioTela() {
+  const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>(defaultMessages);
   const { user } = useAuth();
   usePageTitle("NexoHub - Cenário Interativo");
   const uidFromUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("uid") : null;
@@ -1124,6 +1125,11 @@ export default function CenarioTela() {
             const json = await resp.json();
             if (json?.ok && json.musicData?.titulo && json.musicData.titulo !== "Sem título") {
               setMusicWithCoverFallback(json.musicData.titulo, json.musicData.artista || "", json.musicData.capa || "", undefined, json.musicStartTime || null);
+            }
+            if (json?.youtubeChatMessages && json.youtubeChatMessages.length > 0) {
+              setChatMessages(json.youtubeChatMessages);
+            } else if (json?.ok && !json.youtubeChatMessages) {
+              setChatMessages(defaultMessages);
             } else {
               // Fallback: try direct XML from browser (for local-network XMLs)
               const xmlUrl = json?.musicXmlUrl || musicXmlUrlRef.current;
