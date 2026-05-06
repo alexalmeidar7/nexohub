@@ -173,11 +173,25 @@ export default function CenarioTela() {
   });
 
   const [currentChatMessageIdx, setCurrentChatMessageIdx] = useState(0);
+  const displayedMessagesRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (activeTab === "chat" && mockMessages.length > 0) {
       const interval = setInterval(() => {
-        setCurrentChatMessageIdx((prev) => (prev + 1) % mockMessages.length);
+        setCurrentChatMessageIdx((prevIdx) => {
+          const availableIndices = mockMessages
+            .map((_, index) => index)
+            .filter((index) => !displayedMessagesRef.current.has(index));
+
+          if (availableIndices.length === 0) {
+            displayedMessagesRef.current.clear();
+            return (prevIdx + 1) % mockMessages.length;
+          }
+
+          const nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+          displayedMessagesRef.current.add(nextIndex);
+          return nextIndex;
+        });
       }, 6000);
       return () => clearInterval(interval);
     }

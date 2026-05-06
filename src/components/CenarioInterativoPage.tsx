@@ -821,11 +821,25 @@ export default function CenarioInterativoPage() {
   const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [previewChatMessageIdx, setPreviewChatMessageIdx] = useState(0);
+  const previewDisplayedMessagesRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (activeTab === "chat" && mockMessages.length > 0) {
       const interval = setInterval(() => {
-        setPreviewChatMessageIdx((prev) => (prev + 1) % mockMessages.length);
+        setPreviewChatMessageIdx((prevIdx) => {
+          const availableIndices = mockMessages
+            .map((_, index) => index)
+            .filter((index) => !previewDisplayedMessagesRef.current.has(index));
+
+          if (availableIndices.length === 0) {
+            previewDisplayedMessagesRef.current.clear();
+            return (prevIdx + 1) % mockMessages.length;
+          }
+
+          const nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+          previewDisplayedMessagesRef.current.add(nextIndex);
+          return nextIndex;
+        });
       }, 6000);
       return () => clearInterval(interval);
     }
