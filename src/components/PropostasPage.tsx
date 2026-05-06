@@ -493,109 +493,190 @@ export default function PropostasPage() {
 
               {/* Editable Overlay */}
               <div 
-                className="absolute inset-0 flex flex-col pointer-events-auto cursor-ns-resize"
+                className="absolute inset-0 flex flex-col pointer-events-auto"
                 style={{ paddingTop: `${overlayY}%` }}
-                onMouseDown={(e) => {
-                  if (e.target === e.currentTarget) {
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const type = e.dataTransfer.getData("type");
+                  if (type) {
+                    const newItem = {
+                      id: `item-${Date.now()}`,
+                      type,
+                      content: type === 'commercial_line' ? { qty: '', time: '', desc: '' } : '',
+                      style: { color: "#ffffff", fontSize: 14, fontWeight: "400" }
+                    };
+                    setProposalItems([...proposalItems, newItem]);
+                  }
+                }}
+              >
+                <div 
+                  className="absolute top-0 left-0 right-0 h-8 cursor-ns-resize hover:bg-sky-500/20 flex items-center justify-center transition-colors z-10"
+                  onMouseDown={(e) => {
                     setIsDragging(true);
                     setStartY(e.clientY);
                     setStartOverlayY(overlayY);
-                  }
-                }}
-                onMouseMove={(e) => {
-                  if (isDragging) {
-                    const deltaY = (e.clientY - startY);
-                    const containerHeight = e.currentTarget.clientHeight || 1000;
-                    const newY = Math.max(0, Math.min(60, startOverlayY + (deltaY / containerHeight) * 100));
-                    setOverlayY(newY);
-                  }
-                }}
-                onMouseUp={() => setIsDragging(false)}
-                onMouseLeave={() => setIsDragging(false)}
-              >
-                <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] px-[5%] text-white">
-                  <div className="space-y-[1vw] relative group">
-                    <textarea 
-                      value={formData.descricao || ""} 
-                      onChange={e => setFormData({...formData, descricao: e.target.value})}
-                      placeholder="01 DESCRIÇÃO"
-                      className="bg-transparent outline-none focus:outline-none focus:ring-0 border-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none shadow-none"
-                      style={{ 
-                        color: formData.descricaoStyle?.color || "#ffffff",
-                        fontSize: `${(formData.descricaoStyle?.fontSize || 12) / 14}vw`,
-                        fontWeight: formData.descricaoStyle?.fontWeight || "400"
-                      }}
-                    />
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
-                      <input 
-                        type="color" 
-                        value={formData.descricaoStyle?.color || "#ffffff"} 
-                        onChange={(e) => setFormData({...formData, descricaoStyle: {...formData.descricaoStyle, color: e.target.value}})}
-                        className="w-5 h-5 cursor-pointer bg-transparent border-none"
-                      />
-                      <select 
-                        value={formData.descricaoStyle?.fontSize || 14}
-                        onChange={(e) => setFormData({...formData, descricaoStyle: {...formData.descricaoStyle, fontSize: parseInt(e.target.value)}})}
-                        className="bg-transparent text-[10px] text-white border border-white/20 rounded"
-                      >
-                        {[10, 12, 14, 16, 18, 20, 24, 28, 32].map(s => <option key={s} value={s} className="bg-slate-800">{s}px</option>)}
-                      </select>
-                      <button 
-                        onClick={() => setFormData({...formData, descricaoStyle: {...formData.descricaoStyle, fontWeight: formData.descricaoStyle?.fontWeight === "900" ? "400" : "900"}})}
-                        className="bg-transparent text-[10px] text-white border border-white/20 rounded px-1"
-                      >
-                        B
-                      </button>
-                    </div>
-                  </div>
+                  }}
+                >
+                  <GripVertical size={16} className="text-sky-500 rotate-90" />
+                </div>
 
-                  <div className="space-y-[1vw] relative group">
-                    <textarea 
-                      value={formData.entrega_comercial || ""} 
-                      onChange={e => setFormData({...formData, entrega_comercial: e.target.value})}
-                      placeholder="02 ENTREGA COMERCIAL"
-                      className="bg-transparent outline-none focus:outline-none focus:ring-0 border-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none shadow-none"
-                      style={{ 
-                        color: formData.entregaComercialStyle?.color || "#ffffff",
-                        fontSize: `${(formData.entregaComercialStyle?.fontSize || 12) / 14}vw`,
-                        fontWeight: formData.entregaComercialStyle?.fontWeight || "400"
-                      }}
-                    />
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
-                      <input 
-                        type="color" 
-                        value={formData.entregaComercialStyle?.color || "#ffffff"} 
-                        onChange={(e) => setFormData({...formData, entregaComercialStyle: {...formData.entregaComercialStyle, color: e.target.value}})}
-                        className="w-5 h-5 cursor-pointer bg-transparent border-none"
-                      />
-                      <select 
-                        value={formData.entregaComercialStyle?.fontSize || 14}
-                        onChange={(e) => setFormData({...formData, entregaComercialStyle: {...formData.entregaComercialStyle, fontSize: parseInt(e.target.value)}})}
-                        className="bg-transparent text-[10px] text-white border border-white/20 rounded"
-                      >
-                        {[10, 12, 14, 16, 18, 20, 24, 28, 32].map(s => <option key={s} value={s} className="bg-slate-800">{s}px</option>)}
-                      </select>
-                      <button 
-                        onClick={() => setFormData({...formData, entregaComercialStyle: {...formData.entregaComercialStyle, fontWeight: formData.entregaComercialStyle?.fontWeight === "900" ? "400" : "900"}})}
-                        className="bg-transparent text-[10px] text-white border border-white/20 rounded px-1"
-                      >
-                        B
-                      </button>
+                <div className="w-full h-full pb-[10%] px-[5%] text-white space-y-4 overflow-y-auto custom-scrollbar">
+                  {proposalItems.length === 0 && (
+                    <div className="h-full flex items-center justify-center border-2 border-dashed border-white/20 rounded-2xl">
+                      <p className="text-white/40 text-[1.5vw] font-bold uppercase">Arraste as ferramentas para aqui</p>
                     </div>
-                  </div>
+                  )}
+                  
+                  {proposalItems.map((item, index) => (
+                    <div key={item.id} className="relative group/item">
+                      <div className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity flex flex-col gap-1">
+                        <button 
+                          onClick={() => setProposalItems(proposalItems.filter(i => i.id !== item.id))}
+                          className="p-1.5 bg-red-500 rounded-lg text-white"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
 
+                      {item.type === 'section' && (
+                        <div className="py-2 border-b border-white/30">
+                          <input 
+                            value={item.content}
+                            onChange={(e) => {
+                              const newItems = [...proposalItems];
+                              newItems[index].content = e.target.value;
+                              setProposalItems(newItems);
+                            }}
+                            placeholder="NOME DA SEÇÃO (OPCIONAL)"
+                            className="bg-transparent border-none outline-none w-full font-black uppercase text-[1.2vw] placeholder:text-white/20"
+                            style={{ color: item.style.color }}
+                          />
+                        </div>
+                      )}
+
+                      {item.type === 'text' && (
+                        <textarea 
+                          value={item.content}
+                          onChange={(e) => {
+                            const newItems = [...proposalItems];
+                            newItems[index].content = e.target.value;
+                            setProposalItems(newItems);
+                          }}
+                          placeholder="DESCRIÇÃO DA PROPOSTA..."
+                          className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-[1vw] w-full min-h-[5vw] outline-none text-[1vw] placeholder:text-white/20 resize-none"
+                          style={{ color: item.style.color }}
+                        />
+                      )}
+
+                      {item.type === 'commercial_line' && (
+                        <div className="flex gap-[1vw] items-center bg-white/5 backdrop-blur-sm p-[0.8vw] rounded-xl border border-white/10">
+                          <input 
+                            placeholder="QNT"
+                            className="bg-transparent border-b border-white/20 outline-none w-[4vw] text-center text-[1vw]"
+                            value={item.content.qty}
+                            onChange={(e) => {
+                              const newItems = [...proposalItems];
+                              newItems[index].content.qty = e.target.value;
+                              setProposalItems(newItems);
+                            }}
+                          />
+                          <input 
+                            placeholder="TEMPO"
+                            className="bg-transparent border-b border-white/20 outline-none w-[6vw] text-center text-[1vw]"
+                            value={item.content.time}
+                            onChange={(e) => {
+                              const newItems = [...proposalItems];
+                              newItems[index].content.time = e.target.value;
+                              setProposalItems(newItems);
+                            }}
+                          />
+                          <input 
+                            placeholder="DESCRIÇÃO"
+                            className="bg-transparent border-b border-white/20 outline-none flex-1 text-[1vw]"
+                            value={item.content.desc}
+                            onChange={(e) => {
+                              const newItems = [...proposalItems];
+                              newItems[index].content.desc = e.target.value;
+                              setProposalItems(newItems);
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {(item.type === 'digital_1' || item.type === 'digital_2') && (
+                        <button 
+                          onClick={() => setEditingDigital({ id: item.id, type: item.type })}
+                          className="flex items-center gap-3 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/50 p-[1vw] rounded-xl w-full transition-all group/digital"
+                        >
+                          <div className="p-2 bg-sky-500 rounded-lg text-white">
+                            <Pencil size={16} />
+                          </div>
+                          <div className="text-left">
+                            <span className="text-[0.8vw] font-bold opacity-50 uppercase">{item.type === 'digital_1' ? 'Entrega Digital 1' : 'Entrega Digital 2'}</span>
+                            <p className="text-[1vw] font-medium truncate max-w-[20vw]">
+                              {item.content || 'Clique para descrever a entrega digital'}
+                            </p>
+                          </div>
+                        </button>
+                      )}
+
+                      {item.type === 'value' && (
+                        <div className="flex items-center gap-[0.5vw] bg-white/5 backdrop-blur-sm p-[1vw] rounded-xl border border-white/10 w-fit">
+                          <span className="text-[1.5vw] font-black" style={{ color: item.style.color }}>R$</span>
+                          <input 
+                            type="number"
+                            value={item.content} 
+                            onChange={(e) => {
+                              const newItems = [...proposalItems];
+                              newItems[index].content = e.target.value;
+                              setProposalItems(newItems);
+                            }}
+                            placeholder="0,00"
+                            className="bg-transparent border-none outline-none w-[10vw] font-black text-[1.8vw] placeholder:text-white/20"
+                            style={{ color: item.style.color }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <Dialog open={!!editingDigital} onOpenChange={() => setEditingDigital(null)}>
+                  <DialogContent className="bg-white p-6">
+                    <DialogHeader>
+                      <DialogTitle className="uppercase font-black text-slate-800">
+                        {editingDigital?.type === 'digital_1' ? 'Configurar Digital 1' : 'Configurar Digital 2'}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <Label className="text-[10px] font-bold uppercase text-slate-400">Descrição da Entrega</Label>
+                      <Textarea 
+                        placeholder="Descreva aqui o que será entregue digitalmente..."
+                        className="min-h-[150px]"
+                        value={proposalItems.find(i => i.id === editingDigital?.id)?.content || ''}
+                        onChange={(e) => {
+                          const newItems = [...proposalItems];
+                          const idx = newItems.findIndex(i => i.id === editingDigital?.id);
+                          if (idx !== -1) {
+                            newItems[idx].content = e.target.value;
+                            setProposalItems(newItems);
+                          }
+                        }}
+                      />
+                      <Button 
+                        onClick={() => setEditingDigital(null)}
+                        className="w-full bg-sky-500 text-white font-bold uppercase h-12"
+                      >
+                        Salvar Entrega Digital
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] px-[5%] text-white hidden">
                   <div className="space-y-[1vw] relative group">
-                    <textarea 
-                      value={formData.entrega_digital || ""} 
-                      onChange={e => setFormData({...formData, entrega_digital: e.target.value})}
-                      placeholder="03 ENTREGA DIGITAL"
-                      className="bg-transparent outline-none focus:outline-none focus:ring-0 border-none w-full h-[18vw] p-[1.2vw] rounded-xl transition-all placeholder:text-white/40 resize-none shadow-none"
-                      style={{ 
-                        color: formData.entregaDigitalStyle?.color || "#ffffff",
-                        fontSize: `${(formData.entregaDigitalStyle?.fontSize || 12) / 14}vw`,
-                        fontWeight: formData.entregaDigitalStyle?.fontWeight || "400"
-                      }}
-                    />
+...
                     <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
                       <input 
                         type="color" 
@@ -618,6 +699,7 @@ export default function PropostasPage() {
                       </button>
                     </div>
                   </div>
+
 
                   <div className="space-y-[1vw] relative group">
                     <div className="flex items-center gap-[0.5vw] bg-transparent p-[1vw] rounded-xl border-none">
