@@ -344,7 +344,6 @@ export default function PropostasPage() {
                   </div>
                 </div>
               </div>
-              </div>
             </div>
 
             <div className="w-full flex justify-end gap-3 mt-6">
