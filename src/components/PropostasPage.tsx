@@ -522,7 +522,7 @@ export default function PropostasPage() {
                         fontSize: 14, 
                         fontWeight: "400",
                         width: type === 'value' ? 15 : 40,
-                        height: 'auto',
+                        height: type === 'text' ? 5 : 'auto',
                         left: Math.max(0, Math.min(90, x)),
                         top: Math.max(0, Math.min(90, y)),
                         textAlign: 'left',
