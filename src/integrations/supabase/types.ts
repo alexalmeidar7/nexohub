@@ -378,6 +378,7 @@ export type Database = {
       }
       comercial_mockups: {
         Row: {
+          config: Json | null
           created_at: string | null
           fields: Json | null
           id: string
@@ -385,6 +386,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          config?: Json | null
           created_at?: string | null
           fields?: Json | null
           id?: string
@@ -392,6 +394,7 @@ export type Database = {
           name: string
         }
         Update: {
+          config?: Json | null
           created_at?: string | null
           fields?: Json | null
           id?: string
