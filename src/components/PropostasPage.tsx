@@ -695,7 +695,7 @@ export default function PropostasPage() {
 
 
                       {item.type === 'section' && (
-                        <div className="py-1 border-b border-white/30">
+                        <div className="border-b border-white/30" style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
                           <input 
                             value={item.content}
                             onChange={(e) => {
@@ -705,27 +705,29 @@ export default function PropostasPage() {
                             }}
                             placeholder="NOME DA SEÇÃO (OPCIONAL)"
                             className="bg-transparent border-none outline-none w-full font-black uppercase text-[1.2vw] placeholder:text-white/20"
-                            style={{ color: item.style.color }}
+                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
                           />
                         </div>
                       )}
 
                       {item.type === 'text' && (
-                        <textarea 
-                          value={item.content}
-                          onChange={(e) => {
-                            const newItems = [...proposalItems];
-                            newItems[index].content = e.target.value;
-                            setProposalItems(newItems);
-                          }}
-                          placeholder="DESCRIÇÃO DA PROPOSTA..."
-                          className="bg-transparent border-none w-full min-h-[2vw] outline-none text-[1vw] placeholder:text-white/20 resize-none shadow-none"
-                          style={{ color: item.style.color }}
-                        />
+                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
+                          <textarea 
+                            value={item.content}
+                            onChange={(e) => {
+                              const newItems = [...proposalItems];
+                              newItems[index].content = e.target.value;
+                              setProposalItems(newItems);
+                            }}
+                            placeholder="DESCRIÇÃO DA PROPOSTA..."
+                            className="bg-transparent border-none w-full min-h-[2vw] outline-none text-[1vw] placeholder:text-white/20 resize-none shadow-none"
+                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
+                          />
+                        </div>
                       )}
 
                       {item.type === 'commercial_line' && (
-                        <div className="flex gap-[0.8vw] items-center bg-transparent">
+                        <div className="flex gap-[0.8vw] items-center bg-transparent" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
                           <input 
                             placeholder="QNT"
                             className="bg-transparent border-none outline-none w-[3vw] text-center text-[1vw]"
@@ -735,6 +737,7 @@ export default function PropostasPage() {
                               newItems[index].content.qty = e.target.value;
                               setProposalItems(newItems);
                             }}
+                            style={{ color: item.style.color }}
                           />
                           <input 
                             placeholder="TEMPO"
@@ -745,6 +748,7 @@ export default function PropostasPage() {
                               newItems[index].content.time = e.target.value;
                               setProposalItems(newItems);
                             }}
+                            style={{ color: item.style.color }}
                           />
                           <input 
                             placeholder="DESCRIÇÃO"
@@ -755,26 +759,30 @@ export default function PropostasPage() {
                               newItems[index].content.desc = e.target.value;
                               setProposalItems(newItems);
                             }}
+                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
                           />
                         </div>
                       )}
 
                       {(item.type === 'digital_1' || item.type === 'digital_2') && (
-                        <button 
-                          onClick={() => setEditingDigital({ id: item.id, type: item.type })}
-                          className="flex items-center gap-2 bg-transparent w-full transition-all group/digital text-left"
-                        >
-                          <div className="text-white">
-                            <Pencil size={14} className="inline mr-2 opacity-50" />
-                            <span className="text-[1vw] font-medium">
-                              {item.content || (item.type === 'digital_1' ? 'ENTREGA DIGITAL 1' : 'ENTREGA DIGITAL 2')}
-                            </span>
-                          </div>
-                        </button>
+                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
+                          <button 
+                            onClick={() => setEditingDigital({ id: item.id, type: item.type })}
+                            className="flex items-center gap-2 bg-transparent w-full transition-all group/digital"
+                            style={{ justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}
+                          >
+                            <div style={{ color: item.style.color, textAlign: item.style.textAlign as any }}>
+                              <Pencil size={14} className="inline mr-2 opacity-50" />
+                              <span className="text-[1vw] font-medium uppercase">
+                                {item.content || (item.type === 'digital_1' ? 'ENTREGA DIGITAL 1' : 'ENTREGA DIGITAL 2')}
+                              </span>
+                            </div>
+                          </button>
+                        </div>
                       )}
 
                       {item.type === 'value' && (
-                        <div className="flex items-center gap-[0.3vw] bg-transparent w-full">
+                        <div className="flex items-center gap-[0.3vw] bg-transparent w-full" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
                           <span className="text-[1.5vw] font-black" style={{ color: item.style.color }}>R$</span>
                           <input 
                             type="number"
@@ -786,7 +794,7 @@ export default function PropostasPage() {
                             }}
                             placeholder="0,00"
                             className="bg-transparent border-none outline-none w-full font-black text-[1.8vw] placeholder:text-white/20"
-                            style={{ color: item.style.color }}
+                            style={{ color: item.style.color, textAlign: item.style.textAlign as any }}
                           />
                         </div>
                       )}
