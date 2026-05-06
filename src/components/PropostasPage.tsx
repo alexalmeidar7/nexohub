@@ -498,11 +498,11 @@ export default function PropostasPage() {
                     style={{ width: "400px", aspectRatio: "1/1.414" }}
                   >
                     <img 
-                      src={selectedProposta.final_art_url || selectedProposta.mockup?.image_url} 
+                      src={selectedProposta.final_art_url || "/mockup-bg-latest.png"} 
                       className="w-full h-full object-cover"
                       crossOrigin="anonymous"
                     />
-                    
+
                     {!selectedProposta.final_art_url && (
                       <div className="absolute inset-0 p-8 flex flex-col justify-center items-center text-center">
                         <div className="bg-white/90 p-6 rounded-lg shadow-lg border">
