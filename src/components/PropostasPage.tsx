@@ -1009,29 +1009,30 @@ export default function PropostasPage() {
                       {item.type === 'section' && (
                         <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
                           <div 
-                            className="w-full transition-all"
+                            className="w-full transition-all relative"
                             style={{ 
                               height: item.style.height ? `${item.style.height}vw` : '0.2vw',
                               backgroundColor: item.style.backgroundColor || '#ffffff',
                               borderRadius: `${item.style.borderRadius || 0}px`,
                               border: item.style.borderWidth ? `${item.style.borderWidth}px solid ${item.style.borderColor || 'transparent'}` : 'none'
                             }}
-                          />
-                          {item.content && (
-                            <div 
-                              className="mt-1 font-black uppercase"
-                              style={{ 
-                                color: item.style.color,
-                                fontFamily: item.style.fontFamily || 'Inter',
-                                fontSize: `${item.style.fontSizeVw || 1.2}vw`,
-                                textAlign: item.style.textAlign as any,
-                                fontWeight: item.style.fontWeight || 'black',
-                                fontStyle: item.style.fontStyle || 'normal'
-                              }}
-                            >
-                              {item.content}
-                            </div>
-                          )}
+                          >
+                            {item.content && (
+                              <div 
+                                className="absolute top-1 left-2 font-black uppercase whitespace-nowrap"
+                                style={{ 
+                                  color: item.style.color,
+                                  fontFamily: item.style.fontFamily || 'Inter',
+                                  fontSize: `${item.style.fontSizeVw || 1.2}vw`,
+                                  fontWeight: item.style.fontWeight || 'black',
+                                  fontStyle: item.style.fontStyle || 'normal',
+                                  transform: 'translateY(-120%)'
+                                }}
+                              >
+                                {item.content}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
 
