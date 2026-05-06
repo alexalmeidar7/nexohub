@@ -232,35 +232,49 @@ Deno.serve(async (req) => {
         const videoId = m1?.[1] || m2?.[1] || m3?.[1];
 
         if (videoId) {
-          // Scrape the initial HTML of the video page to get live chat data
-          // This is a lightweight way to get the most recent messages without OAuth
-          const ytResp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+          console.log(`Fetching YouTube chat for videoId: ${videoId}`);
+          const ytResp = await fetch(`https://www.youtube.com/live_chat?v=${videoId}`, {
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-              "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
             },
-            signal: AbortSignal.timeout(4000),
+            signal: AbortSignal.timeout(5000),
           });
 
           if (ytResp.ok) {
             const html = await ytResp.text();
-            // Look for liveChatRenderer in the page source
-            const chatMatch = html.match(/\"liveChatRenderer\":(\{.*?\})\},\"/);
-            if (chatMatch) {
-              // Note: Parsing complex JSON via regex is risky, but we just need a few fields
-              // We'll try to find message actions
-              const actions = html.match(/\"addChatItemAction\":\{.*?\"text\":\"(.*?)\".*?\"authorName\":\{.*?\"simpleText\":\"(.*?)\"/g);
-              if (actions) {
-                youtubeChatMessages = actions.slice(-15).map(act => {
-                  const msgMatch = act.match(/\"text\":\"(.*?)\"/);
-                  const authorMatch = act.match(/\"simpleText\":\"(.*?)\"/);
+            
+            // Try to find messages in the JSON data embedded in the page
+            // The data is usually in window["ytInitialData"] or similar
+            const actionsMatch = html.match(/\"addChatItemAction\":\{.*?\"text\":\"(.*?)\".*?\"authorName\":\{.*?\"simpleText\":\"(.*?)\"/g);
+            
+            if (actionsMatch) {
+              console.log(`Found ${actionsMatch.length} chat actions`);
+              youtubeChatMessages = actionsMatch.slice(-20).map(act => {
+                const msgMatch = act.match(/\"text\":\"(.*?)\"/);
+                const authorMatch = act.match(/\"simpleText\":\"(.*?)\"/);
+                return {
+                  user: authorMatch ? authorMatch[1] : "Usuário",
+                  text: msgMatch ? msgMatch[1] : ""
+                };
+              }).filter(m => m.text && m.text.length > 0);
+            } else {
+              console.log("No chat actions found in HTML");
+              // Try another regex for a different format
+              const altMessages = html.match(/\"runs\":\[\{\"text\":\"(.*?)\"\}\].*?\"authorName\":\{\"simpleText\":\"(.*?)\"\}/g);
+              if (altMessages) {
+                console.log(`Found ${altMessages.length} alt chat actions`);
+                youtubeChatMessages = altMessages.slice(-20).map(act => {
+                  const msgMatch = act.match(/\"runs\":\[\{\"text\":\"(.*?)\"\}\]/);
+                  const authorMatch = act.match(/\"authorName\":\{\"simpleText\":\"(.*?)\"\}/);
                   return {
                     user: authorMatch ? authorMatch[1] : "Usuário",
                     text: msgMatch ? msgMatch[1] : ""
                   };
-                }).filter(m => m.text);
+                }).filter(m => m.text && m.text.length > 0);
               }
             }
+          } else {
+            console.error(`YouTube fetch failed with status: ${ytResp.status}`);
           }
         }
       } catch (err) {
