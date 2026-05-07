@@ -431,8 +431,11 @@
 .mv-content-area textarea:focus,
 .mv-content-area select:focus {
   border: none !important;
-  outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #2dbef3) 12%, transparent);
+  border-width: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 .mv-content-area .mv-form-header {
