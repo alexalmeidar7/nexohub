@@ -1071,7 +1071,7 @@ export default function PropostasPage() {
                             }}
                             readOnly={item.locked}
                             placeholder="DESCRIÇÃO DA PROPOSTA..."
-                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent selection:bg-sky-500/30 text-current !ring-0 !ring-offset-0 !outline-none !border-0 !border-transparent !bg-transparent !bg-none !shadow-none !bg-opacity-0"
+                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent selection:bg-sky-500/30 text-current !ring-0 !ring-offset-0 !outline-none !border-0 !border-transparent !bg-transparent !bg-none !shadow-none !bg-opacity-0 !appearance-none !box-shadow-none"
                             style={{ 
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
@@ -1101,7 +1101,7 @@ export default function PropostasPage() {
                         <div className="flex gap-[0.8vw] items-center bg-transparent" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
                           <input 
                             placeholder="QNT"
-                            className="bg-transparent border-none outline-none w-[3vw] text-center focus:ring-0 shadow-none focus:bg-transparent"
+                            className="bg-transparent border-none outline-none w-[3vw] text-center focus:ring-0 shadow-none focus:bg-transparent !appearance-none !box-shadow-none !border-0 !bg-none"
                             value={item.content.qty}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
@@ -1119,7 +1119,7 @@ export default function PropostasPage() {
                           />
                           <input 
                             placeholder="TEMPO"
-                            className="bg-transparent border-none outline-none w-[5vw] text-center focus:ring-0 shadow-none focus:bg-transparent"
+                            className="bg-transparent border-none outline-none w-[5vw] text-center focus:ring-0 shadow-none focus:bg-transparent !appearance-none !box-shadow-none !border-0 !bg-none"
                             value={item.content.time}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
@@ -1137,7 +1137,7 @@ export default function PropostasPage() {
                           />
                           <input 
                             placeholder="DESCRIÇÃO"
-                            className="bg-transparent border-none outline-none flex-1 focus:ring-0 shadow-none focus:bg-transparent"
+                            className="bg-transparent border-none outline-none flex-1 focus:ring-0 shadow-none focus:bg-transparent !appearance-none !box-shadow-none !border-0 !bg-none"
                             value={item.content.desc}
                             onChange={(e) => {
                               const newItems = [...proposalItems];
@@ -1196,7 +1196,7 @@ export default function PropostasPage() {
                               setProposalItems(newItems);
                             }}
                             placeholder="0,00"
-                            className="bg-transparent border-none outline-none w-full font-black placeholder:text-white/20 focus:ring-0 shadow-none focus:bg-transparent"
+                            className="bg-transparent border-none outline-none w-full font-black placeholder:text-white/20 focus:ring-0 shadow-none focus:bg-transparent !appearance-none !box-shadow-none !border-0 !bg-none"
                             style={{ 
                               color: item.style.color, 
                               textAlign: item.style.textAlign as any,
