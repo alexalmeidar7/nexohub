@@ -413,29 +413,34 @@
 .mv-content-area input[type="url"],
 .mv-content-area input[type="tel"],
 .mv-content-area textarea,
-.mv-content-area select {
+.mv-content-area select,
+input, 
+textarea {
   background-color: transparent !important;
-  background: transparent !important;
+  background: none !important;
   border: none !important;
   border-width: 0 !important;
-  color: var(--layout-page-text, #0d0446) !important;
-  border-radius: 0 !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  padding: 10px 16px;
-  font-size: 13px;
   outline: none !important;
   box-shadow: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
 }
 
+input:focus,
+textarea:focus,
+input:active,
+textarea:active,
 .mv-content-area input:focus,
 .mv-content-area textarea:focus,
 .mv-content-area select:focus {
+  background-color: transparent !important;
+  background: none !important;
   border: none !important;
   border-width: 0 !important;
   outline: none !important;
   box-shadow: none !important;
-  background: transparent !important;
-  background-color: transparent !important;
+  ring: 0 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
 }
 
 .mv-content-area .mv-form-header {
