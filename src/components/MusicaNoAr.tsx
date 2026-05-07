@@ -110,55 +110,66 @@ function parseXmlString(xmlStr: string): MusicData | null {
     const parser = new DOMParser();
     const doc = parser.parseFromString(cleaned, "application/xml");
     const errorNode = doc.querySelector("parsererror");
-    if (errorNode) return null;
-
-    const rawTitulo =
-      doc.querySelector("nome_musica")?.textContent ||
-      doc.querySelector("titulo")?.textContent ||
-      doc.querySelector("title")?.textContent ||
-      "";
-    const rawArtista =
-      doc.querySelector("interprete")?.textContent ||
-      doc.querySelector("nome_interprete")?.textContent ||
-      doc.querySelector("artista")?.textContent ||
-      doc.querySelector("artist")?.textContent ||
-      "";
-
-    const titulo = normalizeMusicText(rawTitulo);
-    const artista = normalizeMusicText(rawArtista);
-    if (!titulo && !artista) return null;
-
-    const categoria = (doc.querySelector("categoria")?.textContent || "").trim().toUpperCase();
-    if (categoria === "STOPPED" && !titulo && !artista) return null;
-
-    const duracaoStr =
-      doc.querySelector("duracao")?.textContent ||
-      doc.querySelector("duration")?.textContent ||
-      "0";
-    const capa =
-      doc.querySelector("capa")?.textContent ||
-      doc.querySelector("cover")?.textContent ||
-      "";
-
-    let duracao = 0;
-    if (duracaoStr.includes(":")) {
-      const parts = duracaoStr.split(":").map(Number);
-      if (parts.length === 2) duracao = parts[0] * 60 + parts[1];
-      else if (parts.length === 3) duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
-    } else {
-      duracao = parseFloat(duracaoStr) || 0;
-      if (duracao > 600) duracao = duracao / 1000;
+    if (errorNode) {
+      console.warn("[MusicaNoAr] XML parser error node:", errorNode.textContent);
+      // Fallback: try parsing as text/xml if application/xml fails
+      const doc2 = parser.parseFromString(cleaned, "text/xml");
+      if (!doc2.querySelector("parsererror")) return extractMusicFromDoc(doc2);
+      return null;
     }
 
-    return {
-      titulo: titulo || "Sem titulo",
-      artista: artista || "Desconhecido",
-      duracao,
-      capa,
-    };
-  } catch {
+    return extractMusicFromDoc(doc);
+  } catch (err) {
+    console.warn("[MusicaNoAr] XML parse error:", err);
     return null;
   }
+}
+
+function extractMusicFromDoc(doc: Document): MusicData | null {
+  const rawTitulo =
+    doc.querySelector("nome_musica")?.textContent ||
+    doc.querySelector("titulo")?.textContent ||
+    doc.querySelector("title")?.textContent ||
+    "";
+  const rawArtista =
+    doc.querySelector("interprete")?.textContent ||
+    doc.querySelector("nome_interprete")?.textContent ||
+    doc.querySelector("artista")?.textContent ||
+    doc.querySelector("artist")?.textContent ||
+    "";
+
+  const titulo = normalizeMusicText(rawTitulo);
+  const artista = normalizeMusicText(rawArtista);
+  if (!titulo && !artista) return null;
+
+  const categoria = (doc.querySelector("categoria")?.textContent || "").trim().toUpperCase();
+  if (categoria === "STOPPED" && !titulo && !artista) return null;
+
+  const duracaoStr =
+    doc.querySelector("duracao")?.textContent ||
+    doc.querySelector("duration")?.textContent ||
+    "0";
+  const capa =
+    doc.querySelector("capa")?.textContent ||
+    doc.querySelector("cover")?.textContent ||
+    "";
+
+  let duracao = 0;
+  if (duracaoStr.includes(":")) {
+    const parts = duracaoStr.split(":").map(Number);
+    if (parts.length === 2) duracao = parts[0] * 60 + parts[1];
+    else if (parts.length === 3) duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
+  } else {
+    duracao = parseFloat(duracaoStr) || 0;
+    if (duracao > 600) duracao = duracao / 1000;
+  }
+
+  return {
+    titulo: titulo || "Sem titulo",
+    artista: artista || "Desconhecido",
+    duracao,
+    capa,
+  };
 }
 
 function formatTime(seconds: number): string {
