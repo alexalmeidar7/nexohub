@@ -156,7 +156,8 @@ function parseXmlString(xmlStr: string): MusicData | null {
       duracao,
       capa,
     };
-  } catch {
+  } catch (err) {
+    console.warn("[MusicaNoAr] XML parse error:", err);
     return null;
   }
 }
