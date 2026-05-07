@@ -1056,11 +1056,11 @@ export default function PropostasPage() {
                         <div style={{ 
                           padding: `${item.style.padding || 0}vw`, 
                           textAlign: item.style.textAlign as any, 
-                          background: item.style.backgroundColor === 'transparent' ? 'none' : (item.style.backgroundColor || 'none'),
-                          backgroundColor: item.style.backgroundColor || 'transparent',
-                          borderRadius: `${item.style.borderRadius || 0}px`,
-                          border: 'none',
-                          boxShadow: 'none'
+                          background: 'transparent !important',
+                          backgroundColor: 'transparent !important',
+                          borderRadius: '0',
+                          border: 'none !important',
+                          boxShadow: 'none !important'
                         }}>
                           <textarea 
                             value={item.content}
