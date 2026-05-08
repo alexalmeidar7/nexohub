@@ -936,10 +936,11 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           DADOS REAIS: ${financeContext}
           
           REQUISITOS OBRIGATÓRIOS:
-          1. O texto DEVE ter no mínimo 4 parágrafos curtos para Teleprompter.
-          2. Comece com a cotação exata do Dólar e do Euro fornecida.
-          3. Detalhe o Ibovespa (B3) e as bolsas NYSE, NASDAQ, FTSE 100 e Nikkei 225.
-          4. Finalize com o horário e a fonte AwesomeAPI.`
+          1. O texto DEVE ter no mínimo 4 parágrafos curtos e claros para Teleprompter.
+          2. Comece com a cotação exata e a VARIAÇÃO PERCENTUAL do Dólar e do Euro (ex: "+0.5%").
+          3. Inclua obrigatoriamente dados atualizados das 5 principais bolsas: B3 (Ibovespa), NYSE, NASDAQ, FTSE 100 e Nikkei 225.
+          4. Se os dados das bolsas não estiverem no contexto, use informações de mercado recentes e destaque a tendência (alta/baixa).
+          5. Finalize mencionando o horário e a fonte AwesomeAPI.`
         }
       });
 
