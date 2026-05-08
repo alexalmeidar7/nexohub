@@ -903,18 +903,25 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     else setAddingFinance(true);
     
     try {
-      // Fetch real-time exchange rates
+      // Fetch real-time exchange rates and market data
       let financeContext = "";
       try {
-        const [usdResp, eurResp] = await Promise.all([
+        const [usdResp, eurResp, btcResp] = await Promise.all([
           fetch("https://economia.awesomeapi.com.br/last/USD-BRL"),
-          fetch("https://economia.awesomeapi.com.br/last/EUR-BRL")
+          fetch("https://economia.awesomeapi.com.br/last/EUR-BRL"),
+          fetch("https://economia.awesomeapi.com.br/last/BTC-BRL")
         ]);
         const usdData = await usdResp.json();
         const eurData = await eurResp.json();
+        const btcData = await btcResp.json();
         
         const usdTime = new Date(usdData.USDBRL.create_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        financeContext = `Cotações: Dólar comercial está em R$ ${parseFloat(usdData.USDBRL.bid).toFixed(2)}, Euro em R$ ${parseFloat(eurData.EURBRL.bid).toFixed(2)}. Dados atualizados às ${usdTime} via AwesomeAPI.`;
+        
+        financeContext = `Cotações e Variações: 
+        - Dólar Comercial: R$ ${parseFloat(usdData.USDBRL.bid).toFixed(2)} (${usdData.USDBRL.pctChange}%)
+        - Euro: R$ ${parseFloat(eurData.EURBRL.bid).toFixed(2)} (${eurData.EURBRL.pctChange}%)
+        - Bitcoin: R$ ${parseFloat(btcData.BTCBRL.bid).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${btcData.BTCBRL.pctChange}%)
+        Dados atualizados às ${usdTime} via AwesomeAPI.`;
       } catch (e) {
         console.warn("AwesomeAPI error:", e);
       }
