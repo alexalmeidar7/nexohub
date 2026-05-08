@@ -843,13 +843,28 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       });
 
       const wxData = wxResp?.data;
-      const weatherText = `Previsão para ${name}: Hoje a temperatura varia entre ${Math.round(wxData.daily.temperature_2m_min[0])}°C e ${Math.round(wxData.daily.temperature_2m_max[0])}°C. Amanhã a mínima será de ${Math.round(wxData.daily.temperature_2m_min[1])}°C e a máxima de ${Math.round(wxData.daily.temperature_2m_max[1])}°C.`;
+      const todayMax = Math.round(wxData.daily.temperature_2m_max[0]);
+      const todayMin = Math.round(wxData.daily.temperature_2m_min[0]);
+      const tomorrowMax = Math.round(wxData.daily.temperature_2m_max[1]);
+      const tomorrowMin = Math.round(wxData.daily.temperature_2m_min[1]);
+      const rainChance = wxData.daily.precipitation_probability_max[0] ?? 0;
+      const humidity = wxData.current.relative_humidity_2m;
+      
+      const weatherText = `Previsão para ${name}: Hoje a temperatura varia entre ${todayMin}°C e ${todayMax}°C com ${rainChance}% de chance de chuva. Umidade relativa do ar em ${humidity}%. Amanhã a mínima será de ${tomorrowMin}°C e a máxima de ${tomorrowMax}°C.`;
 
       const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
         body: {
-          url: "https://www.climatempo.com.br/", // Actual weather related URL to provide context
+          url: `https://www.climatempo.com.br/previsao-do-tempo/cidade/${latitude},${longitude}`, 
           generate_journalistic_text: true,
-          custom_prompt: `Você é um apresentador de telejornalismo. Use EXCLUSIVAMENTE os dados a seguir para criar uma previsão do tempo envolvente para a cidade de ${name}: ${weatherText}. O texto deve estar em PORTUGUÊS (Brasil) e pronto para leitura no Teleprompter. Não use informações externas.`
+          custom_prompt: `Você é um apresentador de telejornalismo. Crie uma previsão do tempo completa para ${name} baseada nestes dados: ${weatherText}.
+          
+          REQUISITOS OBRIGATÓRIOS:
+          1. Divida o texto em parágrafos curtos e claros para Teleprompter.
+          2. Informe as temperaturas máximas e mínimas de hoje e amanhã.
+          3. Mencione a possibilidade de chuva (${rainChance}%).
+          4. Se a umidade (${humidity}%) estiver abaixo de 30%, inclua um alerta de tempo seco e recomendações de hidratação.
+          5. Use um tom profissional e envolvente em PORTUGUÊS (Brasil).
+          6. Não use informações externas, foque nos dados fornecidos.`
         }
       });
 
