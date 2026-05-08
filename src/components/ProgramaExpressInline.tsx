@@ -902,11 +902,31 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     else setAddingFinance(true);
     
     try {
+      // Fetch real-time exchange rates
+      let financeContext = "";
+      try {
+        const [usdResp, eurResp] = await Promise.all([
+          fetch("https://economia.awesomeapi.com.br/last/USD-BRL"),
+          fetch("https://economia.awesomeapi.com.br/last/EUR-BRL")
+        ]);
+        const usdData = await usdResp.json();
+        const eurData = await eurResp.json();
+        financeContext = `Cotações: Dólar comercial está em R$ ${parseFloat(usdData.USDBRL.bid).toFixed(2)}, Euro em R$ ${parseFloat(eurData.EURBRL.bid).toFixed(2)}.`;
+      } catch (e) {
+        console.warn("AwesomeAPI error:", e);
+      }
+
       const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
         body: {
-          url: "https://valor.globo.com/flash/", // Actual finance URL to provide context
+          url: "https://valor.globo.com/investe/", 
           generate_journalistic_text: true,
-          custom_prompt: "Você é um analista financeiro de um telejornal brasileiro. Crie um resumo ATUALIZADO e profissional sobre o mercado financeiro (Dólar, Euro e Bolsa). Use um tom sério e informativo, em PORTUGUÊS (Brasil), pronto para o Teleprompter."
+          custom_prompt: `Você é um analista financeiro de um telejornal brasileiro. Use os dados reais a seguir: ${financeContext}.
+          
+          REQUISITOS OBRIGATÓRIOS:
+          1. Comece com a cotação do Dólar e do Euro.
+          2. Inclua o desempenho das 5 principais bolsas mundiais: B3 (Brasil), NYSE (EUA), NASDAQ (EUA), FTSE 100 (Londres) e Nikkei 225 (Japão).
+          3. Use tom profissional e direto, dividido em parágrafos para Teleprompter.
+          4. O texto deve estar em PORTUGUÊS (Brasil).`
         }
       });
 
