@@ -924,17 +924,19 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
         body: {
-          url: "https://valorinveste.globo.com/cotacoes/", 
+          url: "https://about.google", // Dummy stable URL
           generate_journalistic_text: true,
-          custom_prompt: `Você é um analista financeiro sênior de um telejornal brasileiro. Use os dados reais a seguir: ${financeContext}.
+          custom_prompt: `Você é um analista financeiro sênior de um telejornal brasileiro. 
+          
+          IMPORTANTE: IGNORE COMPLETAMENTE o conteúdo extraído da URL. Baseie-se APENAS nos dados fornecidos abaixo:
+          DADOS REAIS: ${financeContext}
           
           REQUISITOS OBRIGATÓRIOS:
-          1. O texto DEVE ter no mínimo 4 parágrafos curtos, ideais para leitura fluida no Teleprompter.
-          2. Comece informando a cotação do Dólar e do Euro frente ao Real.
-          3. Em seguida, detalhe o desempenho da B3 (Ibovespa) e das 4 maiores bolsas mundiais (NYSE, NASDAQ, FTSE 100 e Nikkei 225) com números fictícios porém realistas se os reais não estiverem no contexto.
-          4. Use um tom profissional, direto e informativo em PORTUGUÊS (Brasil).
-          5. Finalize mencionando o horário da última atualização e a fonte AwesomeAPI conforme fornecido.
-          6. NÃO use caracteres especiais ou tabelas, apenas parágrafos narrativos.`
+          1. O texto DEVE ter no mínimo 4 parágrafos curtos para Teleprompter.
+          2. Comece com a cotação exata do Dólar e do Euro fornecida nos dados.
+          3. Detalhe o Ibovespa (B3) e as maiores bolsas globais (NYSE, NASDAQ, FTSE 100, Nikkei 225).
+          4. Use um tom profissional e informativo em PORTUGUÊS (Brasil).
+          5. Finalize com o horário e a fonte AwesomeAPI.`
         }
       });
 
