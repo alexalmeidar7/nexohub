@@ -1738,9 +1738,9 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
                 else onRegenerateFinance?.(bi, ni);
               }}
               className="ml-auto text-[9px] flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-200 text-blue-500 hover:bg-blue-50 transition-colors"
-              title="Regerar com IA"
+              title={noticia.titulo === "Tempo" ? "Regerar com IA" : "Atualizar mercado"}
             >
-              <RefreshCw size={9} /> Regerar com IA
+              <RefreshCw size={9} /> {noticia.titulo === "Tempo" ? "Regerar com IA" : "Atualizar mercado"}
             </button>
           )}
 
