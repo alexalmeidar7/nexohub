@@ -847,9 +847,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
         body: {
-          url: "https://about.google", // Dummy URL to trigger AI
+          url: "https://www.climatempo.com.br/", // Actual weather related URL to provide context
           generate_journalistic_text: true,
-          custom_prompt: `Você é um apresentador de previsão do tempo. Crie um resumo jornalístico curto e envolvente baseado nestes dados: ${weatherText}. Retorne o texto pronto para Teleprompter.`
+          custom_prompt: `Você é um apresentador de telejornalismo. Use EXCLUSIVAMENTE os dados a seguir para criar uma previsão do tempo envolvente para a cidade de ${name}: ${weatherText}. O texto deve estar em PORTUGUÊS (Brasil) e pronto para leitura no Teleprompter. Não use informações externas.`
         }
       });
 
@@ -889,9 +889,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     try {
       const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
         body: {
-          url: "https://about.google", // Dummy URL to trigger AI
+          url: "https://valor.globo.com/flash/", // Actual finance URL to provide context
           generate_journalistic_text: true,
-          custom_prompt: "Você é um analista financeiro. Crie um resumo curto sobre o mercado financeiro hoje (Dólar, Euro, Bolsa) de forma realista para um teleprompter. Seja direto e profissional."
+          custom_prompt: "Você é um analista financeiro de um telejornal brasileiro. Crie um resumo ATUALIZADO e profissional sobre o mercado financeiro (Dólar, Euro e Bolsa). Use um tom sério e informativo, em PORTUGUÊS (Brasil), pronto para o Teleprompter."
         }
       });
 
