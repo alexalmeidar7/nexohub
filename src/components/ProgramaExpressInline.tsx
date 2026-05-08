@@ -854,21 +854,18 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
         body: {
-          url: "https://about.google", // Dummy stable URL
+          input_text: weatherText,
+          skip_fetch: true,
           generate_journalistic_text: true,
-          custom_prompt: `Você é um apresentador de telejornalismo sênior. 
+          custom_prompt: `Você é um apresentador de telejornalismo sênior. Crie uma previsão do tempo completa para ${name}, em PORTUGUÊS (Brasil).
           
-          IMPORTANTE: IGNORE COMPLETAMENTE o conteúdo extraído da URL. Baseie-se APENAS nos dados fornecidos abaixo:
-          CIDADE: ${name}
-          DADOS: ${weatherText}
+          DADOS REAIS: ${weatherText}
           
           REQUISITOS OBRIGATÓRIOS:
-          1. O texto deve ser uma previsão do tempo completa para ${name}, em PORTUGUÊS (Brasil).
-          2. Divida em parágrafos curtos e claros para Teleprompter.
-          3. Inclua temperaturas mínimas e máximas de hoje e amanhã.
-          4. Mencione a chance de chuva (${rainChance}%) e a umidade (${humidity}%).
-          5. Se a umidade for baixa (< 30%), dê um alerta de saúde.
-          6. NÃO mencione "Climatempo", "Página não encontrada" ou qualquer erro de site.`
+          1. Divida em parágrafos curtos e claros para Teleprompter.
+          2. Informe temperaturas de hoje e amanhã, chance de chuva (${rainChance}%) e umidade (${humidity}%).
+          3. Se a umidade for baixa (< 30%), inclua um alerta de saúde.
+          4. NÃO mencione nomes de sites ou erros de página.`
         }
       });
 
@@ -924,19 +921,18 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
         body: {
-          url: "https://about.google", // Dummy stable URL
+          input_text: financeContext,
+          skip_fetch: true,
           generate_journalistic_text: true,
-          custom_prompt: `Você é um analista financeiro sênior de um telejornal brasileiro. 
+          custom_prompt: `Você é um analista financeiro sênior brasileiro. Crie um resumo profissional do mercado financeiro em PORTUGUÊS (Brasil).
           
-          IMPORTANTE: IGNORE COMPLETAMENTE o conteúdo extraído da URL. Baseie-se APENAS nos dados fornecidos abaixo:
           DADOS REAIS: ${financeContext}
           
           REQUISITOS OBRIGATÓRIOS:
           1. O texto DEVE ter no mínimo 4 parágrafos curtos para Teleprompter.
-          2. Comece com a cotação exata do Dólar e do Euro fornecida nos dados.
-          3. Detalhe o Ibovespa (B3) e as maiores bolsas globais (NYSE, NASDAQ, FTSE 100, Nikkei 225).
-          4. Use um tom profissional e informativo em PORTUGUÊS (Brasil).
-          5. Finalize com o horário e a fonte AwesomeAPI.`
+          2. Comece com a cotação exata do Dólar e do Euro fornecida.
+          3. Detalhe o Ibovespa (B3) e as bolsas NYSE, NASDAQ, FTSE 100 e Nikkei 225.
+          4. Finalize com o horário e a fonte AwesomeAPI.`
         }
       });
 
