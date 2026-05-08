@@ -911,7 +911,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         ]);
         const usdData = await usdResp.json();
         const eurData = await eurResp.json();
-        financeContext = `Cotações: Dólar comercial está em R$ ${parseFloat(usdData.USDBRL.bid).toFixed(2)}, Euro em R$ ${parseFloat(eurData.EURBRL.bid).toFixed(2)}.`;
+        
+        const usdTime = new Date(usdData.USDBRL.create_date).toLocaleTimeString('pt-BR', { hour: '2d', minute: '2d' });
+        financeContext = `Cotações: Dólar comercial está em R$ ${parseFloat(usdData.USDBRL.bid).toFixed(2)}, Euro em R$ ${parseFloat(eurData.EURBRL.bid).toFixed(2)}. Dados atualizados às ${usdTime} via AwesomeAPI.`;
       } catch (e) {
         console.warn("AwesomeAPI error:", e);
       }
