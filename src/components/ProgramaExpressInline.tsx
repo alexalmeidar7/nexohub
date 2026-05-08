@@ -949,7 +949,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           titulo: "Mercado Financeiro",
           resumo: "Confira agora os destaques da economia e do mercado financeiro",
           texto_materia: finalContent,
-          imagemUrl: "https://images.unsplash.com/photo-1611974714851-eb605161ca81?w=800&auto=format&fit=crop&q=60",
+          imagemUrl: "",
           escalada: false
         };
 
