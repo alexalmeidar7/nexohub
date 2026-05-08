@@ -854,17 +854,21 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
         body: {
-          url: `https://www.climatempo.com.br/previsao-do-tempo/cidade/${latitude},${longitude}`, 
+          url: "https://about.google", // Dummy stable URL
           generate_journalistic_text: true,
-          custom_prompt: `Você é um apresentador de telejornalismo. Crie uma previsão do tempo completa para ${name} baseada nestes dados: ${weatherText}.
+          custom_prompt: `Você é um apresentador de telejornalismo sênior. 
+          
+          IMPORTANTE: IGNORE COMPLETAMENTE o conteúdo extraído da URL. Baseie-se APENAS nos dados fornecidos abaixo:
+          CIDADE: ${name}
+          DADOS: ${weatherText}
           
           REQUISITOS OBRIGATÓRIOS:
-          1. Divida o texto em parágrafos curtos e claros para Teleprompter.
-          2. Informe as temperaturas máximas e mínimas de hoje e amanhã.
-          3. Mencione a possibilidade de chuva (${rainChance}%).
-          4. Se a umidade (${humidity}%) estiver abaixo de 30%, inclua um alerta de tempo seco e recomendações de hidratação.
-          5. Use um tom profissional e envolvente em PORTUGUÊS (Brasil).
-          6. Não use informações externas, foque nos dados fornecidos.`
+          1. O texto deve ser uma previsão do tempo completa para ${name}, em PORTUGUÊS (Brasil).
+          2. Divida em parágrafos curtos e claros para Teleprompter.
+          3. Inclua temperaturas mínimas e máximas de hoje e amanhã.
+          4. Mencione a chance de chuva (${rainChance}%) e a umidade (${humidity}%).
+          5. Se a umidade for baixa (< 30%), dê um alerta de saúde.
+          6. NÃO mencione "Climatempo", "Página não encontrada" ou qualquer erro de site.`
         }
       });
 
