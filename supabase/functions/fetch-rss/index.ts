@@ -121,21 +121,23 @@ Deno.serve(async (req) => {
 
   try {
     const { url, generate_journalistic_text, custom_prompt, generate_summary, input_text, skip_fetch } = await req.json();
-    if (!url) {
-      return new Response(JSON.stringify({ error: "URL is required" }), {
+    if (!url && !input_text) {
+      return new Response(JSON.stringify({ error: "URL or input_text is required" }), {
         status: 400,
         headers: responseHeaders,
       });
     }
 
-    let parsedUrl: URL;
-    try {
-      parsedUrl = new URL(url);
-      if (!/^https?:$/.test(parsedUrl.protocol)) throw new Error("invalid_protocol");
-    } catch {
-      return new Response(JSON.stringify({ content: "", error: "URL inválida", ok: false }), {
-        headers: responseHeaders,
-      });
+    let parsedUrl: URL | null = null;
+    if (url) {
+      try {
+        parsedUrl = new URL(url);
+        if (!/^https?:$/.test(parsedUrl.protocol)) throw new Error("invalid_protocol");
+      } catch {
+        return new Response(JSON.stringify({ content: "", error: "URL inválida", ok: false }), {
+          headers: responseHeaders,
+        });
+      }
     }
 
     let response: Response | null = null;
@@ -143,7 +145,7 @@ Deno.serve(async (req) => {
 
     if (!skip_fetch && url) {
       try {
-        response = await fetchWithRetry(parsedUrl.toString());
+        response = await fetchWithRetry(parsedUrl!.toString());
         const contentType = response.headers.get("content-type") || "";
         const buffer = await response.arrayBuffer();
         text = pickBestDecodedText(buffer, contentType);
