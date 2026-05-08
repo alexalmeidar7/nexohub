@@ -167,32 +167,35 @@ Deno.serve(async (req) => {
     let summary = null;
     if (generate_journalistic_text || generate_summary) {
       try {
-        // Improved heuristic to extract main text from HTML
-        // Remove known non-content tags
-        let cleanText = text
-          .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "")
-          .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")
-          .replace(/<nav[^>]*>([\s\S]*?)<\/nav>/gi, "")
-          .replace(/<footer[^>]*>([\s\S]*?)<\/footer>/gi, "")
-          .replace(/<header[^>]*>([\s\S]*?)<\/header>/gi, "")
-          .replace(/<aside[^>]*>([\s\S]*?)<\/aside>/gi, "");
+        let contentToProcess = text;
+        if (!input_text) {
+          // Improved heuristic to extract main text from HTML
+          // Remove known non-content tags
+          let cleanText = text
+            .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "")
+            .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")
+            .replace(/<nav[^>]*>([\s\S]*?)<\/nav>/gi, "")
+            .replace(/<footer[^>]*>([\s\S]*?)<\/footer>/gi, "")
+            .replace(/<header[^>]*>([\s\S]*?)<\/header>/gi, "")
+            .replace(/<aside[^>]*>([\s\S]*?)<\/aside>/gi, "");
 
-        // Try to find the article body first
-        const articleMatch = cleanText.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
-        const mainMatch = cleanText.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
-        const contentMatch = cleanText.match(/<div[^>]+(?:class|id)=["'](?:article-body|content|entry-content|post-body|story-body)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
-        
-        let contentToProcess = articleMatch?.[1] || mainMatch?.[1] || contentMatch?.[1] || cleanText;
+          // Try to find the article body first
+          const articleMatch = cleanText.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+          const mainMatch = cleanText.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
+          const contentMatch = cleanText.match(/<div[^>]+(?:class|id)=["'](?:article-body|content|entry-content|post-body|story-body)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+          
+          contentToProcess = articleMatch?.[1] || mainMatch?.[1] || contentMatch?.[1] || cleanText;
 
-        // Clean up and limit
-        contentToProcess = contentToProcess
-          .replace(/<[^>]+>/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
+          // Clean up and limit
+          contentToProcess = contentToProcess
+            .replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
 
-        // If we extracted something very small from article/main, fallback to full text
-        if (contentToProcess.length < 500 && cleanText.length > contentToProcess.length) {
-          contentToProcess = cleanText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+          // If we extracted something very small from article/main, fallback to full text
+          if (contentToProcess.length < 500 && cleanText.length > contentToProcess.length) {
+            contentToProcess = cleanText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+          }
         }
 
         contentToProcess = contentToProcess.slice(0, 10000); // Send more context to AI if available
