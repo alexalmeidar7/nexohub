@@ -840,26 +840,17 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       const wxData = wxResp?.data;
       const weatherText = `Previsão para ${name}: Hoje a temperatura varia entre ${Math.round(wxData.daily.temperature_2m_min[0])}°C e ${Math.round(wxData.daily.temperature_2m_max[0])}°C. Amanhã a mínima será de ${Math.round(wxData.daily.temperature_2m_min[1])}°C e a máxima de ${Math.round(wxData.daily.temperature_2m_max[1])}°C.`;
 
-      const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer `,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: "Você é um apresentador de previsão do tempo. Crie um resumo jornalístico curto e envolvente." },
-            { role: "user", content: `Crie um texto para teleprompter baseado nestes dados: ${weatherText}` }
-          ],
-          temperature: 0.7,
-        }),
+      const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
+        body: {
+          url: "https://about.google", // Dummy URL to trigger AI
+          generate_journalistic_text: true,
+          custom_prompt: `Você é um apresentador de previsão do tempo. Crie um resumo jornalístico curto e envolvente baseado nestes dados: ${weatherText}. Retorne o texto pronto para Teleprompter.`
+        }
       });
 
       let finalContent = weatherText;
-      if (aiResponse.ok) {
-        const aiData = await aiResponse.json();
-        finalContent = aiData.choices?.[0]?.message?.content || weatherText;
+      if (!aiError && aiData?.journalisticText) {
+        finalContent = aiData.journalisticText;
       }
 
       const newItem: NewsItem = {
@@ -882,26 +873,17 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const addFinanceInfo = async (bi: number) => {
     setAddingFinance(true);
     try {
-      const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer `,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: "Você é um analista financeiro. Crie um resumo curto sobre o mercado financeiro hoje (Dólar, Euro, Bolsa) de forma fictícia mas realista para um roteiro de teste." },
-            { role: "user", content: "Crie um texto curto para teleprompter sobre o mercado financeiro." }
-          ],
-          temperature: 0.8,
-        }),
+      const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
+        body: {
+          url: "https://about.google", // Dummy URL to trigger AI
+          generate_journalistic_text: true,
+          custom_prompt: "Você é um analista financeiro. Crie um resumo curto sobre o mercado financeiro hoje (Dólar, Euro, Bolsa) de forma realista para um teleprompter. Seja direto e profissional."
+        }
       });
 
       let finalContent = "O mercado financeiro opera em estabilidade hoje. O dólar apresenta leve oscilação frente ao real, enquanto a bolsa de valores mantém patamares consistentes acompanhando o cenário internacional.";
-      if (aiResponse.ok) {
-        const aiData = await aiResponse.json();
-        finalContent = aiData.choices?.[0]?.message?.content || finalContent;
+      if (!aiError && aiData?.journalisticText) {
+        finalContent = aiData.journalisticText;
       }
 
       const newItem: NewsItem = {
