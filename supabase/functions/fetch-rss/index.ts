@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { url, generate_journalistic_text, custom_prompt, generate_summary } = await req.json();
+    const { url, generate_journalistic_text, custom_prompt, generate_summary, input_text, skip_fetch } = await req.json();
     if (!url) {
       return new Response(JSON.stringify({ error: "URL is required" }), {
         status: 400,
@@ -138,25 +138,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    let response: Response;
-    try {
-      response = await fetchWithRetry(parsedUrl.toString());
-    } catch (fetchErr) {
-      const isTimeout = fetchErr instanceof DOMException && fetchErr.name === "TimeoutError";
-      const msg = isTimeout
-        ? "Feed demorou demais para responder"
-        : fetchErr instanceof Error
-          ? fetchErr.message
-          : "Falha ao buscar feed";
+    let response: Response | null = null;
+    let text = input_text || "";
 
-      return new Response(JSON.stringify({ content: "", error: msg, ok: false }), {
-        headers: responseHeaders,
-      });
+    if (!skip_fetch && url) {
+      try {
+        response = await fetchWithRetry(parsedUrl.toString());
+        const contentType = response.headers.get("content-type") || "";
+        const buffer = await response.arrayBuffer();
+        text = pickBestDecodedText(buffer, contentType);
+      } catch (fetchErr) {
+        if (!input_text) {
+          const isTimeout = fetchErr instanceof DOMException && fetchErr.name === "TimeoutError";
+          const msg = isTimeout
+            ? "Feed demorou demais para responder"
+            : fetchErr instanceof Error
+              ? fetchErr.message
+              : "Falha ao buscar feed";
+
+          return new Response(JSON.stringify({ content: "", error: msg, ok: false }), {
+            headers: responseHeaders,
+          });
+        }
+      }
     }
-
-    const contentType = response.headers.get("content-type") || "";
-    const buffer = await response.arrayBuffer();
-    const text = pickBestDecodedText(buffer, contentType);
 
     let journalisticText = null;
     let summary = null;
@@ -232,7 +237,7 @@ Deno.serve(async (req) => {
                   model: "gpt-4o-mini",
                   messages: [
                     { role: "system", content: systemPrompt },
-                    { role: "user", content: `COM BASE NESTE CONTEÚDO: ${contentToProcess}\n\nEscreva uma matéria jornalística completa e envolvente. RETORNE UM JSON NO FORMATO: {"materia": "texto da materia aqui", "resumo": "resumo de 1-2 frases aqui"}` }
+                    { role: "user", content: input_text ? `${custom_prompt}\n\nCONTEÚDO PARA PROCESSAR: ${input_text}\n\nRETORNE UM JSON NO FORMATO: {"materia": "texto da materia aqui", "resumo": "resumo de 1-2 frases aqui"}` : `COM BASE NESTE CONTEÚDO: ${contentToProcess}\n\nEscreva uma matéria jornalística completa e envolvente. RETORNE UM JSON NO FORMATO: {"materia": "texto da materia aqui", "resumo": "resumo de 1-2 frases aqui"}` }
                   ],
                   response_format: { type: "json_object" },
                   temperature: 0.7,
