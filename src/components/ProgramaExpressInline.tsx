@@ -843,7 +843,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${Deno.env.get("OPENAI_API_KEY") || ""}`,
+          "Authorization": `Bearer `,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -885,7 +885,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${Deno.env.get("OPENAI_API_KEY") || ""}`,
+          "Authorization": `Bearer `,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
