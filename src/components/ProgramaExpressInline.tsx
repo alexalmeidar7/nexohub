@@ -858,25 +858,34 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         finalContent = aiData.journalisticText;
       }
 
-      const newItem: NewsItem = {
-        titulo: "Tempo",
-        resumo: "Vamos ver como fica a previsão do tempo",
-        texto_materia: finalContent,
-        imagemUrl: "https://images.unsplash.com/photo-1592210633464-a7db05248248?w=800&auto=format&fit=crop&q=60",
-        escalada: false
-      };
+      if (isRegenerating) {
+        updateNoticia(bi, ni!, "texto_materia", finalContent);
+        toast.success("Previsão atualizada com IA!");
+      } else {
+        const newItem: NewsItem = {
+          titulo: "Tempo",
+          resumo: "Vamos ver como fica a previsão do tempo",
+          texto_materia: finalContent,
+          imagemUrl: "https://images.unsplash.com/photo-1592210633464-a7db05248248?w=800&auto=format&fit=crop&q=60",
+          escalada: false
+        };
 
-      setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, newItem] } : b));
-      toast.success("Previsão do tempo adicionada!");
+        setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, newItem] } : b));
+        toast.success("Previsão do tempo adicionada!");
+      }
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao adicionar previsão do tempo");
+      toast.error("Erro ao processar previsão do tempo");
     }
-    setAddingWeather(false);
+    if (isRegenerating) setFetchingLink(null);
+    else setAddingWeather(false);
   };
 
-  const addFinanceInfo = async (bi: number) => {
-    setAddingFinance(true);
+  const addFinanceInfo = async (bi: number, ni?: number) => {
+    const isRegenerating = ni !== undefined;
+    if (isRegenerating) setFetchingLink(`${bi}-${ni}`);
+    else setAddingFinance(true);
+    
     try {
       const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
         body: {
@@ -891,21 +900,27 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         finalContent = aiData.journalisticText;
       }
 
-      const newItem: NewsItem = {
-        titulo: "Mercado Financeiro",
-        resumo: "Confira agora os destaques da economia e do mercado financeiro",
-        texto_materia: finalContent,
-        imagemUrl: "https://images.unsplash.com/photo-1611974714851-eb605161ca81?w=800&auto=format&fit=crop&q=60",
-        escalada: false
-      };
+      if (isRegenerating) {
+        updateNoticia(bi, ni!, "texto_materia", finalContent);
+        toast.success("Mercado financeiro atualizado com IA!");
+      } else {
+        const newItem: NewsItem = {
+          titulo: "Mercado Financeiro",
+          resumo: "Confira agora os destaques da economia e do mercado financeiro",
+          texto_materia: finalContent,
+          imagemUrl: "https://images.unsplash.com/photo-1611974714851-eb605161ca81?w=800&auto=format&fit=crop&q=60",
+          escalada: false
+        };
 
-      setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, newItem] } : b));
-      toast.success("Mercado financeiro adicionado!");
+        setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, newItem] } : b));
+        toast.success("Mercado financeiro adicionado!");
+      }
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao adicionar mercado financeiro");
+      toast.error("Erro ao processar mercado financeiro");
     }
-    setAddingFinance(false);
+    if (isRegenerating) setFetchingLink(null);
+    else setAddingFinance(false);
   };
 
   const handleSave = async () => {
