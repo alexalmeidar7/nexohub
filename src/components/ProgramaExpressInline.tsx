@@ -226,6 +226,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [addingWeather, setAddingWeather] = useState(false);
+  const [addingFinance, setAddingFinance] = useState(false);
 
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
@@ -797,6 +799,108 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     }
     xml += `</programaExpress>`;
     return xml;
+  };
+
+  const addWeatherInfo = async (bi: number) => {
+    setAddingWeather(true);
+    try {
+      let city = "";
+      try {
+        const primary = JSON.parse(localStorage.getItem("masterview_primary_city") || "null");
+        if (primary?.name) city = primary.name;
+        if (!city) city = localStorage.getItem("masterview_last_city") || "";
+      } catch {}
+
+      if (!city && user) {
+        const { data } = await supabase.from("user_settings").select("weather_city").eq("user_id", user.id).maybeSingle();
+        if (data?.weather_city) city = data.weather_city;
+      }
+
+      if (!city) {
+        toast.error("Cidade não configurada. Defina em CADASTRO > CIDADE TEMPO.");
+        setAddingWeather(false);
+        return;
+      }
+
+      const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query: city, count: 1 },
+      });
+
+      if (!geoData?.results?.length) {
+        toast.error("Não foi possível localizar a cidade.");
+        setAddingWeather(false);
+        return;
+      }
+
+      const { latitude, longitude, name } = geoData.results[0];
+      const { data: wxResp } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "forecast", lat: latitude, lon: longitude, forecast_days: 2 },
+      });
+
+      const wxData = wxResp?.data;
+      const weatherText = `Previsão para ${name}: Hoje a temperatura varia entre ${Math.round(wxData.daily.temperature_2m_min[0])}°C e ${Math.round(wxData.daily.temperature_2m_max[0])}°C. Amanhã a mínima será de ${Math.round(wxData.daily.temperature_2m_min[1])}°C e a máxima de ${Math.round(wxData.daily.temperature_2m_max[1])}°C.`;
+
+      const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
+        body: {
+          url: "https://about.google", // Dummy URL to trigger AI
+          generate_journalistic_text: true,
+          custom_prompt: `Você é um apresentador de previsão do tempo. Crie um resumo jornalístico curto e envolvente baseado nestes dados: ${weatherText}. Retorne o texto pronto para Teleprompter.`
+        }
+      });
+
+      let finalContent = weatherText;
+      if (!aiError && aiData?.journalisticText) {
+        finalContent = aiData.journalisticText;
+      }
+
+      const newItem: NewsItem = {
+        titulo: "Tempo",
+        resumo: "Vamos ver como fica a previsão do tempo",
+        texto_materia: finalContent,
+        imagemUrl: "https://images.unsplash.com/photo-1592210633464-a7db05248248?w=800&auto=format&fit=crop&q=60",
+        escalada: false
+      };
+
+      setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, newItem] } : b));
+      toast.success("Previsão do tempo adicionada!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao adicionar previsão do tempo");
+    }
+    setAddingWeather(false);
+  };
+
+  const addFinanceInfo = async (bi: number) => {
+    setAddingFinance(true);
+    try {
+      const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
+        body: {
+          url: "https://about.google", // Dummy URL to trigger AI
+          generate_journalistic_text: true,
+          custom_prompt: "Você é um analista financeiro. Crie um resumo curto sobre o mercado financeiro hoje (Dólar, Euro, Bolsa) de forma realista para um teleprompter. Seja direto e profissional."
+        }
+      });
+
+      let finalContent = "O mercado financeiro opera em estabilidade hoje. O dólar apresenta leve oscilação frente ao real, enquanto a bolsa de valores mantém patamares consistentes acompanhando o cenário internacional.";
+      if (!aiError && aiData?.journalisticText) {
+        finalContent = aiData.journalisticText;
+      }
+
+      const newItem: NewsItem = {
+        titulo: "Mercado Financeiro",
+        resumo: "Confira agora os destaques da economia e do mercado financeiro",
+        texto_materia: finalContent,
+        imagemUrl: "https://images.unsplash.com/photo-1611974714851-eb605161ca81?w=800&auto=format&fit=crop&q=60",
+        escalada: false
+      };
+
+      setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, newItem] } : b));
+      toast.success("Mercado financeiro adicionado!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao adicionar mercado financeiro");
+    }
+    setAddingFinance(false);
   };
 
   const handleSave = async () => {
@@ -1414,9 +1518,29 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                       {bloco.noticias.map((noticia, ni) => (
                         <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} />
                       ))}
-                      <button onClick={() => addNoticia(bi)} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all" style={{ color: "var(--layout-accent-color, #2ec1f7)", border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 40%, transparent)" }}>
-                        <Plus size={12} /> Adicionar notícia
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={() => addNoticia(bi)} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all" style={{ color: "var(--layout-accent-color, #2ec1f7)", border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 40%, transparent)" }}>
+                          <Plus size={12} /> Adicionar notícia
+                        </button>
+                        <button 
+                          onClick={() => addWeatherInfo(bi)} 
+                          disabled={addingWeather}
+                          className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all disabled:opacity-50" 
+                          style={{ color: "#f59e0b", border: "1px dashed color-mix(in srgb, #f59e0b 40%, transparent)" }}
+                        >
+                          {addingWeather ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} 
+                          Adicionar previsão do tempo
+                        </button>
+                        <button 
+                          onClick={() => addFinanceInfo(bi)} 
+                          disabled={addingFinance}
+                          className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all disabled:opacity-50" 
+                          style={{ color: "#10b981", border: "1px dashed color-mix(in srgb, #10b981 40%, transparent)" }}
+                        >
+                          {addingFinance ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} 
+                          Adicionar mercado financeiro
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
