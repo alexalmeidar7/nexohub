@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
 
     if (!skip_fetch && url) {
       try {
-        response = await fetchWithRetry(parsedUrl.toString());
+        response = await fetchWithRetry(parsedUrl!.toString());
         const contentType = response.headers.get("content-type") || "";
         const buffer = await response.arrayBuffer();
         text = pickBestDecodedText(buffer, contentType);
