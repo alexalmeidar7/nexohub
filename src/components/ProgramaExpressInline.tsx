@@ -801,8 +801,11 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     return xml;
   };
 
-  const addWeatherInfo = async (bi: number) => {
-    setAddingWeather(true);
+  const addWeatherInfo = async (bi: number, ni?: number) => {
+    const isRegenerating = ni !== undefined;
+    if (isRegenerating) setFetchingLink(`${bi}-${ni}`);
+    else setAddingWeather(true);
+    
     try {
       let city = "";
       try {
@@ -818,7 +821,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       if (!city) {
         toast.error("Cidade não configurada. Defina em CADASTRO > CIDADE TEMPO.");
-        setAddingWeather(false);
+        if (isRegenerating) setFetchingLink(null);
+        else setAddingWeather(false);
         return;
       }
 
@@ -828,7 +832,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       if (!geoData?.results?.length) {
         toast.error("Não foi possível localizar a cidade.");
-        setAddingWeather(false);
+        if (isRegenerating) setFetchingLink(null);
+        else setAddingWeather(false);
         return;
       }
 
@@ -853,25 +858,34 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         finalContent = aiData.journalisticText;
       }
 
-      const newItem: NewsItem = {
-        titulo: "Tempo",
-        resumo: "Vamos ver como fica a previsão do tempo",
-        texto_materia: finalContent,
-        imagemUrl: "https://images.unsplash.com/photo-1592210633464-a7db05248248?w=800&auto=format&fit=crop&q=60",
-        escalada: false
-      };
+      if (isRegenerating) {
+        updateNoticia(bi, ni!, "texto_materia", finalContent);
+        toast.success("Previsão atualizada com IA!");
+      } else {
+        const newItem: NewsItem = {
+          titulo: "Tempo",
+          resumo: "Vamos ver como fica a previsão do tempo",
+          texto_materia: finalContent,
+          imagemUrl: "https://images.unsplash.com/photo-1592210633464-a7db05248248?w=800&auto=format&fit=crop&q=60",
+          escalada: false
+        };
 
-      setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, newItem] } : b));
-      toast.success("Previsão do tempo adicionada!");
+        setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, newItem] } : b));
+        toast.success("Previsão do tempo adicionada!");
+      }
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao adicionar previsão do tempo");
+      toast.error("Erro ao processar previsão do tempo");
     }
-    setAddingWeather(false);
+    if (isRegenerating) setFetchingLink(null);
+    else setAddingWeather(false);
   };
 
-  const addFinanceInfo = async (bi: number) => {
-    setAddingFinance(true);
+  const addFinanceInfo = async (bi: number, ni?: number) => {
+    const isRegenerating = ni !== undefined;
+    if (isRegenerating) setFetchingLink(`${bi}-${ni}`);
+    else setAddingFinance(true);
+    
     try {
       const { data: aiData, error: aiError } = await supabase.functions.invoke("fetch-rss", {
         body: {
@@ -886,21 +900,27 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         finalContent = aiData.journalisticText;
       }
 
-      const newItem: NewsItem = {
-        titulo: "Mercado Financeiro",
-        resumo: "Confira agora os destaques da economia e do mercado financeiro",
-        texto_materia: finalContent,
-        imagemUrl: "https://images.unsplash.com/photo-1611974714851-eb605161ca81?w=800&auto=format&fit=crop&q=60",
-        escalada: false
-      };
+      if (isRegenerating) {
+        updateNoticia(bi, ni!, "texto_materia", finalContent);
+        toast.success("Mercado financeiro atualizado com IA!");
+      } else {
+        const newItem: NewsItem = {
+          titulo: "Mercado Financeiro",
+          resumo: "Confira agora os destaques da economia e do mercado financeiro",
+          texto_materia: finalContent,
+          imagemUrl: "https://images.unsplash.com/photo-1611974714851-eb605161ca81?w=800&auto=format&fit=crop&q=60",
+          escalada: false
+        };
 
-      setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, newItem] } : b));
-      toast.success("Mercado financeiro adicionado!");
+        setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, newItem] } : b));
+        toast.success("Mercado financeiro adicionado!");
+      }
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao adicionar mercado financeiro");
+      toast.error("Erro ao processar mercado financeiro");
     }
-    setAddingFinance(false);
+    if (isRegenerating) setFetchingLink(null);
+    else setAddingFinance(false);
   };
 
   const handleSave = async () => {
@@ -1516,7 +1536,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                   {!collapsedBlocos.has(bi) && (
                     <div className="space-y-3">
                       {bloco.noticias.map((noticia, ni) => (
-                        <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} />
+                        <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} onRegenerateWeather={addWeatherInfo} onRegenerateFinance={addFinanceInfo} addingWeather={addingWeather} addingFinance={addingFinance} />
                       ))}
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => addNoticia(bi)} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all" style={{ color: "var(--layout-accent-color, #2ec1f7)", border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 40%, transparent)" }}>
@@ -1571,7 +1591,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 }
 
 /* Sub-component for each noticia row */
-function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields }: {
+function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields, onRegenerateWeather, onRegenerateFinance, addingWeather, addingFinance }: {
   noticia: NewsItem; bi: number; ni: number;
   inputStyle: React.CSSProperties; fetchingLink: string | null;
   onUpdate: (bi: number, ni: number, field: keyof NewsItem, value: any) => void;
@@ -1579,6 +1599,10 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   onFetchLink: (bi: number, ni: number, url: string, force?: boolean) => void;
   canRemove: boolean;
   editedFields?: Set<string>;
+  onRegenerateWeather?: (bi: number, ni: number) => void;
+  onRegenerateFinance?: (bi: number, ni: number) => void;
+  addingWeather?: boolean;
+  addingFinance?: boolean;
 }) {
   const [linkInput, setLinkInput] = useState(noticia.link || "");
   const [collapsed, setCollapsed] = useState(false);
@@ -1667,6 +1691,19 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
               title="Gerar texto novamente usando IA"
             >
               <RefreshCw size={9} /> Reprocessar
+            </button>
+          )}
+
+          {!isFetching && (noticia.titulo === "Tempo" || noticia.titulo === "Mercado Financeiro") && (
+            <button 
+              onClick={() => {
+                if (noticia.titulo === "Tempo") onRegenerateWeather?.(bi, ni);
+                else onRegenerateFinance?.(bi, ni);
+              }}
+              className="ml-auto text-[9px] flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-200 text-blue-500 hover:bg-blue-50 transition-colors"
+              title="Regerar com IA"
+            >
+              <RefreshCw size={9} /> Regerar com IA
             </button>
           )}
 
