@@ -132,13 +132,20 @@ export default function EnquetePage() {
   const xmlUrl = user
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-enquete?user_id=${user.id}`
     : "";
+  const fetchAiSetting = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase.from("profiles").select("ai_enabled").eq("user_id", user.id).maybeSingle();
+    if (data) setAiEnabled(data.ai_enabled ?? true);
+  }, [user]);
+
   useEffect(() => {
     if (user) {
       loadEnquetes();
       loadCustomCategories();
       loadProgramas();
+      fetchAiSetting();
     }
-  }, [user]);
+  }, [user, fetchAiSetting]);
 
   const loadProgramas = async () => {
     if (!user) return;
