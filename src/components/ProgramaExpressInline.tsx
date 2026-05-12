@@ -876,7 +876,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       if (isRegenerating) {
         updateNoticia(bi, ni!, "texto_materia", finalContent);
-        toast.success("Previsão atualizada com IA!");
+        toast.success(aiError ? "Previsão atualizada!" : "Previsão atualizada com IA!");
       } else {
         const newItem: NewsItem = {
           titulo: "Tempo",
