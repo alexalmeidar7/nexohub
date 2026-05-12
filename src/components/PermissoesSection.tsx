@@ -123,7 +123,31 @@ export default function PermissoesSection() {
     setLoading(false);
   }, [user]);
 
-  useEffect(() => { fetchSubUsers(); }, [fetchSubUsers]);
+  const fetchAiSetting = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase.from("profiles").select("ai_enabled").eq("user_id", user.id).maybeSingle();
+    if (data) setAiEnabled(data.ai_enabled ?? true);
+  }, [user]);
+
+  useEffect(() => { 
+    fetchSubUsers(); 
+    fetchAiSetting();
+  }, [fetchSubUsers, fetchAiSetting]);
+
+  const toggleAi = async (checked: boolean) => {
+    if (!user) return;
+    setUpdatingAi(true);
+    try {
+      const { error } = await supabase.from("profiles").update({ ai_enabled: checked }).eq("user_id", user.id);
+      if (error) throw error;
+      setAiEnabled(checked);
+      toast.success(checked ? "IA habilitada ✨" : "Todas as funcionalidades IA desabilitadas ⏹️");
+    } catch (err) {
+      toast.error("Erro ao atualizar configuração de IA");
+    } finally {
+      setUpdatingAi(false);
+    }
+  };
 
   const handleCreate = async () => {
     if (!newEmail || !newPassword) {
