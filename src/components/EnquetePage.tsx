@@ -173,7 +173,8 @@ export default function EnquetePage() {
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-enquetes`,
           { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoria: item.nome }) }
         );
-        const quizzes = await res.json();
+        const json = await res.json();
+        const quizzes = Array.isArray(json) ? json : json?.quizzes;
         if (Array.isArray(quizzes) && quizzes.length > 0) {
           await supabase
             .from("custom_enquete_categories")
