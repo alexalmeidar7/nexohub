@@ -51,20 +51,13 @@ Sem explicação, sem markdown, apenas o JSON.`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded, try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
-        status: 500,
+      const msg = response.status === 429
+        ? "Limite de requisições atingido. Tente novamente em instantes."
+        : response.status === 402
+        ? "Créditos de IA esgotados. Adicione créditos no workspace."
+        : "Erro no gateway de IA.";
+      return new Response(JSON.stringify({ ok: false, error: msg, quizzes: [] }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
