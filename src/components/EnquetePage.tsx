@@ -797,8 +797,12 @@ export default function EnquetePage() {
               </p>
             </div>
             <Button
-              disabled={loadingCategory}
+              disabled={loadingCategory || !aiEnabled}
               onClick={async () => {
+                if (!aiEnabled) {
+                  toast.error("IA desativada. Reative em Configurações > Permissões.");
+                  return;
+                }
                 const name = newCategoryName.trim();
                 if (!name) { toast.error("Digite o nome da categoria."); return; }
                 if (CATEGORIES.includes(name)) { toast.error("Categoria já existe."); return; }
