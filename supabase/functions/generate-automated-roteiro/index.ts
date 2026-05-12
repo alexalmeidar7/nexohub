@@ -247,7 +247,7 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES PERSONALIZADAS DO USUÁRIO (SIGA À RIS
         const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         roteiro = JSON.parse(cleaned);
 
-        if (!producao_ai_habilitada) {
+        if (!producao_ai_habilitada || isAiDisabled) {
           isValid = true;
           break;
         }
