@@ -120,7 +120,26 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    
+    const authHeader = req.headers.get("Authorization");
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader || "" } },
+    });
+
     const { url, generate_journalistic_text, custom_prompt, generate_summary, input_text, skip_fetch } = await req.json();
+    
+    let aiEnabled = true;
+    if (authHeader) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from("profiles").select("ai_enabled").eq("user_id", user.id).maybeSingle();
+        if (profile) aiEnabled = profile.ai_enabled ?? true;
+      }
+    }
+
     if (!url && !input_text) {
       return new Response(JSON.stringify({ error: "URL or input_text is required" }), {
         status: 400,
