@@ -95,14 +95,17 @@ serve(async (req) => {
       });
     }
 
+    const { automacao_id, producao_ai_habilitada = true, producao_ai_prompt = "" } = await req.json();
+
+    const { data: profile } = await supabase.from("profiles").select("ai_enabled").eq("user_id", user.id).maybeSingle();
+    const isAiDisabled = profile?.ai_enabled === false;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "LOVABLE_API_KEY não configurada" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const { automacao_id, producao_ai_habilitada = true, producao_ai_prompt = "" } = await req.json();
     if (!automacao_id) {
       return new Response(JSON.stringify({ error: "automacao_id obrigatório" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -185,7 +188,7 @@ Retorne APENAS um JSON válido com a seguinte estrutura:
 }
 
 Regras:
-- producao_ai_habilitada: ${producao_ai_habilitada}
+- producao_ai_habilitada: ${producao_ai_habilitada && !isAiDisabled}
 - Se producao_ai_habilitada for TRUE: O campo "texto_materia" DEVE ser uma matéria jornalística COMPLETA, DETALHADA e EXTENSA para ser lida no TP (Teleprompter).
   * OBRIGATÓRIO: Mínimo de 5 parágrafos densos e pelo menos 1500 caracteres por notícia.
   * PROIBIDO: Não retorne apenas resumos ou textos curtos. O usuário exige um texto completo.
@@ -244,7 +247,7 @@ ${producao_ai_prompt ? `  * INSTRUÇÕES PERSONALIZADAS DO USUÁRIO (SIGA À RIS
         const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         roteiro = JSON.parse(cleaned);
 
-        if (!producao_ai_habilitada) {
+        if (!producao_ai_habilitada || isAiDisabled) {
           isValid = true;
           break;
         }

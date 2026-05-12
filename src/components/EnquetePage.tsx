@@ -112,6 +112,7 @@ export default function EnquetePage() {
   const [loadingCategory, setLoadingCategory] = useState(false);
 
   // Auto-schedule state
+  const [aiEnabled, setAiEnabled] = useState(true);
   const [autoMode, setAutoMode] = useState<"programa" | "custom">("programa");
   const [autoPrograma, setAutoPrograma] = useState("");
   const [autoDiasSemana, setAutoDiasSemana] = useState<string[]>([]);
@@ -131,13 +132,20 @@ export default function EnquetePage() {
   const xmlUrl = user
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-enquete?user_id=${user.id}`
     : "";
+  const fetchAiSetting = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase.from("profiles").select("ai_enabled").eq("user_id", user.id).maybeSingle();
+    if (data) setAiEnabled(data.ai_enabled ?? true);
+  }, [user]);
+
   useEffect(() => {
     if (user) {
       loadEnquetes();
       loadCustomCategories();
       loadProgramas();
+      fetchAiSetting();
     }
-  }, [user]);
+  }, [user, fetchAiSetting]);
 
   const loadProgramas = async () => {
     if (!user) return;
@@ -452,13 +460,15 @@ export default function EnquetePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}>
-          <HelpCircle size={20} className="text-white" />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Enquete</h2>
-          <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Configure perguntas e respostas para exibição no ar</p>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}>
+            <HelpCircle size={20} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Enquete</h2>
+            <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Configure perguntas e respostas para exibição no ar</p>
+          </div>
         </div>
       </div>
       {/* XML Link */}
@@ -574,18 +584,20 @@ export default function EnquetePage() {
           </div>
         ))}
         {/* Schedule */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Data</label>
-            <Input type="date" value={dataEnquete} onChange={e => setDataEnquete(e.target.value)} className="text-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+            <Input type="date" value={dataEnquete} onChange={e => setDataEnquete(e.target.value)} className="text-sm h-10" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
           </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Início</label>
-            <Input type="time" value={horarioInicio} onChange={e => setHorarioInicio(e.target.value)} className="text-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Fim</label>
-            <Input type="time" value={horarioFim} onChange={e => setHorarioFim(e.target.value)} className="text-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+          <div className="grid grid-cols-2 gap-3 sm:col-span-2">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Início</label>
+              <Input type="time" value={horarioInicio} onChange={e => setHorarioInicio(e.target.value)} className="text-sm h-10" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Fim</label>
+              <Input type="time" value={horarioFim} onChange={e => setHorarioFim(e.target.value)} className="text-sm h-10" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
@@ -693,12 +705,12 @@ export default function EnquetePage() {
 
         <div>
           <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Gerar para os próximos</label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {[5, 10, 15].map(d => (
               <button
                 key={d}
                 onClick={() => setAutoDaysAhead(d)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all min-w-[70px]"
                 style={{
                   backgroundColor: autoDaysAhead === d ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, var(--layout-border-color, #333))",
                   color: autoDaysAhead === d ? "#fff" : "var(--layout-page-text, #1a1a1a)",
@@ -734,7 +746,7 @@ export default function EnquetePage() {
             {enquetes.map(e => {
               const answers = [e.resposta1, e.resposta2, e.resposta3, e.resposta4].filter(a => a?.trim());
               return (
-                <div key={e.id} className="px-4 py-3 flex items-center gap-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+                <div key={e.id} className="px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{e.pergunta}</p>
                     <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
@@ -745,18 +757,20 @@ export default function EnquetePage() {
                     <Button
                       size="sm"
                       onClick={() => generateArteForEnquete(e)}
-                      className="flex items-center gap-1.5 text-[10px] font-bold rounded-lg text-white px-3 py-1 shrink-0"
+                      className="flex items-center justify-center gap-1.5 text-[10px] font-bold rounded-lg text-white px-3 py-1.5 shrink-0 w-full sm:w-auto"
                       style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}
                     >
                       <Download size={12} /> Baixar Arte
                     </Button>
                   )}
-                  <button onClick={() => handleEdit(e)} className="p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Editar">
-                    <Pencil size={14} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
-                  </button>
-                  <button onClick={() => handleDelete(e.id)} className="p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Excluir">
-                    <Trash2 size={14} className="text-red-500" />
-                  </button>
+                  <div className="flex sm:flex-col gap-1 shrink-0 ml-auto sm:ml-0">
+                    <button onClick={() => handleEdit(e)} className="p-2 sm:p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Editar">
+                      <Pencil size={16} className="sm:w-[14px] sm:h-[14px]" style={{ color: "var(--layout-accent-color, #268ffa)" }} />
+                    </button>
+                    <button onClick={() => handleDelete(e.id)} className="p-2 sm:p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Excluir">
+                      <Trash2 size={16} className="sm:w-[14px] sm:h-[14px] text-red-500" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -783,8 +797,12 @@ export default function EnquetePage() {
               </p>
             </div>
             <Button
-              disabled={loadingCategory}
+              disabled={loadingCategory || !aiEnabled}
               onClick={async () => {
+                if (!aiEnabled) {
+                  toast.error("IA desativada. Reative em Configurações > Permissões.");
+                  return;
+                }
                 const name = newCategoryName.trim();
                 if (!name) { toast.error("Digite o nome da categoria."); return; }
                 if (CATEGORIES.includes(name)) { toast.error("Categoria já existe."); return; }

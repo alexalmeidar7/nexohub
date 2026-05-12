@@ -11,7 +11,32 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    
+    const authHeader = req.headers.get("Authorization");
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader || "" } },
+    });
+
     const { categoria } = await req.json();
+
+    let aiEnabled = true;
+    if (authHeader) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from("profiles").select("ai_enabled").eq("user_id", user.id).maybeSingle();
+        if (profile) aiEnabled = profile.ai_enabled ?? true;
+      }
+    }
+
+    if (!aiEnabled) {
+      return new Response(JSON.stringify({ ok: false, error: "IA desabilitada no perfil", quizzes: [] }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (!categoria) {
       return new Response(JSON.stringify({ error: "categoria required" }), {
         status: 400,
