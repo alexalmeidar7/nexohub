@@ -695,12 +695,12 @@ export default function EnquetePage() {
 
         <div>
           <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Gerar para os próximos</label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {[5, 10, 15].map(d => (
               <button
                 key={d}
                 onClick={() => setAutoDaysAhead(d)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all min-w-[70px]"
                 style={{
                   backgroundColor: autoDaysAhead === d ? "var(--layout-accent-color, #268ffa)" : "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, var(--layout-border-color, #333))",
                   color: autoDaysAhead === d ? "#fff" : "var(--layout-page-text, #1a1a1a)",
