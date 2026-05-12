@@ -755,12 +755,14 @@ export default function EnquetePage() {
                       <Download size={12} /> Baixar Arte
                     </Button>
                   )}
-                  <button onClick={() => handleEdit(e)} className="p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Editar">
-                    <Pencil size={14} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
-                  </button>
-                  <button onClick={() => handleDelete(e.id)} className="p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Excluir">
-                    <Trash2 size={14} className="text-red-500" />
-                  </button>
+                  <div className="flex sm:flex-col gap-1 shrink-0 ml-auto sm:ml-0">
+                    <button onClick={() => handleEdit(e)} className="p-2 sm:p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Editar">
+                      <Pencil size={16} className="sm:w-[14px] sm:h-[14px]" style={{ color: "var(--layout-accent-color, #268ffa)" }} />
+                    </button>
+                    <button onClick={() => handleDelete(e.id)} className="p-2 sm:p-1.5 rounded-lg transition-colors hover:bg-black/5" title="Excluir">
+                      <Trash2 size={16} className="sm:w-[14px] sm:h-[14px] text-red-500" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
