@@ -188,7 +188,7 @@ Retorne APENAS um JSON válido com a seguinte estrutura:
 }
 
 Regras:
-- producao_ai_habilitada: ${producao_ai_habilitada}
+- producao_ai_habilitada: ${producao_ai_habilitada && !isAiDisabled}
 - Se producao_ai_habilitada for TRUE: O campo "texto_materia" DEVE ser uma matéria jornalística COMPLETA, DETALHADA e EXTENSA para ser lida no TP (Teleprompter).
   * OBRIGATÓRIO: Mínimo de 5 parágrafos densos e pelo menos 1500 caracteres por notícia.
   * PROIBIDO: Não retorne apenas resumos ou textos curtos. O usuário exige um texto completo.
