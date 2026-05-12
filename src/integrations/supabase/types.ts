@@ -1063,6 +1063,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_enabled: boolean | null
           avatar_url: string | null
           cidade: string | null
           created_at: string
@@ -1079,6 +1080,7 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          ai_enabled?: boolean | null
           avatar_url?: string | null
           cidade?: string | null
           created_at?: string
@@ -1095,6 +1097,7 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          ai_enabled?: boolean | null
           avatar_url?: string | null
           cidade?: string | null
           created_at?: string
