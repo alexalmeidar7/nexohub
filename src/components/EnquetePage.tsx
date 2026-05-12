@@ -738,7 +738,7 @@ export default function EnquetePage() {
             {enquetes.map(e => {
               const answers = [e.resposta1, e.resposta2, e.resposta3, e.resposta4].filter(a => a?.trim());
               return (
-                <div key={e.id} className="px-4 py-3 flex items-center gap-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+                <div key={e.id} className="px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{e.pergunta}</p>
                     <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
