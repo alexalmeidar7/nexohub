@@ -749,7 +749,7 @@ export default function EnquetePage() {
                     <Button
                       size="sm"
                       onClick={() => generateArteForEnquete(e)}
-                      className="flex items-center gap-1.5 text-[10px] font-bold rounded-lg text-white px-3 py-1 shrink-0"
+                      className="flex items-center justify-center gap-1.5 text-[10px] font-bold rounded-lg text-white px-3 py-1.5 shrink-0 w-full sm:w-auto"
                       style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}
                     >
                       <Download size={12} /> Baixar Arte
