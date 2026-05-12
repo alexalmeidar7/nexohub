@@ -95,14 +95,17 @@ serve(async (req) => {
       });
     }
 
+    const { automacao_id, producao_ai_habilitada = true, producao_ai_prompt = "" } = await req.json();
+
+    const { data: profile } = await supabase.from("profiles").select("ai_enabled").eq("user_id", user.id).maybeSingle();
+    const isAiDisabled = profile?.ai_enabled === false;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "LOVABLE_API_KEY não configurada" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const { automacao_id, producao_ai_habilitada = true, producao_ai_prompt = "" } = await req.json();
     if (!automacao_id) {
       return new Response(JSON.stringify({ error: "automacao_id obrigatório" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
