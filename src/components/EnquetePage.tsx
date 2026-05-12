@@ -112,6 +112,7 @@ export default function EnquetePage() {
   const [loadingCategory, setLoadingCategory] = useState(false);
 
   // Auto-schedule state
+  const [aiEnabled, setAiEnabled] = useState(true);
   const [autoMode, setAutoMode] = useState<"programa" | "custom">("programa");
   const [autoPrograma, setAutoPrograma] = useState("");
   const [autoDiasSemana, setAutoDiasSemana] = useState<string[]>([]);
