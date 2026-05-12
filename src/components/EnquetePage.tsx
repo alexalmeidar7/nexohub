@@ -574,18 +574,20 @@ export default function EnquetePage() {
           </div>
         ))}
         {/* Schedule */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Data</label>
-            <Input type="date" value={dataEnquete} onChange={e => setDataEnquete(e.target.value)} className="text-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+            <Input type="date" value={dataEnquete} onChange={e => setDataEnquete(e.target.value)} className="text-sm h-10" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
           </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Início</label>
-            <Input type="time" value={horarioInicio} onChange={e => setHorarioInicio(e.target.value)} className="text-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Fim</label>
-            <Input type="time" value={horarioFim} onChange={e => setHorarioFim(e.target.value)} className="text-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+          <div className="grid grid-cols-2 gap-3 sm:col-span-2">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Início</label>
+              <Input type="time" value={horarioInicio} onChange={e => setHorarioInicio(e.target.value)} className="text-sm h-10" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wide mb-1 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Fim</label>
+              <Input type="time" value={horarioFim} onChange={e => setHorarioFim(e.target.value)} className="text-sm h-10" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }} />
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
