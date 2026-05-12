@@ -573,6 +573,7 @@ export default function PermissoesSection() {
           )}
         </div>
       ))}
+      </div>
     </div>
   );
 }
