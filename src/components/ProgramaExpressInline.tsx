@@ -951,7 +951,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       if (isRegenerating) {
         updateNoticia(bi, ni!, "texto_materia", finalContent);
-        toast.success("Mercado financeiro atualizado com IA!");
+        toast.success(aiError ? "Mercado financeiro atualizado!" : "Mercado financeiro atualizado com IA!");
       } else {
         const newItem: NewsItem = {
           titulo: "Mercado Financeiro",
