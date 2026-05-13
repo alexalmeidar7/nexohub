@@ -29,9 +29,24 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(supabaseUrl, serviceKey);
 
-    const now = new Date();
-    const today = now.toISOString().slice(0, 10);
-    const currentTime = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Sao_Paulo" });
+    // Get current date and time in America/Sao_Paulo
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    
+    const parts = formatter.formatToParts(new Date());
+    const getPart = (type: string) => parts.find(p => p.type === type)?.value;
+    
+    const today = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
+    const currentTime = `${getPart("hour")}:${getPart("minute")}`;
+    
+    console.log(`Checking for userId: ${userId}, Date: ${today}, Time: ${currentTime}`);
 
     const { data: scheduled } = await sb
       .from("enquetes_agendadas")
