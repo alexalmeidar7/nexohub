@@ -159,7 +159,7 @@ export default function EnquetePage() {
   };
   const loadCustomCategories = async () => {
     if (!user) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString("en-CA");
     const { data } = await supabase
       .from("custom_enquete_categories")
       .select("*")
@@ -195,7 +195,7 @@ export default function EnquetePage() {
   };
   const loadEnquetes = async () => {
     if (!user) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString("en-CA");
     const { data } = await supabase
       .from("enquetes_agendadas")
       .select("*")
