@@ -929,12 +929,22 @@ export default function CenarioInterativoPage() {
 
   /* ─── Music data sync from per-user localStorage ─── */
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setMusicData(null);
+      prevMusicRef.current = "";
+      return;
+    }
     const key = `masterview_music_data::${user.id}`;
     const poll = setInterval(() => {
       try {
         const raw = localStorage.getItem(key);
-        if (!raw) return;
+        if (!raw) {
+          if (prevMusicRef.current !== "") {
+            setMusicData(null);
+            prevMusicRef.current = "";
+          }
+          return;
+        }
         const d = JSON.parse(raw);
         const sig = `${d.titulo}|${d.artista}`;
         if (sig !== prevMusicRef.current) {
@@ -978,7 +988,12 @@ export default function CenarioInterativoPage() {
 
   /* ─── Fetch current program + sponsor logos ─── */
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setCurrentProgram(null);
+      setSponsorLogos([]);
+      setNextProgram(null);
+      return;
+    }
     const load = async () => {
       const now = new Date();
       const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
