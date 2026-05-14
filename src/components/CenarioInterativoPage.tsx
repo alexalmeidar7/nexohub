@@ -332,12 +332,12 @@ export default function CenarioInterativoPage() {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   
-  // Se o estado vier de um sync remoto como 'forecast', converte para 'today'
+  // Sincroniza a exibição do satélite com a opção de configuração
   useEffect(() => {
-    if (weatherSubTab === "forecast") {
+    if (weatherSubTab === "satellite" && !config.weather.showSatellite) {
       setWeatherSubTab("today");
     }
-  }, [weatherSubTab]);
+  }, [config.weather.showSatellite, weatherSubTab]);
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
   const [satelliteZoom, setSatelliteZoom] = useState(6);
   const isRemoteUpdateRef = useRef(false);
@@ -2079,7 +2079,12 @@ export default function CenarioInterativoPage() {
                       ].map(t => (
                         <button
                           key={t.key}
-                          onClick={() => handleWeatherSubTabChange(t.key)}
+                          onClick={() => {
+                            handleWeatherSubTabChange(t.key);
+                            if (t.key === "satellite" && !config.weather.showSatellite) {
+                              updateWeather({ showSatellite: true });
+                            }
+                          }}
                           className="flex-1 flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all"
                           style={{
                             background: weatherSubTab === t.key ? subTabActive : "transparent",
@@ -2179,9 +2184,9 @@ export default function CenarioInterativoPage() {
                         <p className="text-xs" style={{ color: mutedText }}>
                           Exibe imagens de satélite meteorológico da região configurada.
                         </p>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm">Exibir imagens de satélite</Label>
-                          <Switch checked={config.weather.showSatellite} onCheckedChange={v => updateWeather({ showSatellite: v })} />
+                        <div className="flex items-center justify-between p-2 rounded-lg border border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)" }}>
+                          <Label className="text-sm cursor-pointer" htmlFor="show-satellite-switch">Exibir imagens de satélite</Label>
+                          <Switch id="show-satellite-switch" checked={config.weather.showSatellite} onCheckedChange={v => updateWeather({ showSatellite: v })} />
                         </div>
                         <div>
                           <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade para satélite</Label>
@@ -2652,7 +2657,7 @@ export default function CenarioInterativoPage() {
                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${pvh(1.8)}px` }}>
 
                     {/* Fullscreen background layers */}
-                    {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
+                    {activeTab === "weather" && (weatherSubTab === "satellite" || config.weather.showSatellite) && weatherCoords && (
                       <div className="absolute inset-0" style={{ zIndex: 5 }}>
                         <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={(z) => { setSatelliteZoom(z); cenarioBcRef.current?.postMessage({ type: "zoom-change", zoom: z }); rtDrawChannelRef.current?.send({ type: "broadcast", event: "zoom-change", payload: { zoom: z } }); }} />
                       </div>
