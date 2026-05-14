@@ -2179,9 +2179,9 @@ export default function CenarioInterativoPage() {
                         <p className="text-xs" style={{ color: mutedText }}>
                           Exibe imagens de satélite meteorológico da região configurada.
                         </p>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm">Exibir imagens de satélite</Label>
-                          <Switch checked={config.weather.showSatellite} onCheckedChange={v => updateWeather({ showSatellite: v })} />
+                        <div className="flex items-center justify-between p-2 rounded-lg border border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)" }}>
+                          <Label className="text-sm cursor-pointer" htmlFor="show-satellite-switch">Exibir imagens de satélite</Label>
+                          <Switch id="show-satellite-switch" checked={config.weather.showSatellite} onCheckedChange={v => updateWeather({ showSatellite: v })} />
                         </div>
                         <div>
                           <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade para satélite</Label>
