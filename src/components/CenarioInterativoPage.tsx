@@ -3094,28 +3094,30 @@ export default function CenarioInterativoPage() {
                                       <div className="font-bold uppercase tracking-widest text-center" style={{ fontSize: `${pvh(1.3)}px`, opacity: 0.5, marginBottom: `${pvh(0.5)}px` }}>Próximos Dias</div>
                                       {liveWeather.daily.slice(1, 4).map((d, i) => (
                                         <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
-                                          padding: `${pvh(1.5)}px ${pvh(2)}px`,
+                                          padding: `${pvh(1.2)}px ${pvh(2)}px`,
                                           background: "rgba(255,255,255,0.05)",
                                           borderRadius: `${pvh(1.8)}px`,
                                           backdropFilter: "blur(20px)",
                                           border: "1px solid rgba(255,255,255,0.08)",
-                                          gap: `${pvh(1.5)}px`,
+                                          gap: `${pvh(1)}px`,
                                         }}>
-                                          <div style={{ minWidth: `${pvh(9)}px` }}>
-                                            <span className="font-bold capitalize" style={{ fontSize: `${pvh(1.7)}px`, lineHeight: 1.1 }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                                          <div style={{ width: `${pvh(11)}px`, flexShrink: 0 }}>
+                                            <span className="font-bold capitalize block truncate" style={{ fontSize: `${pvh(1.6)}px`, lineHeight: 1.1 }}>
+                                              {new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" }).replace('.', '')}
+                                            </span>
                                           </div>
-                                          <div style={{ width: `${pvh(4.5)}px`, height: `${pvh(4.5)}px`, flexShrink: 0 }}>
-                                            <WeatherIcon code={d.code} size={pvh(4.5)} forceDay />
+                                          <div style={{ width: `${pvh(4)}px`, height: `${pvh(4)}px`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                            <WeatherIcon code={d.code} size={pvh(3.8)} forceDay />
                                           </div>
                                           <div className="flex flex-col flex-1" style={{ minWidth: 0 }}>
-                                            <div className="flex items-center" style={{ gap: `${pvh(0.8)}px`, fontSize: `${pvh(1.1)}px`, opacity: 0.7 }}>
+                                            <div className="flex items-center" style={{ gap: `${pvh(0.5)}px`, fontSize: `${pvh(1.1)}px`, opacity: 0.8 }}>
                                               <span style={{ color: "#7dd3fc" }}>💧{d.precip}%</span>
-                                              <span>{d.rainMm}mm</span>
+                                              <span className="opacity-60">{d.rainMm}mm</span>
                                             </div>
                                           </div>
-                                          <div className="flex items-baseline" style={{ flexShrink: 0, gap: `${pvh(0.5)}px` }}>
-                                            <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2.2)}px`, lineHeight: 1 }}>{d.max}°</span>
-                                            <span className="font-medium tabular-nums" style={{ fontSize: `${pvh(1.4)}px`, opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
+                                          <div className="flex items-center" style={{ flexShrink: 0, gap: `${pvh(0.8)}px` }}>
+                                            <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2)}px`, lineHeight: 1 }}>{d.max}°</span>
+                                            <span className="font-medium tabular-nums" style={{ fontSize: `${pvh(1.4)}px`, opacity: 0.4, lineHeight: 1 }}>{d.min}°</span>
                                           </div>
                                         </div>
                                       ))}
