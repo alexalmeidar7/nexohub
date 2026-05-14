@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Loader2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Minus, Plus } from "lucide-react";
 
 interface SatelliteMapProps {
   lat: number;
@@ -55,11 +56,16 @@ export default function SatelliteMap({
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    setIsLoading(true);
     debounceRef.current = setTimeout(() => {
       setDebouncedView(view);
     }, 600);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [view]);
+
+  const handleIframeLoad = () => {
+    setIsLoading(false);
+  };
 
   const panStep = Math.max(0.0035, 1.35 / Math.pow(2, Math.max(view.zoom - 3, 0) / 1.9));
 
@@ -106,11 +112,21 @@ export default function SatelliteMap({
           height: "100%", 
           border: "none", 
           borderRadius: "inherit",
-          pointerEvents: interactive ? "none" : "auto" // If interactive is true, we want our own buttons to handle it
+          opacity: isLoading ? 0 : 1,
+          transition: "opacity 0.5s ease-in-out",
+          pointerEvents: interactive ? "none" : "auto" 
         }}
         title="Mapa Satélite Meteorológico"
         allowFullScreen
+        onLoad={handleIframeLoad}
       />
+
+      {isLoading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm z-20">
+          <Loader2 className="w-8 h-8 text-white animate-spin mb-2" />
+          <span className="text-white/70 text-xs font-medium tracking-widest uppercase">Carregando Satélite...</span>
+        </div>
+      )}
       
       {(showControls || interactive) && (
         <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
