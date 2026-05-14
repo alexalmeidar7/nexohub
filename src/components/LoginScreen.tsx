@@ -6,6 +6,7 @@ import logoNexo from "@/assets/logo-nexo.png";
 const AUTH_TIMEOUT_MS = 12000;
 const MAX_RETRIES = 3;
 const KEEP_CONNECTED_KEY = "nexohub_keep_connected";
+const REMEMBERED_USER_KEY = "nexohub_remembered_user";
 
 const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -65,7 +66,7 @@ const getFriendlyAuthMessage = (message: string) => {
 };
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => localStorage.getItem(REMEMBERED_USER_KEY) || "");
   const [pass, setPass] = useState("");
   const [keepConnected, setKeepConnected] = useState(() => localStorage.getItem(KEEP_CONNECTED_KEY) !== "false");
   const [showForgot, setShowForgot] = useState(false);
@@ -126,6 +127,11 @@ export default function LoginScreen() {
     setLoading(true);
     setError("");
     localStorage.setItem(KEEP_CONNECTED_KEY, keepConnected ? "true" : "false");
+    if (keepConnected) {
+      localStorage.setItem(REMEMBERED_USER_KEY, email.trim());
+    } else {
+      localStorage.removeItem(REMEMBERED_USER_KEY);
+    }
 
     const request = () => supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
 
