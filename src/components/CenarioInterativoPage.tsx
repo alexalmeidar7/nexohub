@@ -107,7 +107,7 @@ const defaultConfig: CenarioConfig = {
   programThumbPosition: "center",
   bgType: "none",
   home: { bgImage: "", showArtistImage: true, showMusicCover: true, showProgramThumb: true },
-  weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
+  weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "", lat: null, lon: null, zoom: 6 },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
   chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
