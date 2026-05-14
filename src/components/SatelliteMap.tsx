@@ -5,6 +5,8 @@ interface SatelliteMapProps {
   lon: number;
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
+  onMove?: (lat: number, lon: number, zoom: number) => void;
+  interactive?: boolean;
   showControls?: boolean;
   className?: string;
   style?: React.CSSProperties;
