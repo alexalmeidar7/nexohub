@@ -342,7 +342,7 @@ export default function CenarioInterativoPage() {
     }
   }, [config.weather.showSatellite, weatherSubTab]);
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
-  const [satelliteZoom, setSatelliteZoom] = useState(6);
+  // satellite zoom is now in config.weather.zoom
   const isRemoteUpdateRef = useRef(false);
 
   /* ─── Preview Drawing ─── */
