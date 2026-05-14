@@ -2079,7 +2079,12 @@ export default function CenarioInterativoPage() {
                       ].map(t => (
                         <button
                           key={t.key}
-                          onClick={() => handleWeatherSubTabChange(t.key)}
+                          onClick={() => {
+                            handleWeatherSubTabChange(t.key);
+                            if (t.key === "satellite" && !config.weather.showSatellite) {
+                              updateWeather({ showSatellite: true });
+                            }
+                          }}
                           className="flex-1 flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all"
                           style={{
                             background: weatherSubTab === t.key ? subTabActive : "transparent",
