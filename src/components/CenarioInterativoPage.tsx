@@ -988,7 +988,12 @@ export default function CenarioInterativoPage() {
 
   /* ─── Fetch current program + sponsor logos ─── */
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setCurrentProgram(null);
+      setSponsorLogos([]);
+      setNextProgram(null);
+      return;
+    }
     const load = async () => {
       const now = new Date();
       const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
