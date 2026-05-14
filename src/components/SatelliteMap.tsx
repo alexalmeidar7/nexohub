@@ -13,7 +13,7 @@ interface SatelliteMapProps {
   style?: React.CSSProperties;
 }
 
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Minus, Plus } from "lucide-react";
+
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const roundCoord = (value: number) => Math.round(value * 10000) / 10000;
