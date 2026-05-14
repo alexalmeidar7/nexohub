@@ -2666,7 +2666,7 @@ export default function CenarioInterativoPage() {
                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${pvh(1.8)}px` }}>
 
                     {/* Fullscreen background layers */}
-                    {activeTab === "weather" && (weatherSubTab === "satellite" || config.weather.showSatellite) && weatherCoords && (
+                    {activeTab === "weather" && weatherSubTab === "satellite" && weatherCoords && (
                       <div className="absolute inset-0" style={{ zIndex: 5 }}>
                         <SatelliteMap 
                           lat={config.weather.lat ?? weatherCoords.lat} 
