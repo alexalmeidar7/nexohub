@@ -332,12 +332,12 @@ export default function CenarioInterativoPage() {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   
-  // Se o estado vier de um sync remoto como 'forecast', converte para 'today'
+  // Sincroniza a exibição do satélite com a opção de configuração
   useEffect(() => {
-    if (weatherSubTab === "forecast") {
+    if (weatherSubTab === "satellite" && !config.weather.showSatellite) {
       setWeatherSubTab("today");
     }
-  }, [weatherSubTab]);
+  }, [config.weather.showSatellite, weatherSubTab]);
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
   const [satelliteZoom, setSatelliteZoom] = useState(6);
   const isRemoteUpdateRef = useRef(false);
