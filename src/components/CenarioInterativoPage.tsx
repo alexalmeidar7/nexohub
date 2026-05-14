@@ -759,7 +759,7 @@ export default function CenarioInterativoPage() {
         }
       }
       if (ev.data?.type === "zoom-change" && typeof ev.data.zoom === "number") {
-        setSatelliteZoom(ev.data.zoom);
+        updateWeather({ zoom: ev.data.zoom });
       }
       if (ev.data?.type === "draw-clear") {
         const canvas = previewCanvasRef.current;
