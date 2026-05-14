@@ -331,6 +331,13 @@ export default function CenarioInterativoPage() {
   const [activeTab, setActiveTab] = useState("home");
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [weatherSubTab, setWeatherSubTab] = useState("today");
+  
+  // Se o estado vier de um sync remoto como 'forecast', converte para 'today'
+  useEffect(() => {
+    if (weatherSubTab === "forecast") {
+      setWeatherSubTab("today");
+    }
+  }, [weatherSubTab]);
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
   const [satelliteZoom, setSatelliteZoom] = useState(6);
   const isRemoteUpdateRef = useRef(false);
