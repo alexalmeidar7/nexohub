@@ -146,15 +146,20 @@ export default function AdminLogin() {
           {error && <p className="text-red-500 text-center" style={{ fontSize: "12px" }}>{error}</p>}
 
           <div className="flex justify-between items-center pt-2">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                className="w-4 h-4 rounded"
-                style={{ accentColor: "#0f1058" }}
-              />
-              <span style={{ fontSize: "12px", color: "#0f1058" }}>Lembrar login</span>
+            <label className="flex items-center gap-2 cursor-pointer select-none group">
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="peer h-4 w-4 shrink-0 rounded border border-[#0f1058]/40 bg-white ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200"
+                  style={{ accentColor: "#0f1058" }}
+                />
+                <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity duration-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0f1058" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+              </div>
+              <span className="transition-colors duration-200 group-hover:text-[#268ffa]" style={{ fontSize: "12px", color: "#0f1058" }}>Lembrar login</span>
             </label>
 
             <button
