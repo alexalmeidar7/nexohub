@@ -25,6 +25,9 @@ interface WeatherConfig {
   showSatellite: boolean;
   city: string;
   bgImage: string;
+  lat?: number | null;
+  lon?: number | null;
+  zoom?: number;
 }
 
 interface TrafficPoint {
