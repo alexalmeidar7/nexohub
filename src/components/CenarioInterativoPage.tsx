@@ -1188,6 +1188,9 @@ export default function CenarioInterativoPage() {
         }
         const { latitude, longitude } = results[0];
         setWeatherCoords({ lat: latitude, lon: longitude });
+        if (config.weather.lat === null || config.weather.lon === null) {
+          updateWeather({ lat: latitude, lon: longitude });
+        }
         // 2. Get forecast
         const { data: forecastData } = await supabase.functions.invoke("fetch-weather", {
           body: { action: "forecast", lat: latitude, lon: longitude, forecast_days: 5 },
