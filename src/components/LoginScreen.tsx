@@ -216,18 +216,23 @@ export default function LoginScreen() {
 
             {error && <p className="text-center font-medium" style={{ fontSize: "12px", color: "#dc2626" }}>{error}</p>}
 
-            <label className="flex items-center gap-2 cursor-pointer select-none pt-1">
-              <input
-                type="checkbox"
-                checked={keepConnected}
-                onChange={(e) => {
-                  setKeepConnected(e.target.checked);
-                  localStorage.setItem(KEEP_CONNECTED_KEY, e.target.checked ? "true" : "false");
-                }}
-                className="w-4 h-4 rounded"
-                style={{ accentColor: "#268ffa" }}
-              />
-              <span style={{ fontSize: "12px", color: "#0f1058" }}>mantenha-me conectado</span>
+            <label className="flex items-center gap-2 cursor-pointer select-none pt-1 group">
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  checked={keepConnected}
+                  onChange={(e) => {
+                    setKeepConnected(e.target.checked);
+                    localStorage.setItem(KEEP_CONNECTED_KEY, e.target.checked ? "true" : "false");
+                  }}
+                  className="peer h-4 w-4 shrink-0 rounded border border-[#0f1058]/20 bg-white ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200"
+                  style={{ accentColor: "#268ffa" }}
+                />
+                <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity duration-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#268ffa" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+              </div>
+              <span className="transition-colors duration-200 group-hover:text-[#268ffa]" style={{ fontSize: "12px", color: "#0f1058" }}>mantenha-me conectado</span>
             </label>
 
             <div className="flex justify-between items-center pt-2">
