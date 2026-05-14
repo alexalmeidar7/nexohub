@@ -232,7 +232,8 @@ export default function CenarioTela() {
   }, [effectiveUserId]);
   const [weatherSubTab, setWeatherSubTab] = useState(() => {
     if (typeof window === "undefined") return "today";
-    return new URLSearchParams(window.location.search).get("weatherSubTab") || "today";
+    const sub = new URLSearchParams(window.location.search).get("weatherSubTab") || "today";
+    return sub === "forecast" ? "today" : sub;
   });
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; apresentadorInstagram?: string; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
