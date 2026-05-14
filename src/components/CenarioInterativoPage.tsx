@@ -2199,9 +2199,14 @@ export default function CenarioInterativoPage() {
                           <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                         </div>
                         {config.weather.showSatellite && weatherCoords && (
-                          <div className="rounded-lg p-3 text-xs text-center" style={{ background: subTabBg, color: mutedText }}>
-                            <Satellite size={16} className="mx-auto mb-1 opacity-60" />
-                            O mapa de satélite é exibido no Preview ao lado →
+                          <div className="rounded-lg overflow-hidden border border-border/10 h-[250px]" style={{ background: subTabBg }}>
+                            <SatelliteMap 
+                              lat={config.weather.lat ?? weatherCoords.lat} 
+                              lon={config.weather.lon ?? weatherCoords.lon} 
+                              zoom={config.weather.zoom} 
+                              interactive
+                              onMove={(lat, lon, z) => updateWeather({ lat, lon, zoom: z })}
+                            />
                           </div>
                         )}
                         {config.weather.showSatellite && !weatherCoords && (
