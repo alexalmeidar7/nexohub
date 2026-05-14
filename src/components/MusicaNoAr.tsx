@@ -29,7 +29,7 @@ const UPLOAD_HISTORY_KEY = "masterview_xml_upload_history";
 const SOURCE_MODE_KEY = "masterview_source_mode";
 const DEVICE_NAME_KEY = "masterview_device_name";
 const DEVICE_ID_KEY = "masterview_device_id";
-const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
+const DEFAULT_XML_URL = "";
 const LOCAL_SOURCE_GRACE_MS = 15000;
 
 function isValidXmlUrl(value: string): boolean {
