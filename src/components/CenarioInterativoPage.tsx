@@ -531,7 +531,7 @@ export default function CenarioInterativoPage() {
         setPreviewHasDrawing(true);
       }
     }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
-      if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
+      if (payload && typeof payload.zoom === "number") updateWeather({ zoom: payload.zoom });
     }).on("broadcast", { event: "config-update" }, ({ payload }: any) => {
       if (payload?.config && typeof payload.config === "object") {
         isRemoteUpdateRef.current = true;
