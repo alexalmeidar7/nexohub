@@ -25,6 +25,9 @@ interface WeatherConfig {
   showSatellite: boolean;
   city: string;
   bgImage: string;
+  lat?: number | null;
+  lon?: number | null;
+  zoom?: number;
 }
 
 interface TrafficPoint {
@@ -104,7 +107,7 @@ const defaultConfig: CenarioConfig = {
   programThumbPosition: "center",
   bgType: "none",
   home: { bgImage: "", showArtistImage: true, showMusicCover: true, showProgramThumb: true },
-  weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
+  weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "", lat: null, lon: null, zoom: 6 },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
   chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
@@ -339,7 +342,7 @@ export default function CenarioInterativoPage() {
     }
   }, [config.weather.showSatellite, weatherSubTab]);
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
-  const [satelliteZoom, setSatelliteZoom] = useState(6);
+  // satellite zoom is now in config.weather.zoom
   const isRemoteUpdateRef = useRef(false);
 
   /* ─── Preview Drawing ─── */
@@ -528,7 +531,7 @@ export default function CenarioInterativoPage() {
         setPreviewHasDrawing(true);
       }
     }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
-      if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
+      if (payload && typeof payload.zoom === "number") updateWeather({ zoom: payload.zoom });
     }).on("broadcast", { event: "config-update" }, ({ payload }: any) => {
       if (payload?.config && typeof payload.config === "object") {
         isRemoteUpdateRef.current = true;
@@ -756,7 +759,7 @@ export default function CenarioInterativoPage() {
         }
       }
       if (ev.data?.type === "zoom-change" && typeof ev.data.zoom === "number") {
-        setSatelliteZoom(ev.data.zoom);
+        updateWeather({ zoom: ev.data.zoom });
       }
       if (ev.data?.type === "draw-clear") {
         const canvas = previewCanvasRef.current;
@@ -1185,6 +1188,7 @@ export default function CenarioInterativoPage() {
         }
         const { latitude, longitude } = results[0];
         setWeatherCoords({ lat: latitude, lon: longitude });
+        updateWeather({ lat: latitude, lon: longitude });
         // 2. Get forecast
         const { data: forecastData } = await supabase.functions.invoke("fetch-weather", {
           body: { action: "forecast", lat: latitude, lon: longitude, forecast_days: 5 },
@@ -2193,9 +2197,14 @@ export default function CenarioInterativoPage() {
                           <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                         </div>
                         {config.weather.showSatellite && weatherCoords && (
-                          <div className="rounded-lg p-3 text-xs text-center" style={{ background: subTabBg, color: mutedText }}>
-                            <Satellite size={16} className="mx-auto mb-1 opacity-60" />
-                            O mapa de satélite é exibido no Preview ao lado →
+                          <div className="rounded-lg overflow-hidden border border-border/10 h-[250px]" style={{ background: subTabBg }}>
+                            <SatelliteMap 
+                              lat={config.weather.lat ?? weatherCoords.lat} 
+                              lon={config.weather.lon ?? weatherCoords.lon} 
+                              zoom={config.weather.zoom} 
+                              interactive
+                              onMove={(lat, lon, z) => updateWeather({ lat, lon, zoom: z })}
+                            />
                           </div>
                         )}
                         {config.weather.showSatellite && !weatherCoords && (
@@ -2659,7 +2668,17 @@ export default function CenarioInterativoPage() {
                     {/* Fullscreen background layers */}
                     {activeTab === "weather" && (weatherSubTab === "satellite" || config.weather.showSatellite) && weatherCoords && (
                       <div className="absolute inset-0" style={{ zIndex: 5 }}>
-                        <SatelliteMap lat={weatherCoords.lat} lon={weatherCoords.lon} zoom={satelliteZoom} showControls onZoomChange={(z) => { setSatelliteZoom(z); cenarioBcRef.current?.postMessage({ type: "zoom-change", zoom: z }); rtDrawChannelRef.current?.send({ type: "broadcast", event: "zoom-change", payload: { zoom: z } }); }} />
+                        <SatelliteMap 
+                          lat={config.weather.lat ?? weatherCoords.lat} 
+                          lon={config.weather.lon ?? weatherCoords.lon} 
+                          zoom={config.weather.zoom} 
+                          interactive
+                          onMove={(lat, lon, z) => {
+                            updateWeather({ lat, lon, zoom: z });
+                            cenarioBcRef.current?.postMessage({ type: "zoom-change", zoom: z });
+                            rtDrawChannelRef.current?.send({ type: "broadcast", event: "zoom-change", payload: { zoom: z } });
+                          }}
+                        />
                       </div>
                     )}
                     {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
