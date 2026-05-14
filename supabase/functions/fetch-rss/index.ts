@@ -131,10 +131,12 @@ Deno.serve(async (req) => {
 
     const { url, generate_journalistic_text, custom_prompt, generate_summary, input_text, skip_fetch } = await req.json();
     
+    let userEmail = "";
     let aiEnabled = true;
     if (authHeader) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        userEmail = user.email || "";
         const { data: profile } = await supabase.from("profiles").select("ai_enabled").eq("user_id", user.id).maybeSingle();
         if (profile) aiEnabled = profile.ai_enabled ?? true;
       }
@@ -152,8 +154,26 @@ Deno.serve(async (req) => {
       try {
         parsedUrl = new URL(url);
         if (!/^https?:$/.test(parsedUrl.protocol)) throw new Error("invalid_protocol");
-      } catch {
-        return new Response(JSON.stringify({ content: "", error: "URL inválida", ok: false }), {
+
+        // Validation for Interativa vs Positiva content
+        const urlStr = parsedUrl.toString().toLowerCase();
+        const isInterativaUser = userEmail.includes("interativa");
+        const isPositivaUser = userEmail.includes("positiva");
+        const isInterativaUrl = urlStr.includes("interativa");
+        const isPositivaUrl = urlStr.includes("positiva");
+
+        if (isInterativaUser && isPositivaUrl) {
+          return new Response(JSON.stringify({ content: "", error: "Usuários da Interativa não podem acessar conteúdo da Positiva", ok: false }), {
+            headers: responseHeaders,
+          });
+        }
+        if (isPositivaUser && isInterativaUrl) {
+          return new Response(JSON.stringify({ content: "", error: "Usuários da Positiva não podem acessar conteúdo da Interativa", ok: false }), {
+            headers: responseHeaders,
+          });
+        }
+      } catch (err: any) {
+        return new Response(JSON.stringify({ content: "", error: err.message === "invalid_protocol" ? "Protocolo inválido" : "URL inválida", ok: false }), {
           headers: responseHeaders,
         });
       }
