@@ -35,6 +35,7 @@ export default function SatelliteMap({
   }));
 
   const [debouncedView, setDebouncedView] = useState(view);
+  const [isLoading, setIsLoading] = useState(true);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
