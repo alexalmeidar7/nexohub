@@ -1710,7 +1710,7 @@ export default function CenarioTela() {
                                 zIndex: 1,
                                 opacity: showMusic && currentPhase === "music" ? 1 : 0,
                                 visibility: showMusic && currentPhase === "music" ? "visible" : "hidden",
-                                transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                                transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                                 transform: `scale(${currentPhase === "music" ? 1 : 0.9}) rotate(${currentPhase === "music" ? 0 : 5}deg)`,
                                 position: "absolute",
                                 inset: 0,
