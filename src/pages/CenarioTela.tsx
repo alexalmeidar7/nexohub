@@ -1209,20 +1209,9 @@ export default function CenarioTela() {
         const newCurrencySubTab = ev.data.currencySubTab;
 
         if (newTab && newTab !== activeTab) {
-          const wrapper = document.querySelector('.cenario-page-wrapper');
-          if (wrapper) {
-            wrapper.classList.add("cenario-exit-active");
-            setTimeout(() => {
-              setActiveTab(newTab);
-              if (newSubTab) setWeatherSubTab(newSubTab);
-              if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
-              wrapper.classList.remove("cenario-exit-active");
-            }, 250);
-          } else {
-            setActiveTab(newTab);
-            if (newSubTab) setWeatherSubTab(newSubTab);
-            if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
-          }
+          setActiveTab(newTab);
+          if (newSubTab) setWeatherSubTab(newSubTab);
+          if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
         } else {
           if (newSubTab) setWeatherSubTab(newSubTab);
           if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
