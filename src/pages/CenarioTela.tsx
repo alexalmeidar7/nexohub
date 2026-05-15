@@ -1775,11 +1775,18 @@ export default function CenarioTela() {
                       100% { opacity: 1; transform: translateX(0); }
                     }
 
+                    @keyframes cenario-exit {
+                      0% { opacity: 1; transform: scale(1); }
+                      100% { opacity: 0; transform: scale(0.95); }
+                    }
+
                     .cenario-anim-box { animation: cenario-box-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
                     .cenario-anim-text { animation: cenario-text-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
                     .cenario-anim-row-1 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.4s; }
                     .cenario-anim-row-2 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.5s; }
                     .cenario-anim-row-3 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.6s; }
+                    
+                    .cenario-exit-active { animation: cenario-exit 0.5s ease both; }
                    `}</style>
                 </div>
               );
