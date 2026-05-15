@@ -1821,9 +1821,14 @@ export default function CenarioTela() {
                                   <WeatherIcon code={d.code} size={100} forceDay />
                                 </div>
                                 <div className="flex flex-col flex-1" style={{ minWidth: 0 }}>
-                                  <div className="flex items-center" style={{ gap: `${vhToPx(1)}${vu}`, fontSize: `${vhToPx(1.3)}${vu}`, opacity: 0.7 }}>
-                                    <span style={{ color: "#7dd3fc" }}>💧{d.precip}%</span>
-                                    <span>{d.rainMm}mm</span>
+                                  <div className="flex flex-col" style={{ gap: `${vhToPx(0.3)}${vu}` }}>
+                                    <div className="flex items-center" style={{ gap: `${vhToPx(0.5)}${vu}`, fontSize: `${vhToPx(1.3)}${vu}` }}>
+                                      <Droplets style={{ width: `${vhToPx(1.3)}${vu}`, height: `${vhToPx(1.3)}${vu}`, color: "var(--layout-accent-color, #7dd3fc)" }} />
+                                      <span className="font-bold" style={{ color: "var(--layout-accent-color, #7dd3fc)" }}>{d.humidity}%</span>
+                                    </div>
+                                    <div className="flex items-center opacity-70" style={{ gap: `${vhToPx(0.5)}${vu}`, fontSize: `${vhToPx(1.3)}${vu}` }}>
+                                      <span>🌧 {d.rainMm ?? 0}mm</span>
+                                    </div>
                                   </div>
                                 </div>
                                 <div className="flex items-baseline" style={{ flexShrink: 0, gap: `${vhToPx(0.6)}${vu}` }}>

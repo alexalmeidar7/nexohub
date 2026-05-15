@@ -3149,9 +3149,14 @@ export default function CenarioInterativoPage() {
                                             <WeatherIcon code={d.code} size={pvh(3.8)} forceDay />
                                           </div>
                                           <div className="flex flex-col flex-1" style={{ minWidth: 0 }}>
-                                            <div className="flex items-center" style={{ gap: `${pvh(0.5)}px`, fontSize: `${pvh(1.1)}px`, opacity: 0.8 }}>
-                                              <span style={{ color: "#7dd3fc" }}>💧{d.precip}%</span>
-                                              <span className="opacity-60">{d.rainMm}mm</span>
+                                            <div className="flex flex-col" style={{ gap: `${pvh(0.2)}px` }}>
+                                              <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, fontSize: `${pvh(1.1)}px` }}>
+                                                <Droplets size={pvh(1.1)} style={{ color: "var(--layout-accent-color, #7dd3fc)" }} />
+                                                <span className="font-bold" style={{ color: "var(--layout-accent-color, #7dd3fc)" }}>{d.humidity}%</span>
+                                              </div>
+                                              <div className="flex items-center opacity-60" style={{ gap: `${pvh(0.4)}px`, fontSize: `${pvh(1.1)}px` }}>
+                                                <span>🌧 {d.rainMm ?? 0}mm</span>
+                                              </div>
                                             </div>
                                           </div>
                                           <div className="flex items-center" style={{ flexShrink: 0, gap: `${pvh(0.8)}px` }}>
