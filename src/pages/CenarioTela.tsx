@@ -1827,6 +1827,13 @@ export default function CenarioTela() {
                     .cenario-anim-row-3 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.6s; }
                     
                     .cenario-exit-active { animation: cenario-exit 0.5s ease both; }
+                    
+                    @keyframes skeleton-shimmer {
+                      0% { opacity: 0.3; }
+                      50% { opacity: 0.6; }
+                      100% { opacity: 0.3; }
+                    }
+                    .cenario-skeleton { animation: skeleton-shimmer 1.5s ease-in-out infinite; }
                    `}</style>
                 </div>
               );
