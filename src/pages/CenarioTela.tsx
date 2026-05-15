@@ -1360,7 +1360,7 @@ export default function CenarioTela() {
                       src={prevArtistBgUrl}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(0.7)", transition: "opacity 1.2s ease-in-out" }}
+                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(0.7)" }}
                     />
                   )}
                   {isHomeOrChat && artistBgUrl && (
@@ -1368,13 +1368,13 @@ export default function CenarioTela() {
                       src={artistBgUrl}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(0.7)", transition: "opacity 1.2s ease-in-out" }}
+                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(0.7)" }}
                       onLoad={() => setArtistBgReady(true)}
                     />
                   )}
                   {config.home.artistOverlayEnabled && (
                     <div 
-                      className="absolute inset-0 transition-opacity duration-1000" 
+                      className="absolute inset-0" 
                       style={{ 
                         opacity: artistVisible ? (config.home.artistOverlayOpacity ?? 60) / 100 : 0,
                         background: config.home.artistOverlayColor || "#000000"
