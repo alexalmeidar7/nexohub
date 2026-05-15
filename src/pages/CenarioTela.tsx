@@ -1798,8 +1798,9 @@ export default function CenarioTela() {
 
                    <style>{`
                     @keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } 
-                    @keyframes presenter-enter { 0% { opacity: 0; transform: translateX(-50%) translateY(15%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
-                    
+                     @keyframes presenter-enter { 0% { opacity: 0; transform: translateX(-50%) translateY(15%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
+                     @keyframes cenario-page-enter { 0% { opacity: 0; transform: scale(1.02); } 100% { opacity: 1; transform: scale(1); } }
+                     
                     @keyframes cenario-box-enter {
                       0% { opacity: 0; transform: translateY(30px) scale(0.95); }
                       100% { opacity: 1; transform: translateY(0) scale(1); }
