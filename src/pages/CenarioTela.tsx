@@ -1187,17 +1187,57 @@ export default function CenarioTela() {
         bc.postMessage({ type: "pong" });
       }
       if (ev.data?.type === "tab-change") {
-        setActiveTab(ev.data.tab);
-        if (ev.data.subTab) setWeatherSubTab(ev.data.subTab);
-        if (ev.data.currencySubTab) setCurrencySubTab(ev.data.currencySubTab);
+        const newTab = ev.data.tab;
+        const newSubTab = ev.data.subTab;
+        const newCurrencySubTab = ev.data.currencySubTab;
+        
+        if (newTab !== activeTab) {
+          const wrapper = document.querySelector('.cenario-page-wrapper');
+          if (wrapper) {
+            wrapper.classList.add("cenario-exit-active");
+            setTimeout(() => {
+              setActiveTab(newTab);
+              if (newSubTab) setWeatherSubTab(newSubTab);
+              if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
+              wrapper.classList.remove("cenario-exit-active");
+            }, 500);
+          } else {
+            setActiveTab(newTab);
+            if (newSubTab) setWeatherSubTab(newSubTab);
+            if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
+          }
+        } else {
+          if (newSubTab) setWeatherSubTab(newSubTab);
+          if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
+        }
       }
       if (ev.data?.type === "config-update" && ev.data.config && typeof ev.data.config === "object") {
         setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
       }
       if (ev.data?.type === "full-state") {
-        if (ev.data.tab) setActiveTab(ev.data.tab);
-        if (ev.data.subTab) setWeatherSubTab(ev.data.subTab);
-        if (ev.data.currencySubTab) setCurrencySubTab(ev.data.currencySubTab);
+        const newTab = ev.data.tab;
+        const newSubTab = ev.data.subTab;
+        const newCurrencySubTab = ev.data.currencySubTab;
+
+        if (newTab && newTab !== activeTab) {
+          const wrapper = document.querySelector('.cenario-page-wrapper');
+          if (wrapper) {
+            wrapper.classList.add("cenario-exit-active");
+            setTimeout(() => {
+              setActiveTab(newTab);
+              if (newSubTab) setWeatherSubTab(newSubTab);
+              if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
+              wrapper.classList.remove("cenario-exit-active");
+            }, 500);
+          } else {
+            setActiveTab(newTab);
+            if (newSubTab) setWeatherSubTab(newSubTab);
+            if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
+          }
+        } else {
+          if (newSubTab) setWeatherSubTab(newSubTab);
+          if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
+        }
         if (ev.data.config && typeof ev.data.config === "object") {
           setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
         }
@@ -1286,7 +1326,7 @@ export default function CenarioTela() {
           transition: "transform 0.5s ease",
         }}
       >
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${vhToPx(1.8)}px`, fontFamily: "'Inter', sans-serif" }}>
+        <div className="relative cenario-page-wrapper" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${vhToPx(1.8)}px`, fontFamily: "'Inter', sans-serif" }}>
 
           {/* Fullscreen background layers behind sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
@@ -1759,13 +1799,34 @@ export default function CenarioTela() {
                    <style>{`
                     @keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } 
                     @keyframes presenter-enter { 0% { opacity: 0; transform: translateX(-50%) translateY(15%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
+                    
+                    @keyframes cenario-box-enter {
+                      0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+                      100% { opacity: 1; transform: translateY(0) scale(1); }
+                    }
+
+                    @keyframes cenario-text-enter {
+                      0% { opacity: 0; transform: translateY(20px); }
+                      100% { opacity: 1; transform: translateY(0); }
+                    }
+
                     @keyframes cenario-row-enter {
                       0% { opacity: 0; transform: translateX(20px); }
                       100% { opacity: 1; transform: translateX(0); }
                     }
-                    .cenario-anim-row-1 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.1s; }
-                    .cenario-anim-row-2 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.2s; }
-                    .cenario-anim-row-3 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.3s; }
+
+                    @keyframes cenario-exit {
+                      0% { opacity: 1; transform: scale(1); }
+                      100% { opacity: 0; transform: scale(0.95); }
+                    }
+
+                    .cenario-anim-box { animation: cenario-box-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+                    .cenario-anim-text { animation: cenario-text-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-1 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.4s; }
+                    .cenario-anim-row-2 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.5s; }
+                    .cenario-anim-row-3 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.6s; }
+                    
+                    .cenario-exit-active { animation: cenario-exit 0.5s ease both; }
                    `}</style>
                 </div>
               );
@@ -1781,13 +1842,13 @@ export default function CenarioTela() {
                   {liveWeather ? (<>
                     {weatherSubTab === "today" && (
                       <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: `${vhToPx(2)}${vu}`, padding: `${vhToPx(2)}${vu}`, marginTop: `-${vhToPx(2)}${vu}` }}>
-                        <div className="text-center" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
+                        <div className="text-center cenario-anim-text" style={{ marginBottom: `${vhToPx(1.5)}${vu}`, animationDelay: '0.1s' }}>
                           <div className="font-black leading-none" style={{ fontSize: `${vhToPx(5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,1)" }}>{weatherCity || config.city || "Cidade"}</div>
                           <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.8)}${vu}`, letterSpacing: "0.2em" }}>Previsão do Tempo</div>
                         </div>
 
                         {config.weather.showCurrent && (
-                          <div className="rounded-[3vh] w-full max-w-[90%]" style={{ padding: `${vhToPx(3.5)}${vu}`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}>
+                          <div className="rounded-[3vh] w-full max-w-[90%] cenario-anim-box" style={{ padding: `${vhToPx(3.5)}${vu}`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.4)", animationDelay: '0.2s' }}>
                             <div className="flex items-center justify-center" style={{ gap: `${vhToPx(4)}${vu}`, marginBottom: `${vhToPx(2.5)}${vu}` }}>
                               <div style={{ width: `${vhToPx(12)}${vu}`, height: `${vhToPx(12)}${vu}`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
                                 <WeatherIcon code={liveWeather.current.code} size={250} forceDay />
@@ -1811,10 +1872,11 @@ export default function CenarioTela() {
                         )}
 
                         {config.weather.showForecast3Days && (
-                          <div className="w-full max-w-[90%] flex flex-col" style={{ gap: `${vhToPx(1.5)}${vu}` }}>
+                          <div className="w-full max-w-[90%] flex flex-col cenario-anim-text" style={{ gap: `${vhToPx(1.5)}${vu}`, animationDelay: '0.3s' }}>
                             <div className="font-bold uppercase tracking-widest text-center" style={{ fontSize: `${vhToPx(1.5)}${vu}`, opacity: 0.6, marginBottom: `${vhToPx(0.5)}${vu}` }}>Próximos Dias</div>
                              {liveWeather.daily.slice(1, 4).map((d, i) => (
                                <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
+                                 animationDelay: `${0.4 + (i * 0.1)}s`,
                                  padding: `${vhToPx(2)}${vu} ${vhToPx(2.5)}${vu}`,
                                  background: "rgba(0,0,0,0.4)",
                                  backdropFilter: "blur(12px)",
