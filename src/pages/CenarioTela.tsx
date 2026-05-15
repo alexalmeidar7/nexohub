@@ -2181,7 +2181,7 @@ export default function CenarioTela() {
                 WebkitBackdropFilter: "blur(12px)",
                 backdropFilter: "blur(12px)",
                 border: `1px solid ${backendHealth === "offline" ? "rgba(239,68,68,0.5)" : "rgba(250,204,21,0.4)"}`,
-                animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both",
+                animation: "cenario-page-enter 0.3s cubic-bezier(0.16,1,0.3,1) both",
               }}
             >
               <div
