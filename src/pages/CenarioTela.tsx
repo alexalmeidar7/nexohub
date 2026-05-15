@@ -1884,7 +1884,8 @@ export default function CenarioTela() {
                              {liveWeather.daily.slice(1, 4).map((d, i) => (
                                <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
                                  animationDelay: `${0.4 + (i * 0.1)}s`,
-                                 padding: `${vhToPx(2)}${vu} ${vhToPx(2.5)}${vu}`,
+                                 padding: `0 ${vhToPx(2.5)}${vu}`,
+                                 height: `${vhToPx(10)}${vu}`,
                                  background: "rgba(0,0,0,0.4)",
                                  backdropFilter: "blur(12px)",
                                  WebkitBackdropFilter: "blur(12px)",
@@ -1950,7 +1951,7 @@ export default function CenarioTela() {
                       {config.weather.showForecast3Days && (
                         <div className="w-full max-w-[90%] flex flex-col gap-4 mt-2">
                            {[1,2,3].map(i => (
-                             <div key={i} className="w-full flex items-center bg-black/40 backdrop-blur-xl rounded-[2.5vh] border border-white/15 p-6 gap-8">
+                             <div key={i} className="w-full flex items-center bg-black/40 backdrop-blur-xl rounded-[2.5vh] border border-white/15 px-6 gap-8" style={{ height: vhToPx(10) }}>
                                <div className="bg-white/10 rounded-lg cenario-skeleton" style={{ width: vhToPx(12), height: vhToPx(3) }} />
                                <div className="bg-white/10 rounded-full cenario-skeleton" style={{ width: vhToPx(6), height: vhToPx(6) }} />
                                <div className="flex-1 flex flex-col gap-2">
