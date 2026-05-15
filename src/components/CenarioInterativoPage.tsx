@@ -3215,10 +3215,11 @@ export default function CenarioInterativoPage() {
                                       {liveWeather.daily.slice(1, 4).map((d, i) => (
                                         <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
                                           padding: `${pvh(1.2)}px ${pvh(2)}px`,
-                                          background: "rgba(255,255,255,0.05)",
+                                          background: "rgba(255,255,255,0.08)",
                                           borderRadius: `${pvh(1.8)}px`,
                                           backdropFilter: "blur(20px)",
-                                          border: "1px solid rgba(255,255,255,0.08)",
+                                          border: "1.5px solid rgba(255,255,255,0.15)",
+                                          boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
                                           gap: `${pvh(1)}px`,
                                         }}>
                                           <div style={{ width: `${pvh(11)}px`, flexShrink: 0 }}>

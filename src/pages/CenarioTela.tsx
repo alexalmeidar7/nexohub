@@ -1813,17 +1813,17 @@ export default function CenarioTela() {
                         {config.weather.showForecast3Days && (
                           <div className="w-full max-w-[90%] flex flex-col" style={{ gap: `${vhToPx(1.5)}${vu}` }}>
                             <div className="font-bold uppercase tracking-widest text-center" style={{ fontSize: `${vhToPx(1.5)}${vu}`, opacity: 0.6, marginBottom: `${vhToPx(0.5)}${vu}` }}>Próximos Dias</div>
-                            {liveWeather.daily.slice(1, 4).map((d, i) => (
-                              <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
-                                padding: `${vhToPx(2)}${vu} ${vhToPx(2.5)}${vu}`,
-                                background: "rgba(0,0,0,0.3)",
-                                backdropFilter: "blur(10px)",
-                                WebkitBackdropFilter: "blur(10px)",
-                                borderRadius: `${vhToPx(2.5)}${vu}`,
-                                border: "1px solid rgba(255,255,255,0.05)",
-                                boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-                                gap: `${vhToPx(2)}${vu}`,
-                              }}>
+                             {liveWeather.daily.slice(1, 4).map((d, i) => (
+                               <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
+                                 padding: `${vhToPx(2)}${vu} ${vhToPx(2.5)}${vu}`,
+                                 background: "rgba(0,0,0,0.4)",
+                                 backdropFilter: "blur(12px)",
+                                 WebkitBackdropFilter: "blur(12px)",
+                                 borderRadius: `${vhToPx(2.5)}${vu}`,
+                                 border: "1.5px solid rgba(255,255,255,0.15)",
+                                 boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
+                                 gap: `${vhToPx(2)}${vu}`,
+                               }}>
                                 <div style={{ minWidth: `${vhToPx(11)}${vu}` }}>
                                   <span className="font-black capitalize" style={{ fontSize: `${vhToPx(2)}${vu}`, lineHeight: 1.1 }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
                                 </div>
