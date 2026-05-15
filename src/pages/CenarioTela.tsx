@@ -1192,20 +1192,9 @@ export default function CenarioTela() {
         const newCurrencySubTab = ev.data.currencySubTab;
         
         if (newTab !== activeTab) {
-          const wrapper = document.querySelector('.cenario-page-wrapper');
-          if (wrapper) {
-            wrapper.classList.add("cenario-exit-active");
-            setTimeout(() => {
-              setActiveTab(newTab);
-              if (newSubTab) setWeatherSubTab(newSubTab);
-              if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
-              wrapper.classList.remove("cenario-exit-active");
-            }, 250);
-          } else {
-            setActiveTab(newTab);
-            if (newSubTab) setWeatherSubTab(newSubTab);
-            if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
-          }
+          setActiveTab(newTab);
+          if (newSubTab) setWeatherSubTab(newSubTab);
+          if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
         } else {
           if (newSubTab) setWeatherSubTab(newSubTab);
           if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
@@ -1220,20 +1209,9 @@ export default function CenarioTela() {
         const newCurrencySubTab = ev.data.currencySubTab;
 
         if (newTab && newTab !== activeTab) {
-          const wrapper = document.querySelector('.cenario-page-wrapper');
-          if (wrapper) {
-            wrapper.classList.add("cenario-exit-active");
-            setTimeout(() => {
-              setActiveTab(newTab);
-              if (newSubTab) setWeatherSubTab(newSubTab);
-              if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
-              wrapper.classList.remove("cenario-exit-active");
-            }, 250);
-          } else {
-            setActiveTab(newTab);
-            if (newSubTab) setWeatherSubTab(newSubTab);
-            if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
-          }
+          setActiveTab(newTab);
+          if (newSubTab) setWeatherSubTab(newSubTab);
+          if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
         } else {
           if (newSubTab) setWeatherSubTab(newSubTab);
           if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
@@ -1382,7 +1360,7 @@ export default function CenarioTela() {
                       src={prevArtistBgUrl}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(0.7)", transition: "opacity 1.2s ease-in-out" }}
+                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(0.7)" }}
                     />
                   )}
                   {isHomeOrChat && artistBgUrl && (
@@ -1390,13 +1368,13 @@ export default function CenarioTela() {
                       src={artistBgUrl}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(0.7)", transition: "opacity 1.2s ease-in-out" }}
+                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(0.7)" }}
                       onLoad={() => setArtistBgReady(true)}
                     />
                   )}
                   {config.home.artistOverlayEnabled && (
                     <div 
-                      className="absolute inset-0 transition-opacity duration-1000" 
+                      className="absolute inset-0" 
                       style={{ 
                         opacity: artistVisible ? (config.home.artistOverlayOpacity ?? 60) / 100 : 0,
                         background: config.home.artistOverlayColor || "#000000"
@@ -1408,11 +1386,11 @@ export default function CenarioTela() {
                 {/* Camada 3: Thumb do programa (fica por cima da camada 1 e 2) */}
                 <div className="absolute inset-0" style={{ zIndex: 3 }}>
                   {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
-                    <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 1.2s ease-in-out" }}>
+                    <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0 }}>
                       <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(0.7)", objectPosition: config.programThumbPosition || "center" } : { filter: "blur(22px) brightness(0.7)", transform: "scale(1.1)", objectPosition: config.programThumbPosition || "center" }} />
                       {config.thumbOverlayEnabled && (
                         <div 
-                          className="absolute inset-0 transition-opacity duration-1000" 
+                          className="absolute inset-0" 
                           style={{ 
                             opacity: (config.thumbOverlayOpacity ?? 60) / 100,
                             background: config.thumbOverlayColor || "#000000"
@@ -1816,26 +1794,21 @@ export default function CenarioTela() {
                       100% { opacity: 1; transform: translateX(0); }
                     }
 
-                    @keyframes cenario-exit {
-                      0% { opacity: 1; transform: scale(1); }
-                      100% { opacity: 0; transform: scale(0.95); }
-                    }
-
-                    .cenario-anim-box { animation: cenario-box-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
-                    .cenario-anim-text { animation: cenario-text-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-box { animation: none !important; }
+                    .cenario-anim-text { animation: none !important; }
                     
-                    .cenario-delay-1 { animation-delay: 0.02s; }
-                    .cenario-delay-2 { animation-delay: 0.04s; }
-                    .cenario-delay-3 { animation-delay: 0.06s; }
-                    .cenario-delay-4 { animation-delay: 0.08s; }
-                    .cenario-delay-5 { animation-delay: 0.1s; }
-                    .cenario-delay-6 { animation-delay: 0.12s; }
+                    .cenario-delay-1 { animation-delay: 0s !important; }
+                    .cenario-delay-2 { animation-delay: 0s !important; }
+                    .cenario-delay-3 { animation-delay: 0s !important; }
+                    .cenario-delay-4 { animation-delay: 0s !important; }
+                    .cenario-delay-5 { animation-delay: 0s !important; }
+                    .cenario-delay-6 { animation-delay: 0s !important; }
 
-                    .cenario-anim-row-1 { animation: cenario-row-enter 0.15s cubic-bezier(0.16, 1, 0.3, 1) both; }
-                    .cenario-anim-row-2 { animation: cenario-row-enter 0.15s cubic-bezier(0.16, 1, 0.3, 1) both; }
-                    .cenario-anim-row-3 { animation: cenario-row-enter 0.15s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-1 { animation: none !important; }
+                    .cenario-anim-row-2 { animation: none !important; }
+                    .cenario-anim-row-3 { animation: none !important; }
                     
-                    .cenario-exit-active { animation: cenario-exit 0.15s ease both; }
+                    .cenario-exit-active { animation: none !important; }
                     
                     @keyframes skeleton-shimmer {
                       0% { opacity: 0.3; }
