@@ -500,6 +500,33 @@ serve(async (req) => {
     if (broadcastConfig.ticker) tickerParts.push(broadcastConfig.ticker);
     const ticker = tickerParts.join("  •  ");
 
+    // ── Active Promotions / Banners Rotation ──
+    // Every 5 seconds, switch between active promotions that have a banner_l_url
+    const today = new Date().toISOString().split("T")[0];
+    const { data: promoData } = await supabase
+      .from("promocoes")
+      .select("banner_l_url")
+      .eq("user_id", dataOwnerId)
+      .lte("data_inicio", today)
+      .gte("data_fim", today)
+      .not("banner_l_url", "is", null);
+
+    let bannerLUrl = "";
+    if (promoData && promoData.length > 0) {
+      // Rotate every 5 seconds (using 5-second slots of Unix time)
+      const promoSlot = Math.floor(Date.now() / 5000);
+      const idx = promoSlot % promoData.length;
+      const rawUrl = promoData[idx].banner_l_url;
+      if (rawUrl) {
+        bannerLUrl = await ensurePngImageUrl(
+          supabase,
+          rawUrl,
+          `broadcast/${dataOwnerId}/promo-banner-l-${idx}.png`,
+          1024,
+        );
+      }
+    }
+
     // ── Music curiosity manual override ──
     // The dashbord sets music_curiosity_manual (text) and music_curiosity_manual_until (ISO timestamp)
     let curiosidade = "";
