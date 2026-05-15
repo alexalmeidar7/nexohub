@@ -1863,7 +1863,7 @@ export default function CenarioTela() {
                         </div>
 
                         {config.weather.showCurrent && (
-                          <div className="rounded-[3vh] w-full max-w-[90%] cenario-anim-box" style={{ padding: `${vhToPx(3.5)}${vu}`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.4)", animationDelay: '0.2s' }}>
+                          <div className="rounded-[3vh] w-full max-w-[90%] cenario-anim-box cenario-delay-2" style={{ padding: `${vhToPx(3.5)}${vu}`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}>
                             <div className="flex items-center justify-center" style={{ gap: `${vhToPx(4)}${vu}`, marginBottom: `${vhToPx(2.5)}${vu}` }}>
                               <div style={{ width: `${vhToPx(12)}${vu}`, height: `${vhToPx(12)}${vu}`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
                                 <WeatherIcon code={liveWeather.current.code} size={250} forceDay />
