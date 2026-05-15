@@ -1740,7 +1740,7 @@ export default function CenarioTela() {
                               width: "100%",
                               opacity: currentPhase === "music" ? 1 : 0,
                               transform: `translateY(${currentPhase === "music" ? 0 : vhToPx(1) + vu})`,
-                              transition: "opacity 0.8s ease, transform 0.8s ease",
+                              transition: "opacity 0.4s ease, transform 0.4s ease",
                               visibility: currentPhase === "music" ? "visible" : "hidden"
                             }}>
                               <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
