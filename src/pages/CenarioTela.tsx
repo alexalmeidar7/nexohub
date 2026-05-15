@@ -1795,13 +1795,13 @@ export default function CenarioTela() {
                   {liveWeather ? (<>
                     {weatherSubTab === "today" && (
                       <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: `${vhToPx(2)}${vu}`, padding: `${vhToPx(2)}${vu}`, marginTop: `-${vhToPx(2)}${vu}` }}>
-                        <div className="text-center" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
+                        <div className="text-center cenario-anim-text" style={{ marginBottom: `${vhToPx(1.5)}${vu}`, animationDelay: '0.1s' }}>
                           <div className="font-black leading-none" style={{ fontSize: `${vhToPx(5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,1)" }}>{weatherCity || config.city || "Cidade"}</div>
                           <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.8)}${vu}`, letterSpacing: "0.2em" }}>Previsão do Tempo</div>
                         </div>
 
                         {config.weather.showCurrent && (
-                          <div className="rounded-[3vh] w-full max-w-[90%]" style={{ padding: `${vhToPx(3.5)}${vu}`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}>
+                          <div className="rounded-[3vh] w-full max-w-[90%] cenario-anim-box" style={{ padding: `${vhToPx(3.5)}${vu}`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.4)", animationDelay: '0.2s' }}>
                             <div className="flex items-center justify-center" style={{ gap: `${vhToPx(4)}${vu}`, marginBottom: `${vhToPx(2.5)}${vu}` }}>
                               <div style={{ width: `${vhToPx(12)}${vu}`, height: `${vhToPx(12)}${vu}`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
                                 <WeatherIcon code={liveWeather.current.code} size={250} forceDay />
