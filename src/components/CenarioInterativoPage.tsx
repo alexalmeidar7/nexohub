@@ -24,6 +24,7 @@ interface WeatherConfig {
   showForecast3Days: boolean;
   showSatellite: boolean;
   city: string;
+  favorites?: { name: string; lat: number; lon: number }[];
   bgImage: string;
   lat?: number | null;
   lon?: number | null;
@@ -107,7 +108,7 @@ const defaultConfig: CenarioConfig = {
   programThumbPosition: "center",
   bgType: "none",
   home: { bgImage: "", showArtistImage: true, showMusicCover: true, showProgramThumb: true },
-  weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "", lat: null, lon: null, zoom: 6 },
+  weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "", lat: null, lon: null, zoom: 6, favorites: [] },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
   chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
@@ -1179,7 +1180,12 @@ export default function CenarioInterativoPage() {
     }
 
     cenarioBcRef.current?.postMessage({ type: "config-update", config });
-    rtDrawChannelRef.current?.send({ type: "broadcast", event: "config-update", payload: { config } });
+    // Usamos broadcast do canal de tempo real para maior velocidade de sincronização
+    rtDrawChannelRef.current?.send({ 
+      type: "broadcast", 
+      event: "config-update", 
+      payload: { config } 
+    });
   }, [config, loaded]);
 
   /* ─── Fetch weather data ─── */
@@ -1353,7 +1359,19 @@ export default function CenarioInterativoPage() {
     setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
   };
   const updateWeather = (partial: Partial<WeatherConfig>) => {
-    setConfig(c => ({ ...c, weather: { ...c.weather, ...partial } }));
+    setConfig(c => {
+      const newWeather = { ...c.weather, ...partial };
+      const newConfig = { ...c, weather: newWeather };
+      
+      // Sincronização rápida via realtime broadcast para a tela externa
+      rtDrawChannelRef.current?.send({
+        type: "broadcast",
+        event: "config-update",
+        payload: { config: newConfig }
+      });
+      
+      return newConfig;
+    });
   };
   const updateTraffic = (partial: Partial<TrafficConfig>) => {
     setConfig(c => ({ ...c, traffic: { ...c.traffic, ...partial } }));
