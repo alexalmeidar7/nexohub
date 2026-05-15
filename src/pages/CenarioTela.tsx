@@ -1891,7 +1891,6 @@ export default function CenarioTela() {
                             <div className="font-bold uppercase tracking-widest text-center" style={{ fontSize: `${vhToPx(1.5)}${vu}`, opacity: 0.6, marginBottom: `${vhToPx(0.5)}${vu}` }}>Próximos Dias</div>
                              {liveWeather.daily.slice(1, 4).map((d, i) => (
                                <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1} cenario-delay-${i + 4}`} style={{
-                                 animationDelay: `${0.4 + (i * 0.1)}s`,
                                  padding: `0 ${vhToPx(2.5)}${vu}`,
                                  height: `${vhToPx(10)}${vu}`,
                                  background: "rgba(0,0,0,0.4)",
