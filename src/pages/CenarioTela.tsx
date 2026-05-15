@@ -1857,7 +1857,7 @@ export default function CenarioTela() {
                   {liveWeather ? (<>
                     {weatherSubTab === "today" && (
                       <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: `${vhToPx(2)}${vu}`, padding: `${vhToPx(2)}${vu}`, marginTop: `-${vhToPx(2)}${vu}` }}>
-                        <div className="text-center cenario-anim-text" style={{ marginBottom: `${vhToPx(1.5)}${vu}`, animationDelay: '0.1s' }}>
+                        <div className="text-center cenario-anim-text cenario-delay-1" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
                           <div className="font-black leading-none" style={{ fontSize: `${vhToPx(5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,1)" }}>{weatherCity || config.city || "Cidade"}</div>
                           <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.8)}${vu}`, letterSpacing: "0.2em" }}>Previsão do Tempo</div>
                         </div>
