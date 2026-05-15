@@ -1673,7 +1673,7 @@ export default function CenarioTela() {
                                         filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
                                         pointerEvents: "none",
                                         zIndex: 1,
-                                        animation: "presenter-enter 0.8s cubic-bezier(0.16,1,0.3,1) both",
+                                        animation: "presenter-enter 0.4s cubic-bezier(0.16,1,0.3,1) both",
                                       }}
                                     />
                                   </>
