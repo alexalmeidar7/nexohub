@@ -1200,7 +1200,7 @@ export default function CenarioTela() {
               if (newSubTab) setWeatherSubTab(newSubTab);
               if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
               wrapper.classList.remove("cenario-exit-active");
-            }, 500);
+            }, 250);
           } else {
             setActiveTab(newTab);
             if (newSubTab) setWeatherSubTab(newSubTab);
@@ -1228,7 +1228,7 @@ export default function CenarioTela() {
               if (newSubTab) setWeatherSubTab(newSubTab);
               if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
               wrapper.classList.remove("cenario-exit-active");
-            }, 500);
+            }, 250);
           } else {
             setActiveTab(newTab);
             if (newSubTab) setWeatherSubTab(newSubTab);
@@ -1511,7 +1511,7 @@ export default function CenarioTela() {
             {/* Animated page wrapper */}
             <div
               key={activeTab + (activeTab === "weather" ? `-${weatherSubTab}` : "") + (activeTab === "currency" ? `-${currencySubTab}` : "")}
-              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, animation: "cenario-page-enter 0.45s cubic-bezier(0.16,1,0.3,1) both" }}
+              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, animation: "cenario-page-enter 0.3s cubic-bezier(0.16,1,0.3,1) both" }}
             >
 
             {/* ═══ HOME ═══ */}
@@ -1645,7 +1645,7 @@ export default function CenarioTela() {
                                    flexShrink: 0,
                                    opacity: showProgram && currentPhase === "program" ? 1 : 0,
                                    visibility: showProgram && currentPhase === "program" ? "visible" : "hidden",
-                                   transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                                   transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                                    transform: `scale(${currentPhase === "program" ? 1 : 0.9}) rotate(${currentPhase === "program" ? 0 : -5}deg)`,
                                    position: "absolute",
                                    inset: 0
@@ -1673,7 +1673,7 @@ export default function CenarioTela() {
                                         filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))",
                                         pointerEvents: "none",
                                         zIndex: 1,
-                                        animation: "presenter-enter 0.8s cubic-bezier(0.16,1,0.3,1) both",
+                                        animation: "presenter-enter 0.4s cubic-bezier(0.16,1,0.3,1) both",
                                       }}
                                     />
                                   </>
@@ -1710,7 +1710,7 @@ export default function CenarioTela() {
                                 zIndex: 1,
                                 opacity: showMusic && currentPhase === "music" ? 1 : 0,
                                 visibility: showMusic && currentPhase === "music" ? "visible" : "hidden",
-                                transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                                transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                                 transform: `scale(${currentPhase === "music" ? 1 : 0.9}) rotate(${currentPhase === "music" ? 0 : 5}deg)`,
                                 position: "absolute",
                                 inset: 0,
@@ -1740,7 +1740,7 @@ export default function CenarioTela() {
                               width: "100%",
                               opacity: currentPhase === "music" ? 1 : 0,
                               transform: `translateY(${currentPhase === "music" ? 0 : vhToPx(1) + vu})`,
-                              transition: "opacity 0.8s ease, transform 0.8s ease",
+                              transition: "opacity 0.4s ease, transform 0.4s ease",
                               visibility: currentPhase === "music" ? "visible" : "hidden"
                             }}>
                               <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
@@ -1782,7 +1782,7 @@ export default function CenarioTela() {
                                 objectFit: "contain",
                                 opacity: i === sponsorIdx ? 1 : 0,
                                 transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
-                                transition: "opacity 0.8s ease, transform 0.8s ease",
+                                transition: "opacity 0.4s ease, transform 0.4s ease",
                                 filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
                               }}
                             />
@@ -1798,8 +1798,9 @@ export default function CenarioTela() {
 
                    <style>{`
                     @keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } 
-                    @keyframes presenter-enter { 0% { opacity: 0; transform: translateX(-50%) translateY(15%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
-                    
+                     @keyframes presenter-enter { 0% { opacity: 0; transform: translateX(-50%) translateY(15%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
+                     @keyframes cenario-page-enter { 0% { opacity: 0; transform: scale(1.02); } 100% { opacity: 1; transform: scale(1); } }
+                     
                     @keyframes cenario-box-enter {
                       0% { opacity: 0; transform: translateY(30px) scale(0.95); }
                       100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -1820,21 +1821,21 @@ export default function CenarioTela() {
                       100% { opacity: 0; transform: scale(0.95); }
                     }
 
-                    .cenario-anim-box { animation: cenario-box-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-                    .cenario-anim-text { animation: cenario-text-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-box { animation: cenario-box-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+                    .cenario-anim-text { animation: cenario-text-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
                     
-                    .cenario-delay-1 { animation-delay: 0.1s; }
-                    .cenario-delay-2 { animation-delay: 0.2s; }
-                    .cenario-delay-3 { animation-delay: 0.3s; }
-                    .cenario-delay-4 { animation-delay: 0.4s; }
-                    .cenario-delay-5 { animation-delay: 0.5s; }
-                    .cenario-delay-6 { animation-delay: 0.6s; }
+                    .cenario-delay-1 { animation-delay: 0.05s; }
+                    .cenario-delay-2 { animation-delay: 0.1s; }
+                    .cenario-delay-3 { animation-delay: 0.15s; }
+                    .cenario-delay-4 { animation-delay: 0.2s; }
+                    .cenario-delay-5 { animation-delay: 0.25s; }
+                    .cenario-delay-6 { animation-delay: 0.3s; }
 
-                    .cenario-anim-row-1 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-                    .cenario-anim-row-2 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-                    .cenario-anim-row-3 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-1 { animation: cenario-row-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-2 { animation: cenario-row-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-3 { animation: cenario-row-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
                     
-                    .cenario-exit-active { animation: cenario-exit 0.5s ease both; }
+                    .cenario-exit-active { animation: cenario-exit 0.25s ease both; }
                     
                     @keyframes skeleton-shimmer {
                       0% { opacity: 0.3; }
@@ -2159,7 +2160,7 @@ export default function CenarioTela() {
                 background: "rgba(74,222,128,0.2)",
                 WebkitBackdropFilter: "blur(16px)", backdropFilter: "blur(16px)",
                 border: "1px solid rgba(74,222,128,0.4)",
-                animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both",
+                animation: "cenario-page-enter 0.3s cubic-bezier(0.16,1,0.3,1) both",
               }}
             >
               <div className="rounded-full" style={{ width: "1vh", height: "1vh", background: "#4ade80", boxShadow: "0 0 8px #4ade80" }} />
@@ -2180,7 +2181,7 @@ export default function CenarioTela() {
                 WebkitBackdropFilter: "blur(12px)",
                 backdropFilter: "blur(12px)",
                 border: `1px solid ${backendHealth === "offline" ? "rgba(239,68,68,0.5)" : "rgba(250,204,21,0.4)"}`,
-                animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both",
+                animation: "cenario-page-enter 0.3s cubic-bezier(0.16,1,0.3,1) both",
               }}
             >
               <div
