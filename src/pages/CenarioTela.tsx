@@ -1782,7 +1782,7 @@ export default function CenarioTela() {
                                 objectFit: "contain",
                                 opacity: i === sponsorIdx ? 1 : 0,
                                 transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
-                                transition: "opacity 0.8s ease, transform 0.8s ease",
+                                transition: "opacity 0.4s ease, transform 0.4s ease",
                                 filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
                               }}
                             />
