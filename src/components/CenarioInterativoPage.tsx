@@ -1348,7 +1348,7 @@ export default function CenarioInterativoPage() {
     };
     
     pendingSaveRef.current = doSave;
-    saveTimeout.current = setTimeout(doSave, 1500); // Increased debounce to 1.5s
+    saveTimeout.current = setTimeout(doSave, 800); // Reduzido de 1500ms para 800ms para salvar mais rápido no banco
     
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
