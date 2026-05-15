@@ -203,7 +203,10 @@ const ensurePngImageUrl = async (
   if (!/^https?:\/\//i.test(trimmed)) return "";
 
   const cleanUrl = trimmed.split("?")[0].split("#")[0];
-  if (/\.png$/i.test(cleanUrl)) return withVersion(cleanUrl, version);
+  
+  // If it's already a PNG and we want original size (1920x1080 is the signal for Banner L), 
+  // return the original URL with version to avoid resizing.
+  if (/\.png$/i.test(cleanUrl) && size === 1920) return withVersion(trimmed, version);
 
   try {
     // Re-upload only if source URL changed (or marker missing).
