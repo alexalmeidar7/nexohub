@@ -1822,9 +1822,17 @@ export default function CenarioTela() {
 
                     .cenario-anim-box { animation: cenario-box-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
                     .cenario-anim-text { animation: cenario-text-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
-                    .cenario-anim-row-1 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.4s; }
-                    .cenario-anim-row-2 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.5s; }
-                    .cenario-anim-row-3 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.6s; }
+                    
+                    .cenario-delay-1 { animation-delay: 0.1s; }
+                    .cenario-delay-2 { animation-delay: 0.2s; }
+                    .cenario-delay-3 { animation-delay: 0.3s; }
+                    .cenario-delay-4 { animation-delay: 0.4s; }
+                    .cenario-delay-5 { animation-delay: 0.5s; }
+                    .cenario-delay-6 { animation-delay: 0.6s; }
+
+                    .cenario-anim-row-1 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-2 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-3 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
                     
                     .cenario-exit-active { animation: cenario-exit 0.5s ease both; }
                     
@@ -1849,13 +1857,13 @@ export default function CenarioTela() {
                   {liveWeather ? (<>
                     {weatherSubTab === "today" && (
                       <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: `${vhToPx(2)}${vu}`, padding: `${vhToPx(2)}${vu}`, marginTop: `-${vhToPx(2)}${vu}` }}>
-                        <div className="text-center cenario-anim-text" style={{ marginBottom: `${vhToPx(1.5)}${vu}`, animationDelay: '0.1s' }}>
+                        <div className="text-center cenario-anim-text cenario-delay-1" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
                           <div className="font-black leading-none" style={{ fontSize: `${vhToPx(5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,1)" }}>{weatherCity || config.city || "Cidade"}</div>
                           <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.8)}${vu}`, letterSpacing: "0.2em" }}>Previsão do Tempo</div>
                         </div>
 
                         {config.weather.showCurrent && (
-                          <div className="rounded-[3vh] w-full max-w-[90%] cenario-anim-box" style={{ padding: `${vhToPx(3.5)}${vu}`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.4)", animationDelay: '0.2s' }}>
+                          <div className="rounded-[3vh] w-full max-w-[90%] cenario-anim-box cenario-delay-2" style={{ padding: `${vhToPx(3.5)}${vu}`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}>
                             <div className="flex items-center justify-center" style={{ gap: `${vhToPx(4)}${vu}`, marginBottom: `${vhToPx(2.5)}${vu}` }}>
                               <div style={{ width: `${vhToPx(12)}${vu}`, height: `${vhToPx(12)}${vu}`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
                                 <WeatherIcon code={liveWeather.current.code} size={250} forceDay />
@@ -1879,11 +1887,10 @@ export default function CenarioTela() {
                         )}
 
                         {config.weather.showForecast3Days && (
-                          <div className="w-full max-w-[90%] flex flex-col cenario-anim-text" style={{ gap: `${vhToPx(1.5)}${vu}`, animationDelay: '0.3s' }}>
+                          <div className="w-full max-w-[90%] flex flex-col cenario-anim-text cenario-delay-3" style={{ gap: `${vhToPx(1.5)}${vu}` }}>
                             <div className="font-bold uppercase tracking-widest text-center" style={{ fontSize: `${vhToPx(1.5)}${vu}`, opacity: 0.6, marginBottom: `${vhToPx(0.5)}${vu}` }}>Próximos Dias</div>
                              {liveWeather.daily.slice(1, 4).map((d, i) => (
-                               <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
-                                 animationDelay: `${0.4 + (i * 0.1)}s`,
+                               <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1} cenario-delay-${i + 4}`} style={{
                                  padding: `0 ${vhToPx(2.5)}${vu}`,
                                  height: `${vhToPx(10)}${vu}`,
                                  background: "rgba(0,0,0,0.4)",
