@@ -1820,21 +1820,21 @@ export default function CenarioTela() {
                       100% { opacity: 0; transform: scale(0.95); }
                     }
 
-                    .cenario-anim-box { animation: cenario-box-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-                    .cenario-anim-text { animation: cenario-text-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-box { animation: cenario-box-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+                    .cenario-anim-text { animation: cenario-text-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
                     
-                    .cenario-delay-1 { animation-delay: 0.1s; }
-                    .cenario-delay-2 { animation-delay: 0.2s; }
-                    .cenario-delay-3 { animation-delay: 0.3s; }
-                    .cenario-delay-4 { animation-delay: 0.4s; }
-                    .cenario-delay-5 { animation-delay: 0.5s; }
-                    .cenario-delay-6 { animation-delay: 0.6s; }
+                    .cenario-delay-1 { animation-delay: 0.05s; }
+                    .cenario-delay-2 { animation-delay: 0.1s; }
+                    .cenario-delay-3 { animation-delay: 0.15s; }
+                    .cenario-delay-4 { animation-delay: 0.2s; }
+                    .cenario-delay-5 { animation-delay: 0.25s; }
+                    .cenario-delay-6 { animation-delay: 0.3s; }
 
-                    .cenario-anim-row-1 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-                    .cenario-anim-row-2 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-                    .cenario-anim-row-3 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-1 { animation: cenario-row-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-2 { animation: cenario-row-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-3 { animation: cenario-row-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
                     
-                    .cenario-exit-active { animation: cenario-exit 0.5s ease both; }
+                    .cenario-exit-active { animation: cenario-exit 0.25s ease both; }
                     
                     @keyframes skeleton-shimmer {
                       0% { opacity: 0.3; }
