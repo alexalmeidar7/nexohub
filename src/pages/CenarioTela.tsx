@@ -1794,26 +1794,21 @@ export default function CenarioTela() {
                       100% { opacity: 1; transform: translateX(0); }
                     }
 
-                    @keyframes cenario-exit {
-                      0% { opacity: 1; transform: scale(1); }
-                      100% { opacity: 0; transform: scale(0.95); }
-                    }
-
-                    .cenario-anim-box { animation: cenario-box-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
-                    .cenario-anim-text { animation: cenario-text-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-box { animation: none !important; }
+                    .cenario-anim-text { animation: none !important; }
                     
-                    .cenario-delay-1 { animation-delay: 0.02s; }
-                    .cenario-delay-2 { animation-delay: 0.04s; }
-                    .cenario-delay-3 { animation-delay: 0.06s; }
-                    .cenario-delay-4 { animation-delay: 0.08s; }
-                    .cenario-delay-5 { animation-delay: 0.1s; }
-                    .cenario-delay-6 { animation-delay: 0.12s; }
+                    .cenario-delay-1 { animation-delay: 0s !important; }
+                    .cenario-delay-2 { animation-delay: 0s !important; }
+                    .cenario-delay-3 { animation-delay: 0s !important; }
+                    .cenario-delay-4 { animation-delay: 0s !important; }
+                    .cenario-delay-5 { animation-delay: 0s !important; }
+                    .cenario-delay-6 { animation-delay: 0s !important; }
 
-                    .cenario-anim-row-1 { animation: cenario-row-enter 0.15s cubic-bezier(0.16, 1, 0.3, 1) both; }
-                    .cenario-anim-row-2 { animation: cenario-row-enter 0.15s cubic-bezier(0.16, 1, 0.3, 1) both; }
-                    .cenario-anim-row-3 { animation: cenario-row-enter 0.15s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-1 { animation: none !important; }
+                    .cenario-anim-row-2 { animation: none !important; }
+                    .cenario-anim-row-3 { animation: none !important; }
                     
-                    .cenario-exit-active { animation: cenario-exit 0.15s ease both; }
+                    .cenario-exit-active { animation: none !important; }
                     
                     @keyframes skeleton-shimmer {
                       0% { opacity: 0.3; }
