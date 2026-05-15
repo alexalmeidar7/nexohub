@@ -2160,7 +2160,7 @@ export default function CenarioTela() {
                 background: "rgba(74,222,128,0.2)",
                 WebkitBackdropFilter: "blur(16px)", backdropFilter: "blur(16px)",
                 border: "1px solid rgba(74,222,128,0.4)",
-                animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both",
+                animation: "cenario-page-enter 0.3s cubic-bezier(0.16,1,0.3,1) both",
               }}
             >
               <div className="rounded-full" style={{ width: "1vh", height: "1vh", background: "#4ade80", boxShadow: "0 0 8px #4ade80" }} />
