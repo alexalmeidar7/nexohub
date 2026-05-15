@@ -1200,7 +1200,7 @@ export default function CenarioTela() {
               if (newSubTab) setWeatherSubTab(newSubTab);
               if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
               wrapper.classList.remove("cenario-exit-active");
-            }, 500);
+            }, 250);
           } else {
             setActiveTab(newTab);
             if (newSubTab) setWeatherSubTab(newSubTab);
@@ -1228,7 +1228,7 @@ export default function CenarioTela() {
               if (newSubTab) setWeatherSubTab(newSubTab);
               if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
               wrapper.classList.remove("cenario-exit-active");
-            }, 500);
+            }, 250);
           } else {
             setActiveTab(newTab);
             if (newSubTab) setWeatherSubTab(newSubTab);
