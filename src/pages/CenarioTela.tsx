@@ -1925,8 +1925,46 @@ export default function CenarioTela() {
                     )}
                     {weatherSubTab === "satellite" && null}
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-100" style={{ fontSize: `${vhToPx(1.8)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>
-                      <CloudSun size={24} className="mr-1" /> {weatherCity ? "Carregando..." : "Configure uma cidade"}
+                    <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: `${vhToPx(2)}${vu}`, padding: `${vhToPx(2)}${vu}`, marginTop: `-${vhToPx(2)}${vu}` }}>
+                      <div className="text-center cenario-anim-text" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
+                        <div className="bg-white/10 rounded-lg cenario-skeleton" style={{ width: vhToPx(25), height: vhToPx(5) }} />
+                        <div className="bg-white/5 rounded-lg cenario-skeleton mx-auto mt-2" style={{ width: vhToPx(15), height: vhToPx(2) }} />
+                      </div>
+
+                      {config.weather.showCurrent && (
+                        <div className="rounded-[3vh] w-full max-w-[90%] bg-black/35 backdrop-blur-2xl border border-white/10" style={{ padding: `${vhToPx(3.5)}${vu}` }}>
+                          <div className="flex items-center justify-center gap-10 mb-6">
+                             <div className="bg-white/10 rounded-full cenario-skeleton" style={{ width: vhToPx(12), height: vhToPx(12) }} />
+                             <div className="flex flex-col gap-2">
+                               <div className="bg-white/10 rounded-lg cenario-skeleton" style={{ width: vhToPx(15), height: vhToPx(8) }} />
+                               <div className="bg-white/5 rounded-lg cenario-skeleton" style={{ width: vhToPx(10), height: vhToPx(2) }} />
+                             </div>
+                          </div>
+                          <div className="flex items-center justify-between rounded-2xl bg-black/15 p-4">
+                            <div className="bg-white/10 rounded-lg cenario-skeleton" style={{ width: vhToPx(15), height: vhToPx(3) }} />
+                            <div className="bg-white/10 rounded-lg cenario-skeleton" style={{ width: vhToPx(15), height: vhToPx(3) }} />
+                          </div>
+                        </div>
+                      )}
+
+                      {config.weather.showForecast3Days && (
+                        <div className="w-full max-w-[90%] flex flex-col gap-4 mt-2">
+                           {[1,2,3].map(i => (
+                             <div key={i} className="w-full flex items-center bg-black/40 backdrop-blur-xl rounded-[2.5vh] border border-white/15 p-6 gap-8">
+                               <div className="bg-white/10 rounded-lg cenario-skeleton" style={{ width: vhToPx(12), height: vhToPx(3) }} />
+                               <div className="bg-white/10 rounded-full cenario-skeleton" style={{ width: vhToPx(6), height: vhToPx(6) }} />
+                               <div className="flex-1 flex flex-col gap-2">
+                                 <div className="bg-white/5 rounded-lg cenario-skeleton" style={{ width: vhToPx(8), height: vhToPx(2) }} />
+                                 <div className="bg-white/5 rounded-lg cenario-skeleton" style={{ width: vhToPx(8), height: vhToPx(2) }} />
+                               </div>
+                               <div className="flex flex-col items-end gap-1">
+                                 <div className="bg-white/10 rounded-lg cenario-skeleton" style={{ width: vhToPx(8), height: vhToPx(4) }} />
+                                 <div className="bg-white/5 rounded-lg cenario-skeleton" style={{ width: vhToPx(5), height: vhToPx(2) }} />
+                               </div>
+                             </div>
+                           ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
