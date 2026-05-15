@@ -174,6 +174,13 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     if (dataUserId) loadData(dataUserId);
   }, [dataUserId]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
   const handleBannerLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
