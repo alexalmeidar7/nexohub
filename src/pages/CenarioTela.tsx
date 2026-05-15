@@ -1951,7 +1951,7 @@ export default function CenarioTela() {
                       {config.weather.showForecast3Days && (
                         <div className="w-full max-w-[90%] flex flex-col gap-4 mt-2">
                            {[1,2,3].map(i => (
-                             <div key={i} className="w-full flex items-center bg-black/40 backdrop-blur-xl rounded-[2.5vh] border border-white/15 p-6 gap-8">
+                             <div key={i} className="w-full flex items-center bg-black/40 backdrop-blur-xl rounded-[2.5vh] border border-white/15 px-6 gap-8" style={{ height: vhToPx(10) }}>
                                <div className="bg-white/10 rounded-lg cenario-skeleton" style={{ width: vhToPx(12), height: vhToPx(3) }} />
                                <div className="bg-white/10 rounded-full cenario-skeleton" style={{ width: vhToPx(6), height: vhToPx(6) }} />
                                <div className="flex-1 flex flex-col gap-2">
