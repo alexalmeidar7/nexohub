@@ -522,7 +522,7 @@ serve(async (req) => {
           supabase,
           rawUrl,
           `broadcast/${dataOwnerId}/promo-banner-l-${idx}.png`,
-          1024,
+          1920,
         );
       }
     }
