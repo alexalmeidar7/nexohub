@@ -24,6 +24,7 @@ interface WeatherConfig {
   showForecast3Days: boolean;
   showSatellite: boolean;
   city: string;
+  favorites?: { name: string; lat: number; lon: number }[];
   bgImage: string;
   lat?: number | null;
   lon?: number | null;
@@ -107,7 +108,7 @@ const defaultConfig: CenarioConfig = {
   programThumbPosition: "center",
   bgType: "none",
   home: { bgImage: "", showArtistImage: true, showMusicCover: true, showProgramThumb: true },
-  weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "", lat: null, lon: null, zoom: 6 },
+  weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "", lat: null, lon: null, zoom: 6, favorites: [] },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
   chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
@@ -1179,7 +1180,12 @@ export default function CenarioInterativoPage() {
     }
 
     cenarioBcRef.current?.postMessage({ type: "config-update", config });
-    rtDrawChannelRef.current?.send({ type: "broadcast", event: "config-update", payload: { config } });
+    // Usamos broadcast do canal de tempo real para maior velocidade de sincronização
+    rtDrawChannelRef.current?.send({ 
+      type: "broadcast", 
+      event: "config-update", 
+      payload: { config } 
+    });
   }, [config, loaded]);
 
   /* ─── Fetch weather data ─── */
@@ -1342,7 +1348,7 @@ export default function CenarioInterativoPage() {
     };
     
     pendingSaveRef.current = doSave;
-    saveTimeout.current = setTimeout(doSave, 1500); // Increased debounce to 1.5s
+    saveTimeout.current = setTimeout(doSave, 800); // Reduzido de 1500ms para 800ms para salvar mais rápido no banco
     
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
@@ -1353,7 +1359,19 @@ export default function CenarioInterativoPage() {
     setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
   };
   const updateWeather = (partial: Partial<WeatherConfig>) => {
-    setConfig(c => ({ ...c, weather: { ...c.weather, ...partial } }));
+    setConfig(c => {
+      const newWeather = { ...c.weather, ...partial };
+      const newConfig = { ...c, weather: newWeather };
+      
+      // Sincronização rápida via realtime broadcast para a tela externa
+      rtDrawChannelRef.current?.send({
+        type: "broadcast",
+        event: "config-update",
+        payload: { config: newConfig }
+      });
+      
+      return newConfig;
+    });
   };
   const updateTraffic = (partial: Partial<TrafficConfig>) => {
     setConfig(c => ({ ...c, traffic: { ...c.traffic, ...partial } }));
@@ -2131,9 +2149,63 @@ export default function CenarioInterativoPage() {
                               </div>
                             </div>
                           </div>
-                          <div>
+                          <div className="flex flex-col gap-2">
                             <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade (ou use a cidade principal)</Label>
-                            <Input placeholder={config.city || "Ex: São Paulo"} value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
+                            <div className="flex gap-2">
+                              <Input 
+                                placeholder={config.city || "Ex: São Paulo"} 
+                                value={config.weather.city} 
+                                onChange={e => updateWeather({ city: e.target.value })} 
+                                className="text-sm h-8" 
+                                style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} 
+                              />
+                              <Button 
+                                size="sm" 
+                                className="h-8 px-2 text-[10px] font-bold uppercase tracking-tight bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white"
+                                onClick={() => {
+                                  if (!config.weather.city || !weatherCoords) return;
+                                  const favs = config.weather.favorites || [];
+                                  if (favs.some(f => f.name === config.weather.city)) return;
+                                  updateWeather({ 
+                                    favorites: [...favs, { name: config.weather.city, lat: weatherCoords.lat, lon: weatherCoords.lon }] 
+                                  });
+                                }}
+                              >
+                                <Star size={12} className="mr-1" /> Favoritar
+                              </Button>
+                            </div>
+                            
+                            {/* Weather favorites chips */}
+                            {config.weather.favorites && config.weather.favorites.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-1 pt-2 border-t border-black/5">
+                                {config.weather.favorites.map((f, idx) => (
+                                  <div 
+                                    key={idx}
+                                    className="flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold group cursor-pointer transition-all hover:scale-105"
+                                    style={{ 
+                                      background: config.weather.city === f.name ? "var(--layout-accent-color)" : subTabBg,
+                                      color: config.weather.city === f.name ? "#fff" : textColor,
+                                      border: "1px solid rgba(0,0,0,0.05)"
+                                    }}
+                                    onClick={() => updateWeather({ city: f.name })}
+                                  >
+                                    <MapPin size={10} />
+                                    <span>{f.name}</span>
+                                    <button 
+                                      className="hover:text-red-500 opacity-40 hover:opacity-100 transition-all ml-0.5"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateWeather({ 
+                                          favorites: config.weather.favorites?.filter(fav => fav.name !== f.name) 
+                                        });
+                                      }}
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
 
