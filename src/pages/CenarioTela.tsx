@@ -1187,9 +1187,29 @@ export default function CenarioTela() {
         bc.postMessage({ type: "pong" });
       }
       if (ev.data?.type === "tab-change") {
-        setActiveTab(ev.data.tab);
-        if (ev.data.subTab) setWeatherSubTab(ev.data.subTab);
-        if (ev.data.currencySubTab) setCurrencySubTab(ev.data.currencySubTab);
+        const newTab = ev.data.tab;
+        const newSubTab = ev.data.subTab;
+        const newCurrencySubTab = ev.data.currencySubTab;
+        
+        if (newTab !== activeTab) {
+          const container = containerRef.current;
+          if (container) {
+            container.classList.add("cenario-exit-active");
+            setTimeout(() => {
+              setActiveTab(newTab);
+              if (newSubTab) setWeatherSubTab(newSubTab);
+              if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
+              container.classList.remove("cenario-exit-active");
+            }, 500);
+          } else {
+            setActiveTab(newTab);
+            if (newSubTab) setWeatherSubTab(newSubTab);
+            if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
+          }
+        } else {
+          if (newSubTab) setWeatherSubTab(newSubTab);
+          if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
+        }
       }
       if (ev.data?.type === "config-update" && ev.data.config && typeof ev.data.config === "object") {
         setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
