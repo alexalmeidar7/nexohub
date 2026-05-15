@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CalendarDays, TrendingUp, TrendingDown, Minus, Loader2, ChevronUp, ChevronDown, Pen, Eraser, Clock, Music, Mic, Play } from "lucide-react";
+import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CloudRain, CalendarDays, TrendingUp, TrendingDown, Minus, Loader2, ChevronUp, ChevronDown, Pen, Eraser, Clock, Music, Mic, Play } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -1793,8 +1793,8 @@ export default function CenarioTela() {
                                 <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(2.2)}${vu}` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
                               </div>
                               <div className="flex items-center" style={{ gap: `${vhToPx(2)}${vu}`, fontSize: `${vhToPx(1.8)}${vu}` }}>
-                                <span className="flex items-center" style={{ gap: `${vhToPx(0.5)}${vu}` }}><Droplets style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, opacity: 0.7 }} /> {liveWeather.current.humidity}%</span>
-                                <span className="flex items-center" style={{ gap: `${vhToPx(0.5)}${vu}` }}>🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
+                                <span className="flex items-center" style={{ gap: `${vhToPx(0.5)}${vu}` }}><Droplets style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: accentColor }} /> <span style={{ color: accentColor, fontWeight: 700 }}>{liveWeather.current.humidity}%</span></span>
+                                <span className="flex items-center" style={{ gap: `${vhToPx(0.5)}${vu}` }}><CloudRain style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: "rgba(255,255,255,0.7)" }} /> <span style={{ color: "rgba(255,255,255,0.7)", fontWeight: 700 }}>{liveWeather.daily[0]?.precip ?? 0}%</span></span>
                               </div>
                             </div>
                           </div>
@@ -1823,11 +1823,12 @@ export default function CenarioTela() {
                                 <div className="flex flex-col flex-1" style={{ minWidth: 0 }}>
                                   <div className="flex flex-col" style={{ gap: `${vhToPx(0.3)}${vu}` }}>
                                     <div className="flex items-center" style={{ gap: `${vhToPx(0.5)}${vu}`, fontSize: `${vhToPx(1.3)}${vu}` }}>
-                                      <Droplets style={{ width: `${vhToPx(1.3)}${vu}`, height: `${vhToPx(1.3)}${vu}`, color: "var(--layout-accent-color, #7dd3fc)" }} />
-                                      <span className="font-bold" style={{ color: "var(--layout-accent-color, #7dd3fc)" }}>{d.humidity}%</span>
+                                      <Droplets style={{ width: `${vhToPx(1.3)}${vu}`, height: `${vhToPx(1.3)}${vu}`, color: accentColor }} />
+                                      <span className="font-bold" style={{ color: accentColor }}>{d.humidity}%</span>
                                     </div>
-                                    <div className="flex items-center opacity-70" style={{ gap: `${vhToPx(0.5)}${vu}`, fontSize: `${vhToPx(1.3)}${vu}` }}>
-                                      <span>🌧 {d.rainMm ?? 0}mm</span>
+                                    <div className="flex items-center" style={{ gap: `${vhToPx(0.5)}${vu}`, fontSize: `${vhToPx(1.3)}${vu}` }}>
+                                      <CloudRain style={{ width: `${vhToPx(1.3)}${vu}`, height: `${vhToPx(1.3)}${vu}`, color: "rgba(255,255,255,0.7)" }} />
+                                      <span className="font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>{d.rainMm ?? 0}mm</span>
                                     </div>
                                   </div>
                                 </div>

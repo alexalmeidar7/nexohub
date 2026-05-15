@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, Plus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play } from "lucide-react";
+import { MonitorPlay, CloudSun, CloudRain, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, Plus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import DraggableElement, { ElementPosition, defaultPositions } from "@/components/cenario/DraggableElement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -3193,8 +3193,8 @@ export default function CenarioInterativoPage() {
                                           <span className="font-bold tabular-nums" style={{ fontSize: `${pvh(2)}px` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
                                         </div>
                                         <div className="flex items-center" style={{ gap: `${pvh(1.5)}px`, fontSize: `${pvh(1.6)}px` }}>
-                                          <span className="flex items-center" style={{ gap: `${pvh(0.4)}px` }}><Droplets size={pvh(1.6)} style={{ opacity: 0.7 }} /> {liveWeather.current.humidity}%</span>
-                                          <span className="flex items-center" style={{ gap: `${pvh(0.4)}px` }}>🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
+                                          <span className="flex items-center" style={{ gap: `${pvh(0.4)}px` }}><Droplets size={pvh(1.6)} style={{ color: "var(--layout-accent-color, #444)" }} /> <span style={{ color: "var(--layout-accent-color, #444)", fontWeight: 700 }}>{liveWeather.current.humidity}%</span></span>
+                                          <span className="flex items-center" style={{ gap: `${pvh(0.4)}px` }}><CloudRain size={pvh(1.6)} style={{ color: "rgba(255,255,255,0.7)" }} /> <span style={{ color: "rgba(255,255,255,0.7)", fontWeight: 700 }}>{liveWeather.daily[0]?.precip ?? 0}%</span></span>
                                         </div>
                                       </div>
                                     </div>
@@ -3226,8 +3226,9 @@ export default function CenarioInterativoPage() {
                                                 <Droplets size={pvh(1.1)} style={{ color: "var(--layout-accent-color, #7dd3fc)" }} />
                                                 <span className="font-bold" style={{ color: "var(--layout-accent-color, #7dd3fc)" }}>{d.humidity}%</span>
                                               </div>
-                                              <div className="flex items-center opacity-60" style={{ gap: `${pvh(0.4)}px`, fontSize: `${pvh(1.1)}px` }}>
-                                                <span>🌧 {d.rainMm ?? 0}mm</span>
+                                              <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, fontSize: `${pvh(1.1)}px` }}>
+                                                <CloudRain size={pvh(1.1)} style={{ color: "rgba(255,255,255,0.7)" }} />
+                                                <span className="font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>{d.rainMm ?? 0}mm</span>
                                               </div>
                                             </div>
                                           </div>
