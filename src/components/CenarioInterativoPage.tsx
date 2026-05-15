@@ -3222,30 +3222,30 @@ export default function CenarioInterativoPage() {
                                           boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
                                           gap: `${pvh(1)}px`,
                                         }}>
-                                          <div style={{ width: `${pvh(11)}px`, flexShrink: 0, display: "flex", alignItems: "center" }}>
-                                            <span className="font-bold capitalize block truncate" style={{ fontSize: `${pvh(1.6)}px`, lineHeight: 1 }}>
+                                          <div style={{ width: `${pvh(10)}px`, flexShrink: 0, display: "flex", alignItems: "center" }}>
+                                            <span className="font-bold capitalize block truncate" style={{ fontSize: `${pvh(1.7)}px`, lineHeight: 1 }}>
                                               {new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" }).replace('.', '')}
                                             </span>
                                           </div>
-                                          <div style={{ width: `${pvh(4)}px`, height: `${pvh(4)}px`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                            <WeatherIcon code={d.code} size={pvh(3.8)} forceDay />
+                                          <div style={{ width: `${pvh(4.5)}px`, height: `${pvh(4.5)}px`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                            <WeatherIcon code={d.code} size={pvh(4.2)} forceDay />
                                           </div>
-                                          <div className="flex-1" style={{ minWidth: 0, display: "flex", alignItems: "center" }}>
-                                            <div className="flex flex-col" style={{ gap: `${pvh(0.2)}px` }}>
-                                              <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, fontSize: `${pvh(1.1)}px`, lineHeight: 1 }}>
-                                                <Droplets size={pvh(1.1)} style={{ color: "var(--layout-accent-color, #7dd3fc)" }} />
+                                          <div className="flex-1" style={{ minWidth: 0, display: "flex", alignItems: "center", paddingLeft: `${pvh(1)}px` }}>
+                                            <div className="flex flex-col" style={{ gap: `${pvh(0.3)}px` }}>
+                                              <div className="flex items-center" style={{ gap: `${pvh(0.5)}px`, fontSize: `${pvh(1.2)}px`, lineHeight: 1 }}>
+                                                <Droplets size={pvh(1.2)} style={{ color: "var(--layout-accent-color, #7dd3fc)" }} />
                                                 <span className="font-bold" style={{ color: "var(--layout-accent-color, #7dd3fc)" }}>{d.humidity}%</span>
                                               </div>
-                                              <div className="flex items-center" style={{ gap: `${pvh(0.4)}px`, fontSize: `${pvh(1.1)}px`, lineHeight: 1 }}>
-                                                <CloudRain size={pvh(1.1)} style={{ color: "rgba(255,255,255,0.7)" }} />
+                                              <div className="flex items-center" style={{ gap: `${pvh(0.5)}px`, fontSize: `${pvh(1.2)}px`, lineHeight: 1 }}>
+                                                <CloudRain size={pvh(1.2)} style={{ color: "rgba(255,255,255,0.7)" }} />
                                                 <span className="font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>{d.rainMm ?? 0}mm</span>
                                               </div>
                                             </div>
                                           </div>
-                                          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.8)}px` }}>
+                                          <div style={{ width: `${pvh(8)}px`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
                                             <div className="flex flex-col items-end" style={{ gap: `${pvh(0.1)}px`, justifyContent: "center" }}>
-                                              <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2.4)}px`, lineHeight: 1 }}>{d.max}°</span>
-                                              <span className="font-bold tabular-nums" style={{ fontSize: `${pvh(1.2)}px`, opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
+                                              <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2.6)}px`, lineHeight: 1 }}>{d.max}°</span>
+                                              <span className="font-bold tabular-nums" style={{ fontSize: `${pvh(1.3)}px`, opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
                                             </div>
                                           </div>
                                         </div>
