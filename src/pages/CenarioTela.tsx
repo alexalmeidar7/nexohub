@@ -1645,7 +1645,7 @@ export default function CenarioTela() {
                                    flexShrink: 0,
                                    opacity: showProgram && currentPhase === "program" ? 1 : 0,
                                    visibility: showProgram && currentPhase === "program" ? "visible" : "hidden",
-                                   transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                                   transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                                    transform: `scale(${currentPhase === "program" ? 1 : 0.9}) rotate(${currentPhase === "program" ? 0 : -5}deg)`,
                                    position: "absolute",
                                    inset: 0
