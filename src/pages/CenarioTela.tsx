@@ -1759,13 +1759,27 @@ export default function CenarioTela() {
                    <style>{`
                     @keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } 
                     @keyframes presenter-enter { 0% { opacity: 0; transform: translateX(-50%) translateY(15%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
+                    
+                    @keyframes cenario-box-enter {
+                      0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+                      100% { opacity: 1; transform: translateY(0) scale(1); }
+                    }
+
+                    @keyframes cenario-text-enter {
+                      0% { opacity: 0; transform: translateY(20px); }
+                      100% { opacity: 1; transform: translateY(0); }
+                    }
+
                     @keyframes cenario-row-enter {
                       0% { opacity: 0; transform: translateX(20px); }
                       100% { opacity: 1; transform: translateX(0); }
                     }
-                    .cenario-anim-row-1 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.1s; }
-                    .cenario-anim-row-2 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.2s; }
-                    .cenario-anim-row-3 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.3s; }
+
+                    .cenario-anim-box { animation: cenario-box-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+                    .cenario-anim-text { animation: cenario-text-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                    .cenario-anim-row-1 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.4s; }
+                    .cenario-anim-row-2 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.5s; }
+                    .cenario-anim-row-3 { animation: cenario-row-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.6s; }
                    `}</style>
                 </div>
               );
