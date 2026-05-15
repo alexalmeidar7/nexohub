@@ -1,0 +1,1 @@
+ALTER TABLE public.promocoes ADD COLUMN banner_l_url TEXT;

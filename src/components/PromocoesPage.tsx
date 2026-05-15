@@ -94,6 +94,7 @@ function EditableCell({ value, onSave, className, textClassName }: { value: stri
 interface Promocao {
   id: string;
   imagem_url: string;
+  banner_l_url?: string;
   botao_url: string;
   texto: string;
   oferecimento: string;
@@ -126,6 +127,8 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
   const [dataFim, setDataFim] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [bannerLFile, setBannerLFile] = useState<File | null>(null);
+  const [bannerLPreview, setBannerLPreview] = useState("");
   const textoEditorRef = useRef<HTMLDivElement>(null);
   const oferecimentoEditorRef = useRef<HTMLDivElement>(null);
 
@@ -178,10 +181,17 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     setImagePreview(URL.createObjectURL(file));
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
+  const handleBannerLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBannerLFile(file);
+    setBannerLPreview(URL.createObjectURL(file));
+  };
+
+  const uploadImage = async (file: File, prefix = "promocoes"): Promise<string> => {
     const compressed = await compressImage(file);
-    const ext = compressed.name.split(".").pop();
-    const path = `promocoes/${Date.now()}.${ext}`;
+    const ext = compressed.name.split(".").pop() || "jpg";
+    const path = `${prefix}/${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("comercial").upload(path, compressed, { upsert: true });
     if (error) throw error;
     const { data } = supabase.storage.from("comercial").getPublicUrl(path);
@@ -199,6 +209,8 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     setDataFim(item.data_fim);
     setImagePreview(item.imagem_url || "");
     setImageFile(null);
+    setBannerLPreview(item.banner_l_url || "");
+    setBannerLFile(null);
   };
 
   const cancelEdit = () => {
@@ -214,11 +226,16 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     try {
       let imagem_url = editingId ? imagePreview : "";
       if (imageFile) imagem_url = await uploadImage(imageFile);
+      
+      let banner_l_url = editingId ? bannerLPreview : "";
+      if (bannerLFile) banner_l_url = await uploadImage(bannerLFile);
+
       const botao_url = titulo;
 
       if (editingId) {
         const { error } = await supabase.from("promocoes").update({
           imagem_url,
+          banner_l_url,
           botao_url,
           texto,
           oferecimento,
@@ -231,6 +248,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
         const { error } = await supabase.from("promocoes").insert({
           user_id: dataUserId!,
           imagem_url,
+          banner_l_url,
           botao_url,
           texto,
           oferecimento,
@@ -272,6 +290,8 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     setDataFim("");
     setImageFile(null);
     setImagePreview("");
+    setBannerLFile(null);
+    setBannerLPreview("");
   };
 
   const handleDelete = async (id: string) => {
@@ -333,24 +353,47 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
           <div className="p-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-4">
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Banner da Promoção <span className="font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>(1920×850px)</span></label>
-                  <div className="flex items-center gap-3">
-                    {imagePreview ? (
-                      <img src={imagePreview} alt="banner" className="w-24 h-14 rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
-                    ) : (
-                      <div className="w-24 h-14 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
-                        <ImageIcon size={20} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
-                      </div>
-                    )}
-                    <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold transition-all rounded-full"
-                      style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#ffffff"; (e.currentTarget as HTMLElement).style.color = "var(--layout-header-bg, #1a1a1a)"; }}
-                    >
-                      <Upload size={12} /> Enviar banner
-                      <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                    </label>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Banner da Promoção <span className="font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>(1920×850px)</span></label>
+                    <div className="flex items-center gap-3">
+                      {imagePreview ? (
+                        <img src={imagePreview} alt="banner" className="w-24 h-14 rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
+                      ) : (
+                        <div className="w-24 h-14 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
+                          <ImageIcon size={20} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
+                        </div>
+                      )}
+                      <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold transition-all rounded-full"
+                        style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#ffffff"; (e.currentTarget as HTMLElement).style.color = "var(--layout-header-bg, #1a1a1a)"; }}
+                      >
+                        <Upload size={12} /> Enviar banner
+                        <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex-1">
+                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Banner L <span className="font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>(PNG)</span></label>
+                    <div className="flex items-center gap-3">
+                      {bannerLPreview ? (
+                        <img src={bannerLPreview} alt="banner L" className="w-24 h-14 rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
+                      ) : (
+                        <div className="w-24 h-14 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
+                          <ImageIcon size={20} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
+                        </div>
+                      )}
+                      <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold transition-all rounded-full"
+                        style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#ffffff"; (e.currentTarget as HTMLElement).style.color = "var(--layout-header-bg, #1a1a1a)"; }}
+                      >
+                        <Upload size={12} /> Enviar banner L
+                        <input type="file" accept="image/png" className="hidden" onChange={handleBannerLChange} />
+                      </label>
+                    </div>
                   </div>
                 </div>
 

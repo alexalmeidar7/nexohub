@@ -1241,6 +1241,7 @@ export type Database = {
       }
       promocoes: {
         Row: {
+          banner_l_url: string | null
           botao_url: string | null
           created_at: string
           data_fim: string
@@ -1252,6 +1253,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          banner_l_url?: string | null
           botao_url?: string | null
           created_at?: string
           data_fim: string
@@ -1263,6 +1265,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          banner_l_url?: string | null
           botao_url?: string | null
           created_at?: string
           data_fim?: string
