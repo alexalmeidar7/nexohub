@@ -215,7 +215,8 @@ const ensurePngImageUrl = async (
       if (existing) return withVersion(existing, version);
     }
     const source = trimmed.replace(/^https?:\/\//i, "");
-    const fetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=${size}&h=${size === 1920 ? 1080 : size}&fit=contain`;
+    const height = size === 1920 ? 1080 : size;
+    const fetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=${size}&h=${height}&fit=cover&a=center`;
     const response = await fetch(fetchUrl);
     if (!response.ok) return "";
     const bytes = new Uint8Array(await response.arrayBuffer());
