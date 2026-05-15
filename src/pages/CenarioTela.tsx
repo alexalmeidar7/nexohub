@@ -1220,14 +1220,14 @@ export default function CenarioTela() {
         const newCurrencySubTab = ev.data.currencySubTab;
 
         if (newTab && newTab !== activeTab) {
-          const container = containerRef.current;
-          if (container) {
-            container.classList.add("cenario-exit-active");
+          const wrapper = document.querySelector('.cenario-page-wrapper');
+          if (wrapper) {
+            wrapper.classList.add("cenario-exit-active");
             setTimeout(() => {
               setActiveTab(newTab);
               if (newSubTab) setWeatherSubTab(newSubTab);
               if (newCurrencySubTab) setCurrencySubTab(newCurrencySubTab);
-              container.classList.remove("cenario-exit-active");
+              wrapper.classList.remove("cenario-exit-active");
             }, 500);
           } else {
             setActiveTab(newTab);
