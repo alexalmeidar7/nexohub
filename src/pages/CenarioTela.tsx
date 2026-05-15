@@ -1884,7 +1884,8 @@ export default function CenarioTela() {
                              {liveWeather.daily.slice(1, 4).map((d, i) => (
                                <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
                                  animationDelay: `${0.4 + (i * 0.1)}s`,
-                                 padding: `${vhToPx(2)}${vu} ${vhToPx(2.5)}${vu}`,
+                                 padding: `0 ${vhToPx(2.5)}${vu}`,
+                                 height: `${vhToPx(10)}${vu}`,
                                  background: "rgba(0,0,0,0.4)",
                                  backdropFilter: "blur(12px)",
                                  WebkitBackdropFilter: "blur(12px)",
