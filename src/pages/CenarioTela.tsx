@@ -1825,7 +1825,7 @@ export default function CenarioTela() {
                         )}
 
                         {config.weather.showForecast3Days && (
-                          <div className="w-full max-w-[90%] flex flex-col" style={{ gap: `${vhToPx(1.5)}${vu}` }}>
+                          <div className="w-full max-w-[90%] flex flex-col cenario-anim-text" style={{ gap: `${vhToPx(1.5)}${vu}`, animationDelay: '0.3s' }}>
                             <div className="font-bold uppercase tracking-widest text-center" style={{ fontSize: `${vhToPx(1.5)}${vu}`, opacity: 0.6, marginBottom: `${vhToPx(0.5)}${vu}` }}>Próximos Dias</div>
                              {liveWeather.daily.slice(1, 4).map((d, i) => (
                                <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
