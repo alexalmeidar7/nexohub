@@ -3242,8 +3242,10 @@ export default function CenarioInterativoPage() {
                                             </div>
                                           </div>
                                           <div className="flex items-center" style={{ flexShrink: 0, gap: `${pvh(0.8)}px` }}>
-                                            <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2)}px`, lineHeight: 1 }}>{d.max}°</span>
-                                            <span className="font-medium tabular-nums" style={{ fontSize: `${pvh(1.4)}px`, opacity: 0.4, lineHeight: 1 }}>{d.min}°</span>
+                                            <div className="flex flex-col items-end" style={{ gap: `${pvh(0.1)}px` }}>
+                                              <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2.4)}px`, lineHeight: 1 }}>{d.max}°</span>
+                                              <span className="font-bold tabular-nums" style={{ fontSize: `${pvh(1.2)}px`, opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
+                                            </div>
                                           </div>
                                         </div>
                                       ))}
