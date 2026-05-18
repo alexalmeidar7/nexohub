@@ -748,7 +748,7 @@ export default function PromocoesKiosk() {
         {/* Promoções */}
         {botoes.length > 0 && (
           <div className="relative group">
-            <h2 className="text-lg font-bold mb-4">Promoções</h2>
+            <h2 className="text-lg font-bold mb-4" style={{ color: "var(--layout-page-text, #ffffff)" }}>Promoções</h2>
             <div onMouseEnter={() => startScroll(promoScrollRef, "left")} onMouseLeave={stopScroll} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
               <ChevronLeft size={36} />
             </div>
