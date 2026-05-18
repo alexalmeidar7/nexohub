@@ -876,7 +876,7 @@ export default function PromocoesKiosk() {
 
               {/* Rótulo Citações */}
               <div className="px-4 py-1 flex-shrink-0">
-                <span className="text-sm font-bold" style={{ color: "#FF0000" }}>Citações</span>
+                <span className="text-sm font-bold" style={{ color: "var(--layout-accent-color, #FF0000)" }}>Citações</span>
               </div>
 
               {/* Controles teleprompter - painel estilizado */}
