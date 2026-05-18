@@ -494,7 +494,7 @@ export default function PromocoesKiosk() {
 
    // Inline teleprompter controls renderer (not a component to avoid remount)
   const renderTeleprompterControls = (target: "promo" | "program") => (
-    <div className="flex items-center gap-3 p-[15px] rounded-xl" style={{ backgroundColor: "#1b1b1d" }}>
+    <div className="flex items-center gap-3 p-[15px] rounded-xl" style={{ backgroundColor: "var(--layout-slider-bg, #1b1b1d)" }}>
       <button
         type="button"
         onClick={() => toggleAutoScroll(target)}
