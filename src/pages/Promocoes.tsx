@@ -581,7 +581,7 @@ export default function PromocoesKiosk() {
                 : null;
               return presenter?.foto ? (
                 <div className="relative group/presenter ml-2">
-                  <div className="w-14 h-14 rounded-full overflow-hidden" style={{ backgroundColor: "#d70d0e" }}>
+                  <div className="w-14 h-14 rounded-full overflow-hidden" style={{ backgroundColor: "var(--layout-accent-color, #d70d0e)" }}>
                     <img src={presenter.foto} alt={presenter.nome} className="w-full h-full object-cover" />
                   </div>
                   <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/presenter:opacity-100 transition-opacity">
