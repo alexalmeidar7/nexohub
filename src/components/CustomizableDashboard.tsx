@@ -146,16 +146,17 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
-  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
+  // Using effectiveUserId from props if provided, otherwise using internal logic as fallback
+  const [internalEffectiveUserId, setInternalEffectiveUserId] = useState<string | null>(null);
+  const resolvedUserId = effectiveUserId || internalEffectiveUserId || user?.id;
 
-  // Resolve effective user ID (parent for sub-users)
   useEffect(() => {
-    if (!user) return;
+    if (!user || effectiveUserId) return;
     let cancelled = false;
     supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle()
       .then(({ data }) => {
         if (cancelled) return;
-        setEffectiveUserId(data?.ativo ? data.parent_user_id : user.id);
+        setInternalEffectiveUserId(data?.ativo ? data.parent_user_id : user.id);
       });
     return () => { cancelled = true; };
   }, [user]);
