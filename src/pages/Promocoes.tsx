@@ -540,10 +540,10 @@ export default function PromocoesKiosk() {
         .no-scrollbar::-webkit-scrollbar{display:none}
         .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
         .promo-scroll::-webkit-scrollbar{width:10px}
-        .promo-scroll::-webkit-scrollbar-track{background:#a60101;border-radius:5px}
+        .promo-scroll::-webkit-scrollbar-track{background:var(--layout-accent-color, #a60101);border-radius:5px}
         .promo-scroll::-webkit-scrollbar-thumb{background:white;border-radius:5px}
         .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:white;border-radius:2px}
-        .promo-scroll{scrollbar-width:thin;scrollbar-color:white #a60101}
+        .promo-scroll{scrollbar-width:thin;scrollbar-color:white var(--layout-accent-color, #a60101)}
         @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px rgba(251,216,55,1)}50%{box-shadow:0 0 0 3px rgba(251,216,55,0.2)}}
         .animate-pulse-border{animation:pulse-border 1.5s ease-in-out infinite}
       `}</style>
@@ -553,21 +553,21 @@ export default function PromocoesKiosk() {
         {/* Header */}
         <div className="flex justify-between items-center w-full px-2">
           <div className="flex items-center gap-3">
-            <Radio size={16} style={{ color: "#be0101" }} className="animate-pulse" />
+            <Radio size={16} style={{ color: "var(--layout-accent-color, #be0101)" }} className="animate-pulse" />
             <div>
-              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "#be0101" }}>No Ar</span>
-              <p className="text-white text-sm font-semibold truncate max-w-[300px]">
+              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "var(--layout-accent-color, #be0101)" }}>No Ar</span>
+              <p className="text-sm font-semibold truncate max-w-[300px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>
                 {onAirProgram?.nome || "Programação Musical"}
               </p>
               {onAirProgram && (
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-white/60 text-[10px]">
+                  <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-header-text, #ffffff) 60%, transparent)" }}>
                     {onAirProgram.horarioInicio.slice(0, 5)} às {onAirProgram.horarioFim.slice(0, 5)}
                   </span>
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ width: 160, backgroundColor: "#d70d0e" }}>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ width: 160, backgroundColor: "var(--layout-accent-color, #d70d0e)" }}>
                     <div
                       className="h-full rounded-full transition-all duration-1000"
-                      style={{ width: `${onAirProgram.progress}%`, backgroundColor: "#ffffff" }}
+                      style={{ width: `${onAirProgram.progress}%`, backgroundColor: "var(--layout-header-text, #ffffff)" }}
                     />
                   </div>
                 </div>
