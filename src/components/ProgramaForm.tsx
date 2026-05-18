@@ -860,7 +860,16 @@ export default function ProgramaForm() {
                 </div>
                 <input type="file" accept="image/*" onChange={handleSelo} className="hidden" />
               </label>
-              {selo && <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
+              {selo && (
+                <div className="flex gap-3">
+                  <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1 flex items-center gap-1">
+                    <Trash2 size={10} /> Remover
+                  </button>
+                  <button onClick={() => handleDownload(selo, `selo_${nome || "programa"}.png`)} className="text-[10px] text-blue-400 hover:text-blue-300 mt-1 flex items-center gap-1">
+                    <Download size={10} /> Baixar
+                  </button>
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Capa (226×302 PNG alpha)</label>
@@ -875,7 +884,16 @@ export default function ProgramaForm() {
                 </div>
                 <input type="file" accept="image/*" onChange={handleCapa} className="hidden" />
               </label>
-              {capa && <button onClick={() => setCapa("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
+              {capa && (
+                <div className="flex gap-3">
+                  <button onClick={() => setCapa("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1 flex items-center gap-1">
+                    <Trash2 size={10} /> Remover
+                  </button>
+                  <button onClick={() => handleDownload(capa, `capa_${nome || "programa"}.png`)} className="text-[10px] text-blue-400 hover:text-blue-300 mt-1 flex items-center gap-1">
+                    <Download size={10} /> Baixar
+                  </button>
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Thumb (1920×1080 PNG)</label>
@@ -890,7 +908,16 @@ export default function ProgramaForm() {
                 </div>
                 <input type="file" accept="image/*" onChange={handleThumb} className="hidden" />
               </label>
-              {thumb && <button onClick={() => setThumb("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
+              {thumb && (
+                <div className="flex gap-3">
+                  <button onClick={() => setThumb("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1 flex items-center gap-1">
+                    <Trash2 size={10} /> Remover
+                  </button>
+                  <button onClick={() => handleDownload(thumb, `thumb_${nome || "programa"}.png`)} className="text-[10px] text-blue-400 hover:text-blue-300 mt-1 flex items-center gap-1">
+                    <Download size={10} /> Baixar
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
