@@ -651,15 +651,23 @@ export default function CenariosEstudioPage() {
             ))}
 
             {unlinkedTemplates.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-border/40" />
-                  <Badge variant="outline" className="px-3 py-1 border-muted-foreground/30 bg-muted/5 text-muted-foreground font-bold text-[11px] uppercase tracking-wider rounded-lg">
-                    Templates sem Programa
-                  </Badge>
-                  <div className="h-px flex-1 bg-border/40" />
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-muted/20 text-muted-foreground">
+                      <LayoutGrid className="h-4 w-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm tracking-tight" style={layoutText}>Templates sem Programa</span>
+                      <span className="text-[10px] font-mono opacity-60 uppercase" style={layoutTextMuted}>
+                        Não vinculados • {unlinkedTemplates.length} template{unlinkedTemplates.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-px flex-1 bg-gradient-to-r from-border/60 to-transparent" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {unlinkedTemplates.map(renderTemplateCard)}
                 </div>
               </div>
