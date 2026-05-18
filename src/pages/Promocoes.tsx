@@ -512,7 +512,7 @@ export default function PromocoesKiosk() {
         <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 60%, transparent)" }}>Auto</span>
       </div>
       <div className="flex items-center gap-2 flex-1 max-w-[180px]">
-        <span className="text-[10px] text-white/50">Vel.</span>
+        <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 50%, transparent)" }}>Vel.</span>
         <Slider
           value={[scrollSpeed]}
           min={1}
