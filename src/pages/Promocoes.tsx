@@ -499,7 +499,7 @@ export default function PromocoesKiosk() {
         type="button"
         onClick={() => toggleAutoScroll(target)}
         className="w-8 h-8 rounded-lg flex items-center justify-center text-white hover:brightness-125 transition"
-        style={{ backgroundColor: "#a60101" }}
+        style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}
       >
         {autoScrolling && activeScrollTarget === target ? <Pause size={14} /> : <Play size={14} />}
       </button>
