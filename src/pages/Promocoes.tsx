@@ -862,9 +862,9 @@ export default function PromocoesKiosk() {
               <div className="px-4 pt-4 pb-1 flex-shrink-0">
                   {selectedProgram?.schedules && selectedProgram.schedules.length > 0 ? (
                     selectedProgram.schedules.map((s, i) => (
-                      <div key={i} className="text-lg font-bold text-white">
+                      <div key={i} className="text-lg font-bold" style={{ color: "var(--layout-page-text, #ffffff)" }}>
                         {s.horarioInicio.slice(0, 5)} às {s.horarioFim.slice(0, 5)}
-                        {s.dias.length > 0 && <span className="text-xs text-white/60 ml-2 font-normal">{s.dias.join(", ")}</span>}
+                        {s.dias.length > 0 && <span className="text-xs ml-2 font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 60%, transparent)" }}>{s.dias.join(", ")}</span>}
                       </div>
                     ))
                   ) : (
