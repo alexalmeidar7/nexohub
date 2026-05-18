@@ -465,6 +465,34 @@ export default function ProgramaForm() {
     reader.readAsDataURL(file);
   };
 
+  const handleDownload = async (url: string, filename: string) => {
+    if (!url) return;
+    try {
+      if (url.startsWith('data:')) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }
+    } catch (error) {
+      console.error("Erro ao baixar imagem:", error);
+      window.open(url, '_blank');
+    }
+  };
+
   const toggleDia = (dia: string) => {
     setDiasSemana(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]);
   };
