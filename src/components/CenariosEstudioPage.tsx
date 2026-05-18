@@ -17,6 +17,10 @@ interface Programa {
   id: string;
   nome: string;
   ativo: boolean;
+  dias_semana?: string[];
+  horario_inicio?: string;
+  horario_fim?: string;
+  estudio?: string;
 }
 
 interface Grupo {
