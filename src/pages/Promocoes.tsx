@@ -897,8 +897,8 @@ export default function PromocoesKiosk() {
                         <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-2 object-contain max-h-[200px]" />
                       )}
                       <div
-                        className="max-w-none text-white leading-[1.35] [&_*]:!bg-transparent [&_*]:leading-[1.35] [&_p]:!my-0 [&_p+p]:!mt-2 [&_p]:!text-white [&_span]:!text-white"
-                        style={{ fontSize: `${fontSize}px`, lineHeight: 1.35 }}
+                        className="max-w-none leading-[1.35] [&_*]:!bg-transparent [&_*]:leading-[1.35] [&_p]:!my-0 [&_p+p]:!mt-2"
+                        style={{ fontSize: `${fontSize}px`, lineHeight: 1.35, color: "var(--layout-page-text, #ffffff)" }}
                         dangerouslySetInnerHTML={{
                           __html: t.texto
                             .replace(/\/\//g, "<br/>")
