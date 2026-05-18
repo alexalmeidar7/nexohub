@@ -596,25 +596,25 @@ export default function PromocoesKiosk() {
               <div className="flex items-center gap-3 ml-3">
                 {config.site && (
                   <Tooltip>
-                    <TooltipTrigger><Globe size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Globe size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
                     <TooltipContent><p>{config.site}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.instagram && (
                   <Tooltip>
-                    <TooltipTrigger><Instagram size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Instagram size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
                     <TooltipContent><p>{config.instagram}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.youtube && (
                   <Tooltip>
-                    <TooltipTrigger><Youtube size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Youtube size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
                     <TooltipContent><p>{config.youtube}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.facebook && (
                   <Tooltip>
-                    <TooltipTrigger><Facebook size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Facebook size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
                     <TooltipContent><p>{config.facebook}</p></TooltipContent>
                   </Tooltip>
                 )}
@@ -623,19 +623,19 @@ export default function PromocoesKiosk() {
                 {config.telefoneParticipacao && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <MessageCircle size={15} style={{ color: "#FF0000" }} />
-                      <span className="font-bold text-[16px] text-white">{config.telefoneParticipacao}</span>
+                      <MessageCircle size={15} style={{ color: "var(--layout-accent-color, #FF0000)" }} />
+                      <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneParticipacao}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "#FF0000" }}>whatsapp ouvinte</span>
+                    <span className="text-xs" style={{ color: "var(--layout-accent-color, #FF0000)" }}>whatsapp ouvinte</span>
                   </div>
                 )}
                 {config.telefoneComercial && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <Phone size={15} style={{ color: "#FF0000" }} />
-                      <span className="font-bold text-[16px] text-white">{config.telefoneComercial}</span>
+                      <Phone size={15} style={{ color: "var(--layout-accent-color, #FF0000)" }} />
+                      <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneComercial}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "#FF0000" }}>telefone comercial</span>
+                    <span className="text-xs" style={{ color: "var(--layout-accent-color, #FF0000)" }}>telefone comercial</span>
                   </div>
                 )}
               </div>
