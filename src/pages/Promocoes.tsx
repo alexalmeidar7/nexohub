@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
 import { getApresentadores } from "@/components/ApresentadorForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type TelaPromoConfig, defaultTelaPromoConfig, buildTelaPromoBgStyle } from "@/components/ConfigTelaPromoPage";
@@ -65,6 +66,7 @@ function renderBoldMarkdown(text: string) {
 
 export default function PromocoesKiosk() {
   usePageTitle("Promoções");
+  useLayoutColors();
   const { userSlug } = useParams<{ userSlug?: string }>();
   const isPublicMode = !!userSlug;
   const [loading, setLoading] = useState(true);
@@ -492,12 +494,12 @@ export default function PromocoesKiosk() {
 
    // Inline teleprompter controls renderer (not a component to avoid remount)
   const renderTeleprompterControls = (target: "promo" | "program") => (
-    <div className="flex items-center gap-3 p-[15px] rounded-xl" style={{ backgroundColor: "#1b1b1d" }}>
+    <div className="flex items-center gap-3 p-[15px] rounded-xl" style={{ backgroundColor: "var(--layout-slider-bg, #1b1b1d)" }}>
       <button
         type="button"
         onClick={() => toggleAutoScroll(target)}
         className="w-8 h-8 rounded-lg flex items-center justify-center text-white hover:brightness-125 transition"
-        style={{ backgroundColor: "#a60101" }}
+        style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}
       >
         {autoScrolling && activeScrollTarget === target ? <Pause size={14} /> : <Play size={14} />}
       </button>
@@ -505,25 +507,25 @@ export default function PromocoesKiosk() {
         <Checkbox
           checked={autoPlay}
           onCheckedChange={(v) => handleAutoPlayChange(v === true)}
-          className="border-white/40 data-[state=checked]:bg-[#a60101] data-[state=checked]:border-[#a60101]"
+          className="border-white/40 data-[state=checked]:bg-[var(--layout-accent-color,#a60101)] data-[state=checked]:border-[var(--layout-accent-color,#a60101)]"
         />
-        <span className="text-[10px] text-white/60">Auto</span>
+        <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 60%, transparent)" }}>Auto</span>
       </div>
       <div className="flex items-center gap-2 flex-1 max-w-[180px]">
-        <span className="text-[10px] text-white/50">Vel.</span>
+        <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 50%, transparent)" }}>Vel.</span>
         <Slider
           value={[scrollSpeed]}
           min={1}
           max={100}
           step={1}
           onValueChange={([v]) => setScrollSpeed(v)}
-          className="flex-1 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:bg-[#a60101] [&_[role=slider]]:border-[#a60101] [&_.relative]:bg-white/20 [&_[data-orientation=horizontal]>.absolute]:bg-[#a60101]"
+          className="flex-1 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:bg-[var(--layout-accent-color,#a60101)] [&_[role=slider]]:border-[var(--layout-accent-color,#a60101)] [&_.relative]:bg-white/20 [&_[data-orientation=horizontal]>.absolute]:bg-[var(--layout-accent-color,#a60101)]"
         />
-        <span className="text-[9px] text-white/40 whitespace-nowrap">espaço = play/pause</span>
+        <span className="text-[9px] whitespace-nowrap" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 40%, transparent)" }}>espaço = play/pause</span>
       </div>
       <div className="flex items-center gap-1 ml-auto">
-        <button type="button" onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A-</button>
-        <button type="button" onClick={() => setFontSize(s => Math.min(56, s + 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A+</button>
+        <button type="button" onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold hover:brightness-125 transition" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}>A-</button>
+        <button type="button" onClick={() => setFontSize(s => Math.min(56, s + 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold hover:brightness-125 transition" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}>A+</button>
       </div>
     </div>
   );
@@ -538,10 +540,10 @@ export default function PromocoesKiosk() {
         .no-scrollbar::-webkit-scrollbar{display:none}
         .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
         .promo-scroll::-webkit-scrollbar{width:10px}
-        .promo-scroll::-webkit-scrollbar-track{background:#a60101;border-radius:5px}
+        .promo-scroll::-webkit-scrollbar-track{background:var(--layout-accent-color, #a60101);border-radius:5px}
         .promo-scroll::-webkit-scrollbar-thumb{background:white;border-radius:5px}
         .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:white;border-radius:2px}
-        .promo-scroll{scrollbar-width:thin;scrollbar-color:white #a60101}
+        .promo-scroll{scrollbar-width:thin;scrollbar-color:white var(--layout-accent-color, #a60101)}
         @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px rgba(251,216,55,1)}50%{box-shadow:0 0 0 3px rgba(251,216,55,0.2)}}
         .animate-pulse-border{animation:pulse-border 1.5s ease-in-out infinite}
       `}</style>
@@ -551,21 +553,21 @@ export default function PromocoesKiosk() {
         {/* Header */}
         <div className="flex justify-between items-center w-full px-2">
           <div className="flex items-center gap-3">
-            <Radio size={16} style={{ color: "#be0101" }} className="animate-pulse" />
+            <Radio size={16} style={{ color: "var(--layout-accent-color, #be0101)" }} className="animate-pulse" />
             <div>
-              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "#be0101" }}>No Ar</span>
-              <p className="text-white text-sm font-semibold truncate max-w-[300px]">
+              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "var(--layout-accent-color, #be0101)" }}>No Ar</span>
+              <p className="text-sm font-semibold truncate max-w-[300px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>
                 {onAirProgram?.nome || "Programação Musical"}
               </p>
               {onAirProgram && (
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-white/60 text-[10px]">
+                  <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-header-text, #ffffff) 60%, transparent)" }}>
                     {onAirProgram.horarioInicio.slice(0, 5)} às {onAirProgram.horarioFim.slice(0, 5)}
                   </span>
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ width: 160, backgroundColor: "#d70d0e" }}>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ width: 160, backgroundColor: "var(--layout-accent-color, #d70d0e)" }}>
                     <div
                       className="h-full rounded-full transition-all duration-1000"
-                      style={{ width: `${onAirProgram.progress}%`, backgroundColor: "#ffffff" }}
+                      style={{ width: `${onAirProgram.progress}%`, backgroundColor: "var(--layout-header-text, #ffffff)" }}
                     />
                   </div>
                 </div>
@@ -579,7 +581,7 @@ export default function PromocoesKiosk() {
                 : null;
               return presenter?.foto ? (
                 <div className="relative group/presenter ml-2">
-                  <div className="w-14 h-14 rounded-full overflow-hidden" style={{ backgroundColor: "#d70d0e" }}>
+                  <div className="w-14 h-14 rounded-full overflow-hidden" style={{ backgroundColor: "var(--layout-accent-color, #d70d0e)" }}>
                     <img src={presenter.foto} alt={presenter.nome} className="w-full h-full object-cover" />
                   </div>
                   <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/presenter:opacity-100 transition-opacity">
@@ -594,25 +596,25 @@ export default function PromocoesKiosk() {
               <div className="flex items-center gap-3 ml-3">
                 {config.site && (
                   <Tooltip>
-                    <TooltipTrigger><Globe size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Globe size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
                     <TooltipContent><p>{config.site}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.instagram && (
                   <Tooltip>
-                    <TooltipTrigger><Instagram size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Instagram size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
                     <TooltipContent><p>{config.instagram}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.youtube && (
                   <Tooltip>
-                    <TooltipTrigger><Youtube size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Youtube size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
                     <TooltipContent><p>{config.youtube}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.facebook && (
                   <Tooltip>
-                    <TooltipTrigger><Facebook size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Facebook size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
                     <TooltipContent><p>{config.facebook}</p></TooltipContent>
                   </Tooltip>
                 )}
@@ -621,19 +623,19 @@ export default function PromocoesKiosk() {
                 {config.telefoneParticipacao && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <MessageCircle size={15} style={{ color: "#FF0000" }} />
-                      <span className="font-bold text-[16px] text-white">{config.telefoneParticipacao}</span>
+                      <MessageCircle size={15} style={{ color: "var(--layout-accent-color, #FF0000)" }} />
+                      <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneParticipacao}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "#FF0000" }}>whatsapp ouvinte</span>
+                    <span className="text-xs" style={{ color: "var(--layout-accent-color, #FF0000)" }}>whatsapp ouvinte</span>
                   </div>
                 )}
                 {config.telefoneComercial && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <Phone size={15} style={{ color: "#FF0000" }} />
-                      <span className="font-bold text-[16px] text-white">{config.telefoneComercial}</span>
+                      <Phone size={15} style={{ color: "var(--layout-accent-color, #FF0000)" }} />
+                      <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneComercial}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "#FF0000" }}>telefone comercial</span>
+                    <span className="text-xs" style={{ color: "var(--layout-accent-color, #FF0000)" }}>telefone comercial</span>
                   </div>
                 )}
               </div>
@@ -732,7 +734,7 @@ export default function PromocoesKiosk() {
                   )}
                   <div className="absolute bottom-1 left-0 right-0 text-center flex flex-col items-center gap-0.5">
                     {prog.schedules.map((s, i) => (
-                      <span key={i} className="text-[10px] font-bold text-white drop-shadow-lg bg-black/50 px-1.5 py-0.5 rounded">
+                      <span key={i} className="text-[10px] font-bold text-white drop-shadow-lg px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--layout-accent-color, rgba(0,0,0,0.5))" }}>
                         {s.horarioInicio.slice(0, 5)} - {s.horarioFim.slice(0, 5)}
                       </span>
                     ))}
@@ -746,7 +748,7 @@ export default function PromocoesKiosk() {
         {/* Promoções */}
         {botoes.length > 0 && (
           <div className="relative group">
-            <h2 className="text-lg font-bold mb-4">Promoções</h2>
+            <h2 className="text-lg font-bold mb-4" style={{ color: "var(--layout-page-text, #ffffff)" }}>Promoções</h2>
             <div onMouseEnter={() => startScroll(promoScrollRef, "left")} onMouseLeave={stopScroll} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
               <ChevronLeft size={36} />
             </div>
@@ -800,7 +802,7 @@ export default function PromocoesKiosk() {
 
       {/* Modal da Promoção */}
       <Dialog open={!!selectedPromo} onOpenChange={(open) => { if (!open) closePromoModal(); }}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-2xl h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5">
+        <DialogContent className="border-zinc-800 text-white max-w-2xl h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "var(--layout-page-bg, #09090b)" }}>
           {/* Banner fixo no topo com padding */}
           {selectedPromo?.imagem_url && (
             <div className="flex-shrink-0 pt-4 px-4">
@@ -809,7 +811,7 @@ export default function PromocoesKiosk() {
           )}
 
           {/* Período com ícone de calendário */}
-          <div className="px-4 pt-2 text-xs text-white/60 flex items-center gap-1.5 flex-shrink-0">
+          <div className="px-4 pt-2 text-xs flex items-center gap-1.5 flex-shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 60%, transparent)" }}>
             <Calendar size={12} />
             <span>Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}</span>
           </div>
@@ -822,8 +824,8 @@ export default function PromocoesKiosk() {
           {/* Corpo: texto + oferecimento dentro do scroll, alinhado ao X */}
           <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
             <div
-              className="text-white font-bold promo-html-content"
-              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4 }}
+              className="font-bold promo-html-content"
+              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "var(--layout-page-text, #ffffff)" }}
               dangerouslySetInnerHTML={{
                 __html: (selectedPromo?.texto || "")
                   .replace(/\/\//g, "<br/>")
@@ -835,9 +837,10 @@ export default function PromocoesKiosk() {
             {/* Oferecimento dentro do scroll, após o texto */}
             {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
               <div className="mt-6 pt-4 border-t border-white/10 text-center">
-                <span className="text-white/50 text-sm uppercase tracking-wider">Oferecimento</span>
+                <span className="text-sm uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 50%, transparent)" }}>Oferecimento</span>
                 <div
-                  className="text-white text-xl font-bold mt-2 promo-html-content"
+                  className="text-xl font-bold mt-2 promo-html-content"
+                  style={{ color: "var(--layout-page-text, #ffffff)" }}
                   dangerouslySetInnerHTML={{
                     __html: selectedPromo.oferecimento
                       .replace(/\/\//g, "<br/>")
@@ -853,19 +856,19 @@ export default function PromocoesKiosk() {
 
       {/* Modal de Programação */}
       <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-4xl h-[80vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5">
+        <DialogContent className="border-zinc-800 text-white max-w-4xl h-[80vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "var(--layout-page-bg, #09090b)" }}>
           <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full">
               {/* Horário em destaque */}
               <div className="px-4 pt-4 pb-1 flex-shrink-0">
                   {selectedProgram?.schedules && selectedProgram.schedules.length > 0 ? (
                     selectedProgram.schedules.map((s, i) => (
-                      <div key={i} className="text-lg font-bold text-white">
+                      <div key={i} className="text-lg font-bold" style={{ color: "var(--layout-page-text, #ffffff)" }}>
                         {s.horarioInicio.slice(0, 5)} às {s.horarioFim.slice(0, 5)}
-                        {s.dias.length > 0 && <span className="text-xs text-white/60 ml-2 font-normal">{s.dias.join(", ")}</span>}
+                        {s.dias.length > 0 && <span className="text-xs ml-2 font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 60%, transparent)" }}>{s.dias.join(", ")}</span>}
                       </div>
                     ))
                   ) : (
-                    <div className="text-lg font-bold text-white">
+                    <div className="text-lg font-bold" style={{ color: "var(--layout-page-text, #ffffff)" }}>
                       {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
                     </div>
                   )}
@@ -873,7 +876,7 @@ export default function PromocoesKiosk() {
 
               {/* Rótulo Citações */}
               <div className="px-4 py-1 flex-shrink-0">
-                <span className="text-sm font-bold" style={{ color: "#FF0000" }}>Citações</span>
+                <span className="text-sm font-bold" style={{ color: "var(--layout-accent-color, #FF0000)" }}>Citações</span>
               </div>
 
               {/* Controles teleprompter - painel estilizado */}
@@ -886,7 +889,7 @@ export default function PromocoesKiosk() {
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
-                    return <p className="text-white/40 text-sm">Nenhum conteúdo disponível.</p>;
+                    return <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 40%, transparent)" }}>Nenhum conteúdo disponível.</p>;
                   }
                   return tests.map(t => (
                     <div key={t.id} className="mb-4">
@@ -894,8 +897,8 @@ export default function PromocoesKiosk() {
                         <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-2 object-contain max-h-[200px]" />
                       )}
                       <div
-                        className="max-w-none text-white leading-[1.35] [&_*]:!bg-transparent [&_*]:leading-[1.35] [&_p]:!my-0 [&_p+p]:!mt-2 [&_p]:!text-white [&_span]:!text-white"
-                        style={{ fontSize: `${fontSize}px`, lineHeight: 1.35 }}
+                        className="max-w-none leading-[1.35] [&_*]:!bg-transparent [&_*]:leading-[1.35] [&_p]:!my-0 [&_p+p]:!mt-2"
+                        style={{ fontSize: `${fontSize}px`, lineHeight: 1.35, color: "var(--layout-page-text, #ffffff)" }}
                         dangerouslySetInnerHTML={{
                           __html: t.texto
                             .replace(/\/\//g, "<br/>")
