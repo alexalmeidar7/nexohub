@@ -507,9 +507,9 @@ export default function PromocoesKiosk() {
         <Checkbox
           checked={autoPlay}
           onCheckedChange={(v) => handleAutoPlayChange(v === true)}
-          className="border-white/40 data-[state=checked]:bg-[#a60101] data-[state=checked]:border-[#a60101]"
+          className="border-white/40 data-[state=checked]:bg-[var(--layout-accent-color,#a60101)] data-[state=checked]:border-[var(--layout-accent-color,#a60101)]"
         />
-        <span className="text-[10px] text-white/60">Auto</span>
+        <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 60%, transparent)" }}>Auto</span>
       </div>
       <div className="flex items-center gap-2 flex-1 max-w-[180px]">
         <span className="text-[10px] text-white/50">Vel.</span>
