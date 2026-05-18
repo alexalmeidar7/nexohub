@@ -92,14 +92,38 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
 
   const getProgramaForGradeSlot = (dia: string, slotTime: string) => {
     const dateForDay = getDateForDay(dia);
+    
+    // Calculate next slot time
+    const [h, m, s] = slotTime.split(":").map(Number);
+    let nextM = m + 30;
+    let nextH = h;
+    if (nextM >= 60) {
+      nextM = 0;
+      nextH++;
+    }
+    const nextSlotTime = `${String(nextH).padStart(2, "0")}:${String(nextM).padStart(2, "0")}:00`;
+
     const matching = programas.filter(p => {
       if (!p.ativo) return false;
       const dias = (p.dias_semana || []).map(d => dayShortToFull[d] || d);
-      return dias.includes(dia) && slotTime >= p.horario_inicio && slotTime < p.horario_fim;
+      
+      // Overlap logic: program starts before slot ends AND program ends after slot starts
+      const overlaps = p.horario_inicio < nextSlotTime && p.horario_fim > slotTime;
+      return dias.includes(dia) && overlaps;
     });
+
+    if (matching.length === 0) return undefined;
+
+    // Variable programs take priority but ONLY on their specific date
     const variable = matching.find(p => p.variavel && p.data_variavel === dateForDay);
     if (variable) return variable;
-    return matching.find(p => !p.variavel) || matching[0] || undefined;
+
+    // Priority: show program that starts in this slot if any
+    const startsInSlot = matching.find(p => p.horario_inicio >= slotTime && p.horario_inicio < nextSlotTime);
+    if (startsInSlot) return startsInSlot;
+
+    // Otherwise show fixed (non-variable) program
+    return matching.find(p => !p.variavel) || matching[0];
   };
 
   const { skipMap, spanMap } = useMemo(() => {
