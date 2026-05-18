@@ -259,12 +259,18 @@ export default function CenariosEstudioPage() {
         arteUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       }
 
-      // 3) replace TVs (single record holding the artwork)
-      await (supabase as any).from("cenario_estudio_tvs").delete().eq("grupo_id", grupo.id);
+      // 3) Upsert TVs (single record holding the artwork) to avoid empty state during delete/insert
       if (arteUrl) {
-        const { error: tErr } = await (supabase as any).from("cenario_estudio_tvs").insert([
-          { grupo_id: grupo.id, user_id: user.id, posicao: 0, imagem_url: arteUrl },
-        ]);
+        const { error: tErr } = await (supabase as any).from("cenario_estudio_tvs").upsert(
+          { 
+            grupo_id: grupo.id, 
+            user_id: user.id, 
+            posicao: 0, 
+            imagem_url: arteUrl,
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'grupo_id,posicao' }
+        );
         if (tErr) throw tErr;
       }
 
