@@ -17,7 +17,7 @@ export default function AccessScreen({ logoUrl, onLoginSuccess, onGuest }: Acces
     try {
       // Use the Lovable app origin as redirect to avoid custom domain OAuth issues
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: window.location.href,
         extraParams: {
           prompt: "select_account",
         },
