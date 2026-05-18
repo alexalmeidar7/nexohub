@@ -17,6 +17,10 @@ interface Programa {
   id: string;
   nome: string;
   ativo: boolean;
+  dias_semana?: string[];
+  horario_inicio?: string;
+  horario_fim?: string;
+  estudio?: string;
 }
 
 interface Grupo {
@@ -84,7 +88,7 @@ export default function CenariosEstudioPage() {
     const [gruposRes, tvsRes, progsRes] = await Promise.all([
       supabase.from("cenario_estudio_grupos" as any).select("*").eq("user_id", user.id).order("created_at"),
       supabase.from("cenario_estudio_tvs" as any).select("*").eq("user_id", user.id).order("posicao"),
-      supabase.from("programas").select("id, nome, ativo").eq("user_id", user.id).eq("ativo", true).order("nome"),
+      supabase.from("programas").select("id, nome, ativo, dias_semana, horario_inicio, horario_fim, estudio").eq("user_id", user.id).eq("ativo", true).order("nome"),
     ]);
     const tvsByGrupo: Record<string, TV[]> = {};
     ((tvsRes.data as any[]) || []).forEach((t) => {
@@ -104,6 +108,57 @@ export default function CenariosEstudioPage() {
     setProgramas((progsRes.data as Programa[]) || []);
     setLoading(false);
   }, [user?.id]);
+
+  const onAirProgramId = useMemo(() => {
+    if (!programas.length) return null;
+    
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const now = new Date();
+    const tzParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).formatToParts(now);
+    
+    const wkShort = tzParts.find((p) => p.type === "weekday")?.value || "Sun";
+    const hh = tzParts.find((p) => p.type === "hour")?.value || "00";
+    const mm = tzParts.find((p) => p.type === "minute")?.value || "00";
+    const ss = tzParts.find((p) => p.type === "second")?.value || "00";
+    const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const today = dayNames[dayMap[wkShort] ?? 0];
+    const nowTime = `${hh}:${mm}:${ss}`;
+
+    const toSeconds = (time: string) => {
+      const [hour = "0", minute = "0", second = "0"] = String(time ?? "").split(":");
+      return Number(hour) * 3600 + Number(minute) * 60 + Number(second);
+    };
+
+    const isTimeInRange = (start: string, end: string, current: string) => {
+      const startSeconds = toSeconds(start);
+      const endSeconds = toSeconds(end);
+      const currentSeconds = toSeconds(current);
+      if (endSeconds <= startSeconds) {
+        return currentSeconds >= startSeconds || currentSeconds < endSeconds;
+      }
+      return currentSeconds >= startSeconds && currentSeconds < endSeconds;
+    };
+
+    const candidates = programas.filter(
+      (p) =>
+        (p.dias_semana || []).includes(today) &&
+        isTimeInRange(p.horario_inicio || "00:00:00", p.horario_fim || "23:59:59", nowTime)
+    );
+
+    if (candidates.length === 0) return null;
+    if (candidates.length === 1) return candidates[0].id;
+
+    // Prioritize Estudio FM
+    const fmMatch = candidates.find(p => (p as any).estudio?.toLowerCase().includes("fm"));
+    return fmMatch ? fmMatch.id : candidates[0].id;
+  }, [programas]);
 
   useEffect(() => {
     loadAll();
@@ -204,12 +259,18 @@ export default function CenariosEstudioPage() {
         arteUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       }
 
-      // 3) replace TVs (single record holding the artwork)
-      await (supabase as any).from("cenario_estudio_tvs").delete().eq("grupo_id", grupo.id);
+      // 3) Upsert TVs (single record holding the artwork) to avoid empty state during delete/insert
       if (arteUrl) {
-        const { error: tErr } = await (supabase as any).from("cenario_estudio_tvs").insert([
-          { grupo_id: grupo.id, user_id: user.id, posicao: 0, imagem_url: arteUrl },
-        ]);
+        const { error: tErr } = await (supabase as any).from("cenario_estudio_tvs").upsert(
+          { 
+            grupo_id: grupo.id, 
+            user_id: user.id, 
+            posicao: 0, 
+            imagem_url: arteUrl,
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'grupo_id,posicao' }
+        );
         if (tErr) throw tErr;
       }
 
@@ -445,14 +506,17 @@ export default function CenariosEstudioPage() {
           const linkedNames = t.programa_ids
             .map((pid) => programas.find((p) => p.id === pid)?.nome)
             .filter(Boolean) as string[];
+            
+          const isActive = onAirProgramId && t.programa_ids.includes(onAirProgramId);
+          const isEditing = editingIds.has(t.id);
 
           return (
             <Card 
               key={t.id} 
-              className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+              className={`group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isActive ? 'ring-2 ring-primary ring-offset-2' : ''}`}
               style={{
                 ...layoutCardStyle,
-                border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent)",
+                border: isActive ? "2px solid var(--layout-accent-color, #2563eb)" : "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent)",
               }}
             >
               <div
@@ -490,7 +554,10 @@ export default function CenariosEstudioPage() {
                     size="icon"
                     variant="secondary"
                     className="h-9 w-9 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
-                    onClick={() => setEditingIds((prev) => new Set(prev).add(t.id))}
+                    onClick={() => {
+                      setEditingIds((prev) => new Set(prev).add(t.id));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -505,10 +572,15 @@ export default function CenariosEstudioPage() {
                 </div>
 
                 {/* Grid Badge */}
-                <div className="absolute bottom-3 left-3">
+                <div className="absolute bottom-3 left-3 flex items-center gap-2">
                   <Badge className="bg-white/10 backdrop-blur-md border-white/20 text-white text-[10px] font-mono">
                     {t.rows}×{t.cols} GRID
                   </Badge>
+                  {isActive && (
+                    <Badge className="bg-primary/90 backdrop-blur-md border-none text-white text-[10px] font-bold animate-pulse">
+                      NO AR
+                    </Badge>
+                  )}
                 </div>
               </div>
 
