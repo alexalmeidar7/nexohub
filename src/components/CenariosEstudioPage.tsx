@@ -500,14 +500,17 @@ export default function CenariosEstudioPage() {
           const linkedNames = t.programa_ids
             .map((pid) => programas.find((p) => p.id === pid)?.nome)
             .filter(Boolean) as string[];
+            
+          const isActive = onAirProgramId && t.programa_ids.includes(onAirProgramId);
+          const isEditing = editingIds.has(t.id);
 
           return (
             <Card 
               key={t.id} 
-              className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+              className={`group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isActive ? 'ring-2 ring-primary ring-offset-2' : ''}`}
               style={{
                 ...layoutCardStyle,
-                border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent)",
+                border: isActive ? "2px solid var(--layout-accent-color, #2563eb)" : "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent)",
               }}
             >
               <div
