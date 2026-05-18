@@ -88,7 +88,7 @@ export default function CenariosEstudioPage() {
     const [gruposRes, tvsRes, progsRes] = await Promise.all([
       supabase.from("cenario_estudio_grupos" as any).select("*").eq("user_id", user.id).order("created_at"),
       supabase.from("cenario_estudio_tvs" as any).select("*").eq("user_id", user.id).order("posicao"),
-      supabase.from("programas").select("id, nome, ativo").eq("user_id", user.id).eq("ativo", true).order("nome"),
+      supabase.from("programas").select("id, nome, ativo, dias_semana, horario_inicio, horario_fim, estudio").eq("user_id", user.id).eq("ativo", true).order("nome"),
     ]);
     const tvsByGrupo: Record<string, TV[]> = {};
     ((tvsRes.data as any[]) || []).forEach((t) => {
