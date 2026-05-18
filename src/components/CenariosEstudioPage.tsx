@@ -617,23 +617,34 @@ export default function CenariosEstudioPage() {
         };
 
         return (
-          <div className="space-y-10">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold uppercase tracking-widest opacity-60 flex items-center gap-2" style={layoutText}>
+          <div className="space-y-12">
+            <div className="flex items-center justify-between pb-2 border-b border-border/40">
+              <h4 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex items-center gap-2" style={layoutText}>
                 <LayoutGrid className="h-4 w-4" /> Templates Disponíveis
               </h4>
+              <Badge variant="outline" className="text-[10px] font-medium" style={layoutTextMuted}>
+                Organizado por horário
+              </Badge>
             </div>
 
-            {Object.entries(templatesByProgram).map(([pid, { nome, templates }]) => (
-              <div key={pid} className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-border/40" />
-                  <Badge variant="outline" className="px-3 py-1 border-primary/30 bg-primary/5 text-primary font-bold text-[11px] uppercase tracking-wider rounded-lg">
-                    {nome}
-                  </Badge>
-                  <div className="h-px flex-1 bg-border/40" />
+            {sortedProgramSections.map(({ id, nome, templates, horario }) => (
+              <div key={id} className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
+                      <Radio className="h-4 w-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm tracking-tight" style={layoutText}>{nome}</span>
+                      <span className="text-[10px] font-mono opacity-60 uppercase" style={layoutTextMuted}>
+                        {horario ? horario.substring(0, 5) : "--:--"} • {templates.length} template{templates.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-px flex-1 bg-gradient-to-r from-border/60 to-transparent" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {templates.map(renderTemplateCard)}
                 </div>
               </div>
