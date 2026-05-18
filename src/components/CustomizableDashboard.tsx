@@ -135,9 +135,10 @@ function getIcon(name: string) {
 
 interface Props {
   onNavigate: (page: Page) => void;
+  effectiveUserId?: string | null;
 }
 
-export default function CustomizableDashboard({ onNavigate }: Props) {
+export default function CustomizableDashboard({ onNavigate, effectiveUserId }: Props) {
   const { user } = useAuth();
   const [items, setItems] = useState<DashboardItem[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
