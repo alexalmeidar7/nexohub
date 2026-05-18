@@ -88,7 +88,7 @@ export default function CenariosEstudioPage() {
     const [gruposRes, tvsRes, progsRes] = await Promise.all([
       supabase.from("cenario_estudio_grupos" as any).select("*").eq("user_id", user.id).order("created_at"),
       supabase.from("cenario_estudio_tvs" as any).select("*").eq("user_id", user.id).order("posicao"),
-      supabase.from("programas").select("id, nome, ativo, dias_semana, horario_inicio, horario_fim, estudio").eq("user_id", user.id).eq("ativo", true).order("nome"),
+      supabase.from("programas").select("id, nome, ativo, dias_semana, horario_inicio, horario_fim, estudio").eq("user_id", user.id).eq("ativo", true).order("horario_inicio"),
     ]);
     const tvsByGrupo: Record<string, TV[]> = {};
     ((tvsRes.data as any[]) || []).forEach((t) => {
@@ -477,28 +477,22 @@ export default function CenariosEstudioPage() {
         
         if (savedTemplates.length === 0) return null;
 
-        // Group templates by program
-        const templatesByProgram: Record<string, { nome: string, templates: Grupo[] }> = {};
-        const unlinkedTemplates: Grupo[] = [];
+        // Group templates by program, preserving program order (sorted by time in loadAll)
+        const sortedProgramSections = programas
+          .map(prog => {
+            // Only include programs that have at least one saved template
+            const progTemplates = savedTemplates.filter(t => t.programa_ids.includes(prog.id));
+            if (progTemplates.length === 0) return null;
+            return {
+              id: prog.id,
+              nome: prog.nome,
+              horario: prog.horario_inicio,
+              templates: progTemplates
+            };
+          })
+          .filter((section): section is NonNullable<typeof section> => section !== null);
 
-        savedTemplates.forEach(t => {
-          if (t.programa_ids.length === 0) {
-            unlinkedTemplates.push(t);
-          } else {
-            t.programa_ids.forEach(pid => {
-              const prog = programas.find(p => p.id === pid);
-              if (prog) {
-                if (!templatesByProgram[pid]) {
-                  templatesByProgram[pid] = { nome: prog.nome, templates: [] };
-                }
-                // Avoid duplicates if a template is already added for this program
-                if (!templatesByProgram[pid].templates.find(existing => existing.id === t.id)) {
-                  templatesByProgram[pid].templates.push(t);
-                }
-              }
-            });
-          }
-        });
+        const unlinkedTemplates = savedTemplates.filter(t => t.programa_ids.length === 0);
 
         const renderTemplateCard = (t: Grupo) => {
           const a = t.tvs.find((tv) => tv.posicao === 0);
@@ -623,38 +617,57 @@ export default function CenariosEstudioPage() {
         };
 
         return (
-          <div className="space-y-10">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold uppercase tracking-widest opacity-60 flex items-center gap-2" style={layoutText}>
+          <div className="space-y-12">
+            <div className="flex items-center justify-between pb-2 border-b border-border/40">
+              <h4 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex items-center gap-2" style={layoutText}>
                 <LayoutGrid className="h-4 w-4" /> Templates Disponíveis
               </h4>
+              <Badge variant="outline" className="text-[10px] font-medium" style={layoutTextMuted}>
+                Organizado por horário
+              </Badge>
             </div>
 
-            {Object.entries(templatesByProgram).map(([pid, { nome, templates }]) => (
-              <div key={pid} className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-border/40" />
-                  <Badge variant="outline" className="px-3 py-1 border-primary/30 bg-primary/5 text-primary font-bold text-[11px] uppercase tracking-wider rounded-lg">
-                    {nome}
-                  </Badge>
-                  <div className="h-px flex-1 bg-border/40" />
+            {sortedProgramSections.map(({ id, nome, templates, horario }) => (
+              <div key={id} className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
+                      <Radio className="h-4 w-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm tracking-tight" style={layoutText}>{nome}</span>
+                      <span className="text-[10px] font-mono opacity-60 uppercase" style={layoutTextMuted}>
+                        {horario ? horario.substring(0, 5) : "--:--"} • {templates.length} template{templates.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-px flex-1 bg-gradient-to-r from-border/60 to-transparent" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {templates.map(renderTemplateCard)}
                 </div>
               </div>
             ))}
 
             {unlinkedTemplates.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-border/40" />
-                  <Badge variant="outline" className="px-3 py-1 border-muted-foreground/30 bg-muted/5 text-muted-foreground font-bold text-[11px] uppercase tracking-wider rounded-lg">
-                    Templates sem Programa
-                  </Badge>
-                  <div className="h-px flex-1 bg-border/40" />
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-muted/20 text-muted-foreground">
+                      <LayoutGrid className="h-4 w-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm tracking-tight" style={layoutText}>Templates sem Programa</span>
+                      <span className="text-[10px] font-mono opacity-60 uppercase" style={layoutTextMuted}>
+                        Não vinculados • {unlinkedTemplates.length} template{unlinkedTemplates.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-px flex-1 bg-gradient-to-r from-border/60 to-transparent" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {unlinkedTemplates.map(renderTemplateCard)}
                 </div>
               </div>
