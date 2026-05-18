@@ -868,7 +868,7 @@ export default function PromocoesKiosk() {
                       </div>
                     ))
                   ) : (
-                    <div className="text-lg font-bold text-white">
+                    <div className="text-lg font-bold" style={{ color: "var(--layout-page-text, #ffffff)" }}>
                       {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
                     </div>
                   )}
