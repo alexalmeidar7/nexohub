@@ -837,9 +837,10 @@ export default function PromocoesKiosk() {
             {/* Oferecimento dentro do scroll, após o texto */}
             {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
               <div className="mt-6 pt-4 border-t border-white/10 text-center">
-                <span className="text-white/50 text-sm uppercase tracking-wider">Oferecimento</span>
+                <span className="text-sm uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 50%, transparent)" }}>Oferecimento</span>
                 <div
-                  className="text-white text-xl font-bold mt-2 promo-html-content"
+                  className="text-xl font-bold mt-2 promo-html-content"
+                  style={{ color: "var(--layout-page-text, #ffffff)" }}
                   dangerouslySetInnerHTML={{
                     __html: selectedPromo.oferecimento
                       .replace(/\/\//g, "<br/>")
