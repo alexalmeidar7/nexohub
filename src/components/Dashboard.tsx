@@ -485,9 +485,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return;
     }
     if ((parentLabel === "ferramentas" || parentLabel === "comercial") && child.label === "tela promo") {
-      const email = parentEmail || user?.email || "";
-      const slug = email.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+      const targetId = effectiveUserId || user?.id;
+      window.open(`/user/${targetId}/nexohub/telapromo`, "_blank");
       setHoveredMenu(null);
       return;
     }
