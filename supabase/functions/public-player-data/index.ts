@@ -155,6 +155,11 @@ Deno.serve(async (req) => {
     }
 
     if (!userId) {
+      return new Response(JSON.stringify({ error: "User not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // ── FAST PATH: active mid-rolls for public Top 10 playback ──────
     if (section === "active_midrolls") {
