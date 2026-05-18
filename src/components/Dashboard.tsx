@@ -861,7 +861,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="relative flex-1 h-full">
             <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
-              {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} />}
+              {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
