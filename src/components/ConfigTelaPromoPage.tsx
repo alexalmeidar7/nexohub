@@ -93,7 +93,11 @@ function SectionCard({ icon: Icon, title, children }: { icon: any; title: string
   );
 }
 
-export default function ConfigTelaPromoPage() {
+interface Props {
+  effectiveUserId?: string | null;
+}
+
+export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
   const { user } = useAuth();
   const [config, setConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [saving, setSaving] = useState(false);
@@ -190,8 +194,8 @@ export default function ConfigTelaPromoPage() {
             border: "1px solid rgba(255,255,255,0.1)",
           }}
           onClick={() => {
-            const slug = user?.email?.split("@")[0] || "";
-            window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+            const targetId = effectiveUserId || user?.id;
+            window.open(`/user/${targetId}/nexohub/telapromo`, "_blank");
           }}
         >
           <ExternalLink size={15} /> Abrir Tela Promo

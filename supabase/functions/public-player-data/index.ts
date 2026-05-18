@@ -128,24 +128,38 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const slugLower = slug.toLowerCase();
-    const { data: matchedProfile, error: profileError } = await supabase
-      .from("profiles")
-      .select("user_id, email")
-      .ilike("email", `${slugLower}@%`)
-      .limit(1)
-      .maybeSingle();
+    const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+    
+    let userId: string | null = null;
+    let matchedProfile: any = null;
 
-    if (profileError) throw profileError;
+    if (isUUID(slug)) {
+      userId = slug;
+      // We still need the email for prefix matching logic if we want to be fully backward compatible, 
+      // but for bootstrap we mostly need the userId.
+    } else {
+      const slugLower = slug.toLowerCase();
+      const { data, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id, email")
+        .ilike("email", `${slugLower}@%`)
+        .limit(1)
+        .maybeSingle();
 
-    if (!matchedProfile?.user_id) {
+      if (profileError) throw profileError;
+      
+      if (data?.user_id) {
+        userId = data.user_id;
+        matchedProfile = data;
+      }
+    }
+
+    if (!userId) {
       return new Response(JSON.stringify({ error: "User not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const userId = matchedProfile.user_id;
 
     // ── FAST PATH: active mid-rolls for public Top 10 playback ──────
     if (section === "active_midrolls") {

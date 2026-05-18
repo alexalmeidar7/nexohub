@@ -135,9 +135,10 @@ function getIcon(name: string) {
 
 interface Props {
   onNavigate: (page: Page) => void;
+  effectiveUserId?: string | null;
 }
 
-export default function CustomizableDashboard({ onNavigate }: Props) {
+export default function CustomizableDashboard({ onNavigate, effectiveUserId }: Props) {
   const { user } = useAuth();
   const [items, setItems] = useState<DashboardItem[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -145,16 +146,17 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
-  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
+  // Using effectiveUserId from props if provided, otherwise using internal logic as fallback
+  const [internalEffectiveUserId, setInternalEffectiveUserId] = useState<string | null>(null);
+  const resolvedUserId = effectiveUserId || internalEffectiveUserId || user?.id;
 
-  // Resolve effective user ID (parent for sub-users)
   useEffect(() => {
-    if (!user) return;
+    if (!user || effectiveUserId) return;
     let cancelled = false;
     supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle()
       .then(({ data }) => {
         if (cancelled) return;
-        setEffectiveUserId(data?.ativo ? data.parent_user_id : user.id);
+        setInternalEffectiveUserId(data?.ativo ? data.parent_user_id : user.id);
       });
     return () => { cancelled = true; };
   }, [user]);
@@ -344,11 +346,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const handleLinkClick = (item: DashboardItem) => {
     if (editMode) return;
     if (item.linkExternal === "player") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/player`, "_blank");
+      window.open(`/user/${resolvedUserId}/nexohub/player`, "_blank");
     } else if (item.linkExternal === "telapromo") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+      window.open(`/user/${resolvedUserId}/nexohub/telapromo`, "_blank");
     } else if (item.linkPage) {
       onNavigate(item.linkPage);
     }
