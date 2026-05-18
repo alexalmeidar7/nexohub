@@ -105,6 +105,57 @@ export default function CenariosEstudioPage() {
     setLoading(false);
   }, [user?.id]);
 
+  const onAirProgramId = useMemo(() => {
+    if (!programas.length) return null;
+    
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const now = new Date();
+    const tzParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).formatToParts(now);
+    
+    const wkShort = tzParts.find((p) => p.type === "weekday")?.value || "Sun";
+    const hh = tzParts.find((p) => p.type === "hour")?.value || "00";
+    const mm = tzParts.find((p) => p.type === "minute")?.value || "00";
+    const ss = tzParts.find((p) => p.type === "second")?.value || "00";
+    const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const today = dayNames[dayMap[wkShort] ?? 0];
+    const nowTime = `${hh}:${mm}:${ss}`;
+
+    const toSeconds = (time: string) => {
+      const [hour = "0", minute = "0", second = "0"] = String(time ?? "").split(":");
+      return Number(hour) * 3600 + Number(minute) * 60 + Number(second);
+    };
+
+    const isTimeInRange = (start: string, end: string, current: string) => {
+      const startSeconds = toSeconds(start);
+      const endSeconds = toSeconds(end);
+      const currentSeconds = toSeconds(current);
+      if (endSeconds <= startSeconds) {
+        return currentSeconds >= startSeconds || currentSeconds < endSeconds;
+      }
+      return currentSeconds >= startSeconds && currentSeconds < endSeconds;
+    };
+
+    const candidates = programas.filter(
+      (p) =>
+        (p.dias_semana || []).includes(today) &&
+        isTimeInRange(p.horario_inicio || "00:00:00", p.horario_fim || "23:59:59", nowTime)
+    );
+
+    if (candidates.length === 0) return null;
+    if (candidates.length === 1) return candidates[0].id;
+
+    // Prioritize Estudio FM
+    const fmMatch = candidates.find(p => (p as any).estudio?.toLowerCase().includes("fm"));
+    return fmMatch ? fmMatch.id : candidates[0].id;
+  }, [programas]);
+
   useEffect(() => {
     loadAll();
   }, [loadAll]);
