@@ -477,28 +477,22 @@ export default function CenariosEstudioPage() {
         
         if (savedTemplates.length === 0) return null;
 
-        // Group templates by program
-        const templatesByProgram: Record<string, { nome: string, templates: Grupo[] }> = {};
-        const unlinkedTemplates: Grupo[] = [];
+        // Group templates by program, preserving program order (sorted by time in loadAll)
+        const sortedProgramSections = programas
+          .map(prog => {
+            // Only include programs that have at least one saved template
+            const progTemplates = savedTemplates.filter(t => t.programa_ids.includes(prog.id));
+            if (progTemplates.length === 0) return null;
+            return {
+              id: prog.id,
+              nome: prog.nome,
+              horario: prog.horario_inicio,
+              templates: progTemplates
+            };
+          })
+          .filter((section): section is NonNullable<typeof section> => section !== null);
 
-        savedTemplates.forEach(t => {
-          if (t.programa_ids.length === 0) {
-            unlinkedTemplates.push(t);
-          } else {
-            t.programa_ids.forEach(pid => {
-              const prog = programas.find(p => p.id === pid);
-              if (prog) {
-                if (!templatesByProgram[pid]) {
-                  templatesByProgram[pid] = { nome: prog.nome, templates: [] };
-                }
-                // Avoid duplicates if a template is already added for this program
-                if (!templatesByProgram[pid].templates.find(existing => existing.id === t.id)) {
-                  templatesByProgram[pid].templates.push(t);
-                }
-              }
-            });
-          }
-        });
+        const unlinkedTemplates = savedTemplates.filter(t => t.programa_ids.length === 0);
 
         const renderTemplateCard = (t: Grupo) => {
           const a = t.tvs.find((tv) => tv.posicao === 0);
