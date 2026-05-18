@@ -824,8 +824,8 @@ export default function PromocoesKiosk() {
           {/* Corpo: texto + oferecimento dentro do scroll, alinhado ao X */}
           <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
             <div
-              className="text-white font-bold promo-html-content"
-              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4 }}
+              className="font-bold promo-html-content"
+              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "var(--layout-page-text, #ffffff)" }}
               dangerouslySetInnerHTML={{
                 __html: (selectedPromo?.texto || "")
                   .replace(/\/\//g, "<br/>")
