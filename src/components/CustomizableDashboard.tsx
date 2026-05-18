@@ -346,11 +346,9 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
   const handleLinkClick = (item: DashboardItem) => {
     if (editMode) return;
     if (item.linkExternal === "player") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/player`, "_blank");
+      window.open(`/user/${resolvedUserId}/nexohub/player`, "_blank");
     } else if (item.linkExternal === "telapromo") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+      window.open(`/user/${resolvedUserId}/nexohub/telapromo`, "_blank");
     } else if (item.linkPage) {
       onNavigate(item.linkPage);
     }
