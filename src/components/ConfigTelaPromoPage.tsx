@@ -93,7 +93,11 @@ function SectionCard({ icon: Icon, title, children }: { icon: any; title: string
   );
 }
 
-export default function ConfigTelaPromoPage() {
+interface Props {
+  effectiveUserId?: string | null;
+}
+
+export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
   const { user } = useAuth();
   const [config, setConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [saving, setSaving] = useState(false);
