@@ -548,7 +548,10 @@ export default function CenariosEstudioPage() {
                     size="icon"
                     variant="secondary"
                     className="h-9 w-9 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
-                    onClick={() => setEditingIds((prev) => new Set(prev).add(t.id))}
+                    onClick={() => {
+                      setEditingIds((prev) => new Set(prev).add(t.id));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
