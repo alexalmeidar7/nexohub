@@ -566,10 +566,15 @@ export default function CenariosEstudioPage() {
                 </div>
 
                 {/* Grid Badge */}
-                <div className="absolute bottom-3 left-3">
+                <div className="absolute bottom-3 left-3 flex items-center gap-2">
                   <Badge className="bg-white/10 backdrop-blur-md border-white/20 text-white text-[10px] font-mono">
                     {t.rows}×{t.cols} GRID
                   </Badge>
+                  {isActive && (
+                    <Badge className="bg-primary/90 backdrop-blur-md border-none text-white text-[10px] font-bold animate-pulse">
+                      NO AR
+                    </Badge>
+                  )}
                 </div>
               </div>
 
