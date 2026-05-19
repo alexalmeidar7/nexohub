@@ -188,7 +188,10 @@ export default function RoteiroPrograma() {
         });
       }
     }
-    if (blocoAtual && blocoAtual.length > 0) parsedBlocos.push({ noticias: blocoAtual });
+    if (blocoAtual && blocoAtual.length > 0) {
+      const validNews = blocoAtual.filter(n => n.titulo?.trim() || n.texto_materia?.trim() || n.link?.trim());
+      if (validNews.length > 0) parsedBlocos.push({ noticias: validNews });
+    }
 
     // ── Fetch metadata for all URLs in blocos ──
     const linksToFetch: { bi: number; ni: number; url: string }[] = [];
