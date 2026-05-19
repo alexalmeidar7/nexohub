@@ -567,7 +567,7 @@ export default function CenarioTela() {
 
   /* Helper: fetch all cenario data via public edge function (no auth needed) */
   const publicBackoffRef = useRef({ consecutive: 0, BASE: 3000, MAX: 15000 });
-  const fetchViaEdgeFunction = useCallback(async (uid: string) => {
+  const fetchViaEdgeFunction = useCallback(async (uid: string, ytUrl?: string) => {
     if (!uid) return null;
 
     const nowMs = Date.now();
