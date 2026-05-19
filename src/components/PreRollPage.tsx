@@ -605,13 +605,20 @@ export default function PreRollPage() {
                           {p.data_final && format(new Date(p.data_final + "T00:00:00"), "dd/MM/yyyy")}
                         </div>
                       )}
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="flex items-center gap-1 text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                          <Eye size={11} /> {p.views_count || 0} visualizações
-                        </span>
-                        <span className="flex items-center gap-1 text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                          <MousePointerClick size={11} /> {p.clicks_count || 0} cliques
-                        </span>
+                      <div className="flex items-center gap-4 mt-2 p-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" }}>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold uppercase tracking-wider opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Exibições</span>
+                          <span className="flex items-center gap-1.5 text-xs font-bold" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
+                            <Eye size={13} /> {p.views_count || 0}
+                          </span>
+                        </div>
+                        <div className="w-px h-6" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }} />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold uppercase tracking-wider opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cliques</span>
+                          <span className="flex items-center gap-1.5 text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                            <MousePointerClick size={13} /> {p.clicks_count || 0}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
