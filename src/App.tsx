@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import PreviewNavigation from "./components/PreviewNavigation";
 import { Loader2 } from "lucide-react";
 
 // Retry wrapper for lazy imports — retries up to 3 times on chunk load failure
@@ -146,6 +147,7 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
+          <PreviewNavigation />
           <ChunkErrorBoundary>
           <Suspense fallback={
             <div
