@@ -1379,6 +1379,9 @@ export default function CenarioInterativoPage() {
   };
   const updateChat = (partial: Partial<ChatConfig>) => {
     setConfig(c => ({ ...c, chat: { ...c.chat, ...partial } }));
+    if (partial.youtubeVideoUrl !== undefined) {
+      setChatMessages([]);
+    }
   };
 
   const getElPos = useCallback((id: string): ElementPosition => {
