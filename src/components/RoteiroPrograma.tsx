@@ -111,7 +111,10 @@ export default function RoteiroPrograma() {
   };
 
   const handleSaveTxtRoteiro = async () => {
-    if (!txtEditRoteiroId || !txtEditText.trim()) return;
+    if (!txtEditRoteiroId || !txtEditText.trim()) {
+      if (!txtEditText.trim()) toast.error("Conteúdo vazio");
+      return;
+    }
     setTxtSaving(true);
 
     const roteiro = historico.find(r => r.id === txtEditRoteiroId);
@@ -149,7 +152,10 @@ export default function RoteiroPrograma() {
       if (linha.replace(/\*/g, "").trim().toUpperCase().startsWith("ESCALADA")) { secaoAtual = "escalada"; continue; }
       if (linha.replace(/\*/g, "").trim().toUpperCase().match(/^BLOCO\s*\d*/i)) {
         secaoAtual = "blocos";
-        if (blocoAtual && blocoAtual.length > 0) parsedBlocos.push({ noticias: blocoAtual });
+        if (blocoAtual && blocoAtual.length > 0) {
+          const validNews = blocoAtual.filter(n => n.titulo?.trim() || n.texto_materia?.trim() || n.link?.trim());
+          if (validNews.length > 0) parsedBlocos.push({ noticias: validNews });
+        }
         blocoAtual = [];
         continue;
       }
@@ -185,7 +191,10 @@ export default function RoteiroPrograma() {
         });
       }
     }
-    if (blocoAtual && blocoAtual.length > 0) parsedBlocos.push({ noticias: blocoAtual });
+    if (blocoAtual && blocoAtual.length > 0) {
+      const validNews = blocoAtual.filter(n => n.titulo?.trim() || n.texto_materia?.trim() || n.link?.trim());
+      if (validNews.length > 0) parsedBlocos.push({ noticias: validNews });
+    }
 
     // ── Fetch metadata for all URLs in blocos ──
     const linksToFetch: { bi: number; ni: number; url: string }[] = [];
@@ -239,6 +248,14 @@ export default function RoteiroPrograma() {
         });
       });
       if (allTitles.length > 0) tickertitulos = allTitles.join(" • ");
+    }
+
+    // Validate final structured data before saving
+    const finalNewsCount = (updatedParticipantes.blocos || []).reduce((s: number, b: any) => s + (b.noticias || []).filter((n: any) => n.titulo?.trim() || n.texto_materia?.trim() || n.link?.trim()).length, 0);
+    if (finalNewsCount === 0) {
+      toast.error("O roteiro processado não contém notícias válidas. Verifique a formatação.");
+      setTxtSaving(false);
+      return;
     }
 
     const updatePayload: any = {
