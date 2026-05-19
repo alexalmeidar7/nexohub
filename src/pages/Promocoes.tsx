@@ -825,7 +825,7 @@ export default function PromocoesKiosk() {
           <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
             <div
               className="font-bold promo-html-content"
-              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "var(--layout-page-text, #ffffff)" }}
+              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white" }}
               dangerouslySetInnerHTML={{
                 __html: (selectedPromo?.texto || "")
                   .replace(/\/\//g, "<br/>")
@@ -840,7 +840,7 @@ export default function PromocoesKiosk() {
                 <span className="text-sm uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 50%, transparent)" }}>Oferecimento</span>
                 <div
                   className="text-xl font-bold mt-2 promo-html-content"
-                  style={{ color: "var(--layout-page-text, #ffffff)" }}
+                  style={{ color: "white" }}
                   dangerouslySetInnerHTML={{
                     __html: selectedPromo.oferecimento
                       .replace(/\/\//g, "<br/>")
@@ -898,7 +898,7 @@ export default function PromocoesKiosk() {
                       )}
                       <div
                         className="max-w-none leading-[1.35] [&_*]:!bg-transparent [&_*]:leading-[1.35] [&_p]:!my-0 [&_p+p]:!mt-2"
-                        style={{ fontSize: `${fontSize}px`, lineHeight: 1.35, color: "var(--layout-page-text, #ffffff)" }}
+                        style={{ fontSize: `${fontSize}px`, lineHeight: 1.35, color: "white" }}
                         dangerouslySetInnerHTML={{
                           __html: t.texto
                             .replace(/\/\//g, "<br/>")
