@@ -892,9 +892,9 @@ export default function PromocoesKiosk() {
                     return <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 40%, transparent)" }}>Nenhum conteúdo disponível.</p>;
                   }
                   return tests.map(t => (
-                    <div key={t.id} className="mb-4">
+                    <div key={t.id} className="mb-6 p-6 rounded-2xl shadow-xl border border-white/5" style={{ backgroundColor: "#1a1a1a" }}>
                       {t.imagem_url && (
-                        <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-2 object-contain max-h-[200px]" />
+                        <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-4 object-contain max-h-[300px]" />
                       )}
                       <div
                         className="max-w-none leading-[1.35] [&_*]:!bg-transparent [&_*]:leading-[1.35] [&_p]:!my-0 [&_p+p]:!mt-2"
