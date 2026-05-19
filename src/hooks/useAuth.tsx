@@ -39,6 +39,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+
+    // Load backup session if available and keepConnected is true
+    const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
+    if (keepConnected && !lastGoodSessionRef.current) {
+      const backup = localStorage.getItem('nexohub_backup_session');
+      if (backup) {
+        try {
+          lastGoodSessionRef.current = JSON.parse(backup);
+        } catch (e) {
+          console.error("Auth: Failed to parse backup session", e);
+        }
+      }
+    }
+
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     const addTimer = (fn: () => void, ms: number) => {
@@ -177,7 +191,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session) {
           const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
           if (keepConnected) {
-            // Opcional: Você pode querer salvar no localStorage explicitamente se o persistSession do Supabase falhar em alguns navegadores
+            // Backup session storage for aggressive recovery
+            localStorage.setItem('nexohub_backup_session', JSON.stringify(session));
           }
         }
       }
@@ -190,8 +205,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth
       .getSession()
       .then(({ data: { session }, error }) => {
-        if (error && !session) {
+        if (!mounted) return;
+        
+        if (error || !session) {
+          // If we have no session but 'keep connected' is ON, we might have a transient network failure
+          const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
+          if (keepConnected && lastGoodSessionRef.current) {
+             console.log("Auth: No session found on start, but keep-connected is active. Restoring last known good session.");
+             void updateAuth(lastGoodSessionRef.current);
+             return;
+          }
+
+          // Otherwise, try one silent refresh before giving up
           return supabase.auth.refreshSession().then(({ data: refreshed }) => {
+            if (!mounted) return;
             if (refreshed.session) {
               void updateAuth(refreshed.session);
             } else {
@@ -220,6 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     manualSignOutRef.current = true;
     // Clear keep-connected flag and cached session so the user actually logs out
     localStorage.setItem(KEEP_CONNECTED_KEY, "false");
+    localStorage.removeItem('nexohub_backup_session');
     lastGoodSessionRef.current = null;
     prevUserIdRef.current = null;
     try {
