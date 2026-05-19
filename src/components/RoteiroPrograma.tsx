@@ -250,6 +250,14 @@ export default function RoteiroPrograma() {
       if (allTitles.length > 0) tickertitulos = allTitles.join(" • ");
     }
 
+    // Validate final structured data before saving
+    const finalNewsCount = (updatedParticipantes.blocos || []).reduce((s: number, b: any) => s + (b.noticias || []).filter((n: any) => n.titulo?.trim() || n.texto_materia?.trim() || n.link?.trim()).length, 0);
+    if (finalNewsCount === 0) {
+      toast.error("O roteiro processado não contém notícias válidas. Verifique a formatação.");
+      setTxtSaving(false);
+      return;
+    }
+
     const updatePayload: any = {
       conteudo_html: txtEditText,
       participantes: JSON.stringify(updatedParticipantes),
