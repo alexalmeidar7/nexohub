@@ -111,7 +111,10 @@ export default function RoteiroPrograma() {
   };
 
   const handleSaveTxtRoteiro = async () => {
-    if (!txtEditRoteiroId || !txtEditText.trim()) return;
+    if (!txtEditRoteiroId || !txtEditText.trim()) {
+      if (!txtEditText.trim()) toast.error("Conteúdo vazio");
+      return;
+    }
     setTxtSaving(true);
 
     const roteiro = historico.find(r => r.id === txtEditRoteiroId);
