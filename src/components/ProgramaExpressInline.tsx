@@ -745,33 +745,40 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         }
 
         const decodeFull = (v: string) => { let s = v; for (let i = 0; i < 3; i++) { const d = decodeHtmlEntities(s); if (d === s) break; s = d; } return s; };
-        const existingNoticia = blocos[bi]?.noticias[ni];
-        const hasSubstantialText = (existingNoticia?.texto_materia && existingNoticia.texto_materia.length > 200) || 
-                                  (existingNoticia?.resumo && existingNoticia.resumo.length > 200);
+        
+        // We need to use a functional update for setBlocos to ensure we don't rely on stale state
+        setBlocos(prev => prev.map((b, i) => i === bi ? {
+          ...b,
+          noticias: b.noticias.map((n, j) => {
+            if (j !== ni) return n;
+            const updated = { ...n };
+            const hasSubstantialText = (n.texto_materia && n.texto_materia.length > 200) || 
+                                      (n.resumo && n.resumo.length > 200);
 
-        if (title && (forceReprocess || !existingNoticia?.titulo || existingNoticia.titulo.length < 5)) {
-          updateNoticia(bi, ni, "titulo", decodeFull(title));
-        }
-        
-        if (image && (forceReprocess || !existingNoticia?.imagemUrl)) {
-          updateNoticia(bi, ni, "imagemUrl", decodeFull(image));
-        }
-        
-        if (summary && (forceReprocess || !hasSubstantialText)) {
-          updateNoticia(bi, ni, "resumo", decodeFull(summary));
-        }
-        
-        if (data.journalisticText) {
-          updateNoticia(bi, ni, "texto_materia", data.journalisticText);
-          if (data.journalisticText.includes("ERRO:")) {
-            toast.error("Erro na geração da IA", { description: data.journalisticText });
-          }
+            if (title && (forceReprocess || !n.titulo || n.titulo.length < 5)) {
+              updated.titulo = decodeFull(title);
+            }
+            if (image && (forceReprocess || !n.imagemUrl)) {
+              updated.imagemUrl = decodeFull(image);
+            }
+            if (summary && (forceReprocess || !hasSubstantialText)) {
+              updated.resumo = decodeFull(summary);
+            }
+            if (data.journalisticText) {
+              updated.texto_materia = data.journalisticText;
+            }
+            updated.link = url;
+            return updated;
+          })
+        } : b));
+
+        if (data.journalisticText && data.journalisticText.includes("ERRO:")) {
+          toast.error("Erro na geração da IA", { description: data.journalisticText });
         } else if (configuracoes.producao_ai_habilitada && !data.journalisticText) {
           console.warn("AI failed to return journalistic text despite being enabled.");
           toast.warning("A IA não retornou o texto jornalístico. Tente reprocessar.");
         }
         
-        updateNoticia(bi, ni, "link", url);
         if (title) toast.success(forceReprocess ? "Matéria reprocessada com sucesso!" : "Dados extraídos do link!"); 
         else toast.warning("Link carregado, mas não foi possível extrair o título");
       } else { toast.error("Não foi possível acessar o link"); }
