@@ -149,11 +149,7 @@ type PublicCenarioPayload = {
   youtubeChatMessages?: { user: string; text: string; avatar?: string }[] | null;
 };
 
-const defaultMessages = [
-  { user: "João Silva", text: "Boa tarde! 🎉" },
-  { user: "Maria", text: "Excelente programa hoje!" },
-  { user: "Carlos", text: "Manda salve pra galera!" },
-];
+const defaultMessages: { user: string; text: string; avatar?: string }[] = [];
 
 export default function CenarioTela() {
   const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>(defaultMessages);

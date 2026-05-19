@@ -219,11 +219,7 @@ async function fetchLiveStocks(): Promise<LiveStock[]> {
   }
 }
 
-const mockMessages = [
-  { user: "João Silva", text: "Boa tarde! 🎉" },
-  { user: "Maria", text: "Excelente programa hoje!" },
-  { user: "Carlos", text: "Manda salve pra galera!" },
-];
+const mockMessages: { user: string; text: string; avatar?: string }[] = [];
 
 /* ─── BG Upload helper ─── */
 async function uploadBgImage(file: File, userId: string, category: string): Promise<string> {
@@ -1071,6 +1067,8 @@ export default function CenarioInterativoPage() {
               const json = await resp.json();
               if (json?.youtubeChatMessages) {
                 setChatMessages(json.youtubeChatMessages);
+              } else {
+                setChatMessages([]);
               }
             }
           } catch (err) {

@@ -72,8 +72,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check cache first (longer TTL to survive DB outages)
-    const cached = uidCache.get(userId);
+    // Create a composite cache key that includes the videoId if chat is enabled
+    // This prevents serving old chat messages when the user changes the URL
+    const videoIdParam = url.searchParams.get("videoId") || "";
+    const cacheKey = videoIdParam ? `${userId}:${videoIdParam}` : userId;
+    const cached = uidCache.get(cacheKey);
+    
     if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
       return new Response(JSON.stringify(cached.data), {
         headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-cache" },
@@ -320,7 +324,7 @@ Deno.serve(async (req) => {
     };
 
     // Store in cache
-    uidCache.set(userId, { data: responsePayload, ts: Date.now() });
+    uidCache.set(cacheKey, { data: responsePayload, ts: Date.now() });
     // Evict old entries
     if (uidCache.size > 100) {
       const cutoff = Date.now() - CACHE_TTL_MS * 2;
