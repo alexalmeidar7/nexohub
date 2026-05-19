@@ -146,7 +146,10 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
         const newItems: NewsItem[] = links.map(l => ({ titulo: "", imagemUrl: "", escalada: false, link: l }));
         onUpdateBloco(bi, newItems);
         totalLinks += links.length;
-        // sequentially fetch metadata for each new item
+
+        // Use current state reference logic via setTimeout to allow state update to propagate
+        // but here we can just pass the newItems info indirectly if needed.
+        // Actually, fetchFromLink uses setBlocos internally which is fine.
         for (let ni = 0; ni < links.length; ni++) {
           await fetchFromLink(bi, ni, links[ni]);
         }
