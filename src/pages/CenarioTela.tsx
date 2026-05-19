@@ -149,11 +149,7 @@ type PublicCenarioPayload = {
   youtubeChatMessages?: { user: string; text: string; avatar?: string }[] | null;
 };
 
-const defaultMessages = [
-  { user: "João Silva", text: "Boa tarde! 🎉" },
-  { user: "Maria", text: "Excelente programa hoje!" },
-  { user: "Carlos", text: "Manda salve pra galera!" },
-];
+const defaultMessages: { user: string; text: string; avatar?: string }[] = [];
 
 export default function CenarioTela() {
   const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>(defaultMessages);
@@ -571,7 +567,7 @@ export default function CenarioTela() {
 
   /* Helper: fetch all cenario data via public edge function (no auth needed) */
   const publicBackoffRef = useRef({ consecutive: 0, BASE: 3000, MAX: 15000 });
-  const fetchViaEdgeFunction = useCallback(async (uid: string) => {
+  const fetchViaEdgeFunction = useCallback(async (uid: string, ytUrl?: string) => {
     if (!uid) return null;
 
     const nowMs = Date.now();
@@ -592,7 +588,7 @@ export default function CenarioTela() {
         const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
         const day = dayNames[now.getDay()];
         const time = now.toTimeString().slice(0, 5);
-        const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}&day=${encodeURIComponent(day)}&time=${time}`;
+        const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}&day=${encodeURIComponent(day)}&time=${time}${ytUrl ? `&ytUrl=${encodeURIComponent(ytUrl)}` : ""}&_t=${Date.now()}`;
         const resp = await fetch(baseUrl, {
           headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
         });
@@ -663,13 +659,13 @@ export default function CenarioTela() {
         }
       } else {
         // Unauthenticated (vMix browser, etc): use edge function
-        const result = await fetchViaEdgeFunction(effectiveUserId);
+        const result = await fetchViaEdgeFunction(effectiveUserId, config.chat?.youtubeVideoUrl);
         if (result?.cenario_config) applyConfig(result.cenario_config);
         if (result?.accentColor) setAccentColor(result.accentColor);
         if (result?.youtubeChatMessages && result.youtubeChatMessages.length > 0) {
           setChatMessages(result.youtubeChatMessages);
-        } else if (!result?.youtubeChatMessages) {
-          setChatMessages(defaultMessages);
+        } else if (result?.ok) {
+          setChatMessages([]);
         }
         if (result?.currentProgram) {
           setCurrentProgram(result.currentProgram);
@@ -769,13 +765,13 @@ export default function CenarioTela() {
         if (pollingPublic) return;
         pollingPublic = true;
         try {
-          const result = await fetchViaEdgeFunction(effectiveUserId);
+          const result = await fetchViaEdgeFunction(effectiveUserId, config.chat?.youtubeVideoUrl);
           if (result?.cenario_config) applyConfig(result.cenario_config);
           if (result?.accentColor) setAccentColor(result.accentColor);
           if (result?.youtubeChatMessages && result.youtubeChatMessages.length > 0) {
             setChatMessages(result.youtubeChatMessages);
-          } else if (!result?.youtubeChatMessages) {
-            setChatMessages(defaultMessages);
+          } else if (result?.ok) {
+            setChatMessages([]);
           }
           if (result?.currentProgram) {
             setCurrentProgram(result.currentProgram);
@@ -1114,7 +1110,7 @@ export default function CenarioTela() {
           const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
           const day = dayNames[now.getDay()];
           const time = now.toTimeString().slice(0, 5);
-          const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${effectiveUserId}&day=${encodeURIComponent(day)}&time=${time}&_cache=0&_t=${Date.now()}`;
+          const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${effectiveUserId}&day=${encodeURIComponent(day)}&time=${time}&ytUrl=${encodeURIComponent(config.chat.youtubeVideoUrl || "")}&_cache=0&_t=${Date.now()}`;
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 6000);
           const resp = await fetch(baseUrl, {
@@ -1129,8 +1125,8 @@ export default function CenarioTela() {
             }
             if (json?.youtubeChatMessages && json.youtubeChatMessages.length > 0) {
               setChatMessages(json.youtubeChatMessages);
-            } else if (json?.ok && !json.youtubeChatMessages) {
-              setChatMessages(defaultMessages);
+            } else if (json?.ok) {
+              setChatMessages([]);
             } else {
               // Fallback: try direct XML from browser (for local-network XMLs)
               const xmlUrl = json?.musicXmlUrl || musicXmlUrlRef.current;

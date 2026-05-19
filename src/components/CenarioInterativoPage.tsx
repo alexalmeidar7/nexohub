@@ -219,11 +219,7 @@ async function fetchLiveStocks(): Promise<LiveStock[]> {
   }
 }
 
-const mockMessages = [
-  { user: "João Silva", text: "Boa tarde! 🎉" },
-  { user: "Maria", text: "Excelente programa hoje!" },
-  { user: "Carlos", text: "Manda salve pra galera!" },
-];
+const mockMessages: { user: string; text: string; avatar?: string }[] = [];
 
 /* ─── BG Upload helper ─── */
 async function uploadBgImage(file: File, userId: string, category: string): Promise<string> {
@@ -1063,7 +1059,7 @@ export default function CenarioInterativoPage() {
             const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
             const day = dayNames[now.getDay()];
             const time = now.toTimeString().slice(0, 5);
-            const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${user.id}&day=${encodeURIComponent(day)}&time=${time}&_t=${Date.now()}`;
+            const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${user.id}&day=${encodeURIComponent(day)}&time=${time}&ytUrl=${encodeURIComponent(config.chat.youtubeVideoUrl)}&_t=${Date.now()}`;
             const resp = await fetch(baseUrl, {
               headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
             });
@@ -1071,6 +1067,8 @@ export default function CenarioInterativoPage() {
               const json = await resp.json();
               if (json?.youtubeChatMessages) {
                 setChatMessages(json.youtubeChatMessages);
+              } else {
+                setChatMessages([]);
               }
             }
           } catch (err) {
@@ -1381,6 +1379,9 @@ export default function CenarioInterativoPage() {
   };
   const updateChat = (partial: Partial<ChatConfig>) => {
     setConfig(c => ({ ...c, chat: { ...c.chat, ...partial } }));
+    if (partial.youtubeVideoUrl !== undefined) {
+      setChatMessages([]);
+    }
   };
 
   const getElPos = useCallback((id: string): ElementPosition => {
