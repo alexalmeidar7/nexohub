@@ -147,6 +147,7 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
+          <PreviewNavigation />
           <ChunkErrorBoundary>
           <Suspense fallback={
             <div
