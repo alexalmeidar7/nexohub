@@ -190,8 +190,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth
       .getSession()
       .then(({ data: { session }, error }) => {
-        if (error && !session) {
+        if (!mounted) return;
+        
+        if (error || !session) {
+          // If we have no session but 'keep connected' is ON, we might have a transient network failure
+          const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
+          if (keepConnected && lastGoodSessionRef.current) {
+             console.log("Auth: No session found on start, but keep-connected is active. Restoring last known good session.");
+             void updateAuth(lastGoodSessionRef.current);
+             return;
+          }
+
+          // Otherwise, try one silent refresh before giving up
           return supabase.auth.refreshSession().then(({ data: refreshed }) => {
+            if (!mounted) return;
             if (refreshed.session) {
               void updateAuth(refreshed.session);
             } else {
