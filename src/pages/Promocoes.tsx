@@ -802,7 +802,7 @@ export default function PromocoesKiosk() {
 
       {/* Modal da Promoção */}
       <Dialog open={!!selectedPromo} onOpenChange={(open) => { if (!open) closePromoModal(); }}>
-        <DialogContent className="border-zinc-800 text-white max-w-2xl h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "var(--layout-page-bg, #09090b)" }}>
+        <DialogContent className="border-zinc-800 text-white max-w-2xl h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
           {/* Banner fixo no topo com padding */}
           {selectedPromo?.imagem_url && (
             <div className="flex-shrink-0 pt-4 px-4">
@@ -856,7 +856,7 @@ export default function PromocoesKiosk() {
 
       {/* Modal de Programação */}
       <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
-        <DialogContent className="border-zinc-800 text-white max-w-4xl h-[80vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "var(--layout-page-bg, #09090b)" }}>
+        <DialogContent className="border-zinc-800 text-white max-w-4xl h-[80vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
           <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full">
               {/* Horário em destaque */}
               <div className="px-4 pt-4 pb-1 flex-shrink-0">
@@ -892,9 +892,9 @@ export default function PromocoesKiosk() {
                     return <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 40%, transparent)" }}>Nenhum conteúdo disponível.</p>;
                   }
                   return tests.map(t => (
-                    <div key={t.id} className="mb-4">
+                    <div key={t.id} className="mb-6 p-6 rounded-2xl shadow-xl border border-white/5" style={{ backgroundColor: "#1a1a1a" }}>
                       {t.imagem_url && (
-                        <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-2 object-contain max-h-[200px]" />
+                        <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-4 object-contain max-h-[300px]" />
                       )}
                       <div
                         className="max-w-none leading-[1.35] [&_*]:!bg-transparent [&_*]:leading-[1.35] [&_p]:!my-0 [&_p+p]:!mt-2"
