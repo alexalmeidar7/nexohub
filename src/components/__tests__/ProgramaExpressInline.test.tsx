@@ -4,29 +4,36 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import { supabase } from "@/integrations/supabase/client";
 
 // Mock das dependências
-vi.mock("@/integrations/supabase/client", () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: { id: "123", nome: "Teste" }, error: null }),
-      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-    })),
-    storage: {
-      from: vi.fn(() => ({
-        upload: vi.fn().mockResolvedValue({ data: {}, error: null }),
-        getPublicUrl: vi.fn(() => ({ data: { publicUrl: "http://test.xml" } })),
-      })),
+vi.mock("@/integrations/supabase/client", () => {
+  const mockChain = {
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: { id: "123", nome: "Teste" }, error: null }),
+    maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    then: vi.fn(function(onFulfilled) {
+      return Promise.resolve({ data: [], error: null }).then(onFulfilled);
+    }),
+  };
+
+  return {
+    supabase: {
+      from: vi.fn(() => mockChain),
+      storage: {
+        from: vi.fn(() => ({
+          upload: vi.fn().mockResolvedValue({ data: {}, error: null }),
+          getPublicUrl: vi.fn(() => ({ data: { publicUrl: "http://test.xml" } })),
+        })),
+      },
+      functions: {
+        invoke: vi.fn().mockResolvedValue({ data: { ok: true }, error: null }),
+      },
     },
-    functions: {
-      invoke: vi.fn().mockResolvedValue({ data: { ok: true }, error: null }),
-    },
-  },
-}));
+  };
+});
 
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({
