@@ -664,8 +664,8 @@ export default function CenarioTela() {
         if (result?.accentColor) setAccentColor(result.accentColor);
         if (result?.youtubeChatMessages && result.youtubeChatMessages.length > 0) {
           setChatMessages(result.youtubeChatMessages);
-        } else if (!result?.youtubeChatMessages) {
-          setChatMessages(defaultMessages);
+        } else if (result?.ok) {
+          setChatMessages([]);
         }
         if (result?.currentProgram) {
           setCurrentProgram(result.currentProgram);
@@ -770,8 +770,8 @@ export default function CenarioTela() {
           if (result?.accentColor) setAccentColor(result.accentColor);
           if (result?.youtubeChatMessages && result.youtubeChatMessages.length > 0) {
             setChatMessages(result.youtubeChatMessages);
-          } else if (!result?.youtubeChatMessages) {
-            setChatMessages(defaultMessages);
+          } else if (result?.ok) {
+            setChatMessages([]);
           }
           if (result?.currentProgram) {
             setCurrentProgram(result.currentProgram);
@@ -1125,8 +1125,8 @@ export default function CenarioTela() {
             }
             if (json?.youtubeChatMessages && json.youtubeChatMessages.length > 0) {
               setChatMessages(json.youtubeChatMessages);
-            } else if (json?.ok && !json.youtubeChatMessages) {
-              setChatMessages(defaultMessages);
+            } else if (json?.ok) {
+              setChatMessages([]);
             } else {
               // Fallback: try direct XML from browser (for local-network XMLs)
               const xmlUrl = json?.musicXmlUrl || musicXmlUrlRef.current;
