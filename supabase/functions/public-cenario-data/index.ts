@@ -74,8 +74,8 @@ Deno.serve(async (req) => {
 
     // Create a composite cache key that includes the videoId if chat is enabled
     // This prevents serving old chat messages when the user changes the URL
-    const videoIdParam = url.searchParams.get("videoId") || "";
-    const cacheKey = videoIdParam ? `${userId}:${videoIdParam}` : userId;
+    const ytUrlParam = url.searchParams.get("ytUrl") || "";
+    const cacheKey = ytUrlParam ? `${userId}:${ytUrlParam}` : userId;
     const cached = uidCache.get(cacheKey);
     
     if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
