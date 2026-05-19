@@ -39,6 +39,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+
+    // Load backup session if available and keepConnected is true
+    const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
+    if (keepConnected && !lastGoodSessionRef.current) {
+      const backup = localStorage.getItem('nexohub_backup_session');
+      if (backup) {
+        try {
+          lastGoodSessionRef.current = JSON.parse(backup);
+        } catch (e) {
+          console.error("Auth: Failed to parse backup session", e);
+        }
+      }
+    }
+
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     const addTimer = (fn: () => void, ms: number) => {
@@ -177,7 +191,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session) {
           const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
           if (keepConnected) {
-            // Opcional: Você pode querer salvar no localStorage explicitamente se o persistSession do Supabase falhar em alguns navegadores
+            // Backup session storage for aggressive recovery
+            localStorage.setItem('nexohub_backup_session', JSON.stringify(session));
           }
         }
       }
@@ -232,6 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     manualSignOutRef.current = true;
     // Clear keep-connected flag and cached session so the user actually logs out
     localStorage.setItem(KEEP_CONNECTED_KEY, "false");
+    localStorage.removeItem('nexohub_backup_session');
     lastGoodSessionRef.current = null;
     prevUserIdRef.current = null;
     try {
