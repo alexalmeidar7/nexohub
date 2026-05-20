@@ -44,6 +44,7 @@ const PlayerCatalog = lazyRetry(() => import("./pages/player/PlayerCatalog"));
 const VmixControl = lazyRetry(() => import("./pages/VmixControl"));
 const CenarioTela = lazyRetry(() => import("./pages/CenarioTela"));
 const TelaInterativa = lazyRetry(() => import("./pages/TelaInterativa"));
+const CenarioTelaFull = lazyRetry(() => import("./pages/CenarioTelaFull"));
 const IntercomListener = lazyRetry(() => import("./pages/IntercomListener"));
 
 interface ErrorBoundaryState {
@@ -191,6 +192,7 @@ const App = () => (
             <Route path="/vmix-control" element={<VmixControl />} />
             <Route path="/cenario-tela" element={<CenarioTela />} />
             <Route path="/intercom" element={<IntercomListener />} />
+            <Route path="/cenario-tela-full" element={<CenarioTelaFull />} />
             <Route path="/telainterativatelao" element={<TelaInterativa />} />
 
             {/* Slug routes for dynamic access */}
