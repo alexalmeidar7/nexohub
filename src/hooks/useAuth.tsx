@@ -165,19 +165,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      
       if (event === "SIGNED_OUT") {
         const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
+        
+        // Manual logout should always work
         if (manualSignOutRef.current) {
           manualSignOutRef.current = false;
           void updateAuth(null);
           return;
         }
 
-        // If 'keep connected' is on and it wasn't a manual sign out, try to recover
+        // If 'keep connected' is on and it wasn't a manual sign out, IGNORE the SIGNED_OUT event.
+        // This usually happens when another device logs out or a session expires on one tab but should persist globally.
         if (keepConnected && lastGoodSessionRef.current) {
-          console.warn("Auth: Unexpected signed out event but 'keep connected' is active. Attempting to restore session.");
-          void updateAuth(lastGoodSessionRef.current);
+          console.warn("Auth: Ignored SIGNED_OUT event because 'keep connected' is active.");
+          // We don't call updateAuth(null) here, we stay as we are.
           return;
         }
         
@@ -197,7 +199,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      
       void updateAuth(session);
     });
 
