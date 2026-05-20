@@ -811,7 +811,7 @@ export default function PromocoesKiosk() {
           )}
 
           {/* Período com ícone de calendário */}
-          <div className="px-4 pt-2 text-xs flex items-center gap-1.5 flex-shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 60%, transparent)" }}>
+          <div className="px-4 pt-2 text-xs flex items-center gap-1.5 flex-shrink-0" style={{ color: "rgba(255, 255, 255, 0.6)" }}>
             <Calendar size={12} />
             <span>Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}</span>
           </div>
@@ -837,7 +837,7 @@ export default function PromocoesKiosk() {
             {/* Oferecimento dentro do scroll, após o texto */}
             {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
               <div className="mt-6 pt-4 border-t border-white/10 text-center">
-                <span className="text-sm uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 50%, transparent)" }}>Oferecimento</span>
+                <span className="text-sm uppercase tracking-wider" style={{ color: "rgba(255, 255, 255, 0.5)" }}>Oferecimento</span>
                 <div
                   className="text-xl font-bold mt-2 promo-html-content"
                   style={{ color: "white" }}
@@ -862,13 +862,13 @@ export default function PromocoesKiosk() {
               <div className="px-4 pt-4 pb-1 flex-shrink-0">
                   {selectedProgram?.schedules && selectedProgram.schedules.length > 0 ? (
                     selectedProgram.schedules.map((s, i) => (
-                      <div key={i} className="text-lg font-bold" style={{ color: "var(--layout-page-text, #ffffff)" }}>
+                      <div key={i} className="text-lg font-bold" style={{ color: "white" }}>
                         {s.horarioInicio.slice(0, 5)} às {s.horarioFim.slice(0, 5)}
-                        {s.dias.length > 0 && <span className="text-xs ml-2 font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 60%, transparent)" }}>{s.dias.join(", ")}</span>}
+                        {s.dias.length > 0 && <span className="text-xs ml-2 font-normal" style={{ color: "rgba(255, 255, 255, 0.6)" }}>{s.dias.join(", ")}</span>}
                       </div>
                     ))
                   ) : (
-                    <div className="text-lg font-bold" style={{ color: "var(--layout-page-text, #ffffff)" }}>
+                    <div className="text-lg font-bold" style={{ color: "white" }}>
                       {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
                     </div>
                   )}
@@ -889,7 +889,7 @@ export default function PromocoesKiosk() {
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
-                    return <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 40%, transparent)" }}>Nenhum conteúdo disponível.</p>;
+                    return <p className="text-sm" style={{ color: "rgba(255, 255, 255, 0.4)" }}>Nenhum conteúdo disponível.</p>;
                   }
                   return tests.map(t => (
                     <div key={t.id} className="mb-6 p-6 rounded-2xl shadow-xl border border-white/5" style={{ backgroundColor: "#1a1a1a" }}>
