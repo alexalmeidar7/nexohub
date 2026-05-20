@@ -354,7 +354,7 @@ serve(async (req) => {
     ]);
 
     const emp = empRes.data;
-    const prog = (progsRes.data || [])
+    const activePrograms = (progsRes.data || [])
       .map((item) => ({
         item,
         sortKey: getCurrentProgramSortKey(
@@ -369,15 +369,22 @@ serve(async (req) => {
           todayDate,
           yesterdayDate,
         ),
+        isVariavelHoje:
+          !!item.variavel && normalizeDateValue(item.data_variavel) === todayDate,
+        endSec: timeToSeconds(item.horario_fim),
       }))
-      .filter((entry) => entry.sortKey >= 0)
-      .sort((a, b) => {
-        // Prefer variable (one-off special) programs scheduled exactly for today over recurring ones
-        const aVar = a.item.variavel && normalizeDateValue(a.item.data_variavel) === todayDate ? 1 : 0;
-        const bVar = b.item.variavel && normalizeDateValue(b.item.data_variavel) === todayDate ? 1 : 0;
-        if (aVar !== bVar) return bVar - aVar;
-        return b.sortKey - a.sortKey;
-      })[0]?.item || null;
+      .filter((entry) => entry.sortKey >= 0);
+
+    // Variable special program for today only counts while still inside its time window.
+    // Once it ends, fall back to the recurring grade program covering "now".
+    const variavelAtivo = activePrograms.find(
+      (e) => e.isVariavelHoje && nowSeconds < e.endSec,
+    );
+    const recorrenteAtivo = activePrograms
+      .filter((e) => !e.isVariavelHoje)
+      .sort((a, b) => b.sortKey - a.sortKey)[0];
+
+    const prog = (variavelAtivo || recorrenteAtivo)?.item || null;
 
 
     let programaNome = "";
