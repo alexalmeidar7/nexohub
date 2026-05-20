@@ -811,7 +811,7 @@ export default function PromocoesKiosk() {
           )}
 
           {/* Período com ícone de calendário */}
-          <div className="px-4 pt-2 text-xs flex items-center gap-1.5 flex-shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 60%, transparent)" }}>
+          <div className="px-4 pt-2 text-xs flex items-center gap-1.5 flex-shrink-0" style={{ color: "rgba(255, 255, 255, 0.6)" }}>
             <Calendar size={12} />
             <span>Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}</span>
           </div>
