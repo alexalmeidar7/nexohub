@@ -329,7 +329,6 @@ export default function CenarioInterativoPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
   const [activeTab, setActiveTab] = useState("home");
-  const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>([]);
   const [isUpdatingChat, setIsUpdatingChat] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [weatherSubTab, setWeatherSubTab] = useState("today");

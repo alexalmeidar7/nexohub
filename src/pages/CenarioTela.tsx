@@ -174,27 +174,70 @@ export default function CenarioTela() {
   const [currentChatMessageIdx, setCurrentChatMessageIdx] = useState(0);
   const displayedMessagesRef = useRef<Set<number>>(new Set());
 
-  useEffect(() => {
-    if (activeTab === "chat" && chatMessages.length > 0) {
-      const interval = setInterval(() => {
-        setCurrentChatMessageIdx((prevIdx) => {
-          const availableIndices = chatMessages
-            .map((_, index) => index)
-            .filter((index) => !displayedMessagesRef.current.has(index));
+  /* Helper: fetch all cenario data via public edge function (no auth needed) */
+  const publicBackoffRef = useRef({ consecutive: 0, BASE: 3000, MAX: 15000 });
+  const publicFetchInFlightRef = useRef<Promise<PublicCenarioPayload | null> | null>(null);
+  const publicFetchLastResultRef = useRef<PublicCenarioPayload | null>(null);
+  const publicFetchLastAtRef = useRef(0);
 
-          if (availableIndices.length === 0) {
-            displayedMessagesRef.current.clear();
-            return (prevIdx + 1) % chatMessages.length;
-          }
+  const fetchViaEdgeFunction = useCallback(async (uid: string, ytUrl?: string) => {
+    if (!uid) return null;
 
-          const nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-          displayedMessagesRef.current.add(nextIndex);
-          return nextIndex;
-        });
-      }, 6000);
-      return () => clearInterval(interval);
+    const nowMs = Date.now();
+    if (publicFetchInFlightRef.current) {
+      return publicFetchInFlightRef.current;
     }
-  }, [activeTab, chatMessages.length]);
+    const bo = publicBackoffRef.current;
+    const jitter = Math.random() * 5000;
+    const minGap = Math.min(bo.BASE * Math.pow(2, bo.consecutive), bo.MAX) + jitter;
+    const clientCacheWindow = bo.consecutive > 0 ? Math.min(minGap, 12000) : 2500;
+    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < clientCacheWindow) {
+      return publicFetchLastResultRef.current;
+    }
+
+    const request = (async (): Promise<PublicCenarioPayload | null> => {
+      try {
+        const now = new Date();
+        const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const day = dayNames[now.getDay()];
+        const time = now.toTimeString().slice(0, 5);
+        const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}&day=${encodeURIComponent(day)}&time=${time}${ytUrl ? `&ytUrl=${encodeURIComponent(ytUrl)}` : ""}&_t=${Date.now()}`;
+        const resp = await fetch(baseUrl, {
+          headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        });
+        if (!resp.ok) {
+          bo.consecutive = Math.min(bo.consecutive + 1, 8);
+          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
+          return publicFetchLastResultRef.current;
+        }
+
+        const json = await resp.json();
+        if (!json?.ok) {
+          bo.consecutive = Math.min(bo.consecutive + 1, 8);
+          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
+          return publicFetchLastResultRef.current;
+        }
+
+        bo.consecutive = 0;
+        setBackendHealth("online");
+        const parsed = json as PublicCenarioPayload;
+        publicFetchLastResultRef.current = parsed;
+        publicFetchLastAtRef.current = Date.now();
+        return parsed;
+      } catch {
+        bo.consecutive = Math.min(bo.consecutive + 1, 8);
+        setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
+        return publicFetchLastResultRef.current;
+      }
+    })();
+
+    publicFetchInFlightRef.current = request;
+    try {
+      return await request;
+    } finally {
+      publicFetchInFlightRef.current = null;
+    }
+  }, []);
 
   const updateChatMessages = useCallback(async () => {
     if (!effectiveUserId || activeTab !== "chat" || isUpdatingChat) return;
@@ -226,6 +269,28 @@ export default function CenarioTela() {
       return () => clearInterval(interval);
     }
   }, [activeTab, updateChatMessages]);
+
+  useEffect(() => {
+    if (activeTab === "chat" && chatMessages.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentChatMessageIdx((prevIdx) => {
+          const availableIndices = chatMessages
+            .map((_, index) => index)
+            .filter((index) => !displayedMessagesRef.current.has(index));
+
+          if (availableIndices.length === 0) {
+            displayedMessagesRef.current.clear();
+            return (prevIdx + 1) % chatMessages.length;
+          }
+
+          const nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+          displayedMessagesRef.current.add(nextIndex);
+          return nextIndex;
+        });
+      }, 6000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, chatMessages.length]);
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
@@ -597,66 +662,6 @@ export default function CenarioTela() {
     }
   }, []);
 
-  /* Helper: fetch all cenario data via public edge function (no auth needed) */
-  const publicBackoffRef = useRef({ consecutive: 0, BASE: 3000, MAX: 15000 });
-  const fetchViaEdgeFunction = useCallback(async (uid: string, ytUrl?: string) => {
-    if (!uid) return null;
-
-    const nowMs = Date.now();
-    if (publicFetchInFlightRef.current) {
-      return publicFetchInFlightRef.current;
-    }
-    const bo = publicBackoffRef.current;
-    const jitter = Math.random() * 5000;
-    const minGap = Math.min(bo.BASE * Math.pow(2, bo.consecutive), bo.MAX) + jitter;
-    const clientCacheWindow = bo.consecutive > 0 ? Math.min(minGap, 12000) : 2500;
-    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < clientCacheWindow) {
-      return publicFetchLastResultRef.current;
-    }
-
-    const request = (async (): Promise<PublicCenarioPayload | null> => {
-      try {
-        const now = new Date();
-        const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-        const day = dayNames[now.getDay()];
-        const time = now.toTimeString().slice(0, 5);
-        const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}&day=${encodeURIComponent(day)}&time=${time}${ytUrl ? `&ytUrl=${encodeURIComponent(ytUrl)}` : ""}&_t=${Date.now()}`;
-        const resp = await fetch(baseUrl, {
-          headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-        });
-        if (!resp.ok) {
-          bo.consecutive = Math.min(bo.consecutive + 1, 8);
-          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
-          return publicFetchLastResultRef.current;
-        }
-
-        const json = await resp.json();
-        if (!json?.ok) {
-          bo.consecutive = Math.min(bo.consecutive + 1, 8);
-          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
-          return publicFetchLastResultRef.current;
-        }
-
-        bo.consecutive = 0;
-        setBackendHealth("online");
-        const parsed = json as PublicCenarioPayload;
-        publicFetchLastResultRef.current = parsed;
-        publicFetchLastAtRef.current = Date.now();
-        return parsed;
-      } catch {
-        bo.consecutive = Math.min(bo.consecutive + 1, 8);
-        setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
-        return publicFetchLastResultRef.current;
-      }
-    })();
-
-    publicFetchInFlightRef.current = request;
-    try {
-      return await request;
-    } finally {
-      publicFetchInFlightRef.current = null;
-    }
-  }, []);
 
   /* Load config from DB + subscribe to realtime changes */
   const initialTabLoaded = useRef(false);
