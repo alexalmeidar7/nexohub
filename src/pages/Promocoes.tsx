@@ -791,7 +791,7 @@ export default function PromocoesKiosk() {
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
                       <PromoIcon size={18} />
                     </div>
-                    <span className="whitespace-nowrap">{promo.botao_url === "SAIBA MAIS" ? "" : promo.botao_url}</span>
+                    <span className="whitespace-nowrap">{promo.botao_url}</span>
                   </div>
                 );
               })}
