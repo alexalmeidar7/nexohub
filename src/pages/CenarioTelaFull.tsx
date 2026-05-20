@@ -405,7 +405,8 @@ export default function CenarioTelaFull() {
   }, [musicData?.artista, isBreakTrack, isJornalistico]);
 
   /* ─── Screen Rotation ─── */
-  const [screenRotation, setScreenRotation] = useState(0);
+  // screenRotation fixada em 0 para tela full
+  // const [screenRotation, setScreenRotation] = useState(0);
 
   /* ─── Drawing (Pen) ─── */
   const [drawingActive, setDrawingActive] = useState(false);
@@ -1289,11 +1290,12 @@ export default function CenarioTelaFull() {
 
   const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
 
-  const isLandscape = screenRotation === 90 || screenRotation === 270;
+  const isLandscape = true; // Forçado para full horizontal
+  const screenRotation = 0; // Resetar rotação
 
-  /* ── Fixed 1080×1920 virtual canvas scaled to fit viewport ── */
-  const CANVAS_W = 1080;
-  const CANVAS_H = 1920;
+  /* ── Fixed 1920×1080 virtual canvas scaled to fit viewport ── */
+  const CANVAS_W = 1920;
+  const CANVAS_H = 1080;
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewScale, setViewScale] = useState(1);
 
@@ -1303,11 +1305,7 @@ export default function CenarioTelaFull() {
     const calc = () => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      if (isLandscape) {
-        setViewScale(Math.min(vw / CANVAS_H, vh / CANVAS_W));
-      } else {
-        setViewScale(Math.min(vw / CANVAS_W, vh / CANVAS_H));
-      }
+      setViewScale(Math.min(vw / CANVAS_W, vh / CANVAS_H));
     };
     calc();
     window.addEventListener("resize", calc);
@@ -1333,12 +1331,12 @@ export default function CenarioTelaFull() {
         style={{
           width: CANVAS_W,
           height: CANVAS_H,
-          transform: `scale(${viewScale}) rotate(${screenRotation}deg)`,
+          transform: `scale(${viewScale})`,
           transformOrigin: "center center",
           transition: "transform 0.5s ease",
         }}
       >
-        <div className="relative cenario-page-wrapper" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${vhToPx(1.8)}px`, fontFamily: "'Inter', sans-serif" }}>
+        <div className="relative cenario-page-wrapper" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `24px`, fontFamily: "'Inter', sans-serif" }}>
 
           {/* Fullscreen background layers behind sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
