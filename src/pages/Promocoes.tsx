@@ -889,7 +889,7 @@ export default function PromocoesKiosk() {
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
-                    return <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 40%, transparent)" }}>Nenhum conteúdo disponível.</p>;
+                    return <p className="text-sm" style={{ color: "rgba(255, 255, 255, 0.4)" }}>Nenhum conteúdo disponível.</p>;
                   }
                   return tests.map(t => (
                     <div key={t.id} className="mb-6 p-6 rounded-2xl shadow-xl border border-white/5" style={{ backgroundColor: "#1a1a1a" }}>
