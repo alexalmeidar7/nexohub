@@ -2041,81 +2041,60 @@ export default function CenarioTela() {
                         <div className="font-bold uppercase tracking-[0.2em]" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor }}>chat ao vivo</div>
                       </div>
 
-                      {/* Single Message Display */}
-                      <div className="w-full flex items-center justify-center px-[5%]">
-                        {chatMessages.map((m, i) => (
+                      {/* Last 3 Messages List */}
+                      <div className="w-full flex flex-col items-center justify-center gap-6" style={{ padding: `0 ${vhToPx(4)}${vu}` }}>
+                        {chatMessages.slice(-3).map((m, i) => (
                           <div
                             key={i}
-                            className="absolute flex flex-col items-center text-center w-[90%] rounded-[3vh]"
+                            className="flex items-center gap-4 w-full rounded-[2vh] animate-fade-in"
                             style={{
-                              opacity: i === currentChatMessageIdx ? 1 : 0,
-                              transform: `translateY(${i === currentChatMessageIdx ? '0' : (i < currentChatMessageIdx ? '-30px' : '30px')}) scale(${i === currentChatMessageIdx ? 1 : 0.95})`,
-                              visibility: i === currentChatMessageIdx ? 'visible' : 'hidden',
-                              transition: 'opacity 1s ease, transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 1.2s',
-                              background: 'rgba(0, 0, 0, 0.5)',
-                              backdropFilter: 'blur(20px)',
-                              WebkitBackdropFilter: 'blur(20px)',
-                              padding: `${vhToPx(4)}${vu}`,
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
-                              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                              background: 'rgba(0, 0, 0, 0.4)',
+                              backdropFilter: 'blur(10px)',
+                              WebkitBackdropFilter: 'blur(10px)',
+                              padding: `${vhToPx(2.5)}${vu}`,
+                              border: '1px solid rgba(255, 255, 255, 0.05)',
+                              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                              animation: `cenario-chat-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both ${i * 0.1}s`
                             }}
                           >
-                            {/* User Avatar Circle */}
+                            {/* User Avatar */}
                             <div 
-                              className="rounded-full flex items-center justify-center mb-6 shadow-2xl border-4"
+                              className="rounded-full flex items-center justify-center flex-shrink-0 border-2"
                               style={{ 
-                                width: vhToPx(12), 
-                                height: vhToPx(12), 
+                                width: vhToPx(6), 
+                                height: vhToPx(6), 
                                 background: accentRgba(0.2), 
-                                borderColor: accentRgba(0.5),
-                                opacity: i === currentChatMessageIdx ? 1 : 0,
-                                transform: i === currentChatMessageIdx ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(-20px)',
-                                transition: 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s'
+                                borderColor: accentRgba(0.5)
                               }}
                             >
-                              <span className="font-black" style={{ 
-                                fontSize: vhToPx(5), 
-                                color: '#fff',
-                                opacity: i === currentChatMessageIdx ? 1 : 0,
-                                transition: 'opacity 0.5s ease 0.4s'
-                              }}>
+                              <span className="font-bold" style={{ fontSize: vhToPx(2.5), color: '#fff' }}>
                                 {m.user.charAt(0).toUpperCase()}
                               </span>
                             </div>
 
-                            {/* User Name */}
-                            <div 
-                              className="font-black uppercase tracking-widest mb-2" 
-                              style={{ 
-                                fontSize: `${vhToPx(2.2)}${vu}`, 
-                                color: accentColor,
-                                textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-                                opacity: i === currentChatMessageIdx ? 1 : 0,
-                                transform: i === currentChatMessageIdx ? 'translateY(0)' : 'translateY(10px)',
-                                transition: 'all 0.6s ease 0.5s'
-                              }}
-                            >
-                              {m.user}
-                            </div>
-
-                            {/* Message Text */}
-                            <div 
-                              className="font-bold leading-[1.2] px-4" 
-                              style={{ 
-                                fontSize: `34px`, 
-                                color: '#fff',
-                                textShadow: '0 4px 15px rgba(0,0,0,0.8)',
-                                maxWidth: '100%',
-                                opacity: i === currentChatMessageIdx ? 1 : 0,
-                                transform: i === currentChatMessageIdx ? 'translateY(0)' : 'translateY(15px)',
-                                transition: 'all 0.7s ease 0.7s'
-                              }}
-                            >
-                              "{m.text}"
+                            <div className="flex flex-col min-w-0">
+                              <div 
+                                className="font-black uppercase tracking-wider mb-0.5 truncate" 
+                                style={{ fontSize: `${vhToPx(1.6)}${vu}`, color: accentColor }}
+                              >
+                                {m.user}
+                              </div>
+                              <div 
+                                className="font-bold leading-tight" 
+                                style={{ fontSize: `${vhToPx(2.2)}${vu}`, color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
+                              >
+                                {m.text}
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
+                      <style>{`
+                        @keyframes cenario-chat-enter {
+                          0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+                          100% { opacity: 1; transform: translateY(0) scale(1); }
+                        }
+                      `}</style>
                     </div>
                   ) : (
                     <div className="flex-1 flex items-center justify-center opacity-100" style={{ fontSize: `${vhToPx(1.8)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>Chat desativado</div>
