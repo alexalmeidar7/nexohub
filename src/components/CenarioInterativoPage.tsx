@@ -869,7 +869,7 @@ export default function CenarioInterativoPage() {
   const [savedFlash, setSavedFlash] = useState(false);
   const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>([]);
+  
   const [previewChatMessageIdx, setPreviewChatMessageIdx] = useState(0);
   const previewDisplayedMessagesRef = useRef<Set<number>>(new Set());
 
