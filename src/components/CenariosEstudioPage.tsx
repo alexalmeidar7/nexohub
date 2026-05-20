@@ -136,8 +136,8 @@ export default function CenariosEstudioPage() {
       return Number(hour) * 3600 + Number(minute) * 60 + Number(second);
     };
 
-    const isTimeInRange = (start: string, end: string, current: string) => {
-      const startSeconds = toSeconds(start);
+    const isTimeInRange = (start: string, end: string, current: string, anticipationMinutes = 0) => {
+      const startSeconds = toSeconds(start) - (anticipationMinutes * 60);
       const endSeconds = toSeconds(end);
       const currentSeconds = toSeconds(current);
       if (endSeconds <= startSeconds) {
@@ -149,7 +149,7 @@ export default function CenariosEstudioPage() {
     const candidates = programas.filter(
       (p) =>
         (p.dias_semana || []).includes(today) &&
-        isTimeInRange(p.horario_inicio || "00:00:00", p.horario_fim || "23:59:59", nowTime)
+        isTimeInRange(p.horario_inicio || "00:00:00", p.horario_fim || "23:59:59", nowTime, 4)
     );
 
     if (candidates.length === 0) return null;
