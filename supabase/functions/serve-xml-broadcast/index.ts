@@ -371,7 +371,14 @@ serve(async (req) => {
         ),
       }))
       .filter((entry) => entry.sortKey >= 0)
-      .sort((a, b) => b.sortKey - a.sortKey)[0]?.item || null;
+      .sort((a, b) => {
+        // Prefer variable (one-off special) programs scheduled exactly for today over recurring ones
+        const aVar = a.item.variavel && normalizeDateValue(a.item.data_variavel) === todayDate ? 1 : 0;
+        const bVar = b.item.variavel && normalizeDateValue(b.item.data_variavel) === todayDate ? 1 : 0;
+        if (aVar !== bVar) return bVar - aVar;
+        return b.sortKey - a.sortKey;
+      })[0]?.item || null;
+
 
     let programaNome = "";
     let programaLogo = "";
