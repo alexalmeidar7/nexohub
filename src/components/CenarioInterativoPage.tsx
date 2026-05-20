@@ -532,10 +532,15 @@ export default function CenarioInterativoPage() {
     }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
       if (payload && typeof payload.zoom === "number") updateWeather({ zoom: payload.zoom });
     }).on("broadcast", { event: "config-update" }, ({ payload }: any) => {
-      if (payload?.config && typeof payload.config === "object") {
-        isRemoteUpdateRef.current = true;
-        
-        // Prevent infinite loop by checking if the tab actually changed
+    if (payload?.config && typeof payload.config === "object") {
+      isRemoteUpdateRef.current = true;
+      
+      // Clear chat if youtubeVideoUrl changed
+      if (payload.config.chat?.youtubeVideoUrl && payload.config.chat.youtubeVideoUrl !== configRef.current.chat.youtubeVideoUrl) {
+        setChatMessages([]);
+      }
+      
+      // Prevent infinite loop by checking if the tab actually changed
         if (payload.config._activeTab && payload.config._activeTab !== activeTabRef.current) {
           setActiveTab(payload.config._activeTab);
         }

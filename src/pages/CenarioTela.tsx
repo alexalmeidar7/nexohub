@@ -498,8 +498,12 @@ export default function CenarioTela() {
       }).on("broadcast", { event: "rotate" }, ({ payload }: any) => {
         if (payload && typeof payload.angle === "number") setScreenRotation(payload.angle);
       }).on("broadcast", { event: "config-update" }, ({ payload }: any) => {
-        if (payload?.config && typeof payload.config === "object") {
-          setConfig(prev => ({ ...prev, ...(payload.config as Partial<CenarioConfig>) }));
+      if (payload?.config && typeof payload.config === "object") {
+        // Clear chat if youtubeVideoUrl changed
+        if (payload.config.chat?.youtubeVideoUrl && payload.config.chat.youtubeVideoUrl !== config.chat.youtubeVideoUrl) {
+          setChatMessages([]);
+        }
+        setConfig(prev => ({ ...prev, ...(payload.config as Partial<CenarioConfig>) }));
           setLastSyncTime(new Date());
           setBackendHealth("online");
         }
