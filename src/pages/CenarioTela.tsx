@@ -153,6 +153,7 @@ const defaultMessages: { user: string; text: string; avatar?: string }[] = [];
 
 export default function CenarioTela() {
   const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>(defaultMessages);
+  const [isUpdatingChat, setIsUpdatingChat] = useState(false);
   const { user } = useAuth();
   usePageTitle("NexoHub - Cenário Interativo");
   const uidFromUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("uid") : null;
@@ -172,6 +173,102 @@ export default function CenarioTela() {
 
   const [currentChatMessageIdx, setCurrentChatMessageIdx] = useState(0);
   const displayedMessagesRef = useRef<Set<number>>(new Set());
+
+  /* Helper: fetch all cenario data via public edge function (no auth needed) */
+  const publicBackoffRef = useRef({ consecutive: 0, BASE: 3000, MAX: 15000 });
+  const publicFetchInFlightRef = useRef<Promise<PublicCenarioPayload | null> | null>(null);
+  const publicFetchLastResultRef = useRef<PublicCenarioPayload | null>(null);
+  const publicFetchLastAtRef = useRef(0);
+
+  const fetchViaEdgeFunction = useCallback(async (uid: string, ytUrl?: string) => {
+    if (!uid) return null;
+
+    const nowMs = Date.now();
+    if (publicFetchInFlightRef.current) {
+      return publicFetchInFlightRef.current;
+    }
+    const bo = publicBackoffRef.current;
+    const jitter = Math.random() * 5000;
+    const minGap = Math.min(bo.BASE * Math.pow(2, bo.consecutive), bo.MAX) + jitter;
+    const clientCacheWindow = bo.consecutive > 0 ? Math.min(minGap, 12000) : 2500;
+    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < clientCacheWindow) {
+      return publicFetchLastResultRef.current;
+    }
+
+    const request = (async (): Promise<PublicCenarioPayload | null> => {
+      try {
+        const now = new Date();
+        const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const day = dayNames[now.getDay()];
+        const time = now.toTimeString().slice(0, 5);
+        const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}&day=${encodeURIComponent(day)}&time=${time}${ytUrl ? `&ytUrl=${encodeURIComponent(ytUrl)}` : ""}&_t=${Date.now()}`;
+        const resp = await fetch(baseUrl, {
+          headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        });
+        if (!resp.ok) {
+          bo.consecutive = Math.min(bo.consecutive + 1, 8);
+          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
+          return publicFetchLastResultRef.current;
+        }
+
+        const json = await resp.json();
+        if (!json?.ok) {
+          bo.consecutive = Math.min(bo.consecutive + 1, 8);
+          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
+          return publicFetchLastResultRef.current;
+        }
+
+        bo.consecutive = 0;
+        setBackendHealth("online");
+        const parsed = json as PublicCenarioPayload;
+        publicFetchLastResultRef.current = parsed;
+        publicFetchLastAtRef.current = Date.now();
+        return parsed;
+      } catch {
+        bo.consecutive = Math.min(bo.consecutive + 1, 8);
+        setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
+        return publicFetchLastResultRef.current;
+      }
+    })();
+
+    publicFetchInFlightRef.current = request;
+    try {
+      return await request;
+    } finally {
+      publicFetchInFlightRef.current = null;
+    }
+  }, []);
+
+  const updateChatMessages = useCallback(async () => {
+    if (!effectiveUserId || activeTab !== "chat" || isUpdatingChat) return;
+    setIsUpdatingChat(true);
+    try {
+      const result = await fetchViaEdgeFunction(effectiveUserId, config.chat?.youtubeVideoUrl);
+      if (result?.youtubeChatMessages && result.youtubeChatMessages.length > 0) {
+        setChatMessages(prev => {
+          // Merge avoiding duplicates (based on text and user)
+          const existingKeys = new Set(prev.map(m => `${m.user}:${m.text}`));
+          const newOnes = result.youtubeChatMessages!.filter(m => !existingKeys.has(`${m.user}:${m.text}`));
+          if (newOnes.length === 0) return prev;
+          
+          const combined = [...prev, ...newOnes].slice(-50); // Keep last 50
+          return combined;
+        });
+      }
+    } catch (err) {
+      console.error("Error updating chat:", err);
+    } finally {
+      setIsUpdatingChat(false);
+    }
+  }, [effectiveUserId, activeTab, isUpdatingChat, config.chat?.youtubeVideoUrl, fetchViaEdgeFunction]);
+
+  useEffect(() => {
+    if (activeTab === "chat") {
+      updateChatMessages(); // Initial fetch
+      const interval = setInterval(updateChatMessages, 10000); // Poll every 10s
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, updateChatMessages]);
 
   useEffect(() => {
     if (activeTab === "chat" && chatMessages.length > 0) {
@@ -249,9 +346,6 @@ export default function CenarioTela() {
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
 
   const musicXmlUrlRef = useRef<string | null>(null);
-  const publicFetchInFlightRef = useRef<Promise<PublicCenarioPayload | null> | null>(null);
-  const publicFetchLastResultRef = useRef<PublicCenarioPayload | null>(null);
-  const publicFetchLastAtRef = useRef(0);
 
   /* ─── Artist background image (Deezer) — same logic as Player audio ─── */
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
@@ -565,66 +659,6 @@ export default function CenarioTela() {
     }
   }, []);
 
-  /* Helper: fetch all cenario data via public edge function (no auth needed) */
-  const publicBackoffRef = useRef({ consecutive: 0, BASE: 3000, MAX: 15000 });
-  const fetchViaEdgeFunction = useCallback(async (uid: string, ytUrl?: string) => {
-    if (!uid) return null;
-
-    const nowMs = Date.now();
-    if (publicFetchInFlightRef.current) {
-      return publicFetchInFlightRef.current;
-    }
-    const bo = publicBackoffRef.current;
-    const jitter = Math.random() * 5000;
-    const minGap = Math.min(bo.BASE * Math.pow(2, bo.consecutive), bo.MAX) + jitter;
-    const clientCacheWindow = bo.consecutive > 0 ? Math.min(minGap, 12000) : 2500;
-    if (publicFetchLastResultRef.current && nowMs - publicFetchLastAtRef.current < clientCacheWindow) {
-      return publicFetchLastResultRef.current;
-    }
-
-    const request = (async (): Promise<PublicCenarioPayload | null> => {
-      try {
-        const now = new Date();
-        const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-        const day = dayNames[now.getDay()];
-        const time = now.toTimeString().slice(0, 5);
-        const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${uid}&day=${encodeURIComponent(day)}&time=${time}${ytUrl ? `&ytUrl=${encodeURIComponent(ytUrl)}` : ""}&_t=${Date.now()}`;
-        const resp = await fetch(baseUrl, {
-          headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-        });
-        if (!resp.ok) {
-          bo.consecutive = Math.min(bo.consecutive + 1, 8);
-          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
-          return publicFetchLastResultRef.current;
-        }
-
-        const json = await resp.json();
-        if (!json?.ok) {
-          bo.consecutive = Math.min(bo.consecutive + 1, 8);
-          setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
-          return publicFetchLastResultRef.current;
-        }
-
-        bo.consecutive = 0;
-        setBackendHealth("online");
-        const parsed = json as PublicCenarioPayload;
-        publicFetchLastResultRef.current = parsed;
-        publicFetchLastAtRef.current = Date.now();
-        return parsed;
-      } catch {
-        bo.consecutive = Math.min(bo.consecutive + 1, 8);
-        setBackendHealth(bo.consecutive >= 3 ? "offline" : "slow");
-        return publicFetchLastResultRef.current;
-      }
-    })();
-
-    publicFetchInFlightRef.current = request;
-    try {
-      return await request;
-    } finally {
-      publicFetchInFlightRef.current = null;
-    }
-  }, []);
 
   /* Load config from DB + subscribe to realtime changes */
   const initialTabLoaded = useRef(false);
