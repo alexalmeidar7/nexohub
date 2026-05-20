@@ -405,8 +405,7 @@ export default function CenarioTelaFull() {
   }, [musicData?.artista, isBreakTrack, isJornalistico]);
 
   /* ─── Screen Rotation ─── */
-  // screenRotation fixada em 0 para tela full
-  // const [screenRotation, setScreenRotation] = useState(0);
+  const [screenRotation, setScreenRotation] = useState(0);
 
   /* ─── Drawing (Pen) ─── */
   const [drawingActive, setDrawingActive] = useState(false);
