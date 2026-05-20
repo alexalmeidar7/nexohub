@@ -153,6 +153,7 @@ const defaultMessages: { user: string; text: string; avatar?: string }[] = [];
 
 export default function CenarioTela() {
   const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>(defaultMessages);
+  const [isUpdatingChat, setIsUpdatingChat] = useState(false);
   const { user } = useAuth();
   usePageTitle("NexoHub - Cenário Interativo");
   const uidFromUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("uid") : null;
@@ -194,6 +195,37 @@ export default function CenarioTela() {
       return () => clearInterval(interval);
     }
   }, [activeTab, chatMessages.length]);
+
+  const updateChatMessages = useCallback(async () => {
+    if (!effectiveUserId || activeTab !== "chat" || isUpdatingChat) return;
+    setIsUpdatingChat(true);
+    try {
+      const result = await fetchViaEdgeFunction(effectiveUserId, config.chat?.youtubeVideoUrl);
+      if (result?.youtubeChatMessages && result.youtubeChatMessages.length > 0) {
+        setChatMessages(prev => {
+          // Merge avoiding duplicates (based on text and user)
+          const existingKeys = new Set(prev.map(m => `${m.user}:${m.text}`));
+          const newOnes = result.youtubeChatMessages!.filter(m => !existingKeys.has(`${m.user}:${m.text}`));
+          if (newOnes.length === 0) return prev;
+          
+          const combined = [...prev, ...newOnes].slice(-50); // Keep last 50
+          return combined;
+        });
+      }
+    } catch (err) {
+      console.error("Error updating chat:", err);
+    } finally {
+      setIsUpdatingChat(false);
+    }
+  }, [effectiveUserId, activeTab, isUpdatingChat, config.chat?.youtubeVideoUrl, fetchViaEdgeFunction]);
+
+  useEffect(() => {
+    if (activeTab === "chat") {
+      updateChatMessages(); // Initial fetch
+      const interval = setInterval(updateChatMessages, 10000); // Poll every 10s
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, updateChatMessages]);
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {

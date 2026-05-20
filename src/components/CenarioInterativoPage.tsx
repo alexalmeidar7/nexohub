@@ -329,6 +329,8 @@ export default function CenarioInterativoPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
   const [activeTab, setActiveTab] = useState("home");
+  const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>([]);
+  const [isUpdatingChat, setIsUpdatingChat] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   
@@ -640,6 +642,47 @@ export default function CenarioInterativoPage() {
     setPreviewHasDrawing(false);
     sendDrawClear();
   }, [sendDrawClear]);
+
+  const updateChatMessages = useCallback(async () => {
+    if (!user?.id || activeTab !== "chat" || isUpdatingChat) return;
+    setIsUpdatingChat(true);
+    try {
+      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+      const now = new Date();
+      const day = dayNames[now.getDay()];
+      const time = now.toTimeString().slice(0, 5);
+      const ytUrl = config.chat.youtubeVideoUrl;
+      
+      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${user.id}&day=${encodeURIComponent(day)}&time=${time}${ytUrl ? `&ytUrl=${encodeURIComponent(ytUrl)}` : ""}&_t=${Date.now()}`;
+      const resp = await fetch(baseUrl, {
+        headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      });
+      
+      if (resp.ok) {
+        const result = await resp.json();
+        if (result?.youtubeChatMessages && result.youtubeChatMessages.length > 0) {
+          setChatMessages(prev => {
+            const existingKeys = new Set(prev.map(m => `${m.user}:${m.text}`));
+            const newOnes = result.youtubeChatMessages.filter((m: any) => !existingKeys.has(`${m.user}:${m.text}`));
+            if (newOnes.length === 0) return prev;
+            return [...prev, ...newOnes].slice(-50);
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error updating chat in panel:", err);
+    } finally {
+      setIsUpdatingChat(false);
+    }
+  }, [user?.id, activeTab, isUpdatingChat, config.chat.youtubeVideoUrl]);
+
+  useEffect(() => {
+    if (activeTab === "chat") {
+      updateChatMessages();
+      const interval = setInterval(updateChatMessages, 15000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, updateChatMessages]);
 
   useEffect(() => {
     const canvas = previewCanvasRef.current;
@@ -2656,6 +2699,23 @@ export default function CenarioInterativoPage() {
                     <Label className="text-xs mb-1 block" style={{ color: mutedText }}>URL do vídeo/live do YouTube</Label>
                     <Input placeholder="https://youtube.com/watch?v=..." value={config.chat.youtubeVideoUrl} onChange={e => updateChat({ youtubeVideoUrl: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                     <BgImageUpload value={config.chat.bgImage} onChange={v => updateChat({ bgImage: v })} mutedText={mutedText} userId={uid} category="chat" />
+                  </div>
+                )}
+                
+                {config.chat.enabled && chatMessages.length > 0 && (
+                  <div className="space-y-2 mt-4 pt-4 border-t" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)" }}>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[10px] uppercase tracking-wider font-bold" style={{ color: mutedText }}>Mensagens recentes</Label>
+                      {isUpdatingChat && <Loader2 size={10} className="animate-spin" style={{ color: accentColor }} />}
+                    </div>
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                      {chatMessages.slice().reverse().map((m, i) => (
+                        <div key={i} className="p-2 rounded-lg text-[11px] leading-relaxed animate-fade-in" style={{ background: "color-mix(in srgb, var(--layout-page-text, #000) 5%, transparent)", color: textColor }}>
+                          <span className="font-bold mr-1" style={{ color: accentColor }}>{m.user}:</span>
+                          {m.text}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </TabsContent>
