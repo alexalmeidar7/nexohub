@@ -1336,7 +1336,7 @@ export default function CenarioTelaFull() {
           transition: "transform 0.5s ease",
         }}
       >
-        <div className="relative cenario-page-wrapper" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `24px`, fontFamily: "'Inter', sans-serif" }}>
+        <div className="relative cenario-page-wrapper" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", fontSize: `${vhToPxW(1.8)}px`, fontFamily: "'Inter', sans-serif" }}>
 
           {/* Fullscreen background layers behind sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
