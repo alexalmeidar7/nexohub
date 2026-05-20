@@ -2751,6 +2751,13 @@ export default function CenarioInterativoPage() {
                   <ExternalLink size={11} /> Cenário interativo Externo
                 </button>
                 <button
+                  onClick={() => window.open(`/cenario-tela-full?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
+                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
+                >
+                  <MonitorPlay size={11} /> Cenário formato Full
+                </button>
+                <button
                   onClick={() => {
                     setExternalRotation(prev => {
                       const val = (prev + 90) % 360;
