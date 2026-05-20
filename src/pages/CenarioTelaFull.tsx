@@ -151,7 +151,7 @@ type PublicCenarioPayload = {
 
 const defaultMessages: { user: string; text: string; avatar?: string }[] = [];
 
-export default function CenarioTela() {
+export default function CenarioTelaFull() {
   const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>(defaultMessages);
   const [isUpdatingChat, setIsUpdatingChat] = useState(false);
   const { user } = useAuth();
