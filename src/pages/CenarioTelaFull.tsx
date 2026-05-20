@@ -1290,7 +1290,7 @@ export default function CenarioTelaFull() {
   const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
 
   const isLandscape = true; // Forçado para full horizontal
-  // const screenRotation = 0; // Removido para usar o state local fixo em 0
+  const screenRotation = 0; // Fixado em 0 para tela full
 
   /* ── Fixed 1920×1080 virtual canvas scaled to fit viewport ── */
   const CANVAS_W = 1920;
