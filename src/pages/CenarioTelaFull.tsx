@@ -1313,6 +1313,7 @@ export default function CenarioTelaFull() {
 
   // Convert old vh-based sizes to px on the 1080×1920 canvas (1vh ≈ 19.2px on 1920h)
   const vhToPx = (v: number) => v * CANVAS_H / 100;
+  const vhToPxW = (v: number) => v * CANVAS_W / 100;
   const vu = "px";
 
   /* Sidebar button size helper */
