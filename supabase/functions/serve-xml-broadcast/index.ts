@@ -336,7 +336,9 @@ serve(async (req) => {
         .from("roteiros")
         .select("tickertitulos")
         .eq("user_id", dataOwnerId)
-        .eq("tipo_programa", "Jornalístico")
+        .in("tipo_programa", ["Jornalístico", "express"])
+        .not("tickertitulos", "is", null)
+        .neq("tickertitulos", "")
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
