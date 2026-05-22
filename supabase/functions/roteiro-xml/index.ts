@@ -138,6 +138,7 @@ Deno.serve(async (req) => {
       xml += `    <rede_social_instagram_texto></rede_social_instagram_texto>\n`;
       xml += `    <rede_social_whatsapp_texto>${esc(whatsappNum)}</rede_social_whatsapp_texto>\n`;
       xml += `    <qrcode_link>${esc(qrcodeLink)}</qrcode_link>\n`;
+      xml += `    <imagem_apoio_atual>${esc(imagemApoioAtual)}</imagem_apoio_atual>\n`;
       for (let i = 0; i < 5; i++) {
         xml += `    <imagem_apoio_${i + 1}>${esc(apoioImagens[i] || "")}</imagem_apoio_${i + 1}>\n`;
       }
