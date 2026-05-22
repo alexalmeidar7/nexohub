@@ -80,8 +80,8 @@ serve(async (req) => {
         const imagens: string[] = (podcastData.apoioImagens || []).filter((u: string) => u && u.trim());
         const videos: string[] = (podcastData.apoioVideos || []).filter((u: string) => u && u.trim());
         if (imagens.length > 0) {
-          // Rotate active image every 5 seconds
-          const idx = Math.floor(Date.now() / 5000) % imagens.length;
+          // Rotate active image every 7 seconds
+          const idx = Math.floor(Date.now() / 7000) % imagens.length;
           xml += `    <imagemAtual>${esc(imagens[idx])}</imagemAtual>\n`;
           xml += `    <apoioImagens>\n`;
           imagens.forEach((u) => { xml += `      <imagem>${esc(u)}</imagem>\n`; });

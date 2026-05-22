@@ -117,6 +117,12 @@ Deno.serve(async (req) => {
 
     // Build flat/tabular XML for vMix Data Sources
     // Each participant becomes a <dados> row with all fields as flat columns
+    // Rotate active apoio image every 7 seconds
+    const apoioValid = apoioImagens.filter((u) => u && u.trim());
+    const imagemApoioAtual = apoioValid.length > 0
+      ? apoioValid[Math.floor(Date.now() / 7000) % apoioValid.length]
+      : "";
+
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
     xml += `<items>\n`;
 
@@ -132,6 +138,7 @@ Deno.serve(async (req) => {
       xml += `    <rede_social_instagram_texto></rede_social_instagram_texto>\n`;
       xml += `    <rede_social_whatsapp_texto>${esc(whatsappNum)}</rede_social_whatsapp_texto>\n`;
       xml += `    <qrcode_link>${esc(qrcodeLink)}</qrcode_link>\n`;
+      xml += `    <imagem_apoio_atual>${esc(imagemApoioAtual)}</imagem_apoio_atual>\n`;
       for (let i = 0; i < 5; i++) {
         xml += `    <imagem_apoio_${i + 1}>${esc(apoioImagens[i] || "")}</imagem_apoio_${i + 1}>\n`;
       }
@@ -152,6 +159,7 @@ Deno.serve(async (req) => {
         xml += `    <rede_social_instagram_texto>${esc(p.instagram || "")}</rede_social_instagram_texto>\n`;
         xml += `    <rede_social_whatsapp_texto>${esc(p.whatsapp || whatsappNum)}</rede_social_whatsapp_texto>\n`;
         xml += `    <qrcode_link>${esc(qrcodeLink)}</qrcode_link>\n`;
+        xml += `    <imagem_apoio_atual>${esc(imagemApoioAtual)}</imagem_apoio_atual>\n`;
         for (let i = 0; i < 5; i++) {
           xml += `    <imagem_apoio_${i + 1}>${esc(apoioImagens[i] || "")}</imagem_apoio_${i + 1}>\n`;
         }
@@ -169,7 +177,7 @@ Deno.serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=15",
+        "Cache-Control": "public, max-age=3",
       },
     });
   } catch (err) {
