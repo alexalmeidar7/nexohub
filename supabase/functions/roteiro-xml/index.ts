@@ -117,6 +117,12 @@ Deno.serve(async (req) => {
 
     // Build flat/tabular XML for vMix Data Sources
     // Each participant becomes a <dados> row with all fields as flat columns
+    // Rotate active apoio image every 7 seconds
+    const apoioValid = apoioImagens.filter((u) => u && u.trim());
+    const imagemApoioAtual = apoioValid.length > 0
+      ? apoioValid[Math.floor(Date.now() / 7000) % apoioValid.length]
+      : "";
+
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
     xml += `<items>\n`;
 
