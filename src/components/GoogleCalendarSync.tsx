@@ -1,0 +1,170 @@
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Calendar as CalIcon, RefreshCw, Link2, Unlink, ExternalLink, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+interface GEvent {
+  id: string;
+  summary: string;
+  description: string;
+  location: string;
+  start: string;
+  end: string;
+  htmlLink: string;
+}
+
+export default function GoogleCalendarSync() {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [connected, setConnected] = useState(false);
+  const [events, setEvents] = useState<GEvent[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+
+  const fetchEvents = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("google-calendar-events");
+      if (error) throw error;
+      setConnected(!!data?.connected);
+      setEvents(data?.events || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRefreshing(false);
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("google-calendar-auth");
+      if (error || !data?.url) throw error || new Error("Sem URL");
+      const popup = window.open(data.url, "google-cal", "width=520,height=640");
+      // Poll for completion
+      const t = setInterval(async () => {
+        if (popup?.closed) {
+          clearInterval(t);
+          setConnecting(false);
+          await fetchEvents();
+        }
+      }, 1000);
+    } catch (e: any) {
+      toast({ title: "Erro ao conectar", description: e.message, variant: "destructive" });
+      setConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("google_calendar_tokens").delete().eq("user_id", user.id);
+    setConnected(false);
+    setEvents([]);
+    toast({ title: "Google Agenda desconectado" });
+  };
+
+  if (loading) return null;
+
+  return (
+    <div
+      className="rounded-2xl p-4 mb-4"
+      style={{
+        backgroundColor: "var(--layout-widget-bg, hsl(var(--card)))",
+        color: "var(--layout-widget-text, hsl(var(--card-foreground)))",
+        border: "1px solid color-mix(in srgb, var(--layout-border-color, hsl(var(--border))) 60%, transparent)",
+      }}
+    >
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, hsl(var(--primary))) 18%, transparent)" }}
+          >
+            <CalIcon size={18} style={{ color: "var(--layout-accent-color, hsl(var(--primary)))" }} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold m-0">Google Agenda</h3>
+            <p className="text-[11px] opacity-70 m-0">
+              {connected ? `${events.length} evento(s) sincronizado(s)` : "Conecte sua conta para ver os eventos aqui"}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {connected ? (
+            <>
+              <Button size="sm" variant="outline" onClick={fetchEvents} disabled={refreshing} className="h-8 gap-1 text-xs rounded-full">
+                {refreshing ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                Atualizar
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleDisconnect} className="h-8 gap-1 text-xs rounded-full">
+                <Unlink size={12} /> Desconectar
+              </Button>
+            </>
+          ) : (
+            <Button
+              size="sm"
+              onClick={handleConnect}
+              disabled={connecting}
+              className="h-8 gap-1 text-xs rounded-full font-semibold"
+              style={{
+                backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))",
+                color: "var(--layout-accent-text, hsl(var(--primary-foreground)))",
+              }}
+            >
+              {connecting ? <Loader2 size={12} className="animate-spin" /> : <Link2 size={12} />}
+              Conectar Google Agenda
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {connected && events.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-72 overflow-y-auto">
+          {events.map((ev) => {
+            const start = ev.start ? new Date(ev.start) : null;
+            return (
+              <a
+                key={ev.id}
+                href={ev.htmlLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl p-3 text-xs transition-transform hover:scale-[1.01]"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--layout-page-bg, hsl(var(--background))) 85%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--layout-border-color, hsl(var(--border))) 50%, transparent)",
+                  color: "var(--layout-page-text, hsl(var(--foreground)))",
+                }}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <span className="font-semibold line-clamp-2">{ev.summary}</span>
+                  <ExternalLink size={11} className="opacity-50 shrink-0 mt-0.5" />
+                </div>
+                {start && (
+                  <p className="text-[10px] opacity-70 m-0">
+                    {format(start, "dd 'de' MMM, HH:mm", { locale: ptBR })}
+                  </p>
+                )}
+                {ev.location && (
+                  <p className="text-[10px] opacity-60 m-0 mt-0.5 line-clamp-1">📍 {ev.location}</p>
+                )}
+              </a>
+            );
+          })}
+        </div>
+      )}
+
+      {connected && events.length === 0 && !refreshing && (
+        <p className="text-[11px] opacity-60 text-center py-2 m-0">Nenhum evento próximo encontrado no seu Google Agenda.</p>
+      )}
+    </div>
+  );
+}
