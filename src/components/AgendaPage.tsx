@@ -1261,6 +1261,7 @@ export default function AgendaPage() {
 
   return (
     <div className="animate-fade-in">
+      <GoogleCalendarSync />
       <Dialog open={viewEventDialogOpen} onOpenChange={setViewEventDialogOpen}>
         <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none", color: "var(--layout-page-text, #1a1a1a)" }}>
           {viewingEvent && (
