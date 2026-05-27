@@ -613,8 +613,27 @@ export default function RoteiroPrograma() {
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {historico.map((r, idx) => {
               const dataFormatada = format(new Date(r.data_programa), "dd/MM/yyyy");
-              const isFeito = r.status === "feito";
-              const isAgd = r.status === "agendado";
+              const eventTime = r.horario
+                ? new Date(`${r.data_programa}T${r.horario}:00`)
+                : new Date(`${r.data_programa}T23:59:00`);
+              const oneHourAfter = new Date(eventTime.getTime() + 60 * 60 * 1000);
+              const now = new Date();
+              const phase: "agendado" | "agora" | "jafoi" =
+                now < eventTime ? "agendado" : now < oneHourAfter ? "agora" : "jafoi";
+              const phaseLabel = phase === "agendado" ? "AGENDADO" : phase === "agora" ? "ACONTECENDO AGORA" : "JÁ FOI";
+              const phaseBg =
+                phase === "agendado"
+                  ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
+                  : phase === "agora"
+                  ? "rgba(234,88,12,0.14)"
+                  : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)";
+              const phaseColor =
+                phase === "agendado"
+                  ? "var(--layout-accent-color, #2563eb)"
+                  : phase === "agora"
+                  ? "#ea580c"
+                  : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)";
+              const hasXml = typeof r.subtitulo === "string" && r.subtitulo.startsWith("express_xml::");
               const isAuto = typeof r.titulo === "string" && r.titulo.includes("[AUTO]");
               return (
                 <div key={r.id} className="flex-shrink-0 rounded-lg p-2.5 flex flex-col gap-1.5 transition-all hover:brightness-95" style={{ minWidth: "220px", maxWidth: "280px", backgroundColor: isAuto ? "color-mix(in srgb, #8b5cf6 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: isAuto ? "2px solid #8b5cf6" : "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)", boxShadow: isAuto ? "0 0 0 3px color-mix(in srgb, #8b5cf6 18%, transparent)" : undefined }}>
@@ -628,14 +647,15 @@ export default function RoteiroPrograma() {
                         🤖 AUTO
                       </span>
                     )}
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0" style={{
-                      backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
-                      color: isFeito ? "#16a34a" : isAgd ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
-                    }}>{isFeito ? "feito" : isAgd ? "agendado" : r.status}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0 whitespace-nowrap" style={{ backgroundColor: phaseBg, color: phaseColor }}>
+                      {phase === "agora" && <span className="inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle animate-pulse" style={{ backgroundColor: "#ea580c" }} />}
+                      {phaseLabel}
+                    </span>
                     {r.tickertitulos && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0" style={{ backgroundColor: "rgba(234,179,8,0.12)", color: "#ca8a04" }}>ticker on</span>
                     )}
                   </div>
+
                   <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                     {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
                   </p>
