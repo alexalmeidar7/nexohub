@@ -1382,6 +1382,7 @@ export type Database = {
           titulo: string
           updated_at: string
           user_id: string
+          xml_pushed_at: string | null
         }
         Insert: {
           apresentador_editado?: boolean | null
@@ -1405,6 +1406,7 @@ export type Database = {
           titulo?: string
           updated_at?: string
           user_id: string
+          xml_pushed_at?: string | null
         }
         Update: {
           apresentador_editado?: boolean | null
@@ -1428,6 +1430,7 @@ export type Database = {
           titulo?: string
           updated_at?: string
           user_id?: string
+          xml_pushed_at?: string | null
         }
         Relationships: []
       }
