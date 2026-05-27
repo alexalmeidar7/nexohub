@@ -26,16 +26,45 @@ serve(async (req) => {
 
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // Most recent express roteiro for this studio
-    const { data: r } = await sb
+    // Carrega candidatos: roteiros express deste user+estúdio
+    const { data: candidates } = await sb
       .from("roteiros")
-      .select("programa_nome, estudio, data_programa, participantes, subtitulo")
+      .select("programa_nome, estudio, data_programa, horario, participantes, subtitulo, xml_pushed_at, created_at")
       .eq("user_id", userId)
       .ilike("estudio", estudio)
       .like("subtitulo", "express_xml::%")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("data_programa", { ascending: false })
+      .limit(50);
+
+    // Carrega horarios dos programas para fallback
+    const { data: progs } = await sb
+      .from("programas")
+      .select("nome, horario_inicio")
+      .eq("user_id", userId);
+    const progMap = new Map<string, string>();
+    (progs || []).forEach((p: any) => { if (p.nome) progMap.set(p.nome, (p.horario_inicio || "").slice(0, 5)); });
+
+    const now = Date.now();
+    // Mantém somente roteiros que JÁ aconteceram OU que foram enviados manualmente para o XML
+    const eligible = (candidates || []).filter((r: any) => {
+      if (r.xml_pushed_at) return true;
+      const hora = r.horario || progMap.get(r.programa_nome) || "00:00";
+      const evt = new Date(`${r.data_programa}T${hora}:00-03:00`).getTime();
+      return !isNaN(evt) && evt <= now;
+    });
+
+    // Ordena por "timestamp efetivo" desc: maior entre push manual e event time
+    eligible.sort((a: any, b: any) => {
+      const hA = a.horario || progMap.get(a.programa_nome) || "00:00";
+      const hB = b.horario || progMap.get(b.programa_nome) || "00:00";
+      const evA = new Date(`${a.data_programa}T${hA}:00-03:00`).getTime();
+      const evB = new Date(`${b.data_programa}T${hB}:00-03:00`).getTime();
+      const tsA = Math.max(a.xml_pushed_at ? new Date(a.xml_pushed_at).getTime() : 0, evA || 0);
+      const tsB = Math.max(b.xml_pushed_at ? new Date(b.xml_pushed_at).getTime() : 0, evB || 0);
+      return tsB - tsA;
+    });
+
+    const r = eligible[0] || null;
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
 
