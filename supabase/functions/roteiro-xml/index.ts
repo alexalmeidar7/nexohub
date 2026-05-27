@@ -90,11 +90,17 @@ Deno.serve(async (req) => {
       participantes = [];
     }
 
-    // Check podcast scheduling: if scheduled and not yet released, hide content
+    // Check scheduling: hide content until scheduled release time has arrived
     let scheduledHidden = false;
     if (podcastData?.agendamentoData && podcastData?.agendamentoHorario) {
-      // Build a Date in São Paulo time (UTC-3) and compare to now
       const releaseAt = new Date(`${podcastData.agendamentoData}T${podcastData.agendamentoHorario}:00-03:00`);
+      if (!isNaN(releaseAt.getTime()) && Date.now() < releaseAt.getTime()) {
+        scheduledHidden = true;
+      }
+    } else if ((roteiro as any).data_programa) {
+      // Generic roteiro: use data_programa + horario (São Paulo UTC-3)
+      const horario = (roteiro as any).horario || "00:00";
+      const releaseAt = new Date(`${(roteiro as any).data_programa}T${horario}:00-03:00`);
       if (!isNaN(releaseAt.getTime()) && Date.now() < releaseAt.getTime()) {
         scheduledHidden = true;
       }
