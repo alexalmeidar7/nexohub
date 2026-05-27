@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     // Fetch roteiro
     const { data: roteiro, error } = await supabase
       .from("roteiros")
-      .select("titulo, subtitulo, participantes, programa_nome, user_id, estudio")
+      .select("titulo, subtitulo, participantes, programa_nome, user_id, estudio, data_programa, horario")
       .eq("id", roteiroId)
       .maybeSingle();
 
