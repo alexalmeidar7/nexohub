@@ -360,7 +360,8 @@ export default function RoteiroPrograma() {
       .from("roteiros")
       .select("*")
       .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
+      .order("data_programa", { ascending: false })
+      .order("horario", { ascending: false, nullsFirst: false })
       .limit(10);
     if (!data) { setHistorico([]); return; }
 
@@ -409,6 +410,95 @@ export default function RoteiroPrograma() {
 
   const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+  const regenerateXmlForRoteiro = async (r: any): Promise<boolean> => {
+    try {
+      if (!r?.subtitulo || !String(r.subtitulo).startsWith("express_xml::")) return false;
+      let parts: any = null;
+      try {
+        let raw = r.participantes;
+        if (typeof raw === "string") raw = JSON.parse(raw);
+        if (typeof raw === "string") raw = JSON.parse(raw);
+        parts = raw;
+      } catch { parts = {}; }
+      const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
+      const pList: any[] = parsed.participantes || [];
+      const blocosList: any[] = parsed.blocos || [];
+      const escaladaItems: any[] = parsed.escaladaList || [];
+      const podcastData = parsed.podcastData;
+      const isPodcast = !!podcastData;
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
+      xml += `  <programa>${escXml(r.programa_nome || "")}</programa>\n`;
+      xml += `  <estudio>${escXml(r.estudio || "")}</estudio>\n`;
+      xml += `  <data>${r.data_programa || new Date().toISOString().split("T")[0]}</data>\n`;
+
+      if (pList.length > 0) {
+        xml += `  <participantes>\n`;
+        pList.forEach((p: any) => {
+          xml += `    <item>\n`;
+          xml += `      <nome>${escXml(p.nome || "")}</nome>\n`;
+          xml += `      <cargo>${escXml(p.cargo || "")}</cargo>\n`;
+          xml += `      <instagram>${escXml(p.instagram || "")}</instagram>\n`;
+          xml += `    </item>\n`;
+        });
+        xml += `  </participantes>\n`;
+      }
+
+      if (isPodcast) {
+        xml += `  <roteiro>\n`;
+        xml += `    <tituloTarja>${escXml(podcastData.tituloTarja || "")}</tituloTarja>\n`;
+        xml += `    <introducao>${escXml(podcastData.introducao || "")}</introducao>\n`;
+        xml += `    <perguntas>\n`;
+        (podcastData.perguntas || []).filter((p: string) => p.trim()).forEach((p: string, i: number) => {
+          xml += `      <pergunta ordem="${i + 1}">${escXml(p)}</pergunta>\n`;
+        });
+        xml += `    </perguntas>\n`;
+        xml += `    <concluindo>${escXml(podcastData.concluindo || "")}</concluindo>\n`;
+        xml += `  </roteiro>\n`;
+      } else {
+        if (escaladaItems.length > 0) {
+          xml += `  <escalada>\n`;
+          escaladaItems.forEach((e: any, i: number) => {
+            xml += `    <item ordem="${i + 1}">\n`;
+            xml += `      <titulo>${escXml(typeof e === "string" ? e : e.titulo || "")}</titulo>\n`;
+            xml += `      <imagem>${escXml(typeof e === "string" ? "" : e.imagemUrl || "")}</imagem>\n`;
+            xml += `    </item>\n`;
+          });
+          xml += `  </escalada>\n`;
+        }
+        blocosList.forEach((b: any, bi: number) => {
+          xml += `  <bloco numero="${bi + 1}">\n`;
+          (b.noticias || []).forEach((n: any, ni: number) => {
+            if (!n.titulo) return;
+            xml += `    <noticia ordem="${ni + 1}">\n`;
+            xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
+            xml += `      <resumo>${escXml(n.resumo || "")}</resumo>\n`;
+            xml += `      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n`;
+            xml += `      <imagem>${escXml(n.imagemUrl || "")}</imagem>\n`;
+            xml += `      <escalada>${n.escalada || false}</escalada>\n`;
+            xml += `    </noticia>\n`;
+          });
+          xml += `  </bloco>\n`;
+        });
+      }
+      xml += `</programaExpress>`;
+
+      const xmlUrl = r.subtitulo!.replace("express_xml::", "");
+      const urlObj = new URL(xmlUrl);
+      const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
+      if (!pathMatch) return false;
+      const filePath = decodeURIComponent(pathMatch[1]);
+
+      const blob = new Blob([new TextEncoder().encode(xml)], { type: "application/xml" });
+      const { error } = await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+      if (error) { console.warn("[RegenXML] upload error", error); return false; }
+      return true;
+    } catch (e) {
+      console.warn(`[RegenXML] Error on roteiro ${r?.id}:`, e);
+      return false;
+    }
+  };
+
   const regenerateAllXmls = async () => {
     if (!user) return;
     setRegenerating(true);
@@ -427,90 +517,8 @@ export default function RoteiroPrograma() {
 
       let count = 0;
       for (const r of allRoteiros) {
-        try {
-          let parts: any = null;
-          try {
-            let raw = r.participantes;
-            if (typeof raw === "string") raw = JSON.parse(raw);
-            if (typeof raw === "string") raw = JSON.parse(raw);
-            parts = raw;
-          } catch { parts = {}; }
-          const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
-          const pList: any[] = parsed.participantes || [];
-          const blocosList: any[] = parsed.blocos || [];
-          const escaladaItems: any[] = parsed.escaladaList || [];
-          const podcastData = parsed.podcastData;
-          const isPodcast = !!podcastData;
-
-          let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
-          xml += `  <programa>${escXml(r.programa_nome || "")}</programa>\n`;
-          xml += `  <estudio>${escXml(r.estudio || "")}</estudio>\n`;
-          xml += `  <data>${r.data_programa || new Date().toISOString().split("T")[0]}</data>\n`;
-
-          if (pList.length > 0) {
-            xml += `  <participantes>\n`;
-            pList.forEach((p: any) => {
-              xml += `    <item>\n`;
-              xml += `      <nome>${escXml(p.nome || "")}</nome>\n`;
-              xml += `      <cargo>${escXml(p.cargo || "")}</cargo>\n`;
-              xml += `      <instagram>${escXml(p.instagram || "")}</instagram>\n`;
-              xml += `    </item>\n`;
-            });
-            xml += `  </participantes>\n`;
-          }
-
-          if (isPodcast) {
-            xml += `  <roteiro>\n`;
-            xml += `    <tituloTarja>${escXml(podcastData.tituloTarja || "")}</tituloTarja>\n`;
-            xml += `    <introducao>${escXml(podcastData.introducao || "")}</introducao>\n`;
-            xml += `    <perguntas>\n`;
-            (podcastData.perguntas || []).filter((p: string) => p.trim()).forEach((p: string, i: number) => {
-              xml += `      <pergunta ordem="${i + 1}">${escXml(p)}</pergunta>\n`;
-            });
-            xml += `    </perguntas>\n`;
-            xml += `    <concluindo>${escXml(podcastData.concluindo || "")}</concluindo>\n`;
-            xml += `  </roteiro>\n`;
-          } else {
-            if (escaladaItems.length > 0) {
-              xml += `  <escalada>\n`;
-              escaladaItems.forEach((e: any, i: number) => {
-                xml += `    <item ordem="${i + 1}">\n`;
-                xml += `      <titulo>${escXml(typeof e === "string" ? e : e.titulo || "")}</titulo>\n`;
-                xml += `      <imagem>${escXml(typeof e === "string" ? "" : e.imagemUrl || "")}</imagem>\n`;
-                xml += `    </item>\n`;
-              });
-              xml += `  </escalada>\n`;
-            }
-            blocosList.forEach((b: any, bi: number) => {
-              xml += `  <bloco numero="${bi + 1}">\n`;
-              (b.noticias || []).forEach((n: any, ni: number) => {
-                if (!n.titulo) return;
-            xml += `    <noticia ordem="${ni + 1}">\n`;
-            xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
-            xml += `      <resumo>${escXml(n.resumo || "")}</resumo>\n`;
-            xml += `      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n`;
-            xml += `      <imagem>${escXml(n.imagemUrl || "")}</imagem>\n`;
-            xml += `      <escalada>${n.escalada || false}</escalada>\n`;
-            xml += `    </noticia>\n`;
-              });
-              xml += `  </bloco>\n`;
-            });
-          }
-          xml += `</programaExpress>`;
-
-          // Extract storage path from subtitulo
-          const xmlUrl = r.subtitulo!.replace("express_xml::", "");
-          const urlObj = new URL(xmlUrl);
-          const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
-          if (!pathMatch) continue;
-          const filePath = decodeURIComponent(pathMatch[1]);
-
-          const blob = new Blob([new TextEncoder().encode(xml)], { type: "application/xml" });
-          await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
-          count++;
-        } catch (e) {
-          console.warn(`[RegenXML] Error on roteiro ${r.id}:`, e);
-        }
+        const ok = await regenerateXmlForRoteiro(r);
+        if (ok) count++;
       }
       toast.success(`${count} XML(s) regenerado(s) com sucesso!`);
     } catch (e) {
@@ -519,6 +527,7 @@ export default function RoteiroPrograma() {
     }
     setRegenerating(false);
   };
+
 
   const historicoSlot = useMemo(() => {
     if (historico.length === 0) return null;
@@ -604,8 +613,27 @@ export default function RoteiroPrograma() {
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {historico.map((r, idx) => {
               const dataFormatada = format(new Date(r.data_programa), "dd/MM/yyyy");
-              const isFeito = r.status === "feito";
-              const isAgd = r.status === "agendado";
+              const eventTime = r.horario
+                ? new Date(`${r.data_programa}T${r.horario}:00`)
+                : new Date(`${r.data_programa}T23:59:00`);
+              const oneHourAfter = new Date(eventTime.getTime() + 60 * 60 * 1000);
+              const now = new Date();
+              const phase: "agendado" | "agora" | "jafoi" =
+                now < eventTime ? "agendado" : now < oneHourAfter ? "agora" : "jafoi";
+              const phaseLabel = phase === "agendado" ? "AGENDADO" : phase === "agora" ? "ACONTECENDO AGORA" : "JÁ FOI";
+              const phaseBg =
+                phase === "agendado"
+                  ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
+                  : phase === "agora"
+                  ? "rgba(234,88,12,0.14)"
+                  : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)";
+              const phaseColor =
+                phase === "agendado"
+                  ? "var(--layout-accent-color, #2563eb)"
+                  : phase === "agora"
+                  ? "#ea580c"
+                  : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)";
+              const hasXml = typeof r.subtitulo === "string" && r.subtitulo.startsWith("express_xml::");
               const isAuto = typeof r.titulo === "string" && r.titulo.includes("[AUTO]");
               return (
                 <div key={r.id} className="flex-shrink-0 rounded-lg p-2.5 flex flex-col gap-1.5 transition-all hover:brightness-95" style={{ minWidth: "220px", maxWidth: "280px", backgroundColor: isAuto ? "color-mix(in srgb, #8b5cf6 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: isAuto ? "2px solid #8b5cf6" : "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)", boxShadow: isAuto ? "0 0 0 3px color-mix(in srgb, #8b5cf6 18%, transparent)" : undefined }}>
@@ -619,14 +647,15 @@ export default function RoteiroPrograma() {
                         🤖 AUTO
                       </span>
                     )}
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0" style={{
-                      backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
-                      color: isFeito ? "#16a34a" : isAgd ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
-                    }}>{isFeito ? "feito" : isAgd ? "agendado" : r.status}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0 whitespace-nowrap" style={{ backgroundColor: phaseBg, color: phaseColor }}>
+                      {phase === "agora" && <span className="inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle animate-pulse" style={{ backgroundColor: "#ea580c" }} />}
+                      {phaseLabel}
+                    </span>
                     {r.tickertitulos && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0" style={{ backgroundColor: "rgba(234,179,8,0.12)", color: "#ca8a04" }}>ticker on</span>
                     )}
                   </div>
+
                   <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                     {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
                   </p>
@@ -658,6 +687,17 @@ export default function RoteiroPrograma() {
                     }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(37,211,102,0.08)" }} title="Enviar por WhatsApp">
                       <MessageSquare size={10} style={{ color: "#25d366" }} />
                     </button>
+                    {hasXml && (
+                      <button onClick={async () => {
+                        toast.info("Enviando para o XML...");
+                        const ok = await regenerateXmlForRoteiro(r);
+                        if (ok) toast.success("XML atualizado!");
+                        else toast.error("Falha ao enviar XML");
+                      }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" }} title="Enviar para o XML">
+                        <Code2 size={10} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                      </button>
+                    )}
+
                     <button onClick={() => {
                       let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = []; let editPodcastData: any = undefined;
                       try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; editPodcastData = parsed.podcastData || undefined; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
