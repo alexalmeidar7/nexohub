@@ -687,6 +687,17 @@ export default function RoteiroPrograma() {
                     }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(37,211,102,0.08)" }} title="Enviar por WhatsApp">
                       <MessageSquare size={10} style={{ color: "#25d366" }} />
                     </button>
+                    {hasXml && (
+                      <button onClick={async () => {
+                        toast.info("Enviando para o XML...");
+                        const ok = await regenerateXmlForRoteiro(r);
+                        if (ok) toast.success("XML atualizado!");
+                        else toast.error("Falha ao enviar XML");
+                      }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" }} title="Enviar para o XML">
+                        <Code2 size={10} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                      </button>
+                    )}
+
                     <button onClick={() => {
                       let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = []; let editPodcastData: any = undefined;
                       try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; editPodcastData = parsed.podcastData || undefined; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
