@@ -91,20 +91,24 @@ Deno.serve(async (req) => {
     }
 
     // Check scheduling: hide content until scheduled release time has arrived
+    // `force=1` bypasses scheduling (used by manual "Enviar para XML" button)
+    const force = url.searchParams.get("force") === "1";
     let scheduledHidden = false;
-    if (podcastData?.agendamentoData && podcastData?.agendamentoHorario) {
-      const releaseAt = new Date(`${podcastData.agendamentoData}T${podcastData.agendamentoHorario}:00-03:00`);
-      if (!isNaN(releaseAt.getTime()) && Date.now() < releaseAt.getTime()) {
-        scheduledHidden = true;
-      }
-    } else if ((roteiro as any).data_programa) {
-      // Generic roteiro: use data_programa + horario (São Paulo UTC-3)
-      const horario = (roteiro as any).horario || "00:00";
-      const releaseAt = new Date(`${(roteiro as any).data_programa}T${horario}:00-03:00`);
-      if (!isNaN(releaseAt.getTime()) && Date.now() < releaseAt.getTime()) {
-        scheduledHidden = true;
+    if (!force) {
+      if (podcastData?.agendamentoData && podcastData?.agendamentoHorario) {
+        const releaseAt = new Date(`${podcastData.agendamentoData}T${podcastData.agendamentoHorario}:00-03:00`);
+        if (!isNaN(releaseAt.getTime()) && Date.now() < releaseAt.getTime()) {
+          scheduledHidden = true;
+        }
+      } else if ((roteiro as any).data_programa) {
+        const horario = (roteiro as any).horario || "00:00";
+        const releaseAt = new Date(`${(roteiro as any).data_programa}T${horario}:00-03:00`);
+        if (!isNaN(releaseAt.getTime()) && Date.now() < releaseAt.getTime()) {
+          scheduledHidden = true;
+        }
       }
     }
+
 
     if (scheduledHidden) {
       participantes = [];
