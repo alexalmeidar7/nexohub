@@ -360,7 +360,8 @@ export default function RoteiroPrograma() {
       .from("roteiros")
       .select("*")
       .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
+      .order("data_programa", { ascending: false })
+      .order("horario", { ascending: false, nullsFirst: false })
       .limit(10);
     if (!data) { setHistorico([]); return; }
 
