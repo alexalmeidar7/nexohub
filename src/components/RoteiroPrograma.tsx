@@ -612,14 +612,25 @@ export default function RoteiroPrograma() {
           ) : (
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {historico.map((r, idx) => {
-              const dataFormatada = format(new Date(r.data_programa), "dd/MM/yyyy");
-              const eventTime = r.horario
-                ? new Date(`${r.data_programa}T${r.horario}:00`)
-                : new Date(`${r.data_programa}T23:59:00`);
-              const oneHourAfter = new Date(eventTime.getTime() + 60 * 60 * 1000);
+              const [yy, mm, dd] = (r.data_programa || "").split("-").map(Number);
+              const dataFormatada = yy ? format(new Date(yy, (mm || 1) - 1, dd || 1), "dd/MM/yyyy") : "";
+              const progRef = programas.find(p => p.nome === r.programa_nome);
+              const horaInicioStr = (progRef?.horario_inicio?.slice(0, 5)) || r.horario || "23:59";
+              const horaFimStr = progRef?.horario_fim?.slice(0, 5) || "";
+              const [hi, mi] = horaInicioStr.split(":").map(Number);
+              const eventTime = new Date(yy, (mm || 1) - 1, dd || 1, hi || 0, mi || 0, 0);
+              let endTime: Date;
+              if (horaFimStr) {
+                const [hf, mf] = horaFimStr.split(":").map(Number);
+                endTime = new Date(yy, (mm || 1) - 1, dd || 1, hf || 0, mf || 0, 0);
+                // Se horario_fim < horario_inicio, é programa que vira o dia
+                if (endTime.getTime() <= eventTime.getTime()) endTime = new Date(endTime.getTime() + 24 * 60 * 60 * 1000);
+              } else {
+                endTime = new Date(eventTime.getTime() + 60 * 60 * 1000);
+              }
               const now = new Date();
               const phase: "agendado" | "agora" | "jafoi" =
-                now < eventTime ? "agendado" : now < oneHourAfter ? "agora" : "jafoi";
+                now < eventTime ? "agendado" : now < endTime ? "agora" : "jafoi";
               const phaseLabel = phase === "agendado" ? "AGENDADO" : phase === "agora" ? "ACONTECENDO AGORA" : "JÁ FOI";
               const phaseBg =
                 phase === "agendado"
