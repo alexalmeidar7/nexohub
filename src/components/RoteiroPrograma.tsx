@@ -417,7 +417,7 @@ export default function RoteiroPrograma() {
       // Pega XML completo direto da edge function (sempre fresco)
       const projectId = (import.meta as any).env?.VITE_SUPABASE_PROJECT_ID || "zzjfzxxvxbspbdkodoix";
       const anonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || "";
-      const fnUrl = `https://${projectId}.supabase.co/functions/v1/roteiro-xml?id=${r.id}&t=${Date.now()}`;
+      const fnUrl = `https://${projectId}.supabase.co/functions/v1/roteiro-xml?id=${r.id}&force=1&t=${Date.now()}`;
       const resp = await fetch(fnUrl, {
         headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
         cache: "no-store",
