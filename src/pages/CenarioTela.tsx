@@ -1745,7 +1745,7 @@ export default function CenarioTela() {
                           </div>
 
                           {/* ── Music Details (Text below cover) ── */}
-                          {musicData && (
+                          {musicData && showMusic && (
                             <div style={{
                               marginTop: `${vhToPx(1)}${vu}`,
                               textAlign: "right",
