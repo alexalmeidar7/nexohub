@@ -3192,7 +3192,7 @@ export default function CenarioInterativoPage() {
                                    </div>
 
                                    {/* ── Music Details (Text below cover) ── */}
-                                   {musicData && (
+                                   {musicData && showMusic && (
                                      <div style={{
                                        marginTop: `${pvh(1)}px`,
                                        textAlign: "right",
