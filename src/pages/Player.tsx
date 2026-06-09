@@ -800,7 +800,7 @@ export default function PlayerPage() {
   // Fetch all initial data — 3 stages for fastest possible first paint
   useEffect(() => {
     let cancelled = false;
-    const slug = userSlug ?? null;
+    const slug = userSlug && !userSlug.startsWith(":") ? userSlug : null;
 
     // Skip fetch if Top 10 mode — playlist comes from navigation state
     if (isTop10Mode) return;
