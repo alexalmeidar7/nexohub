@@ -23,25 +23,28 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Find user by email prefix via profiles table
-    const slugLower = slug.toLowerCase();
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id, email")
-      .not("email", "is", null);
+    const isUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+    let userId: string | null = null;
 
-    const matchedProfile = (profiles || []).find((p: any) =>
-      p.email && p.email.split("@")[0].toLowerCase() === slugLower
-    );
+    if (isUUID(slug)) {
+      userId = slug;
+    } else {
+      const slugLower = slug.toLowerCase();
+      const { data: matched } = await supabase
+        .from("profiles")
+        .select("user_id, email")
+        .ilike("email", `${slugLower}@%`)
+        .limit(1)
+        .maybeSingle();
+      if (matched?.user_id) userId = matched.user_id;
+    }
 
-    if (!matchedProfile) {
+    if (!userId) {
       return new Response(JSON.stringify({ error: "User not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const userId = matchedProfile.user_id;
 
     // Check if this is a sub-user and if so, use the parent's data
     const { data: subUserData } = await supabase
