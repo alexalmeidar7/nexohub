@@ -2513,13 +2513,14 @@ export default function PlayerPage() {
     (async () => {
       try {
         const ownerId = top10OwnerUserId || effectiveUserId;
-        if (ownerId || (isPublicMode && userSlug)) {
+        const validSlug = userSlug && !userSlug.startsWith(":") ? userSlug : null;
+        if (ownerId || (isPublicMode && validSlug)) {
           const now = new Date();
           const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-          const { data } = isPublicMode && userSlug
-            ? await supabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "active_midrolls" } })
+          const { data } = isPublicMode && validSlug
+            ? await supabase.functions.invoke("public-player-data", { body: { slug: validSlug, section: "active_midrolls" } })
             : await supabase.from("comercial_preroll").select("*").eq("user_id", ownerId).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
-          const campaigns = isPublicMode && userSlug ? (data?.prerolls || []) : data;
+          const campaigns = isPublicMode && validSlug ? (data?.prerolls || []) : data;
           if (campaigns && campaigns.length > 0) {
             const pool = filterCampaignsByType(campaigns, now, true);
             if (pool.length > 0) {
