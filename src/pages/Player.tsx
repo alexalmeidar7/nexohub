@@ -1151,7 +1151,7 @@ export default function PlayerPage() {
     };
 
     if (isPublicMode) {
-      if (!userSlug) return;
+      if (!userSlug || userSlug.startsWith(":")) return;
 
       let cancelled = false;
       let inFlight = false;
