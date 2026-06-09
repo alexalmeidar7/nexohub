@@ -352,7 +352,7 @@ export default function PlayerPage() {
   const isTop10Mode = searchParams.get("top10") === "1";
   const navigate = useNavigate();
   const location = useLocation();
-  const isPublicMode = !!userSlug;
+  const isPublicMode = !!userSlug && !userSlug.startsWith(":");
   const playerHomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home", [userSlug]);
   const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
@@ -800,7 +800,7 @@ export default function PlayerPage() {
   // Fetch all initial data — 3 stages for fastest possible first paint
   useEffect(() => {
     let cancelled = false;
-    const slug = userSlug ?? null;
+    const slug = userSlug && !userSlug.startsWith(":") ? userSlug : null;
 
     // Skip fetch if Top 10 mode — playlist comes from navigation state
     if (isTop10Mode) return;
@@ -1151,7 +1151,7 @@ export default function PlayerPage() {
     };
 
     if (isPublicMode) {
-      if (!userSlug) return;
+      if (!userSlug || userSlug.startsWith(":")) return;
 
       let cancelled = false;
       let inFlight = false;
@@ -2513,13 +2513,14 @@ export default function PlayerPage() {
     (async () => {
       try {
         const ownerId = top10OwnerUserId || effectiveUserId;
-        if (ownerId || (isPublicMode && userSlug)) {
+        const validSlug = userSlug && !userSlug.startsWith(":") ? userSlug : null;
+        if (ownerId || (isPublicMode && validSlug)) {
           const now = new Date();
           const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-          const { data } = isPublicMode && userSlug
-            ? await supabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "active_midrolls" } })
+          const { data } = isPublicMode && validSlug
+            ? await supabase.functions.invoke("public-player-data", { body: { slug: validSlug, section: "active_midrolls" } })
             : await supabase.from("comercial_preroll").select("*").eq("user_id", ownerId).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
-          const campaigns = isPublicMode && userSlug ? (data?.prerolls || []) : data;
+          const campaigns = isPublicMode && validSlug ? (data?.prerolls || []) : data;
           if (campaigns && campaigns.length > 0) {
             const pool = filterCampaignsByType(campaigns, now, true);
             if (pool.length > 0) {
