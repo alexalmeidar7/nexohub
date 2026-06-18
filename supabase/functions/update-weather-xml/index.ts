@@ -97,7 +97,7 @@ function weatherIconKey(code: number, isNight = false): string {
   const suffix = isNight ? "n" : "d";
   const codes = Object.keys(weatherLabelsMap).map(Number);
   const c = codes.reduce((prev, curr) => Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev);
-  return `weather-icon-color-${c}-${suffix}`;
+  return `weather-icon-static-${c}-${suffix}`;
 }
 
 const uploadedIcons: Record<string, string> = {};
