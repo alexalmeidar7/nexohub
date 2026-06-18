@@ -95,18 +95,41 @@ async function ensureIconUploaded(
   const key = weatherIconKey(code, isNight);
   if (uploadedIcons[key]) return uploadedIcons[key];
 
-  const fileName = `weather-icons/${key}.svg`;
+  const svgFileName = `weather-icons/${key}.svg`;
+  const pngFileName = `weather-icons/${key}.png`;
   const svg = weatherIconSvg(code, isNight);
-  const blob = new Blob([svg], { type: "image/svg+xml" });
 
+  // Upload SVG source (needed so wsrv.nl can fetch and convert it)
+  const svgBlob = new Blob([svg], { type: "image/svg+xml" });
   await supabase.storage
     .from("xml-files")
-    .upload(fileName, blob, { upsert: true, contentType: "image/svg+xml" });
+    .upload(svgFileName, svgBlob, { upsert: true, contentType: "image/svg+xml" });
 
-  const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(fileName);
-  const publicUrl = urlData?.publicUrl || "";
-  uploadedIcons[key] = publicUrl;
-  return publicUrl;
+  // Convert SVG → PNG via wsrv.nl proxy
+  const { data: svgUrlData } = supabase.storage.from("xml-files").getPublicUrl(svgFileName);
+  const svgPublicUrl = svgUrlData?.publicUrl || "";
+  const source = svgPublicUrl.replace(/^https?:\/\//i, "");
+  const pngFetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=256&h=256`;
+
+  let pngPublicUrl = "";
+  try {
+    const res = await fetch(pngFetchUrl);
+    if (res.ok) {
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      await supabase.storage
+        .from("xml-files")
+        .upload(pngFileName, bytes, { upsert: true, contentType: "image/png", cacheControl: "3600" });
+      const { data: pngUrlData } = supabase.storage.from("xml-files").getPublicUrl(pngFileName);
+      pngPublicUrl = (pngUrlData?.publicUrl || "").split("?")[0];
+    }
+  } catch (err) {
+    console.error("PNG conversion failed:", err);
+  }
+
+  // Fallback to SVG if PNG conversion failed
+  const finalUrl = pngPublicUrl || svgPublicUrl;
+  uploadedIcons[key] = finalUrl;
+  return finalUrl;
 }
 
 serve(async (req) => {
