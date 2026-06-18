@@ -112,7 +112,7 @@ async function ensureIconUploaded(
 
   const pngFileName = `weather-icons/${key}.png`;
   const iconName = basmiliusIconName(code, isNight);
-  const svgSource = `cdn.jsdelivr.net/gh/basmilius/weather-icons@dev/production/fill/svg/${iconName}.svg`;
+  const svgSource = `cdn.jsdelivr.net/gh/basmilius/weather-icons@dev/production/fill/svg-static/${iconName}.svg`;
   const pngFetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(svgSource)}&output=png&w=256&h=256`;
 
   let pngPublicUrl = "";
