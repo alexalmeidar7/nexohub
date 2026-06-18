@@ -78,11 +78,26 @@ function weatherIconSvg(code: number, isNight = false): string {
   return `${S}${body}${E}`;
 }
 
+// Map WMO code → basmilius/weather-icons name (colored set)
+function basmiliusIconName(code: number, isNight: boolean): string {
+  const codes = Object.keys(weatherLabelsMap).map(Number);
+  const c = codes.reduce((prev, curr) => Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev);
+  if (c === 0) return isNight ? "clear-night" : "clear-day";
+  if (c <= 2) return isNight ? "partly-cloudy-night" : "partly-cloudy-day";
+  if (c === 3) return "cloudy";
+  if (c <= 48) return "fog";
+  if (c <= 55) return "drizzle";
+  if (c <= 65) return "rain";
+  if (c <= 75) return "snow";
+  if (c <= 82) return "rain";
+  return "thunderstorms-rain";
+}
+
 function weatherIconKey(code: number, isNight = false): string {
   const suffix = isNight ? "n" : "d";
   const codes = Object.keys(weatherLabelsMap).map(Number);
   const c = codes.reduce((prev, curr) => Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev);
-  return `weather-icon-${c}-${suffix}`;
+  return `weather-icon-color-${c}-${suffix}`;
 }
 
 const uploadedIcons: Record<string, string> = {};
@@ -95,21 +110,10 @@ async function ensureIconUploaded(
   const key = weatherIconKey(code, isNight);
   if (uploadedIcons[key]) return uploadedIcons[key];
 
-  const svgFileName = `weather-icons/${key}.svg`;
   const pngFileName = `weather-icons/${key}.png`;
-  const svg = weatherIconSvg(code, isNight);
-
-  // Upload SVG source (needed so wsrv.nl can fetch and convert it)
-  const svgBlob = new Blob([svg], { type: "image/svg+xml" });
-  await supabase.storage
-    .from("xml-files")
-    .upload(svgFileName, svgBlob, { upsert: true, contentType: "image/svg+xml" });
-
-  // Convert SVG → PNG via wsrv.nl proxy
-  const { data: svgUrlData } = supabase.storage.from("xml-files").getPublicUrl(svgFileName);
-  const svgPublicUrl = svgUrlData?.publicUrl || "";
-  const source = svgPublicUrl.replace(/^https?:\/\//i, "");
-  const pngFetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=256&h=256`;
+  const iconName = basmiliusIconName(code, isNight);
+  const svgSource = `cdn.jsdelivr.net/gh/basmilius/weather-icons@dev/production/fill/svg/${iconName}.svg`;
+  const pngFetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(svgSource)}&output=png&w=256&h=256`;
 
   let pngPublicUrl = "";
   try {
@@ -123,13 +127,11 @@ async function ensureIconUploaded(
       pngPublicUrl = (pngUrlData?.publicUrl || "").split("?")[0];
     }
   } catch (err) {
-    console.error("PNG conversion failed:", err);
+    console.error("Colored icon fetch failed:", err);
   }
 
-  // Fallback to SVG if PNG conversion failed
-  const finalUrl = pngPublicUrl || svgPublicUrl;
-  uploadedIcons[key] = finalUrl;
-  return finalUrl;
+  uploadedIcons[key] = pngPublicUrl;
+  return pngPublicUrl;
 }
 
 serve(async (req) => {
