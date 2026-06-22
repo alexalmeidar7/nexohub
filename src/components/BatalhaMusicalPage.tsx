@@ -129,9 +129,19 @@ export default function BatalhaMusicalPage() {
       toast.error("Digite o nome do artista primeiro");
       return;
     }
-    if (which === 1) { setLoading1(true); skip1Ref.current += 1; }
-    else { setLoading2(true); skip2Ref.current += 1; }
-    const url = await fetchArtistImage(name, which === 1 ? skip1Ref.current : skip2Ref.current);
+    const currentUrl = which === 1 ? artista1.imagemUrl : artista2.imagemUrl;
+    if (which === 1) setLoading1(true); else setLoading2(true);
+
+    let url = "";
+    // Try up to 8 increments to find a URL different from the current one
+    for (let i = 0; i < 8; i++) {
+      if (which === 1) skip1Ref.current += 1; else skip2Ref.current += 1;
+      const skip = which === 1 ? skip1Ref.current : skip2Ref.current;
+      const next = await fetchArtistImage(name, skip);
+      if (!next) break;
+      if (next !== currentUrl) { url = next; break; }
+    }
+
     if (which === 1) setLoading1(false); else setLoading2(false);
     if (!url) {
       toast.error("Nenhuma outra imagem encontrada");
@@ -143,6 +153,7 @@ export default function BatalhaMusicalPage() {
     else setArtista2(prev => ({ ...prev, imagemUrl: url }));
     await persistImage(which, url);
   };
+
 
   const applyImageUrl = async (which: 1 | 2, url: string) => {
     const trimmed = url.trim();
