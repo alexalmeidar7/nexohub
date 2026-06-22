@@ -199,9 +199,10 @@ export default function BatalhaMusicalPage() {
       let persistedUrl: string | null = null;
       setArtista1(prev => {
         if (prev.nome.trim() !== artistName) return prev;
-        // Don't clear existing image if API returned nothing
-        if (!url && prev.imagemUrl) return prev;
-        if (prev.imagemUrl !== url) persistedUrl = url;
+        // Never overwrite an existing image — only fill when empty
+        if (prev.imagemUrl) return prev;
+        if (!url) return prev;
+        persistedUrl = url;
         return { ...prev, imagemUrl: url };
       });
       setLoading1(false);
