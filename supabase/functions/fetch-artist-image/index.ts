@@ -60,10 +60,10 @@ async function albumBelongsToArtist(albumId: number, expectedArtistId: number): 
   }
 }
 
-/** Get alternate images of the SAME artist from their albums (cover art), validated. */
+/** Get alternate images of the SAME artist from their albums (cover art). */
 async function getArtistAlbumCovers(artistId: number): Promise<string[]> {
   try {
-    const res = await fetch(`https://api.deezer.com/artist/${artistId}/albums?limit=25`, {
+    const res = await fetch(`https://api.deezer.com/artist/${artistId}/albums?limit=50`, {
       signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) return [];
@@ -76,37 +76,23 @@ async function getArtistAlbumCovers(artistId: number): Promise<string[]> {
       record_type?: string;
     }>;
 
-    // Pre-filter: drop compilations and any album whose listed artist isn't the matched one
-    const prefiltered = albums.filter(a => {
-      if (!isValidImage(a.cover_xl || a.cover_big)) return false;
-      if (typeof a.record_type === "string" && a.record_type.toLowerCase() === "compile") return false;
-      // /artist/{id}/albums sometimes includes the artist obj — if present, must match
-      if (a.artist?.id !== undefined && Number(a.artist.id) !== artistId) return false;
-      return true;
-    });
-
-    // Validate each album in parallel against /album/{id} for definitive ownership check
-    const validated = await Promise.all(
-      prefiltered.slice(0, 15).map(async (a) => {
-        const ok = await albumBelongsToArtist(a.id, artistId);
-        return ok ? (a.cover_xl || a.cover_big) as string : null;
-      })
-    );
-
-    // Dedupe while preserving order
     const seen = new Set<string>();
     const result: string[] = [];
-    for (const url of validated) {
-      if (url && !seen.has(url)) {
-        seen.add(url);
-        result.push(url);
-      }
+    for (const a of albums) {
+      const url = a.cover_xl || a.cover_big;
+      if (!isValidImage(url)) continue;
+      if (typeof a.record_type === "string" && a.record_type.toLowerCase() === "compile") continue;
+      if (a.artist?.id !== undefined && Number(a.artist.id) !== artistId) continue;
+      if (seen.has(url)) continue;
+      seen.add(url);
+      result.push(url);
     }
     return result;
   } catch {
     return [];
   }
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
