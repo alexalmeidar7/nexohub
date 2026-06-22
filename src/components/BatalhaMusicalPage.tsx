@@ -248,8 +248,9 @@ export default function BatalhaMusicalPage() {
       let persistedUrl: string | null = null;
       setArtista2(prev => {
         if (prev.nome.trim() !== artistName) return prev;
-        if (!url && prev.imagemUrl) return prev;
-        if (prev.imagemUrl !== url) persistedUrl = url;
+        if (prev.imagemUrl) return prev;
+        if (!url) return prev;
+        persistedUrl = url;
         return { ...prev, imagemUrl: url };
       });
       setLoading2(false);
