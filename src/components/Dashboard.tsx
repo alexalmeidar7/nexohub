@@ -426,7 +426,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       page === "fans" ||
       page === "apresentadores" ||
       page === "programas" ||
-      page === "previsao"
+      page === "previsao" ||
+      page === "site"
     ) {
       return true;
     }
