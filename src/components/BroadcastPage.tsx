@@ -91,6 +91,7 @@ export default function BroadcastPage() {
   // Ticker auto-content
   const [newsTitles, setNewsTitles] = useState<string[]>([]);
   const [weatherText, setWeatherText] = useState("");
+  const [quotesText, setQuotesText] = useState("");
 
   useEffect(() => {
     latestDataRef.current = data;
