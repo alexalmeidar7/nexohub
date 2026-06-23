@@ -231,6 +231,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [addingWeather, setAddingWeather] = useState(false);
   const [addingFinance, setAddingFinance] = useState(false);
+  const [novoRoteiroOpen, setNovoRoteiroOpen] = useState(false);
+  useEffect(() => { if (editData) setNovoRoteiroOpen(true); }, [editData]);
+  useEffect(() => { if (externalPasteText) setNovoRoteiroOpen(true); }, [externalPasteText]);
 
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
