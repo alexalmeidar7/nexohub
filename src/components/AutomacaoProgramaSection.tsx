@@ -173,7 +173,7 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
   };
 
   const inputStyle: React.CSSProperties = {
-    backgroundColor: "rgba(13,4,70,0.03)",
+    backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)",
     border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)",
     color: "var(--layout-page-text, #1a1a1a)",
   };
@@ -185,7 +185,7 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
 
   return (
     <div className="px-6 pt-4 pb-2">
-      <div className="rounded-xl p-3" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
+      <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
 
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex items-center gap-2">
@@ -251,7 +251,7 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
                 className="flex-1 h-full px-2.5 rounded-md text-[10px] outline-none"
                 style={{ 
                   backgroundColor: "rgba(255,255,255,0.7)", 
-                  border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)",
                   color: "var(--layout-page-text, #1a1a1a)"
                 }}
               />

@@ -488,7 +488,7 @@ export default function RoteiroPrograma() {
     if (historico.length === 0) return null;
     return (
       <div className="px-6 pt-4 pb-2">
-        <div className="rounded-xl p-3" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
+        <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
           <div className="flex items-center gap-2 mb-2">
             <History size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
             <div className="flex items-center gap-1">
