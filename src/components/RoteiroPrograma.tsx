@@ -491,23 +491,35 @@ export default function RoteiroPrograma() {
       <div className="px-6 pt-4 pb-2">
         <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
           <div className="flex items-center gap-2 mb-2">
-            <History size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
-            <div className="flex items-center gap-1">
-              {(["recentes", "historico"] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setActiveTab(t)}
-                  className="text-[11px] font-bold px-2 py-0.5 rounded-md transition"
-                  style={{
-                    backgroundColor: activeTab === t ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "transparent",
-                    color: activeTab === t ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)",
-                  }}
-                >
-                  {t === "recentes" ? "Últimos roteiros" : "Histórico (30 dias)"}
-                </button>
-              ))}
-            </div>
-            {activeTab === "recentes" && (
+            <button
+              onClick={() => setHistoricoOpen(o => !o)}
+              className="flex items-center gap-2 hover:opacity-80 transition"
+              title={historicoOpen ? "Recolher" : "Expandir"}
+            >
+              <History size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+              <span className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Últimos Roteiros</span>
+              {historicoOpen
+                ? <ChevronUp size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                : <ChevronDown size={12} style={{ color: "var(--layout-icon-color, #888)" }} />}
+            </button>
+            {historicoOpen && (
+              <div className="flex items-center gap-1 ml-2">
+                {(["recentes", "historico"] as const).map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setActiveTab(t)}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-md transition"
+                    style={{
+                      backgroundColor: activeTab === t ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "transparent",
+                      color: activeTab === t ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)",
+                    }}
+                  >
+                    {t === "recentes" ? "Cards" : "Histórico (30d)"}
+                  </button>
+                ))}
+              </div>
+            )}
+            {historicoOpen && activeTab === "recentes" && (
               <button
                 onClick={regenerateAllXmls}
                 disabled={regenerating}
@@ -520,6 +532,8 @@ export default function RoteiroPrograma() {
               </button>
             )}
           </div>
+          {historicoOpen && (
+
           {activeTab === "historico" ? (
             <HistoricoTable 
               historico={historico} 
