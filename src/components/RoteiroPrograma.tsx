@@ -702,7 +702,9 @@ export default function RoteiroPrograma() {
             );
           })()
           )}
+          </>)}
         </div>
+
       </div>
     );
   }, [historico, programas, activeTab, regenerating]);
