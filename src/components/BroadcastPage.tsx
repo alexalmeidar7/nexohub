@@ -349,6 +349,51 @@ export default function BroadcastPage() {
     };
   }, [user, activeProgramaId, loadInitialData]);
 
+  // Fetch quotes (currencies + stock indices)
+  useEffect(() => {
+    if (!data.tickerQuotes) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const parts: string[] = [];
+        // Currencies USD + EUR via awesomeapi
+        try {
+          const res = await fetch("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL");
+          if (res.ok) {
+            const d = await res.json();
+            const usd = d.USDBRL;
+            const eur = d.EURBRL;
+            if (usd) {
+              const pct = parseFloat(usd.pctChange);
+              parts.push(`Dólar R$ ${parseFloat(usd.bid).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)`);
+            }
+            if (eur) {
+              const pct = parseFloat(eur.pctChange);
+              parts.push(`Euro R$ ${parseFloat(eur.bid).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)`);
+            }
+          }
+        } catch { /* silent */ }
+        // Stocks via edge fn
+        try {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const res = await fetch(`${supabaseUrl}/functions/v1/fetch-stocks`, { headers: { "Content-Type": "application/json" } });
+          if (res.ok) {
+            const d = await res.json();
+            const wanted = ["^BVSP", "^GSPC", "^DJI", "^IXIC"];
+            for (const sym of wanted) {
+              const s = (d.stocks || []).find((x: any) => x.symbol === sym);
+              if (s) parts.push(`${s.name} ${s.value} (${s.change})`);
+            }
+          }
+        } catch { /* silent */ }
+        if (!cancelled) setQuotesText(parts.join(" | "));
+      } catch { /* silent */ }
+    };
+    load();
+    const id = setInterval(load, 5 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [data.tickerQuotes]);
+
   // Compose ticker from sources
   const composedTicker = useMemo(() => {
     const parts: string[] = [];
@@ -358,11 +403,14 @@ export default function BroadcastPage() {
     if (data.tickerWeather && weatherText) {
       parts.push(weatherText);
     }
+    if (data.tickerQuotes && quotesText) {
+      parts.push(quotesText);
+    }
     if (data.ticker) {
       parts.push(data.ticker);
     }
     return parts.join("  •  ");
-  }, [data.tickerNews, data.tickerWeather, data.ticker, newsTitles, weatherText]);
+  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.ticker, newsTitles, weatherText, quotesText]);
 
   const displayLocutor = data.locutor_override || locutorNome || "Locutor";
 
