@@ -1544,6 +1544,137 @@ export type Database = {
           },
         ]
       }
+      site_categorias: {
+        Row: {
+          cor: string | null
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          slug: string
+          user_id: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          slug: string
+          user_id: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          slug?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      site_config: {
+        Row: {
+          cidade_clima: string | null
+          cidade_lat: number | null
+          cidade_lon: number | null
+          cor_primaria: string | null
+          fonte_noticias: string
+          show_clima: boolean
+          show_economia: boolean
+          show_grade: boolean
+          show_no_ar: boolean
+          show_noticias: boolean
+          show_promocoes: boolean
+          site_descricao: string | null
+          site_nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cidade_clima?: string | null
+          cidade_lat?: number | null
+          cidade_lon?: number | null
+          cor_primaria?: string | null
+          fonte_noticias?: string
+          show_clima?: boolean
+          show_economia?: boolean
+          show_grade?: boolean
+          show_no_ar?: boolean
+          show_noticias?: boolean
+          show_promocoes?: boolean
+          site_descricao?: string | null
+          site_nome?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cidade_clima?: string | null
+          cidade_lat?: number | null
+          cidade_lon?: number | null
+          cor_primaria?: string | null
+          fonte_noticias?: string
+          show_clima?: boolean
+          show_economia?: boolean
+          show_grade?: boolean
+          show_no_ar?: boolean
+          show_noticias?: boolean
+          show_promocoes?: boolean
+          site_descricao?: string | null
+          site_nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      site_noticias: {
+        Row: {
+          categoria_id: string | null
+          conteudo: string | null
+          created_at: string
+          id: string
+          imagem_url: string | null
+          publicado: boolean
+          resumo: string | null
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria_id?: string | null
+          conteudo?: string | null
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          publicado?: boolean
+          resumo?: string | null
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria_id?: string | null
+          conteudo?: string | null
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          publicado?: boolean
+          resumo?: string | null
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_noticias_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "site_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       streaming_channels: {
         Row: {
           active: boolean
