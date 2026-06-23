@@ -35,6 +35,7 @@ interface BroadcastData {
   locutor_override: string;
   tickerNews: boolean;
   tickerWeather: boolean;
+  tickerQuotes: boolean;
   showQrCode: boolean;
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
@@ -47,6 +48,7 @@ const defaultBroadcast: BroadcastData = {
   locutor_override: "",
   tickerNews: false,
   tickerWeather: false,
+  tickerQuotes: false,
   showQrCode: false,
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
