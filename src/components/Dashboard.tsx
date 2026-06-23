@@ -892,7 +892,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "batalha" && <BatalhaMusicalPage />}
               {currentPage === "enquete" && <EnquetePage />}
               {currentPage === "quiz" && <QuizPage />}
-              {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId} />}
+              {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
               {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
               
             </Suspense>

@@ -41,24 +41,33 @@ export function useSiteConfig(userId: string | null | undefined) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setConfig(null);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from("site_config")
-        .select("*")
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (cancelled) return;
-      if (data) {
-        setConfig(data as SiteConfig);
-      } else {
-        const seed = defaults(userId);
-        await supabase.from("site_config").insert(seed);
-        setConfig(seed);
+      try {
+        const { data } = await supabase
+          .from("site_config")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (cancelled) return;
+        if (data) {
+          setConfig(data as SiteConfig);
+        } else {
+          const seed = defaults(userId);
+          const { error } = await supabase.from("site_config").insert(seed);
+          if (cancelled) return;
+          if (!error) setConfig(seed);
+          else setConfig(seed);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     })();
     return () => {
       cancelled = true;
