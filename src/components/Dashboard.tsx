@@ -52,6 +52,7 @@ const BroadcastPage = lazy(() => import("./BroadcastPage"));
 const BatalhaMusicalPage = lazy(() => import("./BatalhaMusicalPage"));
 const EnquetePage = lazy(() => import("./EnquetePage"));
 const QuizPage = lazy(() => import("./QuizPage"));
+const SitePage = lazy(() => import("./site/SitePage"));
 const IntercomWidget = lazy(() => import("./IntercomWidget"));
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
