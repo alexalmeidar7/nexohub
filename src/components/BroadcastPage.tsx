@@ -861,6 +861,26 @@ export default function BroadcastPage() {
               </div>
             </label>
 
+            <label className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer" style={{ backgroundColor: data.tickerQuotes ? "color-mix(in srgb, var(--layout-accent-color, #dc2626) 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
+              <input
+                type="checkbox"
+                checked={data.tickerQuotes}
+                onChange={e => {
+                  const nextData = { ...latestDataRef.current, tickerQuotes: e.target.checked };
+                  setData(nextData);
+                  void handleSave(nextData);
+                }}
+                className="accent-current"
+                style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
+              />
+              <TrendingUp size={12} style={{ color: data.tickerQuotes ? "var(--layout-accent-color, #dc2626)" : "var(--layout-icon-color, #888)" }} />
+              <div>
+                <span className="text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cotações</span>
+                <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>Dólar, Euro e bolsas financeiras</p>
+              </div>
+            </label>
+
+
             <textarea
               value={data.ticker}
               onChange={e => setData({ ...data, ticker: e.target.value })}
