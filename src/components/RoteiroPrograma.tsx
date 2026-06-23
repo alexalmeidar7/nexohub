@@ -721,38 +721,47 @@ export default function RoteiroPrograma() {
           editData={expressEditData}
           afterHeader={<>
             {estudios.length > 0 && (
-              <div className="px-6 pt-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Code2 size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
-                  <p className="text-[11px] font-bold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
-                    XML Roteiro por Estúdio
-                  </p>
-                </div>
-                <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
-                  {estudios.map(est => {
-                    const xmlUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-roteiro-estudio?user_id=${user?.id || ""}&estudio=${encodeURIComponent(est)}`;
-                    return (
-                      <div key={est} className="rounded-xl p-3 flex items-center gap-2"
-                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 18%, transparent)" }}>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
-                            XML ROTEIRO
-                          </p>
-                          <p className="text-xs font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{est}</p>
+              <div className="px-6 pt-4 pb-2">
+                <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Code2 size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                    <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                      XML Roteiro por Estúdio
+                    </p>
+                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full ml-1" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                      {estudios.length}
+                    </span>
+                  </div>
+                  <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                    {estudios.map(est => {
+                      const xmlUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-roteiro-estudio?user_id=${user?.id || ""}&estudio=${encodeURIComponent(est)}`;
+                      return (
+                        <div key={est} className="rounded-lg p-2.5 flex items-center gap-2 transition-all hover:-translate-y-0.5"
+                          style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 16%, transparent)" }}>
+                          <span className="h-7 w-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)" }}>
+                            <Code2 size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                              XML Roteiro
+                            </p>
+                            <p className="text-xs font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{est}</p>
+                          </div>
+                          <button
+                            onClick={() => navigator.clipboard.writeText(xmlUrl).then(() => toast.success(`URL do XML de ${est} copiada!`)).catch(() => toast.error("Erro ao copiar"))}
+                            className="h-7 w-7 flex items-center justify-center rounded-md hover:opacity-80 transition"
+                            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                            title={`Copiar URL: ${xmlUrl}`}
+                          >
+                            <Copy size={11} />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(xmlUrl).then(() => toast.success(`URL do XML de ${est} copiada!`)).catch(() => toast.error("Erro ao copiar"))}
-                          className="h-7 px-2 flex items-center gap-1 rounded-md text-[10px] font-bold hover:opacity-80 transition"
-                          style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
-                          title={xmlUrl}
-                        >
-                          <Copy size={11} /> Copiar XML
-                        </button>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
+
             )}
             {historicoSlot}
             <Suspense fallback={null}>
