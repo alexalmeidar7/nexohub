@@ -532,9 +532,9 @@ export default function RoteiroPrograma() {
               </button>
             )}
           </div>
-          {historicoOpen && (
-
+          {historicoOpen && (<>
           {activeTab === "historico" ? (
+
             <HistoricoTable 
               historico={historico} 
               onEdit={(r) => {
