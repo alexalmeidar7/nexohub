@@ -25,7 +25,7 @@ interface Programa {
   nome: string;
   horario_inicio?: string;
   horario_fim?: string;
-  dias?: string[];
+  dias_semana?: string[];
 }
 interface Stock {
   name: string;
@@ -125,8 +125,10 @@ export default function SiteMockup({ config, effectiveUserId }: Props) {
     (async () => {
       const { data } = await supabase
         .from("programas")
-        .select("id, nome, horario_inicio, horario_fim, dias")
+        .select("id, nome, horario_inicio, horario_fim, dias_semana")
         .eq("user_id", effectiveUserId)
+        .eq("ativo", true)
+        .ilike("estudio", "%fm%")
         .order("horario_inicio", { ascending: true })
         .limit(8);
       setProgramas((data as any) || []);
