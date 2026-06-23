@@ -737,13 +737,14 @@ export default function RoteiroPrograma() {
                 </div>
               </div>
             )}
+            {historicoSlot}
             <Suspense fallback={null}>
               <AutomacaoProgramaSection
                 programas={programas}
                 onGenerateRoteiro={(text) => setExternalPasteText(text)}
               />
             </Suspense>
-            {historicoSlot}
+
           </>}
           externalPasteText={externalPasteText}
           onExternalPasteConsumed={() => setExternalPasteText(null)}
