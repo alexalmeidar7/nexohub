@@ -57,8 +57,24 @@ export default function SitePage({ effectiveUserId }: Props) {
   const [cityResults, setCityResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
 
-  if (loading || !config) {
+  if (!effectiveUserId) {
+    return (
+      <div className="flex items-center justify-center h-64 text-sm opacity-70">
+        Aguarde a sessão carregar para abrir o admin do site.
+      </div>
+    );
+  }
+
+  if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin" /></div>;
+  }
+
+  if (!config) {
+    return (
+      <div className="flex items-center justify-center h-64 text-sm opacity-70">
+        Não foi possível carregar as configurações do site agora.
+      </div>
+    );
   }
 
   const toggle = (k: string) => setOpen((o) => ({ ...o, [k]: !o[k] }));
