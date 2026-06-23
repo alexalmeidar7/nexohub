@@ -163,6 +163,7 @@ const pageTitle: Record<Page, string> = {
   batalha: "vMix — Batalha Musical",
   enquete: "vMix — Enquete",
   quiz: "vMix — Quiz",
+  site: "Site",
 };
 
 interface DashboardProps {

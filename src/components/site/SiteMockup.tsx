@@ -70,14 +70,15 @@ export default function SiteMockup({ config, effectiveUserId }: Props) {
         // Pega último roteiro do usuário e extrai manchetes
         const { data } = await supabase
           .from("roteiros")
-          .select("conteudo, titulo")
+          .select("conteudo_html, titulo, tickertitulos")
           .eq("user_id", effectiveUserId)
+          .ilike("tipo_programa", "%jornal%")
           .order("created_at", { ascending: false })
           .limit(1);
         if (cancelled) return;
         const r = data?.[0];
         if (r) {
-          const txt = String(r.conteudo || "");
+          const txt = String(r.tickertitulos || r.conteudo_html || "");
           // extrai linhas de manchete simples
           const lines = txt
             .replace(/<[^>]+>/g, "\n")
