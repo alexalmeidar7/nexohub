@@ -565,132 +565,127 @@ export default function RoteiroPrograma() {
               }}
             />
           ) : (
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {historico.map((r, idx) => {
-              const [yy, mm, dd] = (r.data_programa || "").split("-").map(Number);
-              const dataFormatada = yy ? format(new Date(yy, (mm || 1) - 1, dd || 1), "dd/MM/yyyy") : "";
-              const progRef = programas.find(p => p.nome === r.programa_nome);
-              const horaInicioStr = (progRef?.horario_inicio?.slice(0, 5)) || r.horario || "23:59";
-              const horaFimStr = progRef?.horario_fim?.slice(0, 5) || "";
-              const [hi, mi] = horaInicioStr.split(":").map(Number);
-              const eventTime = new Date(yy, (mm || 1) - 1, dd || 1, hi || 0, mi || 0, 0);
-              let endTime: Date;
-              if (horaFimStr) {
-                const [hf, mf] = horaFimStr.split(":").map(Number);
-                endTime = new Date(yy, (mm || 1) - 1, dd || 1, hf || 0, mf || 0, 0);
-                // Se horario_fim < horario_inicio, é programa que vira o dia
-                if (endTime.getTime() <= eventTime.getTime()) endTime = new Date(endTime.getTime() + 24 * 60 * 60 * 1000);
-              } else {
-                endTime = new Date(eventTime.getTime() + 60 * 60 * 1000);
-              }
-              const now = new Date();
-              const phase: "agendado" | "agora" | "jafoi" =
-                now < eventTime ? "agendado" : now < endTime ? "agora" : "jafoi";
-              const phaseLabel = phase === "agendado" ? "AGENDADO" : phase === "agora" ? "ACONTECENDO AGORA" : "JÁ FOI";
-              const phaseBg =
-                phase === "agendado"
-                  ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
-                  : phase === "agora"
-                  ? "rgba(234,88,12,0.14)"
-                  : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)";
-              const phaseColor =
-                phase === "agendado"
-                  ? "var(--layout-accent-color, #2563eb)"
-                  : phase === "agora"
-                  ? "#ea580c"
-                  : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)";
-              const hasXml = typeof r.subtitulo === "string" && r.subtitulo.startsWith("express_xml::");
-              const isAuto = typeof r.titulo === "string" && r.titulo.includes("[AUTO]");
-              return (
-                <div key={r.id} className="flex-shrink-0 rounded-lg p-2.5 flex flex-col gap-1.5 transition-all hover:brightness-95" style={{ minWidth: "220px", maxWidth: "280px", backgroundColor: isAuto ? "color-mix(in srgb, #8b5cf6 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: isAuto ? "2px solid #8b5cf6" : "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)", boxShadow: isAuto ? "0 0 0 3px color-mix(in srgb, #8b5cf6 18%, transparent)" : undefined }}>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="text-xs font-bold truncate flex-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                      {r.programa_nome || "Sem programa"}
-                      {r.numero_roteiro && <span className="text-[10px] font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}> #{r.numero_roteiro}</span>}
-                    </p>
-                    {isAuto && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0 flex items-center gap-0.5" style={{ backgroundColor: "#8b5cf6", color: "#fff" }} title="Gerado por Automação">
-                        🤖 AUTO
+          (() => {
+            const grupos = new Map<string, any[]>();
+            historico.forEach(r => {
+              const key = ((r.estudio || "").trim()) || "Sem estúdio";
+              if (!grupos.has(key)) grupos.set(key, []);
+              grupos.get(key)!.push(r);
+            });
+            const estudios = Array.from(grupos.keys()).sort((a, b) => a.localeCompare(b, "pt-BR"));
+            return (
+              <div className="flex flex-col gap-3">
+                {estudios.map(est => (
+                  <div key={est}>
+                    <div className="flex items-center gap-2 mb-1.5 px-0.5">
+                      <span className="inline-block w-1 h-3 rounded-full" style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
+                        {est}
                       </span>
-                    )}
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0 whitespace-nowrap" style={{ backgroundColor: phaseBg, color: phaseColor }}>
-                      {phase === "agora" && <span className="inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle animate-pulse" style={{ backgroundColor: "#ea580c" }} />}
-                      {phaseLabel}
-                    </span>
-                    {r.tickertitulos && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0" style={{ backgroundColor: "rgba(234,179,8,0.12)", color: "#ca8a04" }}>ticker on</span>
-                    )}
+                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                        {grupos.get(est)!.length}
+                      </span>
+                      <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, color-mix(in srgb, var(--layout-border-color, #333333) 18%, transparent), transparent)" }} />
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                      {grupos.get(est)!.map(r => {
+                        const [yy, mm, dd] = (r.data_programa || "").split("-").map(Number);
+                        const dataFormatada = yy ? format(new Date(yy, (mm || 1) - 1, dd || 1), "dd/MM/yyyy") : "";
+                        const hasXml = typeof r.subtitulo === "string" && r.subtitulo.startsWith("express_xml::");
+                        const isAuto = typeof r.titulo === "string" && r.titulo.includes("[AUTO]");
+                        const cleanTitulo = (r.titulo || "").replace("[AUTO]", "").trim();
+                        return (
+                          <div key={r.id} className="flex-shrink-0 rounded-xl p-3 flex flex-col gap-2 transition-all hover:-translate-y-0.5 hover:shadow-md" style={{ minWidth: "230px", maxWidth: "280px", backgroundColor: isAuto ? "color-mix(in srgb, #8b5cf6 6%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: isAuto ? "1px solid color-mix(in srgb, #8b5cf6 45%, transparent)" : "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 10%, transparent)" }}>
+                            <div className="flex items-start gap-1.5">
+                              <p className="text-xs font-bold truncate flex-1 leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                                {r.programa_nome || "Sem programa"}
+                                {r.numero_roteiro && <span className="text-[10px] font-semibold ml-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>#{r.numero_roteiro}</span>}
+                              </p>
+                              {isAuto && (
+                                <span className="text-[8px] px-1.5 py-0.5 rounded-md font-bold flex-shrink-0" style={{ backgroundColor: "#8b5cf6", color: "#fff" }} title="Gerado por Automação">
+                                  AUTO
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+                              <span className="font-semibold">{dataFormatada}</span>
+                              {r.horario && <><span className="opacity-40">·</span><span>{r.horario}</span></>}
+                            </div>
+                            {cleanTitulo && (
+                              <p className="text-[10px] line-clamp-2 leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 75%, transparent)" }}>
+                                {cleanTitulo}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-1 mt-auto pt-1">
+                              <button onClick={async () => {
+                                let parts: any = null;
+                                try { let raw = r.participantes; if (typeof raw === "string") raw = JSON.parse(raw); if (typeof raw === "string") raw = JSON.parse(raw); parts = raw; } catch { parts = []; }
+                                const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
+                                const pList: any[] = parsed.participantes || [];
+                                const blocosList: any[] = parsed.blocos || [];
+                                const dataStr = format(new Date(r.data_programa), "dd/MM/yyyy");
+                                const prog = programas.find(p => p.nome === r.programa_nome);
+                                const horarioInicio = prog?.horario_inicio?.slice(0, 5) || r.horario || "";
+                                const allLinks: string[] = [];
+                                blocosList.forEach((b: any) => (b.noticias || []).forEach((n: any) => { if (n.link) allLinks.push(n.link); }));
+                                const linkMap = new Map<string, string>();
+                                if (allLinks.length > 0) {
+                                  toast.info("Encurtando links...");
+                                  try { const { data: shortData } = await supabase.functions.invoke("format-whatsapp", { body: { urls: allLinks } }); if (shortData?.shortened) allLinks.forEach((url, i) => linkMap.set(url, shortData.shortened[i])); } catch { allLinks.forEach(url => linkMap.set(url, url)); }
+                                }
+                                let msg = `*${r.programa_nome || "Programa"}*\n📅 ${dataStr}${horarioInicio ? ` às ${horarioInicio}` : ""}\n\n`;
+                                if (pList.length > 0) { msg += `👥 *Participantes:*\n`; pList.forEach((p: any) => { msg += `• ${p.nome}${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (${p.instagram.startsWith("@") ? p.instagram : "@" + p.instagram})` : ""}\n`; }); msg += `\n`; }
+                                const escaladaItems = blocosList.flatMap((b: any) => (b.noticias || []).filter((n: any) => n.escalada).map((n: any) => n.titulo)).filter(Boolean);
+                                if (escaladaItems.length > 0) { msg += `📢 *Escalada:*\n`; escaladaItems.forEach((t: string, i: number) => { msg += `${i + 1}. ${t}\n`; }); msg += `\n`; }
+                                blocosList.forEach((b: any, bi: number) => { const noticias = (b.noticias || []).filter((n: any) => n.titulo); if (noticias.length === 0) return; msg += `📺 *BLOCO ${bi + 1}:*\n`; noticias.forEach((n: any) => { msg += `• ${n.titulo}`; if (n.link) msg += `\n  🔗 ${linkMap.get(n.link) || n.link}`; msg += `\n`; }); msg += `\n`; });
+                                msg += `_Nos vemos no programa ;)_`;
+                                setWhatsAppHistoricoData({ titulo: r.titulo || "Roteiro", programaNome: r.programa_nome || "", estudio: r.estudio || "", data: dataStr, horario: r.horario || "", participantes: pList, conteudoTexto: "", _expressFormatted: msg });
+                                setShowWhatsAppDialog(true);
+                              }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(37,211,102,0.08)" }} title="Enviar por WhatsApp">
+                                <MessageSquare size={10} style={{ color: "#25d366" }} />
+                              </button>
+                              {hasXml && (
+                                <button onClick={async () => {
+                                  toast.info("Enviando para o XML...");
+                                  const ok = await regenerateXmlForRoteiro(r);
+                                  if (ok) {
+                                    await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", r.id);
+                                    toast.success("XML atualizado!");
+                                  } else toast.error("Falha ao enviar XML");
+                                }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" }} title="Enviar para o XML">
+                                  <Code2 size={10} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                                </button>
+                              )}
+                              <button onClick={() => {
+                                let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = []; let editPodcastData: any = undefined;
+                                try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; editPodcastData = parsed.podcastData || undefined; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
+                                const prog = programas.find(p => p.nome === r.programa_nome);
+                                let existingXmlPath: string | undefined;
+                                if (r.subtitulo?.startsWith("express_xml::")) {
+                                  try {
+                                    const xmlUrl = r.subtitulo.replace("express_xml::", "");
+                                    const urlObj = new URL(xmlUrl);
+                                    const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
+                                    if (pathMatch) existingXmlPath = pathMatch[1];
+                                  } catch {}
+                                }
+                                setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath, podcastData: editPodcastData });
+                              }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
+                                <Pencil size={10} style={{ color: "var(--layout-icon-color, #888888)" }} />
+                              </button>
+                              <button onClick={() => excluirRoteiro(r.id)} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition ml-auto" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
+                                <Trash2 size={10} style={{ color: "#dc2626" }} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-
-                  <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
-                    {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
-                  </p>
-                  <div className="flex items-center gap-1 mt-auto">
-                    <button onClick={async () => {
-                      let parts: any = null;
-                      try { let raw = r.participantes; if (typeof raw === "string") raw = JSON.parse(raw); if (typeof raw === "string") raw = JSON.parse(raw); parts = raw; } catch { parts = []; }
-                      const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
-                      const pList: any[] = parsed.participantes || [];
-                      const blocosList: any[] = parsed.blocos || [];
-                      const dataStr = format(new Date(r.data_programa), "dd/MM/yyyy");
-                      const prog = programas.find(p => p.nome === r.programa_nome);
-                      const horarioInicio = prog?.horario_inicio?.slice(0, 5) || r.horario || "";
-                      const allLinks: string[] = [];
-                      blocosList.forEach((b: any) => (b.noticias || []).forEach((n: any) => { if (n.link) allLinks.push(n.link); }));
-                      const linkMap = new Map<string, string>();
-                      if (allLinks.length > 0) {
-                        toast.info("Encurtando links...");
-                        try { const { data: shortData } = await supabase.functions.invoke("format-whatsapp", { body: { urls: allLinks } }); if (shortData?.shortened) allLinks.forEach((url, i) => linkMap.set(url, shortData.shortened[i])); } catch { allLinks.forEach(url => linkMap.set(url, url)); }
-                      }
-                      let msg = `*${r.programa_nome || "Programa"}*\n📅 ${dataStr}${horarioInicio ? ` às ${horarioInicio}` : ""}\n\n`;
-                      if (pList.length > 0) { msg += `👥 *Participantes:*\n`; pList.forEach((p: any) => { msg += `• ${p.nome}${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (${p.instagram.startsWith("@") ? p.instagram : "@" + p.instagram})` : ""}\n`; }); msg += `\n`; }
-                      const escaladaItems = blocosList.flatMap((b: any) => (b.noticias || []).filter((n: any) => n.escalada).map((n: any) => n.titulo)).filter(Boolean);
-                      if (escaladaItems.length > 0) { msg += `📢 *Escalada:*\n`; escaladaItems.forEach((t: string, i: number) => { msg += `${i + 1}. ${t}\n`; }); msg += `\n`; }
-                      blocosList.forEach((b: any, bi: number) => { const noticias = (b.noticias || []).filter((n: any) => n.titulo); if (noticias.length === 0) return; msg += `📺 *BLOCO ${bi + 1}:*\n`; noticias.forEach((n: any) => { msg += `• ${n.titulo}`; if (n.link) msg += `\n  🔗 ${linkMap.get(n.link) || n.link}`; msg += `\n`; }); msg += `\n`; });
-                      msg += `_Nos vemos no programa ;)_`;
-                      setWhatsAppHistoricoData({ titulo: r.titulo || "Roteiro", programaNome: r.programa_nome || "", estudio: r.estudio || "", data: dataStr, horario: r.horario || "", participantes: pList, conteudoTexto: "", _expressFormatted: msg });
-                      setShowWhatsAppDialog(true);
-                    }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(37,211,102,0.08)" }} title="Enviar por WhatsApp">
-                      <MessageSquare size={10} style={{ color: "#25d366" }} />
-                    </button>
-                    {hasXml && (
-                      <button onClick={async () => {
-                        toast.info("Enviando para o XML...");
-                        const ok = await regenerateXmlForRoteiro(r);
-                        if (ok) {
-                          await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", r.id);
-                          toast.success("XML atualizado!");
-                        } else toast.error("Falha ao enviar XML");
-                      }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" }} title="Enviar para o XML">
-                        <Code2 size={10} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                      </button>
-                    )}
-
-                    <button onClick={() => {
-                      let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = []; let editPodcastData: any = undefined;
-                      try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; editPodcastData = parsed.podcastData || undefined; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
-                      const prog = programas.find(p => p.nome === r.programa_nome);
-                      let existingXmlPath: string | undefined;
-                      if (r.subtitulo?.startsWith("express_xml::")) {
-                        try {
-                          const xmlUrl = r.subtitulo.replace("express_xml::", "");
-                          const urlObj = new URL(xmlUrl);
-                          const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
-                          if (pathMatch) existingXmlPath = pathMatch[1];
-                        } catch {}
-                      }
-                      setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath, podcastData: editPodcastData });
-                    }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
-                      <Pencil size={10} style={{ color: "var(--layout-icon-color, #888888)" }} />
-                    </button>
-                    <button onClick={() => excluirRoteiro(r.id)} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
-                      <Trash2 size={10} style={{ color: "#dc2626" }} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+            );
+          })()
           )}
         </div>
       </div>
