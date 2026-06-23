@@ -1142,36 +1142,29 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       </div>
 
       {afterHeader}
-      <div className="px-6 pt-4">
-        <button
-          onClick={() => setNovoRoteiroOpen(o => !o)}
-          className="w-full flex items-center gap-2 px-4 py-3 rounded-xl transition-all hover:brightness-95"
-          style={{
-            backgroundColor: novoRoteiroOpen
-              ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
-              : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)",
-            border: `1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) ${novoRoteiroOpen ? 30 : 14}%, transparent)`,
-          }}
-        >
-          <span
-            className="h-7 w-7 flex items-center justify-center rounded-lg flex-shrink-0"
-            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+      <div className="px-6 pt-4 pb-2">
+        <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
+          <button
+            onClick={() => setNovoRoteiroOpen(o => !o)}
+            className="w-full flex items-center gap-2 hover:opacity-80 transition"
+            title={novoRoteiroOpen ? "Recolher" : "Expandir"}
           >
-            <Zap size={14} />
-          </span>
-          <div className="flex-1 text-left">
-            <p className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+            <Zap size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+            <span className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
               {editingId ? "Editar Roteiro" : "Novo Roteiro"}
-            </p>
-            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
-              Identificação do programa, escalada, blocos e finalização
-            </p>
-          </div>
-          {novoRoteiroOpen
-            ? <ChevronUp size={16} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-            : <ChevronDown size={16} style={{ color: "var(--layout-icon-color, #888)" }} />}
-        </button>
+            </span>
+            <span className="text-[10px] hidden sm:inline" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+              · identificação, escalada, blocos
+            </span>
+            <span className="ml-auto">
+              {novoRoteiroOpen
+                ? <ChevronUp size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                : <ChevronDown size={12} style={{ color: "var(--layout-icon-color, #888)" }} />}
+            </span>
+          </button>
+        </div>
       </div>
+
       {novoRoteiroOpen && (
       <div className="p-6 space-y-5">
 
