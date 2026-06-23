@@ -101,8 +101,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Tag, label: "promoções", page: "promocoes" },
       { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page, permKey: "telapromo" },
       { icon: Settings, label: "config tela promo", page: "configtelapromo", separator: true },
-      { icon: ShoppingCart, label: "shopping", page: "shopping", separator: true },
-      { icon: FileText, label: "propostas comerciais", page: "propostas" },
+      { icon: ShoppingCart, label: "shopping", page: "shopping" },
     ]
   },
   {
