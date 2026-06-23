@@ -258,6 +258,10 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
             </div>
           </div>
         </div>
+        )}
+
+        {sectionOpen && (<>
+
 
         {automacoes.length > 0 && !showForm && (
           <div className="space-y-2 mb-2">
