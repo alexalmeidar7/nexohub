@@ -48,6 +48,7 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [sectionOpen, setSectionOpen] = useState(false);
   const [promptAi, setPromptAi] = useState(localStorage.getItem("producao_ai_prompt") || "");
 
   // Form state
@@ -188,18 +189,29 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
 
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex items-center gap-2">
-            <Bot size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-            <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Automatização de Programa</p>
-            {!showForm && (
+            <button
+              onClick={() => setSectionOpen(o => !o)}
+              className="flex items-center gap-2 flex-1 text-left hover:opacity-80 transition"
+            >
+              <Bot size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+              <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Automatização de Programa</p>
+              {sectionOpen
+                ? <ChevronUp size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                : <ChevronDown size={12} style={{ color: "var(--layout-icon-color, #888)" }} />}
+            </button>
+            {sectionOpen && !showForm && (
               <button
                 onClick={() => { resetForm(); setShowForm(true); }}
-                className="text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 hover:opacity-80 transition ml-auto"
+                className="text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 hover:opacity-80 transition"
                 style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}
               >
                 <Plus size={10} /> Nova Automação
               </button>
             )}
           </div>
+
+          {sectionOpen && (
+
 
           <div className="flex items-center gap-3 p-2.5 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}>
             <div className="flex items-center gap-2 min-w-fit">
@@ -245,7 +257,12 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
               />
             </div>
           </div>
+          )}
         </div>
+
+
+        {sectionOpen && (<>
+
 
         {automacoes.length > 0 && !showForm && (
           <div className="space-y-2 mb-2">
@@ -436,7 +453,9 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
             </div>
           </div>
         )}
+        </>)}
       </div>
+
 
     </div>
   );
