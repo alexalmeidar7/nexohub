@@ -95,6 +95,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
     ]
   },
+  { icon: Globe, label: "site", page: "site" },
   {
     icon: ShoppingBag, label: "comercial", children: [
       { icon: MessageSquareQuote, label: "citações", page: "testemunhais" },
