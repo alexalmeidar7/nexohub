@@ -517,6 +517,51 @@ serve(async (req) => {
         }
       } catch { /* silent */ }
     }
+    if (broadcastConfig.tickerQuotes) {
+      const qParts: string[] = [];
+      try {
+        const cRes = await fetch("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL");
+        if (cRes.ok) {
+          const cd = await cRes.json();
+          const fmt = (v: string) => parseFloat(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          if (cd.USDBRL) {
+            const pct = parseFloat(cd.USDBRL.pctChange);
+            qParts.push(`Dólar R$ ${fmt(cd.USDBRL.bid)} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)`);
+          }
+          if (cd.EURBRL) {
+            const pct = parseFloat(cd.EURBRL.pctChange);
+            qParts.push(`Euro R$ ${fmt(cd.EURBRL.bid)} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)`);
+          }
+        }
+      } catch { /* silent */ }
+      try {
+        const symbols = [
+          { s: "^BVSP", n: "Ibovespa" },
+          { s: "^GSPC", n: "S&P 500" },
+          { s: "^DJI", n: "Dow Jones" },
+          { s: "^IXIC", n: "Nasdaq" },
+        ];
+        for (const { s, n } of symbols) {
+          try {
+            const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?interval=1d&range=1d`, {
+              headers: { "User-Agent": "Mozilla/5.0" },
+            });
+            if (!r.ok) continue;
+            const j = await r.json();
+            const meta = j?.chart?.result?.[0]?.meta;
+            const price = meta?.regularMarketPrice ?? 0;
+            const prev = meta?.chartPreviousClose ?? meta?.previousClose ?? price;
+            if (!price) continue;
+            const pct = prev > 0 ? ((price - prev) / prev) * 100 : 0;
+            const val = price >= 1000
+              ? price.toLocaleString("pt-BR", { maximumFractionDigits: 2 })
+              : price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            qParts.push(`${n} ${val} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)`);
+          } catch { /* silent */ }
+        }
+      } catch { /* silent */ }
+      if (qParts.length) tickerParts.push(qParts.join(" | "));
+    }
     if (broadcastConfig.ticker) tickerParts.push(broadcastConfig.ticker);
     const ticker = tickerParts.join("  •  ");
 

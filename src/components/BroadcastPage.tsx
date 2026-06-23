@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon } from "lucide-react";
+import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp } from "lucide-react";
 import XmlLinkRow from "@/components/XmlLinkRow";
 
 
@@ -35,6 +35,7 @@ interface BroadcastData {
   locutor_override: string;
   tickerNews: boolean;
   tickerWeather: boolean;
+  tickerQuotes: boolean;
   showQrCode: boolean;
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
@@ -47,6 +48,7 @@ const defaultBroadcast: BroadcastData = {
   locutor_override: "",
   tickerNews: false,
   tickerWeather: false,
+  tickerQuotes: false,
   showQrCode: false,
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
@@ -89,6 +91,7 @@ export default function BroadcastPage() {
   // Ticker auto-content
   const [newsTitles, setNewsTitles] = useState<string[]>([]);
   const [weatherText, setWeatherText] = useState("");
+  const [quotesText, setQuotesText] = useState("");
 
   useEffect(() => {
     latestDataRef.current = data;
@@ -346,6 +349,51 @@ export default function BroadcastPage() {
     };
   }, [user, activeProgramaId, loadInitialData]);
 
+  // Fetch quotes (currencies + stock indices)
+  useEffect(() => {
+    if (!data.tickerQuotes) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const parts: string[] = [];
+        // Currencies USD + EUR via awesomeapi
+        try {
+          const res = await fetch("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL");
+          if (res.ok) {
+            const d = await res.json();
+            const usd = d.USDBRL;
+            const eur = d.EURBRL;
+            if (usd) {
+              const pct = parseFloat(usd.pctChange);
+              parts.push(`Dólar R$ ${parseFloat(usd.bid).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)`);
+            }
+            if (eur) {
+              const pct = parseFloat(eur.pctChange);
+              parts.push(`Euro R$ ${parseFloat(eur.bid).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)`);
+            }
+          }
+        } catch { /* silent */ }
+        // Stocks via edge fn
+        try {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const res = await fetch(`${supabaseUrl}/functions/v1/fetch-stocks`, { headers: { "Content-Type": "application/json" } });
+          if (res.ok) {
+            const d = await res.json();
+            const wanted = ["^BVSP", "^GSPC", "^DJI", "^IXIC"];
+            for (const sym of wanted) {
+              const s = (d.stocks || []).find((x: any) => x.symbol === sym);
+              if (s) parts.push(`${s.name} ${s.value} (${s.change})`);
+            }
+          }
+        } catch { /* silent */ }
+        if (!cancelled) setQuotesText(parts.join(" | "));
+      } catch { /* silent */ }
+    };
+    load();
+    const id = setInterval(load, 5 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [data.tickerQuotes]);
+
   // Compose ticker from sources
   const composedTicker = useMemo(() => {
     const parts: string[] = [];
@@ -355,11 +403,14 @@ export default function BroadcastPage() {
     if (data.tickerWeather && weatherText) {
       parts.push(weatherText);
     }
+    if (data.tickerQuotes && quotesText) {
+      parts.push(quotesText);
+    }
     if (data.ticker) {
       parts.push(data.ticker);
     }
     return parts.join("  •  ");
-  }, [data.tickerNews, data.tickerWeather, data.ticker, newsTitles, weatherText]);
+  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.ticker, newsTitles, weatherText, quotesText]);
 
   const displayLocutor = data.locutor_override || locutorNome || "Locutor";
 
@@ -809,6 +860,26 @@ export default function BroadcastPage() {
                 <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>Tempo atual e amanhã</p>
               </div>
             </label>
+
+            <label className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer" style={{ backgroundColor: data.tickerQuotes ? "color-mix(in srgb, var(--layout-accent-color, #dc2626) 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
+              <input
+                type="checkbox"
+                checked={data.tickerQuotes}
+                onChange={e => {
+                  const nextData = { ...latestDataRef.current, tickerQuotes: e.target.checked };
+                  setData(nextData);
+                  void handleSave(nextData);
+                }}
+                className="accent-current"
+                style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
+              />
+              <TrendingUp size={12} style={{ color: data.tickerQuotes ? "var(--layout-accent-color, #dc2626)" : "var(--layout-icon-color, #888)" }} />
+              <div>
+                <span className="text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cotações</span>
+                <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>Dólar, Euro e bolsas financeiras</p>
+              </div>
+            </label>
+
 
             <textarea
               value={data.ticker}
