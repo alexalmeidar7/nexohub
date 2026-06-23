@@ -1680,7 +1680,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </button>
         )}
       </div>
+      )}
     </div>
+
   );
 }
 
