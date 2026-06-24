@@ -107,7 +107,7 @@ export default function SiteMockup({ config, effectiveUserId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [effectiveUserId, config.fonte_noticias]);
+  }, [effectiveUserId, config.fonte_noticias, refreshTick]);
 
   // Promoções
   useEffect(() => {
@@ -123,7 +123,7 @@ export default function SiteMockup({ config, effectiveUserId }: Props) {
         .limit(4);
       setPromos((data as any) || []);
     })();
-  }, [effectiveUserId, config.show_promocoes]);
+  }, [effectiveUserId, config.show_promocoes, refreshTick]);
 
   // Programas
   useEffect(() => {
@@ -139,7 +139,7 @@ export default function SiteMockup({ config, effectiveUserId }: Props) {
         .limit(8);
       setProgramas((data as any) || []);
     })();
-  }, [effectiveUserId, config.show_grade]);
+  }, [effectiveUserId, config.show_grade, refreshTick]);
 
   // Economia
   useEffect(() => {
