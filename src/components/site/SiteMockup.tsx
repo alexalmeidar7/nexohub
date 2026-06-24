@@ -43,6 +43,11 @@ export default function SiteMockup({ config, effectiveUserId }: Props) {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [weather, setWeather] = useState<any>(null);
   const [noAr, setNoAr] = useState<string>("");
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  // Cross-tab refresh from admin panel
+  useEffect(() => subscribeSiteSync(() => setRefreshTick((t) => t + 1)), []);
+
 
   // Notícias
   useEffect(() => {
