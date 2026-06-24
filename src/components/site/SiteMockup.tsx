@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Cloud, TrendingUp, TrendingDown, Radio, Tag, Calendar, Newspaper } from "lucide-react";
 import type { SiteConfig } from "@/hooks/useSiteConfig";
+import { subscribeSiteSync } from "@/lib/siteSync";
 
 interface Props {
   config: SiteConfig;
@@ -42,6 +43,11 @@ export default function SiteMockup({ config, effectiveUserId }: Props) {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [weather, setWeather] = useState<any>(null);
   const [noAr, setNoAr] = useState<string>("");
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  // Cross-tab refresh from admin panel
+  useEffect(() => subscribeSiteSync(() => setRefreshTick((t) => t + 1)), []);
+
 
   // Notícias
   useEffect(() => {
@@ -101,7 +107,7 @@ export default function SiteMockup({ config, effectiveUserId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [effectiveUserId, config.fonte_noticias]);
+  }, [effectiveUserId, config.fonte_noticias, refreshTick]);
 
   // Promoções
   useEffect(() => {
@@ -117,7 +123,7 @@ export default function SiteMockup({ config, effectiveUserId }: Props) {
         .limit(4);
       setPromos((data as any) || []);
     })();
-  }, [effectiveUserId, config.show_promocoes]);
+  }, [effectiveUserId, config.show_promocoes, refreshTick]);
 
   // Programas
   useEffect(() => {
@@ -133,7 +139,7 @@ export default function SiteMockup({ config, effectiveUserId }: Props) {
         .limit(8);
       setProgramas((data as any) || []);
     })();
-  }, [effectiveUserId, config.show_grade]);
+  }, [effectiveUserId, config.show_grade, refreshTick]);
 
   // Economia
   useEffect(() => {
