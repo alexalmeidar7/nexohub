@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { postSiteSync, subscribeSiteSync } from "@/lib/siteSync";
 
 export interface SiteConfig {
   user_id: string;
@@ -39,6 +40,16 @@ export function useSiteConfig(userId: string | null | undefined) {
   const [config, setConfig] = useState<SiteConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const localPatchRef = useRef(0); // counts pending local edits to ignore self-echo
+
+  const fetchConfig = useCallback(async (uid: string) => {
+    const { data } = await supabase
+      .from("site_config")
+      .select("*")
+      .eq("user_id", uid)
+      .maybeSingle();
+    if (data) setConfig(data as SiteConfig);
+  }, []);
 
   useEffect(() => {
     if (!userId) {
@@ -74,16 +85,33 @@ export function useSiteConfig(userId: string | null | undefined) {
     };
   }, [userId]);
 
+  // Listen for cross-tab config changes and refetch.
+  useEffect(() => {
+    if (!userId) return;
+    const unsub = subscribeSiteSync((ev) => {
+      if (ev.type !== "config") return;
+      if (localPatchRef.current > 0) return; // skip echo of our own save
+      fetchConfig(userId);
+    });
+    return unsub;
+  }, [userId, fetchConfig]);
+
   const update = useCallback(
     (patch: Partial<SiteConfig>) => {
       if (!config || !userId) return;
       const next = { ...config, ...patch };
       setConfig(next);
       if (saveTimer.current) clearTimeout(saveTimer.current);
+      localPatchRef.current += 1;
       saveTimer.current = setTimeout(async () => {
         const { user_id, ...rest } = next;
         await supabase.from("site_config").update(rest).eq("user_id", userId);
-      }, 500);
+        postSiteSync({ type: "config" });
+        // release echo guard after a tick so the broadcast we just posted is ignored
+        setTimeout(() => {
+          localPatchRef.current = Math.max(0, localPatchRef.current - 1);
+        }, 300);
+      }, 400);
     },
     [config, userId]
   );

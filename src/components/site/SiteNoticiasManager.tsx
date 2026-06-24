@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Plus, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { postSiteSync } from "@/lib/siteSync";
 
 interface Props { effectiveUserId: string | null; }
 interface Noticia {
@@ -53,11 +54,13 @@ export default function SiteNoticiasManager({ effectiveUserId }: Props) {
     if (error) return toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
     setDraft({ titulo: "", resumo: "", imagem_url: "", categoria_id: null, publicado: true });
     reload();
+    postSiteSync({ type: "noticias" });
   };
 
   const remove = async (id: string) => {
     await supabase.from("site_noticias").delete().eq("id", id);
     reload();
+    postSiteSync({ type: "noticias" });
   };
 
   return (

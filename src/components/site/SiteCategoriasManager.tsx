@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { postSiteSync } from "@/lib/siteSync";
 
 interface Props { effectiveUserId: string | null; }
 interface Categoria { id: string; nome: string; slug: string; cor: string; ordem: number; }
@@ -35,11 +36,13 @@ export default function SiteCategoriasManager({ effectiveUserId }: Props) {
     if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
     setNome("");
     reload();
+    postSiteSync({ type: "categorias" });
   };
 
   const remove = async (id: string) => {
     await supabase.from("site_categorias").delete().eq("id", id);
     reload();
+    postSiteSync({ type: "categorias" });
   };
 
   return (
