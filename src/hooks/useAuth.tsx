@@ -252,7 +252,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastGoodSessionRef.current = null;
     prevUserIdRef.current = null;
     try {
-      await supabase.auth.signOut();
+      // scope: 'local' evita revogar a sessão em outros dispositivos/abas
+      await supabase.auth.signOut({ scope: 'local' });
     } catch { /* ignore */ }
     setUser(null);
     setSession(null);
