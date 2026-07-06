@@ -207,10 +207,14 @@ export default function CortesVideoPage() {
       setProgress(Math.min(90, mappedProgress));
     });
 
+    const hasSAB = typeof SharedArrayBuffer !== "undefined";
+    // @ffmpeg/core-mt requires SharedArrayBuffer (COOP/COEP). Otherwise use single-thread core.
+    const corePkg = hasSAB ? "@ffmpeg/core-mt" : "@ffmpeg/core";
     const cdns = [
-      "https://unpkg.com/@ffmpeg/core-dist@0.12.6/dist/umd",
-      "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd"
+      `https://unpkg.com/${corePkg}@0.12.6/dist/umd`,
+      `https://cdn.jsdelivr.net/npm/${corePkg}@0.12.6/dist/umd`,
+      `https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd`,
+      `https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd`,
     ];
     
     let lastErr: any = null;
