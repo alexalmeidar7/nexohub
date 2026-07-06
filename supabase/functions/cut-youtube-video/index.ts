@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 type ResolveResult = { url: string; provider: string; isClip?: boolean };
+type ClipResponseResult = { response: Response; provider: string };
 
 const YOUTUBE_DOWNLOAD_INFO_HOST = "youtube-download-info-api.p.rapidapi.com";
 const CLOUD_API_HUB_HOST = "cloud-api-hub-youtube-downloader.p.rapidapi.com";
@@ -129,6 +130,106 @@ async function parseResponseForUrl(res: Response, provider: string, originalUrl:
   }
 
   return pickBestUrl(text);
+}
+
+async function responseToClipDownload(
+  res: Response,
+  provider: string,
+  originalUrl: string,
+  rapidHeaders: Record<string, string>,
+): Promise<ClipResponseResult | null> {
+  const contentType = res.headers.get("content-type") || "";
+  const finalUrl = res.url || "";
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    console.log(`${provider} clip non-ok: ${res.status} ${trimLog(text)}`);
+    return null;
+  }
+
+  if (
+    contentType.startsWith("video/") ||
+    contentType.includes("application/octet-stream") ||
+    contentType.includes("application/mp4") ||
+    (finalUrl && finalUrl !== originalUrl && isUsableMediaUrl(finalUrl) && !contentType.includes("json") && !contentType.includes("html"))
+  ) {
+    return { response: res, provider };
+  }
+
+  const text = await res.text().catch(() => "");
+  let data: unknown = text;
+  if (contentType.includes("application/json") || text.trim().startsWith("{") || text.trim().startsWith("[")) {
+    try { data = JSON.parse(text); } catch (e) { console.log(`${provider} clip JSON parse error:`, (e as Error).message); }
+  }
+
+  const url = pickBestUrl(data);
+  if (!url) return null;
+
+  try {
+    const mediaUrl = new URL(url);
+    const needsRapidHeaders = mediaUrl.hostname.endsWith("rapidapi.com") || mediaUrl.hostname.includes(".p.rapidapi.com");
+    const mediaRes = await fetch(url, {
+      headers: needsRapidHeaders ? rapidHeaders : { "Accept": "video/mp4, application/octet-stream, */*" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!mediaRes.ok) {
+      console.log(`${provider} media non-ok: ${mediaRes.status} ${trimLog(await mediaRes.text().catch(() => ""))}`);
+      return null;
+    }
+    return { response: mediaRes, provider };
+  } catch (e) {
+    console.log(`${provider} media fetch error:`, (e as Error).message);
+    return null;
+  }
+}
+
+async function fetchRapidApiClipResponse(
+  rapidKey: string,
+  videoId: string,
+  startSeconds: number,
+  endSeconds: number,
+  quality?: string | number,
+): Promise<ClipResponseResult | null> {
+  const height = qualityToHeight(quality);
+  const rapidHeaders = {
+    "Accept": "application/json, video/mp4, application/octet-stream, */*",
+    "Content-Type": "application/json",
+    "X-RapidAPI-Key": rapidKey,
+    "X-RapidAPI-Host": CLOUD_API_HUB_HOST,
+  };
+
+  const attempts: Array<{ provider: string; url: URL }> = [];
+  const baseUrl = new URL(`https://${CLOUD_API_HUB_HOST}/mux`);
+  baseUrl.searchParams.set("id", videoId);
+  baseUrl.searchParams.set("codec", "h264");
+  baseUrl.searchParams.set("audioFormat", "best");
+  baseUrl.searchParams.set("language", "en");
+  baseUrl.searchParams.set("quality", String(height));
+  baseUrl.searchParams.set("startTime", String(Math.floor(startSeconds * 1000)));
+  baseUrl.searchParams.set("endTime", String(Math.floor(endSeconds * 1000)));
+  attempts.push({ provider: "rapidapi:cloud-api-hub-clip-ms", url: baseUrl });
+
+  const clockUrl = new URL(baseUrl.toString());
+  clockUrl.searchParams.set("startTime", toClock(startSeconds));
+  clockUrl.searchParams.set("endTime", toClock(endSeconds));
+  attempts.push({ provider: "rapidapi:cloud-api-hub-clip-clock", url: clockUrl });
+
+  for (const attempt of attempts) {
+    try {
+      const res = await fetch(attempt.url, {
+        headers: rapidHeaders,
+        redirect: "follow",
+        signal: AbortSignal.timeout(30_000),
+      });
+      const clip = await responseToClipDownload(res, attempt.provider, attempt.url.toString(), rapidHeaders);
+      if (clip) return clip;
+    } catch (e) {
+      console.log(`${attempt.provider} clip error:`, (e as Error).message);
+    }
+  }
+
+  return null;
 }
 
 async function resolveRapidApiClip(
@@ -281,7 +382,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { youtube_url, start_seconds, end_seconds, quality } = await req.json();
+    const { youtube_url, start_seconds, end_seconds, quality, action } = await req.json();
 
     if (!youtube_url || start_seconds === undefined || end_seconds === undefined) {
       return new Response(
@@ -310,6 +411,39 @@ Deno.serve(async (req) => {
     }
 
     const videoId = match[1];
+
+    if (action === "download_clip") {
+      const rapidKey = Deno.env.get("RAPIDAPI_KEY") || "";
+      if (!rapidKey) {
+        return new Response(JSON.stringify({ error: "Serviço de download do YouTube não está configurado." }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const clip = await fetchRapidApiClipResponse(
+        rapidKey,
+        videoId,
+        Number(start_seconds),
+        Number(end_seconds),
+        quality,
+      );
+
+      if (!clip) {
+        return new Response(JSON.stringify({ error: "Não foi possível gerar o arquivo do trecho selecionado para este vídeo." }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log(`Streaming clip download via: ${clip.provider} for video ${videoId}`);
+      const headers = new Headers(clip.response.headers);
+      for (const [key, value] of Object.entries(corsHeaders)) headers.set(key, value);
+      if (!headers.get("Content-Type")) headers.set("Content-Type", "video/mp4");
+      headers.set("Content-Disposition", `attachment; filename="youtube_${videoId}_${Math.floor(Number(start_seconds))}-${Math.floor(Number(end_seconds))}.mp4"`);
+      headers.set("X-Download-Provider", clip.provider);
+      return new Response(clip.response.body, { status: 200, headers });
+    }
 
     // Try multiple providers to resolve a direct MP4/stream URL. RapidAPI is preferred
     // because it can return the selected clip; public providers usually return full-video streams.
