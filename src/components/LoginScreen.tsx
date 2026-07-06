@@ -274,11 +274,15 @@ export default function LoginScreen() {
               </button>
 
               <button
+                type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="group relative flex items-center gap-3 px-7 py-2.5 rounded-full font-semibold disabled:opacity-50 transition-all duration-300 text-white overflow-hidden"
+                aria-busy={loading}
+                aria-live="polite"
+                className="group relative flex items-center justify-center gap-3 px-7 py-2.5 min-w-[130px] rounded-full font-semibold disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 text-white overflow-hidden"
                 style={{ fontSize: "12px", background: "linear-gradient(135deg, #268ffa 0%, #1a6ad4 100%)", boxShadow: "0 4px 16px -2px rgba(38,143,250,0.4)" }}
                 onMouseEnter={(e) => {
+                  if (loading) return;
                   e.currentTarget.style.boxShadow = "0 6px 24px -2px rgba(38,143,250,0.55)";
                   e.currentTarget.style.transform = "translateY(-1px)";
                 }}
@@ -288,7 +292,11 @@ export default function LoginScreen() {
                 }}
               >
                 {loading ? (
-                  <Loader2 size={20} className="animate-spin" style={{ color: "#ffffff" }} />
+                  <>
+                    <Loader2 size={16} className="animate-spin" style={{ color: "#ffffff" }} aria-hidden="true" />
+                    <span>entrando...</span>
+                    <span className="sr-only">Autenticando, aguarde</span>
+                  </>
                 ) : (
                   <>
                     entrar
