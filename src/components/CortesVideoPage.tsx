@@ -558,9 +558,18 @@ export default function CortesVideoPage() {
       return;
     }
     if (videoId) {
-      window.open(`https://www.ssyoutube.com/watch?v=${videoId}&t=${startSeconds}`, "_blank");
+      const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      const fallback = `https://en.savefrom.net/1-youtube-video-downloader-4/?url=${encodeURIComponent(ytUrl)}`;
+      window.open(fallback, "_blank", "noopener,noreferrer");
+      toast({
+        title: "Link direto indisponível",
+        description: "Abrimos um serviço externo para baixar o vídeo. Recorte o trecho manualmente após o download.",
+      });
+      return;
     }
+    toast({ title: "Erro", description: "Não foi possível localizar o vídeo para download.", variant: "destructive" });
   };
+
 
   const handleDownload = () => result && handleDownloadRes(result);
 
