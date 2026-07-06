@@ -317,7 +317,8 @@ export default function CortesVideoPage() {
     }
     
     if (lastErr) {
-      const msg = "Erro ao carregar motor de vídeo. Tente recarregar a página.";
+      const detail = lastErr?.message ? ` (${lastErr.message})` : "";
+      const msg = `Erro ao carregar motor de vídeo${detail}. Verifique sua conexão e tente novamente.`;
       setStatusMsg(msg);
       setLoadDetail("");
       throw new Error(msg);
