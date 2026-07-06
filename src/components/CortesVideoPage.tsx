@@ -179,6 +179,34 @@ export default function CortesVideoPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Track elapsed and remaining time during cutting
+  useEffect(() => {
+    if (!cutting) {
+      setElapsedSeconds(0);
+      setRemainingSeconds(null);
+      return;
+    }
+    startTimeRef.current = Date.now();
+    const id = window.setInterval(() => {
+      const el = (Date.now() - startTimeRef.current) / 1000;
+      setElapsedSeconds(el);
+      if (progress > 3 && progress < 100) {
+        const total = el / (progress / 100);
+        setRemainingSeconds(Math.max(0, total - el));
+      }
+    }, 300);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cutting]);
+
+  useEffect(() => {
+    if (!cutting) return;
+    const el = (Date.now() - startTimeRef.current) / 1000;
+    if (progress > 3 && progress < 100) {
+      setRemainingSeconds(Math.max(0, el / (progress / 100) - el));
+    }
+  }, [progress, cutting]);
+
   useEffect(() => {
     if (results.length > 0 && resultRef.current) {
       resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
