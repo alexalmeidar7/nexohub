@@ -88,6 +88,8 @@ export default function CortesVideoPage() {
   const resultRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<number>(0);
   const [estimatedSeconds, setEstimatedSeconds] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<{ stack?: string; log?: string; exitCode?: number } | null>(null);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
@@ -176,6 +178,34 @@ export default function CortesVideoPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Track elapsed and remaining time during cutting
+  useEffect(() => {
+    if (!cutting) {
+      setElapsedSeconds(0);
+      setRemainingSeconds(null);
+      return;
+    }
+    startTimeRef.current = Date.now();
+    const id = window.setInterval(() => {
+      const el = (Date.now() - startTimeRef.current) / 1000;
+      setElapsedSeconds(el);
+      if (progress > 3 && progress < 100) {
+        const total = el / (progress / 100);
+        setRemainingSeconds(Math.max(0, total - el));
+      }
+    }, 300);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cutting]);
+
+  useEffect(() => {
+    if (!cutting) return;
+    const el = (Date.now() - startTimeRef.current) / 1000;
+    if (progress > 3 && progress < 100) {
+      setRemainingSeconds(Math.max(0, el / (progress / 100) - el));
+    }
+  }, [progress, cutting]);
 
   useEffect(() => {
     if (results.length > 0 && resultRef.current) {
@@ -1076,11 +1106,29 @@ export default function CortesVideoPage() {
           </button>
           {cutting && (
             <div className="w-full max-w-md flex flex-col items-center gap-3 mt-4">
-              {estimatedSeconds && progress < 100 && (
-                <div className="text-[10px] font-bold opacity-60 uppercase tracking-widest animate-pulse" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  Tempo estimado: {Math.max(1, Math.round(estimatedSeconds - (progress / 100 * estimatedSeconds)))}s restantes
-                </div>
-              )}
+              {(() => {
+                const fmt = (s: number) => {
+                  const t = Math.max(0, Math.round(s));
+                  const m = Math.floor(t / 60);
+                  const sec = t % 60;
+                  return m > 0 ? `${m}m ${String(sec).padStart(2, "0")}s` : `${sec}s`;
+                };
+                return (
+                  <div className="w-full flex items-center justify-between gap-3 px-1 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
+                    <div className="flex flex-col items-start">
+                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Decorrido</span>
+                      <span className="text-sm font-black font-mono tabular-nums" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{fmt(elapsedSeconds)}</span>
+                    </div>
+                    <div className="flex-1 h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)" }} />
+                    <div className="flex flex-col items-end">
+                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Restante</span>
+                      <span className="text-sm font-black font-mono tabular-nums" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
+                        {remainingSeconds !== null ? `~${fmt(remainingSeconds)}` : "calculando..."}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="w-full flex flex-col gap-1 px-1">
                 <div className="flex justify-between items-center">
                   <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color, #2563eb)" }}>
