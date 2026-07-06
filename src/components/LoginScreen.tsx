@@ -222,24 +222,38 @@ export default function LoginScreen() {
 
             {error && <p className="text-center font-medium" style={{ fontSize: "12px", color: "#dc2626" }}>{error}</p>}
 
-            <label className="flex items-center gap-2 cursor-pointer select-none pt-1 group">
+            <label htmlFor="keep-connected" className="inline-flex items-center gap-2 cursor-pointer select-none pt-1 group focus-within:outline-none">
               <div className="relative flex items-center justify-center">
                 <input
+                  id="keep-connected"
+                  name="keep-connected"
                   type="checkbox"
                   checked={keepConnected}
                   onChange={(e) => {
                     setKeepConnected(e.target.checked);
                     localStorage.setItem(KEEP_CONNECTED_KEY, e.target.checked ? "true" : "false");
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const next = !keepConnected;
+                      setKeepConnected(next);
+                      localStorage.setItem(KEEP_CONNECTED_KEY, next ? "true" : "false");
+                    }
+                  }}
+                  aria-checked={keepConnected}
+                  aria-label="Mantenha-me conectado"
                   className="peer h-[18px] w-[18px] shrink-0 rounded-[4px] bg-white ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#268ffa] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 peer-checked:bg-[#0f1058]"
                   style={{ accentColor: "#0f1058", border: "2px solid #0f1058", boxShadow: "0 0 0 1px rgba(15,16,88,0.15)" }}
                 />
                 <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity duration-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0f1058" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
               </div>
-              <span className="transition-colors duration-200 group-hover:text-[#268ffa]" style={{ fontSize: "12px", color: "#0f1058" }}>mantenha-me conectado</span>
+              <span className="transition-colors duration-200 group-hover:text-[#268ffa] group-focus-within:text-[#268ffa]" style={{ fontSize: "12px", color: "#0f1058" }}>mantenha-me conectado</span>
             </label>
+
+
 
             <div className="flex justify-between items-center pt-2">
               <button
