@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
+import RouteProgress from "./components/RouteProgress";
 
 // Retry wrapper for lazy imports — retries up to 3 times on chunk load failure
 function lazyRetry(factory: () => Promise<{ default: React.ComponentType<any> }>, retries = 3) {
