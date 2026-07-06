@@ -67,6 +67,128 @@ const copyToClipboard = (text: string) => {
   toast({ title: "Copiado!", description: "Link copiado para a área de transferência." });
 };
 
+function loadYoutubeApi(): Promise<void> {
+  return new Promise((resolve) => {
+    const w = window as any;
+    if (w.YT && w.YT.Player) return resolve();
+    const prev = w.onYouTubeIframeAPIReady;
+    w.onYouTubeIframeAPIReady = () => { prev?.(); resolve(); };
+    if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+      const s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(s);
+    }
+  });
+}
+
+function fmtTime(sec: number): string {
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+}
+
+function YoutubeTrimPlayer({ videoId, startSec, endSec }: { videoId: string; startSec: number; endSec: number }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const playerRef = useRef<any>(null);
+  const rangeRef = useRef({ start: startSec, end: endSec });
+  const [current, setCurrent] = useState(startSec);
+  const [playing, setPlaying] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => { rangeRef.current = { start: startSec, end: endSec }; }, [startSec, endSec]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let raf = 0;
+    (async () => {
+      await loadYoutubeApi();
+      if (cancelled || !containerRef.current) return;
+      const YT = (window as any).YT;
+      playerRef.current = new YT.Player(containerRef.current, {
+        videoId,
+        playerVars: { rel: 0, modestbranding: 1, playsinline: 1, start: Math.floor(startSec) },
+        events: {
+          onReady: () => {
+            setReady(true);
+            try { playerRef.current.seekTo(rangeRef.current.start, true); } catch {}
+          },
+          onStateChange: (e: any) => setPlaying(e.data === 1),
+        },
+      });
+      const tick = () => {
+        const p = playerRef.current;
+        if (p && p.getCurrentTime) {
+          try {
+            const t = p.getCurrentTime() || 0;
+            setCurrent(t);
+            const { start, end } = rangeRef.current;
+            if (end > start && t >= end - 0.05) {
+              p.seekTo(start, true);
+              p.pauseVideo();
+            } else if (t < start - 0.5) {
+              p.seekTo(start, true);
+            }
+          } catch {}
+        }
+        raf = window.setTimeout(tick, 200) as unknown as number;
+      };
+      tick();
+    })();
+    return () => {
+      cancelled = true;
+      if (raf) clearTimeout(raf);
+      try { playerRef.current?.destroy(); } catch {}
+      playerRef.current = null;
+    };
+  }, [videoId]);
+
+  const playTrim = () => {
+    const p = playerRef.current;
+    if (!p) return;
+    try {
+      p.seekTo(rangeRef.current.start, true);
+      p.playVideo();
+    } catch {}
+  };
+  const pause = () => { try { playerRef.current?.pauseVideo(); } catch {} };
+
+  const total = Math.max(0.001, endSec - startSec);
+  const pct = Math.max(0, Math.min(100, ((current - startSec) / total) * 100));
+
+  return (
+    <div className="w-full">
+      <div className="aspect-video w-full bg-black rounded-xl overflow-hidden">
+        <div ref={containerRef} className="w-full h-full" />
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={playing ? pause : playTrim}
+          disabled={!ready}
+          className="px-3 py-1.5 rounded-md text-[11px] font-semibold"
+          style={{ backgroundColor: "var(--layout-primary, #1a1a1a)", color: "var(--layout-primary-text, #ffffff)", opacity: ready ? 1 : 0.5 }}
+        >
+          {playing ? "Pausar" : "Reproduzir trecho"}
+        </button>
+        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)" }}>
+          <div className="h-full transition-all" style={{ width: `${pct}%`, backgroundColor: "var(--layout-primary, #1a1a1a)" }} />
+        </div>
+        <span className="font-mono text-[10px] tabular-nums" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+          {fmtTime(Math.max(0, current - startSec))} / {fmtTime(total)}
+        </span>
+      </div>
+      <p className="mt-1 text-[10px] font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+        {fmtTime(current)} • trecho {fmtTime(startSec)} → {fmtTime(endSec)}
+      </p>
+    </div>
+  );
+}
+
+
+
 export default function CortesVideoPage() {
   const { user } = useAuth();
   const [mode, setMode] = useState<Mode>("youtube");
