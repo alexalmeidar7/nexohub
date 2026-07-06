@@ -891,8 +891,7 @@ export default function CortesVideoPage() {
           <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div className="p-4 flex flex-col items-center gap-2">
               <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 480 }}>
-                <iframe src={`https://www.youtube.com/embed/${videoId}`} title="Preview" className="w-full aspect-video"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                <YoutubeTrimPlayer videoId={videoId} startSec={startSeconds} endSec={endSeconds} />
               </div>
               {videoTitle && <p className="text-xs font-bold text-center max-w-[480px] leading-snug" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{videoTitle}</p>}
               <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{currentTimeStr}</p>
