@@ -502,12 +502,18 @@ export default function CortesVideoPage() {
         if (dur <= 0) continue;
 
         setStatusMsg(`Renderizando trecho ${i + 1} de ${totalClips}...`);
+        setLoadDetail("");
         const base = (i / totalClips) * 100;
         const step = 100 / totalClips;
 
-        const blob = await recordClipFromVideo(localFile, s, e, format, (pct) => {
-          setProgress(Math.round(base + (pct / 100) * step));
-        });
+        const blob = await recordClipFromVideo(
+          localFile, s, e, format,
+          (pct) => setProgress(Math.round(base + (pct / 100) * step)),
+          (title, detail) => {
+            setStatusMsg(`Trecho ${i + 1}/${totalClips} — ${title}`);
+            setLoadDetail(detail || "");
+          }
+        );
 
         const isMp4 = blob.type.includes("mp4");
         const ext = isMp4 ? "mp4" : "webm";
