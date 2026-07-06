@@ -93,6 +93,14 @@ export default function CortesVideoPage() {
   const [showErrorDetails, setShowErrorDetails] = useState(false);
 
   const [format, setFormat] = useState<"fullhd" | "reel" | "original">("fullhd");
+  type Quality = "low" | "balanced" | "high" | "max";
+  const [quality, setQuality] = useState<Quality>("balanced");
+  const qualityPresets: Record<Quality, { label: string; sub: string; bitrate: number; hint: string }> = {
+    low: { label: "Leve", sub: "~2 Mbps", bitrate: 2_000_000, hint: "Arquivos pequenos, ideal para envio rápido em redes sociais e WhatsApp." },
+    balanced: { label: "Equilibrado", sub: "~6 Mbps", bitrate: 6_000_000, hint: "Recomendado: ótimo equilíbrio entre qualidade e tamanho, compatível com a maioria dos players." },
+    high: { label: "Alta", sub: "~10 Mbps", bitrate: 10_000_000, hint: "Boa qualidade para edição ou publicação em canais como YouTube/TV." },
+    max: { label: "Máxima", sub: "~16 Mbps", bitrate: 16_000_000, hint: "Máxima qualidade — arquivos maiores, indicado para masters e arquivos originais." },
+  };
   const [cutting, setCutting] = useState(false);
   type CutResult = {
     blob_url?: string;
