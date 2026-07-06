@@ -419,7 +419,7 @@ export default function CortesVideoPage() {
       const mimeType = mimeCandidates.find((m) => (window as any).MediaRecorder?.isTypeSupported?.(m)) || "";
       const codecLabel = mimeType ? mimeType.split(";")[0].replace("video/", "").toUpperCase() : "WEBM";
 
-      const recorder = new MediaRecorder(combined, mimeType ? { mimeType, videoBitsPerSecond: 6_000_000 } : undefined);
+      const recorder = new MediaRecorder(combined, mimeType ? { mimeType, videoBitsPerSecond: bitrate } : undefined);
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
