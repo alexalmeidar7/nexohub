@@ -233,6 +233,9 @@ export default function CortesVideoPage() {
     share_url?: string;
     thumbnail_url?: string;
     download_url?: string;
+    fallback_download_url?: string;
+    download_provider?: string;
+    is_clip_download?: boolean;
     duration: number;
     is_local: boolean;
     start_seconds?: number;
@@ -778,7 +781,8 @@ export default function CortesVideoPage() {
           body: { 
             youtube_url: youtubeUrl, 
             start_seconds: clipStartSeconds, 
-            end_seconds: clipEndSeconds 
+              end_seconds: clipEndSeconds,
+              quality,
           },
         });
 
@@ -790,6 +794,9 @@ export default function CortesVideoPage() {
           share_url: data.share_url,
           thumbnail_url: data.thumbnail_url,
           download_url: data.download_url || "",
+          fallback_download_url: data.fallback_download_url || "",
+          download_provider: data.download_provider || "",
+          is_clip_download: !!data.is_clip_download,
           duration: data.duration,
           is_local: false,
           start_seconds: clipStartSeconds,
@@ -819,10 +826,10 @@ export default function CortesVideoPage() {
 
   const [retryingIdx, setRetryingIdx] = useState<number | null>(null);
 
-  const openDownloadLink = (url: string) => {
+  const openDownloadLink = (url: string, fileName?: string) => {
     const a = document.createElement("a");
     a.href = url;
-    a.download = `corte_${startTime.replace(/:/g, "-")}_${endTime.replace(/:/g, "-")}.mp4`;
+    a.download = fileName || `corte_${startTime.replace(/:/g, "-")}_${endTime.replace(/:/g, "-")}.mp4`;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
     document.body.appendChild(a);
@@ -840,28 +847,45 @@ export default function CortesVideoPage() {
     );
   };
 
-  const requestDownloadLink = async (res: CutResult): Promise<string | null> => {
+  const requestDownloadClip = async (res: CutResult): Promise<{ url: string; fileName: string } | null> => {
     if (!youtubeUrl || res.start_seconds == null || res.end_seconds == null) return null;
-    const { data, error } = await supabase.functions.invoke("cut-youtube-video", {
-      body: { youtube_url: youtubeUrl, start_seconds: res.start_seconds, end_seconds: res.end_seconds },
+    const { data, error, response } = await supabase.functions.invoke("cut-youtube-video", {
+      body: {
+        action: "download_clip",
+        youtube_url: youtubeUrl,
+        start_seconds: res.start_seconds,
+        end_seconds: res.end_seconds,
+        quality,
+      },
+      timeout: 120000,
     });
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
-    return data?.download_url || null;
+    if (!(data instanceof Blob)) return null;
+
+    if (data.type.includes("application/json")) {
+      const payload = JSON.parse(await data.text().catch(() => "{}"));
+      throw new Error(payload?.error || "Não foi possível gerar o arquivo do trecho.");
+    }
+
+    const disposition = response?.headers.get("content-disposition") || "";
+    const fileName = disposition.match(/filename="?([^";]+)"?/i)?.[1]
+      || `youtube_${Math.floor(res.start_seconds)}-${Math.floor(res.end_seconds)}.mp4`;
+    return { url: URL.createObjectURL(data), fileName };
   };
 
   const tryGenerateDownload = async (res: CutResult, idx: number, attempt = 1): Promise<void> => {
     const MAX_ATTEMPTS = 3;
     setRetryingIdx(idx);
     try {
-      const url = await requestDownloadLink(res);
-      if (url) {
-        setResults((prev) => prev.map((r, i) => (i === idx ? { ...r, download_url: url } : r)));
-        openDownloadLink(url);
+      const download = await requestDownloadClip(res);
+      if (download?.url) {
+        setResults((prev) => prev.map((r, i) => (i === idx ? { ...r, blob_url: download.url, file_name: download.fileName, is_clip_download: true } : r)));
+        openDownloadLink(download.url, download.fileName);
         toast({ title: "Download iniciado" });
         return;
       }
-      throw new Error("Servidor não retornou link de download.");
+      throw new Error("Servidor não retornou o arquivo do trecho.");
     } catch (err: any) {
       if (attempt < MAX_ATTEMPTS) {
         toast({
@@ -887,7 +911,7 @@ export default function CortesVideoPage() {
   };
 
   const handleDownloadRes = (res: CutResult) => {
-    if (res.is_local && res.blob_url) {
+    if (res.blob_url) {
       const a = document.createElement("a");
       a.href = res.blob_url;
       a.download = res.file_name || "corte.mp4";
@@ -1452,10 +1476,10 @@ export default function CortesVideoPage() {
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div className="truncate">
                         <div className="text-[11px] font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                          {res.is_local ? res.file_name : `Download YouTube #${idx + 1}`}
+                          {res.is_local ? res.file_name : `Trecho YouTube #${idx + 1}`}
                         </div>
                         <div className="text-[9px] opacity-50 font-mono">
-                          {res.is_local ? "Processado Localmente" : "Processado no Servidor"}
+                          {res.is_local ? "Processado Localmente" : res.blob_url ? "Arquivo do trecho gerado" : "Pronto para gerar download"}
                         </div>
                       </div>
                       <button 
