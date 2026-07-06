@@ -199,7 +199,8 @@ export default function LoginScreen() {
               placeholder="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200"
+              disabled={loading}
+              className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid rgba(13,55,154,0.2)", backgroundColor: "rgba(15,16,88,0.03)" }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)")}
               onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; }}
@@ -211,8 +212,9 @@ export default function LoginScreen() {
               placeholder="senha"
               value={pass}
               onChange={(e) => setPass(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200"
+              onKeyDown={(e) => { if (e.key === "Enter" && !loading) handleSubmit(); }}
+              disabled={loading}
+              className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid rgba(13,55,154,0.2)", backgroundColor: "rgba(15,16,88,0.03)" }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)")}
               onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; }}
