@@ -222,7 +222,7 @@ export default function LoginScreen() {
 
             {error && <p className="text-center font-medium" style={{ fontSize: "12px", color: "#dc2626" }}>{error}</p>}
 
-            <label htmlFor="keep-connected" className="inline-flex items-center gap-2 cursor-pointer select-none pt-1 group focus-within:outline-none">
+            <label htmlFor="keep-connected" className="inline-flex items-center gap-3 cursor-pointer select-none -mx-2 px-2 py-2 min-h-11 rounded-lg group focus-within:outline-none hover:bg-[#0f1058]/5 active:bg-[#0f1058]/10 transition-colors touch-manipulation">
               <div className="relative flex items-center justify-center">
                 <input
                   id="keep-connected"
