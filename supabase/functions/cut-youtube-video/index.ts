@@ -439,7 +439,9 @@ Deno.serve(async (req) => {
       console.log(`Streaming clip download via: ${clip.provider} for video ${videoId}`);
       const headers = new Headers(clip.response.headers);
       for (const [key, value] of Object.entries(corsHeaders)) headers.set(key, value);
-      if (!headers.get("Content-Type")) headers.set("Content-Type", "video/mp4");
+      const originalContentType = headers.get("Content-Type") || "video/mp4";
+      headers.set("X-Original-Content-Type", originalContentType);
+      headers.set("Content-Type", "application/octet-stream");
       headers.set("Content-Disposition", `attachment; filename="youtube_${videoId}_${Math.floor(Number(start_seconds))}-${Math.floor(Number(end_seconds))}.mp4"`);
       headers.set("X-Download-Provider", clip.provider);
       return new Response(clip.response.body, { status: 200, headers });
