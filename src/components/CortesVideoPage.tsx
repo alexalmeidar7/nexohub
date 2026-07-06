@@ -162,6 +162,55 @@ export default function CortesVideoPage() {
       .catch(() => setVideoTitle(""));
   }, [videoId, mode]);
 
+  // Fetch YouTube video duration via IFrame API
+  const [youtubeDuration, setYoutubeDuration] = useState(0);
+  useEffect(() => {
+    if (mode !== "youtube" || !videoId) { setYoutubeDuration(0); return; }
+    let cancelled = false;
+    let player: any = null;
+
+    const loadApi = () =>
+      new Promise<void>((resolve) => {
+        const w = window as any;
+        if (w.YT && w.YT.Player) return resolve();
+        const prev = w.onYouTubeIframeAPIReady;
+        w.onYouTubeIframeAPIReady = () => { prev?.(); resolve(); };
+        if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+          const s = document.createElement("script");
+          s.src = "https://www.youtube.com/iframe_api";
+          document.head.appendChild(s);
+        }
+      });
+
+    (async () => {
+      await loadApi();
+      if (cancelled) return;
+      const holder = document.createElement("div");
+      holder.style.position = "fixed";
+      holder.style.left = "-9999px";
+      holder.style.width = "1px";
+      holder.style.height = "1px";
+      document.body.appendChild(holder);
+      const YT = (window as any).YT;
+      player = new YT.Player(holder, {
+        videoId,
+        events: {
+          onReady: (e: any) => {
+            const d = Math.floor(e.target.getDuration() || 0);
+            if (!cancelled && d > 0) setYoutubeDuration(d);
+            try { e.target.destroy(); } catch {}
+            holder.remove();
+          },
+        },
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+      try { player?.destroy(); } catch {}
+    };
+  }, [videoId, mode]);
+
   useEffect(() => {
     return () => {
       if (localUrl) URL.revokeObjectURL(localUrl);
