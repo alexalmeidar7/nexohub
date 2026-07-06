@@ -88,6 +88,8 @@ export default function CortesVideoPage() {
   const resultRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<number>(0);
   const [estimatedSeconds, setEstimatedSeconds] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<{ stack?: string; log?: string; exitCode?: number } | null>(null);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
