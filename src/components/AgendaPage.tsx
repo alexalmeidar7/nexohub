@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressInline, { type ExpressEditData } from "@/components/ProgramaExpressInline";
-import GoogleCalendarSync from "@/components/GoogleCalendarSync";
+
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2, Sparkles } from "lucide-react";
 
@@ -1261,7 +1261,7 @@ export default function AgendaPage() {
 
   return (
     <div className="animate-fade-in">
-      <GoogleCalendarSync />
+      
       <Dialog open={viewEventDialogOpen} onOpenChange={setViewEventDialogOpen}>
         <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none", color: "var(--layout-page-text, #1a1a1a)" }}>
           {viewingEvent && (
