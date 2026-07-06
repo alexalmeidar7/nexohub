@@ -8,6 +8,7 @@ import { ToastAction } from "@/components/ui/toast";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import PremiereTimeline from "./PremiereTimeline";
+import ClipPreview from "./ClipPreview";
 
 function toHMS(seconds: number): string {
   const total = Math.max(0, seconds);
@@ -974,7 +975,36 @@ export default function CortesVideoPage() {
           </div>
         </div>
 
-        {/* Cut button */}
+        {/* Preview do trecho selecionado */}
+        {canCut && (
+          <div className="mb-5">
+            <div className="rounded-2xl p-4" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
+              <div className="flex items-center gap-2 mb-3">
+                <Play size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+                <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  Pré-visualização do trecho
+                </div>
+                <div className="text-[10px] font-mono ml-auto" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+                  {activeClip.start} → {activeClip.end} • {formatDuration(duration)}
+                </div>
+              </div>
+              <ClipPreview
+                mode={mode}
+                videoId={videoId}
+                localUrl={localUrl}
+                startSeconds={startSeconds}
+                endSeconds={endSeconds}
+                format={format}
+                key={`${activeClipId}-${startSeconds}-${endSeconds}-${format}-${mode}`}
+              />
+              <p className="text-[10px] leading-snug mt-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                Confira o trecho antes de gerar o arquivo final para download.
+              </p>
+            </div>
+          </div>
+        )}
+
+
         <div className="flex flex-col items-center gap-2 mb-5">
           <button onClick={handleCut} disabled={!canCut || cutting}
             className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
