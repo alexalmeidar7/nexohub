@@ -142,7 +142,7 @@ const pageTitle: Record<Page, string> = {
   dashboard: "Home",
   previsao: "Previsão do Tempo",
   noticias: "Roteiro de Programa",
-  apresentadores: "Cadastro de Apresentadores",
+  apresentadores: "Cadastro de Participantes",
   programas: "Cadastro de Programas",
   musica: "Música no Ar",
   agenda: "Agenda",
