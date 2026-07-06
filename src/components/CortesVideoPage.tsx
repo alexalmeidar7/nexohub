@@ -348,11 +348,13 @@ export default function CortesVideoPage() {
     startSec: number,
     endSec: number,
     target: "fullhd" | "reel" | "original",
-    onProgress: (pct: number) => void
+    onProgress: (pct: number) => void,
+    onStage: (title: string, detail?: string) => void
   ): Promise<Blob> => {
     const clipDuration = endSec - startSec;
     if (clipDuration <= 0) throw new Error("Duração inválida.");
 
+    onStage("Preparando vídeo...", "Lendo metadados do arquivo");
     const url = URL.createObjectURL(file);
     const video = document.createElement("video");
     video.src = url;
@@ -373,25 +375,24 @@ export default function CortesVideoPage() {
       if (target === "fullhd") { outW = 1920; outH = 1080; }
       else if (target === "reel") { outW = 1080; outH = 1920; }
 
+      onStage("Configurando saída...", `Formato ${target.toUpperCase()} • ${outW}×${outH}`);
+
       const canvas = document.createElement("canvas");
       canvas.width = outW;
       canvas.height = outH;
       const ctx = canvas.getContext("2d", { alpha: false })!;
 
-      // Cover fit (crop)
       const scale = Math.max(outW / srcW, outH / srcH);
       const drawW = srcW * scale;
       const drawH = srcH * scale;
       const dx = (outW - drawW) / 2;
       const dy = (outH - drawH) / 2;
 
-      // Audio pipeline
       const AC = (window.AudioContext || (window as any).webkitAudioContext);
       const audioCtx: AudioContext = new AC();
       const source = audioCtx.createMediaElementSource(video);
       const dest = audioCtx.createMediaStreamDestination();
       source.connect(dest);
-      // Do NOT connect to destination (avoid audible playback)
 
       const canvasStream = canvas.captureStream(30);
       const combined = new MediaStream([
@@ -407,12 +408,13 @@ export default function CortesVideoPage() {
         "video/webm",
       ];
       const mimeType = mimeCandidates.find((m) => (window as any).MediaRecorder?.isTypeSupported?.(m)) || "";
+      const codecLabel = mimeType ? mimeType.split(";")[0].replace("video/", "").toUpperCase() : "WEBM";
 
       const recorder = new MediaRecorder(combined, mimeType ? { mimeType, videoBitsPerSecond: 6_000_000 } : undefined);
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
-      // Seek to start
+      onStage("Posicionando no início do trecho...", `Seek para ${startSec.toFixed(2)}s`);
       await new Promise<void>((resolve, reject) => {
         const onSeek = () => { video.removeEventListener("seeked", onSeek); resolve(); };
         video.addEventListener("seeked", onSeek);
@@ -422,6 +424,7 @@ export default function CortesVideoPage() {
 
       recorder.start(250);
       await video.play();
+      onStage("Capturando frames...", `Codec ${codecLabel} • ${clipDuration.toFixed(1)}s a renderizar`);
 
       let rafId = 0;
       const drawLoop = () => {
@@ -434,6 +437,8 @@ export default function CortesVideoPage() {
         const elapsed = Math.max(0, video.currentTime - startSec);
         const pct = Math.min(95, Math.round((elapsed / clipDuration) * 90) + 5);
         onProgress(pct);
+        const remaining = Math.max(0, clipDuration - elapsed);
+        onStage("Capturando frames...", `${elapsed.toFixed(1)}s de ${clipDuration.toFixed(1)}s • restam ~${remaining.toFixed(1)}s`);
       }, 200);
 
       await new Promise<void>((resolve) => {
@@ -450,6 +455,8 @@ export default function CortesVideoPage() {
         check();
       });
 
+      onStage("Exportando arquivo...", "Finalizando codificação");
+      onProgress(97);
       await new Promise<void>((resolve) => {
         recorder.onstop = () => resolve();
         recorder.stop();
@@ -458,12 +465,15 @@ export default function CortesVideoPage() {
       try { audioCtx.close(); } catch {}
       canvasStream.getTracks().forEach((t) => t.stop());
 
+      onStage("Montando download...", "Gerando arquivo final");
+      onProgress(99);
       const outType = (mimeType || "video/webm").split(";")[0];
       return new Blob(chunks, { type: outType });
     } finally {
       URL.revokeObjectURL(url);
     }
   };
+
 
   const handleCutLocal = async () => {
     if (!localFile || clips.length === 0) return;
