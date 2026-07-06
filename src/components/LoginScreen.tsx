@@ -190,7 +190,7 @@ export default function LoginScreen() {
           style={{ fontSize: "12px", borderRadius: "1.5rem", background: "rgba(255,255,255,0.97)" }}
         >
           <h1 className="text-center font-semibold tracking-wide mb-8" style={{ color: "#0f1058", fontSize: "12px" }}>
-            NexoHub login
+            HouseMix login
           </h1>
 
           <div className="space-y-4">
