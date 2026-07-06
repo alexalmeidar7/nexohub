@@ -516,7 +516,7 @@ export default function CortesVideoPage() {
         const step = 100 / totalClips;
 
         const blob = await recordClipFromVideo(
-          localFile, s, e, format,
+          localFile, s, e, format, qualityPresets[quality].bitrate,
           (pct) => setProgress(Math.round(base + (pct / 100) * step)),
           (title, detail) => {
             setStatusMsg(`Trecho ${i + 1}/${totalClips} — ${title}`);
