@@ -4,6 +4,7 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import PremiereTimeline from "./PremiereTimeline";
@@ -101,6 +102,8 @@ export default function CortesVideoPage() {
     download_url?: string;
     duration: number;
     is_local: boolean;
+    start_seconds?: number;
+    end_seconds?: number;
   };
   const [results, setResults] = useState<CutResult[]>([]);
   const result = results[0] || null; // for compatibility with any remaining code using 'result'
@@ -513,6 +516,8 @@ export default function CortesVideoPage() {
           download_url: data.download_url || "",
           duration: data.duration,
           is_local: false,
+          start_seconds: clipStartSeconds,
+          end_seconds: clipEndSeconds,
         });
       }
 
@@ -536,6 +541,75 @@ export default function CortesVideoPage() {
 
   const handleCut = () => (mode === "local" ? handleCutLocal() : handleCutYoutube());
 
+  const [retryingIdx, setRetryingIdx] = useState<number | null>(null);
+
+  const openDownloadLink = (url: string) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `corte_${startTime.replace(/:/g, "-")}_${endTime.replace(/:/g, "-")}.mp4`;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const openExternalFallback = () => {
+    if (!videoId) return;
+    const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    window.open(
+      `https://en.savefrom.net/1-youtube-video-downloader-4/?url=${encodeURIComponent(ytUrl)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  const requestDownloadLink = async (res: CutResult): Promise<string | null> => {
+    if (!youtubeUrl || res.start_seconds == null || res.end_seconds == null) return null;
+    const { data, error } = await supabase.functions.invoke("cut-youtube-video", {
+      body: { youtube_url: youtubeUrl, start_seconds: res.start_seconds, end_seconds: res.end_seconds },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data?.download_url || null;
+  };
+
+  const tryGenerateDownload = async (res: CutResult, idx: number, attempt = 1): Promise<void> => {
+    const MAX_ATTEMPTS = 3;
+    setRetryingIdx(idx);
+    try {
+      const url = await requestDownloadLink(res);
+      if (url) {
+        setResults((prev) => prev.map((r, i) => (i === idx ? { ...r, download_url: url } : r)));
+        openDownloadLink(url);
+        toast({ title: "Download iniciado" });
+        return;
+      }
+      throw new Error("Servidor não retornou link de download.");
+    } catch (err: any) {
+      if (attempt < MAX_ATTEMPTS) {
+        toast({
+          title: `Falha ao gerar link (tentativa ${attempt}/${MAX_ATTEMPTS})`,
+          description: "Tentando novamente...",
+        });
+        await new Promise((r) => setTimeout(r, 800 * attempt));
+        return tryGenerateDownload(res, idx, attempt + 1);
+      }
+      toast({
+        title: "Não foi possível gerar o link",
+        description: err?.message || "Falha após várias tentativas.",
+        variant: "destructive",
+        action: (
+          <ToastAction altText="Tentar novamente" onClick={() => { void tryGenerateDownload(res, idx, 1); }}>
+            Tentar novamente
+          </ToastAction>
+        ),
+      });
+    } finally {
+      setRetryingIdx((cur) => (cur === idx ? null : cur));
+    }
+  };
+
   const handleDownloadRes = (res: CutResult) => {
     if (res.is_local && res.blob_url) {
       const a = document.createElement("a");
@@ -547,20 +621,16 @@ export default function CortesVideoPage() {
       return;
     }
     if (res.download_url) {
-      const a = document.createElement("a");
-      a.href = res.download_url;
-      a.download = `corte_${startTime.replace(/:/g, "-")}_${endTime.replace(/:/g, "-")}.mp4`;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      openDownloadLink(res.download_url);
+      return;
+    }
+    const idx = results.indexOf(res);
+    if (idx >= 0 && res.start_seconds != null && res.end_seconds != null) {
+      void tryGenerateDownload(res, idx, 1);
       return;
     }
     if (videoId) {
-      const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      const fallback = `https://en.savefrom.net/1-youtube-video-downloader-4/?url=${encodeURIComponent(ytUrl)}`;
-      window.open(fallback, "_blank", "noopener,noreferrer");
+      openExternalFallback();
       toast({
         title: "Link direto indisponível",
         description: "Abrimos um serviço externo para baixar o vídeo. Recorte o trecho manualmente após o download.",
