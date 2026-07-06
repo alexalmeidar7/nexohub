@@ -93,6 +93,14 @@ export default function CortesVideoPage() {
   const [showErrorDetails, setShowErrorDetails] = useState(false);
 
   const [format, setFormat] = useState<"fullhd" | "reel" | "original">("fullhd");
+  type Quality = "low" | "balanced" | "high" | "max";
+  const [quality, setQuality] = useState<Quality>("balanced");
+  const qualityPresets: Record<Quality, { label: string; sub: string; bitrate: number; hint: string }> = {
+    low: { label: "Leve", sub: "~2 Mbps", bitrate: 2_000_000, hint: "Arquivos pequenos, ideal para envio rápido em redes sociais e WhatsApp." },
+    balanced: { label: "Equilibrado", sub: "~6 Mbps", bitrate: 6_000_000, hint: "Recomendado: ótimo equilíbrio entre qualidade e tamanho, compatível com a maioria dos players." },
+    high: { label: "Alta", sub: "~10 Mbps", bitrate: 10_000_000, hint: "Boa qualidade para edição ou publicação em canais como YouTube/TV." },
+    max: { label: "Máxima", sub: "~16 Mbps", bitrate: 16_000_000, hint: "Máxima qualidade — arquivos maiores, indicado para masters e arquivos originais." },
+  };
   const [cutting, setCutting] = useState(false);
   type CutResult = {
     blob_url?: string;
@@ -348,6 +356,7 @@ export default function CortesVideoPage() {
     startSec: number,
     endSec: number,
     target: "fullhd" | "reel" | "original",
+    bitrate: number,
     onProgress: (pct: number) => void,
     onStage: (title: string, detail?: string) => void
   ): Promise<Blob> => {
@@ -410,7 +419,7 @@ export default function CortesVideoPage() {
       const mimeType = mimeCandidates.find((m) => (window as any).MediaRecorder?.isTypeSupported?.(m)) || "";
       const codecLabel = mimeType ? mimeType.split(";")[0].replace("video/", "").toUpperCase() : "WEBM";
 
-      const recorder = new MediaRecorder(combined, mimeType ? { mimeType, videoBitsPerSecond: 6_000_000 } : undefined);
+      const recorder = new MediaRecorder(combined, mimeType ? { mimeType, videoBitsPerSecond: bitrate } : undefined);
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
@@ -507,7 +516,7 @@ export default function CortesVideoPage() {
         const step = 100 / totalClips;
 
         const blob = await recordClipFromVideo(
-          localFile, s, e, format,
+          localFile, s, e, format, qualityPresets[quality].bitrate,
           (pct) => setProgress(Math.round(base + (pct / 100) * step)),
           (title, detail) => {
             setStatusMsg(`Trecho ${i + 1}/${totalClips} — ${title}`);
@@ -987,8 +996,47 @@ export default function CortesVideoPage() {
                   ? "Ultra-rápido: mantém a qualidade original e corta em segundos (pode haver pequena variação no início/fim)."
                   : "Horizontal padrão: 1920x1080 (YouTube/TV)."}
               </p>
-            </div>
           </div>
+        </div>
+
+        {/* Qualidade / Bitrate */}
+        <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>⚙️ Qualidade do Vídeo</h3>
+          </div>
+          <div className="p-5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {(Object.keys(qualityPresets) as Quality[]).map((k) => {
+                const active = quality === k;
+                const p = qualityPresets[k];
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setQuality(k)}
+                    className="flex flex-col items-start gap-1 p-3 rounded-xl transition-all text-left"
+                    style={{
+                      border: `2px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)"}`,
+                      backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
+                    }}
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <span className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.label}</span>
+                      {k === "balanced" && (
+                        <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--layout-accent-color, #2563eb)", color: "var(--layout-page-bg, #fff)" }}>PADRÃO</span>
+                      )}
+                    </div>
+                    <div className="text-[10px] font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>{p.sub}</div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[10px] leading-snug mt-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+              {qualityPresets[quality].hint}
+            </p>
+          </div>
+        </div>
+
         </div>
 
         {/* Preview do trecho selecionado */}
