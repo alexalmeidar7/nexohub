@@ -447,30 +447,12 @@ Deno.serve(async (req) => {
       return new Response(clip.response.body, { status: 200, headers });
     }
 
-    // Try multiple providers to resolve a direct MP4/stream URL. RapidAPI is preferred
-    // because it can return the selected clip; public providers usually return full-video streams.
+    // Metadata request: only report whether a fallback full-video URL exists.
+    // The real clip download is generated on demand with action=download_clip,
+    // so temporary provider URLs and private API headers are never exposed to the browser.
     let downloadUrl = "";
     let providerUsed = "";
     let isClipDownload = false;
-
-    const rapidKey = Deno.env.get("RAPIDAPI_KEY") || "";
-    if (rapidKey) {
-      const rapidResult = await resolveRapidApiClip(
-        rapidKey,
-        videoId,
-        youtube_url,
-        Number(start_seconds),
-        Number(end_seconds),
-        quality,
-      );
-      if (rapidResult?.url) {
-        downloadUrl = rapidResult.url;
-        providerUsed = rapidResult.provider;
-        isClipDownload = !!rapidResult.isClip;
-      }
-    } else {
-      console.log("RAPIDAPI_KEY not configured; skipping RapidAPI clip providers");
-    }
 
     // 2) Piped instances (open source YT frontend, no auth)
     const pipedInstances = [
