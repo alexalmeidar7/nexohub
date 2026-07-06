@@ -515,6 +515,8 @@ export default function CortesVideoPage() {
           download_url: data.download_url || "",
           duration: data.duration,
           is_local: false,
+          start_seconds: clipStartSeconds,
+          end_seconds: clipEndSeconds,
         });
       }
 
