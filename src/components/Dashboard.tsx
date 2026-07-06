@@ -80,7 +80,7 @@ const sidebarMenu: MenuItem[] = [
   { icon: Home, label: "home", page: "dashboard" },
   {
     icon: Users, label: "cadastros", children: [
-      { icon: Mic2, label: "apresentadores", page: "apresentadores" },
+      { icon: Mic2, label: "participantes", page: "apresentadores" },
       { icon: PlaySquare, label: "programas", page: "programas" },
       { icon: CloudSun, label: "cidade tempo", page: "previsao" },
     ]
@@ -142,7 +142,7 @@ const pageTitle: Record<Page, string> = {
   dashboard: "Home",
   previsao: "Previsão do Tempo",
   noticias: "Roteiro de Programa",
-  apresentadores: "Cadastro de Apresentadores",
+  apresentadores: "Cadastro de Participantes",
   programas: "Cadastro de Programas",
   musica: "Música no Ar",
   agenda: "Agenda",
