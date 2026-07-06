@@ -360,6 +360,7 @@ Deno.serve(async (req) => {
         if (pick?.url) {
           downloadUrl = pick.url;
           providerUsed = `piped:${base}`;
+          isClipDownload = false;
         }
       } catch (e) {
         console.log(`Piped ${base} error:`, (e as Error).message);
@@ -391,6 +392,7 @@ Deno.serve(async (req) => {
           if (pick?.url) {
             downloadUrl = pick.url;
             providerUsed = `invidious:${base}`;
+            isClipDownload = false;
           }
         } catch (e) {
           console.log(`Invidious ${base} error:`, (e as Error).message);
@@ -416,10 +418,12 @@ Deno.serve(async (req) => {
           if (cobaltData.status === "stream" || cobaltData.status === "redirect" || cobaltData.status === "tunnel") {
             downloadUrl = cobaltData.url || "";
             providerUsed = "cobalt";
+            isClipDownload = false;
           } else if (cobaltData.status === "picker" && Array.isArray(cobaltData.picker)) {
             const mp4 = cobaltData.picker.find((p: any) => p.type === "video") || cobaltData.picker[0];
             downloadUrl = mp4?.url || "";
             providerUsed = "cobalt-picker";
+            isClipDownload = false;
           }
         } else {
           console.log("Cobalt API non-ok:", cobaltRes.status, await cobaltRes.text());
@@ -444,7 +448,8 @@ Deno.serve(async (req) => {
         clip_embed_url: clipEmbedUrl,
         share_url: shareUrl,
         thumbnail_url: thumbnailUrl,
-        download_url: downloadUrl,
+        download_url: isClipDownload ? downloadUrl : "",
+        fallback_download_url: isClipDownload ? "" : downloadUrl,
         download_provider: providerUsed,
         is_clip_download: isClipDownload,
         start_seconds,
