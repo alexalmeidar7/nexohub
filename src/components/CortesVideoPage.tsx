@@ -568,6 +568,8 @@ export default function CortesVideoPage() {
       return;
     }
     toast({ title: "Erro", description: "Não foi possível localizar o vídeo para download.", variant: "destructive" });
+  };
+
 
   const handleDownload = () => result && handleDownloadRes(result);
 
