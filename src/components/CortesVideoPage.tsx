@@ -356,6 +356,7 @@ export default function CortesVideoPage() {
     startSec: number,
     endSec: number,
     target: "fullhd" | "reel" | "original",
+    bitrate: number,
     onProgress: (pct: number) => void,
     onStage: (title: string, detail?: string) => void
   ): Promise<Blob> => {
