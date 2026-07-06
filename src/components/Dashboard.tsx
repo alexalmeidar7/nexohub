@@ -175,11 +175,20 @@ interface DashboardProps {
 export default function Dashboard({ onLogout }: DashboardProps) {
   const { user } = useAuth();
   const layoutColors = useLayoutColors();
-  const [currentPage, setCurrentPage] = useState<Page>("dashboard");
+  const [currentPage, setCurrentPageState] = useState<Page>("dashboard");
+  const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
+    setCurrentPageState((prev) => {
+      const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
+      if (resolved !== prev) {
+        try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+      }
+      return resolved;
+    });
+  }, []);
 
   useEffect(() => {
     (window as any).setCurrentPageGlobal = setCurrentPage;
-  }, []);
+  }, [setCurrentPage]);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
