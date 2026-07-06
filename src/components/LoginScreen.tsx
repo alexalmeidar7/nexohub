@@ -243,11 +243,16 @@ export default function LoginScreen() {
                   }}
                   aria-checked={keepConnected}
                   aria-label="Mantenha-me conectado"
-                  className="peer h-[18px] w-[18px] shrink-0 rounded-[4px] bg-white ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#268ffa] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 peer-checked:bg-[#0f1058]"
-                  style={{ accentColor: "#0f1058", border: "2px solid #0f1058", boxShadow: "0 0 0 1px rgba(15,16,88,0.15)" }}
+                  className="peer h-[20px] w-[20px] shrink-0 rounded-[4px] ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#268ffa] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 cursor-pointer"
+                  style={{
+                    accentColor: "#0f1058",
+                    border: "2px solid #0f1058",
+                    backgroundColor: keepConnected ? "#0f1058" : "#ffffff",
+                    boxShadow: "0 0 0 1px rgba(15,16,88,0.25)",
+                  }}
                 />
                 <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity duration-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
               </div>
               <span className="transition-colors duration-200 group-hover:text-[#268ffa] group-focus-within:text-[#268ffa]" style={{ fontSize: "12px", color: "#0f1058" }}>mantenha-me conectado</span>
