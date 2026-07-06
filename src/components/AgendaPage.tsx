@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressInline, { type ExpressEditData } from "@/components/ProgramaExpressInline";
-import GoogleCalendarSync from "@/components/GoogleCalendarSync";
+
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2, Sparkles } from "lucide-react";
 
