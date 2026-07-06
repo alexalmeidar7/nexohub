@@ -924,6 +924,21 @@ export default function CortesVideoPage() {
           </div>
         )}
 
+        {/* YouTube Timeline (sem miniaturas — CORS impede extração) */}
+        {mode === "youtube" && videoId && youtubeDuration > 0 && (
+          <div className="mb-5">
+            <PremiereTimeline
+              videoUrl=""
+              duration={youtubeDuration}
+              startSec={Math.min(startSeconds, youtubeDuration)}
+              endSec={endSeconds > 0 ? Math.min(endSeconds, youtubeDuration) : Math.min(youtubeDuration, 10)}
+              onChange={(s, e) => { setStartTime(toHMS(s)); setEndTime(toHMS(e)); }}
+              videoTitle={videoTitle || "YouTube"}
+            />
+          </div>
+        )}
+
+
 
         {/* Trechos List */}
         <div className="mb-5">
