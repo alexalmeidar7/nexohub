@@ -101,6 +101,8 @@ export default function CortesVideoPage() {
     download_url?: string;
     duration: number;
     is_local: boolean;
+    start_seconds?: number;
+    end_seconds?: number;
   };
   const [results, setResults] = useState<CutResult[]>([]);
   const result = results[0] || null; // for compatibility with any remaining code using 'result'
