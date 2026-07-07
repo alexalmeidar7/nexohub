@@ -1025,8 +1025,8 @@ export default function VmixPage() {
 
       const hint = isMixedOrCorsLikely
         ? (isEmbeddedPreview
-          ? " O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' nesse domínio."
-          : " No modo Direto (rede local), permita 'Conteúdo inseguro' para este site no navegador.")
+          ? " O preview interno bloqueia HTTP local. Abra o app em nova aba; se o vMix estiver neste PC, use localhost:8088."
+          : " Se o vMix está neste PC, salve como localhost:8088. Se está em outro PC da LAN, o navegador só libera com túnel HTTPS ou permissão manual de conteúdo inseguro.")
         : effectiveMode === "direct" && !isLocal
         ? " IP público detectado — tente o modo 'Proxy'."
         : "";
