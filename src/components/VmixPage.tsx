@@ -188,6 +188,61 @@ function validateVmixParts(protocol: string, host: string, port: string): string
   return null;
 }
 
+function vmixTagText(xml: Document, tagName: string): string | null {
+  return xml.getElementsByTagName(tagName)[0]?.textContent?.trim() || null;
+}
+
+function parseVmixXml(xmlText: string) {
+  const text = (xmlText || "").trim();
+  if (!text) throw new Error("Resposta vazia do vMix. Verifique URL/porta e Web Controller.");
+  if (text === "{}" || text === "[object Blob]" || text === "[object Object]") {
+    throw new Error("Resposta do proxy não veio como XML. Atualize a conexão e tente novamente.");
+  }
+
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(text, "text/xml");
+  const parserError = xml.getElementsByTagName("parsererror")[0];
+  if (parserError) {
+    throw new Error("Resposta do vMix não é um XML válido. Confirme se a URL aponta para a API do vMix (/api/).");
+  }
+
+  const rootName = xml.documentElement?.nodeName?.toLowerCase() || "";
+  const hasVmixRoot = rootName === "vmix" || xml.getElementsByTagName("vmix").length > 0;
+  if (!hasVmixRoot) {
+    throw new Error("Conectou, mas a resposta não é da API XML do vMix. Verifique protocolo, host e porta do Web Controller.");
+  }
+
+  const parsedInputs: VmixInput[] = Array.from(xml.getElementsByTagName("input")).map((el) => ({
+    key: el.getAttribute("key") || el.getAttribute("guid") || el.getAttribute("number") || "",
+    number: el.getAttribute("number") || "",
+    title: el.getAttribute("title") || el.textContent?.trim() || "Sem título",
+    type: el.getAttribute("type") || "",
+    state: el.getAttribute("state") || "Paused",
+    duration: el.getAttribute("duration") || undefined,
+    position: el.getAttribute("position") || undefined,
+    loop: el.getAttribute("loop") || undefined,
+    muted: /true/i.test(el.getAttribute("muted") || ""),
+  })).filter((input) => input.number || input.key || input.title);
+
+  const overlayStates: Record<number, boolean> = {};
+  for (let n = 1; n <= 4; n++) {
+    const ovEl = Array.from(xml.getElementsByTagName("overlay")).find((el) => el.getAttribute("number") === String(n));
+    if (ovEl) {
+      const ovInput = ovEl.textContent?.trim() || ovEl.getAttribute("input") || "";
+      overlayStates[n] = ovInput !== "" && ovInput !== "0";
+    }
+  }
+
+  return {
+    inputs: parsedInputs,
+    active: vmixTagText(xml, "active"),
+    preview: vmixTagText(xml, "preview"),
+    streaming: vmixTagText(xml, "streaming"),
+    recording: vmixTagText(xml, "recording"),
+    overlays: overlayStates,
+  };
+}
+
 // Format keyboard event to a readable key name, distinguishing numpad from top-row numbers
 function formatKeyName(e: KeyboardEvent): string {
   const parts: string[] = [];
@@ -850,6 +905,8 @@ export default function VmixPage() {
     }
 
     if (typeof data === "string") return data;
+    if (data instanceof Blob) return await data.text();
+    if (data instanceof ArrayBuffer) return new TextDecoder().decode(data);
     return typeof data === "object" ? JSON.stringify(data) : String(data);
   }, []);
 
@@ -1006,44 +1063,15 @@ export default function VmixPage() {
     setConnecting(true);
     try {
       const xmlText = await vmixFetch("/api/", effectiveMode);
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(xmlText, "text/xml");
-
-      const inputElements = xml.querySelectorAll("input");
-      const parsedInputs: VmixInput[] = [];
-      inputElements.forEach((el) => {
-        parsedInputs.push({
-          key: el.getAttribute("key") || "",
-          number: el.getAttribute("number") || "",
-          title: el.getAttribute("title") || el.textContent || "",
-          type: el.getAttribute("type") || "",
-          state: el.getAttribute("state") || "Paused",
-          duration: el.getAttribute("duration") || undefined,
-          position: el.getAttribute("position") || undefined,
-          loop: el.getAttribute("loop") || undefined,
-          muted: el.getAttribute("muted") === "True",
-        });
-      });
+      const vmixState = parseVmixXml(xmlText);
+      const parsedInputs = vmixState.inputs;
       setInputs(parsedInputs);
 
-      const active = xml.querySelector("active");
-      const preview = xml.querySelector("preview");
-      if (active) setActiveInput(active.textContent);
-      if (preview) setPreviewInput(preview.textContent);
-
-      const streamingEl = xml.querySelector("streaming");
-      const recordingEl = xml.querySelector("recording");
-      if (streamingEl) setStreaming(streamingEl.textContent === "True");
-      if (recordingEl) setRecording(recordingEl.textContent === "True");
-
-      // Parse overlay states
-      for (let n = 1; n <= 4; n++) {
-        const ovEl = xml.querySelector(`overlay[number="${n}"]`);
-        if (ovEl) {
-          const ovInput = ovEl.textContent || ovEl.getAttribute("input") || "";
-          setOverlays(prev => ({ ...prev, [n]: ovInput !== "" && ovInput !== "0" }));
-        }
-      }
+      if (vmixState.active) setActiveInput(vmixState.active);
+      if (vmixState.preview) setPreviewInput(vmixState.preview);
+      if (vmixState.streaming) setStreaming(/true/i.test(vmixState.streaming));
+      if (vmixState.recording) setRecording(/true/i.test(vmixState.recording));
+      if (Object.keys(vmixState.overlays).length > 0) setOverlays(prev => ({ ...prev, ...vmixState.overlays }));
 
       setConnected(true);
       const inputCount = parsedInputs.length;
@@ -1085,43 +1113,14 @@ export default function VmixPage() {
     if (!savedUrl) return;
     try {
       const xmlText = await vmixFetch("/api/");
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(xmlText, "text/xml");
+      const vmixState = parseVmixXml(xmlText);
+      setInputs(vmixState.inputs);
 
-      const inputElements = xml.querySelectorAll("input");
-      const parsedInputs: VmixInput[] = [];
-      inputElements.forEach((el) => {
-        parsedInputs.push({
-          key: el.getAttribute("key") || "",
-          number: el.getAttribute("number") || "",
-          title: el.getAttribute("title") || el.textContent || "",
-          type: el.getAttribute("type") || "",
-          state: el.getAttribute("state") || "Paused",
-          duration: el.getAttribute("duration") || undefined,
-          position: el.getAttribute("position") || undefined,
-          loop: el.getAttribute("loop") || undefined,
-          muted: el.getAttribute("muted") === "True",
-        });
-      });
-      setInputs(parsedInputs);
-
-      const active = xml.querySelector("active");
-      const preview = xml.querySelector("preview");
-      if (active) setActiveInput(active.textContent);
-      if (preview) setPreviewInput(preview.textContent);
-
-      const streamingEl = xml.querySelector("streaming");
-      const recordingEl = xml.querySelector("recording");
-      if (streamingEl) setStreaming(streamingEl.textContent === "True");
-      if (recordingEl) setRecording(recordingEl.textContent === "True");
-
-      for (let n = 1; n <= 4; n++) {
-        const ovEl = xml.querySelector(`overlay[number="${n}"]`);
-        if (ovEl) {
-          const ovInput = ovEl.textContent || ovEl.getAttribute("input") || "";
-          setOverlays(prev => ({ ...prev, [n]: ovInput !== "" && ovInput !== "0" }));
-        }
-      }
+      if (vmixState.active) setActiveInput(vmixState.active);
+      if (vmixState.preview) setPreviewInput(vmixState.preview);
+      if (vmixState.streaming) setStreaming(/true/i.test(vmixState.streaming));
+      if (vmixState.recording) setRecording(/true/i.test(vmixState.recording));
+      if (Object.keys(vmixState.overlays).length > 0) setOverlays(prev => ({ ...prev, ...vmixState.overlays }));
       // Reset fail counter and ensure status is connected on success
       if (!connected) setConnected(true);
       silentFailCountRef.current = 0;
@@ -1675,7 +1674,7 @@ export default function VmixPage() {
       style={{ backgroundColor: "#222228", color: "#ccc", border: "1px solid #333" }}
     >
       <option value="">— Selecione um Input —</option>
-      {inputs.filter(isNdiInput).map(inp => {
+      {inputs.map(inp => {
         const isNdi = isNdiInput(inp);
         return (
           <option key={inp.key || inp.number} value={inp.number}>
