@@ -18,8 +18,10 @@ const toSeconds = (time: string) => {
   return Number(hour) * 3600 + Number(minute) * 60 + Number(second);
 };
 
-const isTimeInRange = (start: string, end: string, current: string, anticipationMinutes = 0) => {
-  const startSeconds = toSeconds(start) - (anticipationMinutes * 60);
+// delayMinutes atrasa o início efetivo do programa (positivo = considera "no ar"
+// somente após N minutos do horário de início). Ex.: 1 min para atualização de cenário.
+const isTimeInRange = (start: string, end: string, current: string, delayMinutes = 0) => {
+  const startSeconds = toSeconds(start) + (delayMinutes * 60);
   const endSeconds = toSeconds(end);
   const currentSeconds = toSeconds(current);
 
@@ -96,7 +98,7 @@ Deno.serve(async (req) => {
       const candidates = (allProgs || []).filter(
         (p: any) =>
           (p.dias_semana || []).includes(today) &&
-          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime, 4),
+          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime, 1),
       );
       
       if (candidates.length === 0) return null;
