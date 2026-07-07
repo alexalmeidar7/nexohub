@@ -670,24 +670,20 @@ export default function VmixPage() {
     toast({ title: "Configuração salva", description: `Conexão "${studioName}" salva com sucesso.` });
   };
 
+  useEffect(() => {
+    directBaseUrlRef.current = null;
+    loopbackFallbackNotifiedRef.current = false;
+  }, [savedUrl]);
+
   // Direct fetch to vMix (browser → vMix, no edge function)
   const vmixDirectFetch = useCallback(async (path: string): Promise<string> => {
     if (!savedUrl) throw new Error("URL não configurada");
-    let baseUrl = savedUrl.replace(/\/+$/, "");
-    if (!baseUrl.startsWith("http")) baseUrl = "http://" + baseUrl;
-    const targetUrl = baseUrl + path;
-
-    // Detect Mixed Content upfront: HTTPS page cannot fetch HTTP endpoints.
-    // Without this check the browser silently blocks the request and the AbortSignal
-    // fires after 10s with an opaque "signal timed out" error.
-    if (typeof window !== "undefined"
-        && window.location.protocol === "https:"
-        && targetUrl.startsWith("http://")) {
-      throw new Error(
-        "Mixed Content bloqueado: esta página está em HTTPS mas o vMix responde em HTTP. " +
-        "Abra o painel via HTTP na mesma rede do vMix, use o modo Proxy, ou configure um túnel HTTPS (Cloudflare Tunnel/ngrok)."
-      );
-    }
+    const configuredBaseUrl = normalizeVmixBaseUrl(savedUrl);
+    const candidateBaseUrls = Array.from(new Set([
+      directBaseUrlRef.current,
+      configuredBaseUrl,
+      ...(isPrivateIp(savedUrl) && !isLoopbackUrl(savedUrl) ? buildLoopbackFallbackUrls(savedUrl) : []),
+    ].filter(Boolean) as string[]));
 
     const headers: Record<string, string> = {
       "Accept": "application/xml, text/xml, text/html, */*",
@@ -701,36 +697,66 @@ export default function VmixPage() {
     const MAX_ATTEMPTS = 3;
     const PER_ATTEMPT_MS = 6000;
     let lastErr: unknown = null;
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), PER_ATTEMPT_MS);
-      try {
-        const response = await fetch(targetUrl, {
-          method: "GET",
-          headers,
-          mode: "cors",
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        clearTimeout(timer);
-        if (!response.ok && response.status === 401) {
-          throw new Error("Autenticação vMix falhou (401). Verifique usuário/senha do Web Controller.");
-        }
-        return await response.text();
-      } catch (err) {
-        clearTimeout(timer);
-        lastErr = err;
-        const msg = err instanceof Error ? err.message : String(err);
-        const isAbort = err instanceof DOMException && err.name === "AbortError";
-        const isNet = /Failed to fetch|NetworkError|network/i.test(msg);
-        // Don't retry on auth or fatal errors
-        if (/401|Autenticação/.test(msg)) break;
-        // Retry only on transient network/timeout errors
-        if (!isAbort && !isNet) break;
-        if (attempt < MAX_ATTEMPTS) {
-          await new Promise((r) => setTimeout(r, 400 * attempt));
+    let skippedMixedContent = false;
+
+    for (const baseUrl of candidateBaseUrls) {
+      const targetUrl = baseUrl + path;
+
+      // HTTPS pages cannot fetch HTTP LAN IPs. Loopback is tried as an automatic
+      // local fallback because Chrome treats localhost/127.0.0.1 as trustworthy.
+      if (isMixedContentBlockedByPage(targetUrl)) {
+        skippedMixedContent = true;
+        lastErr = new Error("Mixed Content bloqueado para IP LAN HTTP");
+        continue;
+      }
+
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), PER_ATTEMPT_MS);
+        try {
+          const response = await fetch(targetUrl, {
+            method: "GET",
+            headers,
+            mode: "cors",
+            cache: "no-store",
+            signal: controller.signal,
+          });
+          clearTimeout(timer);
+          if (!response.ok && response.status === 401) {
+            throw new Error("Autenticação vMix falhou (401). Verifique usuário/senha do Web Controller.");
+          }
+          directBaseUrlRef.current = baseUrl;
+          if (baseUrl !== configuredBaseUrl && !loopbackFallbackNotifiedRef.current) {
+            loopbackFallbackNotifiedRef.current = true;
+            toast({
+              title: "vMix local conectado",
+              description: "O modo Direto usou localhost para evitar o bloqueio HTTPS → HTTP.",
+            });
+          }
+          return await response.text();
+        } catch (err) {
+          clearTimeout(timer);
+          lastErr = err;
+          const msg = err instanceof Error ? err.message : String(err);
+          const isAbort = err instanceof DOMException && err.name === "AbortError";
+          const isNet = /Failed to fetch|NetworkError|network/i.test(msg);
+          // Don't retry on auth or fatal errors for this target.
+          if (/401|Autenticação/.test(msg)) throw err;
+          // Retry only on transient network/timeout errors.
+          if (!isAbort && !isNet) break;
+          if (attempt < MAX_ATTEMPTS) {
+            await new Promise((r) => setTimeout(r, 400 * attempt));
+          }
         }
       }
+    }
+
+    if (skippedMixedContent) {
+      throw new Error(
+        "Mixed Content bloqueado: o painel está em HTTPS e o vMix em HTTP em outro IP da rede. " +
+        "Se o vMix estiver neste mesmo computador, deixe o app usar localhost/127.0.0.1. " +
+        "Se estiver em outro PC, use um túnel HTTPS/IP público com Proxy — navegadores não permitem HTTPS → HTTP LAN."
+      );
     }
 
     // Produce a specific, actionable error instead of "signal timed out"
@@ -747,7 +773,7 @@ export default function VmixPage() {
       );
     }
     throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
-  }, [savedUrl, vmixUser, vmixPass]);
+  }, [savedUrl, vmixUser, vmixPass, toast]);
 
   // Proxy fetch via Edge Function (browser → cloud → vMix)
   const vmixProxyFetch = useCallback(async (path: string): Promise<string> => {
