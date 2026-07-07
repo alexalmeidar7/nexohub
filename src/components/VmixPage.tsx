@@ -188,6 +188,61 @@ function validateVmixParts(protocol: string, host: string, port: string): string
   return null;
 }
 
+function vmixTagText(xml: Document, tagName: string): string | null {
+  return xml.getElementsByTagName(tagName)[0]?.textContent?.trim() || null;
+}
+
+function parseVmixXml(xmlText: string) {
+  const text = (xmlText || "").trim();
+  if (!text) throw new Error("Resposta vazia do vMix. Verifique URL/porta e Web Controller.");
+  if (text === "{}" || text === "[object Blob]" || text === "[object Object]") {
+    throw new Error("Resposta do proxy não veio como XML. Atualize a conexão e tente novamente.");
+  }
+
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(text, "text/xml");
+  const parserError = xml.getElementsByTagName("parsererror")[0];
+  if (parserError) {
+    throw new Error("Resposta do vMix não é um XML válido. Confirme se a URL aponta para a API do vMix (/api/).");
+  }
+
+  const rootName = xml.documentElement?.nodeName?.toLowerCase() || "";
+  const hasVmixRoot = rootName === "vmix" || xml.getElementsByTagName("vmix").length > 0;
+  if (!hasVmixRoot) {
+    throw new Error("Conectou, mas a resposta não é da API XML do vMix. Verifique protocolo, host e porta do Web Controller.");
+  }
+
+  const parsedInputs: VmixInput[] = Array.from(xml.getElementsByTagName("input")).map((el) => ({
+    key: el.getAttribute("key") || el.getAttribute("guid") || el.getAttribute("number") || "",
+    number: el.getAttribute("number") || "",
+    title: el.getAttribute("title") || el.textContent?.trim() || "Sem título",
+    type: el.getAttribute("type") || "",
+    state: el.getAttribute("state") || "Paused",
+    duration: el.getAttribute("duration") || undefined,
+    position: el.getAttribute("position") || undefined,
+    loop: el.getAttribute("loop") || undefined,
+    muted: /true/i.test(el.getAttribute("muted") || ""),
+  })).filter((input) => input.number || input.key || input.title);
+
+  const overlayStates: Record<number, boolean> = {};
+  for (let n = 1; n <= 4; n++) {
+    const ovEl = Array.from(xml.getElementsByTagName("overlay")).find((el) => el.getAttribute("number") === String(n));
+    if (ovEl) {
+      const ovInput = ovEl.textContent?.trim() || ovEl.getAttribute("input") || "";
+      overlayStates[n] = ovInput !== "" && ovInput !== "0";
+    }
+  }
+
+  return {
+    inputs: parsedInputs,
+    active: vmixTagText(xml, "active"),
+    preview: vmixTagText(xml, "preview"),
+    streaming: vmixTagText(xml, "streaming"),
+    recording: vmixTagText(xml, "recording"),
+    overlays: overlayStates,
+  };
+}
+
 // Format keyboard event to a readable key name, distinguishing numpad from top-row numbers
 function formatKeyName(e: KeyboardEvent): string {
   const parts: string[] = [];
