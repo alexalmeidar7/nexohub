@@ -48,12 +48,21 @@ function ensureStyles() {
       0%, 100% { filter: drop-shadow(0 4px 10px rgba(255,255,255,0.15)) drop-shadow(0 0 14px rgba(255,220,120,0.25)); }
       50% { filter: drop-shadow(0 6px 18px rgba(255,255,255,0.35)) drop-shadow(0 0 24px rgba(255,220,120,0.55)); }
     }
-    .weather-icon-img {
+    .weather-icon-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .weather-icon-layer {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: contain;
       animation: weather-icon-float 5s ease-in-out infinite, weather-icon-glow 3.5s ease-in-out infinite;
-      will-change: transform, filter;
+      will-change: transform, filter, opacity;
+      transition: opacity 500ms ease-in-out;
     }
   `;
   document.head.appendChild(style);
@@ -69,27 +78,65 @@ interface WeatherIconProps {
 export function WeatherIcon({ code, size = 48, forceDay = false, className }: WeatherIconProps) {
   ensureStyles();
   const url = getWeatherIconPng(code, forceDay);
+
+  // Duas camadas alternadas: A e B. Ao mudar a URL, pré-carregamos a nova
+  // camada e só invertemos o "front" quando o load termina — sem piscar.
+  const [layers, setLayers] = React.useState<{ a: string; b: string; front: "a" | "b" }>(() => ({
+    a: url,
+    b: "",
+    front: "a",
+  }));
+  const currentFrontUrl = layers.front === "a" ? layers.a : layers.b;
+
+  React.useEffect(() => {
+    if (url === currentFrontUrl) return;
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      if (cancelled) return;
+      setLayers((prev) => (prev.front === "a"
+        ? { ...prev, b: url, front: "b" }
+        : { ...prev, a: url, front: "a" }));
+    };
+    img.onerror = () => {
+      if (cancelled) return;
+      // Mesmo com erro, alterna para tentar exibir (fallback do onError abaixo)
+      setLayers((prev) => (prev.front === "a"
+        ? { ...prev, b: url, front: "b" }
+        : { ...prev, a: url, front: "a" }));
+    };
+    img.src = url;
+    return () => { cancelled = true; };
+  }, [url, currentFrontUrl]);
+
+  const handleError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
+  };
+
   return (
-    <div
-      className={className}
-      style={{
-        width: size,
-        height: size,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <img
-        src={url}
-        alt=""
-        className="weather-icon-img"
-        draggable={false}
-        onError={(e) => {
-          // Fallback silencioso: esconde caso o ícone ainda não tenha sido gerado
-          (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
-        }}
-      />
+    <div className={`weather-icon-wrap ${className || ""}`} style={{ width: size, height: size }}>
+      {layers.a && (
+        <img
+          key={`a-${layers.a}`}
+          src={layers.a}
+          alt=""
+          className="weather-icon-layer"
+          draggable={false}
+          style={{ opacity: layers.front === "a" ? 1 : 0 }}
+          onError={handleError}
+        />
+      )}
+      {layers.b && (
+        <img
+          key={`b-${layers.b}`}
+          src={layers.b}
+          alt=""
+          className="weather-icon-layer"
+          draggable={false}
+          style={{ opacity: layers.front === "b" ? 1 : 0 }}
+          onError={handleError}
+        />
+      )}
     </div>
   );
 }
