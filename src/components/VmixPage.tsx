@@ -1980,32 +1980,126 @@ export default function VmixPage() {
                   </button>
                 </div>
               </div>
-              <div className="flex gap-2 items-center flex-wrap">
-                <div className="flex-1 min-w-[200px] flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
-                  <Wifi size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
-                  <input
-                    type="text"
-                    value={vmixUrl}
-                    onChange={e => setVmixUrl(e.target.value)}
-                    placeholder="http://192.168.x.x:8088"
-                    className="flex-1 text-sm outline-none bg-transparent text-white placeholder:text-white/20"
-                  />
-                </div>
-                <button onClick={saveUrl} className="px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110" style={{ backgroundColor: "#3a3a44" }}>
-                  {selectedConnectionId ? "Atualizar" : "Salvar Novo"}
-                </button>
-                {savedUrl && (
-                  <button
-                    onClick={connectToVmix}
-                    disabled={connecting}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
-                    style={{ backgroundColor: "#22c55e" }}
-                  >
-                    {connecting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                    {connecting ? "Conectando..." : "Conectar"}
-                  </button>
-                )}
-              </div>
+              {(() => {
+                const parts = parseVmixUrlParts(vmixUrl);
+                const validationError = validateVmixParts(parts.protocol, parts.host, parts.port);
+                const updateParts = (next: Partial<typeof parts>) => {
+                  const merged = { ...parts, ...next };
+                  setVmixUrl(composeVmixUrl(merged.protocol, merged.host, merged.port));
+                  setDirectTestResult(null);
+                };
+                const testDirect = async () => {
+                  if (validationError) {
+                    setDirectTestResult({ ok: false, message: validationError });
+                    return;
+                  }
+                  setDirectTesting(true);
+                  setDirectTestResult(null);
+                  const base = composeVmixUrl(parts.protocol, parts.host, parts.port);
+                  try {
+                    if (window.location.protocol === "https:" && parts.protocol === "http") {
+                      throw new Error("Mixed Content: página HTTPS não permite testar vMix em HTTP. Abra o painel em HTTP ou use o Modo Proxy.");
+                    }
+                    const res = await fetch(`${base}/api/`, { mode: "cors", cache: "no-store", signal: AbortSignal.timeout(6000) });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const text = await res.text();
+                    if (text.includes("<vmix>") || text.includes("<inputs>")) {
+                      setDirectTestResult({ ok: true, message: `Conectado ao vMix em ${base}` });
+                    } else {
+                      setDirectTestResult({ ok: false, message: "Resposta recebida mas não parece ser do vMix" });
+                    }
+                  } catch (e) {
+                    const msg = e instanceof Error ? e.message : String(e);
+                    setDirectTestResult({ ok: false, message: msg.length > 160 ? msg.slice(0, 160) + "…" : msg });
+                  } finally {
+                    setDirectTesting(false);
+                  }
+                };
+                return (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2 items-stretch flex-wrap">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/25">Protocolo</span>
+                        <select
+                          value={parts.protocol}
+                          onChange={e => updateParts({ protocol: e.target.value as "http" | "https" })}
+                          className="px-3 py-2.5 rounded-xl text-sm bg-[#2a2a30] text-white border border-white/10 outline-none focus:border-white/30"
+                        >
+                          <option value="http">http</option>
+                          <option value="https">https</option>
+                        </select>
+                      </div>
+                      <div className="flex-1 min-w-[180px] flex flex-col gap-1">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/25">Host / IP</span>
+                        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
+                          <Wifi size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
+                          <input
+                            type="text"
+                            value={parts.host}
+                            onChange={e => updateParts({ host: e.target.value.trim() })}
+                            placeholder="192.168.x.x ou localhost"
+                            className="flex-1 text-sm outline-none bg-transparent text-white placeholder:text-white/20"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1 w-[110px]">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/25">Porta</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={65535}
+                          value={parts.port}
+                          onChange={e => updateParts({ port: e.target.value.replace(/\D/g, "").slice(0, 5) })}
+                          placeholder="8088"
+                          className="px-4 py-2.5 rounded-xl text-sm bg-[#2a2a30] text-white border border-white/10 outline-none focus:border-white/30 placeholder:text-white/20"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-center flex-wrap">
+                      <button
+                        onClick={testDirect}
+                        disabled={directTesting || !!validationError}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: "#4a4a56" }}
+                        title={validationError || "Testa a conexão direta com o vMix sem salvar"}
+                      >
+                        {directTesting ? <Loader2 size={13} className="animate-spin" /> : <Wifi size={13} />}
+                        {directTesting ? "Testando…" : "Testar Conexão"}
+                      </button>
+                      <button
+                        onClick={saveUrl}
+                        disabled={!!validationError}
+                        className="px-5 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: "#3a3a44" }}
+                      >
+                        {selectedConnectionId ? "Atualizar" : "Salvar Novo"}
+                      </button>
+                      {savedUrl && (
+                        <button
+                          onClick={connectToVmix}
+                          disabled={connecting}
+                          className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
+                          style={{ backgroundColor: "#22c55e" }}
+                        >
+                          {connecting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                          {connecting ? "Conectando..." : "Conectar"}
+                        </button>
+                      )}
+                      <span className="text-[10px] font-mono text-white/30 truncate">
+                        {composeVmixUrl(parts.protocol, parts.host, parts.port) || "—"}
+                      </span>
+                    </div>
+                    {validationError && (
+                      <p className="text-[10px] text-amber-400/80">⚠ {validationError}</p>
+                    )}
+                    {directTestResult && (
+                      <p className={`text-[10px] leading-relaxed ${directTestResult.ok ? "text-emerald-400/90" : "text-red-400/90"}`}>
+                        {directTestResult.ok ? "✅" : "❌"} {directTestResult.message}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Saved Connections List */}
