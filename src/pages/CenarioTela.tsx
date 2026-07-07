@@ -1901,7 +1901,7 @@ export default function CenarioTela() {
                               <div className="font-bold uppercase tracking-[0.35em]" style={{ fontSize: `${vhToPx(1.5)}${vu}`, opacity: 0.75, color: accentColor }}>Próximos Dias</div>
                               <div style={{ height: "1px", flex: 1, background: "linear-gradient(to left, transparent, rgba(255,255,255,0.25))" }} />
                             </div>
-                            <div className="grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: `${vhToPx(1)}${vu}` }}>
+                            <div className="grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: `${vhToPx(0.7)}${vu}` }}>
                               {liveWeather.daily.slice(1, 4).map((d, i) => {
                                 const dt = new Date(d.date + "T12:00");
                                 const wk = dt.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").toUpperCase();
@@ -1909,31 +1909,34 @@ export default function CenarioTela() {
                                 const monthShort = dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
                                 return (
                                   <div key={i} className={`flex flex-col items-center cenario-anim-row-${i + 1} cenario-delay-${i + 4}`} style={{
-                                    padding: `${vhToPx(2)}${vu} ${vhToPx(0.8)}${vu}`,
+                                    padding: `${vhToPx(1.8)}${vu} ${vhToPx(0.3)}${vu}`,
                                     background: "linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 60%, rgba(0,0,0,0.25) 100%)",
                                     backdropFilter: "blur(16px)",
                                     WebkitBackdropFilter: "blur(16px)",
                                     borderRadius: `${vhToPx(2.6)}${vu}`,
                                     border: "1px solid rgba(255,255,255,0.18)",
                                     boxShadow: "0 14px 42px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)",
-                                    gap: `${vhToPx(1)}${vu}`,
+                                    gap: `${vhToPx(0.9)}${vu}`,
                                     position: "relative",
                                     overflow: "hidden",
                                     minWidth: 0,
-                                  }}>
+                                    containerType: "inline-size",
+                                  } as React.CSSProperties}>
                                     <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "60%", height: `${vhToPx(0.3)}${vu}`, background: `linear-gradient(to right, transparent, ${accentColor}, transparent)`, opacity: 0.7 }} />
 
-                                    <div className="flex items-baseline" style={{ gap: `${vhToPx(0.6)}${vu}` }}>
-                                      <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(2.6)}${vu}`, lineHeight: 1, color: accentColor, textShadow: `0 0 18px ${accentColor}66` }}>{dayNum}</span>
+                                    <div className="flex items-baseline" style={{ gap: `${vhToPx(0.5)}${vu}` }}>
+                                      <span className="font-black tabular-nums" style={{ fontSize: "min(2.6vh, 22cqi)", lineHeight: 1, color: accentColor, textShadow: `0 0 18px ${accentColor}66` }}>{dayNum}</span>
                                       <div className="flex flex-col items-start" style={{ lineHeight: 1 }}>
-                                        <span className="font-black tracking-wider" style={{ fontSize: `${vhToPx(1.3)}${vu}`, opacity: 0.95 }}>{wk}</span>
-                                        <span className="font-bold tracking-widest" style={{ fontSize: `${vhToPx(0.95)}${vu}`, opacity: 0.55 }}>{monthShort}</span>
+                                        <span className="font-black tracking-wider" style={{ fontSize: "min(1.3vh, 12cqi)", opacity: 0.95 }}>{wk}</span>
+                                        <span className="font-bold tracking-widest" style={{ fontSize: "min(0.95vh, 9cqi)", opacity: 0.55 }}>{monthShort}</span>
                                       </div>
                                     </div>
 
                                     <div style={{
                                       width: `${vhToPx(9)}${vu}`,
                                       height: `${vhToPx(9)}${vu}`,
+                                      maxWidth: "80cqi",
+                                      maxHeight: "80cqi",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
@@ -1942,9 +1945,9 @@ export default function CenarioTela() {
                                       <WeatherIcon code={d.code} size={140} forceDay />
                                     </div>
 
-                                    <div className="flex items-baseline justify-center flex-nowrap" style={{ gap: `${vhToPx(0.8)}${vu}`, whiteSpace: "nowrap" }}>
-                                      <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(3.4)}${vu}`, lineHeight: 1, textShadow: "0 3px 12px rgba(0,0,0,0.9)" }}>{d.max}°</span>
-                                      <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(3.4)}${vu}`, opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
+                                    <div className="flex items-baseline justify-center flex-nowrap" style={{ gap: `${vhToPx(0.5)}${vu}`, whiteSpace: "nowrap", width: "100%", letterSpacing: "-0.03em" }}>
+                                      <span className="font-black tabular-nums" style={{ fontSize: "min(3.4vh, 30cqi)", lineHeight: 1, textShadow: "0 3px 12px rgba(0,0,0,0.9)" }}>{d.max}°</span>
+                                      <span className="font-bold tabular-nums" style={{ fontSize: "min(3.4vh, 30cqi)", opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
                                     </div>
 
                                     <div style={{ width: "70%", height: "1px", background: "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)", margin: `${vhToPx(0.3)}${vu} 0` }} />
