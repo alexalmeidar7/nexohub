@@ -1895,46 +1895,74 @@ export default function CenarioTela() {
                         )}
 
                         {config.weather.showForecast3Days && (
-                          <div className="w-full max-w-[90%] flex flex-col cenario-anim-text cenario-delay-3" style={{ gap: `${vhToPx(1.5)}${vu}` }}>
-                            <div className="font-bold uppercase tracking-widest text-center" style={{ fontSize: `${vhToPx(1.5)}${vu}`, opacity: 0.6, marginBottom: `${vhToPx(0.5)}${vu}` }}>Próximos Dias</div>
-                             {liveWeather.daily.slice(1, 4).map((d, i) => (
-                               <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1} cenario-delay-${i + 4}`} style={{
-                                 padding: `0 ${vhToPx(2.5)}${vu}`,
-                                 height: `${vhToPx(10)}${vu}`,
-                                 background: "rgba(0,0,0,0.4)",
-                                 backdropFilter: "blur(12px)",
-                                 WebkitBackdropFilter: "blur(12px)",
-                                 borderRadius: `${vhToPx(2.5)}${vu}`,
-                                 border: "1.5px solid rgba(255,255,255,0.15)",
-                                 boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
-                                 gap: `${vhToPx(2)}${vu}`,
-                               }}>
-                                <div style={{ width: `${vhToPx(12)}${vu}`, display: "flex", alignItems: "center", flexShrink: 0 }}>
-                                  <span className="font-black capitalize" style={{ fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1 }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
-                                </div>
-                                <div style={{ width: `${vhToPx(6)}${vu}`, height: `${vhToPx(6)}${vu}`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                  <WeatherIcon code={d.code} size={110} forceDay />
-                                </div>
-                                <div className="flex-1" style={{ minWidth: 0, display: "flex", alignItems: "center", paddingLeft: `${vhToPx(1.5)}${vu}` }}>
-                                  <div className="flex flex-col" style={{ gap: `${vhToPx(0.4)}${vu}` }}>
-                                    <div className="flex items-center" style={{ gap: `${vhToPx(0.6)}${vu}`, fontSize: `${vhToPx(1.4)}${vu}`, lineHeight: 1 }}>
-                                      <Droplets style={{ width: `${vhToPx(1.4)}${vu}`, height: `${vhToPx(1.4)}${vu}`, color: accentColor }} />
-                                      <span className="font-bold" style={{ color: accentColor }}>{d.humidity}%</span>
+                          <div className="w-full max-w-[92%] flex flex-col cenario-anim-text cenario-delay-3" style={{ gap: `${vhToPx(1.5)}${vu}` }}>
+                            <div className="flex items-center justify-center" style={{ gap: `${vhToPx(1)}${vu}`, marginBottom: `${vhToPx(0.3)}${vu}` }}>
+                              <div style={{ height: "1px", flex: 1, background: "linear-gradient(to right, transparent, rgba(255,255,255,0.25))" }} />
+                              <div className="font-bold uppercase tracking-[0.35em]" style={{ fontSize: `${vhToPx(1.5)}${vu}`, opacity: 0.75, color: accentColor }}>Próximos Dias</div>
+                              <div style={{ height: "1px", flex: 1, background: "linear-gradient(to left, transparent, rgba(255,255,255,0.25))" }} />
+                            </div>
+                            <div className="grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: `${vhToPx(1.5)}${vu}` }}>
+                              {liveWeather.daily.slice(1, 4).map((d, i) => {
+                                const dt = new Date(d.date + "T12:00");
+                                const wk = dt.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").toUpperCase();
+                                const dayNum = dt.toLocaleDateString("pt-BR", { day: "2-digit" });
+                                const monthShort = dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
+                                return (
+                                  <div key={i} className={`flex flex-col items-center cenario-anim-row-${i + 1} cenario-delay-${i + 4}`} style={{
+                                    padding: `${vhToPx(2)}${vu} ${vhToPx(1.5)}${vu}`,
+                                    background: "linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 60%, rgba(0,0,0,0.25) 100%)",
+                                    backdropFilter: "blur(16px)",
+                                    WebkitBackdropFilter: "blur(16px)",
+                                    borderRadius: `${vhToPx(2.6)}${vu}`,
+                                    border: "1px solid rgba(255,255,255,0.18)",
+                                    boxShadow: "0 14px 42px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)",
+                                    gap: `${vhToPx(1)}${vu}`,
+                                    position: "relative",
+                                    overflow: "hidden",
+                                  }}>
+                                    <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "60%", height: `${vhToPx(0.3)}${vu}`, background: `linear-gradient(to right, transparent, ${accentColor}, transparent)`, opacity: 0.7 }} />
+
+                                    <div className="flex items-baseline" style={{ gap: `${vhToPx(0.6)}${vu}` }}>
+                                      <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(3)}${vu}`, lineHeight: 1, color: accentColor, textShadow: `0 0 18px ${accentColor}66` }}>{dayNum}</span>
+                                      <div className="flex flex-col items-start" style={{ lineHeight: 1 }}>
+                                        <span className="font-black tracking-wider" style={{ fontSize: `${vhToPx(1.4)}${vu}`, opacity: 0.95 }}>{wk}</span>
+                                        <span className="font-bold tracking-widest" style={{ fontSize: `${vhToPx(1)}${vu}`, opacity: 0.55 }}>{monthShort}</span>
+                                      </div>
                                     </div>
-                                    <div className="flex items-center" style={{ gap: `${vhToPx(0.6)}${vu}`, fontSize: `${vhToPx(1.4)}${vu}`, lineHeight: 1 }}>
-                                      <CloudRain style={{ width: `${vhToPx(1.4)}${vu}`, height: `${vhToPx(1.4)}${vu}`, color: "rgba(255,255,255,0.7)" }} />
-                                      <span className="font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>{d.rainMm ?? 0}mm</span>
+
+                                    <div style={{
+                                      width: `${vhToPx(9)}${vu}`,
+                                      height: `${vhToPx(9)}${vu}`,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      filter: `drop-shadow(0 6px 16px ${accentColor}55) drop-shadow(0 2px 4px rgba(0,0,0,0.5))`,
+                                    }}>
+                                      <WeatherIcon code={d.code} size={140} forceDay />
+                                    </div>
+
+                                    <div className="flex items-baseline" style={{ gap: `${vhToPx(0.8)}${vu}` }}>
+                                      <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(4.2)}${vu}`, lineHeight: 1, textShadow: "0 3px 12px rgba(0,0,0,0.9)" }}>{d.max}°</span>
+                                      <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(2)}${vu}`, opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
+                                    </div>
+
+                                    <div style={{ width: "70%", height: "1px", background: "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)", margin: `${vhToPx(0.3)}${vu} 0` }} />
+
+                                    <div className="w-full flex items-center justify-around" style={{ fontSize: `${vhToPx(1.5)}${vu}` }}>
+                                      <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}` }}>
+                                        <Droplets style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: accentColor, filter: `drop-shadow(0 0 4px ${accentColor}88)` }} />
+                                        <span className="font-black tabular-nums" style={{ color: accentColor }}>{d.humidity}%</span>
+                                      </div>
+                                      <div style={{ width: "1px", height: `${vhToPx(1.6)}${vu}`, background: "rgba(255,255,255,0.15)" }} />
+                                      <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}` }}>
+                                        <CloudRain style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: "#7dd3fc", filter: "drop-shadow(0 0 4px rgba(125,211,252,0.5))" }} />
+                                        <span className="font-black tabular-nums" style={{ color: "#7dd3fc" }}>{d.rainMm ?? 0}mm</span>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                                <div style={{ width: `${vhToPx(10)}${vu}`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-                                  <div className="flex flex-col items-end" style={{ gap: `${vhToPx(0.1)}${vu}`, justifyContent: "center" }}>
-                                    <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(3.4)}${vu}`, lineHeight: 1, textShadow: "0 2px 8px rgba(0,0,0,1)" }}>{d.max}°</span>
-                                    <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(1.7)}${vu}`, opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
+                                );
+                              })}
+                            </div>
                           </div>
                         )}
                       </div>
