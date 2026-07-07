@@ -243,11 +243,12 @@ export default function VmixPage() {
         }
 
         if (!reached) throw new Error("LAN not reachable");
-        
-        clearTimeout(timeoutId);
+
         setLanStatus("same_lan");
       } catch (err) {
         setLanStatus("different_network");
+      } finally {
+        clearTimeout(timeoutId);
       }
     };
 
