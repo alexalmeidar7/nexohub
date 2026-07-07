@@ -115,6 +115,43 @@ function isInsecureHttpUrl(url: string): boolean {
     return false;
   }
 }
+
+function normalizeVmixBaseUrl(rawUrl: string): string {
+  let baseUrl = rawUrl.trim().replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(baseUrl)) baseUrl = "http://" + baseUrl;
+  return baseUrl;
+}
+
+function isLoopbackUrl(rawUrl: string): boolean {
+  try {
+    const hostname = new URL(normalizeVmixBaseUrl(rawUrl)).hostname.toLowerCase();
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]" || hostname === "::1";
+  } catch {
+    return false;
+  }
+}
+
+function isMixedContentBlockedByPage(targetUrl: string): boolean {
+  try {
+    const url = new URL(targetUrl);
+    return typeof window !== "undefined"
+      && window.location.protocol === "https:"
+      && url.protocol === "http:"
+      && !isLoopbackUrl(targetUrl);
+  } catch {
+    return false;
+  }
+}
+
+function buildLoopbackFallbackUrls(rawBaseUrl: string): string[] {
+  try {
+    const url = new URL(normalizeVmixBaseUrl(rawBaseUrl));
+    const port = url.port || "8088";
+    return [`http://127.0.0.1:${port}`, `http://localhost:${port}`];
+  } catch {
+    return ["http://127.0.0.1:8088", "http://localhost:8088"];
+  }
+}
 // Format keyboard event to a readable key name, distinguishing numpad from top-row numbers
 function formatKeyName(e: KeyboardEvent): string {
   const parts: string[] = [];
@@ -164,6 +201,8 @@ export default function VmixPage() {
   const [vmixUser, setVmixUser] = useState("");
   const [vmixPass, setVmixPass] = useState("");
   const [savedUrl, setSavedUrl] = useState("");
+  const directBaseUrlRef = useRef<string | null>(null);
+  const loopbackFallbackNotifiedRef = useRef(false);
   const [vmixConnections, setVmixConnections] = useState<any[]>([]);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   
@@ -176,24 +215,41 @@ export default function VmixPage() {
 
     const checkLan = async () => {
       setLanStatus("checking");
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       try {
         // Try a very quick fetch to the vMix API with a short timeout
         // This only works if the user is on the same network
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        timeoutId = setTimeout(() => controller.abort(), 2000);
         
-        let baseUrl = savedUrl.replace(/\/+$/, "");
-        if (!baseUrl.startsWith("http")) baseUrl = "http://" + baseUrl;
-        
-        await fetch(baseUrl + "/api/", { 
-          mode: 'no-cors', 
-          signal: controller.signal 
-        });
-        
-        clearTimeout(timeoutId);
+        const candidates = Array.from(new Set([
+          normalizeVmixBaseUrl(savedUrl),
+          ...(isPrivateIp(savedUrl) && !isLoopbackUrl(savedUrl) ? buildLoopbackFallbackUrls(savedUrl) : []),
+        ]));
+
+        let reached = false;
+        for (const baseUrl of candidates) {
+          if (isMixedContentBlockedByPage(baseUrl + "/api/")) continue;
+          try {
+            await fetch(baseUrl + "/api/", {
+              mode: 'no-cors',
+              cache: "no-store",
+              signal: controller.signal
+            });
+            reached = true;
+            break;
+          } catch {
+            // try next candidate
+          }
+        }
+
+        if (!reached) throw new Error("LAN not reachable");
+
         setLanStatus("same_lan");
       } catch (err) {
         setLanStatus("different_network");
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
       }
     };
 
@@ -631,24 +687,20 @@ export default function VmixPage() {
     toast({ title: "Configuração salva", description: `Conexão "${studioName}" salva com sucesso.` });
   };
 
+  useEffect(() => {
+    directBaseUrlRef.current = null;
+    loopbackFallbackNotifiedRef.current = false;
+  }, [savedUrl]);
+
   // Direct fetch to vMix (browser → vMix, no edge function)
   const vmixDirectFetch = useCallback(async (path: string): Promise<string> => {
     if (!savedUrl) throw new Error("URL não configurada");
-    let baseUrl = savedUrl.replace(/\/+$/, "");
-    if (!baseUrl.startsWith("http")) baseUrl = "http://" + baseUrl;
-    const targetUrl = baseUrl + path;
-
-    // Detect Mixed Content upfront: HTTPS page cannot fetch HTTP endpoints.
-    // Without this check the browser silently blocks the request and the AbortSignal
-    // fires after 10s with an opaque "signal timed out" error.
-    if (typeof window !== "undefined"
-        && window.location.protocol === "https:"
-        && targetUrl.startsWith("http://")) {
-      throw new Error(
-        "Mixed Content bloqueado: esta página está em HTTPS mas o vMix responde em HTTP. " +
-        "Abra o painel via HTTP na mesma rede do vMix, use o modo Proxy, ou configure um túnel HTTPS (Cloudflare Tunnel/ngrok)."
-      );
-    }
+    const configuredBaseUrl = normalizeVmixBaseUrl(savedUrl);
+    const candidateBaseUrls = Array.from(new Set([
+      directBaseUrlRef.current,
+      configuredBaseUrl,
+      ...(isPrivateIp(savedUrl) && !isLoopbackUrl(savedUrl) ? buildLoopbackFallbackUrls(savedUrl) : []),
+    ].filter(Boolean) as string[]));
 
     const headers: Record<string, string> = {
       "Accept": "application/xml, text/xml, text/html, */*",
@@ -662,36 +714,66 @@ export default function VmixPage() {
     const MAX_ATTEMPTS = 3;
     const PER_ATTEMPT_MS = 6000;
     let lastErr: unknown = null;
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), PER_ATTEMPT_MS);
-      try {
-        const response = await fetch(targetUrl, {
-          method: "GET",
-          headers,
-          mode: "cors",
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        clearTimeout(timer);
-        if (!response.ok && response.status === 401) {
-          throw new Error("Autenticação vMix falhou (401). Verifique usuário/senha do Web Controller.");
-        }
-        return await response.text();
-      } catch (err) {
-        clearTimeout(timer);
-        lastErr = err;
-        const msg = err instanceof Error ? err.message : String(err);
-        const isAbort = err instanceof DOMException && err.name === "AbortError";
-        const isNet = /Failed to fetch|NetworkError|network/i.test(msg);
-        // Don't retry on auth or fatal errors
-        if (/401|Autenticação/.test(msg)) break;
-        // Retry only on transient network/timeout errors
-        if (!isAbort && !isNet) break;
-        if (attempt < MAX_ATTEMPTS) {
-          await new Promise((r) => setTimeout(r, 400 * attempt));
+    let skippedMixedContent = false;
+
+    for (const baseUrl of candidateBaseUrls) {
+      const targetUrl = baseUrl + path;
+
+      // HTTPS pages cannot fetch HTTP LAN IPs. Loopback is tried as an automatic
+      // local fallback because Chrome treats localhost/127.0.0.1 as trustworthy.
+      if (isMixedContentBlockedByPage(targetUrl)) {
+        skippedMixedContent = true;
+        lastErr = new Error("Mixed Content bloqueado para IP LAN HTTP");
+        continue;
+      }
+
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), PER_ATTEMPT_MS);
+        try {
+          const response = await fetch(targetUrl, {
+            method: "GET",
+            headers,
+            mode: "cors",
+            cache: "no-store",
+            signal: controller.signal,
+          });
+          clearTimeout(timer);
+          if (!response.ok && response.status === 401) {
+            throw new Error("Autenticação vMix falhou (401). Verifique usuário/senha do Web Controller.");
+          }
+          directBaseUrlRef.current = baseUrl;
+          if (baseUrl !== configuredBaseUrl && !loopbackFallbackNotifiedRef.current) {
+            loopbackFallbackNotifiedRef.current = true;
+            toast({
+              title: "vMix local conectado",
+              description: "O modo Direto usou localhost para evitar o bloqueio HTTPS → HTTP.",
+            });
+          }
+          return await response.text();
+        } catch (err) {
+          clearTimeout(timer);
+          lastErr = err;
+          const msg = err instanceof Error ? err.message : String(err);
+          const isAbort = err instanceof DOMException && err.name === "AbortError";
+          const isNet = /Failed to fetch|NetworkError|network/i.test(msg);
+          // Don't retry on auth or fatal errors for this target.
+          if (/401|Autenticação/.test(msg)) throw err;
+          // Retry only on transient network/timeout errors.
+          if (!isAbort && !isNet) break;
+          if (attempt < MAX_ATTEMPTS) {
+            await new Promise((r) => setTimeout(r, 400 * attempt));
+          }
         }
       }
+    }
+
+    if (skippedMixedContent) {
+      throw new Error(
+        "Mixed Content bloqueado: o painel está em HTTPS e o vMix em HTTP em outro IP da rede. " +
+        "Se o vMix estiver neste mesmo computador, deixe o app usar localhost/127.0.0.1. " +
+        "Se estiver em outro PC, use um túnel HTTPS/IP público com Proxy — navegadores não permitem HTTPS → HTTP LAN."
+      );
     }
 
     // Produce a specific, actionable error instead of "signal timed out"
@@ -708,7 +790,7 @@ export default function VmixPage() {
       );
     }
     throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
-  }, [savedUrl, vmixUser, vmixPass]);
+  }, [savedUrl, vmixUser, vmixPass, toast]);
 
   // Proxy fetch via Edge Function (browser → cloud → vMix)
   const vmixProxyFetch = useCallback(async (path: string): Promise<string> => {
@@ -800,10 +882,10 @@ export default function VmixPage() {
       result.directResult = "fail";
       const msg = e instanceof Error ? e.message : String(e);
       result.directError = msg;
-      if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+      if (/failed to fetch|networkerror|load failed|mixed content/i.test(msg)) {
         if (secureCtx && protocol === "http") {
           result.mixedContentBlocked = true;
-          result.directError = "Conexão recusada ou Bloqueio de Mixed Content";
+          result.directError = "HTTPS bloqueou HTTP do vMix; localhost foi testado automaticamente.";
         } else {
           result.directError = "Rede inacessível, IP incorreto ou Firewall";
         }
@@ -836,8 +918,8 @@ export default function VmixPage() {
       autoFixMode = "proxy";
     } else if (isLocal && result.mixedContentBlocked) {
       result.recommendation = isEmbeddedPreview
-        ? "⚠️ O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' no navegador para esse domínio."
-        : "⚠️ Conexão falhou. Se você JÁ permitiu 'Conteúdo Inseguro' no cadeado do navegador, verifique: 1) O IP/Porta estão corretos? 2) O vMix está aberto? 3) O Firewall do Windows permite a porta 8088?";
+        ? "⚠️ O preview interno bloqueia HTTP local. Abra o app publicado em nova aba; se o vMix estiver neste PC, use localhost:8088."
+        : "⚠️ O navegador bloqueia HTTPS → HTTP em IP LAN. Se o vMix está neste PC, use localhost:8088/127.0.0.1:8088. Se está em outro PC, use túnel HTTPS/IP público + Proxy ou permita 'Conteúdo inseguro' no site.";
       if (!isEmbeddedPreview && result.directResult === "fail") {
       }
     } else if (isLocal) {
@@ -945,8 +1027,8 @@ export default function VmixPage() {
 
       const hint = isMixedOrCorsLikely
         ? (isEmbeddedPreview
-          ? " O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' nesse domínio."
-          : " No modo Direto (rede local), permita 'Conteúdo inseguro' para este site no navegador.")
+          ? " O preview interno bloqueia HTTP local. Abra o app em nova aba; se o vMix estiver neste PC, use localhost:8088."
+          : " Se o vMix está neste PC, salve como localhost:8088. Se está em outro PC da LAN, o navegador só libera com túnel HTTPS ou permissão manual de conteúdo inseguro.")
         : effectiveMode === "direct" && !isLocal
         ? " IP público detectado — tente o modo 'Proxy'."
         : "";
