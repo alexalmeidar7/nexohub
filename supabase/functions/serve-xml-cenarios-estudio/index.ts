@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
       const candidates = (allProgs || []).filter(
         (p: any) =>
           (p.dias_semana || []).includes(today) &&
-          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime, 4),
+          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime, 1),
       );
       
       if (candidates.length === 0) return null;
