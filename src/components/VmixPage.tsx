@@ -205,6 +205,8 @@ export default function VmixPage() {
   const loopbackFallbackNotifiedRef = useRef(false);
   const [vmixConnections, setVmixConnections] = useState<any[]>([]);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  const [directTesting, setDirectTesting] = useState(false);
+  const [directTestResult, setDirectTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   
   // Logic to check LAN connectivity
   useEffect(() => {
