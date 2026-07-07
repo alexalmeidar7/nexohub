@@ -221,13 +221,28 @@ export default function VmixPage() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2000);
         
-        let baseUrl = savedUrl.replace(/\/+$/, "");
-        if (!baseUrl.startsWith("http")) baseUrl = "http://" + baseUrl;
-        
-        await fetch(baseUrl + "/api/", { 
-          mode: 'no-cors', 
-          signal: controller.signal 
-        });
+        const candidates = Array.from(new Set([
+          normalizeVmixBaseUrl(savedUrl),
+          ...(isPrivateIp(savedUrl) && !isLoopbackUrl(savedUrl) ? buildLoopbackFallbackUrls(savedUrl) : []),
+        ]));
+
+        let reached = false;
+        for (const baseUrl of candidates) {
+          if (isMixedContentBlockedByPage(baseUrl + "/api/")) continue;
+          try {
+            await fetch(baseUrl + "/api/", {
+              mode: 'no-cors',
+              cache: "no-store",
+              signal: controller.signal
+            });
+            reached = true;
+            break;
+          } catch {
+            // try next candidate
+          }
+        }
+
+        if (!reached) throw new Error("LAN not reachable");
         
         clearTimeout(timeoutId);
         setLanStatus("same_lan");
@@ -865,10 +880,10 @@ export default function VmixPage() {
       result.directResult = "fail";
       const msg = e instanceof Error ? e.message : String(e);
       result.directError = msg;
-      if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+      if (/failed to fetch|networkerror|load failed|mixed content/i.test(msg)) {
         if (secureCtx && protocol === "http") {
           result.mixedContentBlocked = true;
-          result.directError = "Conexão recusada ou Bloqueio de Mixed Content";
+          result.directError = "HTTPS bloqueou HTTP do vMix; localhost foi testado automaticamente.";
         } else {
           result.directError = "Rede inacessível, IP incorreto ou Firewall";
         }
@@ -901,8 +916,8 @@ export default function VmixPage() {
       autoFixMode = "proxy";
     } else if (isLocal && result.mixedContentBlocked) {
       result.recommendation = isEmbeddedPreview
-        ? "⚠️ O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' no navegador para esse domínio."
-        : "⚠️ Conexão falhou. Se você JÁ permitiu 'Conteúdo Inseguro' no cadeado do navegador, verifique: 1) O IP/Porta estão corretos? 2) O vMix está aberto? 3) O Firewall do Windows permite a porta 8088?";
+        ? "⚠️ O preview interno bloqueia HTTP local. Abra o app publicado em nova aba; se o vMix estiver neste PC, use localhost:8088."
+        : "⚠️ O navegador bloqueia HTTPS → HTTP em IP LAN. Se o vMix está neste PC, use localhost:8088/127.0.0.1:8088. Se está em outro PC, use túnel HTTPS/IP público + Proxy ou permita 'Conteúdo inseguro' no site.";
       if (!isEmbeddedPreview && result.directResult === "fail") {
       }
     } else if (isLocal) {
