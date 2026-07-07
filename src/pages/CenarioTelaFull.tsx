@@ -1899,7 +1899,7 @@ export default function CenarioTelaFull() {
                               <div className="font-bold uppercase tracking-[0.35em]" style={{ fontSize: `${vhToPx(1.5)}${vu}`, opacity: 0.75, color: accentColor }}>Próximos Dias</div>
                               <div style={{ height: "1px", flex: 1, background: "linear-gradient(to left, transparent, rgba(255,255,255,0.25))" }} />
                             </div>
-                            <div className="grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: `${vhToPx(0.7)}${vu}` }}>
+                            <div className="grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: `${vhToPx(0.6)}${vu}` }}>
                               {liveWeather.daily.slice(1, 4).map((d, i) => {
                                 const dt = new Date(d.date + "T12:00");
                                 const wk = dt.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").toUpperCase();
@@ -1907,19 +1907,20 @@ export default function CenarioTelaFull() {
                                 const monthShort = dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
                                 return (
                                   <div key={i} className={`flex flex-col items-center cenario-anim-row-${i + 1} cenario-delay-${i + 4}`} style={{
-                                    padding: `${vhToPx(1.8)}${vu} ${vhToPx(0.3)}${vu}`,
+                                    padding: `${vhToPx(1.4)}${vu} max(${vhToPx(0.2)}${vu}, 3cqi)`,
                                     background: "linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 60%, rgba(0,0,0,0.25) 100%)",
                                     backdropFilter: "blur(16px)",
                                     WebkitBackdropFilter: "blur(16px)",
-                                    borderRadius: `${vhToPx(2.6)}${vu}`,
+                                    borderRadius: `${vhToPx(2.4)}${vu}`,
                                     border: "1px solid rgba(255,255,255,0.18)",
                                     boxShadow: "0 14px 42px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)",
-                                    gap: `${vhToPx(0.9)}${vu}`,
+                                    gap: `${vhToPx(0.7)}${vu}`,
                                     position: "relative",
                                     overflow: "hidden",
                                     minWidth: 0,
                                     containerType: "inline-size",
                                   } as React.CSSProperties}>
+
                                     <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "60%", height: `${vhToPx(0.3)}${vu}`, background: `linear-gradient(to right, transparent, ${accentColor}, transparent)`, opacity: 0.7 }} />
 
                                     <div className="flex items-baseline" style={{ gap: `${vhToPx(0.5)}${vu}` }}>
