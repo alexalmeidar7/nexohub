@@ -1945,9 +1945,9 @@ export default function CenarioTela() {
                                       <WeatherIcon code={d.code} size={140} forceDay />
                                     </div>
 
-                                    <div className="flex items-baseline justify-center flex-nowrap" style={{ gap: `${vhToPx(0.5)}${vu}`, whiteSpace: "nowrap", width: "100%", letterSpacing: "-0.03em" }}>
-                                      <span className="font-black tabular-nums" style={{ fontSize: "min(3.4vh, 30cqi)", lineHeight: 1, textShadow: "0 3px 12px rgba(0,0,0,0.9)" }}>{d.max}°</span>
-                                      <span className="font-bold tabular-nums" style={{ fontSize: "min(3.4vh, 30cqi)", opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
+                                    <div className="flex items-center justify-center flex-nowrap" style={{ gap: `${vhToPx(0.5)}${vu}`, whiteSpace: "nowrap", width: "100%", letterSpacing: "-0.03em", height: "min(3.4vh, 30cqi)", lineHeight: 1 }}>
+                                      <span className="font-black tabular-nums" style={{ fontSize: "min(3.4vh, 30cqi)", lineHeight: 1, height: "min(3.4vh, 30cqi)", display: "inline-flex", alignItems: "center", textShadow: "0 3px 12px rgba(0,0,0,0.9)" }}>{d.max}°</span>
+                                      <span className="font-bold tabular-nums" style={{ fontSize: "min(3.4vh, 30cqi)", lineHeight: 1, height: "min(3.4vh, 30cqi)", display: "inline-flex", alignItems: "center", opacity: 0.5 }}>{d.min}°</span>
                                     </div>
 
                                     <div style={{ width: "70%", height: "1px", background: "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)", margin: `${vhToPx(0.3)}${vu} 0` }} />
