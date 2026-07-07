@@ -1052,8 +1052,8 @@ export default function VmixPage() {
     // Test Direct
     try {
       const text = await vmixDirectFetch("/api/");
-      result.directResult = text.includes("<vmix>") || text.includes("<inputs>") ? "ok" : "fail";
-      if (result.directResult === "fail") result.directError = "Resposta não é XML do vMix";
+      parseVmixXml(text);
+      result.directResult = "ok";
     } catch (e) {
       result.directResult = "fail";
       const msg = e instanceof Error ? e.message : String(e);
@@ -1075,8 +1075,8 @@ export default function VmixPage() {
     } else {
       try {
         const text = await vmixProxyFetch("/api/");
-        result.proxyResult = text.includes("<vmix>") || text.includes("<inputs>") || text.includes("version") ? "ok" : "fail";
-        if (result.proxyResult === "fail") result.proxyError = "Resposta não é XML do vMix";
+        parseVmixXml(text);
+        result.proxyResult = "ok";
       } catch (e) {
         result.proxyResult = "fail";
         const msg = e instanceof Error ? e.message : String(e);
@@ -2083,11 +2083,8 @@ export default function VmixPage() {
                     const res = await fetch(`${base}/api/`, { mode: "cors", cache: "no-store", signal: AbortSignal.timeout(6000) });
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const text = await res.text();
-                    if (text.includes("<vmix>") || text.includes("<inputs>")) {
-                      setDirectTestResult({ ok: true, message: `Conectado ao vMix em ${base}` });
-                    } else {
-                      setDirectTestResult({ ok: false, message: "Resposta recebida mas não parece ser do vMix" });
-                    }
+                    const vmixState = parseVmixXml(text);
+                    setDirectTestResult({ ok: true, message: `Conectado ao vMix em ${base} (${vmixState.inputs.length} inputs)` });
                   } catch (e) {
                     const msg = e instanceof Error ? e.message : String(e);
                     setDirectTestResult({ ok: false, message: msg.length > 160 ? msg.slice(0, 160) + "…" : msg });
