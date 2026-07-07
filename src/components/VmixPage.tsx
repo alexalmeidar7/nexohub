@@ -637,18 +637,77 @@ export default function VmixPage() {
     let baseUrl = savedUrl.replace(/\/+$/, "");
     if (!baseUrl.startsWith("http")) baseUrl = "http://" + baseUrl;
     const targetUrl = baseUrl + path;
+
+    // Detect Mixed Content upfront: HTTPS page cannot fetch HTTP endpoints.
+    // Without this check the browser silently blocks the request and the AbortSignal
+    // fires after 10s with an opaque "signal timed out" error.
+    if (typeof window !== "undefined"
+        && window.location.protocol === "https:"
+        && targetUrl.startsWith("http://")) {
+      throw new Error(
+        "Mixed Content bloqueado: esta página está em HTTPS mas o vMix responde em HTTP. " +
+        "Abra o painel via HTTP na mesma rede do vMix, use o modo Proxy, ou configure um túnel HTTPS (Cloudflare Tunnel/ngrok)."
+      );
+    }
+
     const headers: Record<string, string> = {
       "Accept": "application/xml, text/xml, text/html, */*",
     };
     if (vmixUser) {
       headers["Authorization"] = `Basic ${btoa(`${vmixUser}:${vmixPass || ""}`)}`;
     }
-    const response = await fetch(targetUrl, {
-      method: "GET",
-      headers,
-      signal: AbortSignal.timeout(10000),
-    });
-    return await response.text();
+
+    // Client-side retry loop instead of a single long AbortSignal — network hiccups
+    // and vMix not-yet-ready both surface as short failures, not a 10s hang.
+    const MAX_ATTEMPTS = 3;
+    const PER_ATTEMPT_MS = 6000;
+    let lastErr: unknown = null;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), PER_ATTEMPT_MS);
+      try {
+        const response = await fetch(targetUrl, {
+          method: "GET",
+          headers,
+          mode: "cors",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (!response.ok && response.status === 401) {
+          throw new Error("Autenticação vMix falhou (401). Verifique usuário/senha do Web Controller.");
+        }
+        return await response.text();
+      } catch (err) {
+        clearTimeout(timer);
+        lastErr = err;
+        const msg = err instanceof Error ? err.message : String(err);
+        const isAbort = err instanceof DOMException && err.name === "AbortError";
+        const isNet = /Failed to fetch|NetworkError|network/i.test(msg);
+        // Don't retry on auth or fatal errors
+        if (/401|Autenticação/.test(msg)) break;
+        // Retry only on transient network/timeout errors
+        if (!isAbort && !isNet) break;
+        if (attempt < MAX_ATTEMPTS) {
+          await new Promise((r) => setTimeout(r, 400 * attempt));
+        }
+      }
+    }
+
+    // Produce a specific, actionable error instead of "signal timed out"
+    const finalMsg = lastErr instanceof Error ? lastErr.message : String(lastErr);
+    if (lastErr instanceof DOMException && lastErr.name === "AbortError") {
+      throw new Error(
+        "Sem resposta do vMix em modo Direto. Verifique: (1) vMix aberto com Web Controller habilitado na porta 8088; " +
+        "(2) IP e porta corretos; (3) firewall do Windows permitindo entrada na porta 8088; (4) navegador na mesma rede do vMix."
+      );
+    }
+    if (/Failed to fetch|NetworkError/i.test(finalMsg)) {
+      throw new Error(
+        "Não foi possível alcançar o vMix (rede inacessível ou Mixed Content). Confirme IP/porta, mesma rede LAN, e se o painel está em HTTP quando o vMix é HTTP."
+      );
+    }
+    throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
   }, [savedUrl, vmixUser, vmixPass]);
 
   // Proxy fetch via Edge Function (browser → cloud → vMix)
