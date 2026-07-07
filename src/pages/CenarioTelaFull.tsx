@@ -1893,13 +1893,13 @@ export default function CenarioTelaFull() {
                         )}
 
                         {config.weather.showForecast3Days && (
-                          <div className="w-full max-w-[92%] flex flex-col cenario-anim-text cenario-delay-3" style={{ gap: `${vhToPx(1.5)}${vu}` }}>
+                          <div className="w-full flex flex-col cenario-anim-text cenario-delay-3" style={{ gap: `${vhToPx(1.5)}${vu}` }}>
                             <div className="flex items-center justify-center" style={{ gap: `${vhToPx(1)}${vu}`, marginBottom: `${vhToPx(0.3)}${vu}` }}>
                               <div style={{ height: "1px", flex: 1, background: "linear-gradient(to right, transparent, rgba(255,255,255,0.25))" }} />
                               <div className="font-bold uppercase tracking-[0.35em]" style={{ fontSize: `${vhToPx(1.5)}${vu}`, opacity: 0.75, color: accentColor }}>Próximos Dias</div>
                               <div style={{ height: "1px", flex: 1, background: "linear-gradient(to left, transparent, rgba(255,255,255,0.25))" }} />
                             </div>
-                            <div className="grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: `${vhToPx(1.5)}${vu}` }}>
+                            <div className="grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: `${vhToPx(1)}${vu}` }}>
                               {liveWeather.daily.slice(1, 4).map((d, i) => {
                                 const dt = new Date(d.date + "T12:00");
                                 const wk = dt.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").toUpperCase();
@@ -1907,7 +1907,7 @@ export default function CenarioTelaFull() {
                                 const monthShort = dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
                                 return (
                                   <div key={i} className={`flex flex-col items-center cenario-anim-row-${i + 1} cenario-delay-${i + 4}`} style={{
-                                    padding: `${vhToPx(2)}${vu} ${vhToPx(1.5)}${vu}`,
+                                    padding: `${vhToPx(2)}${vu} ${vhToPx(0.8)}${vu}`,
                                     background: "linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 60%, rgba(0,0,0,0.25) 100%)",
                                     backdropFilter: "blur(16px)",
                                     WebkitBackdropFilter: "blur(16px)",
@@ -1917,14 +1917,15 @@ export default function CenarioTelaFull() {
                                     gap: `${vhToPx(1)}${vu}`,
                                     position: "relative",
                                     overflow: "hidden",
+                                    minWidth: 0,
                                   }}>
                                     <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "60%", height: `${vhToPx(0.3)}${vu}`, background: `linear-gradient(to right, transparent, ${accentColor}, transparent)`, opacity: 0.7 }} />
 
                                     <div className="flex items-baseline" style={{ gap: `${vhToPx(0.6)}${vu}` }}>
-                                      <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(3)}${vu}`, lineHeight: 1, color: accentColor, textShadow: `0 0 18px ${accentColor}66` }}>{dayNum}</span>
+                                      <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(2.6)}${vu}`, lineHeight: 1, color: accentColor, textShadow: `0 0 18px ${accentColor}66` }}>{dayNum}</span>
                                       <div className="flex flex-col items-start" style={{ lineHeight: 1 }}>
-                                        <span className="font-black tracking-wider" style={{ fontSize: `${vhToPx(1.4)}${vu}`, opacity: 0.95 }}>{wk}</span>
-                                        <span className="font-bold tracking-widest" style={{ fontSize: `${vhToPx(1)}${vu}`, opacity: 0.55 }}>{monthShort}</span>
+                                        <span className="font-black tracking-wider" style={{ fontSize: `${vhToPx(1.3)}${vu}`, opacity: 0.95 }}>{wk}</span>
+                                        <span className="font-bold tracking-widest" style={{ fontSize: `${vhToPx(0.95)}${vu}`, opacity: 0.55 }}>{monthShort}</span>
                                       </div>
                                     </div>
 
@@ -1939,9 +1940,9 @@ export default function CenarioTelaFull() {
                                       <WeatherIcon code={d.code} size={140} forceDay />
                                     </div>
 
-                                    <div className="flex items-baseline" style={{ gap: `${vhToPx(0.8)}${vu}` }}>
-                                      <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(4.2)}${vu}`, lineHeight: 1, textShadow: "0 3px 12px rgba(0,0,0,0.9)" }}>{d.max}°</span>
-                                      <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(2)}${vu}`, opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
+                                    <div className="flex items-baseline justify-center flex-nowrap" style={{ gap: `${vhToPx(0.8)}${vu}`, whiteSpace: "nowrap" }}>
+                                      <span className="font-black tabular-nums" style={{ fontSize: `${vhToPx(3.4)}${vu}`, lineHeight: 1, textShadow: "0 3px 12px rgba(0,0,0,0.9)" }}>{d.max}°</span>
+                                      <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(3.4)}${vu}`, opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
                                     </div>
 
                                     <div style={{ width: "70%", height: "1px", background: "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)", margin: `${vhToPx(0.3)}${vu} 0` }} />
