@@ -115,6 +115,43 @@ function isInsecureHttpUrl(url: string): boolean {
     return false;
   }
 }
+
+function normalizeVmixBaseUrl(rawUrl: string): string {
+  let baseUrl = rawUrl.trim().replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(baseUrl)) baseUrl = "http://" + baseUrl;
+  return baseUrl;
+}
+
+function isLoopbackUrl(rawUrl: string): boolean {
+  try {
+    const hostname = new URL(normalizeVmixBaseUrl(rawUrl)).hostname.toLowerCase();
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]" || hostname === "::1";
+  } catch {
+    return false;
+  }
+}
+
+function isMixedContentBlockedByPage(targetUrl: string): boolean {
+  try {
+    const url = new URL(targetUrl);
+    return typeof window !== "undefined"
+      && window.location.protocol === "https:"
+      && url.protocol === "http:"
+      && !isLoopbackUrl(targetUrl);
+  } catch {
+    return false;
+  }
+}
+
+function buildLoopbackFallbackUrls(rawBaseUrl: string): string[] {
+  try {
+    const url = new URL(normalizeVmixBaseUrl(rawBaseUrl));
+    const port = url.port || "8088";
+    return [`http://127.0.0.1:${port}`, `http://localhost:${port}`];
+  } catch {
+    return ["http://127.0.0.1:8088", "http://localhost:8088"];
+  }
+}
 // Format keyboard event to a readable key name, distinguishing numpad from top-row numbers
 function formatKeyName(e: KeyboardEvent): string {
   const parts: string[] = [];
@@ -164,6 +201,8 @@ export default function VmixPage() {
   const [vmixUser, setVmixUser] = useState("");
   const [vmixPass, setVmixPass] = useState("");
   const [savedUrl, setSavedUrl] = useState("");
+  const directBaseUrlRef = useRef<string | null>(null);
+  const loopbackFallbackNotifiedRef = useRef(false);
   const [vmixConnections, setVmixConnections] = useState<any[]>([]);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   
