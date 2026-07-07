@@ -192,18 +192,99 @@ function vmixTagText(xml: Document, tagName: string): string | null {
   return xml.getElementsByTagName(tagName)[0]?.textContent?.trim() || null;
 }
 
+function normalizeVmixXmlText(xmlText: string): string {
+  let text = (xmlText || "")
+    .replace(/^\uFEFF/, "")
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
+    .trim();
+
+  const start = text.toLowerCase().indexOf("<vmix");
+  const end = text.toLowerCase().lastIndexOf("</vmix>");
+  if (start >= 0 && end >= start) {
+    text = text.slice(start, end + "</vmix>".length).trim();
+  }
+
+  return text;
+}
+
+function escapeLooseXmlAmpersands(text: string): string {
+  return text.replace(/&(?!#\d+;|#x[0-9a-fA-F]+;|[a-zA-Z][a-zA-Z0-9]+;)/g, "&amp;");
+}
+
+function decodeXmlEntities(value: string): string {
+  if (!value) return "";
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(`<x>${escapeLooseXmlAmpersands(value)}</x>`, "text/xml");
+  return xml.documentElement?.textContent || value;
+}
+
+function readXmlAttr(attrs: string, name: string): string {
+  const match = attrs.match(new RegExp(`${name}=["']([^"']*)["']`, "i"));
+  return match ? decodeXmlEntities(match[1]) : "";
+}
+
+function parseVmixXmlFallback(text: string) {
+  if (!/<vmix[\s>]/i.test(text)) {
+    throw new Error("Conectou, mas a resposta não é da API XML do vMix. Verifique protocolo, host e porta do Web Controller.");
+  }
+
+  const parsedInputs: VmixInput[] = Array.from(text.matchAll(/<input\b([^>]*)>([\s\S]*?)<\/input>/gi)).map((match) => {
+    const attrs = match[1] || "";
+    const body = (match[2] || "").replace(/<[^>]+>/g, "").trim();
+    return {
+      key: readXmlAttr(attrs, "key") || readXmlAttr(attrs, "guid") || readXmlAttr(attrs, "number"),
+      number: readXmlAttr(attrs, "number"),
+      title: readXmlAttr(attrs, "title") || decodeXmlEntities(body) || "Sem título",
+      type: readXmlAttr(attrs, "type"),
+      state: readXmlAttr(attrs, "state") || "Paused",
+      duration: readXmlAttr(attrs, "duration") || undefined,
+      position: readXmlAttr(attrs, "position") || undefined,
+      loop: readXmlAttr(attrs, "loop") || undefined,
+      muted: /true/i.test(readXmlAttr(attrs, "muted")),
+    };
+  }).filter((input) => input.number || input.key || input.title);
+
+  const readTag = (tag: string) => {
+    const match = text.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+    return match ? decodeXmlEntities(match[1].replace(/<[^>]+>/g, "").trim()) : null;
+  };
+
+  const overlayStates: Record<number, boolean> = {};
+  for (const match of text.matchAll(/<overlay\b([^>]*)>([\s\S]*?)<\/overlay>/gi)) {
+    const n = Number(readXmlAttr(match[1] || "", "number"));
+    if (n >= 1 && n <= 4) {
+      const ovInput = decodeXmlEntities((match[2] || "").replace(/<[^>]+>/g, "").trim()) || readXmlAttr(match[1] || "", "input");
+      overlayStates[n] = ovInput !== "" && ovInput !== "0";
+    }
+  }
+
+  return {
+    inputs: parsedInputs,
+    active: readTag("active"),
+    preview: readTag("preview"),
+    streaming: readTag("streaming"),
+    recording: readTag("recording"),
+    overlays: overlayStates,
+  };
+}
+
 function parseVmixXml(xmlText: string) {
-  const text = (xmlText || "").trim();
+  const text = normalizeVmixXmlText(xmlText);
   if (!text) throw new Error("Resposta vazia do vMix. Verifique URL/porta e Web Controller.");
   if (text === "{}" || text === "[object Blob]" || text === "[object Object]") {
     throw new Error("Resposta do proxy não veio como XML. Atualize a conexão e tente novamente.");
   }
 
   const parser = new DOMParser();
-  const xml = parser.parseFromString(text, "text/xml");
+  let xml = parser.parseFromString(text, "text/xml");
   const parserError = xml.getElementsByTagName("parsererror")[0];
   if (parserError) {
-    throw new Error("Resposta do vMix não é um XML válido. Confirme se a URL aponta para a API do vMix (/api/).");
+    const repairedText = escapeLooseXmlAmpersands(text);
+    xml = parser.parseFromString(repairedText, "text/xml");
+    const repairedParserError = xml.getElementsByTagName("parsererror")[0];
+    if (repairedParserError) {
+      return parseVmixXmlFallback(text);
+    }
   }
 
   const rootName = xml.documentElement?.nodeName?.toLowerCase() || "";
@@ -971,8 +1052,8 @@ export default function VmixPage() {
     // Test Direct
     try {
       const text = await vmixDirectFetch("/api/");
-      result.directResult = text.includes("<vmix>") || text.includes("<inputs>") ? "ok" : "fail";
-      if (result.directResult === "fail") result.directError = "Resposta não é XML do vMix";
+      parseVmixXml(text);
+      result.directResult = "ok";
     } catch (e) {
       result.directResult = "fail";
       const msg = e instanceof Error ? e.message : String(e);
@@ -994,8 +1075,8 @@ export default function VmixPage() {
     } else {
       try {
         const text = await vmixProxyFetch("/api/");
-        result.proxyResult = text.includes("<vmix>") || text.includes("<inputs>") || text.includes("version") ? "ok" : "fail";
-        if (result.proxyResult === "fail") result.proxyError = "Resposta não é XML do vMix";
+        parseVmixXml(text);
+        result.proxyResult = "ok";
       } catch (e) {
         result.proxyResult = "fail";
         const msg = e instanceof Error ? e.message : String(e);
@@ -2002,11 +2083,8 @@ export default function VmixPage() {
                     const res = await fetch(`${base}/api/`, { mode: "cors", cache: "no-store", signal: AbortSignal.timeout(6000) });
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const text = await res.text();
-                    if (text.includes("<vmix>") || text.includes("<inputs>")) {
-                      setDirectTestResult({ ok: true, message: `Conectado ao vMix em ${base}` });
-                    } else {
-                      setDirectTestResult({ ok: false, message: "Resposta recebida mas não parece ser do vMix" });
-                    }
+                    const vmixState = parseVmixXml(text);
+                    setDirectTestResult({ ok: true, message: `Conectado ao vMix em ${base} (${vmixState.inputs.length} inputs)` });
                   } catch (e) {
                     const msg = e instanceof Error ? e.message : String(e);
                     setDirectTestResult({ ok: false, message: msg.length > 160 ? msg.slice(0, 160) + "…" : msg });
