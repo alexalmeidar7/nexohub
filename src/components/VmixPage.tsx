@@ -152,6 +152,42 @@ function buildLoopbackFallbackUrls(rawBaseUrl: string): string[] {
     return ["http://127.0.0.1:8088", "http://localhost:8088"];
   }
 }
+
+function parseVmixUrlParts(raw: string): { protocol: "http" | "https"; host: string; port: string } {
+  const fallback = { protocol: "http" as const, host: "", port: "8088" };
+  if (!raw) return fallback;
+  let str = raw.trim();
+  if (!/^https?:\/\//i.test(str)) str = "http://" + str;
+  try {
+    const u = new URL(str);
+    return {
+      protocol: (u.protocol.replace(":", "") as "http" | "https") || "http",
+      host: u.hostname,
+      port: u.port || (u.protocol === "https:" ? "443" : "8088"),
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function composeVmixUrl(protocol: "http" | "https", host: string, port: string): string {
+  const h = (host || "").trim();
+  const p = (port || "").trim();
+  if (!h) return "";
+  return `${protocol}://${h}${p ? ":" + p : ""}`;
+}
+
+function validateVmixParts(protocol: string, host: string, port: string): string | null {
+  if (!host || !host.trim()) return "Host/IP obrigatório";
+  if (/\s/.test(host)) return "Host não pode conter espaços";
+  if (!/^([a-zA-Z0-9.\-]+|\[[0-9a-fA-F:]+\])$/.test(host)) return "Host inválido";
+  if (!port || !/^\d+$/.test(port)) return "Porta obrigatória (numérica)";
+  const n = Number(port);
+  if (n < 1 || n > 65535) return "Porta deve estar entre 1 e 65535";
+  if (protocol !== "http" && protocol !== "https") return "Protocolo inválido";
+  return null;
+}
+
 // Format keyboard event to a readable key name, distinguishing numpad from top-row numbers
 function formatKeyName(e: KeyboardEvent): string {
   const parts: string[] = [];
