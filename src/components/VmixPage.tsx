@@ -215,11 +215,12 @@ export default function VmixPage() {
 
     const checkLan = async () => {
       setLanStatus("checking");
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       try {
         // Try a very quick fetch to the vMix API with a short timeout
         // This only works if the user is on the same network
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        timeoutId = setTimeout(() => controller.abort(), 2000);
         
         const candidates = Array.from(new Set([
           normalizeVmixBaseUrl(savedUrl),
@@ -248,7 +249,7 @@ export default function VmixPage() {
       } catch (err) {
         setLanStatus("different_network");
       } finally {
-        clearTimeout(timeoutId);
+        if (timeoutId) clearTimeout(timeoutId);
       }
     };
 
