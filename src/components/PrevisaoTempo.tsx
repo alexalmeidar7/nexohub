@@ -73,9 +73,10 @@ function formatDay(dateStr: string) {
   return date.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" });
 }
 
-const STORAGE_KEY = "masterview_last_city";
-const FAVORITES_KEY = "masterview_favorite_cities";
-const PRIMARY_CITY_KEY = "masterview_primary_city";
+// Per-user storage keys — never mix data between users on the same device.
+const lastCityKey = (uid: string) => `masterview_last_city_${uid}`;
+const favoritesKey = (uid: string) => `masterview_favorite_cities_${uid}`;
+const primaryCityKey = (uid: string) => `masterview_primary_city_${uid}`;
 const REFRESH_INTERVAL = 5 * 60 * 1000;
 
 interface PrimaryCity {
@@ -84,17 +85,18 @@ interface PrimaryCity {
   lon: number;
 }
 
-function getFavorites(): FavoriteCity[] {
-  try { return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"); } catch { return []; }
+function getFavorites(uid: string): FavoriteCity[] {
+  try { return JSON.parse(localStorage.getItem(favoritesKey(uid)) || "[]"); } catch { return []; }
 }
-function saveFavorites(list: FavoriteCity[]) {
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(list));
+function saveFavorites(uid: string, list: FavoriteCity[]) {
+  localStorage.setItem(favoritesKey(uid), JSON.stringify(list));
 }
-function getPrimaryCity(): PrimaryCity | null {
-  try { return JSON.parse(localStorage.getItem(PRIMARY_CITY_KEY) || "null"); } catch { return null; }
+function getPrimaryCity(uid: string): PrimaryCity | null {
+  try { return JSON.parse(localStorage.getItem(primaryCityKey(uid)) || "null"); } catch { return null; }
 }
-function savePrimaryCity(city: PrimaryCity | null) {
-  localStorage.setItem(PRIMARY_CITY_KEY, city ? JSON.stringify(city) : "");
+function savePrimaryCity(uid: string, city: PrimaryCity | null) {
+  if (city) localStorage.setItem(primaryCityKey(uid), JSON.stringify(city));
+  else localStorage.removeItem(primaryCityKey(uid));
 }
 
 export default function PrevisaoTempo() {
