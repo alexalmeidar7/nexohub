@@ -123,7 +123,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     fetchData();
     const interval = setInterval(fetchData, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [uid]);
 
   if (noCity) {
     return (
