@@ -174,12 +174,12 @@ export default function PrevisaoTempo() {
         weatherCode: wxData.daily.weather_code[i + 1],
       }));
       const isNight = wxData.current?.is_day === 0;
-      localStorage.setItem(STORAGE_KEY, name);
+      if (uid) localStorage.setItem(lastCityKey(uid), name);
       setWeather({ city: name, lat, lon, current, forecast, isNight });
       // AI disabled – skip weather description
     } catch { if (!silent) setError("Erro ao buscar dados meteorológicos."); }
     finally { setLoading(false); }
-  }, []);
+  }, [uid]);
 
   const fetchWeather = useCallback(async (searchCity: string, silent = false) => {
     if (!searchCity.trim()) return;
