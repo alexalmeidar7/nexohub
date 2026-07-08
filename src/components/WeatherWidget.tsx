@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Settings } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface WidgetWeather {
   city: string;
@@ -43,20 +44,28 @@ function getLabel(code: number) {
   return weatherLabels[closest] || "Desconhecido";
 }
 
-const PRIMARY_CITY_KEY = "masterview_primary_city";
-const FALLBACK_KEY = "masterview_last_city";
+const PRIMARY_CITY_KEY_PREFIX = "masterview_primary_city";
+const FALLBACK_KEY_PREFIX = "masterview_last_city";
 
 export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any) => void } = {}) {
+  const { user } = useAuth();
+  const uid = user?.id ?? null;
   const [weather, setWeather] = useState<WidgetWeather | null>(null);
   const [noCity, setNoCity] = useState(false);
 
   useEffect(() => {
+    if (!uid) {
+      setWeather(null);
+      setNoCity(false);
+      return;
+    }
+
     let cityName: string | null = null;
     let lat: number | null = null;
     let lon: number | null = null;
 
     try {
-      const primary = JSON.parse(localStorage.getItem(PRIMARY_CITY_KEY) || "null");
+      const primary = JSON.parse(localStorage.getItem(`${PRIMARY_CITY_KEY_PREFIX}_${uid}`) || "null");
       if (primary?.name && primary?.lat && primary?.lon) {
         cityName = primary.name;
         lat = primary.lat;
@@ -65,13 +74,14 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     } catch { /* ignore */ }
 
     if (!cityName) {
-      const fallback = localStorage.getItem(FALLBACK_KEY);
+      const fallback = localStorage.getItem(`${FALLBACK_KEY_PREFIX}_${uid}`);
       if (!fallback) {
         setNoCity(true);
         return;
       }
       cityName = fallback;
     }
+    setNoCity(false);
 
     const fetchData = async () => {
       try {
@@ -113,7 +123,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     fetchData();
     const interval = setInterval(fetchData, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [uid]);
 
   if (noCity) {
     return (

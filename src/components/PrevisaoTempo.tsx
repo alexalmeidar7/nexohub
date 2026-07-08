@@ -4,6 +4,7 @@ import XmlLinkRow from "./XmlLinkRow";
 import { WeatherIcon } from "./WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { useAuth } from "@/hooks/useAuth";
 
 interface WeatherData {
   city: string;
@@ -72,9 +73,10 @@ function formatDay(dateStr: string) {
   return date.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" });
 }
 
-const STORAGE_KEY = "masterview_last_city";
-const FAVORITES_KEY = "masterview_favorite_cities";
-const PRIMARY_CITY_KEY = "masterview_primary_city";
+// Per-user storage keys — never mix data between users on the same device.
+const lastCityKey = (uid: string) => `masterview_last_city_${uid}`;
+const favoritesKey = (uid: string) => `masterview_favorite_cities_${uid}`;
+const primaryCityKey = (uid: string) => `masterview_primary_city_${uid}`;
 const REFRESH_INTERVAL = 5 * 60 * 1000;
 
 interface PrimaryCity {
@@ -83,28 +85,31 @@ interface PrimaryCity {
   lon: number;
 }
 
-function getFavorites(): FavoriteCity[] {
-  try { return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"); } catch { return []; }
+function getFavorites(uid: string): FavoriteCity[] {
+  try { return JSON.parse(localStorage.getItem(favoritesKey(uid)) || "[]"); } catch { return []; }
 }
-function saveFavorites(list: FavoriteCity[]) {
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(list));
+function saveFavorites(uid: string, list: FavoriteCity[]) {
+  localStorage.setItem(favoritesKey(uid), JSON.stringify(list));
 }
-function getPrimaryCity(): PrimaryCity | null {
-  try { return JSON.parse(localStorage.getItem(PRIMARY_CITY_KEY) || "null"); } catch { return null; }
+function getPrimaryCity(uid: string): PrimaryCity | null {
+  try { return JSON.parse(localStorage.getItem(primaryCityKey(uid)) || "null"); } catch { return null; }
 }
-function savePrimaryCity(city: PrimaryCity | null) {
-  localStorage.setItem(PRIMARY_CITY_KEY, city ? JSON.stringify(city) : "");
+function savePrimaryCity(uid: string, city: PrimaryCity | null) {
+  if (city) localStorage.setItem(primaryCityKey(uid), JSON.stringify(city));
+  else localStorage.removeItem(primaryCityKey(uid));
 }
 
 export default function PrevisaoTempo() {
-  const [city, setCity] = useState(() => localStorage.getItem(STORAGE_KEY) || "");
+  const { user } = useAuth();
+  const uid = user?.id ?? null;
+  const [city, setCity] = useState("");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [favorites, setFavorites] = useState<FavoriteCity[]>(getFavorites);
+  const [favorites, setFavorites] = useState<FavoriteCity[]>([]);
 
-  const [primaryCity, setPrimaryCity] = useState<PrimaryCity | null>(getPrimaryCity);
+  const [primaryCity, setPrimaryCity] = useState<PrimaryCity | null>(null);
   const [aiDescription, setAiDescription] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [forecastDescription, setForecastDescription] = useState("");
@@ -169,12 +174,12 @@ export default function PrevisaoTempo() {
         weatherCode: wxData.daily.weather_code[i + 1],
       }));
       const isNight = wxData.current?.is_day === 0;
-      localStorage.setItem(STORAGE_KEY, name);
+      if (uid) localStorage.setItem(lastCityKey(uid), name);
       setWeather({ city: name, lat, lon, current, forecast, isNight });
       // AI disabled – skip weather description
     } catch { if (!silent) setError("Erro ao buscar dados meteorológicos."); }
     finally { setLoading(false); }
-  }, []);
+  }, [uid]);
 
   const fetchWeather = useCallback(async (searchCity: string, silent = false) => {
     if (!searchCity.trim()) return;
@@ -193,107 +198,125 @@ export default function PrevisaoTempo() {
   const searchWeather = () => { setShowSuggestions(false); fetchWeather(city); };
 
   useEffect(() => {
+    if (!uid) {
+      // Reset all UI state when logged out or switching users, so we never mix data.
+      setCity("");
+      setWeather(null);
+      setFavorites([]);
+      setPrimaryCity(null);
+      return;
+    }
+
+    // Hydrate per-user state from user-scoped localStorage first.
+    setFavorites(getFavorites(uid));
+    const scopedPrimary = getPrimaryCity(uid);
+    setPrimaryCity(scopedPrimary);
+
     const loadCity = async () => {
-      // 1) Check localStorage first (fast)
-      const localPrimary = getPrimaryCity();
-      if (localPrimary) {
-        setCity(localPrimary.name);
-        fetchWeatherByCoords(localPrimary.lat, localPrimary.lon, localPrimary.name);
+      if (scopedPrimary) {
+        setCity(scopedPrimary.name);
+        fetchWeatherByCoords(scopedPrimary.lat, scopedPrimary.lon, scopedPrimary.name);
         return;
       }
 
-      // 2) Fallback: check database for saved city
+      // 2) Fallback: check database for saved city (scoped to this user)
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: settings } = await supabase
-            .from("user_settings")
-            .select("weather_city, weather_lat, weather_lon")
-            .eq("user_id", user.id)
-            .maybeSingle();
-          if (settings?.weather_city && settings?.weather_lat != null && settings?.weather_lon != null) {
-            const pc = { name: settings.weather_city, lat: settings.weather_lat, lon: settings.weather_lon };
-            savePrimaryCity(pc);
-            setPrimaryCity(pc);
-            setCity(pc.name);
-            localStorage.setItem(STORAGE_KEY, pc.name);
-            fetchWeatherByCoords(pc.lat, pc.lon, pc.name);
-            return;
-          }
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("weather_city, weather_lat, weather_lon")
+          .eq("user_id", uid)
+          .maybeSingle();
+        if (settings?.weather_city && settings?.weather_lat != null && settings?.weather_lon != null) {
+          const pc = { name: settings.weather_city, lat: settings.weather_lat, lon: settings.weather_lon };
+          savePrimaryCity(uid, pc);
+          setPrimaryCity(pc);
+          setCity(pc.name);
+          localStorage.setItem(lastCityKey(uid), pc.name);
+          fetchWeatherByCoords(pc.lat, pc.lon, pc.name);
+          return;
         }
       } catch { /* ignore */ }
 
-      // 3) Last fallback: localStorage city name
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) fetchWeather(saved);
+      // 3) Last fallback: per-user last city name
+      const saved = localStorage.getItem(lastCityKey(uid));
+      if (saved) {
+        setCity(saved);
+        fetchWeather(saved);
+      }
     };
 
     loadCity();
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [fetchWeather, fetchWeatherByCoords]);
+  }, [uid, fetchWeather, fetchWeatherByCoords]);
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    if (weather) {
+    if (weather && uid) {
       intervalRef.current = setInterval(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = localStorage.getItem(lastCityKey(uid));
         if (saved) fetchWeather(saved, true);
       }, REFRESH_INTERVAL);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [weather, fetchWeather]);
+  }, [weather, fetchWeather, uid]);
 
   const addFavorite = () => {
-    if (!weather) return;
+    if (!weather || !uid) return;
     if (favorites.some(f => f.name === weather.city)) return;
     const updated = [...favorites, { name: weather.city, lat: weather.lat, lon: weather.lon, inXml: false }];
-    saveFavorites(updated);
+    saveFavorites(uid, updated);
     setFavorites(updated);
   };
 
   const toggleFavoriteXml = (name: string) => {
+    if (!uid) return;
     const updated = favorites.map(f => f.name === name ? { ...f, inXml: !f.inXml } : f);
-    saveFavorites(updated);
+    saveFavorites(uid, updated);
     setFavorites(updated);
   };
 
   const removeFavorite = (name: string) => {
+    if (!uid) return;
     const updated = favorites.filter(f => f.name !== name);
-    saveFavorites(updated);
+    saveFavorites(uid, updated);
     setFavorites(updated);
   };
 
   const isFavorited = weather ? favorites.some(f => f.name === weather.city) : false;
   const isPrimary = weather ? primaryCity?.name === weather.city : false;
 
-  const togglePrimaryCity = async () => {
-    if (!weather) return;
-    if (isPrimary) {
-      savePrimaryCity(null);
-      setPrimaryCity(null);
-      // Clear from DB
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("user_settings").update({
-          weather_city: null, weather_lat: null, weather_lon: null
-        }).eq("user_id", user.id);
-      }
-    } else {
-      const pc = { name: weather.city, lat: weather.lat, lon: weather.lon };
-      savePrimaryCity(pc);
-      setPrimaryCity(pc);
-      // Save to DB for background updates
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const row = { user_id: user.id, weather_city: pc.name, weather_lat: pc.lat, weather_lon: pc.lon };
-        const { data: existing } = await supabase.from("user_settings").select("id").eq("user_id", user.id).maybeSingle();
-        if (existing) {
-          await supabase.from("user_settings").update(row).eq("user_id", user.id);
-        } else {
-          await supabase.from("user_settings").insert(row);
-        }
-      }
+  const setAsPrimaryCity = async () => {
+    if (!weather || !uid) return;
+    const pc = { name: weather.city, lat: weather.lat, lon: weather.lon };
+    savePrimaryCity(uid, pc);
+    setPrimaryCity(pc);
+    // Remove from favorites if it was there — a city is either primary or secondary.
+    if (favorites.some(f => f.name === pc.name)) {
+      const updated = favorites.filter(f => f.name !== pc.name);
+      saveFavorites(uid, updated);
+      setFavorites(updated);
     }
+    const row = { user_id: uid, weather_city: pc.name, weather_lat: pc.lat, weather_lon: pc.lon };
+    const { data: existing } = await supabase.from("user_settings").select("id").eq("user_id", uid).maybeSingle();
+    if (existing) {
+      await supabase.from("user_settings").update(row).eq("user_id", uid);
+    } else {
+      await supabase.from("user_settings").insert(row);
+    }
+  };
+
+  const clearPrimaryCity = async () => {
+    if (!uid) return;
+    savePrimaryCity(uid, null);
+    setPrimaryCity(null);
+    await supabase.from("user_settings").update({
+      weather_city: null, weather_lat: null, weather_lon: null,
+    }).eq("user_id", uid);
+  };
+
+  const togglePrimaryCity = async () => {
+    if (isPrimary) await clearPrimaryCity();
+    else await setAsPrimaryCity();
   };
 
   const fetchForecastDescription = async () => {
@@ -389,13 +412,22 @@ export default function PrevisaoTempo() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="text-2xl font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{weather.city}</h3>
-                    {(!primaryCity || isPrimary) && (
+                    {isPrimary ? (
                       <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1 transition-all"
-                        style={{ backgroundColor: isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", border: `1px solid ${isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}` }}>
-                        <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
+                        style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", border: "1px solid var(--layout-header-bg, #1a1a1a)" }}>
+                        <input type="checkbox" checked readOnly onClick={togglePrimaryCity}
                           className="w-3.5 h-3.5" style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} />
-                        <span className="text-[11px] font-semibold" style={{ color: isPrimary ? "var(--layout-header-text, #ffffff)" : "var(--layout-header-bg, #1a1a1a)" }}>Cidade Principal</span>
+                        <span className="text-[11px] font-semibold" style={{ color: "var(--layout-header-text, #ffffff)" }}>Cidade Principal</span>
                       </label>
+                    ) : (
+                      <button onClick={setAsPrimaryCity}
+                        className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-all hover:scale-105"
+                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 45%, transparent)" }}
+                        title={primaryCity ? `Substituirá ${primaryCity.name} como cidade principal` : "Definir como cidade principal"}
+                      >
+                        <Star size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                        {primaryCity ? "Tornar Principal" : "Definir como Principal"}
+                      </button>
                     )}
                     {!isFavorited && (
                       <button onClick={addFavorite} disabled={isPrimary}
