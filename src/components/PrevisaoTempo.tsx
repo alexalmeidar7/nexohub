@@ -359,7 +359,8 @@ export default function PrevisaoTempo() {
                 className="text-xs font-medium transition-colors"
                 style={{ color: "var(--layout-page-text, #1a1a1a)" }}
               >{f.name}</button>
-              <button onClick={() => removeFavorite(f.name)}
+              <button onClick={() => { if (confirm(`Remover "${f.name}" dos favoritos?`)) removeFavorite(f.name); }}
+                title="Remover dos favoritos"
                 className="text-xs transition-colors hover:text-red-500"
                 style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
               >✕</button>
