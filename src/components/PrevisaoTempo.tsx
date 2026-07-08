@@ -4,6 +4,7 @@ import XmlLinkRow from "./XmlLinkRow";
 import { WeatherIcon } from "./WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { useAuth } from "@/hooks/useAuth";
 
 interface WeatherData {
   city: string;
