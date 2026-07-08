@@ -412,13 +412,22 @@ export default function PrevisaoTempo() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="text-2xl font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{weather.city}</h3>
-                    {(!primaryCity || isPrimary) && (
+                    {isPrimary ? (
                       <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1 transition-all"
-                        style={{ backgroundColor: isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", border: `1px solid ${isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}` }}>
-                        <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
+                        style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", border: "1px solid var(--layout-header-bg, #1a1a1a)" }}>
+                        <input type="checkbox" checked readOnly onClick={togglePrimaryCity}
                           className="w-3.5 h-3.5" style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} />
-                        <span className="text-[11px] font-semibold" style={{ color: isPrimary ? "var(--layout-header-text, #ffffff)" : "var(--layout-header-bg, #1a1a1a)" }}>Cidade Principal</span>
+                        <span className="text-[11px] font-semibold" style={{ color: "var(--layout-header-text, #ffffff)" }}>Cidade Principal</span>
                       </label>
+                    ) : (
+                      <button onClick={setAsPrimaryCity}
+                        className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-all hover:scale-105"
+                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 45%, transparent)" }}
+                        title={primaryCity ? `Substituirá ${primaryCity.name} como cidade principal` : "Definir como cidade principal"}
+                      >
+                        <Star size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                        {primaryCity ? "Tornar Principal" : "Definir como Principal"}
+                      </button>
                     )}
                     {!isFavorited && (
                       <button onClick={addFavorite} disabled={isPrimary}
