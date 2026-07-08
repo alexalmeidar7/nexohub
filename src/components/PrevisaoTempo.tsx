@@ -261,56 +261,62 @@ export default function PrevisaoTempo() {
   }, [weather, fetchWeather, uid]);
 
   const addFavorite = () => {
-    if (!weather) return;
+    if (!weather || !uid) return;
     if (favorites.some(f => f.name === weather.city)) return;
     const updated = [...favorites, { name: weather.city, lat: weather.lat, lon: weather.lon, inXml: false }];
-    saveFavorites(updated);
+    saveFavorites(uid, updated);
     setFavorites(updated);
   };
 
   const toggleFavoriteXml = (name: string) => {
+    if (!uid) return;
     const updated = favorites.map(f => f.name === name ? { ...f, inXml: !f.inXml } : f);
-    saveFavorites(updated);
+    saveFavorites(uid, updated);
     setFavorites(updated);
   };
 
   const removeFavorite = (name: string) => {
+    if (!uid) return;
     const updated = favorites.filter(f => f.name !== name);
-    saveFavorites(updated);
+    saveFavorites(uid, updated);
     setFavorites(updated);
   };
 
   const isFavorited = weather ? favorites.some(f => f.name === weather.city) : false;
   const isPrimary = weather ? primaryCity?.name === weather.city : false;
 
-  const togglePrimaryCity = async () => {
-    if (!weather) return;
-    if (isPrimary) {
-      savePrimaryCity(null);
-      setPrimaryCity(null);
-      // Clear from DB
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("user_settings").update({
-          weather_city: null, weather_lat: null, weather_lon: null
-        }).eq("user_id", user.id);
-      }
-    } else {
-      const pc = { name: weather.city, lat: weather.lat, lon: weather.lon };
-      savePrimaryCity(pc);
-      setPrimaryCity(pc);
-      // Save to DB for background updates
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const row = { user_id: user.id, weather_city: pc.name, weather_lat: pc.lat, weather_lon: pc.lon };
-        const { data: existing } = await supabase.from("user_settings").select("id").eq("user_id", user.id).maybeSingle();
-        if (existing) {
-          await supabase.from("user_settings").update(row).eq("user_id", user.id);
-        } else {
-          await supabase.from("user_settings").insert(row);
-        }
-      }
+  const setAsPrimaryCity = async () => {
+    if (!weather || !uid) return;
+    const pc = { name: weather.city, lat: weather.lat, lon: weather.lon };
+    savePrimaryCity(uid, pc);
+    setPrimaryCity(pc);
+    // Remove from favorites if it was there — a city is either primary or secondary.
+    if (favorites.some(f => f.name === pc.name)) {
+      const updated = favorites.filter(f => f.name !== pc.name);
+      saveFavorites(uid, updated);
+      setFavorites(updated);
     }
+    const row = { user_id: uid, weather_city: pc.name, weather_lat: pc.lat, weather_lon: pc.lon };
+    const { data: existing } = await supabase.from("user_settings").select("id").eq("user_id", uid).maybeSingle();
+    if (existing) {
+      await supabase.from("user_settings").update(row).eq("user_id", uid);
+    } else {
+      await supabase.from("user_settings").insert(row);
+    }
+  };
+
+  const clearPrimaryCity = async () => {
+    if (!uid) return;
+    savePrimaryCity(uid, null);
+    setPrimaryCity(null);
+    await supabase.from("user_settings").update({
+      weather_city: null, weather_lat: null, weather_lon: null,
+    }).eq("user_id", uid);
+  };
+
+  const togglePrimaryCity = async () => {
+    if (isPrimary) await clearPrimaryCity();
+    else await setAsPrimaryCity();
   };
 
   const fetchForecastDescription = async () => {
