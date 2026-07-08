@@ -330,14 +330,25 @@ export default function PrevisaoTempo() {
       {(primaryCity || favorites.length > 0) && (
         <div className="flex gap-2 flex-wrap items-center">
           {primaryCity && (
-            <button
-              onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
-              className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all hover:scale-105"
+            <div
+              className="flex items-center gap-2 rounded-full pl-4 pr-2 py-2 text-xs font-bold transition-all hover:scale-105"
               style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
             >
-              <Star size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-              {primaryCity.name}
-            </button>
+              <button
+                onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
+                className="flex items-center gap-2"
+                style={{ color: "var(--layout-header-text, #ffffff)" }}
+              >
+                <Star size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                {primaryCity.name}
+              </button>
+              <button
+                onClick={() => { if (confirm(`Remover "${primaryCity.name}" como cidade principal?`)) clearPrimaryCity(); }}
+                title="Remover cidade principal"
+                className="ml-1 w-5 h-5 rounded-full flex items-center justify-center text-xs transition-colors hover:bg-red-500/30"
+                style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.7 }}
+              >✕</button>
+            </div>
           )}
           {favorites.map(f => (
             <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all hover:shadow-md"
