@@ -198,55 +198,67 @@ export default function PrevisaoTempo() {
   const searchWeather = () => { setShowSuggestions(false); fetchWeather(city); };
 
   useEffect(() => {
+    if (!uid) {
+      // Reset all UI state when logged out or switching users, so we never mix data.
+      setCity("");
+      setWeather(null);
+      setFavorites([]);
+      setPrimaryCity(null);
+      return;
+    }
+
+    // Hydrate per-user state from user-scoped localStorage first.
+    setFavorites(getFavorites(uid));
+    const scopedPrimary = getPrimaryCity(uid);
+    setPrimaryCity(scopedPrimary);
+
     const loadCity = async () => {
-      // 1) Check localStorage first (fast)
-      const localPrimary = getPrimaryCity();
-      if (localPrimary) {
-        setCity(localPrimary.name);
-        fetchWeatherByCoords(localPrimary.lat, localPrimary.lon, localPrimary.name);
+      if (scopedPrimary) {
+        setCity(scopedPrimary.name);
+        fetchWeatherByCoords(scopedPrimary.lat, scopedPrimary.lon, scopedPrimary.name);
         return;
       }
 
-      // 2) Fallback: check database for saved city
+      // 2) Fallback: check database for saved city (scoped to this user)
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: settings } = await supabase
-            .from("user_settings")
-            .select("weather_city, weather_lat, weather_lon")
-            .eq("user_id", user.id)
-            .maybeSingle();
-          if (settings?.weather_city && settings?.weather_lat != null && settings?.weather_lon != null) {
-            const pc = { name: settings.weather_city, lat: settings.weather_lat, lon: settings.weather_lon };
-            savePrimaryCity(pc);
-            setPrimaryCity(pc);
-            setCity(pc.name);
-            localStorage.setItem(STORAGE_KEY, pc.name);
-            fetchWeatherByCoords(pc.lat, pc.lon, pc.name);
-            return;
-          }
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("weather_city, weather_lat, weather_lon")
+          .eq("user_id", uid)
+          .maybeSingle();
+        if (settings?.weather_city && settings?.weather_lat != null && settings?.weather_lon != null) {
+          const pc = { name: settings.weather_city, lat: settings.weather_lat, lon: settings.weather_lon };
+          savePrimaryCity(uid, pc);
+          setPrimaryCity(pc);
+          setCity(pc.name);
+          localStorage.setItem(lastCityKey(uid), pc.name);
+          fetchWeatherByCoords(pc.lat, pc.lon, pc.name);
+          return;
         }
       } catch { /* ignore */ }
 
-      // 3) Last fallback: localStorage city name
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) fetchWeather(saved);
+      // 3) Last fallback: per-user last city name
+      const saved = localStorage.getItem(lastCityKey(uid));
+      if (saved) {
+        setCity(saved);
+        fetchWeather(saved);
+      }
     };
 
     loadCity();
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [fetchWeather, fetchWeatherByCoords]);
+  }, [uid, fetchWeather, fetchWeatherByCoords]);
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    if (weather) {
+    if (weather && uid) {
       intervalRef.current = setInterval(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = localStorage.getItem(lastCityKey(uid));
         if (saved) fetchWeather(saved, true);
       }, REFRESH_INTERVAL);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [weather, fetchWeather]);
+  }, [weather, fetchWeather, uid]);
 
   const addFavorite = () => {
     if (!weather) return;
