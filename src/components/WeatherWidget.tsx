@@ -44,10 +44,12 @@ function getLabel(code: number) {
   return weatherLabels[closest] || "Desconhecido";
 }
 
-const PRIMARY_CITY_KEY = "masterview_primary_city";
-const FALLBACK_KEY = "masterview_last_city";
+const PRIMARY_CITY_KEY_PREFIX = "masterview_primary_city";
+const FALLBACK_KEY_PREFIX = "masterview_last_city";
 
 export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any) => void } = {}) {
+  const { user } = useAuth();
+  const uid = user?.id ?? null;
   const [weather, setWeather] = useState<WidgetWeather | null>(null);
   const [noCity, setNoCity] = useState(false);
 
