@@ -100,14 +100,16 @@ function savePrimaryCity(uid: string, city: PrimaryCity | null) {
 }
 
 export default function PrevisaoTempo() {
-  const [city, setCity] = useState(() => localStorage.getItem(STORAGE_KEY) || "");
+  const { user } = useAuth();
+  const uid = user?.id ?? null;
+  const [city, setCity] = useState("");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [favorites, setFavorites] = useState<FavoriteCity[]>(getFavorites);
+  const [favorites, setFavorites] = useState<FavoriteCity[]>([]);
 
-  const [primaryCity, setPrimaryCity] = useState<PrimaryCity | null>(getPrimaryCity);
+  const [primaryCity, setPrimaryCity] = useState<PrimaryCity | null>(null);
   const [aiDescription, setAiDescription] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [forecastDescription, setForecastDescription] = useState("");
