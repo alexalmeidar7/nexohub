@@ -54,12 +54,18 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
   const [noCity, setNoCity] = useState(false);
 
   useEffect(() => {
+    if (!uid) {
+      setWeather(null);
+      setNoCity(false);
+      return;
+    }
+
     let cityName: string | null = null;
     let lat: number | null = null;
     let lon: number | null = null;
 
     try {
-      const primary = JSON.parse(localStorage.getItem(PRIMARY_CITY_KEY) || "null");
+      const primary = JSON.parse(localStorage.getItem(`${PRIMARY_CITY_KEY_PREFIX}_${uid}`) || "null");
       if (primary?.name && primary?.lat && primary?.lon) {
         cityName = primary.name;
         lat = primary.lat;
@@ -68,13 +74,14 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     } catch { /* ignore */ }
 
     if (!cityName) {
-      const fallback = localStorage.getItem(FALLBACK_KEY);
+      const fallback = localStorage.getItem(`${FALLBACK_KEY_PREFIX}_${uid}`);
       if (!fallback) {
         setNoCity(true);
         return;
       }
       cityName = fallback;
     }
+    setNoCity(false);
 
     const fetchData = async () => {
       try {
