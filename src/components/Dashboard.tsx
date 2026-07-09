@@ -973,7 +973,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   const endSec = eh * 3600 + em * 60;
                   const total = Math.max(endSec - startSec, 1);
                   const elapsed = Math.min(Math.max(nowSec - startSec, 0), total);
-                  const pct = (elapsed / total) * 100;
+                  
                   const fmt = (s: number) => {
                     const h = Math.floor(s / 3600);
                     const m = Math.floor((s % 3600) / 60);
