@@ -992,8 +992,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         style={{ height: "2px", backgroundColor: "rgba(0,33,50,0.15)" }}
                       >
                         <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${pct}%`, backgroundColor: "#d7faff" }}
+                          className="h-full rounded-full"
+                          style={{ width: `${pct}%`, backgroundColor: "#d7faff", transition: "width 1000ms linear" }}
                         />
                       </div>
                       <div
