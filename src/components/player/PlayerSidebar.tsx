@@ -183,10 +183,11 @@ export default function PlayerSidebar({
                 aria-label={item.label}
               >
                 <item.icon
-                  className={`h-[18px] w-[18px] transition-colors duration-200 ${
+                  className={`icon icon-sm transition-colors duration-200 ${
                     isActive ? "text-white" : "text-white/40 group-hover/btn:text-white/80"
                   }`}
                 />
+
 
                 {/* Label tooltip on hover */}
                 <div
