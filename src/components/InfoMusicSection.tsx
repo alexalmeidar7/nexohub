@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -101,6 +101,22 @@ export default function InfoMusicSection() {
   const HARD_CAP = 1000;
   const [totalCount, setTotalCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterField, setFilterField] = useState<"all" | "artista" | "musica" | "curiosidade">("all");
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter(r => {
+      const artista = (r.artista || "").toLowerCase();
+      const musica = (r.musica || "").toLowerCase();
+      const curiosidade = (r.curiosidade || "").toLowerCase();
+      if (filterField === "artista") return artista.includes(q);
+      if (filterField === "musica") return musica.includes(q);
+      if (filterField === "curiosidade") return curiosidade.includes(q);
+      return artista.includes(q) || musica.includes(q) || curiosidade.includes(q);
+    });
+  }, [rows, search, filterField]);
 
   const load = async () => {
     setLoading(true);
@@ -430,11 +446,52 @@ export default function InfoMusicSection() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            Curiosidades salvas ({rows.length}{totalCount > rows.length ? ` de ${totalCount}` : ""})
+            Curiosidades salvas ({search ? `${filteredRows.length} de ${rows.length}` : `${rows.length}${totalCount > rows.length ? ` de ${totalCount}` : ""}`})
           </h4>
           <button onClick={load} className="text-xs opacity-60 hover:opacity-100 inline-flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <RefreshCw size={11} /> Atualizar
           </button>
+        </div>
+        <div className="flex flex-col md:flex-row gap-2 mb-2">
+          <div className="flex-1 relative">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50" style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por artista, música ou texto da curiosidade..."
+              className="w-full pl-8 pr-8 py-2 rounded-lg text-xs outline-none"
+              style={{
+                backgroundColor: "var(--layout-page-bg, #fff)",
+                color: "var(--layout-page-text, #1a1a1a)",
+                border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
+              }}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-black/5"
+                title="Limpar busca"
+              >
+                <X size={12} className="opacity-60" />
+              </button>
+            )}
+          </div>
+          <select
+            value={filterField}
+            onChange={e => setFilterField(e.target.value as typeof filterField)}
+            className="px-3 py-2 rounded-lg text-xs outline-none cursor-pointer"
+            style={{
+              backgroundColor: "var(--layout-page-bg, #fff)",
+              color: "var(--layout-page-text, #1a1a1a)",
+              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
+            }}
+          >
+            <option value="all">Todos os campos</option>
+            <option value="artista">Somente artista</option>
+            <option value="musica">Somente música</option>
+            <option value="curiosidade">Somente curiosidade</option>
+          </select>
         </div>
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
           {loading ? (
@@ -444,6 +501,10 @@ export default function InfoMusicSection() {
           ) : rows.length === 0 ? (
             <div className="text-center py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
               Nenhuma curiosidade salva ainda. As curiosidades aparecerão aqui automaticamente conforme as músicas tocarem.
+            </div>
+          ) : filteredRows.length === 0 ? (
+            <div className="text-center py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+              Nenhuma curiosidade encontrada para "<strong>{search}</strong>".
             </div>
           ) : (
             <div className="max-h-[420px] overflow-auto">
@@ -459,7 +520,7 @@ export default function InfoMusicSection() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r, i) => {
+                  {filteredRows.map((r, i) => {
                     const isLastManual = r.id === lastManualId;
                     return (
                       <tr key={r.id} style={{ 
