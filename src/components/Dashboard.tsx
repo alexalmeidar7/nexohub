@@ -216,6 +216,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const [onAirLocutorFoto, setOnAirLocutorFoto] = useState<string | null>(null);
+  const [onAirTimes, setOnAirTimes] = useState<{ inicio: string; fim: string } | null>(null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const iv = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(iv);
+  }, []);
   const prevThumbRef = useRef<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const [contentScrollProgress, setContentScrollProgress] = useState(0);
@@ -243,7 +249,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       const current = data.find((p: any) =>
         (p.dias_semana || []).includes(dia) && hora >= p.horario_inicio && hora < p.horario_fim
       );
-      if (!current?.apresentador_id) { setOnAirLocutorFoto(null); return; }
+      if (!current) { setOnAirLocutorFoto(null); setOnAirTimes(null); return; }
+      setOnAirTimes({ inicio: current.horario_inicio, fim: current.horario_fim });
+      if (!current.apresentador_id) { setOnAirLocutorFoto(null); return; }
       const { data: ap } = await supabase
         .from("apresentadores")
         .select("foto")
@@ -931,6 +939,34 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     
                   />
                 )}
+                {onAirTimes && (() => {
+                  const [sh, sm] = onAirTimes.inicio.split(":").map(Number);
+                  const [eh, em] = onAirTimes.fim.split(":").map(Number);
+                  const now = new Date(nowTick);
+                  const nowMin = now.getHours() * 60 + now.getMinutes();
+                  const startMin = sh * 60 + sm;
+                  const endMin = eh * 60 + em;
+                  const total = Math.max(endMin - startMin, 1);
+                  const elapsed = Math.min(Math.max(nowMin - startMin, 0), total);
+                  const pct = (elapsed / total) * 100;
+                  return (
+                    <div
+                      className="absolute rounded-full overflow-hidden"
+                      style={{
+                        left: "16px",
+                        right: "16px",
+                        bottom: "16px",
+                        height: "6px",
+                        backgroundColor: "rgba(0,33,50,0.2)",
+                      }}
+                    >
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%`, backgroundColor: "#002132" }}
+                      />
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
