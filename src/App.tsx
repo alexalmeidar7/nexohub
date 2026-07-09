@@ -9,7 +9,6 @@ import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
-import RouteProgress from "./components/RouteProgress";
 
 // Retry wrapper for lazy imports — retries up to 3 times on chunk load failure
 function lazyRetry(factory: () => Promise<{ default: React.ComponentType<any> }>, retries = 3) {
@@ -149,7 +148,6 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
-          <RouteProgress />
           <ChunkErrorBoundary>
           <Suspense fallback={
             <div
@@ -159,22 +157,15 @@ const App = () => (
                 top: 0,
                 left: 0,
                 right: 0,
-                height: 3,
-                background: "transparent",
+                bottom: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#131519",
                 zIndex: 9999,
-                overflow: "hidden",
-                pointerEvents: "none",
               }}
             >
-              <div
-                style={{
-                  height: "100%",
-                  width: "40%",
-                  background: "linear-gradient(90deg, transparent, hsl(var(--primary)), transparent)",
-                  animation: "lov-route-progress 1.1s ease-in-out infinite",
-                }}
-              />
-              <style>{`@keyframes lov-route-progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }`}</style>
+              <Loader2 className="animate-spin" size={32} style={{ color: "#d9ff65" }} />
             </div>
           }>
           <Routes>
