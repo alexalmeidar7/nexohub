@@ -290,11 +290,6 @@ export default function InfoMusicSection() {
               <p className="text-xs font-medium truncate opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                 {nowPlaying.artista}
               </p>
-              {nowPlaying.curiosity && (
-                <div className="mt-2 text-[11px] italic leading-tight opacity-60 line-clamp-2">
-                  "{nowPlaying.curiosity}"
-                </div>
-              )}
             </div>
             
             <button 
@@ -310,6 +305,29 @@ export default function InfoMusicSection() {
           <div className="absolute top-0 right-0 -mt-4 -mr-4 opacity-[0.03] pointer-events-none">
             <Music size={120} />
           </div>
+        </div>
+      )}
+
+      {nowPlaying && (
+        <div className="rounded-xl p-4" style={{
+          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-accent-color, #2563eb))",
+          border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
+        }}>
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+            <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Curiosidade da música no ar
+            </h4>
+          </div>
+          {nowPlaying.curiosity ? (
+            <p className="text-xs italic leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 85%, transparent)" }}>
+              "{nowPlaying.curiosity}"
+            </p>
+          ) : (
+            <p className="text-xs opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Nenhuma curiosidade encontrada para <strong>{nowPlaying.musica}</strong> — {nowPlaying.artista}.
+            </p>
+          )}
         </div>
       )}
 
