@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { musicDataKey, musicStartKey, botXmlLastRunKey } from "@/lib/musicStorageKeys";
+import { applyTrackChangeWithCuriosityGuard } from "@/lib/musicTrackUpdate";
 
 const LOCAL_SOURCE_GRACE_MS = 15000;
 
@@ -148,36 +149,25 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         localStorage.setItem(MUSIC_START_KEY, now.toString());
         
         (async () => {
-          try {
-            // Immediately clear old curiosity + push new track info so consumers don't see stale data
-            const basePatch: Record<string, any> = {
-              music_start_time: now,
-              music_current_title: data.titulo,
-              music_current_artist: data.artista,
-              music_current_cover: data.capa || "",
-              music_current_curiosity: "",
-            };
-            await mergeUserDashboardItems(user.id, basePatch);
-
-            // Then fetch curiosity in background; only write if the track hasn't changed again
-            const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
-              body: {
-                artista: data.artista,
-                musica: data.titulo,
-                userId: user.id,
-                deezerArtistImg: data.capa,
-              },
-            });
-
-            if (curData?.curiosidade) {
-              const stillCurrent = localStorage.getItem(MUSIC_START_KEY) === now.toString();
-              if (stillCurrent) {
-                await mergeUserDashboardItems(user.id, { music_current_curiosity: curData.curiosidade });
-              }
-            }
-          } catch (e) {
-            console.warn("[MusicSync] Error generating curiosity/merging:", e);
-          }
+          await applyTrackChangeWithCuriosityGuard({
+            userId: user.id,
+            now,
+            data,
+            merge: mergeUserDashboardItems,
+            fetchCuriosity: async () => {
+              const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
+                body: {
+                  artista: data.artista,
+                  musica: data.titulo,
+                  userId: user.id,
+                  deezerArtistImg: data.capa,
+                },
+              });
+              return curData as { curiosidade?: string } | null | undefined;
+            },
+            isStillCurrent: () => localStorage.getItem(MUSIC_START_KEY) === now.toString(),
+            onError: (e) => console.warn("[MusicSync] Error generating curiosity/merging:", e),
+          });
         })();
       } else if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
