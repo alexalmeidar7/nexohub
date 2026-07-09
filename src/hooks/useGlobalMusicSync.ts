@@ -149,28 +149,32 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         
         (async () => {
           try {
-            const patch: Record<string, any> = {
+            // Immediately clear old curiosity + push new track info so consumers don't see stale data
+            const basePatch: Record<string, any> = {
               music_start_time: now,
               music_current_title: data.titulo,
               music_current_artist: data.artista,
               music_current_cover: data.capa || "",
+              music_current_curiosity: "",
             };
-            
-            // Trigger curiosity generation via Edge Function call if music changes
+            await mergeUserDashboardItems(user.id, basePatch);
+
+            // Then fetch curiosity in background; only write if the track hasn't changed again
             const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
-              body: { 
-                artista: data.artista, 
-                musica: data.titulo, 
+              body: {
+                artista: data.artista,
+                musica: data.titulo,
                 userId: user.id,
-                deezerArtistImg: data.capa // Use current cover as artist img hint
+                deezerArtistImg: data.capa,
               },
             });
 
             if (curData?.curiosidade) {
-              patch.music_current_curiosity = curData.curiosidade;
+              const stillCurrent = localStorage.getItem(MUSIC_START_KEY) === now.toString();
+              if (stillCurrent) {
+                await mergeUserDashboardItems(user.id, { music_current_curiosity: curData.curiosidade });
+              }
             }
-
-            await mergeUserDashboardItems(user.id, patch);
           } catch (e) {
             console.warn("[MusicSync] Error generating curiosity/merging:", e);
           }
