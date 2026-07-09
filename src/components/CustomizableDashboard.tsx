@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User, Star } from "lucide-react";
 import {
   Tooltip,
@@ -178,6 +179,14 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
   }
   const [onAirProgram, setOnAirProgram] = useState<OnAirProgram | null>(null);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string } | null>(null);
+  const [onAirSlot, setOnAirSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    const findSlot = () => setOnAirSlot(document.getElementById("on-air-info-slot"));
+    findSlot();
+    const obs = new MutationObserver(findSlot);
+    obs.observe(document.body, { childList: true, subtree: true });
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -473,9 +482,10 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
         </div>
       )}
 
-      {/* On-Air Program Info */}
-      {onAirProgram && (
-        <div className="mb-4 animate-fade-in">
+      {/* On-Air Program Info — rendered into cyan box via portal when slot exists */}
+      {onAirProgram && (() => {
+        const block = (
+        <div className="animate-fade-in">
           <div className="flex items-start gap-5">
             {/* Selo / Logo do programa */}
             {false && onAirProgram.selo && (
@@ -522,18 +532,18 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
             {/* Ícones: Full HD + Stereo + Classificação */}
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               {onAirProgram.is_hd && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(0,0,0,0.2)", color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>
                   <span className="text-[7px]">1080p</span> FULL HD
                 </span>
               )}
               {onAirProgram.is_stereo && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(0,0,0,0.2)", color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg>
                   STEREO
                 </span>
               )}
               {onAirProgram.classificacao_etaria && (
-                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(0,0,0,0.2)", color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>
                    {onAirProgram.classificacao_etaria}
                 </span>
               )}
@@ -541,7 +551,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
 
             {/* Música tocando */}
             {currentMusic && (
-              <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.08)" }}>
                 <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
                 <div className="min-w-0">
                   <p className="text-[11px] font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>
@@ -558,7 +568,9 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
             </div>
           </div>
         </div>
-      )}
+        );
+        return onAirSlot ? createPortal(block, onAirSlot) : <div className="mb-4">{block}</div>;
+      })()}
 
 
       {/* Spacer to push widgets to bottom */}
