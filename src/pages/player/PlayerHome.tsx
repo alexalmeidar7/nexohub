@@ -4,7 +4,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from "react-rout
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus, Maximize } from "lucide-react";
+import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus, Maximize, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
@@ -1767,17 +1767,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     >
       {/* Top loading bar */}
       {!dataLoaded && (
-        <div className="absolute top-0 left-0 right-0 z-50 h-1 overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: "40%",
-              background: "linear-gradient(90deg, transparent, hsl(var(--player-accent)), transparent)",
-              animation: "player-hub-loading-bar 1.8s ease-in-out infinite",
-            }}
-          />
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+          <Loader2 className="animate-spin" size={24} style={{ color: "#d9ff65" }} />
         </div>
       )}
+
       {/* Main content */}
       <div ref={contentScrollRef} className={`flex-1 h-full ${(visibleSection === "catalog-detail" || visibleSection === "top10") ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
         <div className={`transition-all duration-500 ease-in-out ${(visibleSection === "catalog-detail" || visibleSection === "top10") ? "h-full" : ""}`} style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
