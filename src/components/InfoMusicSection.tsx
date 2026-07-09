@@ -32,6 +32,7 @@ export default function InfoMusicSection() {
   const [lastTrackKey, setLastTrackKey] = useState<string>("");
   const [manualCuriosityText, setManualCuriosityText] = useState("");
   const [savingManualCuriosity, setSavingManualCuriosity] = useState(false);
+  const [xmlTelemetry, setXmlTelemetry] = useState<{ source: "manual" | "ai" | "none"; text: string; until?: string }>({ source: "none", text: "" });
 
   const loadExcecoes = async () => {
     if (!user) return;
@@ -50,18 +51,38 @@ export default function InfoMusicSection() {
     // Parse now playing data from dashboard_items
     const di = data?.dashboard_items as any;
     const currentTrackKey = `${di?.music_current_title || ""}-${di?.music_current_artist || ""}`;
-    
-    if (currentTrackKey !== lastTrackKey) {
-      if (di?.music_current_title || di?.music_current_artist) {
-        setNowPlaying({
+
+    // Always refresh nowPlaying (curiosity may arrive after the track key)
+    if (di?.music_current_title || di?.music_current_artist) {
+      setNowPlaying(prev => {
+        const next = {
           musica: di.music_current_title || "Sem título",
           artista: di.music_current_artist || "Desconhecido",
           capa: di.music_current_cover || "",
-          curiosity: di.music_current_curiosity
-        });
-        setLastTrackKey(currentTrackKey);
-      }
+          curiosity: di.music_current_curiosity || "",
+        };
+        if (
+          prev &&
+          prev.musica === next.musica &&
+          prev.artista === next.artista &&
+          prev.capa === next.capa &&
+          prev.curiosity === next.curiosity
+        ) return prev;
+        return next;
+      });
+      if (currentTrackKey !== lastTrackKey) setLastTrackKey(currentTrackKey);
     }
+
+    // Derive XML telemetry (what's actually going out on <curiosidade>)
+    const manualText = di?.music_curiosity_manual as string | undefined;
+    const manualUntil = di?.music_curiosity_manual_until as string | undefined;
+    const manualActive = !!(manualText && manualUntil && new Date(manualUntil).getTime() > Date.now());
+    const effective = manualActive
+      ? { source: "manual" as const, text: manualText!, until: manualUntil }
+      : di?.music_current_curiosity
+        ? { source: "ai" as const, text: di.music_current_curiosity as string, until: undefined }
+        : { source: "none" as const, text: "", until: undefined };
+    setXmlTelemetry(effective);
   };
 
   const toggleAi = async () => {
@@ -414,6 +435,53 @@ export default function InfoMusicSection() {
           </div>
         </div>
       )}
+
+      <div className="rounded-xl p-3 flex items-start gap-3" style={{
+        backgroundColor: xmlTelemetry.source === "none"
+          ? "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, #6b7280)"
+          : "color-mix(in srgb, var(--layout-page-bg, #fff) 92%, #10b981)",
+        border: `1px solid ${xmlTelemetry.source === "none"
+          ? "color-mix(in srgb, #6b7280 25%, transparent)"
+          : "color-mix(in srgb, #10b981 30%, transparent)"}`,
+      }}>
+        <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+          <span
+            className={`w-2 h-2 rounded-full ${xmlTelemetry.source !== "none" ? "animate-pulse" : ""}`}
+            style={{ backgroundColor: xmlTelemetry.source === "none" ? "#6b7280" : "#10b981" }}
+          />
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+            XML
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <span className="text-[10px] font-bold uppercase tracking-wide opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Enviando agora em &lt;curiosidade&gt;
+            </span>
+            <span
+              className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+              style={{
+                backgroundColor: xmlTelemetry.source === "manual"
+                  ? "rgba(37,99,235,0.15)"
+                  : xmlTelemetry.source === "ai"
+                    ? "rgba(16,185,129,0.15)"
+                    : "rgba(107,114,128,0.15)",
+                color: xmlTelemetry.source === "manual" ? "#2563eb" : xmlTelemetry.source === "ai" ? "#10b981" : "#6b7280",
+              }}
+            >
+              {xmlTelemetry.source === "manual" ? "Manual" : xmlTelemetry.source === "ai" ? "Auto/IA" : "Vazio"}
+            </span>
+            {xmlTelemetry.source === "manual" && xmlTelemetry.until && (
+              <span className="text-[10px] opacity-60 font-mono" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                expira {new Date(xmlTelemetry.until).toLocaleTimeString("pt-BR")}
+              </span>
+            )}
+          </div>
+          <p className="text-xs italic leading-snug break-words" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 85%, transparent)" }}>
+            {xmlTelemetry.text ? `"${xmlTelemetry.text}"` : "— nenhum texto sendo enviado no momento —"}
+          </p>
+        </div>
+      </div>
 
       {nowPlaying && (
         <div className="rounded-xl p-4" style={{
