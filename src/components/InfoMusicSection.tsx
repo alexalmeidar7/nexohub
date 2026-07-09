@@ -502,6 +502,10 @@ export default function InfoMusicSection() {
             <div className="text-center py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
               Nenhuma curiosidade salva ainda. As curiosidades aparecerão aqui automaticamente conforme as músicas tocarem.
             </div>
+          ) : filteredRows.length === 0 ? (
+            <div className="text-center py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+              Nenhuma curiosidade encontrada para "<strong>{search}</strong>".
+            </div>
           ) : (
             <div className="max-h-[420px] overflow-auto">
               <table className="w-full text-xs">
