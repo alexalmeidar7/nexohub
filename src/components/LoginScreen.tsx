@@ -383,12 +383,13 @@ export default function LoginScreen() {
                     }}
                   >
                     {forgotLoading ? (
-                      <Loader2 size={20} className="animate-spin" style={{ color: "#0f1058" }} />
+                      <Loader2 className="icon icon-sm animate-spin" style={{ color: "#0f1058" }} />
                     ) : (
                       <>
                         enviar
-                        <ArrowRight size={20} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+                        <ArrowRight className="icon icon-sm transition-transform duration-300 group-hover:translate-x-1.5" />
                       </>
+
                     )}
                   </button>
                 </div>
