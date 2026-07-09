@@ -753,7 +753,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           })}
         </div>
 
-        <div className="flex flex-col items-center gap-2 mt-auto pb-2" />
+        
 
         </aside>
       </div>
