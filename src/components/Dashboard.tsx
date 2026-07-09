@@ -215,12 +215,46 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [parentEmail, setParentEmail] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
+  const [onAirLocutorFoto, setOnAirLocutorFoto] = useState<string | null>(null);
   const prevThumbRef = useRef<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const [contentScrollProgress, setContentScrollProgress] = useState(0);
   const [showContentScrollIndicator, setShowContentScrollIndicator] = useState(false);
 
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
+
+  // Fetch on-air presenter photo
+  useEffect(() => {
+    const uid = effectiveUserId || user?.id;
+    if (!uid) return;
+    let cancelled = false;
+    const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+    const load = async () => {
+      const { data } = await supabase
+        .from("programas")
+        .select("apresentador_id, dias_semana, horario_inicio, horario_fim")
+        .eq("user_id", uid)
+        .eq("ativo", true)
+        .ilike("estudio", "%fm%");
+      if (cancelled || !data) return;
+      const now = new Date();
+      const dia = DIAS_MAP[now.getDay()];
+      const hora = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const current = data.find((p: any) =>
+        (p.dias_semana || []).includes(dia) && hora >= p.horario_inicio && hora < p.horario_fim
+      );
+      if (!current?.apresentador_id) { setOnAirLocutorFoto(null); return; }
+      const { data: ap } = await supabase
+        .from("apresentadores")
+        .select("foto")
+        .eq("id", current.apresentador_id)
+        .maybeSingle();
+      if (!cancelled) setOnAirLocutorFoto((ap as any)?.foto || null);
+    };
+    load();
+    const iv = setInterval(load, 60000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [user, effectiveUserId]);
 
   // Helper: find current on-air program and fetch only its thumb
   const findCurrentOnAirThumb = useCallback(async (overrideUserId?: string) => {
@@ -880,7 +914,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               />
               {/* BOX DO LOCUTOR */}
               <div
-                className="absolute rounded-2xl"
+                className="absolute rounded-2xl overflow-hidden group"
                 style={{
                   top: "20px",
                   right: "20px",
@@ -888,7 +922,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   width: "320px",
                   backgroundColor: "#c3f628",
                 }}
-              />
+              >
+                {onAirLocutorFoto && (
+                  <img
+                    src={onAirLocutorFoto}
+                    alt="Locutor no ar"
+                    className="w-full h-full object-cover transition-all duration-500 grayscale group-hover:grayscale-0"
+                    style={{ mixBlendMode: "multiply" }}
+                  />
+                )}
+              </div>
             </div>
 
           </div>
