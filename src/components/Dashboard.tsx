@@ -866,6 +866,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   style={{ top: "60px", left: "8px", height: "208px", width: "auto" }}
                 />
               )}
+              <div
+                id="on-air-info-slot"
+                style={{
+                  position: "absolute",
+                  bottom: "20px",
+                  left: "18px",
+                  right: "18px",
+                  ["--layout-nav-text" as any]: "#002132",
+                  ["--layout-icon-color" as any]: "#002132",
+                  ["--layout-accent-color" as any]: "#002132",
+                }}
+              />
             </div>
 
           </div>
