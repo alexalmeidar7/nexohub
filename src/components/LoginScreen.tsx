@@ -318,7 +318,7 @@ export default function LoginScreen() {
         <div
           className="absolute left-0 right-0 z-0 overflow-hidden transition-all duration-500 ease-in-out"
           style={{
-            top: showForgot ? "calc(100% - 24px)" : "50%",
+            top: showForgot ? "calc(100% - 80px)" : "50%",
             opacity: showForgot ? 1 : 0,
             pointerEvents: showForgot ? "auto" : "none",
           }}
