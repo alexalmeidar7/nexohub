@@ -523,6 +523,19 @@ export default function InfoMusicSection() {
                   })}
                 </tbody>
               </table>
+              {rows.length < Math.min(totalCount, HARD_CAP) && (
+                <div className="p-3 flex items-center justify-center" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 inline-flex items-center gap-2"
+                    style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                  >
+                    {loadingMore ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                    Carregar mais ({Math.min(PAGE_SIZE, Math.min(totalCount, HARD_CAP) - rows.length)})
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
