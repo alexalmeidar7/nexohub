@@ -430,7 +430,7 @@ export default function InfoMusicSection() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            Curiosidades salvas ({rows.length})
+            Curiosidades salvas ({rows.length}{totalCount > rows.length ? ` de ${totalCount}` : ""})
           </h4>
           <button onClick={load} className="text-xs opacity-60 hover:opacity-100 inline-flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <RefreshCw size={11} /> Atualizar
