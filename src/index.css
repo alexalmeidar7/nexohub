@@ -443,6 +443,19 @@ textarea:active,
   --tw-ring-shadow: 0 0 #0000 !important;
 }
 
+/* Escapa do reset global: inputs com esta classe mantêm sua borda inline */
+input.login-input,
+input.login-input:focus,
+input.login-input:active {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  border: 2px solid #00dbff !important;
+  border-width: 2px !important;
+}
+input.login-input:focus {
+  box-shadow: 0 0 0 3px rgba(0,219,255,0.25) !important;
+}
+
 .mv-content-area .mv-form-header {
   background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #ffffff));
   color: var(--layout-accent-color, #2563eb);
