@@ -97,15 +97,35 @@ export default function InfoMusicSection() {
     setSavingExcecoes(false);
   };
 
+  const PAGE_SIZE = 50;
+  const HARD_CAP = 1000;
+  const [totalCount, setTotalCount] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const load = async () => {
     setLoading(true);
+    const { data, count } = await supabase
+      .from("infomusic")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(0, PAGE_SIZE - 1);
+    setRows(data || []);
+    setTotalCount(count || 0);
+    setLoading(false);
+  };
+
+  const loadMore = async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    const from = rows.length;
+    const to = Math.min(from + PAGE_SIZE, HARD_CAP) - 1;
     const { data } = await supabase
       .from("infomusic")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(1000);
-    setRows(data || []);
-    setLoading(false);
+      .range(from, to);
+    if (data && data.length) setRows(prev => [...prev, ...data]);
+    setLoadingMore(false);
   };
 
   useEffect(() => { load(); }, []);
@@ -410,7 +430,7 @@ export default function InfoMusicSection() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            Curiosidades salvas ({rows.length})
+            Curiosidades salvas ({rows.length}{totalCount > rows.length ? ` de ${totalCount}` : ""})
           </h4>
           <button onClick={load} className="text-xs opacity-60 hover:opacity-100 inline-flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <RefreshCw size={11} /> Atualizar
@@ -503,6 +523,19 @@ export default function InfoMusicSection() {
                   })}
                 </tbody>
               </table>
+              {rows.length < Math.min(totalCount, HARD_CAP) && (
+                <div className="p-3 flex items-center justify-center" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 inline-flex items-center gap-2"
+                    style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                  >
+                    {loadingMore ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                    Carregar mais ({Math.min(PAGE_SIZE, Math.min(totalCount, HARD_CAP) - rows.length)})
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
