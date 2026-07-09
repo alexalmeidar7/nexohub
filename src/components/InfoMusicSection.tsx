@@ -50,18 +50,38 @@ export default function InfoMusicSection() {
     // Parse now playing data from dashboard_items
     const di = data?.dashboard_items as any;
     const currentTrackKey = `${di?.music_current_title || ""}-${di?.music_current_artist || ""}`;
-    
-    if (currentTrackKey !== lastTrackKey) {
-      if (di?.music_current_title || di?.music_current_artist) {
-        setNowPlaying({
+
+    // Always refresh nowPlaying (curiosity may arrive after the track key)
+    if (di?.music_current_title || di?.music_current_artist) {
+      setNowPlaying(prev => {
+        const next = {
           musica: di.music_current_title || "Sem título",
           artista: di.music_current_artist || "Desconhecido",
           capa: di.music_current_cover || "",
-          curiosity: di.music_current_curiosity
-        });
-        setLastTrackKey(currentTrackKey);
-      }
+          curiosity: di.music_current_curiosity || "",
+        };
+        if (
+          prev &&
+          prev.musica === next.musica &&
+          prev.artista === next.artista &&
+          prev.capa === next.capa &&
+          prev.curiosity === next.curiosity
+        ) return prev;
+        return next;
+      });
+      if (currentTrackKey !== lastTrackKey) setLastTrackKey(currentTrackKey);
     }
+
+    // Derive XML telemetry (what's actually going out on <curiosidade>)
+    const manualText = di?.music_curiosity_manual as string | undefined;
+    const manualUntil = di?.music_curiosity_manual_until as string | undefined;
+    const manualActive = !!(manualText && manualUntil && new Date(manualUntil).getTime() > Date.now());
+    const effective = manualActive
+      ? { source: "manual" as const, text: manualText!, until: manualUntil }
+      : di?.music_current_curiosity
+        ? { source: "ai" as const, text: di.music_current_curiosity as string, until: undefined }
+        : { source: "none" as const, text: "", until: undefined };
+    setXmlTelemetry(effective);
   };
 
   const toggleAi = async () => {
