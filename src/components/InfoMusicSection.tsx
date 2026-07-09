@@ -102,7 +102,47 @@ export default function InfoMusicSection() {
   const [totalCount, setTotalCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
-  const [filterField, setFilterField] = useState<"all" | "artista" | "musica" | "curiosidade">("all");
+  const [filterField, setFilterField] = useState<"all" | "artista" | "musica" | "curiosidade" | "sem_curiosidade">("all");
+  const [missingRows, setMissingRows] = useState<{ artista: string; musica: string; ultima: string }[]>([]);
+  const [loadingMissing, setLoadingMissing] = useState(false);
+  const [missingInputs, setMissingInputs] = useState<Record<string, string>>({});
+  const [savingMissingKey, setSavingMissingKey] = useState<string | null>(null);
+
+  const loadMissing = async () => {
+    setLoadingMissing(true);
+    try {
+      const { data: played } = await supabase
+        .from("musicas_tocadas")
+        .select("artista, musica, created_at")
+        .order("created_at", { ascending: false })
+        .limit(2000);
+      const { data: infos } = await supabase
+        .from("infomusic")
+        .select("artista, musica")
+        .limit(2000);
+      const known = new Set((infos || []).map(i => `${(i.artista || "").trim().toLowerCase()}::${(i.musica || "").trim().toLowerCase()}`));
+      const seen = new Set<string>();
+      const missing: { artista: string; musica: string; ultima: string }[] = [];
+      for (const p of played || []) {
+        const key = `${(p.artista || "").trim().toLowerCase()}::${(p.musica || "").trim().toLowerCase()}`;
+        if (!key || known.has(key) || seen.has(key)) continue;
+        seen.add(key);
+        missing.push({ artista: p.artista || "", musica: p.musica || "", ultima: p.created_at });
+      }
+      setMissingRows(missing);
+    } catch (e) {
+      toast.error("Erro ao carregar músicas sem curiosidade");
+    }
+    setLoadingMissing(false);
+  };
+
+  const filteredMissing = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return missingRows;
+    return missingRows.filter(m =>
+      m.artista.toLowerCase().includes(q) || m.musica.toLowerCase().includes(q)
+    );
+  }, [missingRows, search]);
 
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
