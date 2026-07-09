@@ -178,21 +178,20 @@ export default function LoginScreen() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden"
-      style={{ background: "linear-gradient(145deg, #080830 0%, #0f1058 40%, #1a1280 100%)" }}
+      style={{ background: "#00dbff" }}
     >
-      {/* Ambient glow orbs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full opacity-20 blur-[120px] pointer-events-none" style={{ background: "radial-gradient(circle, #268ffa 0%, transparent 70%)" }} />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full opacity-15 blur-[100px] pointer-events-none" style={{ background: "radial-gradient(circle, #6c3ce0 0%, transparent 70%)" }} />
-
       <div className="relative w-full max-w-md z-10">
         {/* Main Login Box */}
         <div
-          className="relative z-10 w-full p-10 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.08)] animate-fade-in backdrop-blur-xl"
+          className="relative z-10 w-full p-10 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.25),0_0_0_1px_rgba(255,255,255,0.08)] animate-fade-in backdrop-blur-xl"
           style={{ fontSize: "12px", borderRadius: "1.5rem", background: "rgba(255,255,255,0.97)" }}
         >
-          <h1 className="text-center font-semibold tracking-wide mb-8" style={{ color: "#0f1058", fontSize: "12px" }}>
-            HouseMix login
-          </h1>
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <Home size={16} style={{ color: "#0f1058" }} />
+            <h1 className="text-center font-semibold tracking-wide" style={{ color: "#0f1058", fontSize: "12px" }}>
+              HouseMix login
+            </h1>
+          </div>
 
           <div className="space-y-4">
             <input
