@@ -637,16 +637,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       }}
                       className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
                       style={{
-                        backgroundColor: active ? layoutColors.accentColor : "transparent",
+                        backgroundColor: active && item.label !== "home" ? layoutColors.accentColor : "transparent",
                       }}
-                      onMouseEnter={(e) => { if (!active) e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
-                      onMouseLeave={(e) => { if (!active) e.currentTarget.style.backgroundColor = "transparent"; }}
+                      onMouseEnter={(e) => { if (!active || item.label === "home") e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
+                      onMouseLeave={(e) => { if (!active || item.label === "home") e.currentTarget.style.backgroundColor = "transparent"; }}
                     >
                       {item.label === "home" ? (
-                        <HouseMixIcon size={22} />
+                        <HouseMixIcon size={18} />
                       ) : (
                         <Icon size={18} style={{ color: active ? layoutColors.navText : `${layoutColors.navText}99` }} />
                       )}
+
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="right">
