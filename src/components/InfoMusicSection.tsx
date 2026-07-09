@@ -290,11 +290,6 @@ export default function InfoMusicSection() {
               <p className="text-xs font-medium truncate opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                 {nowPlaying.artista}
               </p>
-              {nowPlaying.curiosity && (
-                <div className="mt-2 text-[11px] italic leading-tight opacity-60 line-clamp-2">
-                  "{nowPlaying.curiosity}"
-                </div>
-              )}
             </div>
             
             <button 
