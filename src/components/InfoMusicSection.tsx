@@ -531,6 +531,7 @@ export default function InfoMusicSection() {
             <option value="artista">Somente artista</option>
             <option value="musica">Somente música</option>
             <option value="curiosidade">Somente curiosidade</option>
+            <option value="sem_curiosidade">Músicas sem curiosidades</option>
           </select>
         </div>
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
