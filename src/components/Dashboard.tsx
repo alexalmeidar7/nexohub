@@ -928,7 +928,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     src={onAirLocutorFoto}
                     alt="Locutor no ar"
                     className="w-full h-full object-cover"
-                    style={{ mixBlendMode: "multiply" }}
+                    
                   />
                 )}
               </div>
