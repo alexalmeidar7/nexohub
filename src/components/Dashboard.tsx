@@ -219,7 +219,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [onAirTimes, setOnAirTimes] = useState<{ inicio: string; fim: string } | null>(null);
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
-    const iv = setInterval(() => setNowTick(Date.now()), 30000);
+    const iv = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(iv);
   }, []);
   const prevThumbRef = useRef<string | null>(null);
