@@ -325,7 +325,7 @@ export default function LoginScreen() {
         >
           <div
             className="px-10 pt-10 pb-8 shadow-[0_16px_50px_-10px_rgba(0,0,0,0.15)]"
-            style={{ background: "rgba(255,255,255,0.97)", fontSize: "12px", borderRadius: "0 0 1.5rem 1.5rem", border: "1px solid rgba(0,219,255,0.25)", borderTop: "none" }}
+            style={{ background: "#d9ff65", fontSize: "12px", borderRadius: "0 0 1.5rem 1.5rem", border: "1px solid rgba(0,219,255,0.25)", borderTop: "none" }}
           >
             {forgotSent ? (
               <div className="flex flex-col items-center gap-3">
