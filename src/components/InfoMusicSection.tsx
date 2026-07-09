@@ -32,6 +32,8 @@ export default function InfoMusicSection() {
   const [lastTrackKey, setLastTrackKey] = useState<string>("");
   const [manualCuriosityText, setManualCuriosityText] = useState("");
   const [savingManualCuriosity, setSavingManualCuriosity] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const curiosityFetchKeyRef = useRef<string>("");
   const [xmlTelemetry, setXmlTelemetry] = useState<{ source: "manual" | "ai" | "none"; text: string; until?: string }>({ source: "none", text: "" });
 
   const loadExcecoes = async () => {
