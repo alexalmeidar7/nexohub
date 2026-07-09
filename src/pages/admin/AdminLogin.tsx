@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ArrowRight, Loader2, Shield } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
@@ -24,11 +25,7 @@ export default function AdminLogin() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#131519" }}>
-        <Loader2 className="animate-spin" size={32} style={{ color: "#d9ff65" }} />
-      </div>
-    );
+    return <LoadingSpinner fullscreen />;
   }
 
   if (user && role === "admin") {

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import SiteMockup from "@/components/site/SiteMockup";
-import { Loader2 } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function SitePreview() {
   const { user, loading: authLoading } = useAuth();
@@ -21,11 +21,7 @@ export default function SitePreview() {
   }, [config?.site_nome]);
 
   if (authLoading || loading || !effectiveUserId || !config) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#131519" }}>
-        <Loader2 className="animate-spin" size={32} style={{ color: "#d9ff65" }} />
-      </div>
-    );
+    return <LoadingSpinner fullscreen />;
   }
 
   return (
