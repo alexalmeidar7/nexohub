@@ -624,6 +624,7 @@ export default function InfoMusicSection() {
                       window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: manualCuriosityText.trim() } }));
                       toast.success("Curiosidade cadastrada e enviada ao XML!");
                       setManualCuriosityText("");
+                      setShowManualForm(false);
                       await load();
                       await loadExcecoes();
                     } catch (e) {
