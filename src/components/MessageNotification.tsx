@@ -137,7 +137,7 @@ export default function MessageNotification() {
 
       {hovering && (
         <div
-          className="absolute left-full top-0 ml-2 w-[340px] rounded-2xl overflow-hidden animate-in fade-in slide-in-from-left-2 duration-200 z-50"
+          className="absolute top-full right-0 mt-2 w-[340px] rounded-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50"
           style={{
             background: "rgba(0, 0, 0, 0.85)",
             backdropFilter: "blur(40px) saturate(1.6)",
