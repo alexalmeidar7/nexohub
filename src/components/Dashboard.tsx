@@ -753,39 +753,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           })}
         </div>
 
-        <div className="flex flex-col items-center gap-2 mt-auto pb-2">
-          <Suspense fallback={<div className="w-10 h-10" />}>
-            <MessageNotification />
-          </Suspense>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setCurrentPage("configuracoes")}
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-all"
-                style={{ color: `${layoutColors.navText}80` }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
-              >
-                <Settings size={18} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right"><p className="text-xs">Configurações</p></TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onLogout}
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-all"
-                style={{ color: layoutColors.accentColor }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
-              >
-                <LogOut size={18} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right"><p className="text-xs">Sair</p></TooltipContent>
-          </Tooltip>
-        </div>
+        <div className="flex flex-col items-center gap-2 mt-auto pb-2" />
+
         </aside>
       </div>
 
