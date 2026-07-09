@@ -998,27 +998,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     return () => { cancelled = true; };
   }, [music?.titulo, music?.artista, isBreak, dataUserId]);
 
-  // Curiosity window: cached curiosities show immediately for 15s; freshly generated ones start 10s after the song begins and stay for 30s.
-  const curiosityKey = curiosidade ? `${music?.artista || ""}::${music?.titulo || ""}`.toLowerCase() : "";
-  if (curiosityKey !== curiosityKeyRef.current) {
-    curiosityKeyRef.current = curiosityKey;
-    curiosityShownAtRef.current = null;
-    curiosityDurationRef.current = 30_000;
-  }
-  if (curiosidade && curiosityShownAtRef.current === null && elapsed >= 10) {
-    curiosityShownAtRef.current = Date.now();
-    curiosityDurationRef.current = 30_000;
-  }
-  useEffect(() => {
-    if (curiosityShownAtRef.current === null) return;
-    const t = setTimeout(() => forceCuriosityTick((n) => n + 1), curiosityDurationRef.current);
-    return () => clearTimeout(t);
-  }, [curiosidade, elapsed >= 10]);
-  const showCuriosidade = !!curiosidade
-    && curiosityShownAtRef.current !== null
-    && (Date.now() - curiosityShownAtRef.current) < curiosityDurationRef.current;
+  // XML always carries the curiosity of the song currently playing (as long as we have one for it).
   const escapeXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const xmlCuriosidade = showCuriosidade ? escapeXml(curiosidade) : "";
+  const xmlCuriosidade = curiosidade ? escapeXml(curiosidade) : "";
 
   if (!music && !presenterFallback) {
     return (
