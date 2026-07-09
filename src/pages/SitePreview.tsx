@@ -22,8 +22,8 @@ export default function SitePreview() {
 
   if (authLoading || loading || !effectiveUserId || !config) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="animate-spin text-slate-400" />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#131519" }}>
+        <Loader2 className="animate-spin" size={32} style={{ color: "#d9ff65" }} />
       </div>
     );
   }

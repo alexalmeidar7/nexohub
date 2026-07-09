@@ -25,8 +25,8 @@ export default function AdminLogin() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #004dc0 0%, #0c0440 100%)" }}>
-        <Loader2 className="animate-spin" size={32} style={{ color: "#268ffa" }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#131519" }}>
+        <Loader2 className="animate-spin" size={32} style={{ color: "#d9ff65" }} />
       </div>
     );
   }
