@@ -878,6 +878,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   ["--layout-accent-color" as any]: "#002132",
                 }}
               />
+              {/* BOX DO LOCUTOR */}
+              <div
+                className="absolute rounded-2xl"
+                style={{
+                  top: "20px",
+                  right: "20px",
+                  bottom: "20px",
+                  width: "320px",
+                  backgroundColor: "#c3f628",
+                }}
+              />
             </div>
 
           </div>
