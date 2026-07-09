@@ -6,6 +6,7 @@ import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus, Maximize, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
