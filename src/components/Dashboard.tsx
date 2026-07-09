@@ -964,48 +964,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     
                   />
                 )}
-                {onAirTimes && (() => {
-                  const [sh, sm] = onAirTimes.inicio.split(":").map(Number);
-                  const [eh, em] = onAirTimes.fim.split(":").map(Number);
-                  const now = new Date(nowTick);
-                  const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-                  const startSec = sh * 3600 + sm * 60;
-                  const endSec = eh * 3600 + em * 60;
-                  const total = Math.max(endSec - startSec, 1);
-                  const elapsed = Math.min(Math.max(nowSec - startSec, 0), total);
-                  
-                  const fmt = (s: number) => {
-                    const h = Math.floor(s / 3600);
-                    const m = Math.floor((s % 3600) / 60);
-                    const sec = s % 60;
-                    const pad = (n: number) => String(n).padStart(2, "0");
-                    return h > 0
-                      ? `${h}:${pad(m)}:${pad(sec)}`
-                      : `${pad(m)}:${pad(sec)}`;
-                  };
-                  return (
-                    <div
-                      className="absolute group/bar"
-                      style={{ left: "20px", right: "20px", bottom: "10px", height: "10px" }}
-                    >
-                      <div
-                        className="absolute left-0 right-0 top-1/2 -translate-y-1/2 rounded-full overflow-hidden"
-                        style={{ height: "2px", backgroundColor: "rgba(0,33,50,0.15)" }}
-                      >
-                        <div
-                          className="h-full w-full rounded-full origin-left"
-                          style={{ transform: `scaleX(${elapsed / total})`, backgroundColor: "#d7faff", transition: "transform 1000ms linear", willChange: "transform" }}
-                        />
-                      </div>
-                      <div
-                        className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap rounded-md px-2 py-1 text-[10px] font-medium shadow-lg"
-                        style={{ backgroundColor: "#002132", color: "#e4fcff" }}
-                      >
-                        {fmt(elapsed)} / {fmt(total)}
-                      </div>
-                    </div>
-                  );
-                })()}
+                {onAirTimes && <ProgramProgressBar inicio={onAirTimes.inicio} fim={onAirTimes.fim} nowTick={nowTick} />}
 
                 {/* Overlay: Próximo programa/locutor */}
                 {nextProgram && (
