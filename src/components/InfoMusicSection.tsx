@@ -101,6 +101,22 @@ export default function InfoMusicSection() {
   const HARD_CAP = 1000;
   const [totalCount, setTotalCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterField, setFilterField] = useState<"all" | "artista" | "musica" | "curiosidade">("all");
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter(r => {
+      const artista = (r.artista || "").toLowerCase();
+      const musica = (r.musica || "").toLowerCase();
+      const curiosidade = (r.curiosidade || "").toLowerCase();
+      if (filterField === "artista") return artista.includes(q);
+      if (filterField === "musica") return musica.includes(q);
+      if (filterField === "curiosidade") return curiosidade.includes(q);
+      return artista.includes(q) || musica.includes(q) || curiosidade.includes(q);
+    });
+  }, [rows, search, filterField]);
 
   const load = async () => {
     setLoading(true);
