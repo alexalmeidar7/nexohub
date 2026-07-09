@@ -365,7 +365,7 @@ export default function LoginScreen() {
                     className="flex items-center gap-1 transition-colors duration-200"
                     style={{ fontSize: "12px", color: "#0f1058" }}
                   >
-                    <X size={14} /> Fechar
+                    <X className="icon icon-xs" /> Fechar
                   </button>
                   <button
                     onClick={handleForgot}
