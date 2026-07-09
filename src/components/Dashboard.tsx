@@ -914,7 +914,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               />
               {/* BOX DO LOCUTOR */}
               <div
-                className="absolute rounded-2xl"
+                className="absolute rounded-2xl overflow-hidden group"
                 style={{
                   top: "20px",
                   right: "20px",
@@ -922,7 +922,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   width: "320px",
                   backgroundColor: "#c3f628",
                 }}
-              />
+              >
+                {onAirLocutorFoto && (
+                  <img
+                    src={onAirLocutorFoto}
+                    alt="Locutor no ar"
+                    className="w-full h-full object-cover transition-all duration-500 grayscale group-hover:grayscale-0"
+                    style={{ mixBlendMode: "multiply" }}
+                  />
+                )}
+              </div>
             </div>
 
           </div>
