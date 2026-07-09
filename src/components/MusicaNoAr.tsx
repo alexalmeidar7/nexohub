@@ -491,28 +491,32 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       if (dataUserId) {
         (async () => {
           try {
-            const patch: Record<string, any> = {
+            // Push fresh track info + clear old curiosity IMMEDIATELY
+            const basePatch: Record<string, any> = {
               music_start_time: now,
               music_current_title: data.titulo,
               music_current_artist: data.artista,
               music_current_cover: data.capa || "",
+              music_current_curiosity: "",
             };
+            await mergeUserDashboardItems(dataUserId, basePatch);
 
-            // Trigger curiosity generation for local source too
+            // Fetch curiosity in background; guard against stale writes if the song changed again
             const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
-              body: { 
-                artista: data.artista, 
-                musica: data.titulo, 
+              body: {
+                artista: data.artista,
+                musica: data.titulo,
                 userId: dataUserId,
-                deezerArtistImg: data.capa 
+                deezerArtistImg: data.capa,
               },
             });
 
             if (curData?.curiosidade) {
-              patch.music_current_curiosity = curData.curiosidade;
+              const stillCurrent = localStorage.getItem(musicStartKey(dataUserId) || "") === String(now);
+              if (stillCurrent) {
+                await mergeUserDashboardItems(dataUserId, { music_current_curiosity: curData.curiosidade });
+              }
             }
-
-            await mergeUserDashboardItems(dataUserId, patch);
           } catch (e) {
             console.warn("[MusicaNoAr] Error generating curiosity/merging:", e);
           }
