@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,6 +32,8 @@ export default function InfoMusicSection() {
   const [lastTrackKey, setLastTrackKey] = useState<string>("");
   const [manualCuriosityText, setManualCuriosityText] = useState("");
   const [savingManualCuriosity, setSavingManualCuriosity] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const curiosityFetchKeyRef = useRef<string>("");
   const [xmlTelemetry, setXmlTelemetry] = useState<{ source: "manual" | "ai" | "none"; text: string; until?: string }>({ source: "none", text: "" });
 
   const loadExcecoes = async () => {
@@ -243,6 +245,41 @@ export default function InfoMusicSection() {
     const interval = setInterval(loadExcecoes, 5000);
     return () => clearInterval(interval);
   }, [user]);
+
+  // Actively fetch curiosity for the currently playing song if the dashboard doesn't already have one.
+  // Also resets the manual-form toggle whenever the track changes.
+  useEffect(() => {
+    if (!nowPlaying || !user) return;
+    const key = `${nowPlaying.artista}::${nowPlaying.musica}`.toLowerCase();
+    if (curiosityFetchKeyRef.current !== key) {
+      curiosityFetchKeyRef.current = key;
+      setShowManualForm(false);
+      setManualCuriosityText("");
+    }
+    if (nowPlaying.curiosity) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("get-music-curiosity", {
+          body: { artista: nowPlaying.artista, musica: nowPlaying.musica, userId: user.id },
+        });
+        if (cancelled) return;
+        const txt = (data as { curiosidade?: string })?.curiosidade;
+        if (!txt) return;
+        // Reflect immediately in UI
+        setNowPlaying(prev => prev && prev.musica === nowPlaying.musica && prev.artista === nowPlaying.artista
+          ? { ...prev, curiosity: txt } : prev);
+        // Persist to dashboard so the XML picks it up
+        const currentDashboard = (await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle()).data?.dashboard_items as any || {};
+        await supabase.from("user_settings").update({
+          dashboard_items: { ...currentDashboard, music_current_curiosity: txt },
+        }).eq("user_id", user.id);
+      } catch (e) {
+        console.warn("[InfoMusicSection] curiosity fetch failed", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [nowPlaying?.musica, nowPlaying?.artista, nowPlaying?.curiosity, user]);
 
   const handleTest = async () => {
     if (!testArtista.trim() || !testMusica.trim()) {
@@ -498,15 +535,40 @@ export default function InfoMusicSection() {
             <p className="text-xs italic leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 85%, transparent)" }}>
               "{nowPlaying.curiosity}"
             </p>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-xs opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+          ) : !showManualForm ? (
+            <div className="space-y-3">
+              <p className="text-xs opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                 Nenhuma curiosidade encontrada para <strong>{nowPlaying.musica}</strong> — {nowPlaying.artista}.
                 {monthlyQuota.count >= monthlyQuota.limit && (
                   <span className="block mt-1 text-[11px]" style={{ color: "#ef4444" }}>
-                    Cota mensal de IA esgotada. Cadastre manualmente abaixo:
+                    Cota mensal de IA esgotada.
                   </span>
                 )}
+              </p>
+              <p className="text-xs font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Deseja cadastrar uma curiosidade manualmente?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowManualForm(true)}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:opacity-90"
+                  style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                >
+                  Sim, cadastrar
+                </button>
+                <button
+                  onClick={() => { curiosityFetchKeyRef.current = ""; }}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide opacity-70 hover:opacity-100"
+                  style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
+                >
+                  Tentar buscar novamente
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[11px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Cadastrando curiosidade manual para <strong>{nowPlaying.musica}</strong> — {nowPlaying.artista}
               </p>
               <textarea
                 value={manualCuriosityText}
@@ -562,6 +624,7 @@ export default function InfoMusicSection() {
                       window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: manualCuriosityText.trim() } }));
                       toast.success("Curiosidade cadastrada e enviada ao XML!");
                       setManualCuriosityText("");
+                      setShowManualForm(false);
                       await load();
                       await loadExcecoes();
                     } catch (e) {
