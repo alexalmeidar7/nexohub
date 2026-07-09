@@ -246,6 +246,41 @@ export default function InfoMusicSection() {
     return () => clearInterval(interval);
   }, [user]);
 
+  // Actively fetch curiosity for the currently playing song if the dashboard doesn't already have one.
+  // Also resets the manual-form toggle whenever the track changes.
+  useEffect(() => {
+    if (!nowPlaying || !user) return;
+    const key = `${nowPlaying.artista}::${nowPlaying.musica}`.toLowerCase();
+    if (curiosityFetchKeyRef.current !== key) {
+      curiosityFetchKeyRef.current = key;
+      setShowManualForm(false);
+      setManualCuriosityText("");
+    }
+    if (nowPlaying.curiosity) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("get-music-curiosity", {
+          body: { artista: nowPlaying.artista, musica: nowPlaying.musica, userId: user.id },
+        });
+        if (cancelled) return;
+        const txt = (data as { curiosidade?: string })?.curiosidade;
+        if (!txt) return;
+        // Reflect immediately in UI
+        setNowPlaying(prev => prev && prev.musica === nowPlaying.musica && prev.artista === nowPlaying.artista
+          ? { ...prev, curiosity: txt } : prev);
+        // Persist to dashboard so the XML picks it up
+        const currentDashboard = (await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle()).data?.dashboard_items as any || {};
+        await supabase.from("user_settings").update({
+          dashboard_items: { ...currentDashboard, music_current_curiosity: txt },
+        }).eq("user_id", user.id);
+      } catch (e) {
+        console.warn("[InfoMusicSection] curiosity fetch failed", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [nowPlaying?.musica, nowPlaying?.artista, nowPlaying?.curiosity, user]);
+
   const handleTest = async () => {
     if (!testArtista.trim() || !testMusica.trim()) {
       toast.error("Informe artista e música");
