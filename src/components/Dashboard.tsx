@@ -939,6 +939,34 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     
                   />
                 )}
+                {onAirTimes && (() => {
+                  const [sh, sm] = onAirTimes.inicio.split(":").map(Number);
+                  const [eh, em] = onAirTimes.fim.split(":").map(Number);
+                  const now = new Date(nowTick);
+                  const nowMin = now.getHours() * 60 + now.getMinutes();
+                  const startMin = sh * 60 + sm;
+                  const endMin = eh * 60 + em;
+                  const total = Math.max(endMin - startMin, 1);
+                  const elapsed = Math.min(Math.max(nowMin - startMin, 0), total);
+                  const pct = (elapsed / total) * 100;
+                  return (
+                    <div
+                      className="absolute rounded-full overflow-hidden"
+                      style={{
+                        left: "16px",
+                        right: "16px",
+                        bottom: "16px",
+                        height: "6px",
+                        backgroundColor: "rgba(0,33,50,0.2)",
+                      }}
+                    >
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%`, backgroundColor: "#002132" }}
+                      />
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
