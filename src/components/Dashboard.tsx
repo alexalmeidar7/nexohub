@@ -863,7 +863,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   src={onAirThumb}
                   alt="Programa no ar"
                   className="absolute object-contain"
-                  style={{ top: "80px", left: "20px", height: "160px", width: "auto" }}
+                  style={{ top: "60px", left: "20px", height: "208px", width: "auto" }}
                 />
               )}
             </div>
