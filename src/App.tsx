@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import { Loader2 } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 // Retry wrapper for lazy imports — retries up to 3 times on chunk load failure
@@ -149,25 +150,7 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <ChunkErrorBoundary>
-          <Suspense fallback={
-            <div
-              aria-label="Carregando"
-              style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "#131519",
-                zIndex: 9999,
-              }}
-            >
-              <Loader2 className="animate-spin" size={32} style={{ color: "#d9ff65" }} />
-            </div>
-          }>
+          <Suspense fallback={<LoadingSpinner fullscreen />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
