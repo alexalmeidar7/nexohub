@@ -179,6 +179,14 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
   }
   const [onAirProgram, setOnAirProgram] = useState<OnAirProgram | null>(null);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string } | null>(null);
+  const [onAirSlot, setOnAirSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    const findSlot = () => setOnAirSlot(document.getElementById("on-air-info-slot"));
+    findSlot();
+    const obs = new MutationObserver(findSlot);
+    obs.observe(document.body, { childList: true, subtree: true });
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!user) return;
