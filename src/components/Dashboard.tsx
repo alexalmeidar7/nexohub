@@ -632,7 +632,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
 
       {/* ===== LEFT SIDEBAR (desktop) ===== */}
-      <div className="hidden lg:flex flex-shrink-0 z-[60] items-stretch py-3 pl-3 overflow-visible">
+      <div className="hidden lg:flex flex-shrink-0 z-[60] items-start py-3 pl-3 overflow-visible">
         <aside
           className="flex flex-col items-center py-4 gap-2 rounded-full relative overflow-visible"
           style={{
@@ -642,7 +642,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           }}
         >
 
-        <div className="flex-1 flex flex-col items-center gap-1 px-1 overflow-visible">
+        <div className="flex flex-col items-center gap-1 px-1 overflow-visible">
           {sidebarMenu.filter(item => {
             // Sub-user: only show menus for allowed modules
             if (subUserModules !== null) {
@@ -753,7 +753,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           })}
         </div>
 
-        <div className="flex flex-col items-center gap-2 mt-auto pb-2" />
+        
 
         </aside>
       </div>
