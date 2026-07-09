@@ -216,6 +216,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const [onAirLocutorFoto, setOnAirLocutorFoto] = useState<string | null>(null);
+  const [onAirTimes, setOnAirTimes] = useState<{ inicio: string; fim: string } | null>(null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const iv = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(iv);
+  }, []);
   const prevThumbRef = useRef<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const [contentScrollProgress, setContentScrollProgress] = useState(0);
