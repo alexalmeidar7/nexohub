@@ -859,7 +859,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   {pageTitle[currentPage]}
                 </p>
               )}
-              <h1 className="text-2xl font-light" style={{ color: isDashboard ? layoutColors.navText : layoutColors.pageText }}>
+              <h1 className="text-2xl font-light" style={{ color: "#002132" }}>
                 {empresa.nome || "NexoHUB"}
               </h1>
             </div>
