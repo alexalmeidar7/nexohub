@@ -642,10 +642,19 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       onMouseEnter={(e) => { if (!active) e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
                       onMouseLeave={(e) => { if (!active) e.currentTarget.style.backgroundColor = "transparent"; }}
                     >
-                      <Icon size={18} style={{ color: active ? layoutColors.navText : `${layoutColors.navText}99` }} />
+                      {item.label === "home" ? (
+                        <HouseMixIcon size={22} />
+                      ) : (
+                        <Icon size={18} style={{ color: active ? layoutColors.navText : `${layoutColors.navText}99` }} />
+                      )}
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="right"><p className="text-xs capitalize">{item.label}</p></TooltipContent>
+                  <TooltipContent side="right">
+                    <p className="text-xs capitalize">
+                      {item.label === "home" ? "Home HouseMix" : item.label}
+                    </p>
+                  </TooltipContent>
+
                 </Tooltip>
 
                 {/* Sidebar flyout submenu */}
