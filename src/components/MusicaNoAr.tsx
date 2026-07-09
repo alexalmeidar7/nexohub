@@ -978,9 +978,18 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         if (cancelled) return;
         if (error) { console.warn("curiosity error", error); return; }
         const txt = (data as { curiosidade?: string })?.curiosidade;
-        
+        const isCached = !!(data as { cached?: boolean })?.cached;
+
         // Only set if user hasn't sent a manual one in the meantime
-        if (txt && !manualCuriosityRef.current) setCuriosidade(txt);
+        if (txt && !manualCuriosityRef.current) {
+          setCuriosidade(txt);
+          // If curiosity was already cached, push it to XML immediately for 15s
+          if (isCached) {
+            curiosityShownAtRef.current = Date.now();
+            curiosityDurationRef.current = 15_000;
+            forceCuriosityTick((n) => n + 1);
+          }
+        }
       } catch (e) {
         console.warn("curiosity fetch failed", e);
       }
@@ -988,23 +997,25 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     return () => { cancelled = true; };
   }, [music?.titulo, music?.artista, isBreak, dataUserId]);
 
-  // Curiosity window: starts 10s after the song begins, stays available for 30s in the XML.
+  // Curiosity window: cached curiosities show immediately for 15s; freshly generated ones start 10s after the song begins and stay for 30s.
   const curiosityKey = curiosidade ? `${music?.artista || ""}::${music?.titulo || ""}`.toLowerCase() : "";
   if (curiosityKey !== curiosityKeyRef.current) {
     curiosityKeyRef.current = curiosityKey;
     curiosityShownAtRef.current = null;
+    curiosityDurationRef.current = 30_000;
   }
   if (curiosidade && curiosityShownAtRef.current === null && elapsed >= 10) {
     curiosityShownAtRef.current = Date.now();
+    curiosityDurationRef.current = 30_000;
   }
   useEffect(() => {
     if (curiosityShownAtRef.current === null) return;
-    const t = setTimeout(() => forceCuriosityTick((n) => n + 1), 30_000);
+    const t = setTimeout(() => forceCuriosityTick((n) => n + 1), curiosityDurationRef.current);
     return () => clearTimeout(t);
   }, [curiosidade, elapsed >= 10]);
   const showCuriosidade = !!curiosidade
     && curiosityShownAtRef.current !== null
-    && (Date.now() - curiosityShownAtRef.current) < 30_000;
+    && (Date.now() - curiosityShownAtRef.current) < curiosityDurationRef.current;
   const escapeXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const xmlCuriosidade = showCuriosidade ? escapeXml(curiosidade) : "";
 
