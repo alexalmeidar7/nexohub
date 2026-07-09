@@ -20,7 +20,7 @@ export default function Index() {
 
   if (!user) {
     return (
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(145deg, #080830 0%, #0f1058 40%, #1a1280 100%)" }}><Loader2 className="animate-spin" size={32} style={{ color: "#268ffa" }} /></div>}>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#131519" }}><Loader2 className="animate-spin" size={32} style={{ color: "#d9ff65" }} /></div>}>
         <LoginScreen />
       </Suspense>
     );
