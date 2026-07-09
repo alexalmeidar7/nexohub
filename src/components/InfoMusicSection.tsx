@@ -436,6 +436,53 @@ export default function InfoMusicSection() {
         </div>
       )}
 
+      <div className="rounded-xl p-3 flex items-start gap-3" style={{
+        backgroundColor: xmlTelemetry.source === "none"
+          ? "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, #6b7280)"
+          : "color-mix(in srgb, var(--layout-page-bg, #fff) 92%, #10b981)",
+        border: `1px solid ${xmlTelemetry.source === "none"
+          ? "color-mix(in srgb, #6b7280 25%, transparent)"
+          : "color-mix(in srgb, #10b981 30%, transparent)"}`,
+      }}>
+        <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+          <span
+            className={`w-2 h-2 rounded-full ${xmlTelemetry.source !== "none" ? "animate-pulse" : ""}`}
+            style={{ backgroundColor: xmlTelemetry.source === "none" ? "#6b7280" : "#10b981" }}
+          />
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+            XML
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <span className="text-[10px] font-bold uppercase tracking-wide opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Enviando agora em &lt;curiosidade&gt;
+            </span>
+            <span
+              className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+              style={{
+                backgroundColor: xmlTelemetry.source === "manual"
+                  ? "rgba(37,99,235,0.15)"
+                  : xmlTelemetry.source === "ai"
+                    ? "rgba(16,185,129,0.15)"
+                    : "rgba(107,114,128,0.15)",
+                color: xmlTelemetry.source === "manual" ? "#2563eb" : xmlTelemetry.source === "ai" ? "#10b981" : "#6b7280",
+              }}
+            >
+              {xmlTelemetry.source === "manual" ? "Manual" : xmlTelemetry.source === "ai" ? "Auto/IA" : "Vazio"}
+            </span>
+            {xmlTelemetry.source === "manual" && xmlTelemetry.until && (
+              <span className="text-[10px] opacity-60 font-mono" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                expira {new Date(xmlTelemetry.until).toLocaleTimeString("pt-BR")}
+              </span>
+            )}
+          </div>
+          <p className="text-xs italic leading-snug break-words" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 85%, transparent)" }}>
+            {xmlTelemetry.text ? `"${xmlTelemetry.text}"` : "— nenhum texto sendo enviado no momento —"}
+          </p>
+        </div>
+      </div>
+
       {nowPlaying && (
         <div className="rounded-xl p-4" style={{
           backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-accent-color, #2563eb))",
