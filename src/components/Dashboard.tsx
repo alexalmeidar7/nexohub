@@ -841,9 +841,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div
               className="rounded-3xl"
               style={{
-                width: "648px",
+                width: "778px",
                 maxWidth: "100%",
-                height: "384px",
+                height: "461px",
+
 
                 backgroundColor: "#00d6f9",
               }}
