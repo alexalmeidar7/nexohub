@@ -512,7 +512,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             });
 
             if (curData?.curiosidade) {
-              const stillCurrent = localStorage.getItem(musicStartKey(dataUserId) || "") === String(now);
+              const stillCurrent = localStorage.getItem(MUSIC_START_KEY) === String(now);
               if (stillCurrent) {
                 await mergeUserDashboardItems(dataUserId, { music_current_curiosity: curData.curiosidade });
               }
