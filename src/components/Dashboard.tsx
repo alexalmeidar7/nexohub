@@ -867,7 +867,50 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div
+            className="flex items-center gap-2 rounded-full px-3 py-1.5"
+            style={{ backgroundColor: "#f1f3f5" }}
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("intercom:open"))}
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                  style={{ color: "#002132" }}
+                >
+                  <Radio size={18} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p className="text-xs">Intercomunicador</p></TooltipContent>
+            </Tooltip>
+            <Suspense fallback={<div className="w-9 h-9" />}>
+              <MessageNotification />
+            </Suspense>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setCurrentPage("configuracoes")}
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                  style={{ color: "#002132" }}
+                >
+                  <Settings size={18} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p className="text-xs">Configurações</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onLogout}
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                  style={{ color: "#002132" }}
+                >
+                  <LogOut size={18} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p className="text-xs">Sair</p></TooltipContent>
+            </Tooltip>
+            <div className="w-px h-6 mx-1" style={{ backgroundColor: "rgba(0,33,50,0.15)" }} />
             <ServerClock />
           </div>
         </div>
