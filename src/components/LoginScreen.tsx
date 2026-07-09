@@ -212,7 +212,7 @@ export default function LoginScreen() {
               onChange={(e) => setPass(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !loading) handleSubmit(); }}
               disabled={loading}
-              className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="login-input w-full rounded-xl px-5 py-3 outline-none transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ fontSize: "12px", color: "#0f1058", border: "2px solid #00dbff", backgroundColor: "#ffffff" }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#00dbff")}
               onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#00dbff"; }}
