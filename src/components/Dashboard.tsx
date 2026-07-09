@@ -245,10 +245,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
     const { data: thumbData } = await supabase
       .from("programas")
-      .select("thumb")
+      .select("selo")
       .eq("id", current.id)
       .maybeSingle();
-    if (thumbData?.thumb) return thumbData.thumb;
+    if ((thumbData as any)?.selo) return (thumbData as any).selo;
     return null;
   }, [user, effectiveUserId]);
 
