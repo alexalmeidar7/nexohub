@@ -30,6 +30,8 @@ export default function InfoMusicSection() {
   const [monthlyQuota, setMonthlyQuota] = useState({ count: 0, limit: 20 });
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string; capa: string; curiosity?: string } | null>(null);
   const [lastTrackKey, setLastTrackKey] = useState<string>("");
+  const [manualCuriosityText, setManualCuriosityText] = useState("");
+  const [savingManualCuriosity, setSavingManualCuriosity] = useState(false);
 
   const loadExcecoes = async () => {
     if (!user) return;
