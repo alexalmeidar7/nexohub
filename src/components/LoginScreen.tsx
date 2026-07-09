@@ -222,7 +222,11 @@ export default function LoginScreen() {
 
             {error && <p className="text-center font-medium" style={{ fontSize: "12px", color: "#dc2626" }}>{error}</p>}
 
-            <label htmlFor="keep-connected" className="inline-flex items-center gap-3 cursor-pointer select-none -mx-2 px-2 py-2 min-h-11 rounded-lg group focus-within:outline-none hover:bg-[#0f1058]/5 active:bg-[#0f1058]/10 transition-colors touch-manipulation">
+            <label
+              htmlFor="keep-connected"
+              className="flex items-center gap-3 cursor-pointer select-none px-3 py-2.5 min-h-11 rounded-xl group focus-within:outline-none transition-colors touch-manipulation"
+              style={{ border: "2px solid #00dbff", backgroundColor: "#ffffff" }}
+            >
               <div className="relative flex items-center justify-center">
                 <input
                   id="keep-connected"
@@ -243,19 +247,18 @@ export default function LoginScreen() {
                   }}
                   aria-checked={keepConnected}
                   aria-label="Mantenha-me conectado"
-                  className="peer h-[20px] w-[20px] shrink-0 rounded-[4px] ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#268ffa] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 cursor-pointer"
+                  className="peer h-[20px] w-[20px] shrink-0 rounded-[4px] ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00dbff] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 cursor-pointer"
                   style={{
-                    accentColor: "#0f1058",
+                    accentColor: "#d9ff65",
                     border: "2px solid #0f1058",
-                    backgroundColor: keepConnected ? "#0f1058" : "#ffffff",
-                    boxShadow: "0 0 0 1px rgba(15,16,88,0.25)",
+                    backgroundColor: keepConnected ? "#d9ff65" : "#ffffff",
                   }}
                 />
                 <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity duration-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f1058" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
               </div>
-              <span className="transition-colors duration-200 group-hover:text-[#268ffa] group-focus-within:text-[#268ffa]" style={{ fontSize: "12px", color: "#0f1058" }}>mantenha-me conectado</span>
+              <span className="transition-colors duration-200" style={{ fontSize: "12px", color: "#0f1058" }}>mantenha-me conectado</span>
             </label>
 
 
