@@ -535,15 +535,40 @@ export default function InfoMusicSection() {
             <p className="text-xs italic leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 85%, transparent)" }}>
               "{nowPlaying.curiosity}"
             </p>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-xs opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+          ) : !showManualForm ? (
+            <div className="space-y-3">
+              <p className="text-xs opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                 Nenhuma curiosidade encontrada para <strong>{nowPlaying.musica}</strong> — {nowPlaying.artista}.
                 {monthlyQuota.count >= monthlyQuota.limit && (
                   <span className="block mt-1 text-[11px]" style={{ color: "#ef4444" }}>
-                    Cota mensal de IA esgotada. Cadastre manualmente abaixo:
+                    Cota mensal de IA esgotada.
                   </span>
                 )}
+              </p>
+              <p className="text-xs font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Deseja cadastrar uma curiosidade manualmente?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowManualForm(true)}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:opacity-90"
+                  style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                >
+                  Sim, cadastrar
+                </button>
+                <button
+                  onClick={() => { curiosityFetchKeyRef.current = ""; }}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide opacity-70 hover:opacity-100"
+                  style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
+                >
+                  Tentar buscar novamente
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[11px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Cadastrando curiosidade manual para <strong>{nowPlaying.musica}</strong> — {nowPlaying.artista}
               </p>
               <textarea
                 value={manualCuriosityText}
