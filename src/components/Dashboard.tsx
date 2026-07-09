@@ -973,14 +973,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   const endSec = eh * 3600 + em * 60;
                   const total = Math.max(endSec - startSec, 1);
                   const elapsed = Math.min(Math.max(nowSec - startSec, 0), total);
-                  const pct = (elapsed / total) * 100;
+                  
                   const fmt = (s: number) => {
                     const h = Math.floor(s / 3600);
                     const m = Math.floor((s % 3600) / 60);
                     const sec = s % 60;
+                    const pad = (n: number) => String(n).padStart(2, "0");
                     return h > 0
-                      ? `${h}h ${String(m).padStart(2, "0")}m`
-                      : `${m}:${String(sec).padStart(2, "0")}`;
+                      ? `${h}:${pad(m)}:${pad(sec)}`
+                      : `${pad(m)}:${pad(sec)}`;
                   };
                   return (
                     <div
@@ -992,8 +993,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         style={{ height: "2px", backgroundColor: "rgba(0,33,50,0.15)" }}
                       >
                         <div
-                          className="h-full rounded-full"
-                          style={{ width: `${pct}%`, backgroundColor: "#d7faff", transition: "width 1000ms linear" }}
+                          className="h-full w-full rounded-full origin-left"
+                          style={{ transform: `scaleX(${elapsed / total})`, backgroundColor: "#d7faff", transition: "transform 1000ms linear", willChange: "transform" }}
                         />
                       </div>
                       <div
