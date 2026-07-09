@@ -294,16 +294,17 @@ export default function LoginScreen() {
               >
                 {loading ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" style={{ color: "#0f1058" }} aria-hidden="true" />
+                    <Loader2 className="icon icon-xs animate-spin" style={{ color: "#0f1058" }} aria-hidden="true" />
                     <span>entrando...</span>
                     <span className="sr-only">Autenticando, aguarde</span>
                   </>
                 ) : (
                   <>
                     entrar
-                    <ArrowRight size={20} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+                    <ArrowRight className="icon icon-sm transition-transform duration-300 group-hover:translate-x-1.5" />
                   </>
                 )}
+
               </button>
             </div>
           </div>
@@ -329,7 +330,7 @@ export default function LoginScreen() {
           >
             {forgotSent ? (
               <div className="flex flex-col items-center gap-3">
-                <CheckCircle style={{ color: "#00dbff" }} size={40} />
+                <CheckCircle className="icon icon-xl" style={{ color: "#00dbff" }} />
                 <p className="text-center" style={{ fontSize: "12px", color: "#0f1058" }}>
                   Link enviado para <strong>{forgotEmail}</strong>
                 </p>
@@ -364,7 +365,7 @@ export default function LoginScreen() {
                     className="flex items-center gap-1 transition-colors duration-200"
                     style={{ fontSize: "12px", color: "#0f1058" }}
                   >
-                    <X size={14} /> Fechar
+                    <X className="icon icon-xs" /> Fechar
                   </button>
                   <button
                     onClick={handleForgot}
@@ -382,12 +383,13 @@ export default function LoginScreen() {
                     }}
                   >
                     {forgotLoading ? (
-                      <Loader2 size={20} className="animate-spin" style={{ color: "#0f1058" }} />
+                      <Loader2 className="icon icon-sm animate-spin" style={{ color: "#0f1058" }} />
                     ) : (
                       <>
                         enviar
-                        <ArrowRight size={20} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+                        <ArrowRight className="icon icon-sm transition-transform duration-300 group-hover:translate-x-1.5" />
                       </>
+
                     )}
                   </button>
                 </div>
