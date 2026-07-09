@@ -103,7 +103,7 @@ export default function InfoMusicSection() {
       .from("infomusic")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(1000);
     setRows(data || []);
     setLoading(false);
   };
