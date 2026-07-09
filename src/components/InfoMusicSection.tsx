@@ -282,6 +282,45 @@ export default function InfoMusicSection() {
     return () => { cancelled = true; };
   }, [nowPlaying?.musica, nowPlaying?.artista, nowPlaying?.curiosity, user]);
 
+  // ============ XML Verifier ============
+  // Fetch the live broadcast XML and compare its <curiosidade> value with the text
+  // displayed in the "Curiosidade da música no ar" card. Alerts on divergence.
+  const normalizeCuriosity = (s: string) =>
+    (s || "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const runXmlCheck = async () => {
+    if (!user) return;
+    setXmlCheck(prev => ({ ...prev, status: "checking" }));
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user.id}&_=${Date.now()}`;
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const xml = await res.text();
+      const m = xml.match(/<curiosidade>([\s\S]*?)<\/curiosidade>/i);
+      const xmlText = normalizeCuriosity(m?.[1] || "");
+      const cardText = normalizeCuriosity(nowPlaying?.curiosity || xmlTelemetry.text || "");
+      const status: "ok" | "diverge" = xmlText === cardText ? "ok" : "diverge";
+      setXmlCheck({ status, xmlText, checkedAt: Date.now() });
+    } catch (e) {
+      setXmlCheck({ status: "error", xmlText: "", checkedAt: Date.now(), error: (e as Error).message });
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    runXmlCheck();
+    const id = setInterval(runXmlCheck, 15000);
+    return () => clearInterval(id);
+     
+  }, [user, nowPlaying?.curiosity, xmlTelemetry.text]);
+
   const handleTest = async () => {
     if (!testArtista.trim() || !testMusica.trim()) {
       toast.error("Informe artista e música");
