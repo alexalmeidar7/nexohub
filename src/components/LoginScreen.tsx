@@ -294,16 +294,17 @@ export default function LoginScreen() {
               >
                 {loading ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" style={{ color: "#0f1058" }} aria-hidden="true" />
+                    <Loader2 className="icon icon-xs animate-spin" style={{ color: "#0f1058" }} aria-hidden="true" />
                     <span>entrando...</span>
                     <span className="sr-only">Autenticando, aguarde</span>
                   </>
                 ) : (
                   <>
                     entrar
-                    <ArrowRight size={20} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+                    <ArrowRight className="icon icon-sm transition-transform duration-300 group-hover:translate-x-1.5" />
                   </>
                 )}
+
               </button>
             </div>
           </div>
