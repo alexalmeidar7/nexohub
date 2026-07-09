@@ -60,8 +60,6 @@ export default function InfoMusicSection() {
           curiosity: di.music_current_curiosity
         });
         setLastTrackKey(currentTrackKey);
-        // Also reload the list when music changes to show the new curiosity
-        load();
       }
     }
   };
@@ -105,7 +103,7 @@ export default function InfoMusicSection() {
       .from("infomusic")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(1000);
     setRows(data || []);
     setLoading(false);
   };
