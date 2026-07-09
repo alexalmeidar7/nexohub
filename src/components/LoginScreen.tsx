@@ -305,9 +305,10 @@ export default function LoginScreen() {
             </div>
           </div>
 
-          <div className="mt-8">
-            <img src={logoNexo} alt="Nexo Soluções Visuais" className="h-10 opacity-80 animate-fade-in" />
-          </div>
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <img src={logoNexo} alt="Nexo Soluções Visuais" className="h-10 opacity-90 animate-fade-in" />
         </div>
 
         {/* Forgot Password Box */}
