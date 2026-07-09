@@ -520,7 +520,7 @@ export default function InfoMusicSection() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r, i) => {
+                  {filteredRows.map((r, i) => {
                     const isLastManual = r.id === lastManualId;
                     return (
                       <tr key={r.id} style={{ 
