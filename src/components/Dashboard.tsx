@@ -219,7 +219,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [onAirTimes, setOnAirTimes] = useState<{ inicio: string; fim: string } | null>(null);
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
-    const iv = setInterval(() => setNowTick(Date.now()), 30000);
+    const iv = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(iv);
   }, []);
   const prevThumbRef = useRef<string | null>(null);
@@ -943,11 +943,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   const [sh, sm] = onAirTimes.inicio.split(":").map(Number);
                   const [eh, em] = onAirTimes.fim.split(":").map(Number);
                   const now = new Date(nowTick);
-                  const nowMin = now.getHours() * 60 + now.getMinutes();
-                  const startMin = sh * 60 + sm;
-                  const endMin = eh * 60 + em;
-                  const total = Math.max(endMin - startMin, 1);
-                  const elapsed = Math.min(Math.max(nowMin - startMin, 0), total);
+                  const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                  const startSec = sh * 3600 + sm * 60;
+                  const endSec = eh * 3600 + em * 60;
+                  const total = Math.max(endSec - startSec, 1);
+                  const elapsed = Math.min(Math.max(nowSec - startSec, 0), total);
                   const pct = (elapsed / total) * 100;
                   return (
                     <div
