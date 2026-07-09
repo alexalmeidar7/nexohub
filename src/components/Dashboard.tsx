@@ -249,7 +249,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       const current = data.find((p: any) =>
         (p.dias_semana || []).includes(dia) && hora >= p.horario_inicio && hora < p.horario_fim
       );
-      if (!current?.apresentador_id) { setOnAirLocutorFoto(null); return; }
+      if (!current) { setOnAirLocutorFoto(null); setOnAirTimes(null); return; }
+      setOnAirTimes({ inicio: current.horario_inicio, fim: current.horario_fim });
+      if (!current.apresentador_id) { setOnAirLocutorFoto(null); return; }
       const { data: ap } = await supabase
         .from("apresentadores")
         .select("foto")
