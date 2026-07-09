@@ -560,26 +560,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* Background layers (full page, behind sidebar) */}
       {isDashboard && (
-        <>
-          <div
-            className="absolute inset-0 z-0 transition-opacity duration-1000"
-            style={{ ...layoutBg, opacity: onAirThumb ? 0 : 1 }}
-          />
-          {onAirThumb && (
-            <div
-              key={onAirThumb}
-              className="absolute inset-0 z-0 animate-fade-in"
-              style={{
-                backgroundImage: `url(${onAirThumb})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-              }}
-            />
-          )}
-          <div className="absolute inset-0 z-0" style={{ background: "rgba(0,0,0,0.3)" }} />
-        </>
+        <div className="absolute inset-0 z-0" style={{ backgroundColor: "#131519" }} />
       )}
+
 
       {/* ===== LEFT SIDEBAR (desktop) ===== */}
       <div className="hidden lg:flex flex-shrink-0 z-[60] items-stretch py-3 pl-3 overflow-visible">
