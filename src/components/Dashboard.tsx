@@ -824,12 +824,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {/* ===== TOP HEADER BAR (desktop) ===== */}
         <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]">
           <div className="flex items-center gap-4">
-            <img src={logoMenu} alt="NexoHUB" className="h-10 w-auto" style={{ filter: (() => {
-              const bg = layoutColors.pageBg?.toLowerCase() || "#ffffff";
-              const m = bg.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
-              const isLight = bg === "#ffffff" || bg === "#fff" || bg === "white" || (m ? (parseInt(m[1],16)*0.299 + parseInt(m[2],16)*0.587 + parseInt(m[3],16)*0.114) > 186 : false);
-              return isLight ? "grayscale(1) brightness(0.75) opacity(0.6)" : "none";
-            })() }} />
             <div>
               {!isDashboard && (
                 <p className="text-xs font-medium tracking-widest uppercase mb-0.5" style={{ color: layoutColors.accentColor }}>
@@ -841,6 +835,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </h1>
             </div>
           </div>
+
           <div className="flex items-center gap-3">
             <ServerClock />
           </div>
