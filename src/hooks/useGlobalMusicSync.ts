@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { musicDataKey, musicStartKey, botXmlLastRunKey } from "@/lib/musicStorageKeys";
+import { applyTrackChangeWithCuriosityGuard } from "@/lib/musicTrackUpdate";
 
 const LOCAL_SOURCE_GRACE_MS = 15000;
 
