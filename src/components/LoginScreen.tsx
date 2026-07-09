@@ -330,7 +330,7 @@ export default function LoginScreen() {
           >
             {forgotSent ? (
               <div className="flex flex-col items-center gap-3">
-                <CheckCircle style={{ color: "#00dbff" }} size={40} />
+                <CheckCircle className="icon icon-xl" style={{ color: "#00dbff" }} />
                 <p className="text-center" style={{ fontSize: "12px", color: "#0f1058" }}>
                   Link enviado para <strong>{forgotEmail}</strong>
                 </p>
