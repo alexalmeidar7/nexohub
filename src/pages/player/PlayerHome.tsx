@@ -6,6 +6,7 @@ import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus, Maximize, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
@@ -1768,7 +1769,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Top loading bar */}
       {!dataLoaded && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-          <Loader2 className="animate-spin" size={24} style={{ color: "#d9ff65" }} />
+          <LoadingSpinner size={24} />
         </div>
       )}
 

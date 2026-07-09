@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface SplashScreenProps {
   logoUrl?: string | null;
@@ -46,7 +46,7 @@ export default function SplashScreen({ logoUrl, channelName, onFinish }: SplashS
         )}
       </div>
 
-      <Loader2 className="animate-spin" size={32} style={{ color: "#d9ff65" }} />
+      <LoadingSpinner size={32} />
     </div>
   );
 }

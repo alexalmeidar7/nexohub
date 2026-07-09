@@ -1,8 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { lazy, Suspense } from "react";
-import { Loader2 } from "lucide-react";
 import { Navigate } from "react-router-dom";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const LoginScreen = lazy(() => import("@/components/LoginScreen"));
 
@@ -11,16 +11,12 @@ export default function Index() {
   usePageTitle("Login");
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#131519" }}>
-        <Loader2 className="animate-spin" size={32} style={{ color: "#d9ff65" }} />
-      </div>
-    );
+    return <LoadingSpinner fullscreen />;
   }
 
   if (!user) {
     return (
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#131519" }}><Loader2 className="animate-spin" size={32} style={{ color: "#d9ff65" }} /></div>}>
+      <Suspense fallback={<LoadingSpinner fullscreen />}>
         <LoginScreen />
       </Suspense>
     );
