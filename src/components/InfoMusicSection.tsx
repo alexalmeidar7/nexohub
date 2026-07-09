@@ -97,15 +97,35 @@ export default function InfoMusicSection() {
     setSavingExcecoes(false);
   };
 
+  const PAGE_SIZE = 50;
+  const HARD_CAP = 1000;
+  const [totalCount, setTotalCount] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const load = async () => {
     setLoading(true);
+    const { data, count } = await supabase
+      .from("infomusic")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(0, PAGE_SIZE - 1);
+    setRows(data || []);
+    setTotalCount(count || 0);
+    setLoading(false);
+  };
+
+  const loadMore = async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    const from = rows.length;
+    const to = Math.min(from + PAGE_SIZE, HARD_CAP) - 1;
     const { data } = await supabase
       .from("infomusic")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(1000);
-    setRows(data || []);
-    setLoading(false);
+      .range(from, to);
+    if (data && data.length) setRows(prev => [...prev, ...data]);
+    setLoadingMore(false);
   };
 
   useEffect(() => { load(); }, []);
