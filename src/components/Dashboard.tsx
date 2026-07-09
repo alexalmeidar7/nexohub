@@ -240,7 +240,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const load = async () => {
       const { data } = await supabase
         .from("programas")
-        .select("apresentador_id, dias_semana, horario_inicio, horario_fim")
+        .select("nome, apresentador_id, dias_semana, horario_inicio, horario_fim")
         .eq("user_id", uid)
         .eq("ativo", true)
         .ilike("estudio", "%fm%");
@@ -248,18 +248,41 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       const now = new Date();
       const dia = DIAS_MAP[now.getDay()];
       const hora = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const current = data.find((p: any) =>
-        (p.dias_semana || []).includes(dia) && hora >= p.horario_inicio && hora < p.horario_fim
-      );
-      if (!current) { setOnAirLocutorFoto(null); setOnAirTimes(null); return; }
-      setOnAirTimes({ inicio: current.horario_inicio, fim: current.horario_fim });
-      if (!current.apresentador_id) { setOnAirLocutorFoto(null); return; }
-      const { data: ap } = await supabase
-        .from("apresentadores")
-        .select("foto")
-        .eq("id", current.apresentador_id)
-        .maybeSingle();
-      if (!cancelled) setOnAirLocutorFoto((ap as any)?.foto || null);
+      const todays = (data as any[]).filter((p) => (p.dias_semana || []).includes(dia));
+      const current = todays.find((p) => hora >= p.horario_inicio && hora < p.horario_fim);
+      // Find next program (today's later than current, else earliest of next day with programs)
+      let next: any = todays
+        .filter((p) => p.horario_inicio > hora)
+        .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio))[0];
+      if (!next) {
+        for (let i = 1; i <= 7; i++) {
+          const d = DIAS_MAP[(now.getDay() + i) % 7];
+          const arr = (data as any[])
+            .filter((p) => (p.dias_semana || []).includes(d))
+            .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
+          if (arr[0]) { next = arr[0]; break; }
+        }
+      }
+
+      if (!current) { setOnAirLocutorFoto(null); setOnAirTimes(null); }
+      else {
+        setOnAirTimes({ inicio: current.horario_inicio, fim: current.horario_fim });
+        if (current.apresentador_id) {
+          const { data: ap } = await supabase.from("apresentadores").select("foto").eq("id", current.apresentador_id).maybeSingle();
+          if (!cancelled) setOnAirLocutorFoto((ap as any)?.foto || null);
+        } else setOnAirLocutorFoto(null);
+      }
+
+      if (next) {
+        let apNome = "";
+        let apFoto: string | null = null;
+        if (next.apresentador_id) {
+          const { data: ap } = await supabase.from("apresentadores").select("nome, foto").eq("id", next.apresentador_id).maybeSingle();
+          apNome = (ap as any)?.nome || "";
+          apFoto = (ap as any)?.foto || null;
+        }
+        if (!cancelled) setNextProgram({ foto: apFoto, apresentador: apNome, programa: next.nome, inicio: next.horario_inicio, fim: next.horario_fim });
+      } else if (!cancelled) setNextProgram(null);
     };
     load();
     const iv = setInterval(load, 60000);
