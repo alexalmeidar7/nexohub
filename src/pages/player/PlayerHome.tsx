@@ -203,7 +203,7 @@ function TopNavBar({
         {logoUrl ? (
           <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
         ) : (
-          <Radio className="w-8 h-8 text-white/30" />
+          <Radio className="icon icon-lg text-white/30" />
         )}
       </div>
 
