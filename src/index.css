@@ -1104,3 +1104,54 @@ table:not([data-no-row-hover]) tbody tr:hover {
 .agenda-event-item:hover div[style*="background"] {
   background: color-mix(in srgb, var(--layout-widget-bg, #000) 15%, transparent) !important;
 }
+
+/* ============================================================
+   ICON SYSTEM — Lucide-based, minimal & uniform
+   Uso: <Radio className="icon" />  ou  <Radio className="icon icon-lg" />
+   Cor segue currentColor (herda do texto do contexto),
+   podendo ser sobrescrita com --icon-color.
+   ============================================================ */
+:root {
+  --icon-size: 26px;
+  --icon-stroke: 1.8;
+  --icon-color: currentColor;
+}
+
+.icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  stroke: var(--icon-color);
+  stroke-width: var(--icon-stroke);
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  flex-shrink: 0;
+  transition: transform .25s ease, color .25s ease, stroke .25s ease, opacity .25s ease;
+}
+
+.icon-xs { width: 16px; height: 16px; }
+.icon-sm { width: 20px; height: 20px; }
+.icon-md { width: 26px; height: 26px; }
+.icon-lg { width: 34px; height: 34px; }
+.icon-xl { width: 42px; height: 42px; }
+
+.icon:hover { transform: scale(1.08); }
+
+/* Para ícones que naturalmente usam áreas sólidas (YouTube, coração cheio, etc.) */
+.icon-fill {
+  fill: var(--icon-color);
+  stroke: none;
+}
+
+/* Ícone dentro de um círculo com borda (estilo botão minimalista) */
+.icon-circle {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.8px solid currentColor;
+  border-radius: 9999px;
+}
+
