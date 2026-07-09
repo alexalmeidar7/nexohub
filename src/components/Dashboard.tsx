@@ -839,16 +839,27 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {isDashboard && (
           <div className="px-3 lg:px-6 pb-4 relative z-[1]">
             <div
-              className="rounded-3xl"
+              className="rounded-3xl relative"
               style={{
                 width: "778px",
                 maxWidth: "100%",
                 height: "461px",
-
-
                 backgroundColor: "#00d6f9",
               }}
-            />
+            >
+              <div
+                className="absolute rounded-full px-5 py-2 font-heading font-bold uppercase tracking-widest text-sm"
+                style={{
+                  top: "70px",
+                  left: "70px",
+                  backgroundColor: "#c3f628",
+                  color: "#002132",
+                }}
+              >
+                no ar
+              </div>
+            </div>
+
           </div>
         )}
 
