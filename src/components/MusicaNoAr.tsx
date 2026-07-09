@@ -249,6 +249,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const [curiosidade, setCuriosidade] = useState<string>("");
   const curiosidadeFetchedKeyRef = useRef<string>("");
   const curiosityShownAtRef = useRef<number | null>(null);
+  const curiosityDurationRef = useRef<number>(30_000);
   const curiosityKeyRef = useRef<string>("");
   const [, forceCuriosityTick] = useState(0);
   const manualCuriosityRef = useRef<string | null>(null);
