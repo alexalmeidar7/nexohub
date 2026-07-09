@@ -324,28 +324,26 @@ export default function LoginScreen() {
           }}
         >
           <div
-            className="px-10 pt-10 pb-8 shadow-[0_16px_50px_-10px_rgba(0,0,0,0.5)] backdrop-blur-xl"
-            style={{ background: "linear-gradient(145deg, #0d0446 0%, #1a1280 100%)", fontSize: "12px", borderRadius: "0 0 1.5rem 1.5rem" }}
+            className="px-10 pt-10 pb-8 shadow-[0_16px_50px_-10px_rgba(0,0,0,0.15)]"
+            style={{ background: "rgba(255,255,255,0.97)", fontSize: "12px", borderRadius: "0 0 1.5rem 1.5rem", border: "1px solid rgba(0,219,255,0.25)", borderTop: "none" }}
           >
             {forgotSent ? (
               <div className="flex flex-col items-center gap-3">
-                <CheckCircle className="text-green-400" size={40} />
-                <p className="text-center text-white" style={{ fontSize: "12px" }}>
+                <CheckCircle style={{ color: "#00dbff" }} size={40} />
+                <p className="text-center" style={{ fontSize: "12px", color: "#0f1058" }}>
                   Link enviado para <strong>{forgotEmail}</strong>
                 </p>
                 <button
                   onClick={closeForgot}
-                  className="mt-2 font-medium transition-colors duration-200 text-white"
-                  style={{ fontSize: "12px" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
+                  className="mt-2 font-medium transition-colors duration-200"
+                  style={{ fontSize: "12px", color: "#0f1058" }}
                 >
                   Fechar
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-center text-white" style={{ fontSize: "12px" }}>
+                <p className="text-center" style={{ fontSize: "12px", color: "#0f1058" }}>
                   Informe seu email para redefinir a senha
                 </p>
                 <input
@@ -355,43 +353,40 @@ export default function LoginScreen() {
                   onChange={(e) => setForgotEmail(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleForgot()}
                   className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200"
-                  style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid rgba(255,255,255,0.2)", backgroundColor: "rgba(255,255,255,0.95)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)")}
-                  onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(38,143,250,0.15)"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
+                  style={{ fontSize: "12px", color: "#0f1058", border: "2px solid #00dbff", backgroundColor: "#ffffff" }}
+                  onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,219,255,0.25)"; }}
+                  onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; }}
                 />
-                {forgotError && <p className="text-red-400 text-center" style={{ fontSize: "12px" }}>{forgotError}</p>}
+                {forgotError && <p className="text-center" style={{ fontSize: "12px", color: "#dc2626" }}>{forgotError}</p>}
                 <div className="flex justify-between items-center">
                   <button
                     onClick={closeForgot}
-                    className="flex items-center gap-1 transition-colors duration-200 text-white"
-                    style={{ fontSize: "12px" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
+                    className="flex items-center gap-1 transition-colors duration-200"
+                    style={{ fontSize: "12px", color: "#0f1058" }}
                   >
                     <X size={14} /> Fechar
                   </button>
                   <button
                     onClick={handleForgot}
                     disabled={forgotLoading}
-                    className="group flex items-center gap-3 px-7 py-2.5 rounded-full font-semibold disabled:opacity-50 transition-all duration-300 text-white"
-                    style={{ fontSize: "12px", background: "linear-gradient(135deg, #268ffa 0%, #1a6ad4 100%)", boxShadow: "0 4px 16px -2px rgba(38,143,250,0.4)" }}
+                    className="group flex items-center gap-3 px-7 py-2.5 rounded-full font-semibold disabled:opacity-70 transition-all duration-300"
+                    style={{ fontSize: "12px", background: "#00dbff", color: "#0f1058", boxShadow: "0 4px 16px -2px rgba(0,219,255,0.5)" }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.boxShadow = "0 6px 24px -2px rgba(38,143,250,0.55)";
+                      if (forgotLoading) return;
+                      e.currentTarget.style.boxShadow = "0 6px 24px -2px rgba(0,219,255,0.7)";
                       e.currentTarget.style.transform = "translateY(-1px)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.boxShadow = "0 4px 16px -2px rgba(38,143,250,0.4)";
+                      e.currentTarget.style.boxShadow = "0 4px 16px -2px rgba(0,219,255,0.5)";
                       e.currentTarget.style.transform = "translateY(0)";
                     }}
                   >
                     {forgotLoading ? (
-                      <Loader2 size={20} className="animate-spin" style={{ color: "#ffffff" }} />
+                      <Loader2 size={20} className="animate-spin" style={{ color: "#0f1058" }} />
                     ) : (
                       <>
                         enviar
-                        <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+                        <ArrowRight size={20} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-x-1.5" />
                       </>
                     )}
                   </button>
