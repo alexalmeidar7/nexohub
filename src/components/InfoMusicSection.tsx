@@ -30,6 +30,8 @@ export default function InfoMusicSection() {
   const [monthlyQuota, setMonthlyQuota] = useState({ count: 0, limit: 20 });
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string; capa: string; curiosity?: string } | null>(null);
   const [lastTrackKey, setLastTrackKey] = useState<string>("");
+  const [manualCuriosityText, setManualCuriosityText] = useState("");
+  const [savingManualCuriosity, setSavingManualCuriosity] = useState(false);
 
   const loadExcecoes = async () => {
     if (!user) return;
@@ -324,9 +326,85 @@ export default function InfoMusicSection() {
               "{nowPlaying.curiosity}"
             </p>
           ) : (
-            <p className="text-xs opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              Nenhuma curiosidade encontrada para <strong>{nowPlaying.musica}</strong> — {nowPlaying.artista}.
-            </p>
+            <div className="space-y-2">
+              <p className="text-xs opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Nenhuma curiosidade encontrada para <strong>{nowPlaying.musica}</strong> — {nowPlaying.artista}.
+                {monthlyQuota.count >= monthlyQuota.limit && (
+                  <span className="block mt-1 text-[11px]" style={{ color: "#ef4444" }}>
+                    Cota mensal de IA esgotada. Cadastre manualmente abaixo:
+                  </span>
+                )}
+              </p>
+              <textarea
+                value={manualCuriosityText}
+                onChange={e => setManualCuriosityText(e.target.value)}
+                placeholder="Digite uma curiosidade sobre esta música ou artista..."
+                rows={2}
+                maxLength={280}
+                className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-none"
+                style={{
+                  backgroundColor: "var(--layout-page-bg, #fff)",
+                  color: "var(--layout-page-text, #1a1a1a)",
+                  border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
+                }}
+              />
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] opacity-50" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  {manualCuriosityText.length}/280 · salva no banco por 6 meses e vai ao XML por 30s
+                </span>
+                <button
+                  onClick={async () => {
+                    if (!manualCuriosityText.trim() || !user) return;
+                    setSavingManualCuriosity(true);
+                    try {
+                      const expiresAt = new Date();
+                      expiresAt.setMonth(expiresAt.getMonth() + 6);
+                      const { data: inserted, error } = await supabase
+                        .from("infomusic")
+                        .insert({
+                          user_id: user.id,
+                          artista: nowPlaying.artista,
+                          musica: nowPlaying.musica,
+                          curiosidade: manualCuriosityText.trim(),
+                          deezer_artist_img: null,
+                          expires_at: expiresAt.toISOString(),
+                        })
+                        .select()
+                        .maybeSingle();
+                      if (error) throw error;
+
+                      const until = new Date(Date.now() + 30_000).toISOString();
+                      const currentDashboard = (await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle()).data?.dashboard_items as any || {};
+                      await supabase.from("user_settings").update({
+                        last_manual_curiosity_id: inserted?.id,
+                        dashboard_items: {
+                          ...currentDashboard,
+                          music_current_curiosity: manualCuriosityText.trim(),
+                          music_curiosity_manual: manualCuriosityText.trim(),
+                          music_curiosity_manual_until: until,
+                          music_curiosity_manual_img: "",
+                        },
+                      }).eq("user_id", user.id);
+
+                      window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: manualCuriosityText.trim() } }));
+                      toast.success("Curiosidade cadastrada e enviada ao XML!");
+                      setManualCuriosityText("");
+                      await load();
+                      await loadExcecoes();
+                    } catch (e) {
+                      toast.error((e as Error).message || "Erro ao salvar");
+                    }
+                    setSavingManualCuriosity(false);
+                  }}
+                  disabled={savingManualCuriosity || !manualCuriosityText.trim()}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 inline-flex items-center justify-center gap-1.5 shrink-0"
+                  style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                >
+                  {savingManualCuriosity ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
+                  Salvar e enviar
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}
