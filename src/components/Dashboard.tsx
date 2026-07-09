@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
 import logoMenu from "@/assets/logo-menu.png";
 import logoFooter from "@/assets/logo-footer.png";
+import { HouseMixIcon } from "@/components/ProductIcons";
+
 import {
   Tooltip,
   TooltipContent,
