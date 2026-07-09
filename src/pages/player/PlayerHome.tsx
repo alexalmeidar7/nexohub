@@ -256,11 +256,11 @@ function TopNavBar({
             className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors"
             style={{ background: "rgba(255,255,255,0.06)" }}
           >
-            <Search className="w-4 h-4" />
+            <Search className="icon icon-xs" />
           </button>
         </div>
         <button className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors" style={{ background: "rgba(255,255,255,0.06)" }}>
-          <Bell className="w-4 h-4" />
+          <Bell className="icon icon-xs" />
         </button>
         <button
           onClick={() => {
@@ -270,7 +270,7 @@ function TopNavBar({
           className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors"
           style={{ background: "rgba(255,255,255,0.06)" }}
         >
-          <Maximize className="w-4 h-4" />
+          <Maximize className="icon icon-xs" />
         </button>
 
         {/* Profile */}
@@ -283,9 +283,10 @@ function TopNavBar({
             {avatarUrl ? (
               <img src={avatarUrl} alt={userName} className="w-full h-full object-contain" />
             ) : (
-              <User className="w-4 h-4 text-white" />
+              <User className="icon icon-xs text-white" />
             )}
           </button>
+
           {profileOpen && userId && (
             <Suspense fallback={null}>
               <WatchProfilePopup
