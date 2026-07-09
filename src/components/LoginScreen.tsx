@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
+import { ArrowRight, Loader2, CheckCircle, X, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import logoNexo from "@/assets/logo-nexo.png";
+import logoNexoAsset from "@/assets/logo-nexo-azul.png.asset.json";
+const logoNexo = logoNexoAsset.url;
 
 const AUTH_TIMEOUT_MS = 12000;
 const MAX_RETRIES = 3;
@@ -177,21 +178,20 @@ export default function LoginScreen() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden"
-      style={{ background: "linear-gradient(145deg, #080830 0%, #0f1058 40%, #1a1280 100%)" }}
+      style={{ background: "#00dbff" }}
     >
-      {/* Ambient glow orbs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full opacity-20 blur-[120px] pointer-events-none" style={{ background: "radial-gradient(circle, #268ffa 0%, transparent 70%)" }} />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full opacity-15 blur-[100px] pointer-events-none" style={{ background: "radial-gradient(circle, #6c3ce0 0%, transparent 70%)" }} />
-
       <div className="relative w-full max-w-md z-10">
         {/* Main Login Box */}
         <div
-          className="relative z-10 w-full p-10 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.08)] animate-fade-in backdrop-blur-xl"
+          className="relative z-10 w-full p-10 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.25),0_0_0_1px_rgba(255,255,255,0.08)] animate-fade-in backdrop-blur-xl"
           style={{ fontSize: "12px", borderRadius: "1.5rem", background: "rgba(255,255,255,0.97)" }}
         >
-          <h1 className="text-center font-semibold tracking-wide mb-8" style={{ color: "#0f1058", fontSize: "12px" }}>
-            HouseMix login
-          </h1>
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <Home size={16} style={{ color: "#0f1058" }} />
+            <h1 className="text-center font-semibold tracking-wide" style={{ color: "#0f1058", fontSize: "12px" }}>
+              HouseMix login
+            </h1>
+          </div>
 
           <div className="space-y-4">
             <input
@@ -201,11 +201,11 @@ export default function LoginScreen() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid rgba(13,55,154,0.2)", backgroundColor: "rgba(15,16,88,0.03)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)")}
-              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(38,143,250,0.12)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
+              style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid #00dbff", backgroundColor: "rgba(0,219,255,0.05)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#00dbff")}
+              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#00dbff"; }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "#00dbff"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,219,255,0.25)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "#00dbff"; e.currentTarget.style.boxShadow = "none"; }}
             />
             <input
               type="password"
@@ -215,11 +215,11 @@ export default function LoginScreen() {
               onKeyDown={(e) => { if (e.key === "Enter" && !loading) handleSubmit(); }}
               disabled={loading}
               className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid rgba(13,55,154,0.2)", backgroundColor: "rgba(15,16,88,0.03)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)")}
-              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(38,143,250,0.12)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
+              style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid #00dbff", backgroundColor: "rgba(0,219,255,0.05)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#00dbff")}
+              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#00dbff"; }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "#00dbff"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,219,255,0.25)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "#00dbff"; e.currentTarget.style.boxShadow = "none"; }}
             />
 
             {error && <p className="text-center font-medium" style={{ fontSize: "12px", color: "#dc2626" }}>{error}</p>}
@@ -279,21 +279,21 @@ export default function LoginScreen() {
                 disabled={loading}
                 aria-busy={loading}
                 aria-live="polite"
-                className="group relative flex items-center justify-center gap-3 px-7 py-2.5 min-w-[130px] rounded-full font-semibold disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 text-white overflow-hidden"
-                style={{ fontSize: "12px", background: "linear-gradient(135deg, #268ffa 0%, #1a6ad4 100%)", boxShadow: "0 4px 16px -2px rgba(38,143,250,0.4)" }}
+                className="group relative flex items-center justify-center gap-3 px-7 py-2.5 min-w-[130px] rounded-full font-semibold disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 overflow-hidden"
+                style={{ fontSize: "12px", background: "#00dbff", color: "#0f1058", boxShadow: "0 4px 16px -2px rgba(0,219,255,0.5)" }}
                 onMouseEnter={(e) => {
                   if (loading) return;
-                  e.currentTarget.style.boxShadow = "0 6px 24px -2px rgba(38,143,250,0.55)";
+                  e.currentTarget.style.boxShadow = "0 6px 24px -2px rgba(0,219,255,0.7)";
                   e.currentTarget.style.transform = "translateY(-1px)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = "0 4px 16px -2px rgba(38,143,250,0.4)";
+                  e.currentTarget.style.boxShadow = "0 4px 16px -2px rgba(0,219,255,0.5)";
                   e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
                 {loading ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" style={{ color: "#ffffff" }} aria-hidden="true" />
+                    <Loader2 size={16} className="animate-spin" style={{ color: "#0f1058" }} aria-hidden="true" />
                     <span>entrando...</span>
                     <span className="sr-only">Autenticando, aguarde</span>
                   </>
