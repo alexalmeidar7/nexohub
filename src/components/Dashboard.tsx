@@ -953,11 +953,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     <div
                       className="absolute rounded-full overflow-hidden"
                       style={{
-                        left: "16px",
-                        right: "16px",
-                        bottom: "16px",
-                        height: "6px",
-                        backgroundColor: "rgba(0,33,50,0.2)",
+                        left: "20px",
+                        right: "20px",
+                        bottom: "14px",
+                        height: "2px",
+                        backgroundColor: "rgba(0,33,50,0.15)",
                       }}
                     >
                       <div
