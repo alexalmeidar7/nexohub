@@ -974,21 +974,34 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   const total = Math.max(endSec - startSec, 1);
                   const elapsed = Math.min(Math.max(nowSec - startSec, 0), total);
                   const pct = (elapsed / total) * 100;
+                  const fmt = (s: number) => {
+                    const h = Math.floor(s / 3600);
+                    const m = Math.floor((s % 3600) / 60);
+                    const sec = s % 60;
+                    return h > 0
+                      ? `${h}h ${String(m).padStart(2, "0")}m`
+                      : `${m}:${String(sec).padStart(2, "0")}`;
+                  };
                   return (
                     <div
-                      className="absolute rounded-full overflow-hidden"
-                      style={{
-                        left: "20px",
-                        right: "20px",
-                        bottom: "14px",
-                        height: "2px",
-                        backgroundColor: "rgba(0,33,50,0.15)",
-                      }}
+                      className="absolute group/bar"
+                      style={{ left: "20px", right: "20px", bottom: "10px", height: "10px" }}
                     >
                       <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${pct}%`, backgroundColor: "#d7faff" }}
-                      />
+                        className="absolute left-0 right-0 top-1/2 -translate-y-1/2 rounded-full overflow-hidden"
+                        style={{ height: "2px", backgroundColor: "rgba(0,33,50,0.15)" }}
+                      >
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${pct}%`, backgroundColor: "#d7faff" }}
+                        />
+                      </div>
+                      <div
+                        className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap rounded-md px-2 py-1 text-[10px] font-medium shadow-lg"
+                        style={{ backgroundColor: "#002132", color: "#e4fcff" }}
+                      >
+                        {fmt(elapsed)} / {fmt(total)}
+                      </div>
                     </div>
                   );
                 })()}
