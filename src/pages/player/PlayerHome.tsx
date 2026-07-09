@@ -1768,7 +1768,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Top loading bar */}
       {!dataLoaded && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-          <Loader2 className="animate-spin" size={24} style={{ color: "#d9ff65" }} />
+          <LoadingSpinner size={24} />
         </div>
       )}
 
