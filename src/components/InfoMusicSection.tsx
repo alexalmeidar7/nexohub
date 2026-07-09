@@ -308,6 +308,29 @@ export default function InfoMusicSection() {
         </div>
       )}
 
+      {nowPlaying && (
+        <div className="rounded-xl p-4" style={{
+          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-accent-color, #2563eb))",
+          border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
+        }}>
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+            <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Curiosidade da música no ar
+            </h4>
+          </div>
+          {nowPlaying.curiosity ? (
+            <p className="text-xs italic leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 85%, transparent)" }}>
+              "{nowPlaying.curiosity}"
+            </p>
+          ) : (
+            <p className="text-xs opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Nenhuma curiosidade encontrada para <strong>{nowPlaying.musica}</strong> — {nowPlaying.artista}.
+            </p>
+          )}
+        </div>
+      )}
+
       <div>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
