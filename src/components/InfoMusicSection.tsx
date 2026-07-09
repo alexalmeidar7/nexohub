@@ -540,7 +540,92 @@ export default function InfoMusicSection() {
           </select>
         </div>
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
-          {loading ? (
+          {filterField === "sem_curiosidade" ? (
+            loadingMissing ? (
+              <div className="flex items-center justify-center gap-2 py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                <Loader2 size={14} className="animate-spin" /> Carregando músicas sem curiosidade...
+              </div>
+            ) : filteredMissing.length === 0 ? (
+              <div className="text-center py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                {missingRows.length === 0
+                  ? "Todas as músicas tocadas já possuem curiosidade cadastrada."
+                  : `Nenhum resultado para "${search}".`}
+                <div className="mt-3">
+                  <button onClick={loadMissing} className="inline-flex items-center gap-1 opacity-70 hover:opacity-100">
+                    <RefreshCw size={11} /> Recarregar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="max-h-[420px] overflow-auto">
+                <div className="flex items-center justify-between px-3 py-2 text-[10px] uppercase font-bold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #fff))" }}>
+                  <span>{filteredMissing.length} música(s) sem curiosidade</span>
+                  <button onClick={loadMissing} className="inline-flex items-center gap-1 opacity-70 hover:opacity-100 normal-case">
+                    <RefreshCw size={10} /> Atualizar
+                  </button>
+                </div>
+                {filteredMissing.map((m, i) => {
+                  const key = `${m.artista}::${m.musica}`.toLowerCase();
+                  const val = missingInputs[key] || "";
+                  const isSaving = savingMissingKey === key;
+                  return (
+                    <div key={key} className="p-3 flex flex-col md:flex-row gap-2 items-start md:items-center" style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined }}>
+                      <div className="min-w-0 md:w-56 shrink-0">
+                        <div className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{m.artista}</div>
+                        <div className="text-[11px] truncate opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{m.musica}</div>
+                        <div className="text-[10px] opacity-50 mt-0.5 font-mono">{new Date(m.ultima).toLocaleDateString("pt-BR")}</div>
+                      </div>
+                      <input
+                        type="text"
+                        value={val}
+                        onChange={e => setMissingInputs(prev => ({ ...prev, [key]: e.target.value }))}
+                        placeholder="Digite uma curiosidade sobre esta música..."
+                        maxLength={280}
+                        className="flex-1 min-w-0 w-full px-3 py-2 rounded-lg text-xs outline-none"
+                        style={{
+                          backgroundColor: "var(--layout-page-bg, #fff)",
+                          color: "var(--layout-page-text, #1a1a1a)",
+                          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
+                        }}
+                      />
+                      <button
+                        onClick={async () => {
+                          if (!val.trim() || !user) return;
+                          setSavingMissingKey(key);
+                          try {
+                            const expiresAt = new Date();
+                            expiresAt.setMonth(expiresAt.getMonth() + 6);
+                            const { error } = await supabase.from("infomusic").insert({
+                              user_id: user.id,
+                              artista: m.artista,
+                              musica: m.musica,
+                              curiosidade: val.trim(),
+                              deezer_artist_img: null,
+                              expires_at: expiresAt.toISOString(),
+                            });
+                            if (error) throw error;
+                            toast.success("Curiosidade cadastrada!");
+                            setMissingRows(prev => prev.filter(x => `${x.artista}::${x.musica}`.toLowerCase() !== key));
+                            setMissingInputs(prev => { const n = { ...prev }; delete n[key]; return n; });
+                            await load();
+                          } catch (e) {
+                            toast.error((e as Error).message || "Erro ao salvar");
+                          }
+                          setSavingMissingKey(null);
+                        }}
+                        disabled={isSaving || !val.trim()}
+                        className="px-3 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 inline-flex items-center gap-1.5 shrink-0"
+                        style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                      >
+                        {isSaving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
+                        Salvar
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          ) : loading ? (
             <div className="flex items-center justify-center gap-2 py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
               <Loader2 size={14} className="animate-spin" /> Carregando...
             </div>
