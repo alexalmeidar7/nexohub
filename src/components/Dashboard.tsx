@@ -836,6 +836,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
+        {isDashboard && (
+          <div className="px-3 lg:px-6 pb-4 relative z-[1] flex justify-center">
+            <div
+              className="rounded-3xl w-full"
+              style={{
+                maxWidth: "1350px",
+                height: "800px",
+                backgroundColor: "#00d6f9",
+              }}
+            />
+          </div>
+        )}
+
+
         {/* ===== MAIN CONTENT AREA ===== */}
         <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]">
           {currentPage !== "dashboard" && (
