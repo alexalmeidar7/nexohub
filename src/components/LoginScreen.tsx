@@ -298,7 +298,7 @@ export default function LoginScreen() {
                 ) : (
                   <>
                     entrar
-                    <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+                    <ArrowRight size={20} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-x-1.5" />
                   </>
                 )}
               </button>
