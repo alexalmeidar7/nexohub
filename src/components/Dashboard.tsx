@@ -851,7 +851,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 className="absolute rounded-full px-5 py-2 font-heading font-bold uppercase tracking-widest text-sm"
                 style={{
                   top: "20px",
-                  left: "8px",
+                  left: "18px",
                   backgroundColor: "#c3f628",
                   color: "#002132",
                 }}
