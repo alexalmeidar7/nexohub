@@ -201,11 +201,11 @@ export default function LoginScreen() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               className="w-full rounded-xl px-5 py-3 outline-none transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid rgba(13,55,154,0.2)", backgroundColor: "rgba(15,16,88,0.03)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)")}
-              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(38,143,250,0.12)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(13,55,154,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
+              style={{ fontSize: "12px", color: "#0f1058", border: "1.5px solid #00dbff", backgroundColor: "rgba(0,219,255,0.05)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#00dbff")}
+              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#00dbff"; }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "#00dbff"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,219,255,0.25)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "#00dbff"; e.currentTarget.style.boxShadow = "none"; }}
             />
             <input
               type="password"
