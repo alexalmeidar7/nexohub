@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -216,6 +216,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const [onAirLocutorFoto, setOnAirLocutorFoto] = useState<string | null>(null);
+  const [nextProgram, setNextProgram] = useState<{ foto: string | null; apresentador: string; programa: string; inicio: string; fim: string } | null>(null);
+  const [showNext, setShowNext] = useState(false);
   const [onAirTimes, setOnAirTimes] = useState<{ inicio: string; fim: string } | null>(null);
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
@@ -238,7 +240,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const load = async () => {
       const { data } = await supabase
         .from("programas")
-        .select("apresentador_id, dias_semana, horario_inicio, horario_fim")
+        .select("nome, apresentador_id, dias_semana, horario_inicio, horario_fim")
         .eq("user_id", uid)
         .eq("ativo", true)
         .ilike("estudio", "%fm%");
@@ -246,18 +248,41 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       const now = new Date();
       const dia = DIAS_MAP[now.getDay()];
       const hora = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const current = data.find((p: any) =>
-        (p.dias_semana || []).includes(dia) && hora >= p.horario_inicio && hora < p.horario_fim
-      );
-      if (!current) { setOnAirLocutorFoto(null); setOnAirTimes(null); return; }
-      setOnAirTimes({ inicio: current.horario_inicio, fim: current.horario_fim });
-      if (!current.apresentador_id) { setOnAirLocutorFoto(null); return; }
-      const { data: ap } = await supabase
-        .from("apresentadores")
-        .select("foto")
-        .eq("id", current.apresentador_id)
-        .maybeSingle();
-      if (!cancelled) setOnAirLocutorFoto((ap as any)?.foto || null);
+      const todays = (data as any[]).filter((p) => (p.dias_semana || []).includes(dia));
+      const current = todays.find((p) => hora >= p.horario_inicio && hora < p.horario_fim);
+      // Find next program (today's later than current, else earliest of next day with programs)
+      let next: any = todays
+        .filter((p) => p.horario_inicio > hora)
+        .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio))[0];
+      if (!next) {
+        for (let i = 1; i <= 7; i++) {
+          const d = DIAS_MAP[(now.getDay() + i) % 7];
+          const arr = (data as any[])
+            .filter((p) => (p.dias_semana || []).includes(d))
+            .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
+          if (arr[0]) { next = arr[0]; break; }
+        }
+      }
+
+      if (!current) { setOnAirLocutorFoto(null); setOnAirTimes(null); }
+      else {
+        setOnAirTimes({ inicio: current.horario_inicio, fim: current.horario_fim });
+        if (current.apresentador_id) {
+          const { data: ap } = await supabase.from("apresentadores").select("foto").eq("id", current.apresentador_id).maybeSingle();
+          if (!cancelled) setOnAirLocutorFoto((ap as any)?.foto || null);
+        } else setOnAirLocutorFoto(null);
+      }
+
+      if (next) {
+        let apNome = "";
+        let apFoto: string | null = null;
+        if (next.apresentador_id) {
+          const { data: ap } = await supabase.from("apresentadores").select("nome, foto").eq("id", next.apresentador_id).maybeSingle();
+          apNome = (ap as any)?.nome || "";
+          apFoto = (ap as any)?.foto || null;
+        }
+        if (!cancelled) setNextProgram({ foto: apFoto, apresentador: apNome, programa: next.nome, inicio: next.horario_inicio, fim: next.horario_fim });
+      } else if (!cancelled) setNextProgram(null);
     };
     load();
     const iv = setInterval(load, 60000);
@@ -967,6 +992,49 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     </div>
                   );
                 })()}
+
+                {/* Overlay: Próximo programa/locutor */}
+                {nextProgram && (
+                  <div
+                    className={`absolute inset-0 transition-all duration-500 ${showNext ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}
+                    style={{ backgroundColor: "#c3f628" }}
+                  >
+                    {nextProgram.foto && (
+                      <img src={nextProgram.foto} alt={nextProgram.apresentador} className="w-full h-full object-cover" />
+                    )}
+                    <div
+                      className="absolute left-0 right-0 bottom-0 px-5 pt-8 pb-6"
+                      style={{ background: "linear-gradient(180deg, transparent 0%, rgba(0,33,50,0.85) 100%)", color: "#e4fcff" }}
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">A seguir</p>
+                      <p className="text-base font-bold leading-tight truncate">{nextProgram.programa}</p>
+                      {nextProgram.apresentador && (
+                        <p className="text-xs opacity-80 truncate">{nextProgram.apresentador}</p>
+                      )}
+                      <p className="text-[11px] opacity-70 mt-1">{nextProgram.inicio} — {nextProgram.fim}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Botão toggle próximo */}
+                {nextProgram && (
+                  <button
+                    onClick={() => setShowNext((v) => !v)}
+                    aria-label={showNext ? "Voltar" : "Ver a seguir"}
+                    className="absolute rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110 active:scale-95 shadow-md"
+                    style={{
+                      top: "12px",
+                      right: "12px",
+                      width: "34px",
+                      height: "34px",
+                      backgroundColor: "#d7faff",
+                      color: "#002132",
+                      zIndex: 2,
+                    }}
+                  >
+                    {showNext ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+                  </button>
+                )}
               </div>
             </div>
 
