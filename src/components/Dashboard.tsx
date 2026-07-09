@@ -594,7 +594,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* Background layers (full page, behind sidebar) */}
       {isDashboard && (
-        <div className="absolute inset-0 z-0" style={{ backgroundColor: "#131519" }} />
+        <div className="absolute inset-0 z-0" style={{ backgroundColor: "#e4fcff" }} />
       )}
 
 
