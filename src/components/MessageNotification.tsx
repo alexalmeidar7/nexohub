@@ -116,13 +116,8 @@ export default function MessageNotification() {
       onMouseLeave={handleMouseLeave}
     >
       <div
-        className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all"
-        style={{
-          color: "var(--layout-nav-text, #fff)",
-          opacity: 0.5,
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `var(--layout-nav-text, #fff)1a`; }}
-        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+        className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition-all hover:bg-black/5"
+        style={{ color: "#002132" }}
       >
         <Mail size={18} />
       </div>
