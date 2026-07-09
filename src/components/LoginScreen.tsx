@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ArrowRight, Loader2, CheckCircle, X, Home } from "lucide-react";
+import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoNexoAsset from "@/assets/logo-nexo-azul.png.asset.json";
+import { HouseMixIcon } from "@/components/ProductIcons";
 const logoNexo = logoNexoAsset.url;
 
 const AUTH_TIMEOUT_MS = 12000;
@@ -186,11 +187,8 @@ export default function LoginScreen() {
           className="relative z-10 w-full p-10 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.25),0_0_0_1px_rgba(255,255,255,0.08)] animate-fade-in backdrop-blur-xl"
           style={{ fontSize: "12px", borderRadius: "1.5rem", background: "rgba(255,255,255,0.97)" }}
         >
-          <div className="flex items-center justify-center gap-2 mb-8">
-            <Home size={16} style={{ color: "#0f1058" }} />
-            <h1 className="text-center font-semibold tracking-wide" style={{ color: "#0f1058", fontSize: "12px" }}>
-              HouseMix login
-            </h1>
+          <div className="flex items-center justify-center mb-8">
+            <HouseMixIcon size={56} />
           </div>
 
           <div className="space-y-4">
@@ -307,9 +305,10 @@ export default function LoginScreen() {
             </div>
           </div>
 
-          <div className="mt-8">
-            <img src={logoNexo} alt="Nexo Soluções Visuais" className="h-10 opacity-80 animate-fade-in" />
-          </div>
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <img src={logoNexo} alt="Nexo Soluções Visuais" className="h-10 opacity-90 animate-fade-in" />
         </div>
 
         {/* Forgot Password Box */}
