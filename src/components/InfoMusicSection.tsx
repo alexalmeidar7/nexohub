@@ -185,6 +185,11 @@ export default function InfoMusicSection() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (filterField === "sem_curiosidade" && missingRows.length === 0 && !loadingMissing) {
+      loadMissing();
+    }
+  }, [filterField]);
   useEffect(() => { 
     loadExcecoes();
     // Auto refresh every 5 seconds to keep "Now Playing" updated
