@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X } from "lucide-react";
+import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ export default function InfoMusicSection() {
   const [showManualForm, setShowManualForm] = useState(false);
   const curiosityFetchKeyRef = useRef<string>("");
   const [xmlTelemetry, setXmlTelemetry] = useState<{ source: "manual" | "ai" | "none"; text: string; until?: string }>({ source: "none", text: "" });
+  const [xmlCheck, setXmlCheck] = useState<{ status: "idle" | "checking" | "ok" | "diverge" | "error"; xmlText: string; checkedAt: number; error?: string }>({ status: "idle", xmlText: "", checkedAt: 0 });
 
   const loadExcecoes = async () => {
     if (!user) return;
@@ -281,6 +282,45 @@ export default function InfoMusicSection() {
     return () => { cancelled = true; };
   }, [nowPlaying?.musica, nowPlaying?.artista, nowPlaying?.curiosity, user]);
 
+  // ============ XML Verifier ============
+  // Fetch the live broadcast XML and compare its <curiosidade> value with the text
+  // displayed in the "Curiosidade da música no ar" card. Alerts on divergence.
+  const normalizeCuriosity = (s: string) =>
+    (s || "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const runXmlCheck = async () => {
+    if (!user) return;
+    setXmlCheck(prev => ({ ...prev, status: "checking" }));
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user.id}&_=${Date.now()}`;
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const xml = await res.text();
+      const m = xml.match(/<curiosidade>([\s\S]*?)<\/curiosidade>/i);
+      const xmlText = normalizeCuriosity(m?.[1] || "");
+      const cardText = normalizeCuriosity(nowPlaying?.curiosity || xmlTelemetry.text || "");
+      const status: "ok" | "diverge" = xmlText === cardText ? "ok" : "diverge";
+      setXmlCheck({ status, xmlText, checkedAt: Date.now() });
+    } catch (e) {
+      setXmlCheck({ status: "error", xmlText: "", checkedAt: Date.now(), error: (e as Error).message });
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    runXmlCheck();
+    const id = setInterval(runXmlCheck, 15000);
+    return () => clearInterval(id);
+     
+  }, [user, nowPlaying?.curiosity, xmlTelemetry.text]);
+
   const handleTest = async () => {
     if (!testArtista.trim() || !testMusica.trim()) {
       toast.error("Informe artista e música");
@@ -519,6 +559,101 @@ export default function InfoMusicSection() {
           </p>
         </div>
       </div>
+
+      {/* XML Verifier: compares card text vs live XML */}
+      <div className="rounded-xl p-3 flex items-start gap-3" style={{
+        backgroundColor: xmlCheck.status === "diverge"
+          ? "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, #ef4444)"
+          : xmlCheck.status === "ok"
+            ? "color-mix(in srgb, var(--layout-page-bg, #fff) 94%, #10b981)"
+            : "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, #6b7280)",
+        border: `1px solid ${
+          xmlCheck.status === "diverge" ? "color-mix(in srgb, #ef4444 45%, transparent)" :
+          xmlCheck.status === "ok" ? "color-mix(in srgb, #10b981 30%, transparent)" :
+          "color-mix(in srgb, #6b7280 25%, transparent)"
+        }`,
+      }}>
+        <div className="shrink-0 pt-0.5">
+          {xmlCheck.status === "checking" ? (
+            <Loader2 size={14} className="animate-spin" style={{ color: "#6b7280" }} />
+          ) : xmlCheck.status === "diverge" ? (
+            <AlertTriangle size={14} style={{ color: "#ef4444" }} />
+          ) : xmlCheck.status === "error" ? (
+            <AlertTriangle size={14} style={{ color: "#f59e0b" }} />
+          ) : (
+            <CheckCircle2 size={14} style={{ color: "#10b981" }} />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Verificador XML ↔ Card
+            </span>
+            <span
+              className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+              style={{
+                backgroundColor:
+                  xmlCheck.status === "diverge" ? "rgba(239,68,68,0.18)" :
+                  xmlCheck.status === "ok" ? "rgba(16,185,129,0.15)" :
+                  xmlCheck.status === "error" ? "rgba(245,158,11,0.18)" :
+                  "rgba(107,114,128,0.15)",
+                color:
+                  xmlCheck.status === "diverge" ? "#ef4444" :
+                  xmlCheck.status === "ok" ? "#10b981" :
+                  xmlCheck.status === "error" ? "#f59e0b" : "#6b7280",
+              }}
+            >
+              {xmlCheck.status === "diverge" ? "Divergente" :
+               xmlCheck.status === "ok" ? "Sincronizado" :
+               xmlCheck.status === "error" ? "Erro" :
+               xmlCheck.status === "checking" ? "Verificando…" : "Aguardando"}
+            </span>
+            {xmlCheck.checkedAt > 0 && (
+              <span className="text-[10px] opacity-60 font-mono" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                {new Date(xmlCheck.checkedAt).toLocaleTimeString("pt-BR")}
+              </span>
+            )}
+            <button
+              onClick={runXmlCheck}
+              className="ml-auto text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 opacity-70 hover:opacity-100"
+              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+            >
+              <RefreshCw size={10} /> Reverificar
+            </button>
+          </div>
+          {xmlCheck.status === "diverge" ? (
+            <div className="space-y-1 mt-1">
+              <p className="text-[11px] font-bold" style={{ color: "#ef4444" }}>
+                ⚠ O texto no XML difere do exibido no card.
+              </p>
+              <div className="grid gap-1 text-[11px]">
+                <div className="flex gap-1.5">
+                  <span className="opacity-60 shrink-0" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Card:</span>
+                  <span className="italic break-words" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    "{normalizeCuriosity(nowPlaying?.curiosity || xmlTelemetry.text || "") || "— vazio —"}"
+                  </span>
+                </div>
+                <div className="flex gap-1.5">
+                  <span className="opacity-60 shrink-0" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>XML:</span>
+                  <span className="italic break-words" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                    "{xmlCheck.xmlText || "— vazio —"}"
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : xmlCheck.status === "error" ? (
+            <p className="text-[11px]" style={{ color: "#f59e0b" }}>
+              Não foi possível ler o XML: {xmlCheck.error}
+            </p>
+          ) : (
+            <p className="text-[11px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              XML e card com o mesmo texto de curiosidade.
+            </p>
+          )}
+        </div>
+      </div>
+
+
 
       {nowPlaying && (
         <div className="rounded-xl p-4" style={{
