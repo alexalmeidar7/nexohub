@@ -293,7 +293,7 @@ export default function LoginScreen() {
               >
                 {loading ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" style={{ color: "#ffffff" }} aria-hidden="true" />
+                    <Loader2 size={16} className="animate-spin" style={{ color: "#0f1058" }} aria-hidden="true" />
                     <span>entrando...</span>
                     <span className="sr-only">Autenticando, aguarde</span>
                   </>
