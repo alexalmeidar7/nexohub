@@ -1422,6 +1422,63 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
 );
 
 /* ========== SERVER CLOCK ========== */
+function ProgramProgressBar({ inicio, fim, nowTick }: { inicio: string; fim: string; nowTick: number }) {
+  const fillRef = useRef<HTMLDivElement>(null);
+  const [sh, sm] = inicio.split(":").map(Number);
+  const [eh, em] = fim.split(":").map(Number);
+  const now = new Date(nowTick);
+  const startDate = new Date(now); startDate.setHours(sh, sm, 0, 0);
+  const endDate = new Date(now); endDate.setHours(eh, em, 0, 0);
+  if (endDate <= startDate) endDate.setDate(endDate.getDate() + 1);
+  const totalMs = endDate.getTime() - startDate.getTime();
+  const elapsedMs = Math.min(Math.max(now.getTime() - startDate.getTime(), 0), totalMs);
+  const elapsedSec = Math.floor(elapsedMs / 1000);
+  const totalSec = Math.floor(totalMs / 1000);
+
+  // Sync a Web Animations API animation with wall-clock time
+  useEffect(() => {
+    const el = fillRef.current;
+    if (!el) return;
+    const anim = el.animate(
+      [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+      { duration: totalMs, easing: "linear", fill: "forwards" }
+    );
+    anim.currentTime = elapsedMs;
+    return () => anim.cancel();
+    // Re-sync when program window changes (not on every second)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inicio, fim, totalMs]);
+
+  const fmt = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+  };
+
+  return (
+    <div className="absolute group/bar" style={{ left: "20px", right: "20px", bottom: "10px", height: "10px" }}>
+      <div
+        className="absolute left-0 right-0 top-1/2 -translate-y-1/2 rounded-full overflow-hidden"
+        style={{ height: "2px", backgroundColor: "rgba(0,33,50,0.15)" }}
+      >
+        <div
+          ref={fillRef}
+          className="h-full w-full rounded-full origin-left"
+          style={{ backgroundColor: "#d7faff", willChange: "transform" }}
+        />
+      </div>
+      <div
+        className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap rounded-md px-2 py-1 text-[10px] font-medium shadow-lg"
+        style={{ backgroundColor: "#002132", color: "#e4fcff" }}
+      >
+        {fmt(elapsedSec)} / {fmt(totalSec)}
+      </div>
+    </div>
+  );
+}
+
 function ServerClock() {
   const [now, setNow] = useState(new Date());
 
