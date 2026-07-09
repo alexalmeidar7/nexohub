@@ -632,7 +632,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
 
       {/* ===== LEFT SIDEBAR (desktop) ===== */}
-      <div className="hidden lg:flex flex-shrink-0 z-[60] items-stretch py-3 pl-3 overflow-visible">
+      <div className="hidden lg:flex flex-shrink-0 z-[60] items-start py-3 pl-3 overflow-visible">
         <aside
           className="flex flex-col items-center py-4 gap-2 rounded-full relative overflow-visible"
           style={{
