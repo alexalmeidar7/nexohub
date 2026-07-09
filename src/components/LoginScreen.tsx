@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
+import { ArrowRight, Loader2, CheckCircle, X, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import logoNexo from "@/assets/logo-nexo.png";
+import logoNexoAsset from "@/assets/logo-nexo-azul.png.asset.json";
+const logoNexo = logoNexoAsset.url;
 
 const AUTH_TIMEOUT_MS = 12000;
 const MAX_RETRIES = 3;
