@@ -144,6 +144,32 @@ export default function InfoMusicSection() {
     );
   }, [missingRows, search]);
 
+  const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const Highlight = ({ text, term }: { text: string; term: string }) => {
+    if (!term || !text) return <>{text}</>;
+    const parts = text.split(new RegExp(`(${escapeRegex(term)})`, "gi"));
+    return (
+      <>
+        {parts.map((part, idx) =>
+          part.toLowerCase() === term.toLowerCase() ? (
+            <mark
+              key={idx}
+              className="rounded px-0.5"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)",
+                color: "inherit",
+              }}
+            >
+              {part}
+            </mark>
+          ) : (
+            <span key={idx}>{part}</span>
+          )
+        )}
+      </>
+    );
+  };
+
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
@@ -663,12 +689,16 @@ export default function InfoMusicSection() {
                             {r.deezer_artist_img && (
                               <img src={r.deezer_artist_img} alt={r.artista} className="w-8 h-8 rounded-full object-cover border border-white/10" />
                             )}
-                            {r.artista}
+                            {(filterField === "all" || filterField === "artista") ? <Highlight text={r.artista} term={search} /> : r.artista}
                           </div>
                         </td>
-                        <td className="px-3 py-2 align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{r.musica}</td>
+                        <td className="px-3 py-2 align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          {(filterField === "all" || filterField === "musica") ? <Highlight text={r.musica} term={search} /> : r.musica}
+                        </td>
                         <td className="px-3 py-2 align-top" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 75%, transparent)", maxWidth: 480 }}>
-                          <div className="line-clamp-3 leading-relaxed">{r.curiosidade}</div>
+                          <div className="line-clamp-3 leading-relaxed">
+                            {(filterField === "all" || filterField === "curiosidade") ? <Highlight text={r.curiosidade} term={search} /> : r.curiosidade}
+                          </div>
                         </td>
                         <td className="px-3 py-2 align-top font-mono text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                           {new Date(r.created_at).toLocaleString("pt-BR")}
