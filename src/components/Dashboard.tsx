@@ -851,7 +851,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 className="absolute rounded-full px-5 py-2 font-heading font-bold uppercase tracking-widest text-sm"
                 style={{
                   top: "20px",
-                  left: "20px",
+                  left: "8px",
                   backgroundColor: "#c3f628",
                   color: "#002132",
                 }}
@@ -863,7 +863,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   src={onAirThumb}
                   alt="Programa no ar"
                   className="absolute object-contain"
-                  style={{ top: "60px", left: "20px", height: "208px", width: "auto" }}
+                  style={{ top: "60px", left: "8px", height: "208px", width: "auto" }}
                 />
               )}
             </div>
