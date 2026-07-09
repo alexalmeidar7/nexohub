@@ -144,6 +144,32 @@ export default function InfoMusicSection() {
     );
   }, [missingRows, search]);
 
+  const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const Highlight = ({ text, term }: { text: string; term: string }) => {
+    if (!term || !text) return <>{text}</>;
+    const parts = text.split(new RegExp(`(${escapeRegex(term)})`, "gi"));
+    return (
+      <>
+        {parts.map((part, idx) =>
+          part.toLowerCase() === term.toLowerCase() ? (
+            <mark
+              key={idx}
+              className="rounded px-0.5"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)",
+                color: "inherit",
+              }}
+            >
+              {part}
+            </mark>
+          ) : (
+            <span key={idx}>{part}</span>
+          )
+        )}
+      </>
+    );
+  };
+
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
