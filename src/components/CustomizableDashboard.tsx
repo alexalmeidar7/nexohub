@@ -478,7 +478,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
         <div className="mb-4 animate-fade-in">
           <div className="flex items-start gap-5">
             {/* Selo / Logo do programa */}
-            {onAirProgram.selo && (
+            {false && onAirProgram.selo && (
                <img
                  src={onAirProgram.selo}
                  alt={onAirProgram.nome}
