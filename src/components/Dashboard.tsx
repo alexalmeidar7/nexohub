@@ -111,6 +111,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Film, label: "ADS", page: "preroll" },
       { icon: MessageSquareQuote, label: "citações", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
+      { icon: Image, label: "logos", page: "logos" },
       { icon: ExternalLink, label: "módulo locutor", page: undefined as unknown as Page, permKey: "telapromo", children: [
         { icon: Settings, label: "config tela promo", page: "configtelapromo" },
       ] },
@@ -121,7 +122,6 @@ const sidebarMenu: MenuItem[] = [
     icon: Monitor, label: "vmix", children: [
       { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
       { icon: Radio, label: "broadcast", page: "broadcast" },
-      { icon: Image, label: "logos", page: "logos" },
       { icon: MonitorPlay, label: "cenários", page: "cenario" },
       { icon: Swords, label: "batalha musical", page: "batalha" },
       { icon: HelpCircle, label: "enquete", page: "enquete" },
