@@ -1903,6 +1903,32 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   const channelType = activeChannel?.type || "";
   const isVideo = channelType.includes("video");
 
+  // Prefetch: quando o canal muda e não está tocando, pré-carrega o stream de áudio
+  // para que o clique em play seja quase instantâneo.
+  useEffect(() => {
+    if (!activeChannel || isVideo || isPlaying || isLoading) return;
+    const url = activeChannel.url;
+    // Se já temos prefetch para essa URL, reaproveita
+    if (prefetchRef.current?.url === url) return;
+    // Limpa prefetch anterior de outra URL
+    if (prefetchRef.current) {
+      try { prefetchRef.current.audio.pause(); prefetchRef.current.audio.removeAttribute("src"); prefetchRef.current.audio.load(); } catch {}
+      prefetchRef.current = null;
+    }
+    const pre = new Audio();
+    pre.preload = "auto";
+    pre.muted = true;
+    const sep = url.includes("?") ? "&" : "?";
+    pre.src = `${url}${sep}_pf=${Date.now()}`;
+    try { pre.load(); } catch {}
+    prefetchRef.current = { url, audio: pre };
+    return () => {
+      // Não descarta imediatamente — o togglePlay pode promovê-lo.
+      // A limpeza real ocorre na próxima troca de canal ou no unmount.
+    };
+  }, [activeChannel?.url, isVideo, isPlaying, isLoading]);
+
+
   const destroyHls = () => {
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     hlsInitUrlRef.current = "";
