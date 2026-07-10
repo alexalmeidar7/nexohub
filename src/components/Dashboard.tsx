@@ -1190,11 +1190,17 @@ const defaultWidgets: WidgetCard[] = [
 function DashboardHome({ empresa, onNavigate }: { empresa: import("./ConfiguracoesPage").EmpresaConfig; onNavigate: (page: Page) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
+    const allIds = defaultWidgets.map(w => w.id);
     try {
       const saved = localStorage.getItem(WIDGETS_ORDER_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed: string[] = JSON.parse(saved);
+        // Append any newly added widget IDs that aren't in the saved order
+        const missing = allIds.filter(id => !parsed.includes(id));
+        return [...parsed.filter(id => allIds.includes(id)), ...missing];
+      }
     } catch {}
-    return defaultWidgets.map(w => w.id);
+    return allIds;
   });
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -1202,6 +1208,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   const orderedWidgets = widgetOrder
     .map(id => defaultWidgets.find(w => w.id === id))
     .filter(Boolean) as WidgetCard[];
+
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedId(id);
