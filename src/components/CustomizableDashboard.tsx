@@ -1954,25 +1954,48 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     return () => clearTimeout(timer);
   }, [displayArt]);
 
+  const isBreak = ((currentMusic?.titulo || "").trim().toLowerCase() === "break") || ((currentMusic?.artista || "").trim().toLowerCase() === "break");
+
   return (
-    <div className="flex flex-col h-full w-full relative rounded-3xl overflow-hidden" style={{ background: "#000", minHeight: 0, maxHeight: "100%", contain: "layout paint size" }}>
-      {/* Background artist image */}
+    <div className="flex flex-col h-full w-full relative rounded-3xl overflow-hidden" style={{ background: isBreak ? "#002233" : "#000", minHeight: 0, maxHeight: "100%", contain: "layout paint size", transition: "background 0.4s ease" }}>
+      {/* Background artist image OR break wave */}
       <div className="absolute inset-0 pointer-events-none">
-        {fadingArt && (
-          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: 0 }} />
-        )}
-        {visibleArt ? (
-          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: artOpacity }} />
-
-
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Tv size={40} className="text-white/10" />
+        {isBreak ? (
+          <div className="absolute inset-0 flex items-end justify-center gap-[3px] px-6 pb-6">
+            {Array.from({ length: 28 }).map((_, i) => (
+              <span
+                key={i}
+                className="block rounded-t-sm"
+                style={{
+                  width: 4,
+                  background: "#c3f628",
+                  height: 8,
+                  animation: isPlaying ? `wave-bar 0.9s ease-in-out ${i * 0.05}s infinite alternate` : "none",
+                  opacity: isPlaying ? 1 : 0.35,
+                }}
+              />
+            ))}
           </div>
+        ) : (
+          <>
+            {fadingArt && (
+              <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: 0 }} />
+            )}
+            {visibleArt ? (
+              <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: artOpacity }} />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Tv size={40} className="text-white/10" />
+              </div>
+            )}
+          </>
         )}
         {/* Vignette to guarantee text contrast */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.85) 100%)" }} />
+        {!isBreak && (
+          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.85) 100%)" }} />
+        )}
       </div>
+
 
       {/* Video overlay (grows upward) */}
       <div
