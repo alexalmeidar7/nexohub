@@ -55,10 +55,16 @@ export function readMusicStart(userId: string | null | undefined): number {
   return parseInt(localStorage.getItem(key) || "0", 10) || 0;
 }
 
+export const MUSIC_DATA_EVENT = "masterview:music-data-updated";
+
 export function writeMusicData(userId: string | null | undefined, data: unknown): void {
   const key = musicDataKey(userId);
   if (!key) return;
   localStorage.setItem(key, JSON.stringify(data));
+  // Notify same-tab listeners (storage event only fires cross-tab)
+  try {
+    window.dispatchEvent(new CustomEvent(MUSIC_DATA_EVENT, { detail: { userId, data } }));
+  } catch {}
 }
 
 export function writeMusicStart(userId: string | null | undefined, ts: number): void {

@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
-import { readMusicData } from "@/lib/musicStorageKeys";
+import { readMusicData, musicDataKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 
 /* Typewriter text component — animates character-by-character on text change */
 function TypewriterText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -603,8 +603,9 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                     boxShadow: isDragOver ? "0 0 0 2px var(--layout-accent-color), 0 4px 20px rgba(0,0,0,0.12)" : "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
                     borderRadius: "24px",
                     height: item.widgetType === "player" ? "auto" : "280px",
-                    minHeight: item.widgetType === "player" ? "260px" : undefined,
+                    minHeight: item.widgetType === "player" ? "221px" : undefined,
                     maxHeight: item.widgetType === "player" ? "none" : "280px",
+                    maxWidth: item.widgetType === "player" ? "70%" : undefined,
                     overflow: item.widgetType === "player" && playerVideoActive === item.id ? "visible" : "hidden",
                   }}
                   onDragOver={(e) => handleDragOver(e, item.id)}
@@ -1679,9 +1680,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
   }, [uid]);
 
   useEffect(() => {
+    const effectiveUid = dataUserId || uid;
+    const targetKey = musicDataKey(effectiveUid);
     const poll = () => {
       try {
-        const d = readMusicData(dataUserId) as any;
+        const d = readMusicData(effectiveUid) as any;
         if (d && d.titulo) {
           setCurrentMusic(prev => {
             if (prev?.titulo === d.titulo && prev?.artista === (d.artista || "") && prev?.capa === (d.capa || "")) return prev;
@@ -1693,9 +1696,25 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
       setCurrentMusic(null);
     };
     poll();
-    const iv = setInterval(poll, 1500);
-    return () => clearInterval(iv);
-  }, [dataUserId]);
+    // Cross-tab: fires when another tab writes to localStorage
+    const onStorage = (e: StorageEvent) => {
+      if (!targetKey || e.key === targetKey) poll();
+    };
+    // Same-tab: fires when writeMusicData runs in this window
+    const onCustom = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || !effectiveUid || detail.userId === effectiveUid) poll();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
+    // Keep a slow poll as safety net for writers that bypass the helper
+    const iv = setInterval(poll, 3000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
+      clearInterval(iv);
+    };
+  }, [dataUserId, uid]);
 
   useEffect(() => {
     if (!audioRef.current) {
@@ -1939,7 +1958,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
       {channels.length === 0 ? (
         <p className="text-white/40 text-xs relative z-10 m-auto">Nenhum canal cadastrado</p>
       ) : (
-        <div className="relative z-10 flex flex-col justify-between h-full p-3 sm:p-5" style={{ minHeight: 220 }}>
+        <div className="relative z-10 flex flex-col justify-between h-full p-3 sm:p-5" style={{ minHeight: 187 }}>
           {/* Top row: "tocando" label + circular controls */}
           <div className="flex items-start justify-between gap-2">
             <span className="text-[16px] sm:text-[20px] md:text-[22px] font-medium lowercase tracking-tight truncate min-w-0" style={{ color: "#c8ff00" }}>
