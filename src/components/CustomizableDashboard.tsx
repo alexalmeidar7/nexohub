@@ -1605,14 +1605,43 @@ function DashboardWeatherWidget() {
 function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: string; onVideoChange?: (active: boolean) => void }) {
   const { user } = useAuth();
   const uid = dataUserId || user?.id;
+  const volumeStorageKey = uid ? `dashboard_player_volume_${uid}` : "dashboard_player_volume_anon";
+  const mutedStorageKey = uid ? `dashboard_player_muted_${uid}` : "dashboard_player_muted_anon";
   const [channels, setChannels] = useState<any[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(0.8);
+  const [isMuted, setIsMuted] = useState(() => {
+    try { return localStorage.getItem(mutedStorageKey) === "1"; } catch { return false; }
+  });
+  const [volume, setVolume] = useState(() => {
+    try {
+      const raw = localStorage.getItem(volumeStorageKey);
+      const v = raw != null ? Number(raw) : NaN;
+      return Number.isFinite(v) && v >= 0 && v <= 1 ? v : 0.8;
+    } catch { return 0.8; }
+  });
   const [showVideo, setShowVideo] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+
+  // Persist volume/mute per user
+  useEffect(() => {
+    try { localStorage.setItem(volumeStorageKey, String(volume)); } catch {}
+  }, [volume, volumeStorageKey]);
+  useEffect(() => {
+    try { localStorage.setItem(mutedStorageKey, isMuted ? "1" : "0"); } catch {}
+  }, [isMuted, mutedStorageKey]);
+
+  // Re-hydrate when user id changes (switching accounts)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(volumeStorageKey);
+      const v = raw != null ? Number(raw) : NaN;
+      if (Number.isFinite(v) && v >= 0 && v <= 1) setVolume(v);
+      setIsMuted(localStorage.getItem(mutedStorageKey) === "1");
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid]);
 
   useEffect(() => { onVideoChange?.(showVideo); }, [showVideo, onVideoChange]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
