@@ -1865,7 +1865,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
   }, [displayArt]);
 
   return (
-    <div className="flex flex-col h-full relative rounded-2xl overflow-hidden" style={{ background: "#000", minHeight: 200 }}>
+    <div className="flex flex-col h-full relative rounded-3xl overflow-hidden" style={{ background: "#000", minHeight: 260 }}>
       {/* Background artist image */}
       <div className="absolute inset-0 pointer-events-none">
         {fadingArt && (
@@ -1884,7 +1884,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
 
       {/* Video overlay (grows upward) */}
       <div
-        className="absolute left-0 right-0 overflow-hidden rounded-2xl pointer-events-none"
+        className="absolute left-0 right-0 overflow-hidden rounded-3xl pointer-events-none"
         style={{
           bottom: "100%",
           marginBottom: showVideo && isVideo ? "8px" : "0px",
@@ -1910,39 +1910,34 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
       {channels.length === 0 ? (
         <p className="text-white/40 text-xs relative z-10 m-auto">Nenhum canal cadastrado</p>
       ) : (
-        <div className="relative z-10 flex flex-col justify-between h-full p-4" style={{ minHeight: 200 }}>
+        <div className="relative z-10 flex flex-col justify-between h-full p-5" style={{ minHeight: 260 }}>
           {/* Top row: "tocando" label + circular controls */}
           <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-1.5 min-w-0">
-              {isPlaying && (
-                <Circle size={7} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse flex-shrink-0" />
-              )}
-              <span className="text-[15px] font-medium lowercase tracking-tight truncate" style={{ color: "var(--layout-accent-color, #c8ff00)" }}>
-                {isPlaying ? "tocando" : "pausado"}
-              </span>
-            </div>
+            <span className="text-[22px] font-medium lowercase tracking-tight truncate" style={{ color: "#c8ff00" }}>
+              {isPlaying ? "tocando" : "pausado"}
+            </span>
 
             <div className="flex flex-col gap-2 flex-shrink-0">
               <button
                 onClick={togglePlay}
                 className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
-                style={{ background: "rgba(0, 30, 45, 0.95)" }}
+                style={{ background: "#001e2d" }}
                 title={isPlaying ? "Pausar" : "Reproduzir"}
               >
                 {isPlaying
-                  ? <Pause size={16} style={{ color: "var(--layout-accent-color, #c8ff00)" }} fill="currentColor" />
-                  : <Play size={16} style={{ color: "var(--layout-accent-color, #c8ff00)", marginLeft: 2 }} fill="currentColor" />}
+                  ? <Pause size={16} style={{ color: "#c8ff00" }} fill="#c8ff00" />
+                  : <Play size={16} style={{ color: "#c8ff00", marginLeft: 2 }} fill="#c8ff00" />}
               </button>
               <div className="relative group/vol">
                 <button
                   onClick={toggleMute}
                   className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
-                  style={{ background: "var(--layout-accent-color, #c8ff00)" }}
+                  style={{ background: "#c8ff00" }}
                   title={isMuted ? "Ativar som" : "Mudo"}
                 >
                   {isMuted || volume === 0
                     ? <VolumeX size={16} style={{ color: "#001e2d" }} />
-                    : <Volume2 size={16} style={{ color: "#001e2d" }} />}
+                    : <Volume2 size={16} style={{ color: "#001e2d" }} fill="#001e2d" />}
                 </button>
                 {/* Volume slider popover on hover */}
                 <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 opacity-0 pointer-events-none group-hover/vol:opacity-100 group-hover/vol:pointer-events-auto transition-opacity duration-150 z-30">
