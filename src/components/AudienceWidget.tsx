@@ -38,7 +38,12 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         .select("youtube, instagram, facebook, youtube_subs, instagram_subs, facebook_subs")
         .eq("user_id", dataUserId as any)
         .maybeSingle();
-      if (cancelled || !data) return;
+      if (cancelled) return;
+      setLoadingConfig(false);
+      if (!data) {
+        setLoadingSocial(false);
+        return;
+      }
       const d = data as any;
       const urls = {
         youtube: d.youtube || undefined,
@@ -57,6 +62,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         instagram: d.instagram_subs != null ? Number(d.instagram_subs) : null,
         facebook: d.facebook_subs != null ? Number(d.facebook_subs) : null,
       };
+      if (!urls.youtube && !urls.instagram && !urls.facebook) {
+        setLoadingSocial(false);
+        return;
+      }
       await fetchCounts(urls, manual);
     };
 
@@ -64,7 +73,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       urls: typeof socialUrlsRef.current,
       manual: SocialCounts,
     ) => {
-      if (!urls.youtube && !urls.instagram && !urls.facebook) return;
+      if (!urls.youtube && !urls.instagram && !urls.facebook) {
+        setLoadingSocial(false);
+        return;
+      }
       const { data } = await supabase.functions.invoke("fetch-social-followers", {
         body: urls,
       });
@@ -77,6 +89,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           facebook: manual.facebook ?? ((data as any).facebook ?? null),
         });
       }
+      setLoadingSocial(false);
     };
 
     load();
