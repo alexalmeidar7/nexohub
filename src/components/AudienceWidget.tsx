@@ -14,18 +14,20 @@ interface SocialCounts {
 }
 
 const ROTATE_MS = 3000;
-const REFETCH_MS = 5 * 60 * 1000; // 5 min
+const REFETCH_MS = 5 * 60 * 1000; // 5 min for social
+const LISTENERS_MS = 30 * 1000; // 30s for stream listeners
 
 export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [social, setSocial] = useState<SocialCounts>({ youtube: null, instagram: null, facebook: null });
   const [playerCount] = useState<number>(0);
-  const [streamingCount] = useState<number>(0);
+  const [streamingCount, setStreamingCount] = useState<number | null>(null);
   const [rotIdx, setRotIdx] = useState(0);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [loadingSocial, setLoadingSocial] = useState(true);
   const [loadingPlayer] = useState(true);
-  const [loadingStreaming] = useState(true);
+  const [loadingStreaming, setLoadingStreaming] = useState(true);
   const socialUrlsRef = useRef<{ youtube?: string; instagram?: string; facebook?: string }>({});
+
 
   // Fetch social follower counts via edge function (which also handles RLS-safe
   // lookup of empresa_config URLs and manual overrides using service role).
@@ -82,6 +84,30 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
+  // Poll Icecast/Shoutcast stats for live audio listener count.
+  useEffect(() => {
+    if (!dataUserId) return;
+    let cancelled = false;
+    const tick = async () => {
+      const { data } = await supabase.functions.invoke("count-stream-listeners", {
+        body: { userId: dataUserId },
+      });
+      if (cancelled) return;
+      if (data && (data as any).ok) {
+        const n = (data as any).listeners;
+        setStreamingCount(typeof n === "number" ? n : null);
+      }
+      setLoadingStreaming(false);
+    };
+    tick();
+    const iv = setInterval(tick, LISTENERS_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
+  }, [dataUserId]);
+
+
 
   // Rotate social display every 3s (only across configured networks)
   useEffect(() => {
@@ -91,7 +117,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
-  const total = socialTotal + playerCount + streamingCount;
+  const total = socialTotal + playerCount + (streamingCount || 0);
   const bg = "#d9ff65";
   const dark = "#0A2540";
 
@@ -168,7 +194,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           icon={<Radio size={14} />}
           label="Streaming"
           value={streamingCount}
-          loading={loadingStreaming && streamingCount === 0}
+          loading={loadingStreaming && streamingCount === null}
           dark={dark}
         />
       </div>
