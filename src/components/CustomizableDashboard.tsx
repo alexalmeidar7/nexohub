@@ -654,24 +654,6 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
         </div>
       )}
 
-      {/* Show add button when no links exist */}
-      {items.filter(i => i.type === "link").length === 0 && items.length > 0 && (
-        <div className="mb-6">
-          <div
-            onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-            className="w-[120px] h-[100px] sm:w-[140px] sm:h-[110px] rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.04]"
-            style={{
-              background: "color-mix(in srgb, var(--layout-nav-text, #fff) 5%, transparent)",
-              border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 20%, transparent)",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 12%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 40%, transparent)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 5%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 20%, transparent)"; }}
-          >
-            <Plus size={18} className="mb-1.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }} />
-            <span className="text-[10px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicionar</span>
-          </div>
-        </div>
-      )}
 
       {/* Empty state */}
       {items.length === 0 && (
