@@ -646,24 +646,37 @@ export default function RoteiroPrograma() {
                         const isAuto = typeof r.titulo === "string" && r.titulo.includes("[AUTO]");
                         const cleanTitulo = (r.titulo || "").replace("[AUTO]", "").trim();
                         return (
-                          <div key={r.id} className="flex-shrink-0 rounded-xl p-3 flex flex-col gap-2 transition-all hover:-translate-y-0.5 hover:shadow-md" style={{ minWidth: "230px", maxWidth: "280px", backgroundColor: isAuto ? "color-mix(in srgb, #8b5cf6 6%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: isAuto ? "1px solid color-mix(in srgb, #8b5cf6 45%, transparent)" : "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 10%, transparent)" }}>
+                          <div
+                            key={r.id}
+                            className="flex-shrink-0 flex flex-col gap-2 transition-all hover:-translate-y-0.5"
+                            style={{
+                              ...MONT,
+                              minWidth: 240,
+                              maxWidth: 290,
+                              padding: 14,
+                              borderRadius: 20,
+                              background: "#FFFFFF",
+                              border: `2px solid ${isAuto ? "#8b5cf6" : CYAN}`,
+                              boxShadow: "0 2px 10px rgba(10, 37, 64, 0.06)",
+                            }}
+                          >
                             <div className="flex items-start gap-1.5">
-                              <p className="text-xs font-bold truncate flex-1 leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                              <p style={{ ...MONT, flex: 1, fontSize: 13, fontWeight: 800, color: DARK, lineHeight: 1.25, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                 {r.programa_nome || "Sem programa"}
-                                {r.numero_roteiro && <span className="text-[10px] font-semibold ml-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>#{r.numero_roteiro}</span>}
+                                {r.numero_roteiro && <span style={{ fontSize: 10, fontWeight: 700, marginLeft: 6, color: CYAN }}>#{r.numero_roteiro}</span>}
                               </p>
                               {isAuto && (
-                                <span className="text-[8px] px-1.5 py-0.5 rounded-md font-bold flex-shrink-0" style={{ backgroundColor: "#8b5cf6", color: "#fff" }} title="Gerado por Automação">
+                                <span style={{ ...MONT, fontSize: 9, fontWeight: 800, padding: "3px 8px", borderRadius: 999, background: "#8b5cf6", color: "#fff", letterSpacing: 1 }} title="Gerado por Automação">
                                   AUTO
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-                              <span className="font-semibold">{dataFormatada}</span>
-                              {r.horario && <><span className="opacity-40">·</span><span>{r.horario}</span></>}
+                            <div className="flex items-center gap-2" style={{ fontSize: 10, color: "#64748B", ...MONT, fontWeight: 700 }}>
+                              <span>{dataFormatada}</span>
+                              {r.horario && <><span style={{ color: CYAN }}>·</span><span>{r.horario}</span></>}
                             </div>
                             {cleanTitulo && (
-                              <p className="text-[10px] line-clamp-2 leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 75%, transparent)" }}>
+                              <p style={{ ...MONT, fontSize: 10, lineHeight: 1.4, color: "#475569", margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                                 {cleanTitulo}
                               </p>
                             )}
