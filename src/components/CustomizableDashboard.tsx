@@ -1754,6 +1754,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const prefetchRef = useRef<{ url: string; audio: HTMLAudioElement } | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<any>(null);
   const hlsInitUrlRef = useRef<string>("");
