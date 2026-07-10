@@ -2008,6 +2008,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
 
       <style>{`
         @keyframes eq-bar { 0% { height: 3px; } 100% { height: 14px; } }
+        .volume-slider-lime::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 9999px; background: #001e2d; border: 2px solid #c8ff00; cursor: pointer; }
+        .volume-slider-lime::-moz-range-thumb { width: 14px; height: 14px; border-radius: 9999px; background: #001e2d; border: 2px solid #c8ff00; cursor: pointer; border: none; }
       `}</style>
     </div>
   );
