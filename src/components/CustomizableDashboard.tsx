@@ -632,7 +632,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                     height: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px`) : "280px",
                     minHeight: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(72, playerMaxHeight)}px` : `${Math.min(221, playerMaxHeight)}px`) : undefined,
                     maxHeight: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px`) : "280px",
-                    maxWidth: item.widgetType === "player" ? "70%" : undefined,
+                    maxWidth: item.widgetType === "player" && typeof window !== "undefined" && window.innerWidth >= 640 ? "70%" : undefined,
                     overflow: item.widgetType === "player" && playerVideoActive === item.id ? "visible" : "hidden",
                     transition: item.widgetType === "player" ? "min-height 0.35s cubic-bezier(0.4,0,0.2,1), height 0.35s cubic-bezier(0.4,0,0.2,1), max-height 0.35s cubic-bezier(0.4,0,0.2,1)" : undefined,
                   }}
