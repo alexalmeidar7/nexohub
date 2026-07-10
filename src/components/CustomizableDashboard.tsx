@@ -199,8 +199,10 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
     const compute = () => {
       const anchorTop = onAirSlot?.getBoundingClientRect().bottom ?? 120;
       const footerTop = footerEl?.getBoundingClientRect().top ?? window.innerHeight;
-      const gap = 32; // spacing above and below the player
-      const available = Math.max(220, footerTop - anchorTop - gap);
+      const isMobile = window.innerWidth < 640;
+      const gap = isMobile ? 16 : 32;
+      const floor = isMobile ? 72 : 220;
+      const available = Math.max(floor, footerTop - anchorTop - gap);
       setPlayerMaxHeight(available);
     };
     compute();
@@ -211,6 +213,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
       window.clearInterval(interval);
     };
   }, [onAirSlot, footerEl]);
+
 
   useEffect(() => {
     if (!user) return;
