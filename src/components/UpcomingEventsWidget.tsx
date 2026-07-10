@@ -308,7 +308,8 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                 </div>
               </button>
             );
-          })
+          })}
+          </>
         )}
       </div>
 
