@@ -196,14 +196,15 @@ Deno.serve(async (req) => {
     const instagram = typeof body?.instagram === "string" && body.instagram.trim() ? body.instagram.trim() : null;
     const facebook = typeof body?.facebook === "string" && body.facebook.trim() ? body.facebook.trim() : null;
 
+    const debug: string[] = [];
     const [yt, ig, fb] = await Promise.all([
       youtube ? fetchYoutube(youtube).catch(() => null) : Promise.resolve(null),
-      instagram ? fetchInstagram(instagram).catch(() => null) : Promise.resolve(null),
+      instagram ? fetchInstagram(instagram, debug).catch((e) => { debug.push(`ig err ${e}`); return null; }) : Promise.resolve(null),
       facebook ? fetchFacebook(facebook).catch(() => null) : Promise.resolve(null),
     ]);
 
     return new Response(
-      JSON.stringify({ ok: true, youtube: yt, instagram: ig, facebook: fb }),
+      JSON.stringify({ ok: true, youtube: yt, instagram: ig, facebook: fb, debug: body?.debug ? debug : undefined }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
