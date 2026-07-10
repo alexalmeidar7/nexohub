@@ -1956,7 +1956,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     return () => clearTimeout(timer);
   }, [displayArt]);
 
-  const isBreak = ((currentMusic?.titulo || "").trim().toLowerCase() === "break") || ((currentMusic?.artista || "").trim().toLowerCase() === "break");
+  const BREAK_LABELS = ["break", "ebs curtas"];
+  const _tit = (currentMusic?.titulo || "").trim().toLowerCase();
+  const _art = (currentMusic?.artista || "").trim().toLowerCase();
+  const isBreak = BREAK_LABELS.includes(_tit) || BREAK_LABELS.includes(_art);
 
   // ===== Web Audio analyser for reactive break wave =====
   const BAR_COUNT = 28;
