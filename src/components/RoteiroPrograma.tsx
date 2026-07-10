@@ -734,11 +734,11 @@ export default function RoteiroPrograma() {
                                   } catch {}
                                 }
                                 setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath, podcastData: editPodcastData });
-                              }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
-                                <Pencil size={10} style={{ color: "var(--layout-icon-color, #888888)" }} />
+                              }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Editar">
+                                <Pencil size={13} style={{ color: DARK }} />
                               </button>
-                              <button onClick={() => excluirRoteiro(r.id)} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition ml-auto" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
-                                <Trash2 size={10} style={{ color: "#dc2626" }} />
+                              <button onClick={() => excluirRoteiro(r.id)} style={{ marginLeft: "auto", width: 30, height: 30, borderRadius: "50%", background: "#FEE2E2", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Excluir">
+                                <Trash2 size={13} style={{ color: "#dc2626" }} />
                               </button>
                             </div>
                           </div>
