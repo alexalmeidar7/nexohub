@@ -1122,9 +1122,19 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)",
     color: "var(--layout-page-text, #1a1a1a)",
   };
+  if (renderAsModal && !novoRoteiroOpen) return null;
 
-  return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
+  const card = (
+    <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: renderAsModal ? "0 20px 60px rgba(0,0,0,0.35)" : "0 4px 24px rgba(0,0,0,0.08)", width: "100%" }}>
+      {renderAsModal && (
+        <button
+          onClick={() => setNovoRoteiroOpen(false)}
+          aria-label="Fechar"
+          style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.9)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
+        >
+          <XIcon size={16} style={{ color: "#0A2540" }} />
+        </button>
+      )}
       {/* Header */}
       <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-button-bg, #2563eb), color-mix(in srgb, var(--layout-button-bg, #2563eb) 70%, black 30%))", color: "#ffffff" }}>
         <div className="flex items-center gap-3">
