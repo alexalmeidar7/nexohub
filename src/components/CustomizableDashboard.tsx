@@ -611,24 +611,36 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                   onDrop={() => handleDrop(item.id)}
                   onDragEnd={handleDragEnd}
                 >
-                  <div
-                    className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0"
-                    style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }}
-                    draggable
-                    onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
-                  >
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
-                      {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "stats" && <BarChart3 size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "player" && <Radio size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                  {item.widgetType !== "player" && (
+                    <div
+                      className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0"
+                      style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }}
+                      draggable
+                      onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
+                    >
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
+                        {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "stats" && <BarChart3 size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                      </div>
+                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
+                        {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Estatísticas"}
+                      </span>
+                      <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
                     </div>
-                    <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
-                      {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : item.widgetType === "player" ? "Player" : "Estatísticas"}
-                    </span>
-                    <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
-                  </div>
+                  )}
+                  {item.widgetType === "player" && (
+                    <div
+                      className="absolute top-2 left-2 z-20 w-6 h-6 rounded-lg flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }}
+                      draggable
+                      onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
+                      title="Arrastar"
+                    >
+                      <GripVertical size={10} style={{ color: "rgba(255,255,255,0.7)" }} />
+                    </div>
+                  )}
                   <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
                     <button
                       onClick={() => removeItem(item.id)}
@@ -638,7 +650,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                       <X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} />
                     </button>
                   </div>
-                  <div className={`p-4 flex-1 ${item.widgetType === "player" && playerVideoActive === item.id ? "overflow-visible" : "overflow-y-auto overflow-x-hidden"} widget-scroll`}>
+                  <div className={`${item.widgetType === "player" ? "p-0" : "p-4"} flex-1 ${item.widgetType === "player" && playerVideoActive === item.id ? "overflow-visible" : item.widgetType === "player" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"} widget-scroll`}>
                     <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
                       {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
                       {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
