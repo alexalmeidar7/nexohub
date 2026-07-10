@@ -229,12 +229,12 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
               <div
                 className="rounded-lg p-2 flex items-center gap-2"
                 style={{
-                  background: "rgba(255,255,255,0.04)",
+                  background: "#ffffff",
                   border: "1px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)",
                 }}
               >
-                <CalendarDays size={12} style={{ color: accent, opacity: 0.8 }} />
-                <p className="text-[10px] leading-tight m-0" style={{ color: textColor, opacity: 0.75 }}>
+                <CalendarDays size={12} style={{ color: accent, opacity: 0.9 }} />
+                <p className="text-[10px] leading-tight m-0" style={{ color: "#111111", opacity: 0.85 }}>
                   Nenhum evento em <span className="font-bold">{format(selected, "dd 'de' MMM", { locale: ptBR })}</span>. Próximos abaixo:
                 </p>
               </div>
