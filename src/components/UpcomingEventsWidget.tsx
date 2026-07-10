@@ -224,7 +224,22 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
             <p className="text-[9px]" style={{ color: textColor }}>Sem eventos próximos</p>
           </div>
         ) : (
-          upcoming.map(({ date, evt }) => {
+          <>
+            {!eventos.some((e) => matches(e, selected) && e.status !== "cancelado" && e.status !== "concluido") && (
+              <div
+                className="rounded-lg p-2 flex items-center gap-2"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)",
+                }}
+              >
+                <CalendarDays size={12} style={{ color: accent, opacity: 0.8 }} />
+                <p className="text-[10px] leading-tight m-0" style={{ color: textColor, opacity: 0.75 }}>
+                  Nenhum evento em <span className="font-bold">{format(selected, "dd 'de' MMM", { locale: ptBR })}</span>. Próximos abaixo:
+                </p>
+              </div>
+            )}
+            {upcoming.map(({ date, evt }) => {
             const type = typeColors[(evt.tipo_evento || "live") as keyof typeof typeColors] || typeColors.live;
             const hora = evt.horario_gravacao || evt.programa?.horario_inicio || "";
             const horaFim = evt.horario_gravacao_fim || evt.programa?.horario_fim || "";
@@ -293,7 +308,8 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                 </div>
               </button>
             );
-          })
+          })}
+          </>
         )}
       </div>
 
