@@ -203,6 +203,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         instagram_subs: toBigInt(newConfig.instagramSubs),
         facebook_subs: toBigInt(newConfig.facebookSubs),
         youtube_subs: toBigInt(newConfig.youtubeSubs),
+        video_stream_api_url: newConfig.videoStreamApiUrl || "",
         updated_at: new Date().toISOString(),
       } as any, { onConflict: "user_id" });
     }, 500);
