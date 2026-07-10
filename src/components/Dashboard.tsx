@@ -26,6 +26,8 @@ const PrevisaoTempo = lazy(() => import("./PrevisaoTempo"));
 const RoteiroPrograma = lazy(() => import("./RoteiroPrograma"));
 const WeatherWidget = lazy(() => import("./WeatherWidget"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
+const UpcomingEventsWidget = lazy(() => import("./UpcomingEventsWidget"));
+
 const MusicaNoAr = lazy(() => import("./MusicaNoAr"));
 const AgendaPage = lazy(() => import("./AgendaPage"));
 const MusicWidget = lazy(() => import("./MusicWidget"));
