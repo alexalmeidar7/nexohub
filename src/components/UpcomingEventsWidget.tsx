@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Clock } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Clock, Radio } from "lucide-react";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -183,9 +183,9 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                 onClick={() => setSelected(d)}
                 className="group flex flex-col items-center justify-center rounded-md py-0.5 transition-all"
                 style={{
-                  background: isSel ? accent : "transparent",
+                  background: isSel ? accent : isToday ? "#ffffff" : "transparent",
                   border: isToday && !isSel ? `1px solid ${accent}` : "1px solid transparent",
-                  color: isSel ? "var(--layout-header-text, #ffffff)" : textColor,
+                  color: isSel ? "var(--layout-header-text, #ffffff)" : isToday ? "#111111" : textColor,
                 }}
               >
                 <span className="text-[7.5px] uppercase font-semibold leading-none" style={{ opacity: isSel ? 0.9 : 0.5 }}>
@@ -229,12 +229,12 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
               <div
                 className="rounded-lg p-2 flex items-center gap-2"
                 style={{
-                  background: "rgba(255,255,255,0.04)",
+                  background: "#ffffff",
                   border: "1px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)",
                 }}
               >
-                <CalendarDays size={12} style={{ color: accent, opacity: 0.8 }} />
-                <p className="text-[10px] leading-tight m-0" style={{ color: textColor, opacity: 0.75 }}>
+                <CalendarDays size={12} style={{ color: accent, opacity: 0.9 }} />
+                <p className="text-[10px] leading-tight m-0" style={{ color: "#111111", opacity: 0.85 }}>
                   Nenhum evento em <span className="font-bold">{format(selected, "dd 'de' MMM", { locale: ptBR })}</span>. Próximos abaixo:
                 </p>
               </div>
@@ -280,12 +280,21 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                     <p className="text-[11px] font-bold truncate leading-tight flex-1" style={{ color: textColor }}>
                       {evt.programa?.nome || evt.descricao?.slice(0, 40) || "Evento"}
                     </p>
-                    <span
-                      className="text-[7px] font-black px-1 py-[1px] rounded-sm shrink-0 tracking-wider"
-                      style={{ backgroundColor: type.bg, color: type.text }}
-                    >
-                      {type.label}
-                    </span>
+                    {evt.tipo_evento === "live" || !evt.tipo_evento ? (
+                      <span className="flex items-center gap-0.5 shrink-0">
+                        <Radio size={9} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
+                        <span className="font-bold text-[8px] tracking-wider animate-pulse" style={{ color: "var(--layout-accent-color)" }}>
+                          AO VIVO
+                        </span>
+                      </span>
+                    ) : (
+                      <span
+                        className="text-[7px] font-black px-1 py-[1px] rounded-sm shrink-0 tracking-wider"
+                        style={{ backgroundColor: type.bg, color: type.text }}
+                      >
+                        {type.label}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     {hora && (
