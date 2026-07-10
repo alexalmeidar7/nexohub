@@ -14,6 +14,13 @@ const AutomacaoProgramaSection = lazy(() => import("./AutomacaoProgramaSection")
 import HistoricoTable from "./HistoricoTable";
 import type { ExpressEditData } from "./ProgramaExpressInline";
 
+// Palette (nexo-form-design-system) — mesmo padrão do Cadastro de Ouvinte
+const CYAN = "#00BFF0";
+const LIME = "#C6F03C";
+const CARD_BG = "#D6F4FB";
+const DARK = "#0A2540";
+const MONT: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" };
+
 interface Programa {
   id: string;
   nome: string;
