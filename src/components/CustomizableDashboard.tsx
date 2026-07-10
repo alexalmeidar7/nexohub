@@ -702,7 +702,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                     </Suspense>
                   </div>
                 )}
-                </>
+                </Fragment>
               );
             })}
           </div>
