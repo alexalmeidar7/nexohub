@@ -105,12 +105,12 @@ const sidebarMenu: MenuItem[] = [
   { icon: Globe, label: "site", page: "site" },
   {
     icon: ShoppingBag, label: "comercial", children: [
+      { icon: Film, label: "ADS", page: "preroll" },
       { icon: MessageSquareQuote, label: "citações", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
       { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page, permKey: "telapromo" },
       { icon: Settings, label: "config tela promo", page: "configtelapromo", separator: true },
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
-      { icon: Film, label: "anúncios", page: "preroll" },
     ]
   },
   {
