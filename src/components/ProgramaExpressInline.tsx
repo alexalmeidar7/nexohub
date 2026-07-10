@@ -1695,7 +1695,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                   {!collapsedBlocos.has(bi) && (
                     <div className="space-y-3">
                       {bloco.noticias.map((noticia, ni) => (
-                        <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} onRegenerateWeather={addWeatherInfo} onRegenerateFinance={addFinanceInfo} addingWeather={addingWeather} addingFinance={addingFinance} defaultCollapsed={!!editingId && !!noticia.titulo} />
+                        <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} onRegenerateWeather={addWeatherInfo} onRegenerateFinance={addFinanceInfo} addingWeather={addingWeather} addingFinance={addingFinance} isOpen={openNoticia[bi] === ni} onToggleOpen={(open) => setOpenNoticia(prev => ({ ...prev, [bi]: open ? ni : null }))} onAddToEscalada={() => addToEscalada(noticia.titulo, noticia.imagemUrl)} alreadyInEscalada={escaladaList.some(e => e.titulo === noticia.titulo && !!noticia.titulo)} />
                       ))}
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => addNoticia(bi)} className="hover:opacity-80" style={nexoPillGhost}>
