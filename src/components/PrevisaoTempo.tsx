@@ -79,6 +79,36 @@ const favoritesKey = (uid: string) => `masterview_favorite_cities_${uid}`;
 const primaryCityKey = (uid: string) => `masterview_primary_city_${uid}`;
 const REFRESH_INTERVAL = 5 * 60 * 1000;
 
+// Palette (nexo-form-design-system)
+const CYAN = "#00BFF0";
+const LIME = "#C6F03C";
+const CARD_BG = "#D6F4FB";
+const DARK = "#0A2540";
+
+const pillInput: React.CSSProperties = {
+  width: "100%",
+  height: 44,
+  borderRadius: 999,
+  background: "#FFFFFF",
+  border: `2px solid ${CYAN}`,
+  padding: "0 20px",
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 13,
+  color: DARK,
+  outline: "none",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  color: DARK,
+  marginBottom: 8,
+  display: "block",
+};
+
 interface PrimaryCity {
   name: string;
   lat: number;
