@@ -23,9 +23,9 @@ export interface EmpresaConfig {
   instagram: string;
   facebook: string;
   youtube: string;
-  instagramSubs: string;
-  facebookSubs: string;
-  youtubeSubs: string;
+  instagramSubs?: string;
+  facebookSubs?: string;
+  youtubeSubs?: string;
   plano: string;
 }
 
