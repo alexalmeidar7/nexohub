@@ -1958,7 +1958,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
       {channels.length === 0 ? (
         <p className="text-white/40 text-xs relative z-10 m-auto">Nenhum canal cadastrado</p>
       ) : (
-        <div className="relative z-10 flex flex-col justify-between h-full p-3 sm:p-5" style={{ minHeight: 220 }}>
+        <div className="relative z-10 flex flex-col justify-between h-full p-3 sm:p-5" style={{ minHeight: 187 }}>
           {/* Top row: "tocando" label + circular controls */}
           <div className="flex items-start justify-between gap-2">
             <span className="text-[16px] sm:text-[20px] md:text-[22px] font-medium lowercase tracking-tight truncate min-w-0" style={{ color: "#c8ff00" }}>
