@@ -554,6 +554,7 @@ export default function RoteiroPrograma() {
                   existingXmlPath, 
                   podcastData: editPodcastData 
                 });
+                setNovoRoteiroOpen(true);
                 // Scroll to top to see the edit form
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 // Force sync with parent component's scroll ref if possible
