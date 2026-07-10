@@ -437,7 +437,7 @@ export default function BatalhaMusicalPage() {
   };
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="nexo-scope animate-fade-in space-y-6">
       {/* Main Form Card */}
       <div className="rounded-2xl overflow-hidden" style={{ background: cardBg, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
         {/* Card Header */}

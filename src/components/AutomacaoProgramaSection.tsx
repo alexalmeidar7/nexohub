@@ -194,7 +194,7 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
   const diaSemanaHoje = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][new Date().getDay()];
 
   return (
-    <div className="px-6 pt-4 pb-2">
+    <div className="nexo-scope px-6 pt-4 pb-2">
       <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
 
         <div className="flex flex-col gap-3 mb-4">

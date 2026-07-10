@@ -238,7 +238,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
 
   if (loading || !dataUserId) {
     return (
-      <div>
+      <div className="nexo-scope">
         <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent overflow-hidden">
           <div className="h-full animate-pulse rounded-r" style={{ width: "60%", background: "var(--layout-accent-color, #e53e3e)", animation: "loadbar 1.2s ease-in-out infinite" }} />
         </div>

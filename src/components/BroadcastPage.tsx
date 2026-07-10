@@ -537,7 +537,7 @@ export default function BroadcastPage() {
   }, [handleSave]);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0 px-2 pt-2 pb-4">
+    <div className="nexo-scope flex flex-col lg:flex-row gap-4 h-full min-h-0 px-2 pt-2 pb-4">
       {/* ── Left: Mockup Preview ── */}
       <div className="flex-1 min-w-0">
         <MockupPreview

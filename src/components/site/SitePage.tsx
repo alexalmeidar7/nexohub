@@ -65,7 +65,7 @@ export default function SitePage({ effectiveUserId }: Props) {
 
   if (!effectiveUserId) {
     return (
-      <div className="flex items-center justify-center h-64 text-sm opacity-70">
+      <div className="nexo-scope flex items-center justify-center h-64 text-sm opacity-70">
         Aguarde a sessão carregar para abrir o admin do site.
       </div>
     );
