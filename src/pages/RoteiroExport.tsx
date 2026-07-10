@@ -31,9 +31,9 @@ export default function RoteiroExport() {
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#f4f6fb" }}>
         <div className="text-center">
           <p className="text-sm" style={{ color: "#0d0446" }}>Nenhum roteiro para exibir.</p>
-          <button onClick={() => navigate(-1)} className="mt-4 text-xs font-semibold" style={{ color: "#268ffa" }}>
-            ← voltar
-          </button>
+          <div className="mt-4 flex justify-center">
+            <BackButton onClick={() => navigate(-1)} />
+          </div>
         </div>
       </div>
     );
@@ -51,10 +51,7 @@ export default function RoteiroExport() {
     <div className="min-h-screen" style={{ backgroundColor: "#f4f6fb" }}>
       {/* Top bar - hidden on print */}
       <div className="print:hidden flex items-center justify-between px-6 py-4" style={{ backgroundColor: "#0d0446" }}>
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-xs font-semibold text-white hover:opacity-80 transition">
-          <ArrowLeft size={14} />
-          voltar
-        </button>
+        <BackButton onClick={() => navigate(-1)} />
         <button onClick={() => {
           const el = document.getElementById("roteiro-export-page-content");
           if (el) {
