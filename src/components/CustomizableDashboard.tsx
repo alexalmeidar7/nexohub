@@ -672,15 +672,17 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                       <GripVertical size={10} style={{ color: "rgba(255,255,255,0.7)" }} />
                     </div>
                   )}
-                  <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                      style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
-                    >
-                      <X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} />
-                    </button>
-                  </div>
+                  {item.widgetType !== "player" && (
+                    <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                        style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
+                      >
+                        <X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} />
+                      </button>
+                    </div>
+                  )}
                   <div className={`${item.widgetType === "player" ? "p-0" : "p-4"} flex-1 ${item.widgetType === "player" && playerVideoActive === item.id ? "overflow-visible" : item.widgetType === "player" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"} widget-scroll`}>
                     <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
                       {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
@@ -1633,6 +1635,69 @@ function DashboardWeatherWidget() {
 }
 
 /* ========== WIDGET: Player ========== */
+function VolumeSliderControl({ compactMode, isMuted, volume, toggleMute, handleVolume }: { compactMode: boolean; isMuted: boolean; volume: number; toggleMute: () => void; handleVolume: (v: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
+  const cancelClose = () => {
+    if (closeTimerRef.current) { window.clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+  };
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimerRef.current = window.setTimeout(() => setOpen(false), 700);
+  };
+  useEffect(() => () => cancelClose(), []);
+
+  return (
+    <div className="relative" onMouseEnter={() => { cancelClose(); setOpen(true); }} onMouseLeave={scheduleClose}>
+      <button
+        onClick={toggleMute}
+        className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
+        style={{ background: "#c8ff00" }}
+        title={isMuted ? "Ativar som" : "Mudo"}
+      >
+        {isMuted || volume === 0
+          ? <VolumeX size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} />
+          : <Volume2 size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} fill="#001e2d" />}
+      </button>
+      {/* Invisible bridge so cursor can travel from button to slider without gap */}
+      <div
+        className="absolute right-full top-0 h-full"
+        style={{ width: 12, pointerEvents: open ? "auto" : "none" }}
+      />
+      <div
+        className="absolute right-full top-1/2 -translate-y-1/2 mr-1.5 z-30"
+        style={{
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transform: `translateY(-50%) translateX(${open ? "0" : "6px"})`,
+          transition: "opacity 200ms ease, transform 200ms ease",
+        }}
+        onMouseEnter={cancelClose}
+        onMouseLeave={scheduleClose}
+      >
+        <div className="rounded-full px-2 py-1.5 sm:px-3 sm:py-2 flex items-center shadow-lg" style={{ background: "#c8ff00" }}>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={isMuted ? 0 : volume}
+            onChange={e => handleVolume(Number(e.target.value))}
+            onMouseDown={e => e.stopPropagation()}
+            onTouchStart={e => e.stopPropagation()}
+            onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
+            draggable={false}
+            className="volume-slider-lime h-1 appearance-none rounded-full cursor-pointer w-20 sm:w-24"
+            style={{
+              background: `linear-gradient(to right, #001e2d ${(isMuted ? 0 : volume) * 100}%, rgba(0,30,45,0.25) ${(isMuted ? 0 : volume) * 100}%)`,
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: { dataUserId?: string; onVideoChange?: (active: boolean) => void; onCompactChange?: (compact: boolean) => void }) {
   const { user } = useAuth();
   const uid = dataUserId || user?.id;
@@ -1762,7 +1827,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     if (!audioRef.current) {
       const audio = new Audio();
       audio.preload = "none";
-      audio.crossOrigin = "anonymous";
+      // Note: crossOrigin intentionally NOT set — many radio streams lack CORS headers
+      // and setting it would break playback. Analyser will taint silently; we handle that below.
       audioRef.current = audio;
     }
     return () => {
@@ -2012,56 +2078,66 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       audioCtxRef.current.resume().catch(() => {});
     }
 
-    // EMA smoothing state — asymmetric attack/release + noise gate + deadband
+    // Smoothing state
     const IDLE_H = 6;
     const smoothed = new Array(BAR_COUNT).fill(IDLE_H);
-    const ATTACK = 0.28;       // rising response (lower = smoother, higher = snappier)
-    const RELEASE = 0.06;      // falling response (very slow = elegant decay)
-    const NOISE_GATE = 14;     // 0..255; below this we treat the bin as silence
-    const DEADBAND = 0.6;      // px difference below which we skip DOM writes to kill jitter
+    const ATTACK = 0.35;
+    const RELEASE = 0.09;
+    const DEADBAND = 0.6;
 
-    if (!ok) {
-      // Fallback: gentle synthetic motion when analyser blocked
-      const start = performance.now();
-      const tick = () => {
-        const t = (performance.now() - start) / 1000;
-        barRefs.current.forEach((el, i) => {
-          if (!el) return;
-          const v = 0.5 + 0.5 * Math.sin(t * 2.2 + i * 0.35) * Math.sin(t * 1.1 + i * 0.7);
-          const target = IDLE_H + Math.abs(v) * 42;
-          const alpha = target > smoothed[i] ? ATTACK : RELEASE;
-          smoothed[i] = smoothed[i] + (target - smoothed[i]) * alpha;
-          if (Math.abs(smoothed[i] - parseFloat(el.style.height || "0")) >= DEADBAND) {
-            el.style.height = `${smoothed[i]}px`;
-          }
-        });
-        rafRef.current = requestAnimationFrame(tick);
-      };
-      rafRef.current = requestAnimationFrame(tick);
-      return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-    }
+    const analyser = ok ? analyserRef.current! : null;
+    const bins = analyser ? analyser.frequencyBinCount : 0;
+    const data = analyser ? new Uint8Array(bins) : null;
+    const step = analyser ? Math.max(1, Math.floor(bins / BAR_COUNT)) : 0;
 
-    const analyser = analyserRef.current!;
-    const bins = analyser.frequencyBinCount;
-    const data = new Uint8Array(bins);
-    const step = Math.max(1, Math.floor(bins / BAR_COUNT));
+    const start = performance.now();
+    let zeroFrames = 0;
+    let analyserUsable = !!analyser;
 
     const tick = () => {
-      analyser.getByteFrequencyData(data);
+      const t = (performance.now() - start) / 1000;
+
+      // Try to read audio; compute overall RMS + per-bar amplitude
+      let overall = 0;
+      let hasAudioData = false;
+      if (analyserUsable && analyser && data) {
+        analyser.getByteFrequencyData(data);
+        let total = 0;
+        for (let k = 0; k < data.length; k++) total += data[k];
+        overall = total / data.length / 255; // 0..1
+        if (overall < 0.005) {
+          zeroFrames++;
+          // 3s of pure zeros → assume tainted stream (CORS), stop trusting analyser
+          if (zeroFrames > 180) analyserUsable = false;
+        } else {
+          zeroFrames = 0;
+        }
+        hasAudioData = overall > 0.005;
+      }
+
+      // Always synthesize a graceful wave; modulate amplitude by real audio if available
+      const baseAmp = hasAudioData ? 0.35 + overall * 0.9 : 0.85; // 0..~1.25
       for (let i = 0; i < BAR_COUNT; i++) {
         const el = barRefs.current[i];
         if (!el) continue;
-        // Average a small window of bins per bar
-        let sum = 0;
-        const start = i * step;
-        for (let j = 0; j < step; j++) sum += data[start + j] || 0;
-        const avg = sum / step; // 0..255
-        // Noise gate: near-silence collapses to idle instead of jittering
-        const gated = avg < NOISE_GATE ? 0 : (avg - NOISE_GATE) / (255 - NOISE_GATE);
-        const target = IDLE_H + gated * 56;
+
+        // Per-bar target: combine synthetic wave with real bin (when available)
+        const wave = 0.5 + 0.5 * Math.sin(t * 2.4 + i * 0.42) * Math.sin(t * 1.15 + i * 0.63);
+        let binAmp = 0;
+        if (hasAudioData && data) {
+          let sum = 0;
+          const s = i * step;
+          for (let j = 0; j < step; j++) sum += data[s + j] || 0;
+          binAmp = (sum / step) / 255;
+        }
+        const combined = hasAudioData
+          ? Math.max(wave * baseAmp * 0.55, binAmp * 1.1)
+          : wave * baseAmp;
+
+        const target = IDLE_H + Math.min(1, combined) * 56;
         const alpha = target > smoothed[i] ? ATTACK : RELEASE;
         smoothed[i] = smoothed[i] + (target - smoothed[i]) * alpha;
-        // Deadband: skip layout writes for imperceptible changes
+
         const current = parseFloat(el.style.height || "0");
         if (Math.abs(smoothed[i] - current) >= DEADBAND) {
           el.style.height = `${smoothed[i]}px`;
@@ -2072,6 +2148,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     rafRef.current = requestAnimationFrame(tick);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [isBreak, isPlaying]);
+
 
 
 
@@ -2260,38 +2337,14 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
                 ? <Pause size={compactMode ? 11 : 12} style={{ color: "#c8ff00" }} fill="#c8ff00" />
                 : <Play size={compactMode ? 11 : 12} style={{ color: "#c8ff00", marginLeft: 1 }} fill="#c8ff00" />}
             </button>
-            <div className="relative group/vol">
-              <button
-                onClick={toggleMute}
-                className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
-                style={{ background: "#c8ff00" }}
-                title={isMuted ? "Ativar som" : "Mudo"}
-              >
-                {isMuted || volume === 0
-                  ? <VolumeX size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} />
-                  : <Volume2 size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} fill="#001e2d" />}
-              </button>
-              <div className="absolute right-full top-1/2 -translate-y-1/2 mr-1.5 opacity-0 pointer-events-none group-hover/vol:opacity-100 group-hover/vol:pointer-events-auto transition-opacity duration-150 z-30">
-                <div className="rounded-full px-2 py-1 sm:px-2.5 sm:py-1.5 flex items-center shadow-lg" style={{ background: "#c8ff00" }}>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={isMuted ? 0 : volume}
-                    onChange={e => handleVolume(Number(e.target.value))}
-                    onMouseDown={e => e.stopPropagation()}
-                    onTouchStart={e => e.stopPropagation()}
-                    onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
-                    draggable={false}
-                    className="volume-slider-lime h-1 appearance-none rounded-full cursor-pointer w-12 sm:w-16"
-                    style={{
-                      background: `linear-gradient(to right, #001e2d ${(isMuted ? 0 : volume) * 100}%, rgba(0,30,45,0.25) ${(isMuted ? 0 : volume) * 100}%)`,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+            <VolumeSliderControl
+              compactMode={compactMode}
+              isMuted={isMuted}
+              volume={volume}
+              toggleMute={toggleMute}
+              handleVolume={handleVolume}
+            />
+
             <button
               onClick={() => setCompactMode(m => !m)}
               className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
