@@ -2065,12 +2065,82 @@ export type Database = {
       cleanup_infomusic: { Args: never; Returns: undefined }
       cleanup_musicas_tocadas: { Args: never; Returns: undefined }
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
+      get_roteiro_by_share_token: {
+        Args: { _token: string }
+        Returns: {
+          apresentador_editado: boolean | null
+          configuracoes: Json | null
+          conteudo_html: string
+          created_at: string
+          data_programa: string
+          editado_at: string | null
+          estudio: string
+          horario: string
+          id: string
+          numero_roteiro: number | null
+          participantes: Json
+          programa_nome: string
+          share_login: string | null
+          share_token: string | null
+          status: string
+          subtitulo: string
+          tickertitulos: string | null
+          tipo_programa: string
+          titulo: string
+          updated_at: string
+          user_id: string
+          xml_pushed_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "roteiros"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      list_roteiros_historico_by_share_token: {
+        Args: { _limit?: number; _token: string }
+        Returns: {
+          apresentador_editado: boolean | null
+          configuracoes: Json | null
+          conteudo_html: string
+          created_at: string
+          data_programa: string
+          editado_at: string | null
+          estudio: string
+          horario: string
+          id: string
+          numero_roteiro: number | null
+          participantes: Json
+          programa_nome: string
+          share_login: string | null
+          share_token: string | null
+          status: string
+          subtitulo: string
+          tickertitulos: string | null
+          tipo_programa: string
+          titulo: string
+          updated_at: string
+          user_id: string
+          xml_pushed_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "roteiros"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      update_roteiro_by_share_token: {
+        Args: { _conteudo_html: string; _participantes: Json; _token: string }
+        Returns: undefined
       }
     }
     Enums: {

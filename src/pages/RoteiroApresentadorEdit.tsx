@@ -99,59 +99,51 @@ export default function RoteiroApresentadorEdit() {
     if (!token) { toast.error("Link inválido"); return; }
     setLoading(true);
     const { data, error } = await supabase
-      .from("roteiros")
-      .select("*")
-      .eq("share_token", token)
-      .maybeSingle();
+      .rpc("get_roteiro_by_share_token", { _token: token });
 
-    if (error || !data) {
+    const row = Array.isArray(data) ? data[0] : null;
+    if (error || !row) {
       toast.error("Roteiro não encontrado");
       setLoading(false);
       return;
     }
 
-    const expectedLogin = (data.share_login || "").toLowerCase().trim();
+    const expectedLogin = ((row as any).share_login || "").toLowerCase().trim();
     if (loginUser.toLowerCase().trim() !== expectedLogin || loginPass !== "edit123") {
       toast.error("Login ou senha inválidos");
       setLoading(false);
       return;
     }
 
-    setRoteiro(data);
+    setRoteiro(row);
     setAuthed(true);
     setLoading(false);
 
     let parts: Participante[] = [];
     try {
-      parts = typeof data.participantes === "string" ? JSON.parse(data.participantes) : data.participantes || [];
+      parts = typeof (row as any).participantes === "string"
+        ? JSON.parse((row as any).participantes)
+        : (row as any).participantes || [];
     } catch { parts = []; }
     setParticipantes(parts);
 
-    fetchHistorico(data.user_id, data.id);
+    fetchHistorico();
 
     setTimeout(() => {
       if (editorRef.current) {
-        editorRef.current.innerHTML = data.conteudo_html || "";
+        editorRef.current.innerHTML = (row as any).conteudo_html || "";
         injectPerguntaActions(editorRef.current);
-        // Count existing perguntas
         const existing = editorRef.current.querySelectorAll("tr[data-pergunta]");
         setPerguntaCount(existing.length || 1);
       }
     }, 100);
   };
 
-  const fetchHistorico = async (userId: string, excludeId?: string) => {
-    let query = supabase
-      .from("roteiros")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(10);
-    if (excludeId) {
-      query = query.neq("id", excludeId);
-    }
-    const { data } = await query;
-    setHistorico(data || []);
+  const fetchHistorico = async () => {
+    if (!token) return;
+    const { data } = await supabase
+      .rpc("list_roteiros_historico_by_share_token", { _token: token, _limit: 10 });
+    setHistorico((data as any[]) || []);
   };
 
   const updateParticipante = (idx: number, field: keyof Participante, value: string) => {
@@ -159,17 +151,13 @@ export default function RoteiroApresentadorEdit() {
   };
 
   const handleSave = async () => {
-    if (!roteiro || !editorRef.current) return;
+    if (!roteiro || !editorRef.current || !token) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("roteiros")
-      .update({
-        conteudo_html: editorRef.current.innerHTML,
-        participantes: participantes as any,
-        apresentador_editado: true,
-        editado_at: new Date().toISOString(),
-      })
-      .eq("id", roteiro.id);
+    const { error } = await supabase.rpc("update_roteiro_by_share_token", {
+      _token: token,
+      _conteudo_html: editorRef.current.innerHTML,
+      _participantes: participantes as any,
+    });
 
     setSaving(false);
     if (error) {
@@ -177,9 +165,10 @@ export default function RoteiroApresentadorEdit() {
     } else {
       setSavedMsg(true);
       setTimeout(() => setSavedMsg(false), 3000);
-      fetchHistorico(roteiro.user_id, roteiro.id);
+      fetchHistorico();
     }
   };
+
 
   // Login screen
   if (!authed) {
