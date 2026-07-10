@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
 import logoMenu from "@/assets/logo-menu.png";
 import logoFooter from "@/assets/logo-footer.png";
-import { HouseMixIcon } from "@/components/ProductIcons";
+import { HouseMixIcon, BusinessIcon, ChatbotIcon, SocialDesignIcon, TvAppIcon } from "@/components/ProductIcons";
 
 import {
   Tooltip,
@@ -863,9 +863,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   {pageTitle[currentPage]}
                 </p>
               )}
-              <h1 className="text-2xl font-light" style={{ color: "#002132" }}>
-                {empresa.nome || "NexoHUB"}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-light" style={{ color: "#002132" }}>
+                  {empresa.nome || "NexoHUB"}
+                </h1>
+                {isDashboard && (
+                  <div className="flex items-center gap-1.5">
+                    <HouseMixIcon size={28} />
+                    <BusinessIcon size={28} />
+                    <ChatbotIcon size={28} />
+                    <SocialDesignIcon size={28} />
+                    <TvAppIcon size={28} />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
