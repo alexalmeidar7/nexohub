@@ -31,36 +31,64 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     const load = async () => {
       const { data } = await supabase
         .from("empresa_config")
-        .select("youtube, instagram, facebook")
+        .select("youtube, instagram, facebook, youtube_subs, instagram_subs, facebook_subs")
         .eq("user_id", dataUserId as any)
         .maybeSingle();
       if (cancelled || !data) return;
+      const d = data as any;
       const urls = {
-        youtube: (data as any).youtube || undefined,
-        instagram: (data as any).instagram || undefined,
-        facebook: (data as any).facebook || undefined,
+        youtube: d.youtube || undefined,
+        instagram: d.instagram || undefined,
+        facebook: d.facebook || undefined,
       };
       socialUrlsRef.current = urls;
-      await fetchCounts(urls);
+      // Seed with manual overrides so numbers show immediately.
+      setSocial({
+        youtube: d.youtube_subs != null ? Number(d.youtube_subs) : null,
+        instagram: d.instagram_subs != null ? Number(d.instagram_subs) : null,
+        facebook: d.facebook_subs != null ? Number(d.facebook_subs) : null,
+      });
+      const manual = {
+        youtube: d.youtube_subs != null ? Number(d.youtube_subs) : null,
+        instagram: d.instagram_subs != null ? Number(d.instagram_subs) : null,
+        facebook: d.facebook_subs != null ? Number(d.facebook_subs) : null,
+      };
+      await fetchCounts(urls, manual);
     };
 
-    const fetchCounts = async (urls: typeof socialUrlsRef.current) => {
+    const fetchCounts = async (
+      urls: typeof socialUrlsRef.current,
+      manual: SocialCounts,
+    ) => {
       if (!urls.youtube && !urls.instagram && !urls.facebook) return;
       const { data } = await supabase.functions.invoke("fetch-social-followers", {
         body: urls,
       });
       if (cancelled) return;
       if (data && (data as any).ok) {
+        // Manual override wins over scraped value.
         setSocial({
-          youtube: (data as any).youtube ?? null,
-          instagram: (data as any).instagram ?? null,
-          facebook: (data as any).facebook ?? null,
+          youtube: manual.youtube ?? ((data as any).youtube ?? null),
+          instagram: manual.instagram ?? ((data as any).instagram ?? null),
+          facebook: manual.facebook ?? ((data as any).facebook ?? null),
         });
       }
     };
 
     load();
-    const iv = setInterval(() => fetchCounts(socialUrlsRef.current), REFETCH_MS);
+    const iv = setInterval(async () => {
+      const { data: d2 } = await supabase
+        .from("empresa_config")
+        .select("youtube_subs, instagram_subs, facebook_subs")
+        .eq("user_id", dataUserId as any)
+        .maybeSingle();
+      const manual: SocialCounts = {
+        youtube: d2 && (d2 as any).youtube_subs != null ? Number((d2 as any).youtube_subs) : null,
+        instagram: d2 && (d2 as any).instagram_subs != null ? Number((d2 as any).instagram_subs) : null,
+        facebook: d2 && (d2 as any).facebook_subs != null ? Number((d2 as any).facebook_subs) : null,
+      };
+      fetchCounts(socialUrlsRef.current, manual);
+    }, REFETCH_MS);
     return () => {
       cancelled = true;
       clearInterval(iv);
