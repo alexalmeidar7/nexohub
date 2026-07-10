@@ -511,7 +511,6 @@ export default function RoteiroPrograma() {
                 ? <ChevronUp size={14} style={{ color: CYAN }} />
                 : <ChevronDown size={14} style={{ color: "#94A3B8" }} />}
             </button>
-            {historicoOpen && (
           </div>
           {historicoOpen && (<>
           {activeTab === "historico" ? (
