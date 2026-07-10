@@ -2189,13 +2189,14 @@ export default function AgendaPage() {
             </div>
           </div>
             {/* Próximos Feriados Section */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #ef4444), color-mix(in srgb, var(--layout-accent-color, #ef4444) 80%, black 20%))", color: "#ffffff" }}>
-                <div className="flex items-center gap-1.5">
-                  <Star size={12} className="fill-white" />
+            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+              <div className="flex items-center justify-between" style={{ padding: "12px 18px", background: NEXO_DARK, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+                <div className="flex items-center gap-2">
+                  <Star size={12} style={{ color: NEXO_LIME, fill: NEXO_LIME }} />
                   Próximos Feriados
                 </div>
               </div>
+
               <div className="p-3 space-y-1.5 max-h-[300px] overflow-y-auto scrollbar-hide">
                 {feriadosNacionais
                   .filter(f => f.date >= new Date(new Date().setHours(0,0,0,0)))
