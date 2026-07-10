@@ -28,10 +28,11 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [rotIdx, setRotIdx] = useState(0);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [loadingSocial, setLoadingSocial] = useState(true);
-  const [loadingVideo] = useState(true);
+  const [loadingVideo, setLoadingVideo] = useState(true);
   const [loadingStreaming, setLoadingStreaming] = useState(true);
   const [loadingSite, setLoadingSite] = useState(true);
   const socialUrlsRef = useRef<{ youtube?: string; instagram?: string; facebook?: string }>({});
+  const videoApiUrlRef = useRef<string | null>(null);
 
 
   // Fetch social follower counts via edge function (which also handles RLS-safe
