@@ -2108,24 +2108,36 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
     const step = analyser ? Math.max(1, Math.floor(bins / BAR_COUNT)) : 0;
 
-    const start = performance.now();
+    // Single rAF clock drives both analyser sampling and bar rendering,
+    // so there's no drift between "what we hear" and "what we draw".
+    let startTs = 0;
+    let lastTs = 0;
     let zeroFrames = 0;
     let analyserUsable = !!analyser;
 
-    const tick = () => {
-      const t = (performance.now() - start) / 1000;
+    // Cancel any prior loop to guarantee a single scheduler per effect run.
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
 
-      // Try to read audio; compute overall RMS + per-bar amplitude
+    const tick = (ts: number) => {
+      if (!startTs) { startTs = ts; lastTs = ts; }
+      // Clamp dt so a throttled/hidden tab doesn't produce a huge catch-up jump
+      // that would look like accumulated latency when the tab becomes active.
+      const dtRaw = (ts - lastTs) / 1000;
+      const dt = dtRaw > 0.1 ? 0.1 : dtRaw < 0 ? 0 : dtRaw;
+      lastTs = ts;
+      const t = (ts - startTs) / 1000;
+
+      // Sample the analyser on the SAME frame we draw — no setInterval, no
+      // separate clock, no queued reads. This keeps audio<->visual in sync.
       let overall = 0;
       let hasAudioData = false;
       if (analyserUsable && analyser && data) {
         analyser.getByteFrequencyData(data);
         let total = 0;
         for (let k = 0; k < data.length; k++) total += data[k];
-        overall = total / data.length / 255; // 0..1
+        overall = total / data.length / 255;
         if (overall < 0.005) {
           zeroFrames++;
-          // 3s of pure zeros → assume tainted stream (CORS), stop trusting analyser
           if (zeroFrames > 180) analyserUsable = false;
         } else {
           zeroFrames = 0;
@@ -2133,13 +2145,16 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         hasAudioData = overall > 0.005;
       }
 
-      // Always synthesize a graceful wave; modulate amplitude by real audio if available
-      const baseAmp = hasAudioData ? 0.35 + overall * 0.9 : 0.85; // 0..~1.25
+      const baseAmp = hasAudioData ? 0.35 + overall * 0.9 : 0.85;
+      // Frame-rate independent smoothing: convert per-frame alpha (tuned at
+      // 60fps) into a time-based factor so 30/120Hz displays behave the same.
+      const attackK = 1 - Math.pow(1 - ATTACK, dt * 60);
+      const releaseK = 1 - Math.pow(1 - RELEASE, dt * 60);
+
       for (let i = 0; i < BAR_COUNT; i++) {
         const el = barRefs.current[i];
         if (!el) continue;
 
-        // Per-bar target: combine synthetic wave with real bin (when available)
         const wave = 0.5 + 0.5 * Math.sin(t * 2.4 + i * 0.42) * Math.sin(t * 1.15 + i * 0.63);
         let binAmp = 0;
         if (hasAudioData && data) {
@@ -2153,7 +2168,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           : wave * baseAmp;
 
         const target = IDLE_H + Math.min(1, combined) * 56;
-        const alpha = target > smoothed[i] ? ATTACK : RELEASE;
+        const alpha = target > smoothed[i] ? attackK : releaseK;
         smoothed[i] = smoothed[i] + (target - smoothed[i]) * alpha;
 
         const current = parseFloat(el.style.height || "0");
@@ -2164,7 +2179,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    return () => {
+      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    };
+
   }, [isBreak, isPlaying, isVideo, showVideo]);
 
 
