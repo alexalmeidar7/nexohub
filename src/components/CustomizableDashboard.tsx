@@ -628,15 +628,24 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
               return (
                 <Fragment key={item.id}>
                 <div
+                  className={
+                    (item.widgetType === "player"
+                      ? "col-span-full flex flex-row items-stretch gap-2 "
+                      : "") +
+                    "relative"
+                  }
+                  style={item.widgetType === "player" ? { height: playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px` } : undefined}
+                >
+                <div
                   className={`relative group rounded-3xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: "var(--layout-widget-bg, #1a1a1a)",
                     boxShadow: isDragOver ? "0 0 0 2px var(--layout-accent-color), 0 4px 20px rgba(0,0,0,0.12)" : "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
                     borderRadius: "24px",
-                    aspectRatio: item.widgetType === "player" && !playerCompactMap[item.id] ? "1 / 1" : undefined,
-                    height: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : undefined) : "280px",
-                    minHeight: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(72, playerMaxHeight)}px` : undefined) : undefined,
-                    maxHeight: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px`) : "280px",
+                    aspectRatio: item.widgetType === "player" ? "1 / 1" : undefined,
+                    height: item.widgetType === "player" ? "100%" : "280px",
+                    maxHeight: item.widgetType === "player" ? "100%" : "280px",
+                    flexShrink: item.widgetType === "player" ? 0 : undefined,
                     overflow: item.widgetType === "player" && playerVideoActive === item.id ? "visible" : "hidden",
                     transition: item.widgetType === "player" ? "min-height 0.35s cubic-bezier(0.4,0,0.2,1), height 0.35s cubic-bezier(0.4,0,0.2,1), max-height 0.35s cubic-bezier(0.4,0,0.2,1)" : undefined,
                   }}
@@ -696,12 +705,13 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                   </div>
                 </div>
                 {item.widgetType === "player" && (
-                  <div key={`${item.id}-audience`} className="sm:col-span-1 lg:col-span-1 xl:col-span-2">
-                    <Suspense fallback={<div style={{ height: audienceHeight, borderRadius: 24, background: "#d9ff65", opacity: 0.6 }} />}>
+                  <div className="flex-1 min-w-0 h-full">
+                    <Suspense fallback={<div style={{ height: "100%", borderRadius: 24, background: "#d9ff65", opacity: 0.6 }} />}>
                       <AudienceWidget dataUserId={dataUserId || undefined} heightPx={audienceHeight} />
                     </Suspense>
                   </div>
                 )}
+                </div>
                 </Fragment>
               );
             })}
