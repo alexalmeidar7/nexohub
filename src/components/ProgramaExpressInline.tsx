@@ -72,6 +72,7 @@ interface Props {
   novoOpen?: boolean;
   onNovoOpenChange?: (v: boolean) => void;
   hideNovoToggle?: boolean;
+  renderAsModal?: boolean;
 }
 
 /* Inline participant row with editable cargo */
