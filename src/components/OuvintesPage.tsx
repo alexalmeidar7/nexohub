@@ -294,8 +294,42 @@ export default function OuvintesPage() {
             <input style={pillInput} value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} placeholder="Cidade" />
           </Field>
           <Field label="Data de Nascimento">
-            <input style={pillInput} type="date" value={form.data_nascimento} onChange={(e) => setForm({ ...form, data_nascimento: e.target.value })} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                style={{ ...pillInput, flex: 1 }}
+                type="date"
+                value={form.data_nascimento}
+                onChange={(e) => setForm({ ...form, data_nascimento: e.target.value })}
+              />
+              <div
+                style={{
+                  ...pillInput,
+                  width: 90,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#F1FAFD",
+                  fontWeight: 800,
+                  color: form.data_nascimento ? CYAN : "#94A3B8",
+                  fontSize: 14,
+                }}
+                title="Idade"
+              >
+                {(() => {
+                  if (!form.data_nascimento) return "— anos";
+                  const d = new Date(form.data_nascimento + "T00:00:00");
+                  if (isNaN(d.getTime())) return "— anos";
+                  const now = new Date();
+                  let age = now.getFullYear() - d.getFullYear();
+                  const m = now.getMonth() - d.getMonth();
+                  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+                  if (age < 0 || age > 130) return "—";
+                  return `${age} anos`;
+                })()}
+              </div>
+            </div>
           </Field>
+
 
           <Field label="Escolaridade">
             <select style={pillSelect} value={form.escolaridade} onChange={(e) => setForm({ ...form, escolaridade: e.target.value })}>

@@ -711,477 +711,495 @@ export default function ProgramaForm() {
 
   if (loadingData) return <ModulePageSkeleton variant="form" />;
 
+  // === Nexo Form Design System (mesmo do Cadastro de Ouvinte) ===
+  const CYAN = "#00BFF0";
+  const LIME = "#C6F03C";
+  const CARD_BG = "#D6F4FB";
+  const DARK = "#0A2540";
+
+  const pillInput: React.CSSProperties = {
+    width: "100%",
+    height: 44,
+    borderRadius: 999,
+    background: "#FFFFFF",
+    border: `2px solid ${CYAN}`,
+    padding: "0 20px",
+    fontFamily: "'Montserrat', sans-serif",
+    fontSize: 13,
+    color: DARK,
+    outline: "none",
+  };
+
+  const pillSelectTrigger: React.CSSProperties = {
+    ...pillInput,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    cursor: "pointer",
+    textAlign: "left" as const,
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontFamily: "'Montserrat', sans-serif",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: DARK,
+    marginBottom: 8,
+    display: "block",
+  };
+
+  const primaryBtn: React.CSSProperties = {
+    height: 44,
+    padding: "0 28px",
+    borderRadius: 999,
+    background: LIME,
+    border: "none",
+    color: DARK,
+    fontWeight: 800,
+    fontSize: 12,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 10,
+    cursor: "pointer",
+    boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
+  };
+
+  const secondaryBtn: React.CSSProperties = {
+    height: 44,
+    padding: "0 22px",
+    borderRadius: 999,
+    background: "#FFFFFF",
+    border: `2px solid ${CYAN}`,
+    color: DARK,
+    fontWeight: 700,
+    fontSize: 12,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    cursor: "pointer",
+  };
+
+  const smallCyanBtn: React.CSSProperties = {
+    height: 36,
+    padding: "0 14px",
+    borderRadius: 999,
+    background: CYAN,
+    border: "none",
+    color: "#FFFFFF",
+    fontWeight: 700,
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  };
+
+  const Field = ({ label, children, span = "" }: { label: React.ReactNode; children: React.ReactNode; span?: string }) => (
+    <div className={span}>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  );
+
+  const uploadBox = (img: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, w: number, h: number) => (
+    <label
+      style={{
+        width: w,
+        height: h,
+        borderRadius: 18,
+        background: "#FFFFFF",
+        border: `2px dashed ${CYAN}`,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        overflow: "hidden",
+      }}
+    >
+      {img ? (
+        <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      ) : (
+        <span style={{ fontSize: 9, fontWeight: 700, color: DARK, letterSpacing: 0.5, textTransform: "uppercase" }}>
+          Upload
+        </span>
+      )}
+      <input type="file" accept="image/*" onChange={onChange} style={{ display: "none" }} />
+    </label>
+  );
+
   return (
-    <div className="animate-fade-in space-y-6">
-      {/* Form Card */}
-      <div ref={formRef} className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
-        {/* Form Header */}
-        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
-            <PlaySquare size={20} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-          </div>
-          <div>
-            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              {editingId ? "Editar Programa" : "Cadastro de Programa"}
-            </h3>
-            <p className="text-[11px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>Preencha os dados para cadastrar o programa</p>
+    <div className="animate-fade-in space-y-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      {/* FORM CARD */}
+      <section
+        ref={formRef}
+        style={{
+          background: CARD_BG,
+          borderRadius: 28,
+          padding: "28px 32px 32px",
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: DARK, textTransform: "uppercase", margin: 0 }}>
+            {editingId ? "Editar Programa" : "Cadastro de Programa"}
+          </h3>
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Ativo Toggle */}
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none", background: "#FFFFFF", border: `2px solid ${CYAN}`, borderRadius: 999, padding: "6px 14px" }}>
+              <div style={{ position: "relative", width: 34, height: 18 }}>
+                <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
+                <span style={{ position: "absolute", inset: 0, borderRadius: 999, background: ativo ? LIME : "#E2E8F0", transition: "background 0.2s" }} />
+                <span style={{ position: "absolute", top: 2, left: ativo ? 18 : 2, width: 14, height: 14, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 800, color: DARK, letterSpacing: 1.5, textTransform: "uppercase" }}>{ativo ? "Ativo" : "Inativo"}</span>
+            </label>
+            {/* Variável Toggle */}
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none", background: "#FFFFFF", border: `2px solid ${variavel ? "#F59E0B" : CYAN}`, borderRadius: 999, padding: "6px 14px" }}>
+              <div style={{ position: "relative", width: 34, height: 18 }}>
+                <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
+                <span style={{ position: "absolute", inset: 0, borderRadius: 999, background: variavel ? "#F59E0B" : "#E2E8F0", transition: "background 0.2s" }} />
+                <span style={{ position: "absolute", top: 2, left: variavel ? 18 : 2, width: 14, height: 14, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 800, color: DARK, letterSpacing: 1.5, textTransform: "uppercase" }}>Variável</span>
+            </label>
           </div>
         </div>
 
-        {/* Form Body */}
-        <div className="px-6 py-5 space-y-4">
-          {/* Nome + Tipo */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Programa</label>
-              <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
-                className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
-                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tipo do Programa</label>
-              <div className="flex gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+          <Field label="Nome do Programa" span="lg:col-span-2">
+            <input style={pillInput} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa" />
+          </Field>
+
+          <Field label="Tipo do Programa">
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1 }}>
                 <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
-                  <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
+                  <SelectTrigger style={pillSelectTrigger}>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    {tiposPrograma.map(t => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
+                    {tiposPrograma.map(t => (<SelectItem key={t} value={t}>{t}</SelectItem>))}
                   </SelectContent>
                 </Select>
-                <Dialog open={tipoDialogOpen} onOpenChange={setTipoDialogOpen}>
-                  <DialogTrigger asChild>
-                    <button className="btn-skyglass-accent px-3 py-1 text-xs shrink-0"
-                    >+ Novo</button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-sm">
-                    <DialogHeader><DialogTitle style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Novo Tipo de Programa</DialogTitle></DialogHeader>
-                    <div className="space-y-3">
-                      <input value={newTipo} onChange={(e) => setNewTipo(e.target.value)} placeholder="Nome do tipo"
-                        className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-                        style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
-                        onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                        onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                      />
-                      <button onClick={addTipo} className="btn-skyglass-accent w-full py-2"
-                      >Adicionar</button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
               </div>
-            </div>
-          </div>
-
-          {/* Classificação + Apresentador */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Classificação Etária</label>
-              <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
-                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
-                  <SelectValue placeholder="Selecione a classificação" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CLASSIFICACOES_ETARIAS.map(c => (
-                    <SelectItem key={c.value} value={c.value}>
-                      <span className="flex items-center gap-2">
-                        <ClassificacaoBadge value={c.value} size={18} />
-                        {c.label}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Apresentadores</label>
-              <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    className="w-full min-h-[36px] flex items-center justify-between px-4 text-sm rounded-xl gap-2"
-                    style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
-                  >
-                    <span className="flex-1 text-left truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                      {apresentadoresIds.length > 0
-                        ? apresentadoresIds.map(id => apresentadores.find(a => a.id === id)?.nome).filter(Boolean).join(", ")
-                        : "Selecionar Apresentadores"}
-                    </span>
-                    <ChevronsUpDown size={14} className="opacity-60 shrink-0" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Buscar apresentador..." />
-                    <CommandList>
-                      <CommandEmpty className="py-4 text-center text-sm">Nenhum encontrado.</CommandEmpty>
-                      <CommandGroup>
-                        <CommandItem value="__clear__" onSelect={() => { setApresentadoresIds([]); setApresentadorId(""); }}>
-                          <Check size={14} className={cn("mr-2", apresentadoresIds.length === 0 ? "opacity-100" : "opacity-0")} />
-                          Nenhum
-                        </CommandItem>
-                        {apresentadores.filter(a => a.ativo && a.cargo?.toLowerCase() !== "convidado").map(a => (
-                          <CommandItem key={a.id} value={a.nome} onSelect={() => toggleApresentador(a.id)}>
-                            <Check size={14} className={cn("mr-2", apresentadoresIds.includes(a.id) ? "opacity-100" : "opacity-0")} />
-                            {a.nome}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {apresentadoresIds.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1.5">
-                  {apresentadoresIds.map(id => {
-                    const ap = apresentadores.find(a => a.id === id);
-                    if (!ap) return null;
-                    return (
-                      <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
-                        {ap.nome}
-                        <button onClick={() => toggleApresentador(id)} className="hover:opacity-60">
-                          <X size={10} />
-                        </button>
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Descrição */}
-          <div>
-            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Descrição</label>
-            <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
-              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
-              style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-              onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; }}
-            />
-          </div>
-
-          {/* Selo + Capa + Thumb */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Selo (1080×1080 PNG alpha)</label>
-              <label className="cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[var(--layout-accent-color)]"
-                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-                  {selo ? (
-                    <img src={selo} alt="Selo" className="w-full h-full object-cover rounded-xl" />
-                  ) : (
-                    <span className="text-[9px]" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Upload</span>
-                  )}
-                </div>
-                <input type="file" accept="image/*" onChange={handleSelo} className="hidden" />
-              </label>
-              {selo && (
-                <div className="flex gap-3">
-                  <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1 flex items-center gap-1">
-                    <Trash2 size={10} /> Remover
-                  </button>
-                  <button onClick={() => handleDownload(selo, `selo_${nome || "programa"}.png`)} className="text-[10px] text-blue-400 hover:text-blue-300 mt-1 flex items-center gap-1">
-                    <Download size={10} /> Baixar
-                  </button>
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Capa (226×302 PNG alpha)</label>
-              <label className="cursor-pointer group">
-                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[var(--layout-accent-color)]"
-                  style={{ width: "56px", height: "75px", backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-                  {capa ? (
-                    <img src={capa} alt="Capa" className="w-full h-full object-cover rounded-xl" />
-                  ) : (
-                    <span className="text-[9px]" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Upload</span>
-                  )}
-                </div>
-                <input type="file" accept="image/*" onChange={handleCapa} className="hidden" />
-              </label>
-              {capa && (
-                <div className="flex gap-3">
-                  <button onClick={() => setCapa("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1 flex items-center gap-1">
-                    <Trash2 size={10} /> Remover
-                  </button>
-                  <button onClick={() => handleDownload(capa, `capa_${nome || "programa"}.png`)} className="text-[10px] text-blue-400 hover:text-blue-300 mt-1 flex items-center gap-1">
-                    <Download size={10} /> Baixar
-                  </button>
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Thumb (1920×1080 PNG)</label>
-              <label className="cursor-pointer group">
-                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[var(--layout-accent-color)]"
-                  style={{ width: "96px", height: "54px", backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-                  {thumb ? (
-                    <img src={thumb} alt="Thumb" className="w-full h-full object-cover rounded-xl" />
-                  ) : (
-                    <span className="text-[9px]" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Upload</span>
-                  )}
-                </div>
-                <input type="file" accept="image/*" onChange={handleThumb} className="hidden" />
-              </label>
-              {thumb && (
-                <div className="flex gap-3">
-                  <button onClick={() => setThumb("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1 flex items-center gap-1">
-                    <Trash2 size={10} /> Remover
-                  </button>
-                  <button onClick={() => handleDownload(thumb, `thumb_${nome || "programa"}.png`)} className="text-[10px] text-blue-400 hover:text-blue-300 mt-1 flex items-center gap-1">
-                    <Download size={10} /> Baixar
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Estúdio */}
-          <div>
-            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              <Building2 size={13} /> Estúdio
-            </label>
-            <div className="flex gap-2">
-              <Select value={estudio} onValueChange={setEstudio}>
-                <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
-                  <SelectValue placeholder="Selecione o estúdio" />
-                </SelectTrigger>
-                <SelectContent>
-                  {estudios.map(e => (
-                    <SelectItem key={e} value={e}>{e}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Dialog open={estudioDialogOpen} onOpenChange={setEstudioDialogOpen}>
+              <Dialog open={tipoDialogOpen} onOpenChange={setTipoDialogOpen}>
                 <DialogTrigger asChild>
-                  <button className="btn-skyglass-accent px-3 py-1 text-xs shrink-0"
-                  >+ Novo</button>
+                  <button style={smallCyanBtn}>+ Novo</button>
                 </DialogTrigger>
-                <DialogContent className="max-w-sm">
-                  <DialogHeader><DialogTitle style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cadastrar Estúdio</DialogTitle></DialogHeader>
-                  <div className="space-y-3">
-                    <input value={newEstudio} onChange={(e) => setNewEstudio(e.target.value)} placeholder="Nome do estúdio"
-                      className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-                      style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
-                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                    />
-                    <button onClick={addEstudio} className="btn-skyglass-accent w-full py-2"
-                    >Adicionar</button>
+                <DialogContent style={{ background: CARD_BG, borderRadius: 24, border: "none" }}>
+                  <DialogHeader><DialogTitle style={{ color: DARK, fontFamily: "'Montserrat', sans-serif", fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", fontSize: 14 }}>Novo Tipo de Programa</DialogTitle></DialogHeader>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+                    <input style={pillInput} value={newTipo} onChange={(e) => setNewTipo(e.target.value)} placeholder="Nome do tipo" />
+                    <button onClick={addTipo} style={{ ...primaryBtn, width: "100%", justifyContent: "center" }}>Adicionar</button>
                   </div>
                 </DialogContent>
               </Dialog>
             </div>
-          </div>
+          </Field>
 
-          {/* Dias da Semana */}
-          <div>
-            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              <Calendar size={13} /> Dias da Semana
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {DIAS_SEMANA.map(dia => (
-                <button key={dia} onClick={() => toggleDia(dia)}
-                  className="px-3 py-1.5 text-[11px] font-semibold transition-all rounded-lg"
-                  style={{
-                    backgroundColor: diasSemana.includes(dia) ? "var(--layout-header-bg, #1a1a1a)" : "var(--layout-page-bg, #ffffff)",
-                    color: diasSemana.includes(dia) ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)",
-                    border: diasSemana.includes(dia) ? "2px solid var(--layout-header-bg, #1a1a1a)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)",
-                    boxShadow: diasSemana.includes(dia) ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
-                  }}>
-                  {dia.slice(0, 3)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Horários */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}><Clock size={12} /> Início</label>
-              <input type="time" step="1" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
-                className="w-full px-4 py-2 outline-none transition-all text-sm"
-                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; }}
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}><Clock size={12} /> Fim</label>
-              <input type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
-                className="w-full px-4 py-2 outline-none transition-all text-sm"
-                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; }}
-              />
-            </div>
-          </div>
-
-          {/* Toggles */}
-          <div className="flex items-center gap-6" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)", paddingTop: "12px" }}>
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <div className="relative">
-                <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="sr-only peer" />
-                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[var(--layout-accent-color)]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }} />
-                <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
-              </div>
-              <span className="text-xs font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Ativo</span>
-            </label>
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <div className="relative">
-                <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} className="sr-only peer" />
-                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#f59e0b]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }} />
-                <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
-              </div>
-              <span className="text-xs font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Variável</span>
-            </label>
-          </div>
-
-          {/* Data Variável */}
-          {variavel && (
-            <div className="space-y-2 rounded-xl p-3" style={{ backgroundColor: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
-              <label className="block text-[11px] font-semibold text-amber-300/80 uppercase tracking-wider flex items-center gap-1">
-                <CalendarDays size={13} /> Data do Programa Variável
-              </label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className={cn("w-full justify-start text-left font-normal flex items-center gap-2 px-4 py-2 text-sm rounded-xl")}
-                    style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--layout-header-text, #ffffff)" }}>
-                    <CalendarDays className="h-4 w-4 text-amber-400" />
-                    {dataVariavel ? format(dataVariavel, "dd/MM/yyyy (EEEE)", { locale: ptBR }) : "Selecione a data"}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarUI
-                    mode="single"
-                    selected={dataVariavel}
-                    onSelect={setDataVariavel}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-              <p className="text-[10px] text-amber-200/80 leading-relaxed">
-                ⚠️ Este programa substituirá o programa fixo neste horário apenas na data selecionada.
-              </p>
-            </div>
-          )}
-
-          {/* Conflict + Actions */}
-          {conflictMsg && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.2)" }}>
-              <AlertCircle size={14} className="text-red-400 shrink-0" />
-              <p className="text-xs text-red-300">{conflictMsg}</p>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2">
-            {editingId && (
-              <button onClick={resetForm}
-                className="px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 rounded-xl"
-                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.7)"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.5)"; }}
-              >
-                <X size={13} /> Cancelar
-              </button>
-            )}
-            <button onClick={handleAdd} disabled={saving}
-              className="btn-skyglass-accent px-6 py-2.5 text-xs disabled:opacity-50"
-            >
-              {saving && <Loader2 size={13} className="animate-spin" />}
-              {saving ? "Salvando..." : editingId ? "Atualizar" : "Adicionar Programa"}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Grade de Programação */}
-      {loadingData ? (
-        <div className="animate-pulse space-y-3">
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-5 w-48 rounded bg-[var(--layout-header-bg)]/10" />
-            <div className="h-7 w-48 rounded-full bg-[var(--layout-header-bg)]/10" />
-          </div>
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
-            <table className="w-full">
-              <thead>
-                <tr style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)" }}>
-                  <th className="px-2 py-2 w-20"><div className="h-3 w-12 rounded bg-[var(--layout-header-bg)]/10" /></th>
-                  {Array.from({ length: 7 }).map((_, i) => (
-                    <th key={i} className="px-2 py-2 text-center"><div className="h-3 w-8 mx-auto rounded bg-[var(--layout-header-bg)]/10" /></th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 10 }).map((_, row) => (
-                  <tr key={row}>
-                    <td className="px-2 py-1.5"><div className="h-2.5 w-10 rounded bg-[var(--layout-header-bg)]/5" /></td>
-                    {Array.from({ length: 7 }).map((_, col) => (
-                      <td key={col} className="px-1 py-1">
-                        <div className="h-6 rounded" style={{ backgroundColor: `rgba(13,4,70,${Math.random() * 0.08 + 0.02})` }} />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : programas.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-                <Calendar size={18} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
-              </div>
-              <div>
-                <h4 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Grade de Programação</h4>
-                <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Visualização semanal dos programas</p>
-              </div>
-            </div>
-            <Select value={gradeEstudioFilter} onValueChange={setGradeEstudioFilter}>
-              <SelectTrigger className="w-[180px]" style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "20px", border: "none", fontSize: "11px", height: "30px", padding: "0 12px" }}>
-                <SelectValue placeholder="Filtrar por estúdio" />
+          <Field label="Classificação Etária">
+            <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
+              <SelectTrigger style={pillSelectTrigger}>
+                <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos os estúdios</SelectItem>
-                {estudios.map(e => (
-                  <SelectItem key={e} value={e}>{e}</SelectItem>
+                {CLASSIFICACOES_ETARIAS.map(c => (
+                  <SelectItem key={c.value} value={c.value}>
+                    <span className="flex items-center gap-2">
+                      <ClassificacaoBadge value={c.value} size={18} />
+                      {c.label}
+                    </span>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </Field>
+
+          <Field label="Apresentadores" span="lg:col-span-2">
+            <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
+              <PopoverTrigger asChild>
+                <button style={pillSelectTrigger}>
+                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: apresentadoresIds.length ? DARK : "#94A3B8" }}>
+                    {apresentadoresIds.length > 0
+                      ? apresentadoresIds.map(id => apresentadores.find(a => a.id === id)?.nome).filter(Boolean).join(", ")
+                      : "Selecionar apresentadores"}
+                  </span>
+                  <ChevronsUpDown size={14} style={{ color: CYAN }} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Buscar apresentador..." />
+                  <CommandList>
+                    <CommandEmpty className="py-4 text-center text-sm">Nenhum encontrado.</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem value="__clear__" onSelect={() => { setApresentadoresIds([]); setApresentadorId(""); }}>
+                        <Check size={14} className={cn("mr-2", apresentadoresIds.length === 0 ? "opacity-100" : "opacity-0")} />
+                        Nenhum
+                      </CommandItem>
+                      {apresentadores.filter(a => a.ativo && a.cargo?.toLowerCase() !== "convidado").map(a => (
+                        <CommandItem key={a.id} value={a.nome} onSelect={() => toggleApresentador(a.id)}>
+                          <Check size={14} className={cn("mr-2", apresentadoresIds.includes(a.id) ? "opacity-100" : "opacity-0")} />
+                          {a.nome}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {apresentadoresIds.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {apresentadoresIds.map(id => {
+                  const ap = apresentadores.find(a => a.id === id);
+                  if (!ap) return null;
+                  return (
+                    <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 999, background: "#FFFFFF", border: `1px solid ${CYAN}`, fontSize: 11, fontWeight: 700, color: DARK }}>
+                      {ap.nome}
+                      <button onClick={() => toggleApresentador(id)} style={{ background: "transparent", border: "none", cursor: "pointer", color: DARK, display: "inline-flex" }}>
+                        <X size={11} />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </Field>
+
+          <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Building2 size={12} /> Estúdio</span>}>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <Select value={estudio} onValueChange={setEstudio}>
+                  <SelectTrigger style={pillSelectTrigger}>
+                    <SelectValue placeholder="Selecione o estúdio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {estudios.map(e => (<SelectItem key={e} value={e}>{e}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Dialog open={estudioDialogOpen} onOpenChange={setEstudioDialogOpen}>
+                <DialogTrigger asChild>
+                  <button style={smallCyanBtn}>+ Novo</button>
+                </DialogTrigger>
+                <DialogContent style={{ background: CARD_BG, borderRadius: 24, border: "none" }}>
+                  <DialogHeader><DialogTitle style={{ color: DARK, fontFamily: "'Montserrat', sans-serif", fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", fontSize: 14 }}>Cadastrar Estúdio</DialogTitle></DialogHeader>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+                    <input style={pillInput} value={newEstudio} onChange={(e) => setNewEstudio(e.target.value)} placeholder="Nome do estúdio" />
+                    <button onClick={addEstudio} style={{ ...primaryBtn, width: "100%", justifyContent: "center" }}>Adicionar</button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </Field>
+
+          <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Clock size={12} /> Horário Início</span>}>
+            <input style={pillInput} type="time" step="1" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)} />
+          </Field>
+          <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Clock size={12} /> Horário Fim</span>}>
+            <input style={pillInput} type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)} />
+          </Field>
+
+          <Field label="Descrição" span="md:col-span-2 lg:col-span-3">
+            <Textarea
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              placeholder="Descrição do programa (opcional)"
+              style={{
+                width: "100%",
+                minHeight: 80,
+                borderRadius: 22,
+                background: "#FFFFFF",
+                border: `2px solid ${CYAN}`,
+                padding: "12px 18px",
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: 13,
+                color: DARK,
+                outline: "none",
+                resize: "vertical",
+              }}
+            />
+          </Field>
+
+          <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Calendar size={12} /> Dias da Semana</span>} span="md:col-span-2 lg:col-span-3">
+            <div className="flex flex-wrap gap-2">
+              {DIAS_SEMANA.map(dia => {
+                const active = diasSemana.includes(dia);
+                return (
+                  <button
+                    key={dia}
+                    onClick={() => toggleDia(dia)}
+                    style={{
+                      height: 38,
+                      padding: "0 18px",
+                      borderRadius: 999,
+                      background: active ? CYAN : "#FFFFFF",
+                      border: `2px solid ${CYAN}`,
+                      color: active ? "#FFFFFF" : DARK,
+                      fontWeight: 800,
+                      fontSize: 11,
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {dia.slice(0, 3)}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
+          <Field label="Selo (1080×1080 PNG alpha)">
+            <div className="flex items-center gap-3">
+              {uploadBox(selo, handleSelo, 72, 72)}
+              {selo && (
+                <div className="flex flex-col gap-1">
+                  <button onClick={() => setSelo("")} style={{ background: "transparent", border: "none", color: "#DC2626", fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    <Trash2 size={11} className="inline mr-1" /> Remover
+                  </button>
+                  <button onClick={() => handleDownload(selo, `selo_${nome || "programa"}.png`)} style={{ background: "transparent", border: "none", color: CYAN, fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    <Download size={11} className="inline mr-1" /> Baixar
+                  </button>
+                </div>
+              )}
+            </div>
+          </Field>
+          <Field label="Capa (226×302 PNG alpha)">
+            <div className="flex items-center gap-3">
+              {uploadBox(capa, handleCapa, 60, 82)}
+              {capa && (
+                <div className="flex flex-col gap-1">
+                  <button onClick={() => setCapa("")} style={{ background: "transparent", border: "none", color: "#DC2626", fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    <Trash2 size={11} className="inline mr-1" /> Remover
+                  </button>
+                  <button onClick={() => handleDownload(capa, `capa_${nome || "programa"}.png`)} style={{ background: "transparent", border: "none", color: CYAN, fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    <Download size={11} className="inline mr-1" /> Baixar
+                  </button>
+                </div>
+              )}
+            </div>
+          </Field>
+          <Field label="Thumb (1920×1080 PNG)">
+            <div className="flex items-center gap-3">
+              {uploadBox(thumb, handleThumb, 108, 60)}
+              {thumb && (
+                <div className="flex flex-col gap-1">
+                  <button onClick={() => setThumb("")} style={{ background: "transparent", border: "none", color: "#DC2626", fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    <Trash2 size={11} className="inline mr-1" /> Remover
+                  </button>
+                  <button onClick={() => handleDownload(thumb, `thumb_${nome || "programa"}.png`)} style={{ background: "transparent", border: "none", color: CYAN, fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    <Download size={11} className="inline mr-1" /> Baixar
+                  </button>
+                </div>
+              )}
+            </div>
+          </Field>
+
+          {variavel && (
+            <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#B45309" }}><CalendarDays size={12} /> Data do Programa Variável</span>} span="md:col-span-2 lg:col-span-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button style={{ ...pillSelectTrigger, borderColor: "#F59E0B" }}>
+                    <span style={{ color: dataVariavel ? DARK : "#94A3B8" }}>
+                      {dataVariavel ? format(dataVariavel, "dd/MM/yyyy (EEEE)", { locale: ptBR }) : "Selecione a data"}
+                    </span>
+                    <CalendarDays size={14} style={{ color: "#F59E0B" }} />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarUI mode="single" selected={dataVariavel} onSelect={setDataVariavel} initialFocus className={cn("p-3 pointer-events-auto")} />
+                </PopoverContent>
+              </Popover>
+              <p style={{ fontSize: 10, color: "#92400E", marginTop: 6 }}>
+                ⚠️ Este programa substituirá o programa fixo neste horário apenas na data selecionada.
+              </p>
+            </Field>
+          )}
+        </div>
+
+        {conflictMsg && (
+          <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderRadius: 999, background: "#FEE2E2", border: "1px solid #FCA5A5" }}>
+            <AlertCircle size={14} style={{ color: "#DC2626" }} />
+            <p style={{ fontSize: 12, color: "#991B1B", margin: 0, fontWeight: 600 }}>{conflictMsg}</p>
           </div>
+        )}
+
+        <div className="mt-8 flex items-center justify-end gap-3 flex-wrap">
+          {editingId && (
+            <button onClick={resetForm} style={secondaryBtn}>
+              <X size={16} /> Cancelar
+            </button>
+          )}
+          <button
+            onClick={handleAdd}
+            disabled={saving}
+            style={{ ...primaryBtn, opacity: saving ? 0.6 : 1, cursor: saving ? "wait" : "pointer" }}
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+            {saving ? "Salvando..." : editingId ? "Atualizar" : "Salvar Programa"}
+          </button>
+        </div>
+      </section>
+
+      {/* GRADE DE PROGRAMAÇÃO */}
+      {programas.length > 0 && (
+        <section
+          style={{
+            background: "#FFFFFF",
+            borderRadius: 28,
+            padding: "20px 24px 24px",
+            border: "1px solid #E5F5FB",
+            boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
+          }}
+        >
+          <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+            <div className="flex items-center gap-3" style={{ color: DARK }}>
+              <Calendar size={18} style={{ color: CYAN }} />
+              <h3 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+                Grade de Programação
+              </h3>
+            </div>
+            <div style={{ minWidth: 200 }}>
+              <Select value={gradeEstudioFilter} onValueChange={setGradeEstudioFilter}>
+                <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
+                  <SelectValue placeholder="Filtrar por estúdio" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os estúdios</SelectItem>
+                  {estudios.map(e => (<SelectItem key={e} value={e}>{e}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <style>{`
             .grade-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
             .grade-scroll::-webkit-scrollbar-track { background: transparent; }
-            .grade-scroll::-webkit-scrollbar-thumb { background: var(--layout-header-bg, #1a1a1a); border-radius: 3px; }
-            .grade-scroll::-webkit-scrollbar-thumb:hover { background: var(--layout-accent-color, #2563eb); }
-            .grade-scroll::-webkit-scrollbar-button { display: none; }
+            .grade-scroll::-webkit-scrollbar-thumb { background: ${CYAN}; border-radius: 3px; }
           `}</style>
           <div
             ref={gradeRef}
-            className="rounded-xl overflow-auto max-h-[400px] grade-scroll"
-            style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent", position: "relative", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+            className="rounded-2xl overflow-auto max-h-[440px] grade-scroll"
+            style={{ border: `1px solid ${CARD_BG}`, background: "#FFFFFF", position: "relative" }}
           >
             <table data-no-row-hover className="w-full text-xs border-separate border-spacing-[2px]">
               <thead className="sticky top-0 z-10">
-                <tr style={{ background: "var(--layout-header-bg, #1a1a1a)" }}>
-                  <th className="px-3 py-2.5 text-left w-20 text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-header-text, #ffffff)" }}>Horário</th>
+                <tr style={{ background: CYAN }}>
+                  <th style={{ padding: "10px 12px", textAlign: "left", width: 78, fontSize: 10, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#FFFFFF" }}>Horário</th>
                   {DIAS_SEMANA.map(dia => {
                     const isToday = dia === diaAtual;
                     return (
-                      <th key={dia} className="px-2 py-2.5 text-center text-[10px] font-bold uppercase tracking-widest"
-                        style={{
-                          color: isToday ? "#ffffff" : "var(--layout-header-text, #ffffff)",
-                          backgroundColor: isToday ? "var(--layout-accent-color, #dc2626)" : undefined,
-                        }}>
-                        <div style={isToday ? { color: "#ffffff", fontWeight: 900 } : undefined}>{dia.slice(0, 3).toUpperCase()}</div>
-                        <div style={isToday ? { color: "#ffffff", fontWeight: 700, fontSize: "10px", marginTop: "2px" } : { fontSize: "10px", marginTop: "2px", opacity: 0.7 }}>{weekDates[dia]}</div>
+                      <th key={dia} style={{ padding: "10px 8px", textAlign: "center", fontSize: 10, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#FFFFFF", background: isToday ? DARK : undefined }}>
+                        <div>{dia.slice(0, 3)}</div>
+                        <div style={{ fontSize: 10, marginTop: 2, opacity: 0.85 }}>{weekDates[dia]}</div>
                       </th>
                     );
                   })}
@@ -1196,156 +1214,118 @@ export default function ProgramaForm() {
                 apresentadores={apresentadores}
               />
             </table>
-            {/* Time needle overlay */}
             <div ref={needleRef} style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              height: "2px",
-              background: "linear-gradient(90deg, #dc2626, #ef4444)",
-              zIndex: 15,
-              pointerEvents: "none",
-              display: "none",
+              position: "absolute", left: 0, right: 0, height: 2,
+              background: "linear-gradient(90deg, #DC2626, #EF4444)",
+              zIndex: 15, pointerEvents: "none", display: "none",
               boxShadow: "0 0 6px rgba(220,38,38,0.4)",
             }}>
-              <div style={{
-                position: "absolute",
-                left: -4,
-                top: -4,
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                backgroundColor: "#dc2626",
-                boxShadow: "0 0 6px rgba(220,38,38,0.5)",
-              }} />
-              <div style={{
-                position: "absolute",
-                left: 12,
-                top: -9,
-                fontSize: "9px",
-                fontWeight: 700,
-                color: "var(--layout-header-text, #ffffff)",
-                backgroundColor: "#dc2626",
-                padding: "2px 6px",
-                borderRadius: "4px",
-                whiteSpace: "nowrap",
-                boxShadow: "0 2px 6px rgba(220,38,38,0.3)",
-              }}>
+              <div style={{ position: "absolute", left: -4, top: -4, width: 10, height: 10, borderRadius: "50%", background: "#DC2626", boxShadow: "0 0 6px rgba(220,38,38,0.5)" }} />
+              <div style={{ position: "absolute", left: 12, top: -9, fontSize: 9, fontWeight: 700, color: "#FFFFFF", background: "#DC2626", padding: "2px 6px", borderRadius: 4, whiteSpace: "nowrap" }}>
                 {currentTimeStr.slice(0, 5)}
               </div>
             </div>
           </div>
-        </div>
+        </section>
       )}
 
-      {loadingData ? (
-        <div className="animate-pulse space-y-3">
-          <div className="h-5 w-52 rounded bg-[var(--layout-header-bg)]/10 mb-4" />
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
-            <div className="h-10 w-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }} />
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 px-4 py-3" style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}>
-                <div className="h-3 w-32 rounded bg-[var(--layout-header-bg)]/8" />
-                <div className="h-3 w-24 rounded bg-[var(--layout-header-bg)]/5" />
-                <div className="h-3 w-20 rounded bg-[var(--layout-header-bg)]/5" />
-                <div className="h-3 w-28 rounded bg-[var(--layout-header-bg)]/5" />
-                <div className="ml-auto flex gap-2">
-                  <div className="h-6 w-6 rounded bg-[var(--layout-header-bg)]/5" />
-                  <div className="h-6 w-6 rounded bg-[var(--layout-header-bg)]/5" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : programas.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-              <PlaySquare size={18} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+      {/* LIST CARD */}
+      {programas.length > 0 && (
+        <section
+          style={{
+            background: "#FFFFFF",
+            borderRadius: 28,
+            padding: "20px 24px 28px",
+            border: "1px solid #E5F5FB",
+            boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
+          }}
+        >
+          <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+            <div className="flex items-center gap-3" style={{ color: DARK }}>
+              <PlaySquare size={18} style={{ color: CYAN }} />
+              <h3 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+                Programas Cadastrados
+              </h3>
+              <span style={{ fontSize: 11, fontWeight: 700, background: CARD_BG, color: DARK, padding: "3px 12px", borderRadius: 999 }}>
+                {sortedProgramas.length}
+              </span>
             </div>
-            <div>
-              <h4 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programas Cadastrados</h4>
-              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{sortedProgramas.length} programa{sortedProgramas.length !== 1 ? "s" : ""} registrado{sortedProgramas.length !== 1 ? "s" : ""}</p>
+            <div style={{ minWidth: 180 }}>
+              <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
+                  <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="horario">Ordenar por Horário</SelectItem>
+                  <SelectItem value="nome">Ordenar por Nome</SelectItem>
+                  <SelectItem value="estudio">Ordenar por Estúdio</SelectItem>
+                  <SelectItem value="status">Ordenar por Status</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          <div className="rounded-xl overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <table className="w-full text-xs" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+
+          <div style={{ overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
+            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
               <thead>
-                <tr style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
-                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Programa</th>
-                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Exibição</th>
-                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Horário</th>
-                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Apresentador</th>
-                  <th className="px-4 py-3 text-center font-semibold text-[11px] uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-center font-semibold text-[11px] uppercase tracking-wider">Ações</th>
+                <tr style={{ background: CYAN, color: "#FFFFFF" }}>
+                  {["Programa", "Exibição", "Horário", "Apresentador", "Estúdio", "Status", "Ações"].map((h) => (
+                    <th key={h} style={{ padding: "12px 14px", textAlign: h === "Status" || h === "Ações" ? "center" : "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {sortedProgramas.map((p, i) => (
-                  <tr key={p.id} className="group transition-all duration-200" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f4f8ff", borderBottom: "1px solid rgba(13,4,70,0.04)" }} data-no-row-hover
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#e8f0ff"; e.currentTarget.style.transform = "scale(1.002)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = i % 2 === 0 ? "#ffffff" : "#f4f8ff"; e.currentTarget.style.transform = "scale(1)"; }}
-                  >
-                    <td className="px-4 py-3 font-semibold">
+                  <tr key={p.id} style={{ background: i % 2 === 0 ? "#FFFFFF" : "#F7FCFE", color: DARK }}>
+                    <td style={{ padding: "10px 14px", fontWeight: 700 }}>
                       <div className="flex items-center gap-2">
-                        {p.capa && <img src={p.capa} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />}
+                        {p.capa && <img src={p.capa} alt="" style={{ width: 34, height: 34, borderRadius: 10, objectFit: "cover", border: `1px solid ${CARD_BG}` }} />}
                         <div>
                           <div className="flex items-center gap-1.5">
                             {p.nome}
-                            {p.variavel && <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold" style={{ backgroundColor: "rgba(245,158,11,0.12)", color: "#d97706" }}>VAR</span>}
+                            {p.variavel && <span style={{ fontSize: 9, padding: "1px 8px", borderRadius: 999, fontWeight: 800, background: "#FEF3C7", color: "#92400E", letterSpacing: 0.5 }}>VAR</span>}
                           </div>
-                          {p.classificacaoEtaria && <div className="mt-0.5"><ClassificacaoBadge value={p.classificacaoEtaria} size={14} /></div>}
+                          {p.classificacaoEtaria && <div style={{ marginTop: 3 }}><ClassificacaoBadge value={p.classificacaoEtaria} size={13} /></div>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[11px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+                    <td style={{ padding: "10px 14px", fontSize: 11 }}>
                       {p.variavel && p.dataVariavel
                         ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
-                        : <div className="flex flex-wrap gap-0.5">{p.diasSemana.map(d => <span key={d} className="px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>{d.slice(0, 3)}</span>)}</div>}
+                        : (
+                          <div className="flex flex-wrap gap-1">
+                            {p.diasSemana.map(d => (
+                              <span key={d} style={{ padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: CARD_BG, color: DARK }}>{d.slice(0, 3)}</span>
+                            ))}
+                          </div>
+                        )}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
-                        <Clock size={11} style={{ color: "rgba(13,4,70,0.35)" }} />
+                    <td style={{ padding: "10px 14px", whiteSpace: "nowrap" }}>
+                      <span className="inline-flex items-center gap-1.5" style={{ fontWeight: 600 }}>
+                        <Clock size={11} style={{ color: CYAN }} />
                         {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-[11px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
-                      {getApresentadoresNomes(p) !== "—" ? getApresentadoresNomes(p) : <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}>—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold" style={{
-                        backgroundColor: p.ativo ? "rgba(34,197,94,0.1)" : "rgba(220,38,38,0.08)",
-                        color: p.ativo ? "#16a34a" : "#dc2626",
-                      }}>
-                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.ativo ? "#22c55e" : "#dc2626" }} />
+                    <td style={{ padding: "10px 14px" }}>{getApresentadoresNomes(p)}</td>
+                    <td style={{ padding: "10px 14px" }}>{p.estudio || "—"}</td>
+                    <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 999, fontSize: 10, fontWeight: 800, background: p.ativo ? "#DCFCE7" : "#FEE2E2", color: p.ativo ? "#166534" : "#991B1B" }}>
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.ativo ? "#22C55E" : "#DC2626" }} />
                         {p.ativo ? "Ativo" : "Inativo"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-0.5">
-                        <button onClick={() => startEdit(p)} title="Editar"
-                          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                          style={{ backgroundColor: "transparent" }}
-                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)"; }}
-                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
-                        >
-                          <Pencil size={14} style={{ color: "var(--layout-icon-color, #888888)" }} />
+                    <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                      <div style={{ display: "inline-flex", gap: 6 }}>
+                        <button onClick={() => startEdit(p)} title="Editar" style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: DARK }}>
+                          <Pencil size={14} />
                         </button>
-                        <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                          style={{ backgroundColor: "transparent" }}
-                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = p.ativo ? "rgba(34,197,94,0.1)" : "rgba(220,38,38,0.08)"; }}
-                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
-                        >
-                          <Power size={14} style={{ color: p.ativo ? "#22c55e" : "#dc2626" }} />
+                        <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"} style={{ width: 30, height: 30, borderRadius: "50%", background: p.ativo ? "#DCFCE7" : "#FEE2E2", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: p.ativo ? "#166534" : "#991B1B" }}>
+                          <Power size={14} />
                         </button>
-                        <button onClick={() => removePrograma(p.id)} title="Remover"
-                          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                          style={{ backgroundColor: "transparent" }}
-                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(220,38,38,0.08)"; }}
-                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
-                        >
-                          <Trash2 size={14} style={{ color: "#dc2626" }} />
+                        <button onClick={() => removePrograma(p.id)} title="Remover" style={{ width: 30, height: 30, borderRadius: "50%", background: "#FEE2E2", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#DC2626" }}>
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>
@@ -1354,22 +1334,20 @@ export default function ProgramaForm() {
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       )}
 
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
-          <div className="flex flex-col items-center justify-center animate-fade-in overflow-hidden"
-            style={{ width: "450px", height: "165px", background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", borderRadius: "20px", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-            <div className="flex items-center gap-3 flex-1 justify-center" style={{ fontSize: "14px", color: "var(--layout-header-text, #ffffff)", fontWeight: 600 }}>
-              <CheckCircle size={22} style={{ color: "var(--layout-accent-color, #2563eb)" }} /> Salvo com sucesso!
-            </div>
-            <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.1)" }}>
-              <div style={{ height: "100%", background: "linear-gradient(90deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", animation: "shrinkBar 2s linear forwards" }} />
-            </div>
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10, 37, 64, 0.4)" }}>
+          <div style={{ width: 420, padding: "28px 32px", background: CARD_BG, borderRadius: 24, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, boxShadow: "0 20px 60px rgba(10, 37, 64, 0.3)" }}>
+            <CheckCircle size={24} style={{ color: CYAN }} />
+            <span style={{ fontSize: 14, fontWeight: 800, color: DARK, letterSpacing: 1, textTransform: "uppercase" }}>
+              Salvo com sucesso!
+            </span>
           </div>
         </div>
       )}
     </div>
   );
 }
+
