@@ -51,6 +51,8 @@ export default function RoteiroPrograma() {
   const [externalPasteText, setExternalPasteText] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"recentes" | "historico">("recentes");
   const [historicoOpen, setHistoricoOpen] = useState(true);
+  const [novoRoteiroOpen, setNovoRoteiroOpen] = useState(false);
+  const [automacaoOpen, setAutomacaoOpen] = useState(false);
 
   const roteiroToPlainText = (r: any): string => {
     let parts: any = null;
