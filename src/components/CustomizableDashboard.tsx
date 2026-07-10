@@ -1950,7 +1950,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   }, [displayArt]);
 
   return (
-    <div className="flex flex-col h-full relative rounded-3xl overflow-hidden" style={{ background: "#000", minHeight: 260 }}>
+    <div className="flex flex-col h-full w-full relative rounded-3xl overflow-hidden" style={{ background: "#000", minHeight: 0, maxHeight: "100%", contain: "layout paint size" }}>
       {/* Background artist image */}
       <div className="absolute inset-0 pointer-events-none">
         {fadingArt && (
