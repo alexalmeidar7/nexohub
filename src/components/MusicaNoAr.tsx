@@ -1442,7 +1442,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             )}
           </div>
         )}
-      </div>
+      </section>
 
       {/* XML Output Link */}
       {/* XML Output Link */}
