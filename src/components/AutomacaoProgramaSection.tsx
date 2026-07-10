@@ -199,16 +199,23 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
 
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSectionOpen(o => !o)}
-              className="flex items-center gap-2 flex-1 text-left hover:opacity-80 transition"
-            >
-              <Bot size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-              <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Automatização de Programa</p>
-              {sectionOpen
-                ? <ChevronUp size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                : <ChevronDown size={12} style={{ color: "var(--layout-icon-color, #888)" }} />}
-            </button>
+            {!hideToggle ? (
+              <button
+                onClick={() => setSectionOpen(o => !o)}
+                className="flex items-center gap-2 flex-1 text-left hover:opacity-80 transition"
+              >
+                <Bot size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Automatização de Programa</p>
+                {sectionOpen
+                  ? <ChevronUp size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                  : <ChevronDown size={12} style={{ color: "var(--layout-icon-color, #888)" }} />}
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 flex-1">
+                <Bot size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Automatização de Programa</p>
+              </div>
+            )}
             {sectionOpen && !showForm && (
               <button
                 onClick={() => { resetForm(); setShowForm(true); }}
