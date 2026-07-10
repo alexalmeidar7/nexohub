@@ -671,15 +671,50 @@ export default function RoteiroPrograma() {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2" style={{ fontSize: 10, color: "#64748B", ...MONT, fontWeight: 700 }}>
-                              <span>{dataFormatada}</span>
-                              {r.horario && <><span style={{ color: CYAN }}>·</span><span>{r.horario}</span></>}
-                            </div>
-                            {cleanTitulo && (
-                              <p style={{ ...MONT, fontSize: 10, lineHeight: 1.4, color: "#475569", margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                                {cleanTitulo}
-                              </p>
-                            )}
+                            {(() => {
+                              const upd = r.updated_at ? new Date(r.updated_at) : null;
+                              const updStr = upd ? format(upd, "dd/MM 'às' HH:mm") : "";
+                              let parts: any = null;
+                              try { let raw = r.participantes; if (typeof raw === "string") raw = JSON.parse(raw); if (typeof raw === "string") raw = JSON.parse(raw); parts = raw; } catch { parts = {}; }
+                              const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
+                              const pList: any[] = parsed.participantes || [];
+                              const blocosList: any[] = parsed.blocos || [];
+                              const escaladaItems: any[] = parsed.escaladaList || [];
+                              let firstTitle = "";
+                              if (escaladaItems.length > 0) firstTitle = escaladaItems[0]?.titulo || escaladaItems[0] || "";
+                              if (!firstTitle) {
+                                for (const b of blocosList) {
+                                  const n = (b.noticias || []).find((x: any) => x.titulo);
+                                  if (n) { firstTitle = n.titulo; break; }
+                                }
+                              }
+                              if (!firstTitle) firstTitle = cleanTitulo;
+                              const participantesStr = pList.map((p: any) => p.nome).filter(Boolean).join(", ");
+                              return (
+                                <>
+                                  {updStr && (
+                                    <div style={{ ...MONT, fontSize: 10, color: "#64748B", fontWeight: 700 }}>
+                                      Atualizado em: <span style={{ color: DARK }}>{updStr}</span>
+                                    </div>
+                                  )}
+                                  {firstTitle && (
+                                    <p style={{ ...MONT, fontSize: 11, fontWeight: 700, lineHeight: 1.35, color: DARK, margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                                      {firstTitle}
+                                    </p>
+                                  )}
+                                  {participantesStr && (
+                                    <p style={{ ...MONT, fontSize: 10, lineHeight: 1.4, color: "#475569", margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                                      👥 {participantesStr}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-1.5" style={{ ...MONT, fontSize: 10, fontWeight: 700 }}>
+                                    <span style={{ padding: "3px 8px", borderRadius: 999, background: CARD_BG, color: DARK, border: `1px solid ${CYAN}` }}>
+                                      XML: {dataFormatada}{r.horario ? ` · ${r.horario}` : ""}
+                                    </span>
+                                  </div>
+                                </>
+                              );
+                            })()}
                             <div className="flex items-center gap-1 mt-auto pt-1">
                               <button onClick={async () => {
                                 let parts: any = null;
