@@ -921,10 +921,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="px-3 lg:px-6 pb-4 relative z-[1]">
             <div className="flex flex-row gap-4 items-stretch">
             <div
-              className="rounded-3xl relative"
+              className="rounded-3xl relative shrink min-w-0"
               style={{
                 width: "778px",
-                flexShrink: 0,
+                flexShrink: 1,
+                flexBasis: "778px",
+                minWidth: "520px",
                 maxWidth: "100%",
                 height: "461px",
                 backgroundColor: "#00d6f9",
@@ -1031,6 +1033,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div
               className="rounded-3xl relative overflow-hidden flex-1 min-w-0"
               style={{
+                minWidth: "260px",
                 height: "461px",
                 backgroundColor: "rgba(255,255,255,0.6)",
                 backdropFilter: "blur(20px)",
