@@ -194,7 +194,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           icon={<Radio size={14} />}
           label="Streaming"
           value={streamingCount}
-          loading={loadingStreaming && streamingCount === 0}
+          loading={loadingStreaming && streamingCount === null}
           dark={dark}
         />
       </div>
