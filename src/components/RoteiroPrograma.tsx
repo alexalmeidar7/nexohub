@@ -607,7 +607,7 @@ export default function RoteiroPrograma() {
                             <div className="flex items-start gap-1.5">
                               <p style={{ ...MONT, flex: 1, fontSize: 13, fontWeight: 800, color: DARK, lineHeight: 1.25, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                 {r.programa_nome || "Sem programa"}
-                                {r.numero_roteiro && <span style={{ fontSize: 10, fontWeight: 700, marginLeft: 6, color: CYAN }}>#{r.numero_roteiro}</span>}
+                                
                               </p>
                               {isAuto && (
                                 <span style={{ ...MONT, fontSize: 9, fontWeight: 800, padding: "3px 8px", borderRadius: 999, background: "#8b5cf6", color: "#fff", letterSpacing: 1 }} title="Gerado por Automação">
