@@ -1408,40 +1408,44 @@ export default function AgendaPage() {
         </DialogContent>
       </Dialog>
 
-      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
+      <div style={{ background: NEXO_CARD_BG, borderRadius: 28, padding: "28px 32px 32px", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)", fontFamily: "'Montserrat', sans-serif" }}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-              <CalendarIcon size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+            <div style={{ width: 40, height: 40, borderRadius: 999, background: NEXO_CYAN, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <CalendarIcon size={20} style={{ color: "#FFFFFF" }} />
             </div>
             <div>
-              <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Calendário de Eventos</h3>
-              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie a agenda de programas e participantes</p>
+              <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: NEXO_DARK, textTransform: "uppercase", margin: 0 }}>Agenda de Eventos</h3>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: "#64748B", margin: "4px 0 0" }}>Gerencie programas e participantes</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {locais.length > 0 && (
               <Select value={filterLocal} onValueChange={setFilterLocal}>
-                <SelectTrigger className="w-[160px] h-8 text-xs [&>span]:text-white" style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "20px", border: "none" }}>
-                  <MapPin size={12} className="mr-1 text-white" />
+                <SelectTrigger className="w-[180px] h-10 text-xs" style={{ background: "#FFFFFF", color: NEXO_DARK, borderRadius: 999, border: `2px solid ${NEXO_CYAN}`, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", paddingLeft: 16 }}>
+                  <MapPin size={12} className="mr-1" style={{ color: NEXO_CYAN }} />
                   <SelectValue placeholder="Filtrar por local" />
                 </SelectTrigger>
-                <SelectContent style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "12px" }}>
-                  <SelectItem value="todos" className="text-white focus:bg-[var(--layout-accent-color)] focus:text-white">Todos os locais</SelectItem>
+                <SelectContent style={{ backgroundColor: "#FFFFFF", color: NEXO_DARK, borderRadius: 16, border: `2px solid ${NEXO_CYAN}` }}>
+                  <SelectItem value="todos">Todos os locais</SelectItem>
                   {locais.map((l) => (
-                    <SelectItem key={l} value={l} className="text-white focus:bg-[var(--layout-accent-color)] focus:text-white">{l}</SelectItem>
+                    <SelectItem key={l} value={l}>{l}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             )}
-            <button type="button" onClick={openNewDialog}
-              className="btn-skyglass-accent px-3 py-1.5 text-[10px]"
+            <button
+              type="button"
+              onClick={openNewDialog}
+              style={{ height: 40, padding: "0 22px", borderRadius: 999, background: NEXO_LIME, border: "none", color: NEXO_DARK, fontWeight: 800, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)", fontFamily: "'Montserrat', sans-serif" }}
             >
               <Plus size={14} /> Novo Evento
             </button>
           </div>
         </div>
+
+
 
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
           <DialogContent className="max-w-md max-h-[70vh] overflow-hidden p-0 flex flex-col" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }}>
