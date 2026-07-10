@@ -27,90 +27,61 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [loadingStreaming] = useState(true);
   const socialUrlsRef = useRef<{ youtube?: string; instagram?: string; facebook?: string }>({});
 
-  // Fetch empresa social URLs + follower counts
+  // Fetch social follower counts via edge function (which also handles RLS-safe
+  // lookup of empresa_config URLs and manual overrides using service role).
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
 
-    const load = async () => {
+    const fetchAll = async () => {
+      // Try direct config read first (works for owner/sub-user/admin) so we can
+      // populate the rotation labels immediately.
       const { data } = await supabase
         .from("empresa_config")
-        .select("youtube, instagram, facebook, youtube_subs, instagram_subs, facebook_subs")
+        .select("youtube, instagram, facebook")
         .eq("user_id", dataUserId as any)
         .maybeSingle();
-      if (cancelled) return;
-      setLoadingConfig(false);
-      if (!data) {
-        setLoadingSocial(false);
-        return;
+      if (!cancelled && data) {
+        socialUrlsRef.current = {
+          youtube: (data as any).youtube || undefined,
+          instagram: (data as any).instagram || undefined,
+          facebook: (data as any).facebook || undefined,
+        };
       }
-      const d = data as any;
-      const urls = {
-        youtube: d.youtube || undefined,
-        instagram: d.instagram || undefined,
-        facebook: d.facebook || undefined,
-      };
-      socialUrlsRef.current = urls;
-      // Seed with manual overrides so numbers show immediately.
-      setSocial({
-        youtube: d.youtube_subs != null ? Number(d.youtube_subs) : null,
-        instagram: d.instagram_subs != null ? Number(d.instagram_subs) : null,
-        facebook: d.facebook_subs != null ? Number(d.facebook_subs) : null,
-      });
-      const manual = {
-        youtube: d.youtube_subs != null ? Number(d.youtube_subs) : null,
-        instagram: d.instagram_subs != null ? Number(d.instagram_subs) : null,
-        facebook: d.facebook_subs != null ? Number(d.facebook_subs) : null,
-      };
-      if (!urls.youtube && !urls.instagram && !urls.facebook) {
-        setLoadingSocial(false);
-        return;
-      }
-      await fetchCounts(urls, manual);
-    };
+      if (!cancelled) setLoadingConfig(false);
 
-    const fetchCounts = async (
-      urls: typeof socialUrlsRef.current,
-      manual: SocialCounts,
-    ) => {
-      if (!urls.youtube && !urls.instagram && !urls.facebook) {
-        setLoadingSocial(false);
-        return;
-      }
-      const { data } = await supabase.functions.invoke("fetch-social-followers", {
-        body: urls,
+      const { data: resp } = await supabase.functions.invoke("fetch-social-followers", {
+        body: { userId: dataUserId },
       });
       if (cancelled) return;
-      if (data && (data as any).ok) {
-        // Manual override wins over scraped value.
+      if (resp && (resp as any).ok) {
+        const r = resp as any;
+        // Edge function returns URLs it looked up (helpful when RLS blocked us).
+        if (r.urls) {
+          socialUrlsRef.current = {
+            youtube: r.urls.youtube || socialUrlsRef.current.youtube,
+            instagram: r.urls.instagram || socialUrlsRef.current.instagram,
+            facebook: r.urls.facebook || socialUrlsRef.current.facebook,
+          };
+        }
         setSocial({
-          youtube: manual.youtube ?? ((data as any).youtube ?? null),
-          instagram: manual.instagram ?? ((data as any).instagram ?? null),
-          facebook: manual.facebook ?? ((data as any).facebook ?? null),
+          youtube: r.youtube ?? null,
+          instagram: r.instagram ?? null,
+          facebook: r.facebook ?? null,
         });
       }
       setLoadingSocial(false);
+      setLoadingConfig(false);
     };
 
-    load();
-    const iv = setInterval(async () => {
-      const { data: d2 } = await supabase
-        .from("empresa_config")
-        .select("youtube_subs, instagram_subs, facebook_subs")
-        .eq("user_id", dataUserId as any)
-        .maybeSingle();
-      const manual: SocialCounts = {
-        youtube: d2 && (d2 as any).youtube_subs != null ? Number((d2 as any).youtube_subs) : null,
-        instagram: d2 && (d2 as any).instagram_subs != null ? Number((d2 as any).instagram_subs) : null,
-        facebook: d2 && (d2 as any).facebook_subs != null ? Number((d2 as any).facebook_subs) : null,
-      };
-      fetchCounts(socialUrlsRef.current, manual);
-    }, REFETCH_MS);
+    fetchAll();
+    const iv = setInterval(fetchAll, REFETCH_MS);
     return () => {
       cancelled = true;
       clearInterval(iv);
     };
   }, [dataUserId]);
+
 
   // Rotate social display every 3s (only across configured networks)
   useEffect(() => {
