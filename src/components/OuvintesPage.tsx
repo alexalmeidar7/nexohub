@@ -160,7 +160,9 @@ export default function OuvintesPage() {
       telefone: form.telefone.trim() || null,
       email: form.email.trim() || null,
       setor: form.setor.trim() || null,
-      cidade: form.cidade.trim() || null,
+      cidade: form.cidade.trim()
+        ? (form.uf ? `${form.cidade.trim()}/${form.uf}` : form.cidade.trim())
+        : null,
       data_nascimento: form.data_nascimento || null,
       escolaridade: form.escolaridade || null,
       renda: form.renda || null,
