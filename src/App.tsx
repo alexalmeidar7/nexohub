@@ -10,6 +10,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LayoutVersionGuard from "@/components/LayoutVersionGuard";
 
 // Retry wrapper for lazy imports — retries up to 3 times on chunk load failure
 function lazyRetry(factory: () => Promise<{ default: React.ComponentType<any> }>, retries = 3) {
@@ -147,6 +148,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <LayoutVersionGuard />
       <AuthProvider>
         <BrowserRouter>
           <ChunkErrorBoundary>
