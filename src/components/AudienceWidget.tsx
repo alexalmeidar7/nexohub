@@ -150,9 +150,38 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       }
       try {
         const r = await fetch(url, { cache: "no-store" });
-        const text = await r.text();
-        const m = text.match(/<espectadores_conectados>\s*(\d+)\s*<\/espectadores_conectados>/i);
-        if (!cancelled) setVideoCount(m ? parseInt(m[1], 10) : null);
+        const text = (await r.text()).trim();
+        let count: number | null = null;
+
+        // Try JSON first (Logicahost /api-json/...)
+        if (text.startsWith("{") || text.startsWith("[") || text === "false" || text === "true" || text === "null") {
+          try {
+            const j = JSON.parse(text);
+            if (j === false || j === null) {
+              count = 0; // stream offline
+            } else if (typeof j === "number") {
+              count = j;
+            } else if (j && typeof j === "object") {
+              const raw =
+                (j as any).espectadores_conectados ??
+                (j as any).espectadores ??
+                (j as any).viewers ??
+                (j as any).connected ??
+                (j as any).count ??
+                (j as any).info?.espectadores_conectados;
+              const n = typeof raw === "string" ? parseInt(raw, 10) : raw;
+              count = typeof n === "number" && !Number.isNaN(n) ? n : null;
+            }
+          } catch {
+            count = null;
+          }
+        } else {
+          // Fallback: legacy XML endpoint (/api/...)
+          const m = text.match(/<espectadores_conectados>\s*(\d+)\s*<\/espectadores_conectados>/i);
+          count = m ? parseInt(m[1], 10) : null;
+        }
+
+        if (!cancelled) setVideoCount(count);
       } catch {
         if (!cancelled) setVideoCount(null);
       }
