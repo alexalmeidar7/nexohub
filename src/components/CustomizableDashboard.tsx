@@ -2173,7 +2173,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   useEffect(() => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      try { sourceRef.current?.disconnect(); } catch {}
+      try { activeSourceRef.current?.disconnect(); } catch {}
       try { analyserRef.current?.disconnect(); } catch {}
       try { audioCtxRef.current?.close(); } catch {}
     };
