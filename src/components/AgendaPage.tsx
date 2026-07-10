@@ -2361,18 +2361,19 @@ export default function AgendaPage() {
               </div>
             </div>
             {/* Events of selected day */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
-                <span style={{ color: "var(--layout-header-text, #ffffff)" }}>
+            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+              <div className="flex items-center justify-between" style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+                <span>
                   {selectedDate
-                    ? `📋 Eventos em ${format(selectedDate, "dd/MM/yyyy")}`
-                    : "📋 Todos os eventos"}
+                    ? `Eventos em ${format(selectedDate, "dd/MM/yyyy")}`
+                    : "Todos os eventos"}
                   {filterLocal !== "todos" && ` • ${filterLocal}`}
                 </span>
-                <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                <span style={{ fontSize: 10, fontWeight: 800, background: "#FFFFFF", color: NEXO_DARK, padding: "3px 12px", borderRadius: 999, letterSpacing: 1 }}>
                   {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
                 </span>
               </div>
+
               <div className="p-3 space-y-2">
                 {filteredEventos.map((evt) => renderEventCard(evt))}
 
