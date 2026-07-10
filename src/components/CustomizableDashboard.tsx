@@ -1910,38 +1910,38 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
       {channels.length === 0 ? (
         <p className="text-white/40 text-xs relative z-10 m-auto">Nenhum canal cadastrado</p>
       ) : (
-        <div className="relative z-10 flex flex-col justify-between h-full p-5" style={{ minHeight: 260 }}>
+        <div className="relative z-10 flex flex-col justify-between h-full p-3 sm:p-5" style={{ minHeight: 220 }}>
           {/* Top row: "tocando" label + circular controls */}
-          <div className="flex items-start justify-between gap-3">
-            <span className="text-[22px] font-medium lowercase tracking-tight truncate" style={{ color: "#c8ff00" }}>
+          <div className="flex items-start justify-between gap-2">
+            <span className="text-[16px] sm:text-[20px] md:text-[22px] font-medium lowercase tracking-tight truncate min-w-0" style={{ color: "#c8ff00" }}>
               {isPlaying ? "tocando" : "pausado"}
             </span>
 
-            <div className="flex flex-col gap-2 flex-shrink-0">
+            <div className="flex flex-col gap-1.5 sm:gap-2 flex-shrink-0">
               <button
                 onClick={togglePlay}
-                className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
+                className="w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
                 style={{ background: "#001e2d" }}
                 title={isPlaying ? "Pausar" : "Reproduzir"}
               >
                 {isPlaying
-                  ? <Pause size={16} style={{ color: "#c8ff00" }} fill="#c8ff00" />
-                  : <Play size={16} style={{ color: "#c8ff00", marginLeft: 2 }} fill="#c8ff00" />}
+                  ? <Pause size={14} style={{ color: "#c8ff00" }} fill="#c8ff00" />
+                  : <Play size={14} style={{ color: "#c8ff00", marginLeft: 2 }} fill="#c8ff00" />}
               </button>
               <div className="relative group/vol">
                 <button
                   onClick={toggleMute}
-                  className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
+                  className="w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
                   style={{ background: "#c8ff00" }}
                   title={isMuted ? "Ativar som" : "Mudo"}
                 >
                   {isMuted || volume === 0
-                    ? <VolumeX size={16} style={{ color: "#001e2d" }} />
-                    : <Volume2 size={16} style={{ color: "#001e2d" }} fill="#001e2d" />}
+                    ? <VolumeX size={14} style={{ color: "#001e2d" }} />
+                    : <Volume2 size={14} style={{ color: "#001e2d" }} fill="#001e2d" />}
                 </button>
-                {/* Volume slider popover on hover */}
+                {/* Volume slider popover on hover — clamped so it never leaves the widget */}
                 <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 opacity-0 pointer-events-none group-hover/vol:opacity-100 group-hover/vol:pointer-events-auto transition-opacity duration-150 z-30">
-                  <div className="rounded-full px-3 py-2 flex items-center shadow-lg" style={{ background: "#c8ff00" }}>
+                  <div className="rounded-full px-2.5 py-1.5 sm:px-3 sm:py-2 flex items-center shadow-lg" style={{ background: "#c8ff00" }}>
                     <input
                       type="range"
                       min={0}
@@ -1953,9 +1953,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
                       onTouchStart={e => e.stopPropagation()}
                       onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
                       draggable={false}
-                      className="volume-slider-lime h-1 appearance-none rounded-full cursor-pointer"
+                      className="volume-slider-lime h-1 appearance-none rounded-full cursor-pointer w-16 sm:w-24"
                       style={{
-                        width: 110,
                         background: `linear-gradient(to right, #001e2d ${(isMuted ? 0 : volume) * 100}%, rgba(0,30,45,0.25) ${(isMuted ? 0 : volume) * 100}%)`,
                       }}
                     />
@@ -1966,11 +1965,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
           </div>
 
           {/* Middle: song info — positioned closer to top */}
-          <div className="flex items-end justify-between gap-3 mt-4 mb-auto">
+          <div className="flex items-end justify-between gap-2 mt-2 sm:mt-4 mb-auto">
             <div className="min-w-0 flex-1">
               {currentMusic ? (
                 <>
-                  <p className="text-[15px] font-extrabold leading-[1.1] truncate" style={{ color: "#c8ff00" }}>
+                  <p className="text-[13px] sm:text-[15px] font-extrabold leading-[1.1] truncate" style={{ color: "#c8ff00" }}>
                     <TypewriterText text={currentMusic.titulo || ""} />
                   </p>
                   <p className="text-[13px] font-extrabold leading-[1.15] truncate" style={{ color: "#ffffff" }}>
