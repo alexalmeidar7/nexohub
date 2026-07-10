@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check, RefreshCw, ChevronDown, ChevronUp, Zap, Bot } from "lucide-react";
+import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check, RefreshCw, ChevronDown, ChevronUp, Zap, Bot, Send } from "lucide-react";
 import { toast } from "sonner";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
