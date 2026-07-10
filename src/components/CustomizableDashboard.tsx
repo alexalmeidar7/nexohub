@@ -1917,7 +1917,9 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       prefetchRef.current = null;
     }
     const pre = new Audio();
-    pre.preload = "auto";
+    // preload="metadata" apenas para aquecer DNS/TLS sem bufferizar áudio
+    // (buffers de streams ao vivo ficariam obsoletos e causariam repetição)
+    pre.preload = "metadata";
     pre.muted = true;
     const sep = url.includes("?") ? "&" : "?";
     pre.src = `${url}${sep}_pf=${Date.now()}`;
