@@ -706,7 +706,7 @@ export default function RoteiroPrograma() {
                                 setWhatsAppHistoricoData({ titulo: r.titulo || "Roteiro", programaNome: r.programa_nome || "", estudio: r.estudio || "", data: dataStr, horario: r.horario || "", participantes: pList, conteudoTexto: "", _expressFormatted: msg });
                                 setShowWhatsAppDialog(true);
                               }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Enviar por WhatsApp">
-                                <MessageSquare size={10} style={{ color: "#25d366" }} />
+                                <MessageSquare size={13} style={{ color: "#25d366" }} />
                               </button>
                               {hasXml && (
                                 <button onClick={async () => {
