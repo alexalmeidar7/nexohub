@@ -1152,6 +1152,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       </div>
 
       {afterHeader}
+      {!hideNovoToggle && (
       <div className="px-6 pt-4 pb-2">
         <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
           <button
@@ -1174,6 +1175,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </button>
         </div>
       </div>
+      )}
 
       {novoRoteiroOpen && (
       <div className="p-6 space-y-5">
