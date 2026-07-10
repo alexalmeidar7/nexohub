@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Pencil, Save, X, Search, Users } from "lucide-react";
@@ -44,12 +44,18 @@ const RENDA_OPTIONS = [
 
 const SEXO_OPTIONS = ["Feminino", "Masculino", "Outro", "Prefere não informar"];
 
+const UF_OPTIONS = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
+  "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+];
+
 const emptyForm = {
   nome: "",
   cpf: "",
   telefone: "",
   email: "",
   setor: "",
+  uf: "",
   cidade: "",
   data_nascimento: "",
   escolaridade: "",
@@ -116,6 +122,35 @@ export default function OuvintesPage() {
   const [form, setForm] = useState({ ...emptyForm });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [cidadesUF, setCidadesUF] = useState<string[]>([]);
+  const [showCidadeSug, setShowCidadeSug] = useState(false);
+  const cidadeWrapRef = useRef<HTMLDivElement>(null);
+
+  // Load IBGE cities whenever UF changes
+  useEffect(() => {
+    if (!form.uf) { setCidadesUF([]); return; }
+    let cancelled = false;
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${form.uf}/municipios`)
+      .then((r) => r.json())
+      .then((data: Array<{ nome: string }>) => {
+        if (!cancelled) setCidadesUF((data || []).map((d) => d.nome));
+      })
+      .catch(() => { if (!cancelled) setCidadesUF([]); });
+    return () => { cancelled = true; };
+  }, [form.uf]);
+
+  // Close autocomplete when clicking outside
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (cidadeWrapRef.current && !cidadeWrapRef.current.contains(e.target as Node)) {
+        setShowCidadeSug(false);
+      }
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+
 
   const load = async () => {
     setLoading(true);
@@ -154,7 +189,9 @@ export default function OuvintesPage() {
       telefone: form.telefone.trim() || null,
       email: form.email.trim() || null,
       setor: form.setor.trim() || null,
-      cidade: form.cidade.trim() || null,
+      cidade: form.cidade.trim()
+        ? (form.uf ? `${form.cidade.trim()}/${form.uf}` : form.cidade.trim())
+        : null,
       data_nascimento: form.data_nascimento || null,
       escolaridade: form.escolaridade || null,
       renda: form.renda || null,
@@ -181,13 +218,19 @@ export default function OuvintesPage() {
 
   const handleEdit = (o: Ouvinte) => {
     setEditingId(o.id);
+    // Cidade is persisted as "Cidade/UF" — split on edit so the two fields hydrate correctly.
+    const raw = o.cidade || "";
+    const m = raw.match(/^(.*)\/([A-Z]{2})$/);
+    const cidadeOnly = m ? m[1].trim() : raw;
+    const ufOnly = m ? m[2] : "";
     setForm({
       nome: o.nome || "",
       cpf: o.cpf || "",
       telefone: o.telefone || "",
       email: o.email || "",
       setor: o.setor || "",
-      cidade: o.cidade || "",
+      uf: ufOnly,
+      cidade: cidadeOnly,
       data_nascimento: o.data_nascimento || "",
       escolaridade: o.escolaridade || "",
       renda: o.renda || "",
@@ -290,8 +333,78 @@ export default function OuvintesPage() {
           <Field label="Setor">
             <input style={pillInput} value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} placeholder="Bairro / região" />
           </Field>
+          <Field label="UF">
+            <select
+              style={pillSelect}
+              value={form.uf}
+              onChange={(e) => setForm({ ...form, uf: e.target.value, cidade: "" })}
+            >
+              <option value="">Selecione</option>
+              {UF_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+            </select>
+          </Field>
           <Field label="Cidade">
-            <input style={pillInput} value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} placeholder="Cidade" />
+            <div ref={cidadeWrapRef} style={{ position: "relative" }}>
+              <input
+                style={pillInput}
+                value={form.cidade}
+                onChange={(e) => { setForm({ ...form, cidade: e.target.value }); setShowCidadeSug(true); }}
+                onFocus={() => setShowCidadeSug(true)}
+                placeholder={form.uf ? "Digite para buscar..." : "Selecione a UF primeiro"}
+                disabled={!form.uf}
+                autoComplete="off"
+              />
+              {showCidadeSug && form.uf && form.cidade.trim().length > 0 && (() => {
+                const q = form.cidade.trim().toLowerCase();
+                const matches = cidadesUF
+                  .filter((c) => c.toLowerCase().includes(q))
+                  .slice(0, 8);
+                if (matches.length === 0) return null;
+                // Hide list if the current value exactly matches the only match
+                if (matches.length === 1 && matches[0].toLowerCase() === q) return null;
+                return (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 6px)",
+                      left: 0,
+                      right: 0,
+                      background: "#FFFFFF",
+                      border: `2px solid ${CYAN}`,
+                      borderRadius: 20,
+                      overflow: "hidden",
+                      zIndex: 50,
+                      boxShadow: "0 10px 30px rgba(10,37,64,0.15)",
+                      maxHeight: 260,
+                      overflowY: "auto",
+                    }}
+                  >
+                    {matches.map((c, i) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => { setForm({ ...form, cidade: c }); setShowCidadeSug(false); }}
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          padding: "10px 16px",
+                          background: "transparent",
+                          border: "none",
+                          borderBottom: i < matches.length - 1 ? `1px solid ${CARD_BG}` : "none",
+                          color: DARK,
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
           </Field>
           <Field label="Data de Nascimento">
             <div style={{ display: "flex", gap: 8 }}>
