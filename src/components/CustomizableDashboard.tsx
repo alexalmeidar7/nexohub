@@ -626,15 +626,15 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
               return (
                 <div
                   key={item.id}
-                  className={`relative group rounded-3xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""} ${item.widgetType === "player" ? "sm:col-span-2" : ""}`}
+                  className={`relative group rounded-3xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: "var(--layout-widget-bg, #1a1a1a)",
                     boxShadow: isDragOver ? "0 0 0 2px var(--layout-accent-color), 0 4px 20px rgba(0,0,0,0.12)" : "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
                     borderRadius: "24px",
-                    height: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px`) : "280px",
-                    minHeight: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(72, playerMaxHeight)}px` : `${Math.min(221, playerMaxHeight)}px`) : undefined,
+                    aspectRatio: item.widgetType === "player" && !playerCompactMap[item.id] ? "1 / 1" : undefined,
+                    height: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : undefined) : "280px",
+                    minHeight: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(72, playerMaxHeight)}px` : undefined) : undefined,
                     maxHeight: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px`) : "280px",
-                    maxWidth: item.widgetType === "player" && typeof window !== "undefined" && window.innerWidth >= 640 ? "70%" : undefined,
                     overflow: item.widgetType === "player" && playerVideoActive === item.id ? "visible" : "hidden",
                     transition: item.widgetType === "player" ? "min-height 0.35s cubic-bezier(0.4,0,0.2,1), height 0.35s cubic-bezier(0.4,0,0.2,1), max-height 0.35s cubic-bezier(0.4,0,0.2,1)" : undefined,
                   }}
