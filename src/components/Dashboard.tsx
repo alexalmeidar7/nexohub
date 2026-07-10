@@ -1114,15 +1114,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div className="flex items-center gap-3 mb-4 ml-1">
               <button
                 onClick={() => setCurrentPage("dashboard")}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02]"
-                style={{
-                  backgroundColor: `${layoutColors.accentColor}15`,
-                  color: layoutColors.accentColor,
-                }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.accentColor}25`; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.accentColor}15`; }}
+                className="group inline-flex items-center gap-2.5 h-11 pl-1.5 pr-5 rounded-full bg-[#00BFF0] text-white font-sans font-bold uppercase tracking-[0.08em] text-sm shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)] transition-all hover:brightness-110 hover:shadow-[0_6px_20px_-4px_rgba(0,191,240,0.65)] active:scale-[0.97]"
               >
-                <ChevronDown className="rotate-90" size={14} />
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#0A0A0A] text-white transition-transform group-hover:-translate-x-0.5">
+                  <ChevronLeft size={16} strokeWidth={2.75} />
+                </span>
                 <span>Voltar</span>
               </button>
               <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold opacity-30 select-none" style={{ color: layoutColors.pageText }}>
