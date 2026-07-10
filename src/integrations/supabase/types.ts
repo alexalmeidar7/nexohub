@@ -974,6 +974,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ouvintes: {
+        Row: {
+          cidade: string | null
+          cpf: string | null
+          created_at: string
+          data_nascimento: string | null
+          email: string | null
+          escolaridade: string | null
+          id: string
+          nome: string
+          pontuacao: number | null
+          renda: string | null
+          setor: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          escolaridade?: string | null
+          id?: string
+          nome: string
+          pontuacao?: number | null
+          renda?: string | null
+          setor?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          escolaridade?: string | null
+          id?: string
+          nome?: string
+          pontuacao?: number | null
+          renda?: string | null
+          setor?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       planos: {
         Row: {
           created_at: string

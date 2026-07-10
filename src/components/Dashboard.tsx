@@ -22,6 +22,7 @@ import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 
 // Lazy-load all tab pages for faster initial render
 const ApresentadorForm = lazy(() => import("./ApresentadorForm"));
+const OuvintesPage = lazy(() => import("./OuvintesPage"));
 const ProgramaForm = lazy(() => import("./ProgramaForm"));
 const PrevisaoTempo = lazy(() => import("./PrevisaoTempo"));
 const RoteiroPrograma = lazy(() => import("./RoteiroPrograma"));
@@ -64,7 +65,7 @@ import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -86,6 +87,7 @@ const sidebarMenu: MenuItem[] = [
   {
     icon: Users, label: "cadastros", children: [
       { icon: Mic2, label: "participantes", page: "apresentadores" },
+      { icon: Users, label: "ouvintes", page: "ouvintes" },
       { icon: PlaySquare, label: "programas", page: "programas" },
       { icon: CloudSun, label: "cidade tempo", page: "previsao" },
     ]
@@ -148,6 +150,7 @@ const pageTitle: Record<Page, string> = {
   previsao: "Previsão do Tempo",
   noticias: "Roteiro de Programa",
   apresentadores: "Cadastro de Participantes",
+  ouvintes: "Cadastro de Ouvintes",
   programas: "Cadastro de Programas",
   musica: "Música no Ar",
   agenda: "Agenda",
@@ -516,6 +519,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       page === "tp" ||
       page === "fans" ||
       page === "apresentadores" ||
+      page === "ouvintes" ||
       page === "programas" ||
       page === "previsao" ||
       page === "site"
@@ -1131,6 +1135,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
+              {currentPage === "ouvintes" && <OuvintesPage />}
               {currentPage === "programas" && <ProgramaForm />}
               {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
               <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
