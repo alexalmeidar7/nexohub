@@ -1155,3 +1155,84 @@ table:not([data-no-row-hover]) tbody tr:hover {
   border-radius: 9999px;
 }
 
+/* ============================================================
+   NEXO FORM DESIGN SYSTEM
+   Padrão visual (cyan + lime + pill + Montserrat) para forms.
+   ============================================================ */
+.nx-form-card {
+  background: #D6F4FB;
+  border-radius: 2rem;
+  padding: 2rem 2.25rem;
+  font-family: "Montserrat", system-ui, sans-serif;
+  color: #0A0A0A;
+}
+
+.nx-form-title {
+  font-family: "Montserrat", system-ui, sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #0A0A0A;
+  font-size: 1.05rem;
+  margin-bottom: 1.5rem;
+}
+
+.nx-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem 1.5rem;
+}
+
+@media (max-width: 720px) {
+  .nx-form-grid { grid-template-columns: 1fr; }
+  .nx-form-card { padding: 1.25rem; border-radius: 1.5rem; }
+}
+
+.nx-field { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.nx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 40px;
+  padding: 0 1rem;
+  background: #ffffff;
+  border: 1px solid rgba(10, 10, 10, 0.08);
+  border-radius: 9999px;
+  font-family: "Montserrat", system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0A0A0A;
+  box-shadow: 0 1px 2px rgba(10, 10, 10, 0.04);
+}
+.nx-chip .nx-dot { width: 8px; height: 8px; border-radius: 9999px; background: #00BFF0; }
+.nx-chip.nx-chip-success .nx-dot { background: #22c55e; }
+.nx-chip.nx-chip-danger .nx-dot { background: #ef4444; }
+
+.nx-table-head {
+  background: #00BFF0;
+  color: #ffffff;
+  font-family: "Montserrat", system-ui, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+}
+
+.nx-toggle-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 44px;
+  padding: 0 1rem 0 0.35rem;
+  background: #00BFF0;
+  border-radius: 9999px;
+  color: #ffffff;
+  font-family: "Montserrat", system-ui, sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8125rem;
+}
+
+
