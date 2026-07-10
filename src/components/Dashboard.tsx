@@ -863,13 +863,28 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                             const ChildIcon = child.icon;
                             const childActive = currentPage === child.page;
                             return (
-                              <button key={child.label} onClick={() => handleChildClick(child, item.label)}
-                                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] transition-all"
-                                style={{ color: childActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
-                              >
-                                <ChildIcon size={12} />
-                                <span>{child.label}</span>
-                              </button>
+                              <div key={child.label}>
+                                <button onClick={() => handleChildClick(child, item.label)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] transition-all"
+                                  style={{ color: childActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
+                                >
+                                  <ChildIcon size={12} />
+                                  <span>{child.label}</span>
+                                </button>
+                                {child.children && child.children.map(grand => {
+                                  const GrandIcon = grand.icon;
+                                  const grandActive = currentPage === grand.page;
+                                  return (
+                                    <button key={grand.label} onClick={() => handleChildClick(grand, item.label)}
+                                      className="w-full flex items-center gap-2 pl-8 pr-3 py-1.5 rounded-lg text-[10px] transition-all"
+                                      style={{ color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}80` }}
+                                    >
+                                      <GrandIcon size={11} />
+                                      <span>{grand.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             );
                           })}
                         </div>
