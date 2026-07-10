@@ -603,8 +603,9 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                     boxShadow: isDragOver ? "0 0 0 2px var(--layout-accent-color), 0 4px 20px rgba(0,0,0,0.12)" : "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
                     borderRadius: "24px",
                     height: item.widgetType === "player" ? "auto" : "280px",
-                    minHeight: item.widgetType === "player" ? "260px" : undefined,
+                    minHeight: item.widgetType === "player" ? "221px" : undefined,
                     maxHeight: item.widgetType === "player" ? "none" : "280px",
+                    maxWidth: item.widgetType === "player" ? "70%" : undefined,
                     overflow: item.widgetType === "player" && playerVideoActive === item.id ? "visible" : "hidden",
                   }}
                   onDragOver={(e) => handleDragOver(e, item.id)}
