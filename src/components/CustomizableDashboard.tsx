@@ -1605,11 +1605,15 @@ function DashboardWeatherWidget() {
 }
 
 /* ========== WIDGET: Player ========== */
-function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: string; onVideoChange?: (active: boolean) => void }) {
+function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: { dataUserId?: string; onVideoChange?: (active: boolean) => void; onCompactChange?: (compact: boolean) => void }) {
   const { user } = useAuth();
   const uid = dataUserId || user?.id;
   const volumeStorageKey = uid ? `dashboard_player_volume_${uid}` : "dashboard_player_volume_anon";
   const mutedStorageKey = uid ? `dashboard_player_muted_${uid}` : "dashboard_player_muted_anon";
+  const compactStorageKey = uid ? `dashboard_player_compact_${uid}` : "dashboard_player_compact_anon";
+  const [compactMode, setCompactMode] = useState(() => {
+    try { return localStorage.getItem(compactStorageKey) === "1"; } catch { return false; }
+  });
   const [channels, setChannels] = useState<any[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
