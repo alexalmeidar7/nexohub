@@ -2542,16 +2542,6 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
               handleVolume={handleVolume}
             />
 
-            <button
-              onClick={() => setCompactMode(m => !m)}
-              className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
-              style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(200,255,0,0.35)", backdropFilter: "blur(8px)" }}
-              title={compactMode ? "Modo padrão" : "Modo compacto"}
-            >
-              {compactMode
-                ? <Maximize2 size={compactMode ? 10 : 11} style={{ color: "#c8ff00" }} />
-                : <Minimize2 size={11} style={{ color: "#c8ff00" }} />}
-            </button>
           </div>
         </div>
       )}
