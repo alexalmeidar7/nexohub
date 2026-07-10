@@ -21,6 +21,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [playerCount] = useState<number>(0);
   const [streamingCount] = useState<number>(0);
   const [rotIdx, setRotIdx] = useState(0);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [loadingSocial, setLoadingSocial] = useState(true);
+  const [loadingPlayer] = useState(true);
+  const [loadingStreaming] = useState(true);
   const socialUrlsRef = useRef<{ youtube?: string; instagram?: string; facebook?: string }>({});
 
   // Fetch empresa social URLs + follower counts
@@ -34,7 +38,12 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         .select("youtube, instagram, facebook, youtube_subs, instagram_subs, facebook_subs")
         .eq("user_id", dataUserId as any)
         .maybeSingle();
-      if (cancelled || !data) return;
+      if (cancelled) return;
+      setLoadingConfig(false);
+      if (!data) {
+        setLoadingSocial(false);
+        return;
+      }
       const d = data as any;
       const urls = {
         youtube: d.youtube || undefined,
@@ -53,6 +62,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         instagram: d.instagram_subs != null ? Number(d.instagram_subs) : null,
         facebook: d.facebook_subs != null ? Number(d.facebook_subs) : null,
       };
+      if (!urls.youtube && !urls.instagram && !urls.facebook) {
+        setLoadingSocial(false);
+        return;
+      }
       await fetchCounts(urls, manual);
     };
 
@@ -60,7 +73,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       urls: typeof socialUrlsRef.current,
       manual: SocialCounts,
     ) => {
-      if (!urls.youtube && !urls.instagram && !urls.facebook) return;
+      if (!urls.youtube && !urls.instagram && !urls.facebook) {
+        setLoadingSocial(false);
+        return;
+      }
       const { data } = await supabase.functions.invoke("fetch-social-followers", {
         body: urls,
       });
@@ -73,6 +89,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           facebook: manual.facebook ?? ((data as any).facebook ?? null),
         });
       }
+      setLoadingSocial(false);
     };
 
     load();
@@ -147,12 +164,16 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           >
             Audiência Online
           </span>
-          <span
-            className="text-xl font-black leading-none"
-            style={{ color: dark }}
-          >
-            {total.toLocaleString("pt-BR")}
-          </span>
+          {loadingConfig ? (
+            <Skeleton width={72} height={18} dark={dark} />
+          ) : (
+            <span
+              className="text-xl font-black leading-none"
+              style={{ color: dark }}
+            >
+              {total.toLocaleString("pt-BR")}
+            </span>
+          )}
         </div>
       </div>
 
@@ -161,6 +182,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           icon={current ? current.icon : <Users size={14} />}
           label={current ? current.label : "Redes sociais"}
           value={current ? current.value : null}
+          loading={loadingConfig || loadingSocial}
           dark={dark}
           rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
         />
@@ -168,12 +190,14 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           icon={<MonitorPlay size={14} />}
           label="Player"
           value={playerCount}
+          loading={loadingPlayer && playerCount === 0}
           dark={dark}
         />
         <StatCell
           icon={<Radio size={14} />}
           label="Streaming"
           value={streamingCount}
+          loading={loadingStreaming && streamingCount === 0}
           dark={dark}
         />
       </div>
@@ -181,16 +205,31 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   );
 }
 
+function Skeleton({ width, height, dark }: { width: number | string; height: number; dark: string }) {
+  return (
+    <span
+      className="inline-block rounded-md animate-pulse"
+      style={{
+        width,
+        height,
+        background: `${dark}22`,
+      }}
+    />
+  );
+}
+
 function StatCell({
   icon,
   label,
   value,
+  loading,
   dark,
   rotationKey,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number | null;
+  loading?: boolean;
   dark: string;
   rotationKey?: string;
 }) {
@@ -203,12 +242,16 @@ function StatCell({
     >
       <div style={{ color: dark, opacity: 0.75 }}>{icon}</div>
       <div key={rotationKey} className="flex flex-col min-w-0 w-full animate-fade-in">
-        <span
-          className="text-2xl font-black leading-none truncate"
-          style={{ color: dark }}
-        >
-          {display}
-        </span>
+        {loading ? (
+          <Skeleton width="70%" height={22} dark={dark} />
+        ) : (
+          <span
+            className="text-2xl font-black leading-none truncate"
+            style={{ color: dark }}
+          >
+            {display}
+          </span>
+        )}
         <span
           className="text-[9px] font-semibold uppercase mt-1 truncate"
           style={{ color: dark, opacity: 0.6, letterSpacing: 1 }}
