@@ -1300,3 +1300,146 @@ select:not([data-nx-skip]) option:checked {
 
 
 
+
+/* ============================================================
+   NEXO STYLE PASS — escopo aplicado com class="nexo-scope"
+   Reproduz o visual do "Cadastro do Ouvinte" em qualquer tela
+   sem alterar a lógica interna dos componentes.
+   Tokens: CYAN #00BFF0 | LIME #C6F03C | CARD_BG #D6F4FB
+           DARK #0A2540 | FONT Montserrat
+   ============================================================ */
+
+.nexo-scope {
+  font-family: 'Montserrat', system-ui, sans-serif !important;
+  --layout-accent-color: #00BFF0;
+  --layout-page-bg: #ffffff;
+  --layout-page-text: #0A2540;
+  --layout-header-bg: #0A2540;
+  --layout-header-text: #ffffff;
+  --layout-border-color: #00BFF0;
+  color: #0A2540;
+  background: linear-gradient(180deg, #F1FAFD 0%, #ffffff 100%);
+  min-height: 100%;
+  padding: 20px 24px 40px;
+  border-radius: 24px;
+}
+
+.nexo-scope * {
+  font-family: 'Montserrat', system-ui, sans-serif !important;
+}
+
+/* Titles */
+.nexo-scope h1,
+.nexo-scope h2,
+.nexo-scope h3 {
+  color: #0A2540 !important;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 800 !important;
+}
+
+.nexo-scope h4,
+.nexo-scope h5,
+.nexo-scope h6 {
+  color: #0A2540 !important;
+  font-weight: 700 !important;
+}
+
+/* Convert generic cards/panels to Nexo card look */
+.nexo-scope [class*="rounded-2xl"],
+.nexo-scope [class*="rounded-xl"] {
+  background: #D6F4FB !important;
+  box-shadow: 0 2px 12px rgba(10, 37, 64, 0.05) !important;
+  color: #0A2540 !important;
+}
+
+.nexo-scope [class*="rounded-2xl"] [class*="rounded-xl"],
+.nexo-scope [class*="rounded-2xl"] [class*="rounded-2xl"] {
+  background: #ffffff !important;
+  border: 1.5px solid #00BFF0 !important;
+}
+
+/* Buttons — pill lime */
+.nexo-scope button:not([class*="rounded-full"]):not([role="tab"]):not([data-nexo-skip]) {
+  border-radius: 999px !important;
+  font-family: 'Montserrat', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 12px !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nexo-scope button[type="submit"],
+.nexo-scope button.bg-primary,
+.nexo-scope button[data-nexo="primary"] {
+  background: #C6F03C !important;
+  color: #0A2540 !important;
+  border: 2px solid transparent !important;
+  box-shadow: 0 4px 14px rgba(198, 240, 60, 0.35) !important;
+}
+
+.nexo-scope button[type="submit"]:hover,
+.nexo-scope button.bg-primary:hover,
+.nexo-scope button[data-nexo="primary"]:hover {
+  transform: translateY(-1px);
+}
+
+/* Inputs / selects / textareas — pill cyan */
+.nexo-scope input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]),
+.nexo-scope select,
+.nexo-scope textarea {
+  background: #ffffff !important;
+  border: 2px solid #00BFF0 !important;
+  border-radius: 999px !important;
+  color: #0A2540 !important;
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 13px !important;
+  padding: 10px 20px !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.nexo-scope textarea {
+  border-radius: 22px !important;
+  min-height: 90px;
+  padding: 14px 20px !important;
+}
+
+.nexo-scope input:focus,
+.nexo-scope select:focus,
+.nexo-scope textarea:focus {
+  border-color: #0A2540 !important;
+}
+
+.nexo-scope label {
+  color: #0A2540 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Table look */
+.nexo-scope table th {
+  color: #0A2540 !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px !important;
+}
+
+/* Muted text */
+.nexo-scope .text-muted-foreground,
+.nexo-scope [class*="opacity-60"],
+.nexo-scope [class*="opacity-70"] {
+  color: #64748B !important;
+}
+
+/* Small popup variant — sem gradient de fundo, mais compacto */
+.nexo-scope[data-nexo-variant="popup"] {
+  background: #D6F4FB;
+  padding: 20px;
+  border-radius: 24px;
+  border: 2px solid #00BFF0;
+}
