@@ -49,6 +49,7 @@ export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> 
     instagramSubs: (data as any).instagram_subs != null ? String((data as any).instagram_subs) : "",
     facebookSubs: (data as any).facebook_subs != null ? String((data as any).facebook_subs) : "",
     youtubeSubs: (data as any).youtube_subs != null ? String((data as any).youtube_subs) : "",
+    videoStreamApiUrl: (data as any).video_stream_api_url || "",
     plano: data.plano || "",
   };
 }
