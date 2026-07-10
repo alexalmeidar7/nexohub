@@ -1635,6 +1635,69 @@ function DashboardWeatherWidget() {
 }
 
 /* ========== WIDGET: Player ========== */
+function VolumeSliderControl({ compactMode, isMuted, volume, toggleMute, handleVolume }: { compactMode: boolean; isMuted: boolean; volume: number; toggleMute: () => void; handleVolume: (v: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
+  const cancelClose = () => {
+    if (closeTimerRef.current) { window.clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+  };
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimerRef.current = window.setTimeout(() => setOpen(false), 700);
+  };
+  useEffect(() => () => cancelClose(), []);
+
+  return (
+    <div className="relative" onMouseEnter={() => { cancelClose(); setOpen(true); }} onMouseLeave={scheduleClose}>
+      <button
+        onClick={toggleMute}
+        className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
+        style={{ background: "#c8ff00" }}
+        title={isMuted ? "Ativar som" : "Mudo"}
+      >
+        {isMuted || volume === 0
+          ? <VolumeX size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} />
+          : <Volume2 size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} fill="#001e2d" />}
+      </button>
+      {/* Invisible bridge so cursor can travel from button to slider without gap */}
+      <div
+        className="absolute right-full top-0 h-full"
+        style={{ width: 12, pointerEvents: open ? "auto" : "none" }}
+      />
+      <div
+        className="absolute right-full top-1/2 -translate-y-1/2 mr-1.5 z-30"
+        style={{
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transform: `translateY(-50%) translateX(${open ? "0" : "6px"})`,
+          transition: "opacity 200ms ease, transform 200ms ease",
+        }}
+        onMouseEnter={cancelClose}
+        onMouseLeave={scheduleClose}
+      >
+        <div className="rounded-full px-2 py-1.5 sm:px-3 sm:py-2 flex items-center shadow-lg" style={{ background: "#c8ff00" }}>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={isMuted ? 0 : volume}
+            onChange={e => handleVolume(Number(e.target.value))}
+            onMouseDown={e => e.stopPropagation()}
+            onTouchStart={e => e.stopPropagation()}
+            onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
+            draggable={false}
+            className="volume-slider-lime h-1 appearance-none rounded-full cursor-pointer w-20 sm:w-24"
+            style={{
+              background: `linear-gradient(to right, #001e2d ${(isMuted ? 0 : volume) * 100}%, rgba(0,30,45,0.25) ${(isMuted ? 0 : volume) * 100}%)`,
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: { dataUserId?: string; onVideoChange?: (active: boolean) => void; onCompactChange?: (compact: boolean) => void }) {
   const { user } = useAuth();
   const uid = dataUserId || user?.id;
