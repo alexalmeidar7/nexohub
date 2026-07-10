@@ -160,18 +160,12 @@ async function fetchInstagram(url: string, debug?: string[]): Promise<number | n
   const username = extractInstagramUsername(url);
   debug?.push(`username=${username}`);
   if (username) {
-    const n = await fetchInstagramViaRapidApiDebug(username, debug);
+    const n = await fetchInstagramViaRapidApi(username, debug);
     if (n) return n;
   }
   return null;
 }
 
-async function fetchInstagramViaRapidApiDebug(username: string, debug?: string[]): Promise<number | null> {
-  const key = Deno.env.get("RAPIDAPI_KEY");
-  if (!key) { debug?.push("no RAPIDAPI_KEY"); return null; }
-  debug?.push(`key len=${key.length}`);
-  return await fetchInstagramViaRapidApi(username);
-}
 
 async function fetchFacebook(url: string): Promise<number | null> {
   const html = await fetchHtml(url, UA_META);
