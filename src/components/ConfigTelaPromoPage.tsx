@@ -170,7 +170,7 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
   const cardRadius = config.card_style === "sharp" ? "4px" : config.card_style === "pill" ? "50px" : "16px";
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="nexo-scope flex flex-col gap-4">
       {/* Action buttons */}
       <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
         <Button variant="save"

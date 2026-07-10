@@ -111,10 +111,10 @@ export default function MessageNotification() {
 
   return (
     <div
-      className="relative flex items-center justify-center"
+      className="nexo-scope relative flex items-center justify-center"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-    >
+     data-nexo-variant="popup">
       <div
         className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition-all hover:bg-black/5"
         style={{ color: "#002132" }}

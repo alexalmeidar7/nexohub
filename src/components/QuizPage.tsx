@@ -363,7 +363,7 @@ export default function QuizPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="nexo-scope space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}>

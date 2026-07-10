@@ -16,7 +16,7 @@ export default function CenariosPage() {
   const [tab, setTab] = useState<Tab>("interativo");
 
   return (
-    <div className="space-y-4">
+    <div className="nexo-scope space-y-4">
       {/* Themed pill tabs — matches the "Criar novo template" button style */}
       <div
         className="inline-flex items-center gap-1 p-1 rounded-full"

@@ -643,7 +643,7 @@ export default function PlayerLayoutCustomizer() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="nexo-scope space-y-5">
       {/* Screen tabs */}
       <div className="flex flex-wrap gap-1.5">
         {screenTabs.map(tab => (
