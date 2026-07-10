@@ -1717,20 +1717,20 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               ))}
             </div>
 
-            <button onClick={addBloco} className="w-full py-2.5 rounded-xl text-xs font-semibold transition-all hover:scale-[1.01] active:scale-[0.99]" style={{ border: "2px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 50%, transparent)", color: "var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
-              <Plus size={14} className="inline mr-1" /> Adicionar Bloco {blocos.length + 1}
+            <button onClick={addBloco} className="w-full hover:opacity-80 flex items-center justify-center gap-2" style={{ ...nexoPillGhost, padding: "12px 20px", fontSize: 12, borderStyle: "dashed", width: "100%" }}>
+              <Plus size={14} /> Adicionar Bloco {blocos.length + 1}
             </button>
           </>
         )}
 
         {/* Save / Finish editing */}
         {editingId ? (
-          <button onClick={handleSave} disabled={saving || !programaId} className="btn-skyglass-accent w-full py-3.5 text-sm disabled:opacity-40" style={{ borderRadius: "12px" }}>
+          <button onClick={handleSave} disabled={saving || !programaId} className="w-full flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90" style={{ ...nexoPillPrimary, padding: "14px 24px", fontSize: 13, width: "100%" }}>
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
             {saving ? "Finalizando..." : "Finalizar Edição"}
           </button>
         ) : (
-          <button onClick={handleSave} disabled={saving || !programaId} className="btn-skyglass-accent w-full py-3.5 text-sm disabled:opacity-40" style={{ borderRadius: "12px" }}>
+          <button onClick={handleSave} disabled={saving || !programaId} className="w-full flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90" style={{ ...nexoPillPrimary, padding: "14px 24px", fontSize: 13, width: "100%" }}>
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
             {saving ? "Salvando..." : "Finalizar Programa Express"}
           </button>
