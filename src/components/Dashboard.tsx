@@ -15,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { BackButton } from "@/components/ui/back-button";
 import { useAuth } from "@/hooks/useAuth";
 import { useLayoutColors, defaultLayoutColors } from "@/hooks/useLayoutColors";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
@@ -1112,15 +1113,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]">
           {currentPage !== "dashboard" && (
             <div className="flex items-center gap-3 mb-4 ml-1">
-              <button
-                onClick={() => setCurrentPage("dashboard")}
-                className="group inline-flex items-center gap-2.5 h-11 pl-1.5 pr-5 rounded-full bg-[#00BFF0] text-white font-sans font-bold uppercase tracking-[0.08em] text-sm shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)] transition-all hover:brightness-110 hover:shadow-[0_6px_20px_-4px_rgba(0,191,240,0.65)] active:scale-[0.97]"
-              >
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#0A0A0A] text-white transition-transform group-hover:-translate-x-0.5">
-                  <ChevronLeft size={16} strokeWidth={2.75} />
-                </span>
-                <span>Voltar</span>
-              </button>
+              <BackButton onClick={() => setCurrentPage("dashboard")} />
               <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold opacity-30 select-none" style={{ color: layoutColors.pageText }}>
                 <span>Home</span>
                 <span className="opacity-50">/</span>
