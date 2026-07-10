@@ -770,39 +770,47 @@ export default function RoteiroPrograma() {
           editData={expressEditData}
           afterHeader={<>
             {estudios.length > 0 && (
-              <div className="px-6 pt-4 pb-2">
-                <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Code2 size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                    <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              <div className="px-6 pt-4 pb-2" style={MONT}>
+                <div style={{ background: CARD_BG, borderRadius: 24, padding: "18px 20px" }}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <Code2 size={14} style={{ color: CYAN }} />
+                    <p style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK, margin: 0 }}>
                       XML Roteiro por Estúdio
                     </p>
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full ml-1" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                    <span style={{ ...MONT, fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}`, color: CYAN }}>
                       {estudios.length}
                     </span>
                   </div>
-                  <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                  <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
                     {estudios.map(est => {
                       const xmlUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-roteiro-estudio?user_id=${user?.id || ""}&estudio=${encodeURIComponent(est)}`;
                       return (
-                        <div key={est} className="rounded-lg p-2.5 flex items-center gap-2 transition-all hover:-translate-y-0.5"
-                          style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 16%, transparent)" }}>
-                          <span className="h-7 w-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)" }}>
-                            <Code2 size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                        <div
+                          key={est}
+                          className="flex items-center gap-3 transition-all hover:-translate-y-0.5"
+                          style={{
+                            ...MONT,
+                            padding: "10px 14px",
+                            borderRadius: 999,
+                            background: "#FFFFFF",
+                            border: `2px solid ${CYAN}`,
+                          }}
+                        >
+                          <span style={{ width: 34, height: 34, borderRadius: "50%", background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <Code2 size={14} style={{ color: CYAN }} />
                           </span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                            <p style={{ ...MONT, fontSize: 9, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#64748B", margin: 0 }}>
                               XML Roteiro
                             </p>
-                            <p className="text-xs font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{est}</p>
+                            <p style={{ ...MONT, fontSize: 13, fontWeight: 800, color: DARK, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{est}</p>
                           </div>
                           <button
                             onClick={() => navigator.clipboard.writeText(xmlUrl).then(() => toast.success(`URL do XML de ${est} copiada!`)).catch(() => toast.error("Erro ao copiar"))}
-                            className="h-7 w-7 flex items-center justify-center rounded-md hover:opacity-80 transition"
-                            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                            style={{ width: 34, height: 34, borderRadius: "50%", background: LIME, color: DARK, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(198, 240, 60, 0.4)" }}
                             title={`Copiar URL: ${xmlUrl}`}
                           >
-                            <Copy size={11} />
+                            <Copy size={13} />
                           </button>
                         </div>
                       );
@@ -810,6 +818,7 @@ export default function RoteiroPrograma() {
                   </div>
                 </div>
               </div>
+
 
             )}
             {historicoSlot}
