@@ -324,7 +324,7 @@ function StatCell({
   rotationKey?: string;
 }) {
   const display =
-    value === null ? "—" : value.toLocaleString("pt-BR");
+    value === null ? "..." : value.toLocaleString("pt-BR");
   return (
     <div
       className="rounded-2xl flex flex-col items-start justify-between p-3 min-w-0"
