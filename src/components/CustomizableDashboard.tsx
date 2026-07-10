@@ -1837,6 +1837,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       // Cleanup: stop all playback when widget unmounts
       if (hlsRef.current) { try { hlsRef.current.destroy(); } catch {} hlsRef.current = null; }
       if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); audioRef.current = null; }
+      if (prefetchRef.current) { try { prefetchRef.current.audio.pause(); prefetchRef.current.audio.removeAttribute("src"); prefetchRef.current.audio.load(); } catch {} prefetchRef.current = null; }
       if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     };
   }, []);
