@@ -44,7 +44,7 @@ const DIAS = [
   { key: "dom", label: "Dom" },
 ];
 
-export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro, hideAiProductionConfig }: Props) {
+export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro, hideAiProductionConfig, open, onOpenChange, hideToggle }: Props) {
   const { user } = useAuth();
   const [automacoes, setAutomacoes] = useState<Automacao[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,13 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [sectionOpen, setSectionOpen] = useState(false);
+  const [sectionOpenInternal, setSectionOpenInternal] = useState(false);
+  const sectionOpen = open !== undefined ? open : sectionOpenInternal;
+  const setSectionOpen = (v: boolean | ((p: boolean) => boolean)) => {
+    const next = typeof v === "function" ? (v as any)(sectionOpen) : v;
+    if (onOpenChange) onOpenChange(next);
+    if (open === undefined) setSectionOpenInternal(next);
+  };
   const [promptAi, setPromptAi] = useState(localStorage.getItem("producao_ai_prompt") || "");
 
   // Form state
