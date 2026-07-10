@@ -1972,7 +1972,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
                   <p className="text-[13px] sm:text-[15px] font-extrabold leading-[1.1] truncate" style={{ color: "#c8ff00" }}>
                     <TypewriterText text={currentMusic.titulo || ""} />
                   </p>
-                  <p className="text-[13px] font-extrabold leading-[1.15] truncate" style={{ color: "#ffffff" }}>
+                  <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.15] truncate" style={{ color: "#ffffff" }}>
                     <TypewriterText text={currentMusic.artista || ""} />
                   </p>
                 </>
