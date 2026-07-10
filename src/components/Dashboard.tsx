@@ -111,6 +111,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Film, label: "ADS", page: "preroll" },
       { icon: MessageSquareQuote, label: "citações", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
+      { icon: Image, label: "logos", page: "logos" },
       { icon: ExternalLink, label: "módulo locutor", page: undefined as unknown as Page, permKey: "telapromo", children: [
         { icon: Settings, label: "config tela promo", page: "configtelapromo" },
       ] },
