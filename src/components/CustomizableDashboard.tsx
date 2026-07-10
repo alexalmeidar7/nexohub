@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
-import { readMusicData } from "@/lib/musicStorageKeys";
+import { readMusicData, musicDataKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 
 /* Typewriter text component — animates character-by-character on text change */
 function TypewriterText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -1679,9 +1679,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
   }, [uid]);
 
   useEffect(() => {
+    const effectiveUid = dataUserId || uid;
+    const targetKey = musicDataKey(effectiveUid);
     const poll = () => {
       try {
-        const d = readMusicData(dataUserId) as any;
+        const d = readMusicData(effectiveUid) as any;
         if (d && d.titulo) {
           setCurrentMusic(prev => {
             if (prev?.titulo === d.titulo && prev?.artista === (d.artista || "") && prev?.capa === (d.capa || "")) return prev;
@@ -1693,9 +1695,25 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
       setCurrentMusic(null);
     };
     poll();
-    const iv = setInterval(poll, 1500);
-    return () => clearInterval(iv);
-  }, [dataUserId]);
+    // Cross-tab: fires when another tab writes to localStorage
+    const onStorage = (e: StorageEvent) => {
+      if (!targetKey || e.key === targetKey) poll();
+    };
+    // Same-tab: fires when writeMusicData runs in this window
+    const onCustom = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || !effectiveUid || detail.userId === effectiveUid) poll();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
+    // Keep a slow poll as safety net for writers that bypass the helper
+    const iv = setInterval(poll, 3000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
+      clearInterval(iv);
+    };
+  }, [dataUserId, uid]);
 
   useEffect(() => {
     if (!audioRef.current) {
