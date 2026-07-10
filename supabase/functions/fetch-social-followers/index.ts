@@ -141,9 +141,10 @@ async function fetchInstagramViaRapidApi(username: string): Promise<number | nul
   return null;
 }
 
-async function fetchInstagram(url: string): Promise<number | null> {
+async function fetchInstagram(url: string, debug?: string[]): Promise<number | null> {
   // Try public og:description first (usually blocked from datacenter IPs).
   const html = await fetchHtml(url, UA_META);
+  debug?.push(`og html=${html ? html.length : 0}`);
   if (html) {
     const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
     if (m) {
@@ -156,11 +157,19 @@ async function fetchInstagram(url: string): Promise<number | null> {
   }
   // Fallback: RapidAPI Instagram scraper.
   const username = extractInstagramUsername(url);
+  debug?.push(`username=${username}`);
   if (username) {
-    const n = await fetchInstagramViaRapidApi(username);
+    const n = await fetchInstagramViaRapidApiDebug(username, debug);
     if (n) return n;
   }
   return null;
+}
+
+async function fetchInstagramViaRapidApiDebug(username: string, debug?: string[]): Promise<number | null> {
+  const key = Deno.env.get("RAPIDAPI_KEY");
+  if (!key) { debug?.push("no RAPIDAPI_KEY"); return null; }
+  debug?.push(`key len=${key.length}`);
+  return await fetchInstagramViaRapidApi(username);
 }
 
 async function fetchFacebook(url: string): Promise<number | null> {
