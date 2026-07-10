@@ -2127,7 +2127,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
       {/* Wave bars layer — fades in on break */}
       <div
-        className="absolute inset-0 pointer-events-none flex items-end justify-center gap-[3px] px-6 pb-6"
+        className="absolute inset-0 pointer-events-none flex items-center justify-between gap-[2px] px-3 sm:px-4"
         style={{
           opacity: isBreak ? 1 : 0,
           transform: isBreak && !reducedMotion ? "translateY(0)" : reducedMotion ? "none" : "translateY(8px)",
@@ -2138,13 +2138,13 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           <span
             key={i}
             ref={(el) => { barRefs.current[i] = el; }}
-            className="block rounded-t-sm"
+            className="block rounded-full flex-1"
             style={{
-              width: 4,
+              maxWidth: 2,
               background: "#c3f628",
-              height: reducedMotion ? 22 : 8,
+              height: reducedMotion ? 18 : 6,
               transition: barTransition,
-              opacity: isPlaying ? 1 : 0.35,
+              opacity: isPlaying ? 0.95 : 0.35,
             }}
           />
         ))}
