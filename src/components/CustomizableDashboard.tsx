@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense, Fragment } from "react";
 import { createPortal } from "react-dom";
 import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User, Star, Minimize2, Maximize2 } from "lucide-react";
 import {
@@ -41,6 +41,7 @@ function TypewriterText({ text, className, style }: { text: string; className?: 
 
 const AgendaPage = lazy(() => import("./AgendaPage"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
+const AudienceWidget = lazy(() => import("./AudienceWidget"));
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix";
 
@@ -623,9 +624,10 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
             {items.filter(i => i.type === "widget").map(item => {
               const isDragging = draggedId === item.id;
               const isDragOver = dragOverId === item.id && draggedId !== item.id;
+              const audienceHeight = playerCompactMap[item.id] ? Math.min(96, playerMaxHeight) : playerMaxHeight;
               return (
+                <Fragment key={item.id}>
                 <div
-                  key={item.id}
                   className={`relative group rounded-3xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: "var(--layout-widget-bg, #1a1a1a)",
@@ -693,6 +695,14 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                     </Suspense>
                   </div>
                 </div>
+                {item.widgetType === "player" && (
+                  <div key={`${item.id}-audience`} className="sm:col-span-1 lg:col-span-2 xl:col-span-3">
+                    <Suspense fallback={<div style={{ height: audienceHeight, borderRadius: 24, background: "#d9ff65", opacity: 0.6 }} />}>
+                      <AudienceWidget dataUserId={dataUserId || undefined} heightPx={audienceHeight} />
+                    </Suspense>
+                  </div>
+                )}
+                </Fragment>
               );
             })}
           </div>
