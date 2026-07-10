@@ -2141,6 +2141,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
       <style>{`
         @keyframes eq-bar { 0% { height: 3px; } 100% { height: 14px; } }
+        @keyframes wave-bar { 0% { height: 6px; } 25% { height: 42px; } 50% { height: 14px; } 75% { height: 56px; } 100% { height: 22px; } }
         .volume-slider-lime::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 11px; height: 11px; border-radius: 9999px; background: #001e2d; border: 2px solid #c8ff00; cursor: pointer; }
         .volume-slider-lime::-moz-range-thumb { width: 11px; height: 11px; border-radius: 9999px; background: #001e2d; border: 2px solid #c8ff00; cursor: pointer; }
       `}</style>
