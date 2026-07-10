@@ -892,15 +892,25 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {isDashboard && (
                   <div className="flex items-center gap-1.5">
                     {[
-                      { Icon: HouseMixIcon, name: "House Mix" },
+                      { Icon: HouseMixIcon, name: "House Mix", label: "HouseMix" },
                       { Icon: BusinessIcon, name: "Business" },
                       { Icon: ChatbotIcon, name: "Chatbot" },
                       { Icon: SocialDesignIcon, name: "Social Design" },
                       { Icon: TvAppIcon, name: "TV App" },
-                    ].map(({ Icon, name }) => (
+                    ].map(({ Icon, name, label }) => (
                       <Tooltip key={name}>
                         <TooltipTrigger asChild>
-                          <span className="inline-flex cursor-default"><Icon size={28} /></span>
+                          {label ? (
+                            <span
+                              className="inline-flex items-center gap-1.5 cursor-default rounded-full pl-0.5 pr-3 py-0.5"
+                              style={{ backgroundColor: "#002132", color: "#ffffff" }}
+                            >
+                              <Icon size={28} />
+                              <span className="text-xs font-bold tracking-wide">{label}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex cursor-default"><Icon size={28} /></span>
+                          )}
                         </TooltipTrigger>
                         <TooltipContent side="bottom"><p className="text-xs">{name}</p></TooltipContent>
                       </Tooltip>
