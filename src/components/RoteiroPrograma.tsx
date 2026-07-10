@@ -748,6 +748,13 @@ export default function RoteiroPrograma() {
           onFinish={async () => { setExpressEditData(null); await fetchHistorico(); }}
           editData={expressEditData}
           afterHeader={<>
+            {historicoSlot}
+            <Suspense fallback={null}>
+              <AutomacaoProgramaSection
+                programas={programas}
+                onGenerateRoteiro={(text) => setExternalPasteText(text)}
+              />
+            </Suspense>
             {estudios.length > 0 && (
               <div className="px-6 pt-4 pb-2" style={MONT}>
                 <div style={{ background: CARD_BG, borderRadius: 24, padding: "18px 20px" }}>
@@ -797,17 +804,7 @@ export default function RoteiroPrograma() {
                   </div>
                 </div>
               </div>
-
-
             )}
-            {historicoSlot}
-            <Suspense fallback={null}>
-              <AutomacaoProgramaSection
-                programas={programas}
-                onGenerateRoteiro={(text) => setExternalPasteText(text)}
-              />
-            </Suspense>
-
           </>}
           externalPasteText={externalPasteText}
           onExternalPasteConsumed={() => setExternalPasteText(null)}
