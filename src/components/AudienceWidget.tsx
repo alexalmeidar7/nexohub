@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Users, Radio, MonitorPlay, Share2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   dataUserId?: string;
@@ -15,50 +14,18 @@ interface Stats {
 
 /**
  * Audience widget shown next to the player widget in Home.
- * Displays real-time counts of online audience across channels.
- * Data sources are best-effort placeholders where live tracking is not
- * yet wired (social/streaming); player watchers derive from watch_history
- * activity in the last 5 minutes.
+ * Displays real-time counts of online audience.
+ * Live tracking sources not yet wired — starts at 0; will hook to
+ * realtime presence and streaming metrics in a follow-up.
  */
 export default function AudienceWidget({ dataUserId, heightPx }: Props) {
-  const [stats, setStats] = useState<Stats>({ social: 0, player: 0, streaming: 0 });
+  const [stats] = useState<Stats>({ social: 0, player: 0, streaming: 0 });
 
   useEffect(() => {
-    if (!dataUserId) return;
-    let cancelled = false;
-
-    const fetchStats = async () => {
-      try {
-        // Player watchers: distinct users seen in watch_history in last 5 minutes
-        const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-        const { data: watches } = await supabase
-          .from("watch_history")
-          .select("user_id, viewer_session_id")
-          .eq("channel_owner_id", dataUserId as any)
-          .gte("last_seen_at", fiveMinAgo as any);
-        const playerCount = new Set(
-          (watches || []).map((w: any) => w.viewer_session_id || w.user_id).filter(Boolean)
-        ).size;
-
-        if (!cancelled) {
-          setStats({
-            social: 0,
-            player: playerCount,
-            streaming: 0,
-          });
-        }
-      } catch {
-        // Table columns may vary; keep zeros silently.
-      }
-    };
-
-    fetchStats();
-    const iv = setInterval(fetchStats, 15000);
-    return () => {
-      cancelled = true;
-      clearInterval(iv);
-    };
+    // Placeholder: hook up real listeners (Supabase presence,
+    // streaming server metrics, social APIs) in the next iteration.
   }, [dataUserId]);
+
 
   const total = stats.social + stats.player + stats.streaming;
   const bg = "#d9ff65";
