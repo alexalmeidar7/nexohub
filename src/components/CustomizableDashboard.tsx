@@ -2056,6 +2056,40 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       audio.addEventListener("waiting", onWaiting);
       audio.addEventListener("pause", onPause);
 
+      // ── Watchdog: se currentTime não avança por 8s enquanto usuário quer tocar, reconecta ──
+      let lastTime = 0;
+      let stuckSince = 0;
+      const watchdog = window.setInterval(() => {
+        if (audioRef.current !== audio) { window.clearInterval(watchdog); return; }
+        if (!isPlayingRef.current) return;
+        const t = audio.currentTime;
+        const now = Date.now();
+        if (t !== lastTime) { lastTime = t; stuckSince = now; return; }
+        if (audio.paused) { stuckSince = stuckSince || now; }
+        if (stuckSince && now - stuckSince > 8000) {
+          stuckSince = now; // evita disparar em loop
+          scheduleReconnect("watchdog-stuck");
+        }
+      }, 2000);
+
+      // ── Retomar quando a aba volta a ficar visível ──
+      const onVisibility = () => {
+        if (document.visibilityState !== "visible") return;
+        if (audioRef.current !== audio) return;
+        if (!isPlayingRef.current) return;
+        if (audio.paused || audio.readyState < 2) scheduleReconnect("visibility");
+      };
+      document.addEventListener("visibilitychange", onVisibility);
+
+      // ── Cleanup quando este audio for substituído ──
+      const cleanupTimer = window.setInterval(() => {
+        if (audioRef.current !== audio) {
+          window.clearInterval(watchdog);
+          window.clearInterval(cleanupTimer);
+          document.removeEventListener("visibilitychange", onVisibility);
+        }
+      }, 3000);
+
       audio.src = buildSrc();
       audio.play().then(() => setIsPlaying(true)).catch((err) => {
         console.warn("Audio play failed:", err);
