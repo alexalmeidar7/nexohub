@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
 import { GradientPicker } from "@/components/ui/GradientPicker";
 import { Slider } from "@/components/ui/slider";
 import { Palette, Save, RotateCcw, Loader2, Monitor, Play, Home, Tv, Film, LogIn, Image, Paintbrush, Music } from "lucide-react";
@@ -841,14 +842,13 @@ export default function PlayerLayoutCustomizer() {
         >
           <RotateCcw size={13} /> Restaurar Padrão
         </button>
-        <button
+        <Button variant="save"
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-40"
         >
           {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
           {saving ? "Salvando..." : "Salvar Alterações"}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -1308,9 +1309,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               <div><label className="text-[10px] font-semibold mb-0.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Instagram</label><input value={newContact.instagram} onChange={e => setNewContact(p => ({ ...p, instagram: e.target.value }))} placeholder="@usuario" className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} /></div>
               <div><label className="text-[10px] font-semibold mb-0.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>WhatsApp</label><input value={newContact.whatsapp} onChange={e => setNewContact(p => ({ ...p, whatsapp: e.target.value }))} placeholder="(00) 00000-0000" className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} /></div>
             </div>
-            <button onClick={saveNewContact} disabled={savingContact || !newContact.nome.trim()} className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40" style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}>
+            <Button variant="save" onClick={saveNewContact} disabled={savingContact || !newContact.nome.trim()}>
               {savingContact ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Salvar e Incluir
-            </button>
+            </Button>
           </div>
         )}
 

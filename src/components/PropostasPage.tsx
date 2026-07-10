@@ -1236,7 +1236,7 @@ export default function PropostasPage() {
                           }
                         }}
                       />
-                      <Button 
+                      <Button variant="save" 
                         onClick={() => setEditingDigital(null)}
                         className="w-full bg-sky-500 text-white font-bold uppercase h-12"
                       >

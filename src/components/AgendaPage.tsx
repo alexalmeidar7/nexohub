@@ -171,7 +171,7 @@ function ParticipanteSearchPicker({
                   >
                     Cancelar
                   </Button>
-                  <Button
+                  <Button variant="save"
                     type="button"
                     size="sm"
                     disabled={!guestNome.trim() || savingGuest}
@@ -2072,16 +2072,10 @@ export default function AgendaPage() {
                 </button>
               )}
 
-              <button
+              <Button variant="save"
                 type="button"
                 onClick={handleSave}
                 disabled={!formProgramaId || !formData}
-                className="w-full h-11 text-xs tracking-wide font-semibold rounded-[14px] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{
-                  backgroundColor: "var(--layout-accent-color, #2563eb)",
-                  color: "var(--layout-header-text, #ffffff)",
-                  boxShadow: "0 10px 24px color-mix(in srgb, var(--layout-accent-color, #2563eb) 28%, transparent)",
-                }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #2563eb) 88%, black 12%)";
                 }}
@@ -2090,7 +2084,7 @@ export default function AgendaPage() {
                 }}
               >
                 {editingId ? "✓ Atualizar Evento" : "✓ Salvar Evento"}
-              </button>
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

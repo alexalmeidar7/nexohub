@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste, Palette, Music, Radio, Tv, Mic, Volume2, Video, Zap, Star, Sparkles, Clapperboard, Megaphone, Bell, Timer, Sun, Moon, Cloud, Heart, Settings, Power, SkipForward, Pause, StopCircle, Repeat, Shuffle, Image, Type, Layers, Monitor, Disc, Eye, Lock, Unlock, Send, Download, Upload, Bookmark, Flag, Hash, Globe, Phone, Mail, MessageSquare, Calendar, type LucideIcon } from "lucide-react";
@@ -607,15 +608,13 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 Testar
               </button>
             )}
-            <button
+            <Button variant="save"
               onClick={save}
               disabled={saving}
-              className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.03]"
-              style={{ backgroundColor: "#f59e0b15", color: "#f59e0b", border: "1px solid #f59e0b30" }}
             >
               {saving ? <Loader2 className="animate-spin" size={12} /> : null}
               Salvar
-            </button>
+            </Button>
             <button
               onClick={onClose}
               className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5"

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Calendar } from "lucide-react";
@@ -626,15 +627,13 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                 Testar
               </button>
             )}
-            <button
+            <Button variant="save"
               onClick={saveCommands}
               disabled={saving}
-              className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.03]"
-              style={{ backgroundColor: "#f59e0b15", color: "#f59e0b", border: "1px solid #f59e0b30" }}
             >
               {saving ? <Loader2 className="animate-spin" size={12} /> : null}
               Salvar
-            </button>
+            </Button>
             <button
               onClick={onClose}
               className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5"

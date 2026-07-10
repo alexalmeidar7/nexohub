@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { UserCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -281,13 +282,12 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
             </div>
           </div>
 
-          <button
+          <Button variant="save"
             onClick={handleSave}
             disabled={saving}
-            className="w-full mt-4 py-2 rounded-lg bg-player-accent text-player-foreground font-semibold hover:bg-player-accent-hover transition-colors disabled:opacity-50"
           >
             {saving ? "Salvando..." : "Salvar"}
-          </button>
+          </Button>
         </DialogContent>
       </Dialog>
 

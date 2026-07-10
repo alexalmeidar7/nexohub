@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Plus, Pencil, Trash2, Check, X, ImageIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -312,17 +313,15 @@ function AdminPlansContent() {
               </div>
             </div>
 
-            <button
+            <Button variant="save"
               onClick={handleSave}
               disabled={saving}
-              className="w-full flex items-center justify-center gap-2 py-2.5 font-medium transition-all duration-200 disabled:opacity-50"
-              style={{ fontSize: "12px", backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#0d0446"; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
             >
               {saving ? <Loader2 className="animate-spin" size={14} style={{ color: "#2ec0f6" }} /> : null}
               {editingPlan ? "Salvar Alterações" : "Criar Plano"}
-            </button>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

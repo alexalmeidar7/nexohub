@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { GradientPicker } from "@/components/ui/GradientPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -172,19 +173,13 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
     <div className="flex flex-col gap-4">
       {/* Action buttons */}
       <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-        <button
+        <Button variant="save"
           onClick={handleSave}
           disabled={saving}
-          className="min-h-10 flex-1 flex items-center justify-center gap-2 rounded-xl text-sm font-bold uppercase tracking-[0.06em] transition-all hover:brightness-110 disabled:opacity-60"
-          style={{
-            background: "var(--layout-accent-color, hsl(var(--primary)))",
-            color: "#fff",
-            boxShadow: "0 2px 12px color-mix(in srgb, var(--layout-accent-color, hsl(var(--primary))) 35%, transparent)",
-          }}
         >
           <Save size={15} />
           {saving ? "Salvando..." : "Salvar configurações"}
-        </button>
+        </Button>
 
         <button
           className="min-h-10 flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110 px-6"

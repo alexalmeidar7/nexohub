@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -554,7 +555,7 @@ export default function PermissoesSection() {
                     type="password"
                     style={{ ...inputStyle, flex: 1 }}
                   />
-                  <button
+                  <Button variant="save"
                     onClick={() => handleChangePassword(sub)}
                     disabled={changingPassId === sub.id}
                     className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold"
@@ -566,7 +567,7 @@ export default function PermissoesSection() {
                   >
                     {changingPassId === sub.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                     Salvar
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>

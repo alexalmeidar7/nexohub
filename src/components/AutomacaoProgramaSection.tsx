@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -434,15 +435,13 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
             </div>
 
             <div className="flex gap-2 pt-1">
-              <button
+              <Button variant="save"
                 onClick={handleSave}
                 disabled={saving || !formProgramaId}
-                className="flex-1 py-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 hover:brightness-110 transition disabled:opacity-40"
-                style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
               >
                 {saving ? <Loader2 size={10} className="animate-spin" /> : <Save size={10} />}
                 {editingId ? "Atualizar" : "Salvar Automação"}
-              </button>
+              </Button>
               <button
                 onClick={resetForm}
                 className="px-3 py-1.5 rounded-lg text-[10px] font-bold hover:opacity-80 transition"
