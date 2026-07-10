@@ -495,30 +495,41 @@ export default function RoteiroPrograma() {
   const historicoSlot = useMemo(() => {
     if (historico.length === 0) return null;
     return (
-      <div className="px-6 pt-4 pb-2">
-        <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
-          <div className="flex items-center gap-2 mb-2">
+      <div className="px-6 pt-4 pb-2" style={MONT}>
+        <div style={{ background: CARD_BG, borderRadius: 24, padding: "18px 20px" }}>
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
             <button
               onClick={() => setHistoricoOpen(o => !o)}
               className="flex items-center gap-2 hover:opacity-80 transition"
               title={historicoOpen ? "Recolher" : "Expandir"}
             >
-              <History size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-              <span className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Últimos Roteiros</span>
+              <History size={14} style={{ color: CYAN }} />
+              <span style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK }}>
+                Últimos Roteiros
+              </span>
               {historicoOpen
-                ? <ChevronUp size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                : <ChevronDown size={12} style={{ color: "var(--layout-icon-color, #888)" }} />}
+                ? <ChevronUp size={14} style={{ color: CYAN }} />
+                : <ChevronDown size={14} style={{ color: "#94A3B8" }} />}
             </button>
             {historicoOpen && (
-              <div className="flex items-center gap-1 ml-2">
+              <div className="flex items-center gap-2 ml-1">
                 {(["recentes", "historico"] as const).map(t => (
                   <button
                     key={t}
                     onClick={() => setActiveTab(t)}
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-md transition"
                     style={{
-                      backgroundColor: activeTab === t ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "transparent",
-                      color: activeTab === t ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)",
+                      ...MONT,
+                      height: 30,
+                      padding: "0 14px",
+                      borderRadius: 999,
+                      background: activeTab === t ? CYAN : "#FFFFFF",
+                      color: activeTab === t ? "#FFFFFF" : DARK,
+                      border: `2px solid ${CYAN}`,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                      cursor: "pointer",
                     }}
                   >
                     {t === "recentes" ? "Cards" : "Histórico (30d)"}
@@ -530,11 +541,29 @@ export default function RoteiroPrograma() {
               <button
                 onClick={regenerateAllXmls}
                 disabled={regenerating}
-                className="text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 hover:opacity-80 transition disabled:opacity-40 ml-auto"
-                style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}
+                style={{
+                  ...MONT,
+                  marginLeft: "auto",
+                  height: 32,
+                  padding: "0 16px",
+                  borderRadius: 999,
+                  background: LIME,
+                  color: DARK,
+                  border: "none",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: 1.2,
+                  textTransform: "uppercase",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  cursor: regenerating ? "wait" : "pointer",
+                  opacity: regenerating ? 0.7 : 1,
+                  boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
+                }}
                 title="Regenerar todos os XMLs com a estrutura atualizada"
               >
-                <RefreshCw size={10} className={regenerating ? "animate-spin" : ""} />
+                <RefreshCw size={12} className={regenerating ? "animate-spin" : ""} />
                 {regenerating ? "Regenerando..." : "Regenerar XMLs"}
               </button>
             )}
