@@ -69,6 +69,9 @@ interface Props {
   afterHeader?: React.ReactNode;
   externalPasteText?: string | null;
   onExternalPasteConsumed?: () => void;
+  novoOpen?: boolean;
+  onNovoOpenChange?: (v: boolean) => void;
+  hideNovoToggle?: boolean;
 }
 
 /* Inline participant row with editable cargo */
