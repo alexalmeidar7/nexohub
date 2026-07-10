@@ -716,6 +716,7 @@ export default function RoteiroPrograma() {
                                   } catch {}
                                 }
                                 setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath, podcastData: editPodcastData });
+                                setNovoRoteiroOpen(true);
                               }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Editar">
                                 <Pencil size={13} style={{ color: DARK }} />
                               </button>
