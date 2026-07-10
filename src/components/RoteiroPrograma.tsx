@@ -512,61 +512,6 @@ export default function RoteiroPrograma() {
                 : <ChevronDown size={14} style={{ color: "#94A3B8" }} />}
             </button>
             {historicoOpen && (
-              <div className="flex items-center gap-2 ml-1">
-                {(["recentes", "historico"] as const).map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setActiveTab(t)}
-                    style={{
-                      ...MONT,
-                      height: 30,
-                      padding: "0 14px",
-                      borderRadius: 999,
-                      background: activeTab === t ? CYAN : "#FFFFFF",
-                      color: activeTab === t ? "#FFFFFF" : DARK,
-                      border: `2px solid ${CYAN}`,
-                      fontSize: 10,
-                      fontWeight: 800,
-                      letterSpacing: 1,
-                      textTransform: "uppercase",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {t === "recentes" ? "Cards" : "Histórico (30d)"}
-                  </button>
-                ))}
-              </div>
-            )}
-            {historicoOpen && activeTab === "recentes" && (
-              <button
-                onClick={regenerateAllXmls}
-                disabled={regenerating}
-                style={{
-                  ...MONT,
-                  marginLeft: "auto",
-                  height: 32,
-                  padding: "0 16px",
-                  borderRadius: 999,
-                  background: LIME,
-                  color: DARK,
-                  border: "none",
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: 1.2,
-                  textTransform: "uppercase",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  cursor: regenerating ? "wait" : "pointer",
-                  opacity: regenerating ? 0.7 : 1,
-                  boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
-                }}
-                title="Regenerar todos os XMLs com a estrutura atualizada"
-              >
-                <RefreshCw size={12} className={regenerating ? "animate-spin" : ""} />
-                {regenerating ? "Regenerando..." : "Regenerar XMLs"}
-              </button>
-            )}
           </div>
           {historicoOpen && (<>
           {activeTab === "historico" ? (
