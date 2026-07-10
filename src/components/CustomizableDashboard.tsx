@@ -147,6 +147,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
+  const [playerCompactMap, setPlayerCompactMap] = useState<Record<string, boolean>>({});
   // Using effectiveUserId from props if provided, otherwise using internal logic as fallback
   const [internalEffectiveUserId, setInternalEffectiveUserId] = useState<string | null>(null);
   const resolvedUserId = effectiveUserId || internalEffectiveUserId || user?.id;
