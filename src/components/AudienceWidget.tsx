@@ -137,6 +137,37 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
+  // Poll Logicahost video streaming API for connected viewers.
+  useEffect(() => {
+    if (!dataUserId) return;
+    let cancelled = false;
+    const tick = async () => {
+      const url = videoApiUrlRef.current;
+      if (!url) {
+        setVideoCount(null);
+        setLoadingVideo(false);
+        return;
+      }
+      try {
+        const r = await fetch(url, { cache: "no-store" });
+        const text = await r.text();
+        const m = text.match(/<espectadores_conectados>\s*(\d+)\s*<\/espectadores_conectados>/i);
+        if (!cancelled) setVideoCount(m ? parseInt(m[1], 10) : null);
+      } catch {
+        if (!cancelled) setVideoCount(null);
+      }
+      if (!cancelled) setLoadingVideo(false);
+    };
+    // Delay first tick slightly so empresa_config load has a chance to populate ref.
+    const t0 = setTimeout(tick, 800);
+    const iv = setInterval(tick, VIDEO_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(t0);
+      clearInterval(iv);
+    };
+  }, [dataUserId]);
+
 
   // Rotate social display every 3s (only across configured networks)
   useEffect(() => {
@@ -146,7 +177,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
-  const total = socialTotal + videoCount + (streamingCount || 0) + (siteCount || 0);
+  const total = socialTotal + (videoCount || 0) + (streamingCount || 0) + (siteCount || 0);
   const bg = "#d9ff65";
   const dark = "#0A2540";
 
