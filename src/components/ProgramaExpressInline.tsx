@@ -1757,7 +1757,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
 
 /* Sub-component for each noticia row */
-function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields, onRegenerateWeather, onRegenerateFinance, addingWeather, addingFinance }: {
+function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields, onRegenerateWeather, onRegenerateFinance, addingWeather, addingFinance, defaultCollapsed }: {
   noticia: NewsItem; bi: number; ni: number;
   inputStyle: React.CSSProperties; fetchingLink: string | null;
   onUpdate: (bi: number, ni: number, field: keyof NewsItem, value: any) => void;
@@ -1769,9 +1769,10 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   onRegenerateFinance?: (bi: number, ni: number) => void;
   addingWeather?: boolean;
   addingFinance?: boolean;
+  defaultCollapsed?: boolean;
 }) {
   const [linkInput, setLinkInput] = useState(noticia.link || "");
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(!!defaultCollapsed);
   const isFetching = fetchingLink === `${bi}-${ni}`;
 
   const handlePasteLink = (url: string) => { setLinkInput(url); if (url.startsWith("http")) onFetchLink(bi, ni, url); };
