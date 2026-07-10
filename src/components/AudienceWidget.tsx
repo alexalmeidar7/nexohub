@@ -143,7 +143,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
-  const total = socialTotal + playerCount + (streamingCount || 0);
+  const total = socialTotal + videoCount + (streamingCount || 0) + (siteCount || 0);
   const bg = "#d9ff65";
   const dark = "#0A2540";
 
