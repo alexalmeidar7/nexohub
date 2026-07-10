@@ -187,13 +187,19 @@ export default function OuvintesPage() {
 
   const handleEdit = (o: Ouvinte) => {
     setEditingId(o.id);
+    // Cidade is persisted as "Cidade/UF" — split on edit so the two fields hydrate correctly.
+    const raw = o.cidade || "";
+    const m = raw.match(/^(.*)\/([A-Z]{2})$/);
+    const cidadeOnly = m ? m[1].trim() : raw;
+    const ufOnly = m ? m[2] : "";
     setForm({
       nome: o.nome || "",
       cpf: o.cpf || "",
       telefone: o.telefone || "",
       email: o.email || "",
       setor: o.setor || "",
-      cidade: o.cidade || "",
+      uf: ufOnly,
+      cidade: cidadeOnly,
       data_nascimento: o.data_nascimento || "",
       escolaridade: o.escolaridade || "",
       renda: o.renda || "",
