@@ -2013,56 +2013,66 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       audioCtxRef.current.resume().catch(() => {});
     }
 
-    // EMA smoothing state — asymmetric attack/release + noise gate + deadband
+    // Smoothing state
     const IDLE_H = 6;
     const smoothed = new Array(BAR_COUNT).fill(IDLE_H);
-    const ATTACK = 0.28;       // rising response (lower = smoother, higher = snappier)
-    const RELEASE = 0.06;      // falling response (very slow = elegant decay)
-    const NOISE_GATE = 14;     // 0..255; below this we treat the bin as silence
-    const DEADBAND = 0.6;      // px difference below which we skip DOM writes to kill jitter
+    const ATTACK = 0.35;
+    const RELEASE = 0.09;
+    const DEADBAND = 0.6;
 
-    if (!ok) {
-      // Fallback: gentle synthetic motion when analyser blocked
-      const start = performance.now();
-      const tick = () => {
-        const t = (performance.now() - start) / 1000;
-        barRefs.current.forEach((el, i) => {
-          if (!el) return;
-          const v = 0.5 + 0.5 * Math.sin(t * 2.2 + i * 0.35) * Math.sin(t * 1.1 + i * 0.7);
-          const target = IDLE_H + Math.abs(v) * 42;
-          const alpha = target > smoothed[i] ? ATTACK : RELEASE;
-          smoothed[i] = smoothed[i] + (target - smoothed[i]) * alpha;
-          if (Math.abs(smoothed[i] - parseFloat(el.style.height || "0")) >= DEADBAND) {
-            el.style.height = `${smoothed[i]}px`;
-          }
-        });
-        rafRef.current = requestAnimationFrame(tick);
-      };
-      rafRef.current = requestAnimationFrame(tick);
-      return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-    }
+    const analyser = ok ? analyserRef.current! : null;
+    const bins = analyser ? analyser.frequencyBinCount : 0;
+    const data = analyser ? new Uint8Array(bins) : null;
+    const step = analyser ? Math.max(1, Math.floor(bins / BAR_COUNT)) : 0;
 
-    const analyser = analyserRef.current!;
-    const bins = analyser.frequencyBinCount;
-    const data = new Uint8Array(bins);
-    const step = Math.max(1, Math.floor(bins / BAR_COUNT));
+    const start = performance.now();
+    let zeroFrames = 0;
+    let analyserUsable = !!analyser;
 
     const tick = () => {
-      analyser.getByteFrequencyData(data);
+      const t = (performance.now() - start) / 1000;
+
+      // Try to read audio; compute overall RMS + per-bar amplitude
+      let overall = 0;
+      let hasAudioData = false;
+      if (analyserUsable && analyser && data) {
+        analyser.getByteFrequencyData(data);
+        let total = 0;
+        for (let k = 0; k < data.length; k++) total += data[k];
+        overall = total / data.length / 255; // 0..1
+        if (overall < 0.005) {
+          zeroFrames++;
+          // 3s of pure zeros → assume tainted stream (CORS), stop trusting analyser
+          if (zeroFrames > 180) analyserUsable = false;
+        } else {
+          zeroFrames = 0;
+        }
+        hasAudioData = overall > 0.005;
+      }
+
+      // Always synthesize a graceful wave; modulate amplitude by real audio if available
+      const baseAmp = hasAudioData ? 0.35 + overall * 0.9 : 0.85; // 0..~1.25
       for (let i = 0; i < BAR_COUNT; i++) {
         const el = barRefs.current[i];
         if (!el) continue;
-        // Average a small window of bins per bar
-        let sum = 0;
-        const start = i * step;
-        for (let j = 0; j < step; j++) sum += data[start + j] || 0;
-        const avg = sum / step; // 0..255
-        // Noise gate: near-silence collapses to idle instead of jittering
-        const gated = avg < NOISE_GATE ? 0 : (avg - NOISE_GATE) / (255 - NOISE_GATE);
-        const target = IDLE_H + gated * 56;
+
+        // Per-bar target: combine synthetic wave with real bin (when available)
+        const wave = 0.5 + 0.5 * Math.sin(t * 2.4 + i * 0.42) * Math.sin(t * 1.15 + i * 0.63);
+        let binAmp = 0;
+        if (hasAudioData && data) {
+          let sum = 0;
+          const s = i * step;
+          for (let j = 0; j < step; j++) sum += data[s + j] || 0;
+          binAmp = (sum / step) / 255;
+        }
+        const combined = hasAudioData
+          ? Math.max(wave * baseAmp * 0.55, binAmp * 1.1)
+          : wave * baseAmp;
+
+        const target = IDLE_H + Math.min(1, combined) * 56;
         const alpha = target > smoothed[i] ? ATTACK : RELEASE;
         smoothed[i] = smoothed[i] + (target - smoothed[i]) * alpha;
-        // Deadband: skip layout writes for imperceptible changes
+
         const current = parseFloat(el.style.height || "0");
         if (Math.abs(smoothed[i] - current) >= DEADBAND) {
           el.style.height = `${smoothed[i]}px`;
@@ -2073,6 +2083,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     rafRef.current = requestAnimationFrame(tick);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [isBreak, isPlaying]);
+
 
 
 
