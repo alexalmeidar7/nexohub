@@ -2396,11 +2396,13 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
               onClick={togglePlay}
               className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
               style={{ background: "#001e2d" }}
-              title={isPlaying ? "Pausar" : "Reproduzir"}
+              title={isLoading ? "Carregando..." : isPlaying ? "Pausar" : "Reproduzir"}
             >
-              {isPlaying
-                ? <Pause size={compactMode ? 11 : 12} style={{ color: "#c8ff00" }} fill="#c8ff00" />
-                : <Play size={compactMode ? 11 : 12} style={{ color: "#c8ff00", marginLeft: 1 }} fill="#c8ff00" />}
+              {isLoading
+                ? <Loader2 size={compactMode ? 12 : 14} className="animate-spin" style={{ color: "#c8ff00" }} />
+                : isPlaying
+                  ? <Pause size={compactMode ? 11 : 12} style={{ color: "#c8ff00" }} fill="#c8ff00" />
+                  : <Play size={compactMode ? 11 : 12} style={{ color: "#c8ff00", marginLeft: 1 }} fill="#c8ff00" />}
             </button>
             <VolumeSliderControl
               compactMode={compactMode}
