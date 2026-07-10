@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube } from "lucide-react";
+import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
@@ -14,18 +14,22 @@ interface SocialCounts {
 }
 
 const ROTATE_MS = 3000;
-const REFETCH_MS = 5 * 60 * 1000; // 5 min for social
+// Redes sociais: 5x por dia (a cada ~4h48m)
+const REFETCH_MS = Math.round((24 * 60 * 60 * 1000) / 5);
 const LISTENERS_MS = 30 * 1000; // 30s for stream listeners
+const SITE_MS = 30 * 1000; // 30s for site realtime users
 
 export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [social, setSocial] = useState<SocialCounts>({ youtube: null, instagram: null, facebook: null });
-  const [playerCount] = useState<number>(0);
+  const [videoCount] = useState<number>(0);
   const [streamingCount, setStreamingCount] = useState<number | null>(null);
+  const [siteCount, setSiteCount] = useState<number | null>(null);
   const [rotIdx, setRotIdx] = useState(0);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [loadingSocial, setLoadingSocial] = useState(true);
-  const [loadingPlayer] = useState(true);
+  const [loadingVideo] = useState(true);
   const [loadingStreaming, setLoadingStreaming] = useState(true);
+  const [loadingSite, setLoadingSite] = useState(true);
   const socialUrlsRef = useRef<{ youtube?: string; instagram?: string; facebook?: string }>({});
 
 
@@ -107,6 +111,28 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
+  // Poll GA4 Realtime API for site visitors.
+  useEffect(() => {
+    if (!dataUserId) return;
+    let cancelled = false;
+    const tick = async () => {
+      const { data } = await supabase.functions.invoke("count-site-visitors", {
+        body: { userId: dataUserId },
+      });
+      if (cancelled) return;
+      if (data && (data as any).ok) {
+        const n = (data as any).activeUsers;
+        setSiteCount(typeof n === "number" ? n : null);
+      }
+      setLoadingSite(false);
+    };
+    tick();
+    const iv = setInterval(tick, SITE_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
+  }, [dataUserId]);
 
 
   // Rotate social display every 3s (only across configured networks)
@@ -117,7 +143,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
-  const total = socialTotal + playerCount + (streamingCount || 0);
+  const total = socialTotal + videoCount + (streamingCount || 0) + (siteCount || 0);
   const bg = "#d9ff65";
   const dark = "#0A2540";
 
@@ -174,7 +200,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 flex-1 min-h-0">
+      <div className="grid grid-cols-4 gap-2 flex-1 min-h-0">
         <StatCell
           icon={current ? current.icon : <Users size={14} />}
           label={current ? current.label : "Redes sociais"}
@@ -184,17 +210,24 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
         />
         <StatCell
-          icon={<MonitorPlay size={14} />}
-          label="Player"
-          value={playerCount}
-          loading={loadingPlayer && playerCount === 0}
+          icon={<Radio size={14} />}
+          label="Streaming de áudio"
+          value={streamingCount}
+          loading={loadingStreaming && streamingCount === null}
           dark={dark}
         />
         <StatCell
-          icon={<Radio size={14} />}
-          label="Streaming"
-          value={streamingCount}
-          loading={loadingStreaming && streamingCount === null}
+          icon={<MonitorPlay size={14} />}
+          label="Streaming de vídeo"
+          value={videoCount}
+          loading={loadingVideo && videoCount === 0}
+          dark={dark}
+        />
+        <StatCell
+          icon={<Globe size={14} />}
+          label="Conectados no site"
+          value={siteCount}
+          loading={loadingSite && siteCount === null}
           dark={dark}
         />
       </div>
