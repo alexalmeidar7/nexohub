@@ -199,7 +199,7 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
   };
 
   return (
-    <div className="rounded-2xl p-5" style={{ border: `1px solid ${NEXO_CYAN}33`, backgroundColor: NEXO_CARD_BG, fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="rounded-2xl p-5" style={{ border: `1px solid ${NEXO_CYAN}33`, backgroundColor: "#FFFFFF", fontFamily: "'Montserrat', sans-serif" }}>
       <p className="text-xs font-bold flex items-center gap-1.5 mb-1" style={{ color: NEXO_DARK, letterSpacing: 1, textTransform: "uppercase" }}>
         <Link2 size={14} style={{ color: NEXO_CYAN }} />
         Atualizar Notícias por Links
