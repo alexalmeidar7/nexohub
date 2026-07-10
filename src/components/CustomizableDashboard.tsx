@@ -1651,6 +1651,14 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   }, [uid]);
 
   useEffect(() => { onVideoChange?.(showVideo); }, [showVideo, onVideoChange]);
+  useEffect(() => {
+    try { localStorage.setItem(compactStorageKey, compactMode ? "1" : "0"); } catch {}
+    onCompactChange?.(compactMode);
+  }, [compactMode, compactStorageKey, onCompactChange]);
+  useEffect(() => {
+    try { setCompactMode(localStorage.getItem(compactStorageKey) === "1"); } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<any>(null);
