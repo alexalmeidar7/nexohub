@@ -919,6 +919,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {isDashboard && (
           <div className="px-3 lg:px-6 pb-4 relative z-[1]">
+            <div className="flex flex-row gap-4 items-stretch flex-wrap">
             <div
               className="rounded-3xl relative"
               style={{
@@ -1023,6 +1024,24 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* Calendário Próximos Eventos — ao lado do "No Ar" */}
+            <div
+              className="rounded-3xl relative overflow-hidden flex-1"
+              style={{
+                minWidth: "320px",
+                height: "461px",
+                backgroundColor: "rgba(255,255,255,0.6)",
+                backdropFilter: "blur(20px)",
+                border: "1px solid rgba(0,33,50,0.08)",
+                padding: "16px",
+              }}
+            >
+              <Suspense fallback={<div className="w-full h-full" />}>
+                <UpcomingEventsWidget onNavigate={setCurrentPage as any} />
+              </Suspense>
+            </div>
             </div>
 
           </div>
@@ -1182,7 +1201,7 @@ const defaultWidgets: WidgetCard[] = [
   { id: "top10", bg: "glass", render: () => <TopLikedSongs /> },
   { id: "agenda", bg: "glass", render: (onNav: any) => <DashboardAgendaOld onNavigate={onNav} setCurrentPage={(window as any).setCurrentPageGlobal} /> },
   { id: "noar", bg: "glass-dark", render: () => <OnAirWidget /> },
-  { id: "proximos", bg: "glass", render: (nav) => <UpcomingEventsWidget onNavigate={nav} /> },
+  
   { id: "comercial", bg: "glass", render: () => <ComercialWidgets /> },
 
 ];
