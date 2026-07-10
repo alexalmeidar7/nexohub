@@ -869,11 +869,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </h1>
                 {isDashboard && (
                   <div className="flex items-center gap-1.5">
-                    <HouseMixIcon size={28} />
-                    <BusinessIcon size={28} />
-                    <ChatbotIcon size={28} />
-                    <SocialDesignIcon size={28} />
-                    <TvAppIcon size={28} />
+                    {[
+                      { Icon: HouseMixIcon, name: "House Mix" },
+                      { Icon: BusinessIcon, name: "Business" },
+                      { Icon: ChatbotIcon, name: "Chatbot" },
+                      { Icon: SocialDesignIcon, name: "Social Design" },
+                      { Icon: TvAppIcon, name: "TV App" },
+                    ].map(({ Icon, name }) => (
+                      <Tooltip key={name}>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex cursor-default"><Icon size={28} /></span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom"><p className="text-xs">{name}</p></TooltipContent>
+                      </Tooltip>
+                    ))}
                   </div>
                 )}
               </div>
