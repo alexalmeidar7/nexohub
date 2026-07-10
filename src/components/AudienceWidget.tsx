@@ -142,12 +142,9 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     if (!dataUserId) return;
     let cancelled = false;
     const tick = async () => {
-      const url = videoApiUrlRef.current;
-      if (!url) {
-        setVideoCount(null);
-        setLoadingVideo(false);
-        return;
-      }
+      const url =
+        videoApiUrlRef.current ||
+        "https://video.logicahost.com.br/api-json/V1RJeFIyRXlSbGhQV0dScFRUQTFkMXBGWkhOTmJHeFlWMjVSUFE9PStS";
       try {
         const r = await fetch(url, { cache: "no-store" });
         const text = (await r.text()).trim();
