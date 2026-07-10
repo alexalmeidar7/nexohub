@@ -49,6 +49,7 @@ const TelaInterativa = lazyRetry(() => import("./pages/TelaInterativa"));
 const CenarioTelaFull = lazyRetry(() => import("./pages/CenarioTelaFull"));
 const IntercomListener = lazyRetry(() => import("./pages/IntercomListener"));
 const SitePreview = lazyRetry(() => import("./pages/SitePreview"));
+const DesignSystemDemo = lazyRetry(() => import("./pages/DesignSystemDemo"));
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -174,6 +175,7 @@ const App = () => (
             <Route path="/cenario-tela-full" element={<CenarioTelaFull />} />
             <Route path="/telainterativatelao" element={<TelaInterativa />} />
             <Route path="/site-preview" element={<SitePreview />} />
+            <Route path="/design-system" element={<DesignSystemDemo />} />
 
             {/* Slug routes for dynamic access */}
             <Route path="/:userSlug/telapromo" element={<PromocoesKiosk />} />
