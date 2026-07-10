@@ -213,11 +213,49 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const body = await req.json().catch(() => ({}));
-    const youtube = typeof body?.youtube === "string" && body.youtube.trim() ? body.youtube.trim() : null;
-    const instagram = typeof body?.instagram === "string" && body.instagram.trim() ? body.instagram.trim() : null;
-    const facebook = typeof body?.facebook === "string" && body.facebook.trim() ? body.facebook.trim() : null;
+    let youtube = typeof body?.youtube === "string" && body.youtube.trim() ? body.youtube.trim() : null;
+    let instagram = typeof body?.instagram === "string" && body.instagram.trim() ? body.instagram.trim() : null;
+    let facebook = typeof body?.facebook === "string" && body.facebook.trim() ? body.facebook.trim() : null;
+    let manualYt: number | null = null;
+    let manualIg: number | null = null;
+    let manualFb: number | null = null;
 
+    // If a userId is provided, look up URLs + manual overrides via service role
+    // so end-users (visitors without direct RLS access) can still see counts.
+    const userId = typeof body?.userId === "string" && body.userId.trim() ? body.userId.trim() : null;
     const debug: string[] = [];
+    if (userId) {
+      const supaUrl = Deno.env.get("SUPABASE_URL");
+      const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supaUrl && svcKey) {
+        try {
+          const r = await fetch(
+            `${supaUrl}/rest/v1/empresa_config?user_id=eq.${userId}&select=youtube,instagram,facebook,youtube_subs,instagram_subs,facebook_subs`,
+            { headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` } },
+          );
+          if (r.ok) {
+            const rows = await r.json();
+            const row = Array.isArray(rows) && rows[0] ? rows[0] : null;
+            if (row) {
+              youtube = youtube || (row.youtube || null);
+              instagram = instagram || (row.instagram || null);
+              facebook = facebook || (row.facebook || null);
+              manualYt = row.youtube_subs != null ? Number(row.youtube_subs) : null;
+              manualIg = row.instagram_subs != null ? Number(row.instagram_subs) : null;
+              manualFb = row.facebook_subs != null ? Number(row.facebook_subs) : null;
+              debug.push(`lookup ok yt=${!!youtube} ig=${!!instagram} fb=${!!facebook}`);
+            } else {
+              debug.push("lookup empty");
+            }
+          } else {
+            debug.push(`lookup http=${r.status}`);
+          }
+        } catch (e) {
+          debug.push(`lookup err ${e}`);
+        }
+      }
+    }
+
     const [yt, ig, fb] = await Promise.all([
       youtube ? fetchYoutube(youtube).catch(() => null) : Promise.resolve(null),
       instagram ? fetchInstagram(instagram, debug).catch((e) => { debug.push(`ig err ${e}`); return null; }) : Promise.resolve(null),
@@ -225,7 +263,14 @@ Deno.serve(async (req) => {
     ]);
 
     return new Response(
-      JSON.stringify({ ok: true, youtube: yt, instagram: ig, facebook: fb, debug: body?.debug ? debug : undefined }),
+      JSON.stringify({
+        ok: true,
+        youtube: manualYt ?? yt,
+        instagram: manualIg ?? ig,
+        facebook: manualFb ?? fb,
+        urls: userId ? { youtube, instagram, facebook } : undefined,
+        debug: body?.debug ? debug : undefined,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
