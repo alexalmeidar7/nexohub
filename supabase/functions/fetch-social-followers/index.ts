@@ -73,17 +73,97 @@ async function fetchYoutube(url: string): Promise<number | null> {
   return null;
 }
 
-async function fetchInstagram(url: string): Promise<number | null> {
-  // Meta blocks datacenter IPs from receiving og:description meta.
-  const html = await fetchHtml(url, UA_META);
-  if (!html) return null;
-  const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
-  if (m) {
-    const f = m[1].match(/([\d.,]+\s*[kmb]?)\s*(?:Followers|Seguidores)/i);
-    if (f) return parseCompact(f[1]);
+function extractInstagramUsername(input: string): string | null {
+  if (!input) return null;
+  const s = input.trim();
+  const m = s.match(/instagram\.com\/([^/?#\s]+)/i);
+  if (m) return m[1];
+  // Assume bare username
+  return s.replace(/^@/, "").replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim() || null;
+}
+
+async function fetchInstagramViaRapidApi(username: string, debug?: string[]): Promise<number | null> {
+  const key = Deno.env.get("RAPIDAPI_KEY");
+  if (!key) { debug?.push("no RAPIDAPI_KEY"); return null; }
+  debug?.push(`rapidapi key len=${key.length}`);
+  const hosts: Array<{ host: string; url: string; pick: (j: any) => number | null | undefined }> = [
+    {
+      host: "instagram-scraper-api2.p.rapidapi.com",
+      url: `https://instagram-scraper-api2.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(username)}`,
+      pick: (j) => j?.data?.follower_count ?? j?.data?.edge_followed_by?.count,
+    },
+    {
+      host: "instagram-social-api.p.rapidapi.com",
+      url: `https://instagram-social-api.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(username)}`,
+      pick: (j) => j?.data?.follower_count,
+    },
+    {
+      host: "instagram-scraper-20251.p.rapidapi.com",
+      url: `https://instagram-scraper-20251.p.rapidapi.com/userinfo/${encodeURIComponent(username)}`,
+      pick: (j) => j?.data?.user?.follower_count ?? j?.data?.follower_count,
+    },
+    {
+      host: "instagram-scraper-2022.p.rapidapi.com",
+      url: `https://instagram-scraper-2022.p.rapidapi.com/ig/info_username/?user=${encodeURIComponent(username)}`,
+      pick: (j) => j?.user?.follower_count,
+    },
+    {
+      host: "instagram-data1.p.rapidapi.com",
+      url: `https://instagram-data1.p.rapidapi.com/user/info?username=${encodeURIComponent(username)}`,
+      pick: (j) => j?.edge_followed_by?.count ?? j?.follower_count,
+    },
+    {
+      host: "instagram-bulk-profile-scrapper.p.rapidapi.com",
+      url: `https://instagram-bulk-profile-scrapper.p.rapidapi.com/clients/api/ig/ig_profile?ig=${encodeURIComponent(username)}`,
+      pick: (j) => Array.isArray(j) ? j[0]?.follower_count : j?.follower_count,
+    },
+  ];
+  for (const h of hosts) {
+    try {
+      const r = await fetch(h.url, {
+        headers: { "X-RapidAPI-Key": key, "X-RapidAPI-Host": h.host },
+      });
+      const text = await r.text();
+      if (!r.ok) {
+        debug?.push(`${h.host} HTTP ${r.status}: ${text.slice(0, 120)}`);
+        continue;
+      }
+      let j: any = null;
+      try { j = JSON.parse(text); } catch { debug?.push(`${h.host} non-json`); continue; }
+      const n = h.pick(j);
+      debug?.push(`${h.host} count=${n}`);
+      if (typeof n === "number" && n > 0) return n;
+    } catch (e) {
+      debug?.push(`${h.host} error: ${e}`);
+    }
   }
   return null;
 }
+
+async function fetchInstagram(url: string, debug?: string[]): Promise<number | null> {
+  // Try public og:description first (usually blocked from datacenter IPs).
+  const html = await fetchHtml(url, UA_META);
+  debug?.push(`og html=${html ? html.length : 0}`);
+  if (html) {
+    const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
+    if (m) {
+      const f = m[1].match(/([\d.,]+\s*[kmb]?)\s*(?:Followers|Seguidores)/i);
+      if (f) {
+        const n = parseCompact(f[1]);
+        if (n) return n;
+      }
+    }
+  }
+  // Fallback: RapidAPI Instagram scraper.
+  const username = extractInstagramUsername(url);
+  debug?.push(`username=${username}`);
+  if (username) {
+    const n = await fetchInstagramViaRapidApi(username, debug);
+    if (n) return n;
+  }
+  return null;
+}
+
 
 async function fetchFacebook(url: string): Promise<number | null> {
   const html = await fetchHtml(url, UA_META);
@@ -109,14 +189,15 @@ Deno.serve(async (req) => {
     const instagram = typeof body?.instagram === "string" && body.instagram.trim() ? body.instagram.trim() : null;
     const facebook = typeof body?.facebook === "string" && body.facebook.trim() ? body.facebook.trim() : null;
 
+    const debug: string[] = [];
     const [yt, ig, fb] = await Promise.all([
       youtube ? fetchYoutube(youtube).catch(() => null) : Promise.resolve(null),
-      instagram ? fetchInstagram(instagram).catch(() => null) : Promise.resolve(null),
+      instagram ? fetchInstagram(instagram, debug).catch((e) => { debug.push(`ig err ${e}`); return null; }) : Promise.resolve(null),
       facebook ? fetchFacebook(facebook).catch(() => null) : Promise.resolve(null),
     ]);
 
     return new Response(
-      JSON.stringify({ ok: true, youtube: yt, instagram: ig, facebook: fb }),
+      JSON.stringify({ ok: true, youtube: yt, instagram: ig, facebook: fb, debug: body?.debug ? debug : undefined }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
