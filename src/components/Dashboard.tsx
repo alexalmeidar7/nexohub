@@ -75,6 +75,7 @@ interface MenuChild {
   page: Page;
   separator?: boolean;
   permKey?: string;
+  children?: MenuChild[];
 }
 interface MenuItem {
   icon: typeof Home;
@@ -108,8 +109,9 @@ const sidebarMenu: MenuItem[] = [
       { icon: Film, label: "ADS", page: "preroll" },
       { icon: MessageSquareQuote, label: "citações", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
-      { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page, permKey: "telapromo" },
-      { icon: Settings, label: "config tela promo", page: "configtelapromo", separator: true },
+      { icon: ExternalLink, label: "módulo locutor", page: undefined as unknown as Page, permKey: "telapromo", children: [
+        { icon: Settings, label: "config tela promo", page: "configtelapromo" },
+      ] },
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
     ]
   },
@@ -765,6 +767,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               <ChildIcon size={13} />
                               <span>{child.label}</span>
                             </button>
+                            {child.children && child.children.map(grand => {
+                              const GrandIcon = grand.icon;
+                              const grandActive = currentPage === grand.page;
+                              return (
+                                <button
+                                  key={grand.label}
+                                  onClick={() => handleChildClick(grand, item.label)}
+                                  className="w-full text-left pl-9 pr-4 py-1.5 text-[11px] flex items-center gap-2 transition-all"
+                                  style={{ color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
+                                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; e.currentTarget.style.color = layoutColors.accentColor; }}
+                                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = grandActive ? layoutColors.accentColor : `${layoutColors.navText}99`; }}
+                                >
+                                  <GrandIcon size={12} />
+                                  <span>{grand.label}</span>
+                                </button>
+                              );
+                            })}
                           </div>
                         );
                       })}
@@ -844,13 +863,28 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                             const ChildIcon = child.icon;
                             const childActive = currentPage === child.page;
                             return (
-                              <button key={child.label} onClick={() => handleChildClick(child, item.label)}
-                                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] transition-all"
-                                style={{ color: childActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
-                              >
-                                <ChildIcon size={12} />
-                                <span>{child.label}</span>
-                              </button>
+                              <div key={child.label}>
+                                <button onClick={() => handleChildClick(child, item.label)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] transition-all"
+                                  style={{ color: childActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
+                                >
+                                  <ChildIcon size={12} />
+                                  <span>{child.label}</span>
+                                </button>
+                                {child.children && child.children.map(grand => {
+                                  const GrandIcon = grand.icon;
+                                  const grandActive = currentPage === grand.page;
+                                  return (
+                                    <button key={grand.label} onClick={() => handleChildClick(grand, item.label)}
+                                      className="w-full flex items-center gap-2 pl-8 pr-3 py-1.5 rounded-lg text-[10px] transition-all"
+                                      style={{ color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}80` }}
+                                    >
+                                      <GrandIcon size={11} />
+                                      <span>{grand.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             );
                           })}
                         </div>
