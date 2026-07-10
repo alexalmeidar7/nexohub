@@ -23,6 +23,9 @@ export interface EmpresaConfig {
   instagram: string;
   facebook: string;
   youtube: string;
+  instagramSubs?: string;
+  facebookSubs?: string;
+  youtubeSubs?: string;
   plano: string;
 }
 
@@ -42,6 +45,9 @@ export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> 
     instagram: data.instagram || "",
     facebook: data.facebook || "",
     youtube: data.youtube || "",
+    instagramSubs: (data as any).instagram_subs != null ? String((data as any).instagram_subs) : "",
+    facebookSubs: (data as any).facebook_subs != null ? String((data as any).facebook_subs) : "",
+    youtubeSubs: (data as any).youtube_subs != null ? String((data as any).youtube_subs) : "",
     plano: data.plano || "",
   };
 }
@@ -181,13 +187,22 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
       if (!user) return;
+      const toBigInt = (v?: string) => {
+        if (!v) return null;
+        const n = parseInt(String(v).replace(/\D/g, ""), 10);
+        return isNaN(n) ? null : n;
+      };
       await supabase.from("empresa_config").upsert({
         user_id: user.id, nome: newConfig.nome, logo: newConfig.logo, background_url: newConfig.backgroundUrl,
         endereco: newConfig.endereco,
         telefone_comercial: newConfig.telefoneComercial, telefone_participacao: newConfig.telefoneParticipacao,
         site: newConfig.site, instagram: newConfig.instagram, facebook: newConfig.facebook,
-        youtube: newConfig.youtube, updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+        youtube: newConfig.youtube,
+        instagram_subs: toBigInt(newConfig.instagramSubs),
+        facebook_subs: toBigInt(newConfig.facebookSubs),
+        youtube_subs: toBigInt(newConfig.youtubeSubs),
+        updated_at: new Date().toISOString(),
+      } as any, { onConflict: "user_id" });
     }, 500);
   };
 
@@ -391,6 +406,11 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             {field("Instagram", "instagram", "https://instagram.com/empresa")}
             {field("Facebook", "facebook", "https://facebook.com/empresa")}
             {field("YouTube", "youtube", "https://youtube.com/empresa")}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {field("Nº seguidores Instagram", "instagramSubs", "Ex: 12000")}
+            {field("Nº seguidores Facebook", "facebookSubs", "Ex: 25000")}
+            {field("Nº inscritos YouTube (opcional)", "youtubeSubs", "Auto se vazio")}
           </div>
         </div>
 

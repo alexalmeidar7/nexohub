@@ -648,8 +648,10 @@ export type Database = {
           background_url: string | null
           endereco: string | null
           facebook: string | null
+          facebook_subs: number | null
           id: string
           instagram: string | null
+          instagram_subs: number | null
           logo: string | null
           nome: string | null
           plano: string
@@ -659,14 +661,17 @@ export type Database = {
           updated_at: string
           user_id: string
           youtube: string | null
+          youtube_subs: number | null
         }
         Insert: {
           ativo?: boolean
           background_url?: string | null
           endereco?: string | null
           facebook?: string | null
+          facebook_subs?: number | null
           id?: string
           instagram?: string | null
+          instagram_subs?: number | null
           logo?: string | null
           nome?: string | null
           plano?: string
@@ -676,14 +681,17 @@ export type Database = {
           updated_at?: string
           user_id: string
           youtube?: string | null
+          youtube_subs?: number | null
         }
         Update: {
           ativo?: boolean
           background_url?: string | null
           endereco?: string | null
           facebook?: string | null
+          facebook_subs?: number | null
           id?: string
           instagram?: string | null
+          instagram_subs?: number | null
           logo?: string | null
           nome?: string | null
           plano?: string
@@ -693,6 +701,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           youtube?: string | null
+          youtube_subs?: number | null
         }
         Relationships: []
       }
