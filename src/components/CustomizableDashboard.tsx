@@ -2385,17 +2385,19 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           <img
             src={fadingArt}
             alt=""
-            className="absolute left-0 w-full object-cover object-top"
-            style={{ top: "-30px", height: "calc(100% + 30px)", transition: imgFadeTransition, opacity: 0 }}
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            style={{ transition: imgFadeTransition, opacity: 0 }}
           />
         )}
         {visibleArt ? (
           <img
             src={visibleArt}
             alt=""
-            className="absolute left-0 w-full object-cover object-top"
-            style={{ top: "-30px", height: "calc(100% + 30px)", transition: imgFadeTransition, opacity: artOpacity }}
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            style={{ transition: imgFadeTransition, opacity: artOpacity }}
           />
+
+
 
 
 
