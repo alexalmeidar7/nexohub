@@ -710,13 +710,20 @@ export default function PrevisaoTempo() {
 
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
-    <div className="rounded-xl p-3.5 text-center transition-all hover:shadow-md"
-      style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-      <div className="flex items-center justify-center gap-1.5 mb-1.5" style={{ color }}>
+    <div
+      style={{
+        background: CARD_BG,
+        borderRadius: 18,
+        padding: "12px 14px",
+        textAlign: "center",
+        fontFamily: "'Montserrat', sans-serif",
+      }}
+    >
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 6, color }}>
         {icon}
-        <span className="text-[11px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{label}</span>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "#64748B" }}>{label}</span>
       </div>
-      <p className="text-lg font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{value}</p>
+      <p style={{ fontSize: 18, fontWeight: 800, color: DARK, margin: 0 }}>{value}</p>
     </div>
   );
 }
