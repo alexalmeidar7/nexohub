@@ -14,18 +14,20 @@ interface SocialCounts {
 }
 
 const ROTATE_MS = 3000;
-const REFETCH_MS = 5 * 60 * 1000; // 5 min
+const REFETCH_MS = 5 * 60 * 1000; // 5 min for social
+const LISTENERS_MS = 30 * 1000; // 30s for stream listeners
 
 export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [social, setSocial] = useState<SocialCounts>({ youtube: null, instagram: null, facebook: null });
   const [playerCount] = useState<number>(0);
-  const [streamingCount] = useState<number>(0);
+  const [streamingCount, setStreamingCount] = useState<number | null>(null);
   const [rotIdx, setRotIdx] = useState(0);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [loadingSocial, setLoadingSocial] = useState(true);
   const [loadingPlayer] = useState(true);
-  const [loadingStreaming] = useState(true);
+  const [loadingStreaming, setLoadingStreaming] = useState(true);
   const socialUrlsRef = useRef<{ youtube?: string; instagram?: string; facebook?: string }>({});
+
 
   // Fetch social follower counts via edge function (which also handles RLS-safe
   // lookup of empresa_config URLs and manual overrides using service role).
