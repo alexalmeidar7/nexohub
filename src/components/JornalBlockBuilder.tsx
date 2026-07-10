@@ -423,7 +423,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setEditingItem(null)} style={{ borderColor: "#2ec1f7", borderRadius: "9999px", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>Cancelar</Button>
-              <Button size="sm" onClick={saveEdit} style={{ backgroundColor: "#2ec1f7", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "9999px" }}>Salvar</Button>
+              <Button variant="save" size="sm" onClick={saveEdit} style={{ backgroundColor: "#2ec1f7", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "9999px" }}>Salvar</Button>
             </div>
           </div>
         </DialogContent>

@@ -713,7 +713,7 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
            <Button size="sm" variant="ghost" onClick={onCancel} style={layoutTextMuted}>
              Cancelar
            </Button>
-           <Button size="sm" onClick={onSave} disabled={saving} className="shadow-lg shadow-primary/20 h-9 px-5">
+           <Button variant="save" size="sm" onClick={onSave} disabled={saving} className="shadow-lg shadow-primary/20 h-9 px-5">
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             Salvar Alterações
           </Button>

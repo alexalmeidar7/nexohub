@@ -171,7 +171,7 @@ function ParticipanteSearchPicker({
                   >
                     Cancelar
                   </Button>
-                  <Button
+                  <Button variant="save"
                     type="button"
                     size="sm"
                     disabled={!guestNome.trim() || savingGuest}

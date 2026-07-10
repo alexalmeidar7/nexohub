@@ -640,7 +640,7 @@ export default function BatalhaMusicalPage() {
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Button
+              <Button variant="save"
                 onClick={handleSchedule}
                 disabled={saving}
                 className="w-full sm:w-auto font-bold rounded-xl"

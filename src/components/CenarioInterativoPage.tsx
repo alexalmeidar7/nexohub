@@ -309,7 +309,7 @@ function ExceptionWordsInput({ value, onSave }: { value: string; onSave: (v: str
         placeholder="break, vinheta, hora certa"
         className="h-7 text-xs"
       />
-      <Button
+      <Button variant="save"
         type="button"
         size="sm"
         onClick={handleSave}
