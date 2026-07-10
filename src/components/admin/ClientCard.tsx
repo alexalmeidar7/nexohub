@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Pencil, Check, X, Eye, EyeOff, MessageSquare } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -265,15 +266,13 @@ export default function ClientCard({ client, clientEmail, modules, plans, saving
               >
                 <X size={12} /> Cancelar
               </button>
-              <button
+              <Button variant="save"
                 onClick={handleSave}
                 disabled={savingEdit}
-                className="flex items-center gap-1 px-4 py-1.5 rounded-full transition-all disabled:opacity-50"
-                style={{ fontSize: "11px", backgroundColor: "#0d0446", color: "#fff", border: "1px solid #0d0446" }}
               >
                 {savingEdit ? <Loader2 className="animate-spin" size={12} /> : <Check size={12} />}
                 Salvar
-              </button>
+              </Button>
             </div>
           </div>
         </CollapsibleContent>

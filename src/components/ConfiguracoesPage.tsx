@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
 import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette, Link2, ShieldCheck, Sparkles } from "lucide-react";
 import { lazy, Suspense } from "react";
 const LayoutCustomizer = lazy(() => import("./LayoutCustomizer"));
@@ -410,14 +411,12 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 placeholder="Nova senha (mín. 6 caracteres)"
                 className="flex-1"
               />
-              <button onClick={handleChangePassword} disabled={savingPassword}
-                className="px-5 py-2 font-bold transition-all text-xs disabled:opacity-50 flex items-center gap-1"
-                style={btnPrimary}
+              <Button variant="save" onClick={handleChangePassword} disabled={savingPassword}
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "var(--layout-header-bg, #1a1a1a)"; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; e.currentTarget.style.color = "#ffffff"; }}
               >
                 {savingPassword ? <Loader2 size={14} className="animate-spin" /> : "Salvar"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -553,7 +552,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                         <StyledInput value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Nome do novo catálogo" />
                         {!editingCanal && (
                           <>
-                            <button onClick={() => {
+                            <Button variant="save" onClick={() => {
                               if (!canalForm.catalog_name.trim()) { toast.error("Digite o nome do catálogo."); return; }
                               if (!savedCatalogs.includes(canalForm.catalog_name.trim())) {
                                 setSavedCatalogs(prev => [...prev, canalForm.catalog_name.trim()]);
@@ -564,7 +563,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                               className="btn-skyglass-accent px-3 py-1.5 text-xs shrink-0 whitespace-nowrap"
                             >
                               <Save size={12} /> Salvar Catálogo
-                            </button>
+                            </Button>
                             <button onClick={() => { setNewCatalogMode(false); setCanalForm(p => ({ ...p, catalog_name: "" })); }}
                               className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0"
                               style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
@@ -839,11 +838,10 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   <X size={14} /> Cancelar
                 </button>
               )}
-              <button onClick={handleAddCanal} disabled={savingCanal}
-                className="btn-skyglass-accent px-6 py-2.5 text-sm disabled:opacity-70"
+              <Button variant="save" onClick={handleAddCanal} disabled={savingCanal}
               >
                 {savingCanal ? <Loader2 size={14} className="animate-spin" /> : <><Plus size={14} /> {editingCanal ? "Salvar Alterações" : "Adicionar Canal"}</>}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1071,14 +1069,13 @@ function EventTypesConfigSection() {
       </div>
       
       <div className="flex justify-end">
-        <button 
+        <Button variant="save" 
           onClick={handleSave} 
           disabled={saving}
-          className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-50"
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           {saving ? "Salvando..." : "Salvar Configurações de Eventos"}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -1143,14 +1140,13 @@ function JournalisticPromptSection() {
       </div>
       
       <div className="flex justify-end">
-        <button 
+        <Button variant="save" 
           onClick={handleSave} 
           disabled={saving}
-          className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-50"
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           {saving ? "Salvando..." : "Salvar Diretrizes"}
-        </button>
+        </Button>
       </div>
     </div>
   );

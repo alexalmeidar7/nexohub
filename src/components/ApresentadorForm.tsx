@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, UserPlus, Camera, Shield, Phone, FileSpreadsheet, Search } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
@@ -468,22 +469,13 @@ export default function ApresentadorForm() {
                   <X size={13} /> Cancelar
                 </button>
               )}
-              <button onClick={handleSave} disabled={saving}
-                className="px-6 py-2.5 text-xs font-bold transition-all duration-300 flex items-center gap-2 disabled:opacity-50 rounded-full hover:scale-[1.03] active:scale-[0.97]"
-                style={{
-                  background: "rgba(255,255,255,0.12)",
-                  backdropFilter: "blur(16px)",
-                  WebkitBackdropFilter: "blur(16px)",
-                  color: "var(--layout-accent-color, #2563eb)",
-                  border: "1.5px solid rgba(255,255,255,0.18)",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.15)",
-                }}
+              <Button variant="save" onClick={handleSave} disabled={saving}
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.2)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.15)"; }}
               >
                 {saving && <Loader2 size={13} className="animate-spin" />}
                 {saving ? "Salvando..." : editingId ? "Atualizar" : "Salvar"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

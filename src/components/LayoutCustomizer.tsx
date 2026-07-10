@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
 import { Palette, Save, RotateCcw, Upload, ImageIcon, X, Loader2, AlertTriangle, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -638,14 +639,13 @@ export default function LayoutCustomizer() {
         >
           <RotateCcw size={13} /> Restaurar Padrão
         </button>
-        <button
+        <Button variant="save"
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-40"
         >
           {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
           {saving ? "Salvando..." : "Salvar Alterações"}
-        </button>
+        </Button>
       </div>
     </div>
   );

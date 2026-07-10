@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useLayoutEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -593,11 +594,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                   />
                 </div>
 
-                <button type="submit" disabled={saving}
-                  className="btn-skyglass-accent w-full py-2.5 text-sm disabled:opacity-50"
+                <Button variant="save" type="submit" disabled={saving}
                 >
                   {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingFullId ? "Atualizar Logo" : `Salvar ${pendingFiles.length} logo(s)`}
-                </button>
+                </Button>
               </div>
 
               <div className="space-y-3">

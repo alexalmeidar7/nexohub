@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -818,15 +819,13 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
                 <input value={newContact.whatsapp} onChange={e => setNewContact(p => ({ ...p, whatsapp: e.target.value }))} placeholder="(00) 00000-0000" className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} />
               </div>
             </div>
-            <button
+            <Button variant="save"
               onClick={saveNewContact}
               disabled={savingContact || !newContact.nome.trim()}
-              className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40"
-              style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}
             >
               {savingContact ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
               Salvar e Incluir
-            </button>
+            </Button>
           </div>
         )}
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { X, Save, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as AuthUser } from "@supabase/supabase-js";
@@ -135,20 +136,13 @@ export default function ProfileDialog({
         </div>
 
         {/* Save button */}
-        <button
+        <Button variant="save"
           onClick={handleSave}
           disabled={saving}
-          className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-          style={{
-            background: "hsla(var(--player-accent) / 0.2)",
-            border: "1px solid hsla(var(--player-accent) / 0.4)",
-            color: "hsl(var(--player-accent))",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
-          }}
         >
           <Save size={14} />
           {saving ? "Salvando..." : "Salvar"}
-        </button>
+        </Button>
       </div>
     </div>
   );

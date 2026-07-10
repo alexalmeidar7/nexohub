@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Pencil, Plus, Package } from "lucide-react";
@@ -255,12 +256,11 @@ export default function ShoppingPage() {
               )}
             </div>
 
-            <button type="submit" disabled={saving}
-              className="btn-skyglass-accent px-6 py-2.5 text-sm disabled:opacity-50"
+            <Button variant="save" type="submit" disabled={saving}
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
               {editId ? "Salvar Alterações" : "Cadastrar Produto"}
-            </button>
+            </Button>
           </div>
         </form>
 

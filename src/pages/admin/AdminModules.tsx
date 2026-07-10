@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Pencil, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -99,15 +100,13 @@ function AdminModulesContent() {
               <div className="flex-1 flex items-center gap-3">
                 <input value={editName} onChange={(e) => setEditName(e.target.value)} className="max-w-xs w-full" style={inputStyle} />
                 <input value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className="flex-1" placeholder="Descrição" style={inputStyle} />
-                <button
+                <Button variant="save"
                   onClick={saveEdit}
-                  className="flex items-center gap-1 px-4 py-2 font-medium transition-all duration-200"
-                  style={{ fontSize: "12px", backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#0d0446"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
                 >
                   <Save size={14} /> Salvar
-                </button>
+                </Button>
                 <button
                   onClick={cancelEdit}
                   className="p-2 rounded-full transition-colors"

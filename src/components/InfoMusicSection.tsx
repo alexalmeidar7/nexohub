@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -449,15 +450,13 @@ export default function InfoMusicSection() {
               border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
             }}
           />
-          <button
+          <Button variant="save"
             onClick={saveExcecoes}
             disabled={savingExcecoes || excecoes === excecoesInitial}
-            className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 inline-flex items-center justify-center gap-2"
-            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
           >
             {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
             Salvar
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -722,7 +721,7 @@ export default function InfoMusicSection() {
                 <span className="text-[10px] opacity-50" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   {manualCuriosityText.length}/280 · salva no banco por 6 meses e vai ao XML por 30s
                 </span>
-                <button
+                <Button variant="save"
                   onClick={async () => {
                     if (!manualCuriosityText.trim() || !user) return;
                     setSavingManualCuriosity(true);
@@ -773,7 +772,7 @@ export default function InfoMusicSection() {
                 >
                   {savingManualCuriosity ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
                   Salvar e enviar
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -880,7 +879,7 @@ export default function InfoMusicSection() {
                           border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
                         }}
                       />
-                      <button
+                      <Button variant="save"
                         onClick={async () => {
                           if (!val.trim() || !user) return;
                           setSavingMissingKey(key);
@@ -911,7 +910,7 @@ export default function InfoMusicSection() {
                       >
                         {isSaving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
                         Salvar
-                      </button>
+                      </Button>
                     </div>
                   );
                 })}

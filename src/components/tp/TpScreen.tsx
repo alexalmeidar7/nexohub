@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, Maximize, FlipHorizontal2, FlipVertical2, MessageSquare, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -869,7 +870,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
           <button onClick={toggleFullscreen} title="Tela cheia" className={tpControlBtnClasses}>
             <Maximize size={14} className="text-tp-muted-strong" />
           </button>
-          <button
+          <Button variant="save"
             onClick={() => { setEditMode((v) => !v); setShowFormatBar(false); setScrolling(false); }}
             title={editMode ? "Salvar edição" : "Editar texto"}
             className={`px-3 py-1.5 text-[11px] font-bold rounded-lg border transition-all ${
@@ -879,7 +880,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
             }`}
           >
             {editMode ? "✓ Salvar" : "✎ Editar"}
-          </button>
+          </Button>
         </div>
 
         {/* Setup Modal */}

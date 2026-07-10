@@ -2143,14 +2143,12 @@ export default function VmixPage() {
                         {directTesting ? <Loader2 size={13} className="animate-spin" /> : <Wifi size={13} />}
                         {directTesting ? "Testando…" : "Testar Conexão"}
                       </button>
-                      <button
+                      <Button variant="save"
                         onClick={saveUrl}
                         disabled={!!validationError}
-                        className="px-5 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
-                        style={{ backgroundColor: "#3a3a44" }}
                       >
                         {selectedConnectionId ? "Atualizar" : "Salvar Novo"}
-                      </button>
+                      </Button>
                       {savedUrl && (
                         <button
                           onClick={connectToVmix}

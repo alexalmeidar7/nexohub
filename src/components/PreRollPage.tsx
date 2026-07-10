@@ -549,12 +549,11 @@ export default function PreRollPage() {
               </div>
 
             {/* Submit */}
-            <button type="submit" disabled={saving}
-              className="btn-skyglass-accent w-full sm:w-auto px-8 py-2.5 text-sm disabled:opacity-50"
+            <Button variant="save" type="submit" disabled={saving}
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
               {editId ? "Salvar Alterações" : "Cadastrar Anúncio"}
-            </button>
+            </Button>
           </div>
         </form>
 

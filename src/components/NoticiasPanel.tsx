@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical, BookOpen, Loader2, X, Image as ImageIcon, Link as LinkIcon, Newspaper, CloudSun, Droplets, Thermometer, ArrowUp, ArrowDown } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
@@ -723,14 +724,14 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
               <span style={{ color: "var(--layout-header-text, #ffffff)" }}>📰 Portais de Notícias</span>
               <div className="flex items-center gap-1">
-                <button
+                <Button variant="save"
                   onClick={() => setReorderMode(r => !r)}
                   className="px-2 py-0.5 rounded text-[9px] font-semibold transition-colors"
                   style={{ backgroundColor: reorderMode ? "#2ec1f7" : "rgba(255,255,255,0.15)", color: reorderMode ? "var(--layout-header-bg, #1a1a1a)" : "#ffffff" }}
                   title="Reordenar portais"
                 >
                   {reorderMode ? "✓ Salvar ordem" : "⇅ Reordenar"}
-                </button>
+                </Button>
                 <button onClick={() => toggleBox('portais')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['portais'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
                 </button>
