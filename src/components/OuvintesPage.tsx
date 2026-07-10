@@ -330,9 +330,6 @@ export default function OuvintesPage() {
             </select>
           </Field>
 
-          <Field label="Setor">
-            <input style={pillInput} value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} placeholder="Bairro / região" />
-          </Field>
           <Field label="UF">
             <select
               style={pillSelect}
@@ -405,6 +402,9 @@ export default function OuvintesPage() {
                 );
               })()}
             </div>
+          </Field>
+          <Field label="Setor">
+            <input style={pillInput} value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} placeholder="Bairro / região" />
           </Field>
           <Field label="Data de Nascimento">
             <div style={{ display: "flex", gap: 8 }}>
