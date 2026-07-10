@@ -14,18 +14,22 @@ interface SocialCounts {
 }
 
 const ROTATE_MS = 3000;
-const REFETCH_MS = 5 * 60 * 1000; // 5 min for social
+// Redes sociais: 5x por dia (a cada ~4h48m)
+const REFETCH_MS = Math.round((24 * 60 * 60 * 1000) / 5);
 const LISTENERS_MS = 30 * 1000; // 30s for stream listeners
+const SITE_MS = 30 * 1000; // 30s for site realtime users
 
 export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [social, setSocial] = useState<SocialCounts>({ youtube: null, instagram: null, facebook: null });
-  const [playerCount] = useState<number>(0);
+  const [videoCount] = useState<number>(0);
   const [streamingCount, setStreamingCount] = useState<number | null>(null);
+  const [siteCount, setSiteCount] = useState<number | null>(null);
   const [rotIdx, setRotIdx] = useState(0);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [loadingSocial, setLoadingSocial] = useState(true);
-  const [loadingPlayer] = useState(true);
+  const [loadingVideo] = useState(true);
   const [loadingStreaming, setLoadingStreaming] = useState(true);
+  const [loadingSite, setLoadingSite] = useState(true);
   const socialUrlsRef = useRef<{ youtube?: string; instagram?: string; facebook?: string }>({});
 
 
