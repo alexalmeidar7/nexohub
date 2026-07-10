@@ -1968,12 +1968,15 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   const analyserFailedRef = useRef(false);
 
   useEffect(() => {
-    if (!isBreak || !isPlaying) {
+    const prefersReduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (!isBreak || !isPlaying || prefersReduced) {
       if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
-      // Reset bars to idle heights
-      barRefs.current.forEach((el) => { if (el) el.style.height = "8px"; });
+      // Reset bars to idle heights (static mid-height if reduced motion, low if idle)
+      const idle = prefersReduced ? "22px" : "8px";
+      barRefs.current.forEach((el) => { if (el) el.style.height = idle; });
       return;
     }
+
 
     const audio = audioRef.current;
     if (!audio) return;
