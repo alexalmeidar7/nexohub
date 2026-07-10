@@ -46,7 +46,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       // populate the rotation labels immediately.
       const { data } = await supabase
         .from("empresa_config")
-        .select("youtube, instagram, facebook")
+        .select("youtube, instagram, facebook, video_stream_api_url")
         .eq("user_id", dataUserId as any)
         .maybeSingle();
       if (!cancelled && data) {
@@ -55,6 +55,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           instagram: (data as any).instagram || undefined,
           facebook: (data as any).facebook || undefined,
         };
+        videoApiUrlRef.current = (data as any).video_stream_api_url || null;
       }
       if (!cancelled) setLoadingConfig(false);
 
