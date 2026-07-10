@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check, RefreshCw, ChevronDown, ChevronUp, Zap, Bot } from "lucide-react";
+import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check, RefreshCw, ChevronDown, ChevronUp, Zap, Bot, Send } from "lucide-react";
 import { toast } from "sonner";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
@@ -687,8 +687,8 @@ export default function RoteiroPrograma() {
                                 msg += `_Nos vemos no programa ;)_`;
                                 setWhatsAppHistoricoData({ titulo: r.titulo || "Roteiro", programaNome: r.programa_nome || "", estudio: r.estudio || "", data: dataStr, horario: r.horario || "", participantes: pList, conteudoTexto: "", _expressFormatted: msg });
                                 setShowWhatsAppDialog(true);
-                              }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Enviar por WhatsApp">
-                                <MessageSquare size={13} style={{ color: "#25d366" }} />
+                              }} style={{ width: 30, height: 30, borderRadius: "50%", background: "#296f4d", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Enviar por WhatsApp">
+                                <MessageSquare size={13} style={{ color: "#d9ff65" }} />
                               </button>
                               {hasXml && (
                                 <button onClick={async () => {
@@ -698,8 +698,8 @@ export default function RoteiroPrograma() {
                                     await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", r.id);
                                     toast.success("XML atualizado!");
                                   } else toast.error("Falha ao enviar XML");
-                                }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Enviar para o XML">
-                                  <Code2 size={13} style={{ color: CYAN }} />
+                                }} style={{ width: 30, height: 30, borderRadius: "50%", background: "#00dbff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Enviar para o XML">
+                                  <Send size={13} style={{ color: "#FFFFFF" }} />
                                 </button>
                               )}
                               <button onClick={() => {
