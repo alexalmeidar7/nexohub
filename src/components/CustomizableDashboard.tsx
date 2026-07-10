@@ -578,7 +578,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
 
       {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-2">
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Widgets</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "#002132" }}>Widgets</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" style={{ gridAutoRows: "auto" }}>
 
             {items.filter(i => i.type === "widget").map(item => {
