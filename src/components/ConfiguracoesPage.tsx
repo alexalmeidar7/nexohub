@@ -23,6 +23,9 @@ export interface EmpresaConfig {
   instagram: string;
   facebook: string;
   youtube: string;
+  instagramSubs: string;
+  facebookSubs: string;
+  youtubeSubs: string;
   plano: string;
 }
 
@@ -42,6 +45,9 @@ export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> 
     instagram: data.instagram || "",
     facebook: data.facebook || "",
     youtube: data.youtube || "",
+    instagramSubs: (data as any).instagram_subs != null ? String((data as any).instagram_subs) : "",
+    facebookSubs: (data as any).facebook_subs != null ? String((data as any).facebook_subs) : "",
+    youtubeSubs: (data as any).youtube_subs != null ? String((data as any).youtube_subs) : "",
     plano: data.plano || "",
   };
 }
