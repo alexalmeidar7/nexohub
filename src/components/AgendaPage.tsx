@@ -339,6 +339,13 @@ const getFeriadoNome = (date?: Date) => {
   return f ? f.nome : null;
 };
 
+// Palette (nexo-form-design-system) — mesmo padrão do Cadastro de Ouvinte
+const NEXO_CYAN = "#00BFF0";
+const NEXO_LIME = "#C6F03C";
+const NEXO_CARD_BG = "#D6F4FB";
+const NEXO_DARK = "#0A2540";
+
+
 export default function AgendaPage() {
   const { user } = useAuth();
   const { toast } = useToast();
