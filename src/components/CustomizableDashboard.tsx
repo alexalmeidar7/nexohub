@@ -627,6 +627,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
               const audienceHeight = playerCompactMap[item.id] ? Math.min(96, playerMaxHeight) : playerMaxHeight;
               return (
                 <Fragment key={item.id}>
+                <div
                   className={`relative group rounded-3xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: "var(--layout-widget-bg, #1a1a1a)",
