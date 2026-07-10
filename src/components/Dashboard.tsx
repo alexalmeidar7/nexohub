@@ -925,6 +925,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               style={{
                 width: "778px",
                 flexShrink: 1,
+                flexBasis: "778px",
+                minWidth: "520px",
                 maxWidth: "100%",
                 height: "461px",
                 backgroundColor: "#00d6f9",
