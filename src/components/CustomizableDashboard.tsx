@@ -199,8 +199,10 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
     const compute = () => {
       const anchorTop = onAirSlot?.getBoundingClientRect().bottom ?? 120;
       const footerTop = footerEl?.getBoundingClientRect().top ?? window.innerHeight;
-      const gap = 32; // spacing above and below the player
-      const available = Math.max(220, footerTop - anchorTop - gap);
+      const isMobile = window.innerWidth < 640;
+      const gap = isMobile ? 16 : 32;
+      const floor = isMobile ? 72 : 220;
+      const available = Math.max(floor, footerTop - anchorTop - gap);
       setPlayerMaxHeight(available);
     };
     compute();
@@ -211,6 +213,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
       window.clearInterval(interval);
     };
   }, [onAirSlot, footerEl]);
+
 
   useEffect(() => {
     if (!user) return;
@@ -626,10 +629,10 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                     background: "var(--layout-widget-bg, #1a1a1a)",
                     boxShadow: isDragOver ? "0 0 0 2px var(--layout-accent-color), 0 4px 20px rgba(0,0,0,0.12)" : "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
                     borderRadius: "24px",
-                    height: item.widgetType === "player" ? (playerCompactMap[item.id] ? "96px" : `${playerMaxHeight}px`) : "280px",
-                    minHeight: item.widgetType === "player" ? (playerCompactMap[item.id] ? "96px" : "221px") : undefined,
-                    maxHeight: item.widgetType === "player" ? (playerCompactMap[item.id] ? "96px" : `${playerMaxHeight}px`) : "280px",
-                    maxWidth: item.widgetType === "player" ? "70%" : undefined,
+                    height: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px`) : "280px",
+                    minHeight: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(72, playerMaxHeight)}px` : `${Math.min(221, playerMaxHeight)}px`) : undefined,
+                    maxHeight: item.widgetType === "player" ? (playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px`) : "280px",
+                    maxWidth: item.widgetType === "player" && typeof window !== "undefined" && window.innerWidth >= 640 ? "70%" : undefined,
                     overflow: item.widgetType === "player" && playerVideoActive === item.id ? "visible" : "hidden",
                     transition: item.widgetType === "player" ? "min-height 0.35s cubic-bezier(0.4,0,0.2,1), height 0.35s cubic-bezier(0.4,0,0.2,1), max-height 0.35s cubic-bezier(0.4,0,0.2,1)" : undefined,
                   }}
