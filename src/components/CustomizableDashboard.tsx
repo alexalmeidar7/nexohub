@@ -1993,8 +1993,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         const ctx = new Ctx();
         const source = ctx.createMediaElementSource(audio);
         const analyser = ctx.createAnalyser();
-        analyser.fftSize = 128;
-        analyser.smoothingTimeConstant = 0.75;
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.88;
         source.connect(analyser);
         analyser.connect(ctx.destination);
         audioCtxRef.current = ctx;
