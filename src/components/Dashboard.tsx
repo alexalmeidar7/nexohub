@@ -767,6 +767,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               <ChildIcon size={13} />
                               <span>{child.label}</span>
                             </button>
+                            {child.children && child.children.map(grand => {
+                              const GrandIcon = grand.icon;
+                              const grandActive = currentPage === grand.page;
+                              return (
+                                <button
+                                  key={grand.label}
+                                  onClick={() => handleChildClick(grand, item.label)}
+                                  className="w-full text-left pl-9 pr-4 py-1.5 text-[11px] flex items-center gap-2 transition-all"
+                                  style={{ color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
+                                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; e.currentTarget.style.color = layoutColors.accentColor; }}
+                                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = grandActive ? layoutColors.accentColor : `${layoutColors.navText}99`; }}
+                                >
+                                  <GrandIcon size={12} />
+                                  <span>{grand.label}</span>
+                                </button>
+                              );
+                            })}
                           </div>
                         );
                       })}
