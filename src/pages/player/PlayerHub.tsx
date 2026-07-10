@@ -29,6 +29,10 @@ export default function PlayerHub() {
   const [dataReady, setDataReady] = useState(false);
   const { colors: playerColors, bgConfigs: playerBgConfigs } = usePlayerColors(publicUserId);
 
+  // Real-time "connected on player" heartbeat (20s ping).
+  usePlayerHeartbeat(publicUserId || user?.id || null);
+
+
   useEffect(() => {
     const fetchLogo = async () => {
       const userId = user?.id;
