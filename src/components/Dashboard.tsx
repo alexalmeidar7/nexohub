@@ -109,8 +109,9 @@ const sidebarMenu: MenuItem[] = [
       { icon: Film, label: "ADS", page: "preroll" },
       { icon: MessageSquareQuote, label: "citações", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
-      { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page, permKey: "telapromo" },
-      { icon: Settings, label: "config tela promo", page: "configtelapromo", separator: true },
+      { icon: ExternalLink, label: "módulo locutor", page: undefined as unknown as Page, permKey: "telapromo", children: [
+        { icon: Settings, label: "config tela promo", page: "configtelapromo" },
+      ] },
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
     ]
   },
