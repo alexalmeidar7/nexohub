@@ -659,7 +659,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                       {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
                       {item.widgetType === "stats" && <StatsWidget dataUserId={dataUserId || undefined} />}
                       {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                      {item.widgetType === "player" && <DashboardPlayerWidget dataUserId={dataUserId || undefined} onVideoChange={(active) => setPlayerVideoActive(active ? item.id : null)} />}
+                      {item.widgetType === "player" && <DashboardPlayerWidget dataUserId={dataUserId || undefined} onVideoChange={(active) => setPlayerVideoActive(active ? item.id : null)} onCompactChange={(c) => setPlayerCompactMap(m => ({ ...m, [item.id]: c }))} />}
                     </Suspense>
                   </div>
                 </div>
