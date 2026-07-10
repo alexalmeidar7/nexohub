@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -222,6 +222,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [showNext, setShowNext] = useState(false);
   const [onAirTimes, setOnAirTimes] = useState<{ inicio: string; fim: string } | null>(null);
   const [nowTick, setNowTick] = useState(() => Date.now());
+  // Global player state (mirrored from CustomizableDashboard via window events)
+  const [playerState, setPlayerState] = useState<{ isPlaying: boolean; isLoading: boolean; hasChannel: boolean; channelName: string }>({ isPlaying: false, isLoading: false, hasChannel: false, channelName: "" });
+  useEffect(() => {
+    const onState = (e: Event) => {
+      const d = (e as CustomEvent).detail;
+      if (d) setPlayerState(d);
+    };
+    window.addEventListener("player:state", onState);
+    return () => window.removeEventListener("player:state", onState);
+  }, []);
   useEffect(() => {
     const iv = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(iv);
@@ -893,6 +903,29 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             className="flex items-center gap-2 rounded-full px-3 py-1.5"
             style={{ backgroundColor: "#f1f3f5" }}
           >
+            {!isDashboard && playerState.hasChannel && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("player:toggle"))}
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                    style={{ color: "#002132" }}
+                    aria-label={playerState.isPlaying ? "Pausar player" : "Reproduzir player"}
+                  >
+                    {playerState.isLoading ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : playerState.isPlaying ? (
+                      <Pause size={18} />
+                    ) : (
+                      <Play size={18} />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p className="text-xs">{playerState.isPlaying ? `Pausar${playerState.channelName ? ` – ${playerState.channelName}` : ""}` : "Reproduzir player"}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -1102,7 +1135,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="relative flex-1 h-full">
             <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
-              {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />}
+              {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
+              <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
+                <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />
+              </div>
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}

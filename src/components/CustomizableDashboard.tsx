@@ -2065,6 +2065,26 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     }
   };
 
+  // ── Global bridge: allow other components (nav header) to toggle/observe playback ──
+  const togglePlayRef = useRef(togglePlay);
+  useEffect(() => { togglePlayRef.current = togglePlay; });
+  useEffect(() => {
+    const handler = () => togglePlayRef.current?.();
+    window.addEventListener("player:toggle", handler);
+    return () => window.removeEventListener("player:toggle", handler);
+  }, []);
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("player:state", {
+      detail: {
+        isPlaying,
+        isLoading,
+        hasChannel: !!activeChannel,
+        channelName: activeChannel?.nome || "",
+      },
+    }));
+  }, [isPlaying, isLoading, activeChannel]);
+
+
   const switchTo = (idx: number) => {
     destroyHls();
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
