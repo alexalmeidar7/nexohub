@@ -1972,62 +1972,21 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       {channels.length === 0 ? (
         <p className="text-white/40 text-xs relative z-10 m-auto">Nenhum canal cadastrado</p>
       ) : (
-        <div className="relative z-10 flex flex-col justify-between h-full p-2.5 sm:p-3.5" style={{ minHeight: 187 }}>
-          {/* Top row: "tocando" label + circular controls */}
-          <div className="flex items-start justify-between gap-2">
-            <span className="text-[13px] sm:text-[15px] md:text-[17px] font-medium lowercase tracking-tight truncate min-w-0" style={{ color: "#c8ff00" }}>
-              {isPlaying ? "tocando" : "pausado"}
-            </span>
-
-            <div className="flex flex-col gap-1 sm:gap-1.5 flex-shrink-0">
-              <button
-                onClick={togglePlay}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
-                style={{ background: "#001e2d" }}
-                title={isPlaying ? "Pausar" : "Reproduzir"}
-              >
-                {isPlaying
-                  ? <Pause size={12} style={{ color: "#c8ff00" }} fill="#c8ff00" />
-                  : <Play size={12} style={{ color: "#c8ff00", marginLeft: 1 }} fill="#c8ff00" />}
-              </button>
-              <div className="relative group/vol">
-                <button
-                  onClick={toggleMute}
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
-                  style={{ background: "#c8ff00" }}
-                  title={isMuted ? "Ativar som" : "Mudo"}
-                >
-                  {isMuted || volume === 0
-                    ? <VolumeX size={12} style={{ color: "#001e2d" }} />
-                    : <Volume2 size={12} style={{ color: "#001e2d" }} fill="#001e2d" />}
-                </button>
-                {/* Volume slider popover on hover — clamped so it never leaves the widget */}
-                <div className="absolute right-full top-1/2 -translate-y-1/2 mr-1.5 opacity-0 pointer-events-none group-hover/vol:opacity-100 group-hover/vol:pointer-events-auto transition-opacity duration-150 z-30">
-                  <div className="rounded-full px-2 py-1 sm:px-2.5 sm:py-1.5 flex items-center shadow-lg" style={{ background: "#c8ff00" }}>
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      value={isMuted ? 0 : volume}
-                      onChange={e => handleVolume(Number(e.target.value))}
-                      onMouseDown={e => e.stopPropagation()}
-                      onTouchStart={e => e.stopPropagation()}
-                      onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
-                      draggable={false}
-                      className="volume-slider-lime h-1 appearance-none rounded-full cursor-pointer w-12 sm:w-16"
-                      style={{
-                        background: `linear-gradient(to right, #001e2d ${(isMuted ? 0 : volume) * 100}%, rgba(0,30,45,0.25) ${(isMuted ? 0 : volume) * 100}%)`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
+        <div
+          className={`relative z-10 flex h-full ${compactMode ? "flex-row items-center gap-2 p-2 sm:p-2.5" : "flex-col justify-between p-2.5 sm:p-3.5"}`}
+          style={{ minHeight: compactMode ? 72 : 187, transition: "min-height 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.3s ease" }}
+        >
+          {/* Status label — only in standard mode */}
+          {!compactMode && (
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-[13px] sm:text-[15px] md:text-[17px] font-medium lowercase tracking-tight truncate min-w-0" style={{ color: "#c8ff00" }}>
+                {isPlaying ? "tocando" : "pausado"}
+              </span>
             </div>
-          </div>
+          )}
 
-          {/* Middle: song info — positioned closer to top */}
-          <div className="flex items-end justify-between gap-2 mt-1.5 sm:mt-2.5 mb-auto">
+          {/* Song info — inline in compact, block in standard */}
+          <div className={compactMode ? "flex items-center gap-2 min-w-0 flex-1" : "flex items-end justify-between gap-2 mt-1.5 sm:mt-2.5 mb-auto"}>
             <div className="min-w-0 flex-1">
               {currentMusic ? (
                 <>
@@ -2053,7 +2012,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
               )}
             </div>
 
-            {channels.length > 1 && (
+            {!compactMode && channels.length > 1 && (
               <div className="flex gap-1 flex-shrink-0">
                 <button onClick={goPrev} className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} title="Canal anterior">
                   <ChevronLeft size={12} className="text-white/80" />
@@ -2063,6 +2022,64 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Controls stack — vertical in standard, horizontal in compact; positioned top-right in standard */}
+          <div
+            className={`flex-shrink-0 flex ${compactMode ? "flex-row items-center gap-1.5" : "flex-col gap-1 sm:gap-1.5 absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5"}`}
+          >
+            <button
+              onClick={togglePlay}
+              className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
+              style={{ background: "#001e2d" }}
+              title={isPlaying ? "Pausar" : "Reproduzir"}
+            >
+              {isPlaying
+                ? <Pause size={compactMode ? 11 : 12} style={{ color: "#c8ff00" }} fill="#c8ff00" />
+                : <Play size={compactMode ? 11 : 12} style={{ color: "#c8ff00", marginLeft: 1 }} fill="#c8ff00" />}
+            </button>
+            <div className="relative group/vol">
+              <button
+                onClick={toggleMute}
+                className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
+                style={{ background: "#c8ff00" }}
+                title={isMuted ? "Ativar som" : "Mudo"}
+              >
+                {isMuted || volume === 0
+                  ? <VolumeX size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} />
+                  : <Volume2 size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} fill="#001e2d" />}
+              </button>
+              <div className="absolute right-full top-1/2 -translate-y-1/2 mr-1.5 opacity-0 pointer-events-none group-hover/vol:opacity-100 group-hover/vol:pointer-events-auto transition-opacity duration-150 z-30">
+                <div className="rounded-full px-2 py-1 sm:px-2.5 sm:py-1.5 flex items-center shadow-lg" style={{ background: "#c8ff00" }}>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={isMuted ? 0 : volume}
+                    onChange={e => handleVolume(Number(e.target.value))}
+                    onMouseDown={e => e.stopPropagation()}
+                    onTouchStart={e => e.stopPropagation()}
+                    onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
+                    draggable={false}
+                    className="volume-slider-lime h-1 appearance-none rounded-full cursor-pointer w-12 sm:w-16"
+                    style={{
+                      background: `linear-gradient(to right, #001e2d ${(isMuted ? 0 : volume) * 100}%, rgba(0,30,45,0.25) ${(isMuted ? 0 : volume) * 100}%)`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setCompactMode(m => !m)}
+              className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
+              style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(200,255,0,0.35)", backdropFilter: "blur(8px)" }}
+              title={compactMode ? "Modo padrão" : "Modo compacto"}
+            >
+              {compactMode
+                ? <Maximize2 size={compactMode ? 10 : 11} style={{ color: "#c8ff00" }} />
+                : <Minimize2 size={11} style={{ color: "#c8ff00" }} />}
+            </button>
           </div>
         </div>
       )}
