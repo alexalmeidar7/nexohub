@@ -296,6 +296,15 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [escaladaList, setEscaladaList] = useState<{titulo: string; imagemUrl: string}[]>([]);
+  const [openNoticia, setOpenNoticia] = useState<Record<number, number | null>>({});
+  const addToEscalada = useCallback((titulo: string, imagemUrl: string) => {
+    if (!titulo.trim()) { toast.warning("Notícia sem título"); return; }
+    setEscaladaList(prev => {
+      if (prev.some(e => e.titulo === titulo)) { toast.info("Já está na escalada"); return prev; }
+      toast.success("Adicionada à escalada");
+      return [...prev, { titulo, imagemUrl: imagemUrl || "" }];
+    });
+  }, []);
   const [searchNome, setSearchNome] = useState("");
   const [searchResults, setSearchResults] = useState<Participante[]>([]);
   const [showResults, setShowResults] = useState(false);
