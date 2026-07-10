@@ -919,7 +919,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {isDashboard && (
           <div className="px-3 lg:px-6 pb-4 relative z-[1]">
-            <div className="flex flex-row gap-4 items-stretch flex-wrap">
+            <div className="flex flex-row gap-4 items-stretch">
             <div
               className="rounded-3xl relative"
               style={{
