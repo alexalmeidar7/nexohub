@@ -187,13 +187,22 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
       if (!user) return;
+      const toBigInt = (v?: string) => {
+        if (!v) return null;
+        const n = parseInt(String(v).replace(/\D/g, ""), 10);
+        return isNaN(n) ? null : n;
+      };
       await supabase.from("empresa_config").upsert({
         user_id: user.id, nome: newConfig.nome, logo: newConfig.logo, background_url: newConfig.backgroundUrl,
         endereco: newConfig.endereco,
         telefone_comercial: newConfig.telefoneComercial, telefone_participacao: newConfig.telefoneParticipacao,
         site: newConfig.site, instagram: newConfig.instagram, facebook: newConfig.facebook,
-        youtube: newConfig.youtube, updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+        youtube: newConfig.youtube,
+        instagram_subs: toBigInt(newConfig.instagramSubs),
+        facebook_subs: toBigInt(newConfig.facebookSubs),
+        youtube_subs: toBigInt(newConfig.youtubeSubs),
+        updated_at: new Date().toISOString(),
+      } as any, { onConflict: "user_id" });
     }, 500);
   };
 
