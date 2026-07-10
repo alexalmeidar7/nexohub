@@ -716,8 +716,8 @@ export default function RoteiroPrograma() {
                                     await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", r.id);
                                     toast.success("XML atualizado!");
                                   } else toast.error("Falha ao enviar XML");
-                                }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" }} title="Enviar para o XML">
-                                  <Code2 size={10} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                                }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Enviar para o XML">
+                                  <Code2 size={13} style={{ color: CYAN }} />
                                 </button>
                               )}
                               <button onClick={() => {
