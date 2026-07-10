@@ -1941,7 +1941,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
                 </button>
                 {/* Volume slider popover on hover */}
                 <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 opacity-0 pointer-events-none group-hover/vol:opacity-100 group-hover/vol:pointer-events-auto transition-opacity duration-150 z-30">
-                  <div className="rounded-full px-3 py-2 flex items-center" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)" }}>
+                  <div className="rounded-full px-3 py-2 flex items-center shadow-lg" style={{ background: "#c8ff00" }}>
                     <input
                       type="range"
                       min={0}
@@ -1953,11 +1953,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
                       onTouchStart={e => e.stopPropagation()}
                       onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
                       draggable={false}
-                      className="h-1 appearance-none rounded-full cursor-pointer"
+                      className="volume-slider-lime h-1 appearance-none rounded-full cursor-pointer"
                       style={{
-                        width: 90,
-                        background: `linear-gradient(to right, var(--layout-accent-color) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.2) ${(isMuted ? 0 : volume) * 100}%)`,
-                        accentColor: "var(--layout-accent-color)",
+                        width: 110,
+                        background: `linear-gradient(to right, #001e2d ${(isMuted ? 0 : volume) * 100}%, rgba(0,30,45,0.25) ${(isMuted ? 0 : volume) * 100}%)`,
                       }}
                     />
                   </div>
@@ -1966,25 +1965,25 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
             </div>
           </div>
 
-          {/* Bottom: song info + channel nav */}
-          <div className="flex items-end justify-between gap-3">
+          {/* Middle: song info — positioned closer to top */}
+          <div className="flex items-end justify-between gap-3 mt-4 mb-auto">
             <div className="min-w-0 flex-1">
               {currentMusic ? (
                 <>
-                  <p className="text-[24px] font-extrabold leading-[1.05] truncate" style={{ color: "#c8ff00" }}>
+                  <p className="text-[15px] font-extrabold leading-[1.1] truncate" style={{ color: "#c8ff00" }}>
                     <TypewriterText text={currentMusic.titulo || ""} />
                   </p>
-                  <p className="text-[20px] font-extrabold leading-[1.1] truncate" style={{ color: "#ffffff" }}>
+                  <p className="text-[13px] font-extrabold leading-[1.15] truncate" style={{ color: "#ffffff" }}>
                     <TypewriterText text={currentMusic.artista || ""} />
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-[18px] font-extrabold leading-tight truncate text-white">
+                  <p className="text-[14px] font-extrabold leading-tight truncate text-white">
                     {activeChannel?.name}
                   </p>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 26%, transparent)", color: "var(--layout-accent-color)" }}>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: "color-mix(in srgb, #c8ff00 26%, transparent)", color: "#c8ff00" }}>
                       CH {activeChannel?.numero_canal}
                     </span>
                     {isVideo && <span className="text-[9px] font-bold uppercase tracking-wider text-white/60">Vídeo</span>}
