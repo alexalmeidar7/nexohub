@@ -280,12 +280,21 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                     <p className="text-[11px] font-bold truncate leading-tight flex-1" style={{ color: textColor }}>
                       {evt.programa?.nome || evt.descricao?.slice(0, 40) || "Evento"}
                     </p>
-                    <span
-                      className="text-[7px] font-black px-1 py-[1px] rounded-sm shrink-0 tracking-wider"
-                      style={{ backgroundColor: type.bg, color: type.text }}
-                    >
-                      {type.label}
-                    </span>
+                    {evt.tipo_evento === "live" || !evt.tipo_evento ? (
+                      <span className="flex items-center gap-0.5 shrink-0">
+                        <Radio size={9} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
+                        <span className="font-bold text-[8px] tracking-wider animate-pulse" style={{ color: "var(--layout-accent-color)" }}>
+                          AO VIVO
+                        </span>
+                      </span>
+                    ) : (
+                      <span
+                        className="text-[7px] font-black px-1 py-[1px] rounded-sm shrink-0 tracking-wider"
+                        style={{ backgroundColor: type.bg, color: type.text }}
+                      >
+                        {type.label}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     {hora && (
