@@ -29,6 +29,9 @@ interface Props {
   programas: Programa[];
   onGenerateRoteiro: (pasteText: string) => void;
   hideAiProductionConfig?: boolean;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  hideToggle?: boolean;
 }
 
 const DIAS = [
