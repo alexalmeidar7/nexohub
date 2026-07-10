@@ -175,9 +175,9 @@ Deno.serve(async (req) => {
 
     if (url.searchParams.get("debug") === "1") {
       const d: any = {};
-      if (youtube) d.youtube = await diag(youtube);
-      if (instagram) d.instagram = await diag(instagram);
-      if (facebook) d.facebook = await diag(facebook);
+      if (youtube) d.youtube = await diag(youtube, UA_DESKTOP);
+      if (instagram) d.instagram = await diag(instagram, UA_META);
+      if (facebook) d.facebook = await diag(facebook, UA_META);
       return new Response(JSON.stringify({ ok: true, debug: d }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
