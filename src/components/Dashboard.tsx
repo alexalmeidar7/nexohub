@@ -938,7 +938,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           {label ? (
                             <span
                               className="inline-flex items-center gap-1.5 cursor-default rounded-full pl-0.5 pr-3 py-0.5"
-                              style={{ backgroundColor: "#002132", color: "#ffffff" }}
+                              style={{ backgroundColor: "#00dbff", color: "#002132" }}
                             >
                               <Icon size={28} />
                               <span className="text-xs font-bold tracking-wide">{label}</span>
