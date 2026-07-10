@@ -903,6 +903,29 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             className="flex items-center gap-2 rounded-full px-3 py-1.5"
             style={{ backgroundColor: "#f1f3f5" }}
           >
+            {!isDashboard && playerState.hasChannel && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("player:toggle"))}
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                    style={{ color: "#002132" }}
+                    aria-label={playerState.isPlaying ? "Pausar player" : "Reproduzir player"}
+                  >
+                    {playerState.isLoading ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : playerState.isPlaying ? (
+                      <Pause size={18} />
+                    ) : (
+                      <Play size={18} />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p className="text-xs">{playerState.isPlaying ? `Pausar${playerState.channelName ? ` – ${playerState.channelName}` : ""}` : "Reproduzir player"}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
