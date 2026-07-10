@@ -705,7 +705,7 @@ export default function RoteiroPrograma() {
                                 msg += `_Nos vemos no programa ;)_`;
                                 setWhatsAppHistoricoData({ titulo: r.titulo || "Roteiro", programaNome: r.programa_nome || "", estudio: r.estudio || "", data: dataStr, horario: r.horario || "", participantes: pList, conteudoTexto: "", _expressFormatted: msg });
                                 setShowWhatsAppDialog(true);
-                              }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(37,211,102,0.08)" }} title="Enviar por WhatsApp">
+                              }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Enviar por WhatsApp">
                                 <MessageSquare size={10} style={{ color: "#25d366" }} />
                               </button>
                               {hasXml && (
