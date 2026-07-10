@@ -2343,7 +2343,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           {!compactMode && (
             <div className="flex items-start justify-between gap-2">
               <span className="text-[13px] sm:text-[15px] md:text-[17px] font-medium lowercase tracking-tight truncate min-w-0" style={{ color: "#c8ff00" }}>
-                {isPlaying ? "tocando" : "pausado"}
+                {isLoading ? "carregando..." : isPlaying ? "tocando" : "pausado"}
               </span>
             </div>
           )}
