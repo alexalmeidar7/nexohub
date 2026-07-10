@@ -41,6 +41,7 @@ function TypewriterText({ text, className, style }: { text: string; className?: 
 
 const AgendaPage = lazy(() => import("./AgendaPage"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
+const AudienceWidget = lazy(() => import("./AudienceWidget"));
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix";
 
