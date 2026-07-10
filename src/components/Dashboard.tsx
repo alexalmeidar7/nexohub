@@ -75,6 +75,7 @@ interface MenuChild {
   page: Page;
   separator?: boolean;
   permKey?: string;
+  children?: MenuChild[];
 }
 interface MenuItem {
   icon: typeof Home;
