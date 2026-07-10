@@ -2012,23 +2012,28 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       audioCtxRef.current.resume().catch(() => {});
     }
 
-    // EMA smoothing state — separate weights for rising vs falling so bars snap up but settle down
-    const smoothed = new Array(BAR_COUNT).fill(8);
-    const ATTACK = 0.45; // weight of new value when rising (higher = more responsive)
-    const RELEASE = 0.12; // weight of new value when falling (lower = smoother decay)
+    // EMA smoothing state — asymmetric attack/release + noise gate + deadband
+    const IDLE_H = 6;
+    const smoothed = new Array(BAR_COUNT).fill(IDLE_H);
+    const ATTACK = 0.28;       // rising response (lower = smoother, higher = snappier)
+    const RELEASE = 0.06;      // falling response (very slow = elegant decay)
+    const NOISE_GATE = 14;     // 0..255; below this we treat the bin as silence
+    const DEADBAND = 0.6;      // px difference below which we skip DOM writes to kill jitter
 
     if (!ok) {
-      // Fallback: pseudo-random reactive-ish motion via rAF (keeps bars alive if analyser blocked)
+      // Fallback: gentle synthetic motion when analyser blocked
       const start = performance.now();
       const tick = () => {
         const t = (performance.now() - start) / 1000;
         barRefs.current.forEach((el, i) => {
           if (!el) return;
-          const v = 0.5 + 0.5 * Math.sin(t * 3 + i * 0.35) * Math.sin(t * 1.3 + i * 0.7);
-          const target = 6 + Math.abs(v) * 50;
+          const v = 0.5 + 0.5 * Math.sin(t * 2.2 + i * 0.35) * Math.sin(t * 1.1 + i * 0.7);
+          const target = IDLE_H + Math.abs(v) * 42;
           const alpha = target > smoothed[i] ? ATTACK : RELEASE;
           smoothed[i] = smoothed[i] + (target - smoothed[i]) * alpha;
-          el.style.height = `${smoothed[i]}px`;
+          if (Math.abs(smoothed[i] - parseFloat(el.style.height || "0")) >= DEADBAND) {
+            el.style.height = `${smoothed[i]}px`;
+          }
         });
         rafRef.current = requestAnimationFrame(tick);
       };
@@ -2046,22 +2051,28 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       for (let i = 0; i < BAR_COUNT; i++) {
         const el = barRefs.current[i];
         if (!el) continue;
-        // Average a small window of bins per bar for smoother movement
+        // Average a small window of bins per bar
         let sum = 0;
         const start = i * step;
         for (let j = 0; j < step; j++) sum += data[start + j] || 0;
         const avg = sum / step; // 0..255
-        const target = 6 + (avg / 255) * 56;
-        // Asymmetric EMA: fast attack, slow release
+        // Noise gate: near-silence collapses to idle instead of jittering
+        const gated = avg < NOISE_GATE ? 0 : (avg - NOISE_GATE) / (255 - NOISE_GATE);
+        const target = IDLE_H + gated * 56;
         const alpha = target > smoothed[i] ? ATTACK : RELEASE;
         smoothed[i] = smoothed[i] + (target - smoothed[i]) * alpha;
-        el.style.height = `${smoothed[i]}px`;
+        // Deadband: skip layout writes for imperceptible changes
+        const current = parseFloat(el.style.height || "0");
+        if (Math.abs(smoothed[i] - current) >= DEADBAND) {
+          el.style.height = `${smoothed[i]}px`;
+        }
       }
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [isBreak, isPlaying]);
+
 
 
   useEffect(() => {
