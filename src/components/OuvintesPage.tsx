@@ -159,7 +159,7 @@ export default function OuvintesPage() {
       escolaridade: form.escolaridade || null,
       renda: form.renda || null,
       sexo: form.sexo || null,
-      pontuacao: Number(form.pontuacao) || 0,
+      // pontuacao NÃO é editada manualmente — é calculada pela participação do ouvinte
     };
 
     let error;
