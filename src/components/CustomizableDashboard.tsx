@@ -181,13 +181,36 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
   const [onAirProgram, setOnAirProgram] = useState<OnAirProgram | null>(null);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string } | null>(null);
   const [onAirSlot, setOnAirSlot] = useState<HTMLElement | null>(null);
+  const [footerEl, setFooterEl] = useState<HTMLElement | null>(null);
+  const [playerMaxHeight, setPlayerMaxHeight] = useState<number>(400);
   useEffect(() => {
-    const findSlot = () => setOnAirSlot(document.getElementById("on-air-info-slot"));
+    const findSlot = () => {
+      setOnAirSlot(document.getElementById("on-air-info-slot"));
+      setFooterEl(document.querySelector("footer"));
+    };
     findSlot();
     const obs = new MutationObserver(findSlot);
     obs.observe(document.body, { childList: true, subtree: true });
     return () => obs.disconnect();
   }, []);
+
+  // Dynamically compute player widget height so it fits between the blue on-air box and the page footer
+  useEffect(() => {
+    const compute = () => {
+      const anchorTop = onAirSlot?.getBoundingClientRect().bottom ?? 120;
+      const footerTop = footerEl?.getBoundingClientRect().top ?? window.innerHeight;
+      const gap = 32; // spacing above and below the player
+      const available = Math.max(220, footerTop - anchorTop - gap);
+      setPlayerMaxHeight(available);
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    const interval = window.setInterval(compute, 800);
+    return () => {
+      window.removeEventListener("resize", compute);
+      window.clearInterval(interval);
+    };
+  }, [onAirSlot, footerEl]);
 
   useEffect(() => {
     if (!user) return;
