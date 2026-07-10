@@ -26,6 +26,8 @@ const PrevisaoTempo = lazy(() => import("./PrevisaoTempo"));
 const RoteiroPrograma = lazy(() => import("./RoteiroPrograma"));
 const WeatherWidget = lazy(() => import("./WeatherWidget"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
+const UpcomingEventsWidget = lazy(() => import("./UpcomingEventsWidget"));
+
 const MusicaNoAr = lazy(() => import("./MusicaNoAr"));
 const AgendaPage = lazy(() => import("./AgendaPage"));
 const MusicWidget = lazy(() => import("./MusicWidget"));
@@ -1180,17 +1182,25 @@ const defaultWidgets: WidgetCard[] = [
   { id: "top10", bg: "glass", render: () => <TopLikedSongs /> },
   { id: "agenda", bg: "glass", render: (onNav: any) => <DashboardAgendaOld onNavigate={onNav} setCurrentPage={(window as any).setCurrentPageGlobal} /> },
   { id: "noar", bg: "glass-dark", render: () => <OnAirWidget /> },
+  { id: "proximos", bg: "glass", render: (nav) => <UpcomingEventsWidget onNavigate={nav} /> },
   { id: "comercial", bg: "glass", render: () => <ComercialWidgets /> },
+
 ];
 
 function DashboardHome({ empresa, onNavigate }: { empresa: import("./ConfiguracoesPage").EmpresaConfig; onNavigate: (page: Page) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
+    const allIds = defaultWidgets.map(w => w.id);
     try {
       const saved = localStorage.getItem(WIDGETS_ORDER_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed: string[] = JSON.parse(saved);
+        // Append any newly added widget IDs that aren't in the saved order
+        const missing = allIds.filter(id => !parsed.includes(id));
+        return [...parsed.filter(id => allIds.includes(id)), ...missing];
+      }
     } catch {}
-    return defaultWidgets.map(w => w.id);
+    return allIds;
   });
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -1198,6 +1208,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   const orderedWidgets = widgetOrder
     .map(id => defaultWidgets.find(w => w.id === id))
     .filter(Boolean) as WidgetCard[];
+
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedId(id);
