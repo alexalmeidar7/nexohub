@@ -98,12 +98,14 @@ const sidebarMenu: MenuItem[] = [
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
   {
-    icon: MonitorPlay, label: "player", children: [
-      { icon: Settings, label: "configurações", page: "playerconfig" },
-      { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
+    icon: Globe, label: "site", children: [
+      { icon: Globe, label: "site", page: "site" },
+      { icon: MonitorPlay, label: "player", page: undefined as unknown as Page, children: [
+        { icon: Settings, label: "configurações", page: "playerconfig" },
+        { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
+      ] },
     ]
   },
-  { icon: Globe, label: "site", page: "site" },
   {
     icon: ShoppingBag, label: "comercial", children: [
       { icon: Film, label: "ADS", page: "preroll" },
