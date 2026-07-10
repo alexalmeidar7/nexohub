@@ -1034,46 +1034,65 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const preferredSource = sourceStats.online >= sourceStats.pasta ? "online" : "pasta";
   const bothActive = isOnlineSelected && isLocalSelected;
 
+  // Nexo Form palette (mesmo do Cadastro de Ouvinte)
+  const NEXO_CYAN = "#00BFF0";
+  const NEXO_CARD_BG = "#D6F4FB";
+  const NEXO_DARK = "#0A2540";
+
   return (
-    <div className="animate-fade-in space-y-3">
-      {/* ═══ MAIN MUSIC CARD ═══ */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "var(--layout-header-bg, #0d0446)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+    <div className="animate-fade-in space-y-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      {/* ═══ MAIN MUSIC CARD (Nexo Form style) ═══ */}
+      <section
+        style={{
+          background: NEXO_CARD_BG,
+          borderRadius: 28,
+          padding: "28px 32px 32px",
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
-              <Music size={16} style={{ color: "var(--layout-header-text, #ffffff)" }} />
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex items-center justify-center"
+              style={{ width: 40, height: 40, borderRadius: 999, background: "#FFFFFF", border: `2px solid ${NEXO_CYAN}` }}
+            >
+              <Music size={18} style={{ color: NEXO_CYAN }} />
             </div>
             <div>
-              <h3 className="text-sm font-bold leading-tight" style={{ color: "var(--layout-header-text, #ffffff)" }}>Música no Ar</h3>
-              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}>MODO UNIFICADO</span>
+              <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: NEXO_DARK, textTransform: "uppercase", margin: 0 }}>
+                Música no Ar
+              </h3>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: NEXO_DARK, background: "#FFFFFF", border: `2px solid ${NEXO_CYAN}`, padding: "3px 10px", borderRadius: 999 }}>
+                  Modo Unificado
+                </span>
                 {bothActive && (
-                  <span className="inline-flex items-center gap-1 text-[7px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#16a34a", border: "1px solid rgba(34,197,94,0.25)" }}>
+                  <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #16a34a", color: "#16a34a" }}>
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ backgroundColor: "#22c55e" }} />
                       <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }} />
                     </span>
-                    DUAL
+                    Dual
                   </span>
                 )}
                 {onlineError && (
-                  <span className="inline-flex items-center gap-1 text-[8px] font-bold px-2 py-1 rounded-full" style={{ backgroundColor: "rgba(239,68,68,0.25)", color: "#ffffff", border: "1px solid rgba(239,68,68,0.5)" }}>
+                  <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #ef4444", color: "#ef4444" }}>
                     <AlertTriangle size={10} className="shrink-0" /> Online: erro
                   </span>
                 )}
                 {!onlineError && onlineDelay && (
-                  <span className="inline-flex items-center gap-1 text-[8px] font-bold px-2 py-1 rounded-full" style={{ backgroundColor: "rgba(250,204,21,0.25)", color: "#ffffff", border: "1px solid rgba(250,204,21,0.5)" }}>
+                  <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #eab308", color: "#a16207" }}>
                     <AlertTriangle size={10} className="shrink-0" /> Online: sem resposta +30s
                   </span>
                 )}
                 {localError && (
-                  <span className="inline-flex items-center gap-1 text-[8px] font-bold px-2 py-1 rounded-full" style={{ backgroundColor: "rgba(239,68,68,0.25)", color: "#ffffff", border: "1px solid rgba(239,68,68,0.5)" }}>
+                  <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #ef4444", color: "#ef4444" }}>
                     <AlertTriangle size={10} className="shrink-0" /> Local: erro
                   </span>
                 )}
                 {!localError && localDelay && (
-                  <span className="inline-flex items-center gap-1 text-[8px] font-bold px-2 py-1 rounded-full" style={{ backgroundColor: "rgba(250,204,21,0.25)", color: "#ffffff", border: "1px solid rgba(250,204,21,0.5)" }}>
+                  <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #eab308", color: "#a16207" }}>
                     <AlertTriangle size={10} className="shrink-0" /> Local: sem resposta +15s
                   </span>
                 )}
@@ -1081,6 +1100,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             </div>
           </div>
         </div>
+
 
         {/* Song display with gradient progress */}
         <div className="px-4 pb-4">
