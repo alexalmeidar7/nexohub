@@ -309,9 +309,26 @@ export default function OuvintesPage() {
               {RENDA_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </Field>
-          <Field label="Pontuação">
-            <input style={pillInput} type="number" step="1" value={form.pontuacao} onChange={(e) => setForm({ ...form, pontuacao: e.target.value })} />
+          <Field label="Pontuação (automática)">
+            <div
+              style={{
+                ...pillInput,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "#F1FAFD",
+                color: DARK,
+                fontWeight: 700,
+              }}
+              title="Calculada automaticamente conforme a participação do ouvinte"
+            >
+              <span style={{ fontSize: 16, color: CYAN, fontWeight: 800 }}>{editingId ? (form.pontuacao || "0") : "0"}</span>
+              <span style={{ fontSize: 10, color: "#64748B", letterSpacing: 1, textTransform: "uppercase" }}>
+                gerado pela participação
+              </span>
+            </div>
           </Field>
+
         </div>
 
         <div className="mt-8 flex items-center justify-end gap-3">
