@@ -140,6 +140,31 @@ async function fetchInstagramViaRapidApi(username: string, debug?: string[]): Pr
   return null;
 }
 
+async function fetchInstagramViaSocialBlade(username: string, debug?: string[]): Promise<number | null> {
+  const url = `https://socialblade.com/instagram/user/${encodeURIComponent(username)}`;
+  const html = await fetchHtml(url, UA_DESKTOP);
+  debug?.push(`socialblade html=${html ? html.length : 0}`);
+  if (!html) return null;
+
+  const patterns = [
+    /"followers"\s*:\s*"?(\d[\d,.]*)"?/i,
+    /"followerCount"\s*:\s*"?(\d[\d,.]*)"?/i,
+    /"followers_count"\s*:\s*"?(\d[\d,.]*)"?/i,
+    /(?:followers|seguidores)[^\d]{0,80}(\d[\d,.]*\s*[kmb]?)/i,
+    /(\d[\d,.]*\s*[kmb]?)\s*(?:followers|seguidores)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (!match) continue;
+    const n = parseCompact(match[1]);
+    debug?.push(`socialblade count=${n}`);
+    if (n && n > 0) return n;
+  }
+
+  return null;
+}
+
 async function fetchInstagram(url: string, debug?: string[]): Promise<number | null> {
   // Try public og:description first (usually blocked from datacenter IPs).
   const html = await fetchHtml(url, UA_META);
@@ -158,6 +183,9 @@ async function fetchInstagram(url: string, debug?: string[]): Promise<number | n
   const username = extractInstagramUsername(url);
   debug?.push(`username=${username}`);
   if (username) {
+    const socialBladeCount = await fetchInstagramViaSocialBlade(username, debug);
+    if (socialBladeCount) return socialBladeCount;
+
     const n = await fetchInstagramViaRapidApi(username, debug);
     if (n) return n;
   }
