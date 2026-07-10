@@ -415,6 +415,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             {field("Nº seguidores Facebook", "facebookSubs", "Ex: 25000")}
             {field("Nº inscritos YouTube (opcional)", "youtubeSubs", "Auto se vazio")}
           </div>
+          {field("URL API espectadores de vídeo (Logicahost)", "videoStreamApiUrl", "https://video.logicahost.com.br/api/...")}
         </div>
 
         {/* Credenciais */}
