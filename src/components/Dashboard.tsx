@@ -1035,10 +1035,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               style={{
                 minWidth: "260px",
                 height: "461px",
-                backgroundColor: "rgba(255,255,255,0.6)",
-                backdropFilter: "blur(20px)",
-                border: "1px solid rgba(0,33,50,0.08)",
-                padding: "16px",
+                backgroundColor: "#00d6f9",
+                padding: "20px",
+                ["--layout-widget-text" as any]: "#002132",
+                ["--layout-accent-color" as any]: "#002132",
+                ["--layout-header-text" as any]: "#c3f628",
+                ["--layout-widget-bg" as any]: "#002132",
+                ["--layout-border-color" as any]: "#002132",
               }}
             >
               <Suspense fallback={<div className="w-full h-full" />}>

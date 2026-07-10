@@ -1710,6 +1710,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   const [channels, setChannels] = useState<any[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isMuted, setIsMuted] = useState(() => {
     try { return localStorage.getItem(mutedStorageKey) === "1"; } catch { return false; }
   });
@@ -1908,18 +1909,26 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
   const stopAll = () => {
     destroyHls();
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    if (audioRef.current) {
+      try { audioRef.current.pause(); } catch {}
+      try { audioRef.current.removeAttribute("src"); audioRef.current.load(); } catch {}
+      audioRef.current = null;
+    }
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setShowVideo(false);
     setIsPlaying(false);
+    setIsLoading(false);
   };
 
   const togglePlay = () => {
     if (!activeChannel) return;
-    if (isPlaying) { stopAll(); return; }
+    if (isPlaying || isLoading) { stopAll(); return; }
     // Stop any previous playback without calling stopAll (which resets isPlaying)
     destroyHls();
-    if (audioRef.current) { audioRef.current.pause(); }
+    if (audioRef.current) {
+      try { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); } catch {}
+      audioRef.current = null;
+    }
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setShowVideo(false);
 
@@ -1927,14 +1936,34 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       setShowVideo(true);
       setIsPlaying(true);
     } else {
-      const audio = audioRef.current;
-      if (!audio) return;
-      // Set source and play in user gesture context
-      audio.src = activeChannel.url;
+      // Create a fresh Audio element to guarantee clean state after pause
+      const audio = new Audio();
+      audio.preload = "none";
       audio.volume = volume;
       audio.muted = isMuted;
+      audioRef.current = audio;
+      setIsLoading(true);
+
+      const clearLoading = () => setIsLoading(false);
+      const onPlaying = () => { setIsLoading(false); setIsPlaying(true); };
+      const onError = () => {
+        console.warn("[Player audio] load error");
+        setIsLoading(false);
+        setIsPlaying(false);
+      };
+      const onEnded = () => { setIsPlaying(false); setIsLoading(false); };
+      audio.addEventListener("canplay", clearLoading, { once: true });
+      audio.addEventListener("playing", onPlaying);
+      audio.addEventListener("error", onError);
+      audio.addEventListener("ended", onEnded);
+
+      // Bust cache to force fresh stream connection (avoids stuck buffer after pause)
+      const sep = activeChannel.url.includes("?") ? "&" : "?";
+      audio.src = `${activeChannel.url}${sep}_t=${Date.now()}`;
       audio.play().then(() => setIsPlaying(true)).catch((err) => {
         console.warn("Audio play failed:", err);
+        setIsLoading(false);
+        setIsPlaying(false);
       });
     }
   };
@@ -2314,7 +2343,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           {!compactMode && (
             <div className="flex items-start justify-between gap-2">
               <span className="text-[13px] sm:text-[15px] md:text-[17px] font-medium lowercase tracking-tight truncate min-w-0" style={{ color: "#c8ff00" }}>
-                {isPlaying ? "tocando" : "pausado"}
+                {isLoading ? "carregando..." : isPlaying ? "tocando" : "pausado"}
               </span>
             </div>
           )}
@@ -2367,11 +2396,13 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
               onClick={togglePlay}
               className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
               style={{ background: "#001e2d" }}
-              title={isPlaying ? "Pausar" : "Reproduzir"}
+              title={isLoading ? "Carregando..." : isPlaying ? "Pausar" : "Reproduzir"}
             >
-              {isPlaying
-                ? <Pause size={compactMode ? 11 : 12} style={{ color: "#c8ff00" }} fill="#c8ff00" />
-                : <Play size={compactMode ? 11 : 12} style={{ color: "#c8ff00", marginLeft: 1 }} fill="#c8ff00" />}
+              {isLoading
+                ? <Loader2 size={compactMode ? 12 : 14} className="animate-spin" style={{ color: "#c8ff00" }} />
+                : isPlaying
+                  ? <Pause size={compactMode ? 11 : 12} style={{ color: "#c8ff00" }} fill="#c8ff00" />
+                  : <Play size={compactMode ? 11 : 12} style={{ color: "#c8ff00", marginLeft: 1 }} fill="#c8ff00" />}
             </button>
             <VolumeSliderControl
               compactMode={compactMode}
