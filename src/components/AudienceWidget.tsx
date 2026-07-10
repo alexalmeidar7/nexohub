@@ -84,6 +84,30 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
+  // Poll Icecast/Shoutcast stats for live audio listener count.
+  useEffect(() => {
+    if (!dataUserId) return;
+    let cancelled = false;
+    const tick = async () => {
+      const { data } = await supabase.functions.invoke("count-stream-listeners", {
+        body: { userId: dataUserId },
+      });
+      if (cancelled) return;
+      if (data && (data as any).ok) {
+        const n = (data as any).listeners;
+        setStreamingCount(typeof n === "number" ? n : null);
+      }
+      setLoadingStreaming(false);
+    };
+    tick();
+    const iv = setInterval(tick, LISTENERS_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
+  }, [dataUserId]);
+
+
 
   // Rotate social display every 3s (only across configured networks)
   useEffect(() => {
