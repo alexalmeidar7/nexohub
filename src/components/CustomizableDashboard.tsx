@@ -1711,6 +1711,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const isPlayingRef = useRef(false);
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
   const [isMuted, setIsMuted] = useState(() => {
     try { return localStorage.getItem(mutedStorageKey) === "1"; } catch { return false; }
   });
