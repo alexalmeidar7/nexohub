@@ -1094,6 +1094,24 @@ export type Database = {
         }
         Relationships: []
       }
+      player_heartbeats: {
+        Row: {
+          last_seen: string
+          master_user_id: string
+          session_id: string
+        }
+        Insert: {
+          last_seen?: string
+          master_user_id: string
+          session_id: string
+        }
+        Update: {
+          last_seen?: string
+          master_user_id?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
       preset_commands: {
         Row: {
           commands: Json
