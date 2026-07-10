@@ -603,7 +603,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                     boxShadow: isDragOver ? "0 0 0 2px var(--layout-accent-color), 0 4px 20px rgba(0,0,0,0.12)" : "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
                     borderRadius: "24px",
                     height: item.widgetType === "player" ? "auto" : "280px",
-                    minHeight: item.widgetType === "player" ? "180px" : undefined,
+                    minHeight: item.widgetType === "player" ? "260px" : undefined,
                     maxHeight: item.widgetType === "player" ? "none" : "280px",
                     overflow: item.widgetType === "player" && playerVideoActive === item.id ? "visible" : "hidden",
                   }}
@@ -611,24 +611,36 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                   onDrop={() => handleDrop(item.id)}
                   onDragEnd={handleDragEnd}
                 >
-                  <div
-                    className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0"
-                    style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }}
-                    draggable
-                    onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
-                  >
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
-                      {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "stats" && <BarChart3 size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "player" && <Radio size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                  {item.widgetType !== "player" && (
+                    <div
+                      className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0"
+                      style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }}
+                      draggable
+                      onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
+                    >
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
+                        {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "stats" && <BarChart3 size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                      </div>
+                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
+                        {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Estatísticas"}
+                      </span>
+                      <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
                     </div>
-                    <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
-                      {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : item.widgetType === "player" ? "Player" : "Estatísticas"}
-                    </span>
-                    <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
-                  </div>
+                  )}
+                  {item.widgetType === "player" && (
+                    <div
+                      className="absolute top-2 left-2 z-20 w-6 h-6 rounded-lg flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }}
+                      draggable
+                      onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
+                      title="Arrastar"
+                    >
+                      <GripVertical size={10} style={{ color: "rgba(255,255,255,0.7)" }} />
+                    </div>
+                  )}
                   <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
                     <button
                       onClick={() => removeItem(item.id)}
@@ -638,7 +650,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                       <X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} />
                     </button>
                   </div>
-                  <div className={`p-4 flex-1 ${item.widgetType === "player" && playerVideoActive === item.id ? "overflow-visible" : "overflow-y-auto overflow-x-hidden"} widget-scroll`}>
+                  <div className={`${item.widgetType === "player" ? "p-0" : "p-4"} flex-1 ${item.widgetType === "player" && playerVideoActive === item.id ? "overflow-visible" : item.widgetType === "player" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"} widget-scroll`}>
                     <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
                       {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
                       {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
@@ -1853,7 +1865,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
   }, [displayArt]);
 
   return (
-    <div className="flex flex-col h-full relative rounded-2xl overflow-hidden" style={{ background: "#000", minHeight: 200 }}>
+    <div className="flex flex-col h-full relative rounded-3xl overflow-hidden" style={{ background: "#000", minHeight: 260 }}>
       {/* Background artist image */}
       <div className="absolute inset-0 pointer-events-none">
         {fadingArt && (
@@ -1872,7 +1884,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
 
       {/* Video overlay (grows upward) */}
       <div
-        className="absolute left-0 right-0 overflow-hidden rounded-2xl pointer-events-none"
+        className="absolute left-0 right-0 overflow-hidden rounded-3xl pointer-events-none"
         style={{
           bottom: "100%",
           marginBottom: showVideo && isVideo ? "8px" : "0px",
@@ -1898,39 +1910,34 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
       {channels.length === 0 ? (
         <p className="text-white/40 text-xs relative z-10 m-auto">Nenhum canal cadastrado</p>
       ) : (
-        <div className="relative z-10 flex flex-col justify-between h-full p-4" style={{ minHeight: 200 }}>
+        <div className="relative z-10 flex flex-col justify-between h-full p-5" style={{ minHeight: 260 }}>
           {/* Top row: "tocando" label + circular controls */}
           <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-1.5 min-w-0">
-              {isPlaying && (
-                <Circle size={7} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse flex-shrink-0" />
-              )}
-              <span className="text-[15px] font-medium lowercase tracking-tight truncate" style={{ color: "var(--layout-accent-color, #c8ff00)" }}>
-                {isPlaying ? "tocando" : "pausado"}
-              </span>
-            </div>
+            <span className="text-[22px] font-medium lowercase tracking-tight truncate" style={{ color: "#c8ff00" }}>
+              {isPlaying ? "tocando" : "pausado"}
+            </span>
 
             <div className="flex flex-col gap-2 flex-shrink-0">
               <button
                 onClick={togglePlay}
                 className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
-                style={{ background: "rgba(0, 30, 45, 0.95)" }}
+                style={{ background: "#001e2d" }}
                 title={isPlaying ? "Pausar" : "Reproduzir"}
               >
                 {isPlaying
-                  ? <Pause size={16} style={{ color: "var(--layout-accent-color, #c8ff00)" }} fill="currentColor" />
-                  : <Play size={16} style={{ color: "var(--layout-accent-color, #c8ff00)", marginLeft: 2 }} fill="currentColor" />}
+                  ? <Pause size={16} style={{ color: "#c8ff00" }} fill="#c8ff00" />
+                  : <Play size={16} style={{ color: "#c8ff00", marginLeft: 2 }} fill="#c8ff00" />}
               </button>
               <div className="relative group/vol">
                 <button
                   onClick={toggleMute}
                   className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
-                  style={{ background: "var(--layout-accent-color, #c8ff00)" }}
+                  style={{ background: "#c8ff00" }}
                   title={isMuted ? "Ativar som" : "Mudo"}
                 >
                   {isMuted || volume === 0
                     ? <VolumeX size={16} style={{ color: "#001e2d" }} />
-                    : <Volume2 size={16} style={{ color: "#001e2d" }} />}
+                    : <Volume2 size={16} style={{ color: "#001e2d" }} fill="#001e2d" />}
                 </button>
                 {/* Volume slider popover on hover */}
                 <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 opacity-0 pointer-events-none group-hover/vol:opacity-100 group-hover/vol:pointer-events-auto transition-opacity duration-150 z-30">
@@ -1964,10 +1971,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
             <div className="min-w-0 flex-1">
               {currentMusic ? (
                 <>
-                  <p className="text-[20px] font-extrabold leading-tight truncate" style={{ color: "var(--layout-accent-color, #c8ff00)" }}>
+                  <p className="text-[24px] font-extrabold leading-[1.05] truncate" style={{ color: "#c8ff00" }}>
                     <TypewriterText text={currentMusic.titulo || ""} />
                   </p>
-                  <p className="text-white text-[18px] font-extrabold leading-tight truncate">
+                  <p className="text-[20px] font-extrabold leading-[1.1] truncate" style={{ color: "#ffffff" }}>
                     <TypewriterText text={currentMusic.artista || ""} />
                   </p>
                 </>
