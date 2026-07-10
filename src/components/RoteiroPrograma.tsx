@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check, RefreshCw, ChevronDown, ChevronUp, Zap, Bot } from "lucide-react";
 import { toast } from "sonner";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
@@ -51,6 +51,8 @@ export default function RoteiroPrograma() {
   const [externalPasteText, setExternalPasteText] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"recentes" | "historico">("recentes");
   const [historicoOpen, setHistoricoOpen] = useState(true);
+  const [novoRoteiroOpen, setNovoRoteiroOpen] = useState(false);
+  const [automacaoOpen, setAutomacaoOpen] = useState(false);
 
   const roteiroToPlainText = (r: any): string => {
     let parts: any = null;
@@ -745,14 +747,78 @@ export default function RoteiroPrograma() {
         <ProgramaExpressInline
           programas={programas}
           estudios={estudios}
-          onFinish={async () => { setExpressEditData(null); await fetchHistorico(); }}
+          onFinish={async () => { setExpressEditData(null); setNovoRoteiroOpen(false); await fetchHistorico(); }}
           editData={expressEditData}
+          novoOpen={novoRoteiroOpen}
+          onNovoOpenChange={setNovoRoteiroOpen}
+          hideNovoToggle
           afterHeader={<>
+            <div className="px-6 pt-4 pb-2" style={MONT}>
+              <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+                <button
+                  onClick={() => { setAutomacaoOpen(false); setNovoRoteiroOpen(o => !o); }}
+                  style={{
+                    ...MONT,
+                    height: 64,
+                    padding: "0 22px",
+                    borderRadius: 20,
+                    background: novoRoteiroOpen ? CYAN : "#FFFFFF",
+                    color: novoRoteiroOpen ? "#FFFFFF" : DARK,
+                    border: `2px solid ${CYAN}`,
+                    fontSize: 13,
+                    fontWeight: 800,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    cursor: "pointer",
+                    boxShadow: novoRoteiroOpen ? "0 6px 20px rgba(0, 191, 240, 0.35)" : "0 2px 10px rgba(10, 37, 64, 0.06)",
+                    transition: "all 0.2s ease",
+                  }}
+                  title="Abrir formulário de novo roteiro"
+                >
+                  <Zap size={16} />
+                  Novo Roteiro
+                </button>
+                <button
+                  onClick={() => { setNovoRoteiroOpen(false); setAutomacaoOpen(o => !o); }}
+                  style={{
+                    ...MONT,
+                    height: 64,
+                    padding: "0 22px",
+                    borderRadius: 20,
+                    background: automacaoOpen ? "#8b5cf6" : "#FFFFFF",
+                    color: automacaoOpen ? "#FFFFFF" : DARK,
+                    border: `2px solid #8b5cf6`,
+                    fontSize: 13,
+                    fontWeight: 800,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    cursor: "pointer",
+                    boxShadow: automacaoOpen ? "0 6px 20px rgba(139, 92, 246, 0.35)" : "0 2px 10px rgba(10, 37, 64, 0.06)",
+                    transition: "all 0.2s ease",
+                  }}
+                  title="Abrir automação de programa"
+                >
+                  <Bot size={16} />
+                  Automação de Programa
+                </button>
+              </div>
+            </div>
             {historicoSlot}
             <Suspense fallback={null}>
               <AutomacaoProgramaSection
                 programas={programas}
                 onGenerateRoteiro={(text) => setExternalPasteText(text)}
+                open={automacaoOpen}
+                onOpenChange={setAutomacaoOpen}
+                hideToggle
               />
             </Suspense>
             {estudios.length > 0 && (

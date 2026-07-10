@@ -69,6 +69,9 @@ interface Props {
   afterHeader?: React.ReactNode;
   externalPasteText?: string | null;
   onExternalPasteConsumed?: () => void;
+  novoOpen?: boolean;
+  onNovoOpenChange?: (v: boolean) => void;
+  hideNovoToggle?: boolean;
 }
 
 /* Inline participant row with editable cargo */
@@ -203,7 +206,7 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
   );
 }
 
-export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader, externalPasteText, onExternalPasteConsumed }: Props) {
+export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader, externalPasteText, onExternalPasteConsumed, novoOpen, onNovoOpenChange, hideNovoToggle }: Props) {
   const { user } = useAuth();
   const [estudio, setEstudio] = useState("");
   const [programaId, setProgramaId] = useState("");
@@ -232,7 +235,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [addingWeather, setAddingWeather] = useState(false);
   const [addingFinance, setAddingFinance] = useState(false);
-  const [novoRoteiroOpen, setNovoRoteiroOpen] = useState(false);
+  const [novoRoteiroOpenInternal, setNovoRoteiroOpenInternal] = useState(false);
+  const novoRoteiroOpen = novoOpen !== undefined ? novoOpen : novoRoteiroOpenInternal;
+  const setNovoRoteiroOpen = (v: boolean | ((p: boolean) => boolean)) => {
+    const next = typeof v === "function" ? (v as any)(novoRoteiroOpen) : v;
+    if (onNovoOpenChange) onNovoOpenChange(next);
+    if (novoOpen === undefined) setNovoRoteiroOpenInternal(next);
+  };
   useEffect(() => { if (editData) setNovoRoteiroOpen(true); }, [editData]);
   useEffect(() => { if (externalPasteText) setNovoRoteiroOpen(true); }, [externalPasteText]);
 
@@ -1143,6 +1152,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       </div>
 
       {afterHeader}
+      {!hideNovoToggle && (
       <div className="px-6 pt-4 pb-2">
         <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
           <button
@@ -1165,6 +1175,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </button>
         </div>
       </div>
+      )}
 
       {novoRoteiroOpen && (
       <div className="p-6 space-y-5">

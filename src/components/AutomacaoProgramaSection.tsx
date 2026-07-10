@@ -29,6 +29,9 @@ interface Props {
   programas: Programa[];
   onGenerateRoteiro: (pasteText: string) => void;
   hideAiProductionConfig?: boolean;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  hideToggle?: boolean;
 }
 
 const DIAS = [
@@ -41,7 +44,7 @@ const DIAS = [
   { key: "dom", label: "Dom" },
 ];
 
-export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro, hideAiProductionConfig }: Props) {
+export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro, hideAiProductionConfig, open, onOpenChange, hideToggle }: Props) {
   const { user } = useAuth();
   const [automacoes, setAutomacoes] = useState<Automacao[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +52,13 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [sectionOpen, setSectionOpen] = useState(false);
+  const [sectionOpenInternal, setSectionOpenInternal] = useState(false);
+  const sectionOpen = open !== undefined ? open : sectionOpenInternal;
+  const setSectionOpen = (v: boolean | ((p: boolean) => boolean)) => {
+    const next = typeof v === "function" ? (v as any)(sectionOpen) : v;
+    if (onOpenChange) onOpenChange(next);
+    if (open === undefined) setSectionOpenInternal(next);
+  };
   const [promptAi, setPromptAi] = useState(localStorage.getItem("producao_ai_prompt") || "");
 
   // Form state
@@ -190,16 +199,23 @@ export default function AutomacaoProgramaSection({ programas, onGenerateRoteiro,
 
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSectionOpen(o => !o)}
-              className="flex items-center gap-2 flex-1 text-left hover:opacity-80 transition"
-            >
-              <Bot size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-              <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Automatização de Programa</p>
-              {sectionOpen
-                ? <ChevronUp size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                : <ChevronDown size={12} style={{ color: "var(--layout-icon-color, #888)" }} />}
-            </button>
+            {!hideToggle ? (
+              <button
+                onClick={() => setSectionOpen(o => !o)}
+                className="flex items-center gap-2 flex-1 text-left hover:opacity-80 transition"
+              >
+                <Bot size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Automatização de Programa</p>
+                {sectionOpen
+                  ? <ChevronUp size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                  : <ChevronDown size={12} style={{ color: "var(--layout-icon-color, #888)" }} />}
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 flex-1">
+                <Bot size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Automatização de Programa</p>
+              </div>
+            )}
             {sectionOpen && !showForm && (
               <button
                 onClick={() => { resetForm(); setShowForm(true); }}
