@@ -2319,10 +2319,21 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         }}
       >
         {fadingArt && (
-          <img src={fadingArt} alt="" className="absolute left-0 w-full h-full object-cover object-top" style={{ top: "-30px", transition: imgFadeTransition, opacity: 0 }} />
+          <img
+            src={fadingArt}
+            alt=""
+            className="absolute left-0 w-full object-cover object-top"
+            style={{ top: "-30px", height: "calc(100% + 30px)", transition: imgFadeTransition, opacity: 0 }}
+          />
         )}
         {visibleArt ? (
-          <img src={visibleArt} alt="" className="absolute left-0 w-full h-full object-cover object-top" style={{ top: "-30px", transition: imgFadeTransition, opacity: artOpacity }} />
+          <img
+            src={visibleArt}
+            alt=""
+            className="absolute left-0 w-full object-cover object-top"
+            style={{ top: "-30px", height: "calc(100% + 30px)", transition: imgFadeTransition, opacity: artOpacity }}
+          />
+
 
 
         ) : (
