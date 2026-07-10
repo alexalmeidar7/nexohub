@@ -206,7 +206,7 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
   );
 }
 
-export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader, externalPasteText, onExternalPasteConsumed }: Props) {
+export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader, externalPasteText, onExternalPasteConsumed, novoOpen, onNovoOpenChange, hideNovoToggle }: Props) {
   const { user } = useAuth();
   const [estudio, setEstudio] = useState("");
   const [programaId, setProgramaId] = useState("");
