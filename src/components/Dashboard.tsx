@@ -775,7 +775,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               return (
                                 <button
                                   key={grand.label}
-                                  onClick={() => handleChildClick(grand, item.label)}
+                                  onClick={() => handleChildClick(grand, child.label)}
                                   className="w-full text-left pl-9 pr-4 py-1.5 text-[11px] flex items-center gap-2 transition-all"
                                   style={{ color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
                                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; e.currentTarget.style.color = layoutColors.accentColor; }}
