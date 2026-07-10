@@ -183,9 +183,9 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                 onClick={() => setSelected(d)}
                 className="group flex flex-col items-center justify-center rounded-md py-0.5 transition-all"
                 style={{
-                  background: isSel ? accent : "transparent",
+                  background: isSel ? accent : isToday ? "#ffffff" : "transparent",
                   border: isToday && !isSel ? `1px solid ${accent}` : "1px solid transparent",
-                  color: isSel ? "var(--layout-header-text, #ffffff)" : textColor,
+                  color: isSel ? "var(--layout-header-text, #ffffff)" : isToday ? "#111111" : textColor,
                 }}
               >
                 <span className="text-[7.5px] uppercase font-semibold leading-none" style={{ opacity: isSel ? 0.9 : 0.5 }}>
