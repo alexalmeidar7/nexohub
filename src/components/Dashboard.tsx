@@ -637,7 +637,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           className="flex flex-col items-center py-4 gap-2 rounded-full relative overflow-visible"
           style={{
             width: "58px",
-            backgroundColor: layoutColors.navBg,
+            backgroundColor: `color-mix(in srgb, ${layoutColors.navBg} 95%, transparent)`,
             boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
           }}
         >
