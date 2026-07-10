@@ -1909,18 +1909,26 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
   const stopAll = () => {
     destroyHls();
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    if (audioRef.current) {
+      try { audioRef.current.pause(); } catch {}
+      try { audioRef.current.removeAttribute("src"); audioRef.current.load(); } catch {}
+      audioRef.current = null;
+    }
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setShowVideo(false);
     setIsPlaying(false);
+    setIsLoading(false);
   };
 
   const togglePlay = () => {
     if (!activeChannel) return;
-    if (isPlaying) { stopAll(); return; }
+    if (isPlaying || isLoading) { stopAll(); return; }
     // Stop any previous playback without calling stopAll (which resets isPlaying)
     destroyHls();
-    if (audioRef.current) { audioRef.current.pause(); }
+    if (audioRef.current) {
+      try { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); } catch {}
+      audioRef.current = null;
+    }
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setShowVideo(false);
 
@@ -1928,14 +1936,34 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       setShowVideo(true);
       setIsPlaying(true);
     } else {
-      const audio = audioRef.current;
-      if (!audio) return;
-      // Set source and play in user gesture context
-      audio.src = activeChannel.url;
+      // Create a fresh Audio element to guarantee clean state after pause
+      const audio = new Audio();
+      audio.preload = "none";
       audio.volume = volume;
       audio.muted = isMuted;
+      audioRef.current = audio;
+      setIsLoading(true);
+
+      const clearLoading = () => setIsLoading(false);
+      const onPlaying = () => { setIsLoading(false); setIsPlaying(true); };
+      const onError = () => {
+        console.warn("[Player audio] load error");
+        setIsLoading(false);
+        setIsPlaying(false);
+      };
+      const onEnded = () => { setIsPlaying(false); setIsLoading(false); };
+      audio.addEventListener("canplay", clearLoading, { once: true });
+      audio.addEventListener("playing", onPlaying);
+      audio.addEventListener("error", onError);
+      audio.addEventListener("ended", onEnded);
+
+      // Bust cache to force fresh stream connection (avoids stuck buffer after pause)
+      const sep = activeChannel.url.includes("?") ? "&" : "?";
+      audio.src = `${activeChannel.url}${sep}_t=${Date.now()}`;
       audio.play().then(() => setIsPlaying(true)).catch((err) => {
         console.warn("Audio play failed:", err);
+        setIsLoading(false);
+        setIsPlaying(false);
       });
     }
   };
