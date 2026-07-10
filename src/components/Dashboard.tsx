@@ -921,10 +921,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="px-3 lg:px-6 pb-4 relative z-[1]">
             <div className="flex flex-row gap-4 items-stretch">
             <div
-              className="rounded-3xl relative"
+              className="rounded-3xl relative shrink min-w-0"
               style={{
                 width: "778px",
-                flexShrink: 0,
+                flexShrink: 1,
                 maxWidth: "100%",
                 height: "461px",
                 backgroundColor: "#00d6f9",
