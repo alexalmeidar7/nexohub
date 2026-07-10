@@ -1028,9 +1028,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
             {/* Calendário Próximos Eventos — ao lado do "No Ar" */}
             <div
-              className="rounded-3xl relative overflow-hidden flex-1"
+              className="rounded-3xl relative overflow-hidden flex-1 min-w-0"
               style={{
-                minWidth: "320px",
                 height: "461px",
                 backgroundColor: "rgba(255,255,255,0.6)",
                 backdropFilter: "blur(20px)",
