@@ -134,7 +134,7 @@ async function diag(url: string): Promise<any> {
   try {
     const r = await fetch(url, {
       headers: {
-        "User-Agent": UA_META,
+        "User-Agent": UA_DESKTOP,
         "Accept-Language": "en-US,en;q=0.9,pt-BR;q=0.8",
         Accept: "text/html,application/xhtml+xml",
       },
@@ -142,7 +142,12 @@ async function diag(url: string): Promise<any> {
     });
     const txt = r.ok ? await r.text() : "";
     const og = txt.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
-    return { status: r.status, bytes: txt.length, og: og ? og[1].slice(0, 300) : null, sample: txt.slice(0, 200) };
+    const subs: string[] = [];
+    const re = /.{0,80}(subscribers|inscritos|Followers|Seguidor|likes|curtidas|gillar|gefällt|aiment|gusta)/gi;
+    let mm;
+    let cnt = 0;
+    while ((mm = re.exec(txt)) && cnt < 6) { subs.push(mm[0]); cnt++; }
+    return { status: r.status, bytes: txt.length, og: og ? og[1].slice(0, 200) : null, hits: subs };
   } catch (e) {
     return { error: String(e) };
   }
