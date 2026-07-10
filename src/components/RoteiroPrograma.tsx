@@ -511,62 +511,6 @@ export default function RoteiroPrograma() {
                 ? <ChevronUp size={14} style={{ color: CYAN }} />
                 : <ChevronDown size={14} style={{ color: "#94A3B8" }} />}
             </button>
-            {historicoOpen && (
-              <div className="flex items-center gap-2 ml-1">
-                {(["recentes", "historico"] as const).map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setActiveTab(t)}
-                    style={{
-                      ...MONT,
-                      height: 30,
-                      padding: "0 14px",
-                      borderRadius: 999,
-                      background: activeTab === t ? CYAN : "#FFFFFF",
-                      color: activeTab === t ? "#FFFFFF" : DARK,
-                      border: `2px solid ${CYAN}`,
-                      fontSize: 10,
-                      fontWeight: 800,
-                      letterSpacing: 1,
-                      textTransform: "uppercase",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {t === "recentes" ? "Cards" : "Histórico (30d)"}
-                  </button>
-                ))}
-              </div>
-            )}
-            {historicoOpen && activeTab === "recentes" && (
-              <button
-                onClick={regenerateAllXmls}
-                disabled={regenerating}
-                style={{
-                  ...MONT,
-                  marginLeft: "auto",
-                  height: 32,
-                  padding: "0 16px",
-                  borderRadius: 999,
-                  background: LIME,
-                  color: DARK,
-                  border: "none",
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: 1.2,
-                  textTransform: "uppercase",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  cursor: regenerating ? "wait" : "pointer",
-                  opacity: regenerating ? 0.7 : 1,
-                  boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
-                }}
-                title="Regenerar todos os XMLs com a estrutura atualizada"
-              >
-                <RefreshCw size={12} className={regenerating ? "animate-spin" : ""} />
-                {regenerating ? "Regenerando..." : "Regenerar XMLs"}
-              </button>
-            )}
           </div>
           {historicoOpen && (<>
           {activeTab === "historico" ? (
@@ -663,7 +607,7 @@ export default function RoteiroPrograma() {
                             <div className="flex items-start gap-1.5">
                               <p style={{ ...MONT, flex: 1, fontSize: 13, fontWeight: 800, color: DARK, lineHeight: 1.25, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                 {r.programa_nome || "Sem programa"}
-                                {r.numero_roteiro && <span style={{ fontSize: 10, fontWeight: 700, marginLeft: 6, color: CYAN }}>#{r.numero_roteiro}</span>}
+                                
                               </p>
                               {isAuto && (
                                 <span style={{ ...MONT, fontSize: 9, fontWeight: 800, padding: "3px 8px", borderRadius: 999, background: "#8b5cf6", color: "#fff", letterSpacing: 1 }} title="Gerado por Automação">
