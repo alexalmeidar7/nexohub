@@ -1810,40 +1810,67 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
   };
 
   const channelLogo = activeChannel?.background_url || activeChannel?.logo_url || activeChannel?.cover_url;
-  const displayArt = currentMusic?.capa || channelLogo;
 
-  // Crossfade state for art transitions
+  // Fetch artist image from Deezer for the background
+  const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
+  const artistBgCacheRef = useRef<Record<string, string>>({});
+  useEffect(() => {
+    const artist = (currentMusic?.artista || "").trim();
+    if (!artist) { setArtistBgUrl(null); return; }
+    const cacheKey = artist.toLowerCase();
+    if (artistBgCacheRef.current[cacheKey]) {
+      setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-artist-image", { body: { artist } });
+        if (cancelled) return;
+        if (error || !data?.ok || !data?.url) { setArtistBgUrl(null); return; }
+        artistBgCacheRef.current[cacheKey] = data.url;
+        setArtistBgUrl(data.url);
+      } catch { if (!cancelled) setArtistBgUrl(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [currentMusic?.artista]);
+
+  const displayArt = artistBgUrl || currentMusic?.capa || channelLogo;
+
+  // Crossfade for background art
   const [visibleArt, setVisibleArt] = useState(displayArt);
   const [fadingArt, setFadingArt] = useState<string | null>(null);
   const [artOpacity, setArtOpacity] = useState(1);
 
   useEffect(() => {
     if (displayArt === visibleArt) return;
-    // Start crossfade: show old art fading out while new fades in
     setFadingArt(visibleArt || null);
     setVisibleArt(displayArt);
     setArtOpacity(0);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setArtOpacity(1));
-    });
+    requestAnimationFrame(() => { requestAnimationFrame(() => setArtOpacity(1)); });
     const timer = setTimeout(() => setFadingArt(null), 600);
     return () => clearTimeout(timer);
   }, [displayArt]);
 
   return (
-    <div className="flex flex-col h-full relative">
-      {/* Blurred background art with crossfade */}
-      <div className="absolute inset-0 -m-4 overflow-hidden pointer-events-none rounded-2xl">
+    <div className="flex flex-col h-full relative rounded-2xl overflow-hidden" style={{ background: "#000", minHeight: 200 }}>
+      {/* Background artist image */}
+      <div className="absolute inset-0 pointer-events-none">
         {fadingArt && (
-          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(28px) brightness(0.28) saturate(1.4)", transform: "scale(1.3)", transition: "opacity 0.6s ease-out", opacity: 0 }} />
+          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ transition: "opacity 0.6s ease-out", opacity: 0 }} />
         )}
-        {visibleArt && (
-          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(28px) brightness(0.28) saturate(1.4)", transform: "scale(1.3)", transition: "opacity 0.6s ease-out", opacity: artOpacity }} />
+        {visibleArt ? (
+          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ transition: "opacity 0.6s ease-out", opacity: artOpacity }} />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Tv size={40} className="text-white/10" />
+          </div>
         )}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.92) 100%)" }} />
+        {/* Vignette to guarantee text contrast */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.85) 100%)" }} />
       </div>
 
-      {/* Video area — grows UPWARD as an overlay, anchored to top of widget */}
+      {/* Video overlay (grows upward) */}
       <div
         className="absolute left-0 right-0 overflow-hidden rounded-2xl pointer-events-none"
         style={{
@@ -1868,92 +1895,113 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
         </div>
       </div>
 
-      {/* Controls */}
       {channels.length === 0 ? (
-        <p className="text-white/30 text-xs relative z-10 my-auto">Nenhum canal cadastrado</p>
+        <p className="text-white/40 text-xs relative z-10 m-auto">Nenhum canal cadastrado</p>
       ) : (
-        <div className="relative z-10 flex flex-col gap-3 flex-shrink-0 my-auto">
-          {/* Main row: cover + info + nav */}
-          <div className="flex items-center gap-3">
-            {/* Cover art — bigger square in audio mode, hidden in video mode */}
-            <div
-              className="rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative"
-              style={{
-                width: showVideo && isVideo ? 0 : 72,
-                height: showVideo && isVideo ? 0 : 72,
-                opacity: showVideo && isVideo ? 0 : 1,
-                marginRight: showVideo && isVideo ? -12 : 0,
-                transition: "width 0.4s cubic-bezier(0.4,0,0.2,1), height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease, margin 0.4s ease",
-                background: "rgba(255,255,255,0.05)",
-                boxShadow: "0 6px 20px rgba(0,0,0,0.55)",
-              }}
-            >
-              {fadingArt && (
-                <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" style={{ transition: "opacity 0.5s ease-out", opacity: 0 }} />
+        <div className="relative z-10 flex flex-col justify-between h-full p-4" style={{ minHeight: 200 }}>
+          {/* Top row: "tocando" label + circular controls */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {isPlaying && (
+                <Circle size={7} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse flex-shrink-0" />
               )}
-              {visibleArt ? (
-                <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" style={{ transition: "opacity 0.5s ease-out", opacity: artOpacity }} />
-              ) : (
-                <Tv size={26} className="text-white/20" />
-              )}
-              {isPlaying && !isVideo && (
-                <div className="absolute bottom-1.5 right-1.5 flex items-end gap-[2px] h-3 px-1 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}>
-                  {[0, 1, 2, 3].map(i => (
-                    <div key={i} className="w-[2px] rounded-full" style={{ background: "var(--layout-accent-color)", animation: `eq-bar 0.${4 + i}s ease-in-out infinite alternate`, height: `${5 + Math.random() * 7}px` }} />
-                  ))}
-                </div>
-              )}
+              <span className="text-[15px] font-medium lowercase tracking-tight truncate" style={{ color: "var(--layout-accent-color, #c8ff00)" }}>
+                {isPlaying ? "tocando" : "pausado"}
+              </span>
             </div>
 
-            {/* Info column */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                {isPlaying && <Circle size={6} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse flex-shrink-0" />}
-                <p className="text-white text-[12px] font-bold truncate">{activeChannel?.name}</p>
-                {isVideo && <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-[1px] rounded ml-auto flex-shrink-0" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}>Vídeo</span>}
+            <div className="flex flex-col gap-2 flex-shrink-0">
+              <button
+                onClick={togglePlay}
+                className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
+                style={{ background: "rgba(0, 30, 45, 0.95)" }}
+                title={isPlaying ? "Pausar" : "Reproduzir"}
+              >
+                {isPlaying
+                  ? <Pause size={16} style={{ color: "var(--layout-accent-color, #c8ff00)" }} fill="currentColor" />
+                  : <Play size={16} style={{ color: "var(--layout-accent-color, #c8ff00)", marginLeft: 2 }} fill="currentColor" />}
+              </button>
+              <div className="relative group/vol">
+                <button
+                  onClick={toggleMute}
+                  className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
+                  style={{ background: "var(--layout-accent-color, #c8ff00)" }}
+                  title={isMuted ? "Ativar som" : "Mudo"}
+                >
+                  {isMuted || volume === 0
+                    ? <VolumeX size={16} style={{ color: "#001e2d" }} />
+                    : <Volume2 size={16} style={{ color: "#001e2d" }} />}
+                </button>
+                {/* Volume slider popover on hover */}
+                <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 opacity-0 pointer-events-none group-hover/vol:opacity-100 group-hover/vol:pointer-events-auto transition-opacity duration-150 z-30">
+                  <div className="rounded-full px-3 py-2 flex items-center" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)" }}>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={isMuted ? 0 : volume}
+                      onChange={e => handleVolume(Number(e.target.value))}
+                      onMouseDown={e => e.stopPropagation()}
+                      onTouchStart={e => e.stopPropagation()}
+                      onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
+                      draggable={false}
+                      className="h-1 appearance-none rounded-full cursor-pointer"
+                      style={{
+                        width: 90,
+                        background: `linear-gradient(to right, var(--layout-accent-color) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.2) ${(isMuted ? 0 : volume) * 100}%)`,
+                        accentColor: "var(--layout-accent-color)",
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
+            </div>
+          </div>
+
+          {/* Bottom: song info + channel nav */}
+          <div className="flex items-end justify-between gap-3">
+            <div className="min-w-0 flex-1">
               {currentMusic ? (
                 <>
-                  <p className="text-white/85 text-[11px] font-semibold truncate leading-tight"><TypewriterText text={currentMusic.titulo || ""} /></p>
-                  <p className="text-white/50 text-[10px] truncate leading-tight"><TypewriterText text={currentMusic.artista || ""} /></p>
+                  <p className="text-[20px] font-extrabold leading-tight truncate" style={{ color: "var(--layout-accent-color, #c8ff00)" }}>
+                    <TypewriterText text={currentMusic.titulo || ""} />
+                  </p>
+                  <p className="text-white text-[18px] font-extrabold leading-tight truncate">
+                    <TypewriterText text={currentMusic.artista || ""} />
+                  </p>
                 </>
               ) : (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 26%, transparent)", color: "var(--layout-accent-color)" }}>CH {activeChannel?.numero_canal}</span>
-                  <span className="text-white/40 text-[10px]">{isPlaying ? "Ao vivo" : "Pausado"}</span>
-                </div>
+                <>
+                  <p className="text-[18px] font-extrabold leading-tight truncate text-white">
+                    {activeChannel?.name}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 26%, transparent)", color: "var(--layout-accent-color)" }}>
+                      CH {activeChannel?.numero_canal}
+                    </span>
+                    {isVideo && <span className="text-[9px] font-bold uppercase tracking-wider text-white/60">Vídeo</span>}
+                  </div>
+                </>
               )}
             </div>
 
-            {/* Channel nav arrows — stacked vertically to save horizontal space */}
             {channels.length > 1 && (
-              <div className="flex flex-col gap-1 flex-shrink-0">
-                <button onClick={goPrev} className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.08)" }} title="Canal anterior">
-                  <ChevronLeft size={13} className="text-white/70" />
+              <div className="flex gap-1.5 flex-shrink-0">
+                <button onClick={goPrev} className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} title="Canal anterior">
+                  <ChevronLeft size={14} className="text-white/80" />
                 </button>
-                <button onClick={goNext} className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.08)" }} title="Próximo canal">
-                  <ChevronRight size={13} className="text-white/70" />
+                <button onClick={goNext} className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} title="Próximo canal">
+                  <ChevronRight size={14} className="text-white/80" />
                 </button>
               </div>
             )}
-          </div>
-
-          {/* Bottom row: play + mute + volume slider (full width) */}
-          <div className="flex items-center gap-2.5">
-            <button onClick={togglePlay} className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 flex-shrink-0 shadow-lg" style={{ background: "var(--layout-accent-color, #d30707)" }} title={isPlaying ? "Pausar" : "Reproduzir"}>
-              {isPlaying ? <Pause size={15} className="text-white" fill="white" /> : <Play size={15} className="text-white ml-0.5" fill="white" />}
-            </button>
-            <button onClick={toggleMute} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.08)" }} title={isMuted ? "Ativar som" : "Mudo"}>
-              {isMuted || volume === 0 ? <VolumeX size={12} className="text-white/60" /> : <Volume2 size={12} className="text-white/60" />}
-            </button>
-            <input type="range" min={0} max={1} step={0.01} value={isMuted ? 0 : volume} onChange={e => handleVolume(Number(e.target.value))} onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onDragStart={e => { e.stopPropagation(); e.preventDefault(); }} draggable={false} className="flex-1 h-1 appearance-none rounded-full cursor-pointer" style={{ background: `linear-gradient(to right, var(--layout-accent-color) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.15) ${(isMuted ? 0 : volume) * 100}%)`, accentColor: "var(--layout-accent-color)" }} />
           </div>
         </div>
       )}
 
       <style>{`
         @keyframes eq-bar { 0% { height: 3px; } 100% { height: 14px; } }
-        @keyframes widget-video-grow { 0% { max-height: 0; opacity: 0; } 100% { max-height: 220px; opacity: 1; } }
       `}</style>
     </div>
   );
