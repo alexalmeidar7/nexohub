@@ -14,6 +14,13 @@ const AutomacaoProgramaSection = lazy(() => import("./AutomacaoProgramaSection")
 import HistoricoTable from "./HistoricoTable";
 import type { ExpressEditData } from "./ProgramaExpressInline";
 
+// Palette (nexo-form-design-system) — mesmo padrão do Cadastro de Ouvinte
+const CYAN = "#00BFF0";
+const LIME = "#C6F03C";
+const CARD_BG = "#D6F4FB";
+const DARK = "#0A2540";
+const MONT: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" };
+
 interface Programa {
   id: string;
   nome: string;
@@ -488,30 +495,41 @@ export default function RoteiroPrograma() {
   const historicoSlot = useMemo(() => {
     if (historico.length === 0) return null;
     return (
-      <div className="px-6 pt-4 pb-2">
-        <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
-          <div className="flex items-center gap-2 mb-2">
+      <div className="px-6 pt-4 pb-2" style={MONT}>
+        <div style={{ background: CARD_BG, borderRadius: 24, padding: "18px 20px" }}>
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
             <button
               onClick={() => setHistoricoOpen(o => !o)}
               className="flex items-center gap-2 hover:opacity-80 transition"
               title={historicoOpen ? "Recolher" : "Expandir"}
             >
-              <History size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-              <span className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Últimos Roteiros</span>
+              <History size={14} style={{ color: CYAN }} />
+              <span style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK }}>
+                Últimos Roteiros
+              </span>
               {historicoOpen
-                ? <ChevronUp size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                : <ChevronDown size={12} style={{ color: "var(--layout-icon-color, #888)" }} />}
+                ? <ChevronUp size={14} style={{ color: CYAN }} />
+                : <ChevronDown size={14} style={{ color: "#94A3B8" }} />}
             </button>
             {historicoOpen && (
-              <div className="flex items-center gap-1 ml-2">
+              <div className="flex items-center gap-2 ml-1">
                 {(["recentes", "historico"] as const).map(t => (
                   <button
                     key={t}
                     onClick={() => setActiveTab(t)}
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-md transition"
                     style={{
-                      backgroundColor: activeTab === t ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "transparent",
-                      color: activeTab === t ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)",
+                      ...MONT,
+                      height: 30,
+                      padding: "0 14px",
+                      borderRadius: 999,
+                      background: activeTab === t ? CYAN : "#FFFFFF",
+                      color: activeTab === t ? "#FFFFFF" : DARK,
+                      border: `2px solid ${CYAN}`,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                      cursor: "pointer",
                     }}
                   >
                     {t === "recentes" ? "Cards" : "Histórico (30d)"}
@@ -523,11 +541,29 @@ export default function RoteiroPrograma() {
               <button
                 onClick={regenerateAllXmls}
                 disabled={regenerating}
-                className="text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 hover:opacity-80 transition disabled:opacity-40 ml-auto"
-                style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}
+                style={{
+                  ...MONT,
+                  marginLeft: "auto",
+                  height: 32,
+                  padding: "0 16px",
+                  borderRadius: 999,
+                  background: LIME,
+                  color: DARK,
+                  border: "none",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: 1.2,
+                  textTransform: "uppercase",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  cursor: regenerating ? "wait" : "pointer",
+                  opacity: regenerating ? 0.7 : 1,
+                  boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
+                }}
                 title="Regenerar todos os XMLs com a estrutura atualizada"
               >
-                <RefreshCw size={10} className={regenerating ? "animate-spin" : ""} />
+                <RefreshCw size={12} className={regenerating ? "animate-spin" : ""} />
                 {regenerating ? "Regenerando..." : "Regenerar XMLs"}
               </button>
             )}
@@ -592,15 +628,15 @@ export default function RoteiroPrograma() {
               <div className="flex flex-col gap-3">
                 {estudios.map(est => (
                   <div key={est}>
-                    <div className="flex items-center gap-2 mb-1.5 px-0.5">
-                      <span className="inline-block w-1 h-3 rounded-full" style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }} />
-                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
+                    <div className="flex items-center gap-2 mb-2 px-0.5">
+                      <span style={{ display: "inline-block", width: 6, height: 14, borderRadius: 999, background: CYAN }} />
+                      <span style={{ ...MONT, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK }}>
                         {est}
                       </span>
-                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                      <span style={{ ...MONT, fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}`, color: CYAN }}>
                         {grupos.get(est)!.length}
                       </span>
-                      <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, color-mix(in srgb, var(--layout-border-color, #333333) 18%, transparent), transparent)" }} />
+                      <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, ${CYAN}55, transparent)` }} />
                     </div>
                     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                       {grupos.get(est)!.map(r => {
@@ -610,24 +646,37 @@ export default function RoteiroPrograma() {
                         const isAuto = typeof r.titulo === "string" && r.titulo.includes("[AUTO]");
                         const cleanTitulo = (r.titulo || "").replace("[AUTO]", "").trim();
                         return (
-                          <div key={r.id} className="flex-shrink-0 rounded-xl p-3 flex flex-col gap-2 transition-all hover:-translate-y-0.5 hover:shadow-md" style={{ minWidth: "230px", maxWidth: "280px", backgroundColor: isAuto ? "color-mix(in srgb, #8b5cf6 6%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: isAuto ? "1px solid color-mix(in srgb, #8b5cf6 45%, transparent)" : "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 10%, transparent)" }}>
+                          <div
+                            key={r.id}
+                            className="flex-shrink-0 flex flex-col gap-2 transition-all hover:-translate-y-0.5"
+                            style={{
+                              ...MONT,
+                              minWidth: 240,
+                              maxWidth: 290,
+                              padding: 14,
+                              borderRadius: 20,
+                              background: "#FFFFFF",
+                              border: `2px solid ${isAuto ? "#8b5cf6" : CYAN}`,
+                              boxShadow: "0 2px 10px rgba(10, 37, 64, 0.06)",
+                            }}
+                          >
                             <div className="flex items-start gap-1.5">
-                              <p className="text-xs font-bold truncate flex-1 leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                              <p style={{ ...MONT, flex: 1, fontSize: 13, fontWeight: 800, color: DARK, lineHeight: 1.25, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                 {r.programa_nome || "Sem programa"}
-                                {r.numero_roteiro && <span className="text-[10px] font-semibold ml-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>#{r.numero_roteiro}</span>}
+                                {r.numero_roteiro && <span style={{ fontSize: 10, fontWeight: 700, marginLeft: 6, color: CYAN }}>#{r.numero_roteiro}</span>}
                               </p>
                               {isAuto && (
-                                <span className="text-[8px] px-1.5 py-0.5 rounded-md font-bold flex-shrink-0" style={{ backgroundColor: "#8b5cf6", color: "#fff" }} title="Gerado por Automação">
+                                <span style={{ ...MONT, fontSize: 9, fontWeight: 800, padding: "3px 8px", borderRadius: 999, background: "#8b5cf6", color: "#fff", letterSpacing: 1 }} title="Gerado por Automação">
                                   AUTO
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-                              <span className="font-semibold">{dataFormatada}</span>
-                              {r.horario && <><span className="opacity-40">·</span><span>{r.horario}</span></>}
+                            <div className="flex items-center gap-2" style={{ fontSize: 10, color: "#64748B", ...MONT, fontWeight: 700 }}>
+                              <span>{dataFormatada}</span>
+                              {r.horario && <><span style={{ color: CYAN }}>·</span><span>{r.horario}</span></>}
                             </div>
                             {cleanTitulo && (
-                              <p className="text-[10px] line-clamp-2 leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 75%, transparent)" }}>
+                              <p style={{ ...MONT, fontSize: 10, lineHeight: 1.4, color: "#475569", margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                                 {cleanTitulo}
                               </p>
                             )}
@@ -656,8 +705,8 @@ export default function RoteiroPrograma() {
                                 msg += `_Nos vemos no programa ;)_`;
                                 setWhatsAppHistoricoData({ titulo: r.titulo || "Roteiro", programaNome: r.programa_nome || "", estudio: r.estudio || "", data: dataStr, horario: r.horario || "", participantes: pList, conteudoTexto: "", _expressFormatted: msg });
                                 setShowWhatsAppDialog(true);
-                              }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(37,211,102,0.08)" }} title="Enviar por WhatsApp">
-                                <MessageSquare size={10} style={{ color: "#25d366" }} />
+                              }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Enviar por WhatsApp">
+                                <MessageSquare size={13} style={{ color: "#25d366" }} />
                               </button>
                               {hasXml && (
                                 <button onClick={async () => {
@@ -667,8 +716,8 @@ export default function RoteiroPrograma() {
                                     await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", r.id);
                                     toast.success("XML atualizado!");
                                   } else toast.error("Falha ao enviar XML");
-                                }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" }} title="Enviar para o XML">
-                                  <Code2 size={10} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                                }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Enviar para o XML">
+                                  <Code2 size={13} style={{ color: CYAN }} />
                                 </button>
                               )}
                               <button onClick={() => {
@@ -685,11 +734,11 @@ export default function RoteiroPrograma() {
                                   } catch {}
                                 }
                                 setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath, podcastData: editPodcastData });
-                              }} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
-                                <Pencil size={10} style={{ color: "var(--layout-icon-color, #888888)" }} />
+                              }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Editar">
+                                <Pencil size={13} style={{ color: DARK }} />
                               </button>
-                              <button onClick={() => excluirRoteiro(r.id)} className="h-6 w-6 flex items-center justify-center rounded-md hover:opacity-70 transition ml-auto" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
-                                <Trash2 size={10} style={{ color: "#dc2626" }} />
+                              <button onClick={() => excluirRoteiro(r.id)} style={{ marginLeft: "auto", width: 30, height: 30, borderRadius: "50%", background: "#FEE2E2", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Excluir">
+                                <Trash2 size={13} style={{ color: "#dc2626" }} />
                               </button>
                             </div>
                           </div>
@@ -721,39 +770,47 @@ export default function RoteiroPrograma() {
           editData={expressEditData}
           afterHeader={<>
             {estudios.length > 0 && (
-              <div className="px-6 pt-4 pb-2">
-                <div className="rounded-xl p-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)" }}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Code2 size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                    <p className="text-[11px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              <div className="px-6 pt-4 pb-2" style={MONT}>
+                <div style={{ background: CARD_BG, borderRadius: 24, padding: "18px 20px" }}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <Code2 size={14} style={{ color: CYAN }} />
+                    <p style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK, margin: 0 }}>
                       XML Roteiro por Estúdio
                     </p>
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full ml-1" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                    <span style={{ ...MONT, fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}`, color: CYAN }}>
                       {estudios.length}
                     </span>
                   </div>
-                  <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                  <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
                     {estudios.map(est => {
                       const xmlUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-roteiro-estudio?user_id=${user?.id || ""}&estudio=${encodeURIComponent(est)}`;
                       return (
-                        <div key={est} className="rounded-lg p-2.5 flex items-center gap-2 transition-all hover:-translate-y-0.5"
-                          style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 16%, transparent)" }}>
-                          <span className="h-7 w-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)" }}>
-                            <Code2 size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+                        <div
+                          key={est}
+                          className="flex items-center gap-3 transition-all hover:-translate-y-0.5"
+                          style={{
+                            ...MONT,
+                            padding: "10px 14px",
+                            borderRadius: 999,
+                            background: "#FFFFFF",
+                            border: `2px solid ${CYAN}`,
+                          }}
+                        >
+                          <span style={{ width: 34, height: 34, borderRadius: "50%", background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <Code2 size={14} style={{ color: CYAN }} />
                           </span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                            <p style={{ ...MONT, fontSize: 9, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#64748B", margin: 0 }}>
                               XML Roteiro
                             </p>
-                            <p className="text-xs font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{est}</p>
+                            <p style={{ ...MONT, fontSize: 13, fontWeight: 800, color: DARK, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{est}</p>
                           </div>
                           <button
                             onClick={() => navigator.clipboard.writeText(xmlUrl).then(() => toast.success(`URL do XML de ${est} copiada!`)).catch(() => toast.error("Erro ao copiar"))}
-                            className="h-7 w-7 flex items-center justify-center rounded-md hover:opacity-80 transition"
-                            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                            style={{ width: 34, height: 34, borderRadius: "50%", background: LIME, color: DARK, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(198, 240, 60, 0.4)" }}
                             title={`Copiar URL: ${xmlUrl}`}
                           >
-                            <Copy size={11} />
+                            <Copy size={13} />
                           </button>
                         </div>
                       );
@@ -761,6 +818,7 @@ export default function RoteiroPrograma() {
                   </div>
                 </div>
               </div>
+
 
             )}
             {historicoSlot}
