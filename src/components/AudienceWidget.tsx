@@ -164,12 +164,16 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           >
             Audiência Online
           </span>
-          <span
-            className="text-xl font-black leading-none"
-            style={{ color: dark }}
-          >
-            {total.toLocaleString("pt-BR")}
-          </span>
+          {loadingConfig ? (
+            <Skeleton width={72} height={18} dark={dark} />
+          ) : (
+            <span
+              className="text-xl font-black leading-none"
+              style={{ color: dark }}
+            >
+              {total.toLocaleString("pt-BR")}
+            </span>
+          )}
         </div>
       </div>
 
@@ -178,6 +182,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           icon={current ? current.icon : <Users size={14} />}
           label={current ? current.label : "Redes sociais"}
           value={current ? current.value : null}
+          loading={loadingConfig || loadingSocial}
           dark={dark}
           rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
         />
@@ -185,16 +190,31 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           icon={<MonitorPlay size={14} />}
           label="Player"
           value={playerCount}
+          loading={loadingPlayer && playerCount === 0}
           dark={dark}
         />
         <StatCell
           icon={<Radio size={14} />}
           label="Streaming"
           value={streamingCount}
+          loading={loadingStreaming && streamingCount === 0}
           dark={dark}
         />
       </div>
     </div>
+  );
+}
+
+function Skeleton({ width, height, dark }: { width: number | string; height: number; dark: string }) {
+  return (
+    <span
+      className="inline-block rounded-md animate-pulse"
+      style={{
+        width,
+        height,
+        background: `${dark}22`,
+      }}
+    />
   );
 }
 
