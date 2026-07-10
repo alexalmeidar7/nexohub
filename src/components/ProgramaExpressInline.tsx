@@ -30,6 +30,35 @@ const BLOCK_COLORS = [
   "#2ec1f7", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316",
 ];
 
+// === Nexo Form Design System (mesmo do Cadastro de Participante) ===
+const NEXO_CYAN = "#00BFF0";
+const NEXO_LIME = "#C6F03C";
+const NEXO_CARD_BG = "#D6F4FB";
+const NEXO_DARK = "#0A2540";
+const nexoPillGhost: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 11,
+  fontWeight: 800,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  padding: "8px 16px",
+  borderRadius: 999,
+  background: "#FFFFFF",
+  border: `2px solid ${NEXO_CYAN}`,
+  color: NEXO_DARK,
+  cursor: "pointer",
+  transition: "opacity .2s",
+};
+const nexoPillPrimary: React.CSSProperties = {
+  ...nexoPillGhost,
+  background: NEXO_CYAN,
+  color: "#FFFFFF",
+  border: `2px solid ${NEXO_CYAN}`,
+};
+
 interface NewsItem {
   titulo: string;
   imagemUrl: string;
