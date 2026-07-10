@@ -222,12 +222,14 @@ function StatCell({
   icon,
   label,
   value,
+  loading,
   dark,
   rotationKey,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number | null;
+  loading?: boolean;
   dark: string;
   rotationKey?: string;
 }) {
@@ -240,12 +242,16 @@ function StatCell({
     >
       <div style={{ color: dark, opacity: 0.75 }}>{icon}</div>
       <div key={rotationKey} className="flex flex-col min-w-0 w-full animate-fade-in">
-        <span
-          className="text-2xl font-black leading-none truncate"
-          style={{ color: dark }}
-        >
-          {display}
-        </span>
+        {loading ? (
+          <Skeleton width="70%" height={22} dark={dark} />
+        ) : (
+          <span
+            className="text-2xl font-black leading-none truncate"
+            style={{ color: dark }}
+          >
+            {display}
+          </span>
+        )}
         <span
           className="text-[9px] font-semibold uppercase mt-1 truncate"
           style={{ color: dark, opacity: 0.6, letterSpacing: 1 }}
