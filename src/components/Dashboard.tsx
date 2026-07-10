@@ -1182,7 +1182,9 @@ const defaultWidgets: WidgetCard[] = [
   { id: "top10", bg: "glass", render: () => <TopLikedSongs /> },
   { id: "agenda", bg: "glass", render: (onNav: any) => <DashboardAgendaOld onNavigate={onNav} setCurrentPage={(window as any).setCurrentPageGlobal} /> },
   { id: "noar", bg: "glass-dark", render: () => <OnAirWidget /> },
+  { id: "proximos", bg: "glass", render: (nav) => <UpcomingEventsWidget onNavigate={nav} /> },
   { id: "comercial", bg: "glass", render: () => <ComercialWidgets /> },
+
 ];
 
 function DashboardHome({ empresa, onNavigate }: { empresa: import("./ConfiguracoesPage").EmpresaConfig; onNavigate: (page: Page) => void }) {
