@@ -1117,15 +1117,21 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setSaving(false);
   };
 
+  // === Nexo Form Design System (mesmo do Cadastro de Participante) ===
+  const NEXO_CYAN = "#00BFF0";
+  const NEXO_CARD_BG = "#D6F4FB";
+  const NEXO_DARK = "#0A2540";
   const inputStyle = {
-    backgroundColor: "rgba(13,4,70,0.03)",
-    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)",
-    color: "var(--layout-page-text, #1a1a1a)",
-  };
+    backgroundColor: "#FFFFFF",
+    border: `2px solid ${NEXO_CYAN}`,
+    color: NEXO_DARK,
+    borderRadius: 10,
+    fontFamily: "'Montserrat', sans-serif",
+  } as React.CSSProperties;
   if (renderAsModal && !novoRoteiroOpen) return null;
 
   const card = (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: renderAsModal ? "0 20px 60px rgba(0,0,0,0.35)" : "0 4px 24px rgba(0,0,0,0.08)", width: "100%" }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background: renderAsModal ? NEXO_CARD_BG : "#ffffff", boxShadow: renderAsModal ? "0 20px 60px rgba(0,0,0,0.35)" : "0 4px 24px rgba(0,0,0,0.08)", width: "100%", fontFamily: "'Montserrat', sans-serif" }}>
       {renderAsModal && (
         <button
           onClick={() => setNovoRoteiroOpen(false)}
