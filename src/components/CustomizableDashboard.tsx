@@ -1762,7 +1762,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     if (!audioRef.current) {
       const audio = new Audio();
       audio.preload = "none";
-      audio.crossOrigin = "anonymous";
+      // Note: crossOrigin intentionally NOT set — many radio streams lack CORS headers
+      // and setting it would break playback. Analyser will taint silently; we handle that below.
       audioRef.current = audio;
     }
     return () => {
