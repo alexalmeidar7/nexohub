@@ -1709,13 +1709,14 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   );
 
   if (renderAsModal) {
-    return (
+    return createPortal(
       <div
         onMouseDown={(e) => { if (e.target === e.currentTarget) setNovoRoteiroOpen(false); }}
         style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(10, 37, 64, 0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 20px", overflowY: "auto" }}
       >
         <div style={{ position: "relative", width: "100%", maxWidth: 980 }}>{card}</div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
