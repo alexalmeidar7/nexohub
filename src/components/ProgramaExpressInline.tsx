@@ -1117,15 +1117,21 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setSaving(false);
   };
 
+  // === Nexo Form Design System (mesmo do Cadastro de Participante) ===
+  const NEXO_CYAN = "#00BFF0";
+  const NEXO_CARD_BG = "#D6F4FB";
+  const NEXO_DARK = "#0A2540";
   const inputStyle = {
-    backgroundColor: "rgba(13,4,70,0.03)",
-    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)",
-    color: "var(--layout-page-text, #1a1a1a)",
-  };
+    backgroundColor: "#FFFFFF",
+    border: `2px solid ${NEXO_CYAN}`,
+    color: NEXO_DARK,
+    borderRadius: 10,
+    fontFamily: "'Montserrat', sans-serif",
+  } as React.CSSProperties;
   if (renderAsModal && !novoRoteiroOpen) return null;
 
   const card = (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: renderAsModal ? "0 20px 60px rgba(0,0,0,0.35)" : "0 4px 24px rgba(0,0,0,0.08)", width: "100%" }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background: renderAsModal ? NEXO_CARD_BG : "#ffffff", boxShadow: renderAsModal ? "0 20px 60px rgba(0,0,0,0.35)" : "0 4px 24px rgba(0,0,0,0.08)", width: "100%", fontFamily: "'Montserrat', sans-serif" }}>
       {renderAsModal && (
         <button
           onClick={() => setNovoRoteiroOpen(false)}
@@ -1136,14 +1142,14 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         </button>
       )}
       {/* Header */}
-      <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-button-bg, #2563eb), color-mix(in srgb, var(--layout-button-bg, #2563eb) 70%, black 30%))", color: "#ffffff" }}>
+      <div className="px-6 py-4 flex items-center justify-between" style={{ background: renderAsModal ? NEXO_CARD_BG : "linear-gradient(135deg, var(--layout-button-bg, #2563eb), color-mix(in srgb, var(--layout-button-bg, #2563eb) 70%, black 30%))", color: renderAsModal ? NEXO_DARK : "#ffffff", borderBottom: renderAsModal ? `1px solid rgba(10,37,64,0.08)` : "none" }}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: renderAsModal ? NEXO_CYAN : "rgba(255,255,255,0.15)", color: renderAsModal ? "#FFFFFF" : "inherit" }}>
             <Zap size={18} />
           </div>
           <div>
-            <h3 className="text-base font-bold drop-shadow-sm">{editingId ? "Monte seu Roteiro" : "Monte seu Roteiro"}</h3>
-            <p className="text-xs drop-shadow-sm flex items-center gap-1.5" style={{ opacity: 1, color: "rgba(255,255,255,0.92)", textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>
+            <h3 className="text-base font-bold" style={{ letterSpacing: renderAsModal ? 2 : 0, textTransform: renderAsModal ? "uppercase" : "none", color: renderAsModal ? NEXO_DARK : "inherit" }}>{editingId ? "Editar Roteiro" : "Novo Roteiro"}</h3>
+            <p className="text-xs flex items-center gap-1.5" style={{ opacity: 1, color: renderAsModal ? "rgba(10,37,64,0.65)" : "rgba(255,255,255,0.92)", textShadow: renderAsModal ? "none" : "0 1px 3px rgba(0,0,0,0.4)" }}>
               {autoSaving ? <><Loader2 size={10} className="animate-spin" /> Salvando...</> : lastAutoSaved ? <><CheckCircle2 size={10} style={{ color: "#22c55e" }} /> Salvo automaticamente</> : "Monte seu roteiro de forma rápida"}
             </p>
           </div>
@@ -1155,12 +1161,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             }
             setShowPastePopup(true);
           }}
-          className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-lg hover:opacity-80 transition-all"
-          style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
+          className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 hover:opacity-80 transition-all"
+          style={{ backgroundColor: renderAsModal ? "#FFFFFF" : "rgba(255,255,255,0.15)", color: renderAsModal ? NEXO_DARK : "var(--layout-header-text, #ffffff)", border: renderAsModal ? `2px solid ${NEXO_CYAN}` : "none", borderRadius: renderAsModal ? 999 : 8, marginRight: renderAsModal ? 44 : 0 }}
         >
           <ClipboardPaste size={13} /> Colar Roteiro
         </button>
       </div>
+
 
       {afterHeader}
       {!hideNovoToggle && (
