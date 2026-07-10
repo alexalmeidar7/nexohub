@@ -130,11 +130,11 @@ async function fetchFacebook(url: string): Promise<number | null> {
   return null;
 }
 
-async function diag(url: string): Promise<any> {
+async function diag(url: string, ua = UA_DESKTOP): Promise<any> {
   try {
     const r = await fetch(url, {
       headers: {
-        "User-Agent": UA_DESKTOP,
+        "User-Agent": ua,
         "Accept-Language": "en-US,en;q=0.9,pt-BR;q=0.8",
         Accept: "text/html,application/xhtml+xml",
       },
@@ -142,12 +142,21 @@ async function diag(url: string): Promise<any> {
     });
     const txt = r.ok ? await r.text() : "";
     const og = txt.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
-    const subs: string[] = [];
-    const re = /.{0,80}(subscribers|inscritos|Followers|Seguidor|likes|curtidas|gillar|gefällt|aiment|gusta)/gi;
-    let mm;
-    let cnt = 0;
-    while ((mm = re.exec(txt)) && cnt < 6) { subs.push(mm[0]); cnt++; }
-    return { status: r.status, bytes: txt.length, og: og ? og[1].slice(0, 200) : null, hits: subs };
+    const hits: string[] = [];
+    // Search for channel-own subscriber patterns
+    const patterns = [
+      /"content":"([^"]{1,40}(?:subscribers|inscritos))"/gi,
+      /"simpleText":"([^"]{1,40}(?:subscribers|inscritos))"/gi,
+      /"accessibilityLabel":"([^"]{1,80}(?:subscribers|inscritos))"/gi,
+      /([\d.,]+ ?[KMB]?) ?(?:Followers|Seguidores)/gi,
+      /([\d.,\s]+ ?[KMB]?) ?(?:gillar|likes|curtidas|gefällt|aiment|gusta)/gi,
+    ];
+    for (const p of patterns) {
+      let mm;
+      let c = 0;
+      while ((mm = p.exec(txt)) && c < 3) { hits.push(mm[0]); c++; }
+    }
+    return { status: r.status, bytes: txt.length, og: og ? og[1].slice(0, 200) : null, hits: hits.slice(0, 15) };
   } catch (e) {
     return { error: String(e) };
   }
