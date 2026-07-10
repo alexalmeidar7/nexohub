@@ -1963,11 +1963,22 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       setShowVideo(true);
       setIsPlaying(true);
     } else {
-      // Create a fresh Audio element to guarantee clean state after pause
-      const audio = new Audio();
-      audio.preload = "none";
-      audio.volume = volume;
-      audio.muted = isMuted;
+      // Se temos prefetch para essa URL, promove para playback (instantâneo)
+      const pf = prefetchRef.current;
+      let audio: HTMLAudioElement;
+      let usedPrefetch = false;
+      if (pf && pf.url === activeChannel.url) {
+        audio = pf.audio;
+        audio.muted = isMuted;
+        audio.volume = volume;
+        prefetchRef.current = null;
+        usedPrefetch = true;
+      } else {
+        audio = new Audio();
+        audio.preload = "none";
+        audio.volume = volume;
+        audio.muted = isMuted;
+      }
       audioRef.current = audio;
       setIsLoading(true);
 
@@ -1984,9 +1995,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       audio.addEventListener("error", onError);
       audio.addEventListener("ended", onEnded);
 
-      // Bust cache to force fresh stream connection (avoids stuck buffer after pause)
-      const sep = activeChannel.url.includes("?") ? "&" : "?";
-      audio.src = `${activeChannel.url}${sep}_t=${Date.now()}`;
+      if (!usedPrefetch) {
+        // Bust cache to force fresh stream connection (avoids stuck buffer after pause)
+        const sep = activeChannel.url.includes("?") ? "&" : "?";
+        audio.src = `${activeChannel.url}${sep}_t=${Date.now()}`;
+      }
       audio.play().then(() => setIsPlaying(true)).catch((err) => {
         console.warn("Audio play failed:", err);
         setIsLoading(false);
