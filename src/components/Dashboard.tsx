@@ -1190,18 +1190,28 @@ const defaultWidgets: WidgetCard[] = [
 function DashboardHome({ empresa, onNavigate }: { empresa: import("./ConfiguracoesPage").EmpresaConfig; onNavigate: (page: Page) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
-    const allIds = defaultWidgets.map(w => w.id);
+    const defaultOrder = defaultWidgets.map(w => w.id);
     try {
       const saved = localStorage.getItem(WIDGETS_ORDER_KEY);
       if (saved) {
         const parsed: string[] = JSON.parse(saved);
-        // Append any newly added widget IDs that aren't in the saved order
-        const missing = allIds.filter(id => !parsed.includes(id));
-        return [...parsed.filter(id => allIds.includes(id)), ...missing];
+        const filtered = parsed.filter(id => defaultOrder.includes(id));
+        // Insert any newly added widget IDs at their default position
+        // (relative to the widget that precedes them in the default order).
+        const missing = defaultOrder.filter(id => !filtered.includes(id));
+        const merged = [...filtered];
+        for (const id of missing) {
+          const defIdx = defaultOrder.indexOf(id);
+          const prev = defaultOrder.slice(0, defIdx).reverse().find(p => merged.includes(p));
+          const insertAt = prev ? merged.indexOf(prev) + 1 : 0;
+          merged.splice(insertAt, 0, id);
+        }
+        return merged;
       }
     } catch {}
-    return allIds;
+    return defaultOrder;
   });
+
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
