@@ -142,12 +142,9 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     if (!dataUserId) return;
     let cancelled = false;
     const tick = async () => {
-      const url = videoApiUrlRef.current;
-      if (!url) {
-        setVideoCount(null);
-        setLoadingVideo(false);
-        return;
-      }
+      const url =
+        videoApiUrlRef.current ||
+        "https://video.logicahost.com.br/api-json/V1RJeFIyRXlSbGhQV0dScFRUQTFkMXBGWkhOTmJHeFlWMjVSUFE9PStS";
       try {
         const r = await fetch(url, { cache: "no-store" });
         const text = (await r.text()).trim();
@@ -327,7 +324,7 @@ function StatCell({
   rotationKey?: string;
 }) {
   const display =
-    value === null ? "—" : value.toLocaleString("pt-BR");
+    value === null ? "..." : value.toLocaleString("pt-BR");
   return (
     <div
       className="rounded-2xl flex flex-col items-start justify-between p-3 min-w-0"
