@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube } from "lucide-react";
+import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
