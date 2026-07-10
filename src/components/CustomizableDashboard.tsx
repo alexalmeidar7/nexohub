@@ -1962,7 +1962,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   const isBreak = BREAK_LABELS.includes(_tit) || BREAK_LABELS.includes(_art);
 
   // ===== Web Audio analyser for reactive break wave =====
-  const BAR_COUNT = 28;
+  const BAR_COUNT = 56;
   const barRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
