@@ -519,6 +519,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       page === "tp" ||
       page === "fans" ||
       page === "apresentadores" ||
+      page === "ouvintes" ||
       page === "programas" ||
       page === "previsao" ||
       page === "site"
