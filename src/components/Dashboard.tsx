@@ -580,15 +580,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
+    const masterEmail = parentEmail || user?.email || "";
+    const masterSlug = masterEmail.includes("@") ? masterEmail.split("@")[0].toLowerCase() : (effectiveUserId || user?.id || "");
     if (parentLabel === "player" && child.label === "módulo externo") {
-      const targetId = effectiveUserId || user?.id;
-      window.open(`/user/${targetId}/nexohub/player`, "_blank");
+      window.open(`/user/${masterSlug}/nexohub/player`, "_blank");
       setHoveredMenu(null);
       return;
     }
-    if ((parentLabel === "ferramentas" || parentLabel === "comercial") && child.label === "tela promo") {
-      const targetId = effectiveUserId || user?.id;
-      window.open(`/user/${targetId}/nexohub/telapromo`, "_blank");
+    if ((parentLabel === "ferramentas" || parentLabel === "comercial") && (child.label === "tela promo" || child.label === "módulo locutor")) {
+      window.open(`/user/${masterSlug}/nexohub/telapromo`, "_blank");
       setHoveredMenu(null);
       return;
     }
