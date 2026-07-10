@@ -2012,6 +2012,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       audioCtxRef.current.resume().catch(() => {});
     }
 
+    // EMA smoothing state — separate weights for rising vs falling so bars snap up but settle down
+    const smoothed = new Array(BAR_COUNT).fill(8);
+    const ATTACK = 0.45; // weight of new value when rising (higher = more responsive)
+    const RELEASE = 0.12; // weight of new value when falling (lower = smoother decay)
+
     if (!ok) {
       // Fallback: pseudo-random reactive-ish motion via rAF (keeps bars alive if analyser blocked)
       const start = performance.now();
@@ -2020,7 +2025,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         barRefs.current.forEach((el, i) => {
           if (!el) return;
           const v = 0.5 + 0.5 * Math.sin(t * 3 + i * 0.35) * Math.sin(t * 1.3 + i * 0.7);
-          el.style.height = `${6 + Math.abs(v) * 50}px`;
+          const target = 6 + Math.abs(v) * 50;
+          const alpha = target > smoothed[i] ? ATTACK : RELEASE;
+          smoothed[i] = smoothed[i] + (target - smoothed[i]) * alpha;
+          el.style.height = `${smoothed[i]}px`;
         });
         rafRef.current = requestAnimationFrame(tick);
       };
@@ -2043,14 +2051,18 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         const start = i * step;
         for (let j = 0; j < step; j++) sum += data[start + j] || 0;
         const avg = sum / step; // 0..255
-        const h = 6 + (avg / 255) * 56;
-        el.style.height = `${h}px`;
+        const target = 6 + (avg / 255) * 56;
+        // Asymmetric EMA: fast attack, slow release
+        const alpha = target > smoothed[i] ? ATTACK : RELEASE;
+        smoothed[i] = smoothed[i] + (target - smoothed[i]) * alpha;
+        el.style.height = `${smoothed[i]}px`;
       }
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [isBreak, isPlaying]);
+
 
   useEffect(() => {
     return () => {
