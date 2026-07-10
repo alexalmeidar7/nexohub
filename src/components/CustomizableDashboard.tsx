@@ -1957,44 +1957,63 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   const isBreak = ((currentMusic?.titulo || "").trim().toLowerCase() === "break") || ((currentMusic?.artista || "").trim().toLowerCase() === "break");
 
   return (
-    <div className="flex flex-col h-full w-full relative rounded-3xl overflow-hidden" style={{ background: isBreak ? "#002233" : "#000", minHeight: 0, maxHeight: "100%", contain: "layout paint size", transition: "background 0.4s ease" }}>
-      {/* Background artist image OR break wave */}
-      <div className="absolute inset-0 pointer-events-none">
-        {isBreak ? (
-          <div className="absolute inset-0 flex items-end justify-center gap-[3px] px-6 pb-6">
-            {Array.from({ length: 28 }).map((_, i) => (
-              <span
-                key={i}
-                className="block rounded-t-sm"
-                style={{
-                  width: 4,
-                  background: "#c3f628",
-                  height: 8,
-                  animation: isPlaying ? `wave-bar 0.9s ease-in-out ${i * 0.05}s infinite alternate` : "none",
-                  opacity: isPlaying ? 1 : 0.35,
-                }}
-              />
-            ))}
-          </div>
+    <div className="flex flex-col h-full w-full relative rounded-3xl overflow-hidden" style={{ background: "#000", minHeight: 0, maxHeight: "100%", contain: "layout paint size" }}>
+      {/* Break background color layer — crossfades with artist image */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "#002233",
+          opacity: isBreak ? 1 : 0,
+          transition: "opacity 0.6s ease",
+        }}
+      />
+
+      {/* Artist image layer — fades out on break */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          opacity: isBreak ? 0 : 1,
+          transition: "opacity 0.6s ease",
+        }}
+      >
+        {fadingArt && (
+          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: 0 }} />
+        )}
+        {visibleArt ? (
+          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: artOpacity }} />
         ) : (
-          <>
-            {fadingArt && (
-              <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: 0 }} />
-            )}
-            {visibleArt ? (
-              <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: artOpacity }} />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Tv size={40} className="text-white/10" />
-              </div>
-            )}
-          </>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Tv size={40} className="text-white/10" />
+          </div>
         )}
         {/* Vignette to guarantee text contrast */}
-        {!isBreak && (
-          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.85) 100%)" }} />
-        )}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.85) 100%)" }} />
       </div>
+
+      {/* Wave bars layer — fades in on break */}
+      <div
+        className="absolute inset-0 pointer-events-none flex items-end justify-center gap-[3px] px-6 pb-6"
+        style={{
+          opacity: isBreak ? 1 : 0,
+          transform: isBreak ? "translateY(0)" : "translateY(8px)",
+          transition: "opacity 0.6s ease, transform 0.6s ease",
+        }}
+      >
+        {Array.from({ length: 28 }).map((_, i) => (
+          <span
+            key={i}
+            className="block rounded-t-sm"
+            style={{
+              width: 4,
+              background: "#c3f628",
+              height: 8,
+              animation: isBreak && isPlaying ? `wave-bar 0.9s ease-in-out ${i * 0.05}s infinite alternate` : "none",
+              opacity: isPlaying ? 1 : 0.35,
+            }}
+          />
+        ))}
+      </div>
+
 
 
       {/* Video overlay (grows upward) */}
