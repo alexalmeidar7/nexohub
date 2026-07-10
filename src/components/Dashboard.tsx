@@ -693,9 +693,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       onMouseLeave={(e) => { if (!active || item.label === "home") e.currentTarget.style.backgroundColor = "transparent"; }}
                     >
                       {item.label === "home" ? (
-                        <HouseMixIcon size={40} />
+                        <HouseMixIcon size={22} />
                       ) : (
-                        <Icon size={18} style={{ color: active ? layoutColors.navText : `${layoutColors.navText}99` }} />
+                        <Icon size={22} style={{ color: active ? layoutColors.navText : `${layoutColors.navText}99` }} />
                       )}
 
                     </button>
