@@ -1762,6 +1762,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     if (!audioRef.current) {
       const audio = new Audio();
       audio.preload = "none";
+      audio.crossOrigin = "anonymous";
       audioRef.current = audio;
     }
     return () => {
@@ -1771,6 +1772,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     };
   }, []);
+
 
   // Attach HLS when showVideo activates
   useEffect(() => {
