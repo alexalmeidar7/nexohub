@@ -1959,10 +1959,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       {/* Background artist image */}
       <div className="absolute inset-0 pointer-events-none">
         {fadingArt && (
-          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-contain object-center" style={{ transition: "opacity 0.6s ease-out", opacity: 0 }} />
+          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: 0 }} />
         )}
         {visibleArt ? (
-          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-contain object-center" style={{ transition: "opacity 0.6s ease-out", opacity: artOpacity }} />
+          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: artOpacity }} />
+
 
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
