@@ -116,8 +116,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     if (!dataUserId) return;
     let cancelled = false;
     const tick = async () => {
-      const { data } = await supabase.functions.invoke("count-site-visitors", {
-        body: { userId: dataUserId },
+      const { data } = await supabase.functions.invoke("player-heartbeat", {
+        body: { userId: dataUserId, count: true },
       });
       if (cancelled) return;
       if (data && (data as any).ok) {
