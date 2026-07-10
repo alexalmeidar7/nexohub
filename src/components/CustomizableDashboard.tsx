@@ -1971,10 +1971,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange }: { dataUserId?: str
             <div className="min-w-0 flex-1">
               {currentMusic ? (
                 <>
-                  <p className="text-[20px] font-extrabold leading-tight truncate" style={{ color: "var(--layout-accent-color, #c8ff00)" }}>
+                  <p className="text-[24px] font-extrabold leading-[1.05] truncate" style={{ color: "#c8ff00" }}>
                     <TypewriterText text={currentMusic.titulo || ""} />
                   </p>
-                  <p className="text-white text-[18px] font-extrabold leading-tight truncate">
+                  <p className="text-[20px] font-extrabold leading-[1.1] truncate" style={{ color: "#ffffff" }}>
                     <TypewriterText text={currentMusic.artista || ""} />
                   </p>
                 </>
