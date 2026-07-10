@@ -199,18 +199,18 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
   };
 
   return (
-    <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)", backgroundColor: "color-mix(in srgb, #8b5cf6 5%, transparent)" }}>
-      <p className="text-xs font-bold flex items-center gap-1.5 mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-        <Link2 size={14} style={{ color: "#8b5cf6" }} />
+    <div className="rounded-2xl p-5" style={{ border: `1px solid ${NEXO_CYAN}33`, backgroundColor: NEXO_CARD_BG, fontFamily: "'Montserrat', sans-serif" }}>
+      <p className="text-xs font-bold flex items-center gap-1.5 mb-1" style={{ color: NEXO_DARK, letterSpacing: 1, textTransform: "uppercase" }}>
+        <Link2 size={14} style={{ color: NEXO_CYAN }} />
         Atualizar Notícias por Links
       </p>
-      <p className="text-[10px] mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+      <p className="text-[10px] mb-3" style={{ color: `${NEXO_DARK}99` }}>
         Cole um link por linha em cada bloco. Ao clicar em "Atualizar notícias", as notícias serão substituídas e o XML será atualizado.
       </p>
       <div className="space-y-2">
         {blocos.map((_, bi) => (
           <div key={bi}>
-            <label className="text-[10px] font-bold mb-1 block" style={{ color: BLOCK_COLORS[bi % BLOCK_COLORS.length] }}>
+            <label className="text-[10px] font-bold mb-1 block" style={{ color: NEXO_DARK, letterSpacing: 1, textTransform: "uppercase" }}>
               BLOCO {bi + 1} — links
             </label>
             <textarea
@@ -218,8 +218,8 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
               onChange={e => setLinksText(prev => { const c = [...prev]; c[bi] = e.target.value; return c; })}
               placeholder="https://...&#10;https://..."
               rows={3}
-              className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none resize-y"
-              style={inputStyle}
+              className="w-full px-3 py-2 text-[11px] outline-none resize-y"
+              style={{ ...inputStyle, backgroundColor: "#FFFFFF", border: `2px solid ${NEXO_CYAN}`, color: NEXO_DARK, borderRadius: 14 }}
             />
           </div>
         ))}
@@ -227,15 +227,16 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
       <button
         onClick={handleUpdate}
         disabled={updating}
-        className="w-full mt-3 py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40"
-        style={{ backgroundColor: "#8b5cf6", color: "#fff" }}
+        className="w-full mt-4 flex items-center justify-center gap-1.5 disabled:opacity-40 hover:opacity-90"
+        style={{ ...nexoPillPrimary, padding: "12px 20px", fontSize: 12, width: "100%" }}
       >
-        {updating ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-        Atualizar notícias
+        {updating ? <Loader2 size={12} className="animate-spin" /> : <Check size={14} />}
+        Atualizar Notícias
       </button>
     </div>
   );
 }
+
 
 export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader, externalPasteText, onExternalPasteConsumed, novoOpen, onNovoOpenChange, hideNovoToggle, renderAsModal }: Props) {
   const { user } = useAuth();
