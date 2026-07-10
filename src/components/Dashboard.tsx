@@ -64,6 +64,7 @@ const IntercomWidget = lazy(() => import("./IntercomWidget"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
+import nexoCantoLogo from "@/assets/nexo_canto.png.asset.json";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site";
 
@@ -649,7 +650,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
 
       {/* ===== LEFT SIDEBAR (desktop) ===== */}
-      <div className="hidden lg:flex flex-shrink-0 z-[60] items-center py-3 pl-3 overflow-visible">
+      <div className="hidden lg:flex flex-shrink-0 z-[60] flex-col items-center py-3 pl-3 gap-2 overflow-visible">
+        <img
+          src={nexoCantoLogo.url}
+          alt="Nexo"
+          style={{ width: 40, height: "auto", display: "block", marginBottom: 4 }}
+        />
         <aside
           className="flex flex-col items-center py-4 gap-2 rounded-full relative overflow-visible"
           style={{
@@ -658,6 +664,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
           }}
         >
+
 
         <div className="flex flex-col items-center gap-1 px-1 overflow-visible">
           {sidebarMenu.filter(item => {
