@@ -877,7 +877,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                                   const GrandIcon = grand.icon;
                                   const grandActive = currentPage === grand.page;
                                   return (
-                                    <button key={grand.label} onClick={() => handleChildClick(grand, item.label)}
+                                    <button key={grand.label} onClick={() => handleChildClick(grand, child.label)}
                                       className="w-full flex items-center gap-2 pl-8 pr-3 py-1.5 rounded-lg text-[10px] transition-all"
                                       style={{ color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}80` }}
                                     >
