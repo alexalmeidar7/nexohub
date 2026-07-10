@@ -1956,7 +1956,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     return () => clearTimeout(timer);
   }, [displayArt]);
 
-  const isBreak = ((currentMusic?.titulo || "").trim().toLowerCase() === "break") || ((currentMusic?.artista || "").trim().toLowerCase() === "break");
+  const BREAK_LABELS = ["break", "ebs curtas"];
+  const _tit = (currentMusic?.titulo || "").trim().toLowerCase();
+  const _art = (currentMusic?.artista || "").trim().toLowerCase();
+  const isBreak = BREAK_LABELS.includes(_tit) || BREAK_LABELS.includes(_art);
 
   // ===== Web Audio analyser for reactive break wave =====
   const BAR_COUNT = 28;
@@ -1968,12 +1971,15 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   const analyserFailedRef = useRef(false);
 
   useEffect(() => {
-    if (!isBreak || !isPlaying) {
+    const prefersReduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (!isBreak || !isPlaying || prefersReduced) {
       if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
-      // Reset bars to idle heights
-      barRefs.current.forEach((el) => { if (el) el.style.height = "8px"; });
+      // Reset bars to idle heights (static mid-height if reduced motion, low if idle)
+      const idle = prefersReduced ? "22px" : "8px";
+      barRefs.current.forEach((el) => { if (el) el.style.height = idle; });
       return;
     }
+
 
     const audio = audioRef.current;
     if (!audio) return;
@@ -2055,6 +2061,23 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     };
   }, []);
 
+  // Respect user preference for reduced motion
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+  const fadeTransition = reducedMotion ? "opacity 0.01s linear" : "opacity 0.6s ease";
+  const fadeTransformTransition = reducedMotion
+    ? "opacity 0.01s linear"
+    : "opacity 0.6s ease, transform 0.6s ease";
+  const imgFadeTransition = reducedMotion ? "opacity 0.01s linear" : "opacity 0.6s ease-out";
+  const barTransition = reducedMotion ? "height 0.01s linear" : "height 90ms linear";
+
 
   return (
     <div className="flex flex-col h-full w-full relative rounded-3xl overflow-hidden" style={{ background: "#000", minHeight: 0, maxHeight: "100%", contain: "layout paint size" }}>
@@ -2064,7 +2087,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         style={{
           background: "#002233",
           opacity: isBreak ? 1 : 0,
-          transition: "opacity 0.6s ease",
+          transition: fadeTransition,
         }}
       />
 
@@ -2073,14 +2096,14 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         className="absolute inset-0 pointer-events-none"
         style={{
           opacity: isBreak ? 0 : 1,
-          transition: "opacity 0.6s ease",
+          transition: fadeTransition,
         }}
       >
         {fadingArt && (
-          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: 0 }} />
+          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: imgFadeTransition, opacity: 0 }} />
         )}
         {visibleArt ? (
-          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: "opacity 0.6s ease-out", opacity: artOpacity }} />
+          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: imgFadeTransition, opacity: artOpacity }} />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <Tv size={40} className="text-white/10" />
@@ -2095,8 +2118,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         className="absolute inset-0 pointer-events-none flex items-end justify-center gap-[3px] px-6 pb-6"
         style={{
           opacity: isBreak ? 1 : 0,
-          transform: isBreak ? "translateY(0)" : "translateY(8px)",
-          transition: "opacity 0.6s ease, transform 0.6s ease",
+          transform: isBreak && !reducedMotion ? "translateY(0)" : reducedMotion ? "none" : "translateY(8px)",
+          transition: fadeTransformTransition,
         }}
       >
         {Array.from({ length: BAR_COUNT }).map((_, i) => (
@@ -2107,13 +2130,14 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
             style={{
               width: 4,
               background: "#c3f628",
-              height: 8,
-              transition: "height 90ms linear",
+              height: reducedMotion ? 22 : 8,
+              transition: barTransition,
               opacity: isPlaying ? 1 : 0.35,
             }}
           />
         ))}
       </div>
+
 
 
 
