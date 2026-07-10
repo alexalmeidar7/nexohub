@@ -18,19 +18,21 @@ const ROTATE_MS = 3000;
 const REFETCH_MS = Math.round((24 * 60 * 60 * 1000) / 5);
 const LISTENERS_MS = 30 * 1000; // 30s for stream listeners
 const SITE_MS = 30 * 1000; // 30s for site realtime users
+const VIDEO_MS = 30 * 1000; // 30s for video viewers
 
 export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [social, setSocial] = useState<SocialCounts>({ youtube: null, instagram: null, facebook: null });
-  const [videoCount] = useState<number>(0);
+  const [videoCount, setVideoCount] = useState<number | null>(null);
   const [streamingCount, setStreamingCount] = useState<number | null>(null);
   const [siteCount, setSiteCount] = useState<number | null>(null);
   const [rotIdx, setRotIdx] = useState(0);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [loadingSocial, setLoadingSocial] = useState(true);
-  const [loadingVideo] = useState(true);
+  const [loadingVideo, setLoadingVideo] = useState(true);
   const [loadingStreaming, setLoadingStreaming] = useState(true);
   const [loadingSite, setLoadingSite] = useState(true);
   const socialUrlsRef = useRef<{ youtube?: string; instagram?: string; facebook?: string }>({});
+  const videoApiUrlRef = useRef<string | null>(null);
 
 
   // Fetch social follower counts via edge function (which also handles RLS-safe
@@ -44,7 +46,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       // populate the rotation labels immediately.
       const { data } = await supabase
         .from("empresa_config")
-        .select("youtube, instagram, facebook")
+        .select("youtube, instagram, facebook, video_stream_api_url")
         .eq("user_id", dataUserId as any)
         .maybeSingle();
       if (!cancelled && data) {
@@ -53,6 +55,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           instagram: (data as any).instagram || undefined,
           facebook: (data as any).facebook || undefined,
         };
+        videoApiUrlRef.current = (data as any).video_stream_api_url || null;
       }
       if (!cancelled) setLoadingConfig(false);
 
@@ -134,6 +137,37 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
+  // Poll Logicahost video streaming API for connected viewers.
+  useEffect(() => {
+    if (!dataUserId) return;
+    let cancelled = false;
+    const tick = async () => {
+      const url = videoApiUrlRef.current;
+      if (!url) {
+        setVideoCount(null);
+        setLoadingVideo(false);
+        return;
+      }
+      try {
+        const r = await fetch(url, { cache: "no-store" });
+        const text = await r.text();
+        const m = text.match(/<espectadores_conectados>\s*(\d+)\s*<\/espectadores_conectados>/i);
+        if (!cancelled) setVideoCount(m ? parseInt(m[1], 10) : null);
+      } catch {
+        if (!cancelled) setVideoCount(null);
+      }
+      if (!cancelled) setLoadingVideo(false);
+    };
+    // Delay first tick slightly so empresa_config load has a chance to populate ref.
+    const t0 = setTimeout(tick, 800);
+    const iv = setInterval(tick, VIDEO_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(t0);
+      clearInterval(iv);
+    };
+  }, [dataUserId]);
+
 
   // Rotate social display every 3s (only across configured networks)
   useEffect(() => {
@@ -143,7 +177,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
-  const total = socialTotal + videoCount + (streamingCount || 0) + (siteCount || 0);
+  const total = socialTotal + (videoCount || 0) + (streamingCount || 0) + (siteCount || 0);
   const bg = "#d9ff65";
   const dark = "#0A2540";
 
@@ -220,7 +254,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           icon={<MonitorPlay size={14} />}
           label="Streaming de vídeo"
           value={videoCount}
-          loading={loadingVideo && videoCount === 0}
+          loading={loadingVideo && videoCount === null}
           dark={dark}
         />
         <StatCell

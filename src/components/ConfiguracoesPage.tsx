@@ -26,6 +26,7 @@ export interface EmpresaConfig {
   instagramSubs?: string;
   facebookSubs?: string;
   youtubeSubs?: string;
+  videoStreamApiUrl?: string;
   plano: string;
 }
 
@@ -48,6 +49,7 @@ export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> 
     instagramSubs: (data as any).instagram_subs != null ? String((data as any).instagram_subs) : "",
     facebookSubs: (data as any).facebook_subs != null ? String((data as any).facebook_subs) : "",
     youtubeSubs: (data as any).youtube_subs != null ? String((data as any).youtube_subs) : "",
+    videoStreamApiUrl: (data as any).video_stream_api_url || "",
     plano: data.plano || "",
   };
 }
@@ -201,6 +203,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         instagram_subs: toBigInt(newConfig.instagramSubs),
         facebook_subs: toBigInt(newConfig.facebookSubs),
         youtube_subs: toBigInt(newConfig.youtubeSubs),
+        video_stream_api_url: newConfig.videoStreamApiUrl || "",
         updated_at: new Date().toISOString(),
       } as any, { onConflict: "user_id" });
     }, 500);
@@ -412,6 +415,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             {field("Nº seguidores Facebook", "facebookSubs", "Ex: 25000")}
             {field("Nº inscritos YouTube (opcional)", "youtubeSubs", "Auto se vazio")}
           </div>
+          {field("URL API espectadores de vídeo (Logicahost)", "videoStreamApiUrl", "https://video.logicahost.com.br/api/...")}
         </div>
 
         {/* Credenciais */}

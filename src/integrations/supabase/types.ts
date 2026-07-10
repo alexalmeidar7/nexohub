@@ -660,6 +660,7 @@ export type Database = {
           telefone_participacao: string | null
           updated_at: string
           user_id: string
+          video_stream_api_url: string | null
           youtube: string | null
           youtube_subs: number | null
         }
@@ -680,6 +681,7 @@ export type Database = {
           telefone_participacao?: string | null
           updated_at?: string
           user_id: string
+          video_stream_api_url?: string | null
           youtube?: string | null
           youtube_subs?: number | null
         }
@@ -700,6 +702,7 @@ export type Database = {
           telefone_participacao?: string | null
           updated_at?: string
           user_id?: string
+          video_stream_api_url?: string | null
           youtube?: string | null
           youtube_subs?: number | null
         }
