@@ -2165,7 +2165,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [isBreak, isPlaying]);
+  }, [isBreak, isPlaying, isVideo, showVideo]);
 
 
 
