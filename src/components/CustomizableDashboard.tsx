@@ -696,7 +696,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                   </div>
                 </div>
                 {item.widgetType === "player" && (
-                  <div key={`${item.id}-audience`} className="sm:col-span-1 lg:col-span-2 xl:col-span-3">
+                  <div key={`${item.id}-audience`} className="sm:col-span-1 lg:col-span-1 xl:col-span-2">
                     <Suspense fallback={<div style={{ height: audienceHeight, borderRadius: 24, background: "#d9ff65", opacity: 0.6 }} />}>
                       <AudienceWidget dataUserId={dataUserId || undefined} heightPx={audienceHeight} />
                     </Suspense>
