@@ -235,7 +235,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [addingWeather, setAddingWeather] = useState(false);
   const [addingFinance, setAddingFinance] = useState(false);
-  const [novoRoteiroOpen, setNovoRoteiroOpen] = useState(false);
+  const [novoRoteiroOpenInternal, setNovoRoteiroOpenInternal] = useState(false);
+  const novoRoteiroOpen = novoOpen !== undefined ? novoOpen : novoRoteiroOpenInternal;
+  const setNovoRoteiroOpen = (v: boolean | ((p: boolean) => boolean)) => {
+    const next = typeof v === "function" ? (v as any)(novoRoteiroOpen) : v;
+    if (onNovoOpenChange) onNovoOpenChange(next);
+    if (novoOpen === undefined) setNovoRoteiroOpenInternal(next);
+  };
   useEffect(() => { if (editData) setNovoRoteiroOpen(true); }, [editData]);
   useEffect(() => { if (externalPasteText) setNovoRoteiroOpen(true); }, [externalPasteText]);
 
