@@ -324,235 +324,342 @@ export default function PrevisaoTempo() {
     return;
   };
 
+  const today = new Date().toLocaleDateString("pt-BR");
+
   return (
-    <div className="animate-fade-in space-y-6">
-      {/* Favorite cities chips */}
-      {(primaryCity || favorites.length > 0) && (
-        <div className="flex gap-2 flex-wrap items-center">
-          {primaryCity && (
-            <div
-              className="flex items-center gap-2 rounded-full pl-4 pr-2 py-2 text-xs font-bold transition-all hover:scale-105"
-              style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
+    <div className="animate-fade-in space-y-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      {/* FORM CARD — Cadastro de Cidade / Tempo */}
+      <section
+        style={{
+          background: CARD_BG,
+          borderRadius: 28,
+          padding: "28px 32px 32px",
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <h3
+            style={{
+              fontSize: 18,
+              fontWeight: 800,
+              letterSpacing: 2,
+              color: DARK,
+              textTransform: "uppercase",
+              margin: 0,
+            }}
+          >
+            Cadastro de Cidade / Tempo
+          </h3>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: DARK,
+              background: "#FFFFFF",
+              padding: "6px 16px",
+              borderRadius: 999,
+              border: `2px solid ${CYAN}`,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+            }}
+          >
+            Data: <span style={{ color: CYAN }}>{today}</span>
+          </div>
+        </div>
+
+        {/* Search field pill */}
+        <div className="relative" ref={suggestionsRef}>
+          <label style={labelStyle}>Buscar cidade</label>
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ position: "relative", flex: 1 }}>
+              <MapPin size={16} style={{ position: "absolute", left: 18, top: "50%", transform: "translateY(-50%)", color: CYAN }} />
+              <input
+                value={city}
+                onChange={(e) => handleCityChange(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && searchWeather()}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                placeholder="Digite o nome da cidade..."
+                style={{ ...pillInput, paddingLeft: 42 }}
+              />
+            </div>
+            <button
+              onClick={searchWeather}
+              disabled={loading}
+              style={{
+                height: 44,
+                padding: "0 26px",
+                borderRadius: 999,
+                background: LIME,
+                border: "none",
+                color: DARK,
+                fontWeight: 800,
+                fontSize: 12,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: loading ? "wait" : "pointer",
+                opacity: loading ? 0.7 : 1,
+                boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
+              }}
             >
-              <button
-                onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
-                className="flex items-center gap-2"
-                style={{ color: "var(--layout-header-text, #ffffff)" }}
-              >
-                <Star size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                {primaryCity.name}
-              </button>
-              <button
-                onClick={() => { if (confirm(`Remover "${primaryCity.name}" como cidade principal?`)) clearPrimaryCity(); }}
-                title="Remover cidade principal"
-                className="ml-1 w-5 h-5 rounded-full flex items-center justify-center text-xs transition-colors hover:bg-red-500/30"
-                style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.7 }}
-              >✕</button>
+              <Search size={16} /> Buscar
+            </button>
+          </div>
+          {showSuggestions && suggestions.length > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                zIndex: 50,
+                top: "100%",
+                left: 0,
+                right: 120,
+                marginTop: 8,
+                background: "#FFFFFF",
+                borderRadius: 20,
+                overflow: "hidden",
+                border: `2px solid ${CYAN}`,
+                boxShadow: "0 10px 30px rgba(10,37,64,0.15)",
+              }}
+            >
+              {suggestions.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => selectSuggestion(s)}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "10px 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    fontSize: 12,
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: i < suggestions.length - 1 ? `1px solid ${CARD_BG}` : "none",
+                    cursor: "pointer",
+                    color: DARK,
+                    fontFamily: "'Montserrat', sans-serif",
+                  }}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <MapPin size={12} style={{ color: CYAN }} />
+                    {s.name}{s.admin1 ? `, ${s.admin1}` : ""}
+                  </span>
+                  <span style={{ fontSize: 10, color: "#94A3B8", fontWeight: 700 }}>{s.country}</span>
+                </button>
+              ))}
             </div>
           )}
-          {favorites.map(f => (
-            <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all hover:shadow-md"
-              style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}>
-              <input type="checkbox" checked={f.inXml} onChange={() => toggleFavoriteXml(f.name)}
-                className="w-3 h-3" style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} title="Incluir no XML" />
-              <button onClick={() => { setCity(f.name); fetchWeather(f.name); }}
-                className="text-xs font-medium transition-colors"
-                style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-              >{f.name}</button>
-              <button onClick={() => { if (confirm(`Remover "${f.name}" dos favoritos?`)) removeFavorite(f.name); }}
-                title="Remover dos favoritos"
-                className="text-xs transition-colors hover:text-red-500"
-                style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
-              >✕</button>
-            </div>
-          ))}
         </div>
-      )}
 
-      {/* Search with autocomplete */}
-      <div className="relative" ref={suggestionsRef}>
-        <div className="flex gap-3">
-          <div className="relative flex-1">
-            <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }} />
-            <input value={city} onChange={(e) => handleCityChange(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && searchWeather()}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              placeholder="Buscar cidade..."
-              className="w-full pl-10 pr-4 py-2.5 outline-none transition-all text-sm"
-              style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "16px" }}
-              onFocusCapture={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)"; e.currentTarget.style.boxShadow = "none"; }}
-            />
-          </div>
-          <button onClick={searchWeather} disabled={loading}
-            className="px-6 py-2.5 font-bold transition-all flex items-center gap-2 disabled:opacity-50 hover:scale-105"
-            style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", borderRadius: "16px", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}
-          >
-            <Search size={16} /> Buscar
-          </button>
-        </div>
-        {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-50 top-full left-0 right-0 mt-2 rounded-xl overflow-hidden"
-            style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", marginRight: "110px", boxShadow: "0 10px 40px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}>
-            {suggestions.map((s, i) => (
-              <button key={i} onClick={() => selectSuggestion(s)}
-                className="w-full text-left px-4 py-3 transition-all flex items-center justify-between text-xs border-b border-white/5 last:border-0 hover:bg-white/10"
-                style={{ color: "var(--layout-header-text, #ffffff)" }}
-              >
-                <span className="flex items-center gap-2">
-                  <MapPin size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                  {s.name}{s.admin1 ? `, ${s.admin1}` : ""}
-                </span>
-                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px" }}>{s.country}</span>
-              </button>
-            ))}
+        {/* Favorites chips */}
+        {(primaryCity || favorites.length > 0) && (
+          <div style={{ marginTop: 20 }}>
+            <label style={labelStyle}>Cidades cadastradas</label>
+            <div className="flex gap-2 flex-wrap">
+              {primaryCity && (
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px 8px 8px 16px",
+                    borderRadius: 999,
+                    background: DARK,
+                    color: "#FFFFFF",
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  <button
+                    onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: "#FFFFFF", cursor: "pointer", fontWeight: 700 }}
+                  >
+                    <Star size={12} style={{ color: LIME }} fill={LIME} />
+                    {primaryCity.name}
+                  </button>
+                  <button
+                    onClick={() => { if (confirm(`Remover "${primaryCity.name}" como cidade principal?`)) clearPrimaryCity(); }}
+                    style={{ width: 22, height: 22, borderRadius: 999, background: "rgba(255,255,255,0.15)", border: "none", color: "#FFFFFF", cursor: "pointer", fontSize: 12 }}
+                    title="Remover cidade principal"
+                  >✕</button>
+                </div>
+              )}
+              {favorites.map(f => (
+                <div
+                  key={f.name}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px 12px",
+                    borderRadius: 999,
+                    background: "#FFFFFF",
+                    border: `2px solid ${CYAN}`,
+                    color: DARK,
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={f.inXml}
+                    onChange={() => toggleFavoriteXml(f.name)}
+                    style={{ width: 12, height: 12, accentColor: CYAN }}
+                    title="Incluir no XML"
+                  />
+                  <button
+                    onClick={() => { setCity(f.name); fetchWeather(f.name); }}
+                    style={{ background: "transparent", border: "none", color: DARK, cursor: "pointer", fontWeight: 700, fontSize: 12 }}
+                  >{f.name}</button>
+                  <button
+                    onClick={() => { if (confirm(`Remover "${f.name}" dos favoritos?`)) removeFavorite(f.name); }}
+                    style={{ background: "transparent", border: "none", color: "#94A3B8", cursor: "pointer", fontSize: 12 }}
+                    title="Remover"
+                  >✕</button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
-      </div>
 
-      {error && <p className="text-sm font-medium" style={{ color: "#dc2626" }}>{error}</p>}
+        {error && (
+          <p style={{ marginTop: 16, fontSize: 12, fontWeight: 700, color: "#dc2626" }}>{error}</p>
+        )}
+      </section>
 
       {/* Loading skeleton */}
       {loading && <ModulePageSkeleton variant="list" />}
 
       {weather && (
         <>
-          {/* Current weather — hero card */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-5">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="text-2xl font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{weather.city}</h3>
-                    {isPrimary ? (
-                      <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1 transition-all"
-                        style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", border: "1px solid var(--layout-header-bg, #1a1a1a)" }}>
-                        <input type="checkbox" checked readOnly onClick={togglePrimaryCity}
-                          className="w-3.5 h-3.5" style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} />
-                        <span className="text-[11px] font-semibold" style={{ color: "var(--layout-header-text, #ffffff)" }}>Cidade Principal</span>
-                      </label>
-                    ) : (
-                      <button onClick={setAsPrimaryCity}
-                        className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-all hover:scale-105"
-                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 45%, transparent)" }}
-                        title={primaryCity ? `Substituirá ${primaryCity.name} como cidade principal` : "Definir como cidade principal"}
-                      >
-                        <Star size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                        {primaryCity ? "Tornar Principal" : "Definir como Principal"}
-                      </button>
-                    )}
-                    {!isFavorited && (
-                      <button onClick={addFavorite} disabled={isPrimary}
-                        className="flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all disabled:opacity-40"
-                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
-                      >
-                        <Star size={12} /> Secundária
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                      {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                    </span>
-                  </div>
-                  <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
-                </div>
-                <div className="flex items-center">
-                  <WeatherIcon code={weather.current.weatherCode} size={72} />
-                </div>
-              </div>
-
-              <div className="flex items-start gap-6 mb-6">
-                <div className="text-6xl font-bold flex-shrink-0" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{weather.current.temp}°C</div>
-                <div className="flex-1 space-y-3 pt-2">
-                  {aiLoading ? (
-                    <div className="flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                      <Sparkles size={14} className="animate-pulse" />
-                      <span className="text-xs italic">Gerando descrição...</span>
-                    </div>
-                  ) : aiDescription ? (
-                    <div className="flex items-start gap-2">
-                      <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "var(--layout-icon-color, #888888)" }} />
-                      <p className="text-sm leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{aiDescription}</p>
-                    </div>
-                  ) : null}
-
-                  {!forecastDescription && !forecastLoading && aiDescription && (
-                    <button onClick={fetchForecastDescription}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all hover:scale-105"
-                      style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
+          {/* Current weather card */}
+          <section
+            style={{
+              background: "#FFFFFF",
+              borderRadius: 28,
+              padding: "24px 28px",
+              border: `1px solid ${CARD_BG}`,
+              boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+            }}
+          >
+            <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h3 style={{ fontSize: 22, fontWeight: 800, color: DARK, margin: 0 }}>{weather.city}</h3>
+                  {isPrimary ? (
+                    <span
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        padding: "6px 14px", borderRadius: 999,
+                        background: DARK, color: "#FFFFFF",
+                        fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase",
+                      }}
                     >
-                      <Sparkles size={12} /> Quer que eu te fale como será os próximos 5 dias?
+                      <Star size={11} fill={LIME} style={{ color: LIME }} /> Cidade Principal
+                    </span>
+                  ) : (
+                    <button
+                      onClick={setAsPrimaryCity}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        padding: "6px 14px", borderRadius: 999,
+                        background: "#FFFFFF", color: DARK,
+                        border: `2px solid ${CYAN}`,
+                        fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Star size={11} style={{ color: CYAN }} />
+                      {primaryCity ? "Tornar Principal" : "Definir como Principal"}
                     </button>
                   )}
-                  {forecastLoading && (
-                    <div className="flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                      <Sparkles size={14} className="animate-pulse" />
-                      <span className="text-xs italic">Analisando os próximos dias...</span>
-                    </div>
-                  )}
-                  {forecastDescription && (
-                    <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Veja como fica o tempo nos próximos 5 dias</span>
-                        <button onClick={() => setForecastDescription("")}
-                          className="text-xs px-2 py-0.5 rounded-full transition-all hover:bg-[var(--layout-header-bg)]/10"
-                          style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}
-                        >✕</button>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "var(--layout-icon-color, #888888)" }} />
-                        <p className="text-sm leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{forecastDescription}</p>
-                      </div>
-                    </div>
+                  {!isFavorited && !isPrimary && (
+                    <button
+                      onClick={addFavorite}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        padding: "6px 14px", borderRadius: 999,
+                        background: CARD_BG, color: DARK,
+                        border: "none",
+                        fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Star size={11} /> Adicionar Secundária
+                    </button>
                   )}
                 </div>
+                <p style={{ fontSize: 11, color: "#64748B", fontWeight: 600, textTransform: "capitalize", margin: 0 }}>
+                  {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                </p>
+                <p style={{ fontSize: 13, color: DARK, fontWeight: 600, margin: 0 }}>{getWeatherLabel(weather.current.weatherCode)}</p>
               </div>
-
-              {/* Stats grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatCard icon={<Thermometer size={18} />} label="Mínima" value={`${weather.current.tempMin}°C`} color="#60a5fa" />
-                <StatCard icon={<Thermometer size={18} />} label="Máxima" value={`${weather.current.tempMax}°C`} color="#f97316" />
-                <StatCard icon={<Droplets size={18} />} label="Humidade" value={`${weather.current.humidity}%`} color="var(--layout-accent-color, #2563eb)" />
-                <StatCard icon={<CloudRain size={18} />} label="Chuva" value={`${weather.current.rainChance}%`} color="#a78bfa" />
-              </div>
+              <WeatherIcon code={weather.current.weatherCode} size={72} />
             </div>
-          </div>
+
+            <div className="flex items-center gap-6 mb-6 flex-wrap">
+              <div style={{ fontSize: 60, fontWeight: 800, color: DARK, lineHeight: 1 }}>{weather.current.temp}°C</div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <StatCard icon={<Thermometer size={16} />} label="Mínima" value={`${weather.current.tempMin}°C`} color="#60a5fa" />
+              <StatCard icon={<Thermometer size={16} />} label="Máxima" value={`${weather.current.tempMax}°C`} color="#f97316" />
+              <StatCard icon={<Droplets size={16} />} label="Humidade" value={`${weather.current.humidity}%`} color={CYAN} />
+              <StatCard icon={<CloudRain size={16} />} label="Chuva" value={`${weather.current.rainChance}%`} color="#a78bfa" />
+            </div>
+          </section>
 
           {/* Forecast 5 days */}
-          <div>
-            <h4 className="text-lg font-bold mb-4" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Próximos 5 dias</h4>
+          <section
+            style={{
+              background: CARD_BG,
+              borderRadius: 28,
+              padding: "24px 28px",
+              boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+            }}
+          >
+            <h4 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, color: DARK, textTransform: "uppercase", margin: "0 0 16px" }}>
+              Próximos 5 dias
+            </h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
               {weather.forecast.map((day) => (
-                <div key={day.date}
-                  className="rounded-xl p-5 text-center space-y-2 transition-all hover:shadow-lg hover:-translate-y-1 group"
-                  style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; e.currentTarget.style.boxShadow = "0 8px 25px color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)"; e.currentTarget.style.boxShadow = "none"; }}
+                <div
+                  key={day.date}
+                  style={{
+                    background: "#FFFFFF",
+                    borderRadius: 20,
+                    padding: 16,
+                    textAlign: "center",
+                    border: `2px solid ${CYAN}`,
+                  }}
                 >
-                  <p className="text-[11px] font-semibold uppercase tracking-wider capitalize" style={{ color: "rgba(13,4,70,0.45)" }}>{formatDay(day.date)}</p>
-                  <div className="flex justify-center py-1">
+                  <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, color: CYAN, textTransform: "uppercase", margin: 0 }}>
+                    {formatDay(day.date)}
+                  </p>
+                  <div style={{ display: "flex", justifyContent: "center", padding: "8px 0" }}>
                     <WeatherIcon code={day.weatherCode} size={44} forceDay />
                   </div>
-                  <p className="text-[11px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{getWeatherLabel(day.weatherCode)}</p>
-                  <p className="text-2xl font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{day.temp}°C</p>
-                  <div className="text-[11px] space-y-1.5 pt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                    <p className="flex items-center justify-center gap-1">
-                      <span style={{ color: "#60a5fa" }}>↓{day.tempMin}°</span>
-                      <span className="mx-1">/</span>
-                      <span style={{ color: "#f97316" }}>↑{day.tempMax}°</span>
+                  <p style={{ fontSize: 10, color: "#64748B", fontWeight: 600, margin: "0 0 4px" }}>{getWeatherLabel(day.weatherCode)}</p>
+                  <p style={{ fontSize: 22, fontWeight: 800, color: DARK, margin: "4px 0" }}>{day.temp}°C</p>
+                  <div style={{ fontSize: 11, color: "#64748B", display: "flex", flexDirection: "column", gap: 4, paddingTop: 4 }}>
+                    <p style={{ margin: 0, display: "flex", justifyContent: "center", gap: 6 }}>
+                      <span style={{ color: "#60a5fa", fontWeight: 700 }}>↓{day.tempMin}°</span>
+                      <span style={{ color: "#f97316", fontWeight: 700 }}>↑{day.tempMax}°</span>
                     </p>
-                    <p className="flex items-center justify-center gap-1">
-                      <Droplets size={11} style={{ color: "var(--layout-accent-color, #2563eb)" }} />{day.humidity}%
+                    <p style={{ margin: 0, display: "inline-flex", justifyContent: "center", alignItems: "center", gap: 4 }}>
+                      <Droplets size={11} style={{ color: CYAN }} />{day.humidity}%
                     </p>
-                    <p className="flex items-center justify-center gap-1">
+                    <p style={{ margin: 0, display: "inline-flex", justifyContent: "center", alignItems: "center", gap: 4 }}>
                       <CloudRain size={11} style={{ color: "#a78bfa" }} />{day.rainChance}%
                     </p>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
           <XmlLinkRow label="XML TEMPO" dark xmlContent={(() => {
             if (!weather) return "";
