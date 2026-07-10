@@ -1977,6 +1977,12 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         prefetchRef.current = null;
       }
 
+      const streamUrl = activeChannel.url;
+      const buildSrc = () => {
+        const sep = streamUrl.includes("?") ? "&" : "?";
+        return `${streamUrl}${sep}_t=${Date.now()}_r=${Math.random().toString(36).slice(2, 8)}`;
+      };
+
       // Sempre cria um Audio novo para garantir stream ao vivo (sem buffer stale)
       const audio = new Audio();
       audio.preload = "none";
@@ -1985,11 +1991,36 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       audioRef.current = audio;
       setIsLoading(true);
 
+      // Reconexão automática em caso de stall/end/erro do stream ao vivo
+      let reconnectTimer: number | null = null;
+      let reconnectAttempts = 0;
+      const scheduleReconnect = (reason: string) => {
+        if (audioRef.current !== audio) return; // já substituído
+        if (reconnectTimer !== null) return;
+        reconnectAttempts += 1;
+        const delay = Math.min(500 * reconnectAttempts, 4000);
+        console.warn(`[Player audio] reconectando (${reason}) tentativa ${reconnectAttempts} em ${delay}ms`);
+        setIsLoading(true);
+        reconnectTimer = window.setTimeout(() => {
+          reconnectTimer = null;
+          if (audioRef.current !== audio) return;
+          try {
+            audio.src = buildSrc();
+            audio.load();
+            audio.play().catch(() => scheduleReconnect("play-failed"));
+          } catch {
+            scheduleReconnect("catch");
+          }
+        }, delay);
+      };
+
       const clearLoading = () => setIsLoading(false);
       const onPlaying = () => {
+        reconnectAttempts = 0;
+        if (reconnectTimer !== null) { clearTimeout(reconnectTimer); reconnectTimer = null; }
         setIsLoading(false);
         setIsPlaying(true);
-        // Força ir para o live edge quando o buffer permitir (streams com seekable)
+        // Força ir para o live edge quando o buffer permitir
         try {
           const seek = audio.seekable;
           if (seek && seek.length > 0) {
@@ -2000,20 +2031,30 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           }
         } catch {}
       };
-      const onError = () => {
-        console.warn("[Player audio] load error");
-        setIsLoading(false);
-        setIsPlaying(false);
+      const onError = () => scheduleReconnect("error");
+      const onEnded = () => scheduleReconnect("ended");
+      const onStalled = () => scheduleReconnect("stalled");
+      const onWaiting = () => setIsLoading(true);
+      const onPause = () => {
+        // Se pausou mas o usuário não pediu (isPlayingRef ainda true), reconecta
+        if (audioRef.current === audio && !audio.ended && audio.currentTime > 0) {
+          // Deixamos o browser tentar por 3s antes de reconectar
+          window.setTimeout(() => {
+            if (audioRef.current === audio && audio.paused && isPlayingRef.current) {
+              scheduleReconnect("paused-unexpected");
+            }
+          }, 3000);
+        }
       };
-      const onEnded = () => { setIsPlaying(false); setIsLoading(false); };
       audio.addEventListener("canplay", clearLoading, { once: true });
       audio.addEventListener("playing", onPlaying);
       audio.addEventListener("error", onError);
       audio.addEventListener("ended", onEnded);
+      audio.addEventListener("stalled", onStalled);
+      audio.addEventListener("waiting", onWaiting);
+      audio.addEventListener("pause", onPause);
 
-      // Cache-bust agressivo para evitar reaproveitamento de buffer do browser
-      const sep = activeChannel.url.includes("?") ? "&" : "?";
-      audio.src = `${activeChannel.url}${sep}_t=${Date.now()}_r=${Math.random().toString(36).slice(2, 8)}`;
+      audio.src = buildSrc();
       audio.play().then(() => setIsPlaying(true)).catch((err) => {
         console.warn("Audio play failed:", err);
         setIsLoading(false);
