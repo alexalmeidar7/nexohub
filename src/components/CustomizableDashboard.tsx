@@ -2015,8 +2015,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
             </div>
           )}
 
-          {/* Song info — inline in compact, block in standard */}
-          <div className={compactMode ? "flex items-center gap-2 min-w-0 flex-1" : "flex items-end justify-between gap-2 mt-1.5 sm:mt-2.5 mb-auto"}>
+          {/* Song info — inline in compact, pinned bottom in standard */}
+          <div className={compactMode ? "flex items-center gap-2 min-w-0 flex-1" : "flex items-end justify-between gap-2 mt-auto pr-16"}>
             <div className="min-w-0 flex-1">
               {currentMusic ? (
                 <>
@@ -2041,18 +2041,19 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
                 </>
               )}
             </div>
-
-            {!compactMode && channels.length > 1 && (
-              <div className="flex gap-1 flex-shrink-0">
-                <button onClick={goPrev} className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} title="Canal anterior">
-                  <ChevronLeft size={12} className="text-white/80" />
-                </button>
-                <button onClick={goNext} className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} title="Próximo canal">
-                  <ChevronRight size={12} className="text-white/80" />
-                </button>
-              </div>
-            )}
           </div>
+
+          {/* Channel navigation arrows — bottom-right corner in standard mode */}
+          {!compactMode && channels.length > 1 && (
+            <div className="absolute bottom-2.5 right-2.5 sm:bottom-3.5 sm:right-3.5 flex gap-1 z-20">
+              <button onClick={goPrev} className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} title="Canal anterior">
+                <ChevronLeft size={12} className="text-white/80" />
+              </button>
+              <button onClick={goNext} className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} title="Próximo canal">
+                <ChevronRight size={12} className="text-white/80" />
+              </button>
+            </div>
+          )}
 
           {/* Controls stack — vertical in standard, horizontal in compact; positioned top-right in standard */}
           <div
