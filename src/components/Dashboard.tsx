@@ -99,7 +99,6 @@ const sidebarMenu: MenuItem[] = [
   {
     icon: MonitorPlay, label: "player", children: [
       { icon: Settings, label: "configurações", page: "playerconfig" },
-      { icon: Film, label: "anúncios", page: "preroll" },
       { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
     ]
   },
@@ -111,6 +110,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page, permKey: "telapromo" },
       { icon: Settings, label: "config tela promo", page: "configtelapromo", separator: true },
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
+      { icon: Film, label: "anúncios", page: "preroll" },
     ]
   },
   {
