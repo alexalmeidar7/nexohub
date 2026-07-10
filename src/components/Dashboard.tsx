@@ -1102,7 +1102,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="relative flex-1 h-full">
             <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
-              {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />}
+              {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
+              <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
+                <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />
+              </div>
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
