@@ -626,9 +626,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
               const isDragOver = dragOverId === item.id && draggedId !== item.id;
               const audienceHeight = playerCompactMap[item.id] ? Math.min(96, playerMaxHeight) : playerMaxHeight;
               return (
-                <>
-                <div
-                  key={item.id}
+                <Fragment key={item.id}>
                   className={`relative group rounded-3xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: "var(--layout-widget-bg, #1a1a1a)",
