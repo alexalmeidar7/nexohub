@@ -73,15 +73,13 @@ async function fetchYoutube(url: string): Promise<number | null> {
   return null;
 }
 
-function extractInstagramUsername(url: string): string | null {
-  try {
-    const u = new URL(url.startsWith("http") ? url : `https://${url}`);
-    const parts = u.pathname.split("/").filter(Boolean);
-    return parts[0] || null;
-  } catch {
-    const m = url.match(/instagram\.com\/([^/?#]+)/i);
-    return m ? m[1] : (url.replace(/^@/, "").trim() || null);
-  }
+function extractInstagramUsername(input: string): string | null {
+  if (!input) return null;
+  const s = input.trim();
+  const m = s.match(/instagram\.com\/([^/?#\s]+)/i);
+  if (m) return m[1];
+  // Assume bare username
+  return s.replace(/^@/, "").replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim() || null;
 }
 
 async function fetchInstagramViaRapidApi(username: string, debug?: string[]): Promise<number | null> {
