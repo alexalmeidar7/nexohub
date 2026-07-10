@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.public-cenario-data]
 verify_jwt = false
+
+[functions.fetch-social-followers]
+verify_jwt = false
