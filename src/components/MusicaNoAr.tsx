@@ -1174,10 +1174,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ═══ COLLAPSIBLE CONFIG SECTION ═══ */}
-      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 16px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent)" }}>
+      {/* ═══ COLLAPSIBLE CONFIG SECTION (Nexo Form style) ═══ */}
+      <section style={{ background: NEXO_CARD_BG, borderRadius: 28, overflow: "hidden", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)" }}>
         <button
           onClick={() => setShowConfig(!showConfig)}
           className="w-full flex items-center justify-between px-5 py-3.5 text-left transition-colors"
