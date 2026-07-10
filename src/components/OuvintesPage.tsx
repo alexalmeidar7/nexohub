@@ -620,7 +620,21 @@ export default function OuvintesPage() {
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                       {o.data_nascimento ? new Date(o.data_nascimento + "T00:00:00").toLocaleDateString("pt-BR") : "—"}
                     </td>
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap", fontWeight: 700, color: CYAN }}>
+                      {(() => {
+                        if (!o.data_nascimento) return "—";
+                        const d = new Date(o.data_nascimento + "T00:00:00");
+                        if (isNaN(d.getTime())) return "—";
+                        const now = new Date();
+                        let age = now.getFullYear() - d.getFullYear();
+                        const m = now.getMonth() - d.getMonth();
+                        if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+                        if (age < 0 || age > 130) return "—";
+                        return age;
+                      })()}
+                    </td>
                     <td style={{ padding: "12px 14px" }}>{o.escolaridade || "—"}</td>
+
                     <td style={{ padding: "12px 14px" }}>{o.renda || "—"}</td>
                     <td style={{ padding: "12px 14px", textAlign: "right", fontWeight: 800, color: CYAN }}>
                       {o.pontuacao ?? 0}
