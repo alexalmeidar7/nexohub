@@ -122,6 +122,35 @@ export default function OuvintesPage() {
   const [form, setForm] = useState({ ...emptyForm });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [cidadesUF, setCidadesUF] = useState<string[]>([]);
+  const [showCidadeSug, setShowCidadeSug] = useState(false);
+  const cidadeWrapRef = useRef<HTMLDivElement>(null);
+
+  // Load IBGE cities whenever UF changes
+  useEffect(() => {
+    if (!form.uf) { setCidadesUF([]); return; }
+    let cancelled = false;
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${form.uf}/municipios`)
+      .then((r) => r.json())
+      .then((data: Array<{ nome: string }>) => {
+        if (!cancelled) setCidadesUF((data || []).map((d) => d.nome));
+      })
+      .catch(() => { if (!cancelled) setCidadesUF([]); });
+    return () => { cancelled = true; };
+  }, [form.uf]);
+
+  // Close autocomplete when clicking outside
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (cidadeWrapRef.current && !cidadeWrapRef.current.contains(e.target as Node)) {
+        setShowCidadeSug(false);
+      }
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+
 
   const load = async () => {
     setLoading(true);
