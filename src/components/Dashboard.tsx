@@ -22,6 +22,7 @@ import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 
 // Lazy-load all tab pages for faster initial render
 const ApresentadorForm = lazy(() => import("./ApresentadorForm"));
+const OuvintesPage = lazy(() => import("./OuvintesPage"));
 const ProgramaForm = lazy(() => import("./ProgramaForm"));
 const PrevisaoTempo = lazy(() => import("./PrevisaoTempo"));
 const RoteiroPrograma = lazy(() => import("./RoteiroPrograma"));
