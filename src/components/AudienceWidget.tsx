@@ -254,7 +254,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           icon={<MonitorPlay size={14} />}
           label="Streaming de vídeo"
           value={videoCount}
-          loading={loadingVideo && videoCount === 0}
+          loading={loadingVideo && videoCount === null}
           dark={dark}
         />
         <StatCell
