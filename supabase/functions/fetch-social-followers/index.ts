@@ -73,14 +73,64 @@ async function fetchYoutube(url: string): Promise<number | null> {
   return null;
 }
 
+function extractInstagramUsername(url: string): string | null {
+  try {
+    const u = new URL(url.startsWith("http") ? url : `https://${url}`);
+    const parts = u.pathname.split("/").filter(Boolean);
+    return parts[0] || null;
+  } catch {
+    const m = url.match(/instagram\.com\/([^/?#]+)/i);
+    return m ? m[1] : (url.replace(/^@/, "").trim() || null);
+  }
+}
+
+async function fetchInstagramViaRapidApi(username: string): Promise<number | null> {
+  const key = Deno.env.get("RAPIDAPI_KEY");
+  if (!key) return null;
+  const hosts = [
+    {
+      host: "instagram-scraper-api2.p.rapidapi.com",
+      url: `https://instagram-scraper-api2.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(username)}`,
+      pick: (j: any) => j?.data?.follower_count ?? j?.data?.edge_followed_by?.count ?? null,
+    },
+    {
+      host: "instagram-social-api.p.rapidapi.com",
+      url: `https://instagram-social-api.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(username)}`,
+      pick: (j: any) => j?.data?.follower_count ?? null,
+    },
+  ];
+  for (const h of hosts) {
+    try {
+      const r = await fetch(h.url, {
+        headers: { "X-RapidAPI-Key": key, "X-RapidAPI-Host": h.host },
+      });
+      if (!r.ok) { await r.text(); continue; }
+      const j = await r.json();
+      const n = h.pick(j);
+      if (typeof n === "number" && n > 0) return n;
+    } catch { /* try next */ }
+  }
+  return null;
+}
+
 async function fetchInstagram(url: string): Promise<number | null> {
-  // Meta blocks datacenter IPs from receiving og:description meta.
+  // Try public og:description first (usually blocked from datacenter IPs).
   const html = await fetchHtml(url, UA_META);
-  if (!html) return null;
-  const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
-  if (m) {
-    const f = m[1].match(/([\d.,]+\s*[kmb]?)\s*(?:Followers|Seguidores)/i);
-    if (f) return parseCompact(f[1]);
+  if (html) {
+    const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
+    if (m) {
+      const f = m[1].match(/([\d.,]+\s*[kmb]?)\s*(?:Followers|Seguidores)/i);
+      if (f) {
+        const n = parseCompact(f[1]);
+        if (n) return n;
+      }
+    }
+  }
+  // Fallback: RapidAPI Instagram scraper.
+  const username = extractInstagramUsername(url);
+  if (username) {
+    const n = await fetchInstagramViaRapidApi(username);
+    if (n) return n;
   }
   return null;
 }
