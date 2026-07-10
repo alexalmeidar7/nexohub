@@ -2099,15 +2099,16 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           transition: "opacity 0.6s ease, transform 0.6s ease",
         }}
       >
-        {Array.from({ length: 28 }).map((_, i) => (
+        {Array.from({ length: BAR_COUNT }).map((_, i) => (
           <span
             key={i}
+            ref={(el) => { barRefs.current[i] = el; }}
             className="block rounded-t-sm"
             style={{
               width: 4,
               background: "#c3f628",
               height: 8,
-              animation: isBreak && isPlaying ? `wave-bar 0.9s ease-in-out ${i * 0.05}s infinite alternate` : "none",
+              transition: "height 90ms linear",
               opacity: isPlaying ? 1 : 0.35,
             }}
           />
