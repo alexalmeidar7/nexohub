@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { usePlayerColors } from "@/hooks/usePlayerColors";
+import { usePlayerHeartbeat } from "@/hooks/usePlayerHeartbeat";
 import SplashScreen from "./SplashScreen";
 import AccessScreen from "./AccessScreen";
 import WelcomeScreen from "./WelcomeScreen";
@@ -27,6 +28,10 @@ export default function PlayerHub() {
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
   const [dataReady, setDataReady] = useState(false);
   const { colors: playerColors, bgConfigs: playerBgConfigs } = usePlayerColors(publicUserId);
+
+  // Real-time "connected on player" heartbeat (20s ping).
+  usePlayerHeartbeat(publicUserId || user?.id || null);
+
 
   useEffect(() => {
     const fetchLogo = async () => {
