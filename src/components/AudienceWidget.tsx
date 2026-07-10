@@ -225,7 +225,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         />
         <StatCell
           icon={<Globe size={14} />}
-          label="Conectados no site"
+          label="Conectados no Player"
           value={siteCount}
           loading={loadingSite && siteCount === null}
           dark={dark}
