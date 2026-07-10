@@ -924,8 +924,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               className="rounded-3xl relative"
               style={{
                 width: "778px",
+                flexShrink: 0,
                 maxWidth: "100%",
-                height: "461px",
                 backgroundColor: "#00d6f9",
               }}
             >
