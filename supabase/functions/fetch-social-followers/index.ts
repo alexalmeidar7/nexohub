@@ -86,17 +86,37 @@ function extractInstagramUsername(url: string): string | null {
 
 async function fetchInstagramViaRapidApi(username: string): Promise<number | null> {
   const key = Deno.env.get("RAPIDAPI_KEY");
-  if (!key) return null;
-  const hosts = [
+  if (!key) { console.log("[ig-rapidapi] no RAPIDAPI_KEY"); return null; }
+  const hosts: Array<{ host: string; url: string; pick: (j: any) => number | null | undefined }> = [
     {
       host: "instagram-scraper-api2.p.rapidapi.com",
       url: `https://instagram-scraper-api2.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(username)}`,
-      pick: (j: any) => j?.data?.follower_count ?? j?.data?.edge_followed_by?.count ?? null,
+      pick: (j) => j?.data?.follower_count ?? j?.data?.edge_followed_by?.count,
     },
     {
       host: "instagram-social-api.p.rapidapi.com",
       url: `https://instagram-social-api.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(username)}`,
-      pick: (j: any) => j?.data?.follower_count ?? null,
+      pick: (j) => j?.data?.follower_count,
+    },
+    {
+      host: "instagram-scraper-20251.p.rapidapi.com",
+      url: `https://instagram-scraper-20251.p.rapidapi.com/userinfo/${encodeURIComponent(username)}`,
+      pick: (j) => j?.data?.user?.follower_count ?? j?.data?.follower_count,
+    },
+    {
+      host: "instagram-scraper-2022.p.rapidapi.com",
+      url: `https://instagram-scraper-2022.p.rapidapi.com/ig/info_username/?user=${encodeURIComponent(username)}`,
+      pick: (j) => j?.user?.follower_count,
+    },
+    {
+      host: "instagram-data1.p.rapidapi.com",
+      url: `https://instagram-data1.p.rapidapi.com/user/info?username=${encodeURIComponent(username)}`,
+      pick: (j) => j?.edge_followed_by?.count ?? j?.follower_count,
+    },
+    {
+      host: "instagram-bulk-profile-scrapper.p.rapidapi.com",
+      url: `https://instagram-bulk-profile-scrapper.p.rapidapi.com/clients/api/ig/ig_profile?ig=${encodeURIComponent(username)}`,
+      pick: (j) => Array.isArray(j) ? j[0]?.follower_count : j?.follower_count,
     },
   ];
   for (const h of hosts) {
@@ -104,11 +124,19 @@ async function fetchInstagramViaRapidApi(username: string): Promise<number | nul
       const r = await fetch(h.url, {
         headers: { "X-RapidAPI-Key": key, "X-RapidAPI-Host": h.host },
       });
-      if (!r.ok) { await r.text(); continue; }
-      const j = await r.json();
+      const text = await r.text();
+      if (!r.ok) {
+        console.log(`[ig-rapidapi] ${h.host} -> HTTP ${r.status}: ${text.slice(0, 200)}`);
+        continue;
+      }
+      let j: any = null;
+      try { j = JSON.parse(text); } catch { console.log(`[ig-rapidapi] ${h.host} non-json`); continue; }
       const n = h.pick(j);
+      console.log(`[ig-rapidapi] ${h.host} -> follower_count=${n}`);
       if (typeof n === "number" && n > 0) return n;
-    } catch { /* try next */ }
+    } catch (e) {
+      console.log(`[ig-rapidapi] ${h.host} error: ${e}`);
+    }
   }
   return null;
 }
