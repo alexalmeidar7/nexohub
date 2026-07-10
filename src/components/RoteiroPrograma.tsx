@@ -741,141 +741,160 @@ export default function RoteiroPrograma() {
 
   if (loading) return <ModulePageSkeleton />;
 
+  const ORANGE = "#fe8900";
+
   return (
-    <div className="animate-fade-in space-y-5">
-      <Suspense fallback={<ModulePageSkeleton />}>
+    <div className="animate-fade-in space-y-5" style={MONT}>
+      <div className="px-6 pt-4 pb-2">
+        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+          <button
+            onClick={() => { setAutomacaoOpen(false); setExpressEditData(null); setNovoRoteiroOpen(true); }}
+            style={{
+              ...MONT,
+              height: 64,
+              padding: "0 22px",
+              borderRadius: 20,
+              background: CYAN,
+              color: "#FFFFFF",
+              border: `2px solid ${CYAN}`,
+              fontSize: 13,
+              fontWeight: 800,
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              cursor: "pointer",
+              boxShadow: "0 6px 20px rgba(0, 191, 240, 0.35)",
+              transition: "all 0.2s ease",
+            }}
+            title="Abrir formulário de novo roteiro"
+          >
+            <Zap size={16} />
+            Novo Roteiro
+          </button>
+          <button
+            onClick={() => { setNovoRoteiroOpen(false); setAutomacaoOpen(true); }}
+            style={{
+              ...MONT,
+              height: 64,
+              padding: "0 22px",
+              borderRadius: 20,
+              background: ORANGE,
+              color: "#FFFFFF",
+              border: `2px solid ${ORANGE}`,
+              fontSize: 13,
+              fontWeight: 800,
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              cursor: "pointer",
+              boxShadow: "0 6px 20px rgba(254, 137, 0, 0.35)",
+              transition: "all 0.2s ease",
+            }}
+            title="Abrir automação de programa"
+          >
+            <Bot size={16} />
+            Automação de Programa
+          </button>
+        </div>
+      </div>
+
+      {historicoSlot}
+
+      {estudios.length > 0 && (
+        <div className="px-6 pt-4 pb-2" style={MONT}>
+          <div style={{ background: CARD_BG, borderRadius: 24, padding: "18px 20px" }}>
+            <div className="flex items-center gap-3 mb-3">
+              <Code2 size={14} style={{ color: CYAN }} />
+              <p style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK, margin: 0 }}>
+                XML Roteiro por Estúdio
+              </p>
+              <span style={{ ...MONT, fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}`, color: CYAN }}>
+                {estudios.length}
+              </span>
+            </div>
+            <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+              {estudios.map(est => {
+                const xmlUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-roteiro-estudio?user_id=${user?.id || ""}&estudio=${encodeURIComponent(est)}`;
+                return (
+                  <div
+                    key={est}
+                    className="flex items-center gap-3 transition-all hover:-translate-y-0.5"
+                    style={{ ...MONT, padding: "10px 14px", borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}` }}
+                  >
+                    <span style={{ width: 34, height: 34, borderRadius: "50%", background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Code2 size={14} style={{ color: CYAN }} />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p style={{ ...MONT, fontSize: 9, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#64748B", margin: 0 }}>XML Roteiro</p>
+                      <p style={{ ...MONT, fontSize: 13, fontWeight: 800, color: DARK, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{est}</p>
+                    </div>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(xmlUrl).then(() => toast.success(`URL do XML de ${est} copiada!`)).catch(() => toast.error("Erro ao copiar"))}
+                      style={{ width: 34, height: 34, borderRadius: "50%", background: LIME, color: DARK, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(198, 240, 60, 0.4)" }}
+                      title={`Copiar URL: ${xmlUrl}`}
+                    >
+                      <Copy size={13} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Novo Roteiro */}
+      <Suspense fallback={null}>
         <ProgramaExpressInline
           programas={programas}
           estudios={estudios}
           onFinish={async () => { setExpressEditData(null); setNovoRoteiroOpen(false); await fetchHistorico(); }}
           editData={expressEditData}
           novoOpen={novoRoteiroOpen}
-          onNovoOpenChange={setNovoRoteiroOpen}
+          onNovoOpenChange={(v) => { setNovoRoteiroOpen(v); if (!v) setExpressEditData(null); }}
           hideNovoToggle
-          afterHeader={<>
-            <div className="px-6 pt-4 pb-2" style={MONT}>
-              <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
-                <button
-                  onClick={() => { setAutomacaoOpen(false); setNovoRoteiroOpen(o => !o); }}
-                  style={{
-                    ...MONT,
-                    height: 64,
-                    padding: "0 22px",
-                    borderRadius: 20,
-                    background: novoRoteiroOpen ? CYAN : "#FFFFFF",
-                    color: novoRoteiroOpen ? "#FFFFFF" : DARK,
-                    border: `2px solid ${CYAN}`,
-                    fontSize: 13,
-                    fontWeight: 800,
-                    letterSpacing: 1.5,
-                    textTransform: "uppercase",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 10,
-                    cursor: "pointer",
-                    boxShadow: novoRoteiroOpen ? "0 6px 20px rgba(0, 191, 240, 0.35)" : "0 2px 10px rgba(10, 37, 64, 0.06)",
-                    transition: "all 0.2s ease",
-                  }}
-                  title="Abrir formulário de novo roteiro"
-                >
-                  <Zap size={16} />
-                  Novo Roteiro
-                </button>
-                <button
-                  onClick={() => { setNovoRoteiroOpen(false); setAutomacaoOpen(o => !o); }}
-                  style={{
-                    ...MONT,
-                    height: 64,
-                    padding: "0 22px",
-                    borderRadius: 20,
-                    background: automacaoOpen ? "#8b5cf6" : "#FFFFFF",
-                    color: automacaoOpen ? "#FFFFFF" : DARK,
-                    border: `2px solid #8b5cf6`,
-                    fontSize: 13,
-                    fontWeight: 800,
-                    letterSpacing: 1.5,
-                    textTransform: "uppercase",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 10,
-                    cursor: "pointer",
-                    boxShadow: automacaoOpen ? "0 6px 20px rgba(139, 92, 246, 0.35)" : "0 2px 10px rgba(10, 37, 64, 0.06)",
-                    transition: "all 0.2s ease",
-                  }}
-                  title="Abrir automação de programa"
-                >
-                  <Bot size={16} />
-                  Automação de Programa
-                </button>
-              </div>
-            </div>
-            {historicoSlot}
-            <Suspense fallback={null}>
-              <AutomacaoProgramaSection
-                programas={programas}
-                onGenerateRoteiro={(text) => setExternalPasteText(text)}
-                open={automacaoOpen}
-                onOpenChange={setAutomacaoOpen}
-                hideToggle
-              />
-            </Suspense>
-            {estudios.length > 0 && (
-              <div className="px-6 pt-4 pb-2" style={MONT}>
-                <div style={{ background: CARD_BG, borderRadius: 24, padding: "18px 20px" }}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <Code2 size={14} style={{ color: CYAN }} />
-                    <p style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK, margin: 0 }}>
-                      XML Roteiro por Estúdio
-                    </p>
-                    <span style={{ ...MONT, fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}`, color: CYAN }}>
-                      {estudios.length}
-                    </span>
-                  </div>
-                  <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
-                    {estudios.map(est => {
-                      const xmlUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-roteiro-estudio?user_id=${user?.id || ""}&estudio=${encodeURIComponent(est)}`;
-                      return (
-                        <div
-                          key={est}
-                          className="flex items-center gap-3 transition-all hover:-translate-y-0.5"
-                          style={{
-                            ...MONT,
-                            padding: "10px 14px",
-                            borderRadius: 999,
-                            background: "#FFFFFF",
-                            border: `2px solid ${CYAN}`,
-                          }}
-                        >
-                          <span style={{ width: 34, height: 34, borderRadius: "50%", background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <Code2 size={14} style={{ color: CYAN }} />
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p style={{ ...MONT, fontSize: 9, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#64748B", margin: 0 }}>
-                              XML Roteiro
-                            </p>
-                            <p style={{ ...MONT, fontSize: 13, fontWeight: 800, color: DARK, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{est}</p>
-                          </div>
-                          <button
-                            onClick={() => navigator.clipboard.writeText(xmlUrl).then(() => toast.success(`URL do XML de ${est} copiada!`)).catch(() => toast.error("Erro ao copiar"))}
-                            style={{ width: 34, height: 34, borderRadius: "50%", background: LIME, color: DARK, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(198, 240, 60, 0.4)" }}
-                            title={`Copiar URL: ${xmlUrl}`}
-                          >
-                            <Copy size={13} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-          </>}
+          renderAsModal
           externalPasteText={externalPasteText}
           onExternalPasteConsumed={() => setExternalPasteText(null)}
         />
       </Suspense>
+
+      {/* Modal: Automação de Programa */}
+      {automacaoOpen && createPortal(
+        <div
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setAutomacaoOpen(false); }}
+          style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(10, 37, 64, 0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 20px", overflowY: "auto" }}
+        >
+          <div style={{ position: "relative", width: "100%", maxWidth: 980, background: "#ffffff", borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.35)", overflow: "hidden" }}>
+            <button
+              onClick={() => setAutomacaoOpen(false)}
+              aria-label="Fechar"
+              style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.95)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
+            >
+              <X size={16} style={{ color: DARK }} />
+            </button>
+            <div style={{ padding: "20px 8px 20px" }}>
+              <Suspense fallback={null}>
+                <AutomacaoProgramaSection
+                  programas={programas}
+                  onGenerateRoteiro={(text) => { setAutomacaoOpen(false); setExternalPasteText(text); setNovoRoteiroOpen(true); }}
+                  open
+                  onOpenChange={setAutomacaoOpen}
+                  hideToggle
+                />
+              </Suspense>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
 
       <Suspense fallback={null}>
         <WhatsAppSendDialog
