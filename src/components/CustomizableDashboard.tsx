@@ -201,9 +201,9 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
       const footerTop = footerEl?.getBoundingClientRect().top ?? window.innerHeight;
       const isMobile = window.innerWidth < 640;
       const gap = isMobile ? 16 : 32;
-      const floor = isMobile ? 61 : 153;
-      const ceil = isMobile ? 221 : 289;
-      const raw = (footerTop - anchorTop - gap) * 0.85;
+      const floor = isMobile ? 55 : 138;
+      const ceil = isMobile ? 199 : 260;
+      const raw = (footerTop - anchorTop - gap) * 0.765;
       const available = Math.min(ceil, Math.max(floor, raw));
       setPlayerMaxHeight(available);
     };
