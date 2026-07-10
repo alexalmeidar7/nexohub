@@ -1251,5 +1251,52 @@ input[type="radio"]:not(.sr-only) {
   cursor: pointer;
 }
 
+/* ============================================================
+   SELECT NATIVO — pill branco + chevron cyan, alinhado ao mockup
+   Componentes shadcn <Select> já são estilizados via primitive.
+   Use `data-nx-skip` num <select> para escapar deste estilo.
+   ============================================================ */
+select:not([data-nx-skip]) {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  height: 44px;
+  padding: 0 44px 0 20px;
+  border-radius: 9999px;
+  border: 1px solid rgba(10, 10, 10, 0.10);
+  background-color: #ffffff;
+  color: #0A0A0A;
+  font-family: "Montserrat", system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: inset 0 1px 2px rgba(10, 10, 10, 0.06);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300BFF0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px 16px;
+}
+select:not([data-nx-skip]):focus {
+  outline: none;
+  border-color: #00BFF0;
+  box-shadow: 0 0 0 2px rgba(0, 191, 240, 0.35);
+}
+select:not([data-nx-skip]):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+select:not([data-nx-skip]) option {
+  background: #ffffff;
+  color: #0A0A0A;
+  padding: 8px;
+}
+select:not([data-nx-skip]) option:checked {
+  background: #D6F4FB;
+  color: #0A0A0A;
+  font-weight: 600;
+}
+
+
 
 
