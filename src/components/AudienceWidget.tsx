@@ -200,7 +200,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 flex-1 min-h-0">
+      <div className="grid grid-cols-4 gap-2 flex-1 min-h-0">
         <StatCell
           icon={current ? current.icon : <Users size={14} />}
           label={current ? current.label : "Redes sociais"}
@@ -210,17 +210,24 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
         />
         <StatCell
-          icon={<MonitorPlay size={14} />}
-          label="Player"
-          value={playerCount}
-          loading={loadingPlayer && playerCount === 0}
+          icon={<Radio size={14} />}
+          label="Streaming de áudio"
+          value={streamingCount}
+          loading={loadingStreaming && streamingCount === null}
           dark={dark}
         />
         <StatCell
-          icon={<Radio size={14} />}
-          label="Streaming"
-          value={streamingCount}
-          loading={loadingStreaming && streamingCount === null}
+          icon={<MonitorPlay size={14} />}
+          label="Streaming de vídeo"
+          value={videoCount}
+          loading={loadingVideo && videoCount === 0}
+          dark={dark}
+        />
+        <StatCell
+          icon={<Globe size={14} />}
+          label="Conectados no site"
+          value={siteCount}
+          loading={loadingSite && siteCount === null}
           dark={dark}
         />
       </div>
