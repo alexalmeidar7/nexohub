@@ -1917,7 +1917,9 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       prefetchRef.current = null;
     }
     const pre = new Audio();
-    pre.preload = "auto";
+    // preload="metadata" apenas para aquecer DNS/TLS sem bufferizar áudio
+    // (buffers de streams ao vivo ficariam obsoletos e causariam repetição)
+    pre.preload = "metadata";
     pre.muted = true;
     const sep = url.includes("?") ? "&" : "?";
     pre.src = `${url}${sep}_pf=${Date.now()}`;
@@ -1964,27 +1966,40 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       setShowVideo(true);
       setIsPlaying(true);
     } else {
-      // Se temos prefetch para essa URL, promove para playback (instantâneo)
-      const pf = prefetchRef.current;
-      let audio: HTMLAudioElement;
-      let usedPrefetch = false;
-      if (pf && pf.url === activeChannel.url) {
-        audio = pf.audio;
-        audio.muted = isMuted;
-        audio.volume = volume;
+      // Descarta qualquer prefetch — buffers antigos causariam repetição de áudio
+      // atrasado. O prefetch serve apenas para aquecer DNS/TLS.
+      if (prefetchRef.current) {
+        try {
+          prefetchRef.current.audio.pause();
+          prefetchRef.current.audio.removeAttribute("src");
+          prefetchRef.current.audio.load();
+        } catch {}
         prefetchRef.current = null;
-        usedPrefetch = true;
-      } else {
-        audio = new Audio();
-        audio.preload = "none";
-        audio.volume = volume;
-        audio.muted = isMuted;
       }
+
+      // Sempre cria um Audio novo para garantir stream ao vivo (sem buffer stale)
+      const audio = new Audio();
+      audio.preload = "none";
+      audio.volume = volume;
+      audio.muted = isMuted;
       audioRef.current = audio;
       setIsLoading(true);
 
       const clearLoading = () => setIsLoading(false);
-      const onPlaying = () => { setIsLoading(false); setIsPlaying(true); };
+      const onPlaying = () => {
+        setIsLoading(false);
+        setIsPlaying(true);
+        // Força ir para o live edge quando o buffer permitir (streams com seekable)
+        try {
+          const seek = audio.seekable;
+          if (seek && seek.length > 0) {
+            const end = seek.end(seek.length - 1);
+            if (isFinite(end) && end - audio.currentTime > 2) {
+              audio.currentTime = end;
+            }
+          }
+        } catch {}
+      };
       const onError = () => {
         console.warn("[Player audio] load error");
         setIsLoading(false);
@@ -1996,11 +2011,9 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       audio.addEventListener("error", onError);
       audio.addEventListener("ended", onEnded);
 
-      if (!usedPrefetch) {
-        // Bust cache to force fresh stream connection (avoids stuck buffer after pause)
-        const sep = activeChannel.url.includes("?") ? "&" : "?";
-        audio.src = `${activeChannel.url}${sep}_t=${Date.now()}`;
-      }
+      // Cache-bust agressivo para evitar reaproveitamento de buffer do browser
+      const sep = activeChannel.url.includes("?") ? "&" : "?";
+      audio.src = `${activeChannel.url}${sep}_t=${Date.now()}_r=${Math.random().toString(36).slice(2, 8)}`;
       audio.play().then(() => setIsPlaying(true)).catch((err) => {
         console.warn("Audio play failed:", err);
         setIsLoading(false);
@@ -2306,10 +2319,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         }}
       >
         {fadingArt && (
-          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: imgFadeTransition, opacity: 0 }} />
+          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover object-top" style={{ transition: imgFadeTransition, opacity: 0 }} />
         )}
         {visibleArt ? (
-          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transition: imgFadeTransition, opacity: artOpacity }} />
+          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover object-top" style={{ transition: imgFadeTransition, opacity: artOpacity }} />
+
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <Tv size={40} className="text-white/10" />
