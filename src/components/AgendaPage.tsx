@@ -339,6 +339,13 @@ const getFeriadoNome = (date?: Date) => {
   return f ? f.nome : null;
 };
 
+// Palette (nexo-form-design-system) — mesmo padrão do Cadastro de Ouvinte
+const NEXO_CYAN = "#00BFF0";
+const NEXO_LIME = "#C6F03C";
+const NEXO_CARD_BG = "#D6F4FB";
+const NEXO_DARK = "#0A2540";
+
+
 export default function AgendaPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1401,40 +1408,44 @@ export default function AgendaPage() {
         </DialogContent>
       </Dialog>
 
-      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
+      <div style={{ background: NEXO_CARD_BG, borderRadius: 28, padding: "28px 32px 32px", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)", fontFamily: "'Montserrat', sans-serif" }}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-              <CalendarIcon size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+            <div style={{ width: 40, height: 40, borderRadius: 999, background: NEXO_CYAN, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <CalendarIcon size={20} style={{ color: "#FFFFFF" }} />
             </div>
             <div>
-              <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Calendário de Eventos</h3>
-              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie a agenda de programas e participantes</p>
+              <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: NEXO_DARK, textTransform: "uppercase", margin: 0 }}>Agenda de Eventos</h3>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: "#64748B", margin: "4px 0 0" }}>Gerencie programas e participantes</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {locais.length > 0 && (
               <Select value={filterLocal} onValueChange={setFilterLocal}>
-                <SelectTrigger className="w-[160px] h-8 text-xs [&>span]:text-white" style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "20px", border: "none" }}>
-                  <MapPin size={12} className="mr-1 text-white" />
+                <SelectTrigger className="w-[180px] h-10 text-xs" style={{ background: "#FFFFFF", color: NEXO_DARK, borderRadius: 999, border: `2px solid ${NEXO_CYAN}`, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", paddingLeft: 16 }}>
+                  <MapPin size={12} className="mr-1" style={{ color: NEXO_CYAN }} />
                   <SelectValue placeholder="Filtrar por local" />
                 </SelectTrigger>
-                <SelectContent style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "12px" }}>
-                  <SelectItem value="todos" className="text-white focus:bg-[var(--layout-accent-color)] focus:text-white">Todos os locais</SelectItem>
+                <SelectContent style={{ backgroundColor: "#FFFFFF", color: NEXO_DARK, borderRadius: 16, border: `2px solid ${NEXO_CYAN}` }}>
+                  <SelectItem value="todos">Todos os locais</SelectItem>
                   {locais.map((l) => (
-                    <SelectItem key={l} value={l} className="text-white focus:bg-[var(--layout-accent-color)] focus:text-white">{l}</SelectItem>
+                    <SelectItem key={l} value={l}>{l}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             )}
-            <button type="button" onClick={openNewDialog}
-              className="btn-skyglass-accent px-3 py-1.5 text-[10px]"
+            <button
+              type="button"
+              onClick={openNewDialog}
+              style={{ height: 40, padding: "0 22px", borderRadius: 999, background: NEXO_LIME, border: "none", color: NEXO_DARK, fontWeight: 800, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)", fontFamily: "'Montserrat', sans-serif" }}
             >
               <Plus size={14} /> Novo Evento
             </button>
           </div>
         </div>
+
+
 
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
           <DialogContent className="max-w-md max-h-[70vh] overflow-hidden p-0 flex flex-col" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }}>
@@ -2109,10 +2120,11 @@ export default function AgendaPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-1 space-y-5">
             {/* Calendar */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide" style={{ background: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
-                📅 Calendário
+            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+              <div style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+                Calendário
               </div>
+
               <div className="p-3">
               <style>{`
                 .agenda-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; }
@@ -2177,13 +2189,14 @@ export default function AgendaPage() {
             </div>
           </div>
             {/* Próximos Feriados Section */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #ef4444), color-mix(in srgb, var(--layout-accent-color, #ef4444) 80%, black 20%))", color: "#ffffff" }}>
-                <div className="flex items-center gap-1.5">
-                  <Star size={12} className="fill-white" />
+            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+              <div className="flex items-center justify-between" style={{ padding: "12px 18px", background: NEXO_DARK, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+                <div className="flex items-center gap-2">
+                  <Star size={12} style={{ color: NEXO_LIME, fill: NEXO_LIME }} />
                   Próximos Feriados
                 </div>
               </div>
+
               <div className="p-3 space-y-1.5 max-h-[300px] overflow-y-auto scrollbar-hide">
                 {feriadosNacionais
                   .filter(f => f.date >= new Date(new Date().setHours(0,0,0,0)))
@@ -2231,8 +2244,9 @@ export default function AgendaPage() {
           {/* Events + Upcoming */}
           <div className="lg:col-span-2 space-y-4">
             {/* Week schedule (Mon-Sun) - Injected here */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
+            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+              <div className="flex items-center justify-between" style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+
                 <span className="flex items-center gap-1.5 flex-wrap">
                   <CalendarIcon size={12} /> Programação da Semana
                   {weekEvents.length > 0 && (
@@ -2347,18 +2361,19 @@ export default function AgendaPage() {
               </div>
             </div>
             {/* Events of selected day */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
-                <span style={{ color: "var(--layout-header-text, #ffffff)" }}>
+            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+              <div className="flex items-center justify-between" style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+                <span>
                   {selectedDate
-                    ? `📋 Eventos em ${format(selectedDate, "dd/MM/yyyy")}`
-                    : "📋 Todos os eventos"}
+                    ? `Eventos em ${format(selectedDate, "dd/MM/yyyy")}`
+                    : "Todos os eventos"}
                   {filterLocal !== "todos" && ` • ${filterLocal}`}
                 </span>
-                <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                <span style={{ fontSize: 10, fontWeight: 800, background: "#FFFFFF", color: NEXO_DARK, padding: "3px 12px", borderRadius: 999, letterSpacing: 1 }}>
                   {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
                 </span>
               </div>
+
               <div className="p-3 space-y-2">
                 {filteredEventos.map((evt) => renderEventCard(evt))}
 
@@ -2371,10 +2386,11 @@ export default function AgendaPage() {
             </div>
 
             {/* Upcoming 7 days */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide" style={{ background: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
-                🗓️ Próximos 7 dias
+            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+              <div style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+                Próximos 7 dias
               </div>
+
               <div className="p-3 space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
                 {upcomingEvents.length === 0 ? (
                   <p className="text-xs py-4 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
