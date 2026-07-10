@@ -84,9 +84,10 @@ function extractInstagramUsername(url: string): string | null {
   }
 }
 
-async function fetchInstagramViaRapidApi(username: string): Promise<number | null> {
+async function fetchInstagramViaRapidApi(username: string, debug?: string[]): Promise<number | null> {
   const key = Deno.env.get("RAPIDAPI_KEY");
-  if (!key) { console.log("[ig-rapidapi] no RAPIDAPI_KEY"); return null; }
+  if (!key) { debug?.push("no RAPIDAPI_KEY"); return null; }
+  debug?.push(`rapidapi key len=${key.length}`);
   const hosts: Array<{ host: string; url: string; pick: (j: any) => number | null | undefined }> = [
     {
       host: "instagram-scraper-api2.p.rapidapi.com",
@@ -126,16 +127,16 @@ async function fetchInstagramViaRapidApi(username: string): Promise<number | nul
       });
       const text = await r.text();
       if (!r.ok) {
-        console.log(`[ig-rapidapi] ${h.host} -> HTTP ${r.status}: ${text.slice(0, 200)}`);
+        debug?.push(`${h.host} HTTP ${r.status}: ${text.slice(0, 120)}`);
         continue;
       }
       let j: any = null;
-      try { j = JSON.parse(text); } catch { console.log(`[ig-rapidapi] ${h.host} non-json`); continue; }
+      try { j = JSON.parse(text); } catch { debug?.push(`${h.host} non-json`); continue; }
       const n = h.pick(j);
-      console.log(`[ig-rapidapi] ${h.host} -> follower_count=${n}`);
+      debug?.push(`${h.host} count=${n}`);
       if (typeof n === "number" && n > 0) return n;
     } catch (e) {
-      console.log(`[ig-rapidapi] ${h.host} error: ${e}`);
+      debug?.push(`${h.host} error: ${e}`);
     }
   }
   return null;
