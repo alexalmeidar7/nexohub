@@ -1950,7 +1950,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   }, [displayArt]);
 
   return (
-    <div className="flex flex-col h-full relative rounded-3xl overflow-hidden" style={{ background: "#000", minHeight: 260 }}>
+    <div className="flex flex-col h-full w-full relative rounded-3xl overflow-hidden" style={{ background: "#000", minHeight: 0, maxHeight: "100%", contain: "layout paint size" }}>
       {/* Background artist image */}
       <div className="absolute inset-0 pointer-events-none">
         {fadingArt && (
@@ -1996,9 +1996,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         <p className="text-white/40 text-xs relative z-10 m-auto">Nenhum canal cadastrado</p>
       ) : (
         <div
-          className={`relative z-10 flex h-full ${compactMode ? "flex-row items-center gap-2 p-2 sm:p-2.5" : "flex-col justify-between p-2.5 sm:p-3.5"}`}
-          style={{ minHeight: compactMode ? 72 : 187, transition: "min-height 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.3s ease" }}
+          className={`relative z-10 flex h-full w-full overflow-hidden ${compactMode ? "flex-row items-center gap-2 p-2 sm:p-2.5" : "flex-col justify-between p-2.5 sm:p-3.5"}`}
+          style={{ minHeight: 0, maxHeight: "100%", transition: "min-height 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.3s ease" }}
         >
+
           {/* Status label — only in standard mode */}
           {!compactMode && (
             <div className="flex items-start justify-between gap-2">
