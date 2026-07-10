@@ -624,7 +624,9 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
             {items.filter(i => i.type === "widget").map(item => {
               const isDragging = draggedId === item.id;
               const isDragOver = dragOverId === item.id && draggedId !== item.id;
+              const audienceHeight = playerCompactMap[item.id] ? Math.min(96, playerMaxHeight) : playerMaxHeight;
               return (
+                <>
                 <div
                   key={item.id}
                   className={`relative group rounded-3xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
@@ -694,6 +696,14 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                     </Suspense>
                   </div>
                 </div>
+                {item.widgetType === "player" && (
+                  <div key={`${item.id}-audience`} className="sm:col-span-1 lg:col-span-2 xl:col-span-3">
+                    <Suspense fallback={<div style={{ height: audienceHeight, borderRadius: 24, background: "#d9ff65", opacity: 0.6 }} />}>
+                      <AudienceWidget dataUserId={dataUserId || undefined} heightPx={audienceHeight} />
+                    </Suspense>
+                  </div>
+                )}
+                </>
               );
             })}
           </div>
