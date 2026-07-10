@@ -1766,7 +1766,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
 
 /* Sub-component for each noticia row */
-function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields, onRegenerateWeather, onRegenerateFinance, addingWeather, addingFinance, defaultCollapsed }: {
+function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields, onRegenerateWeather, onRegenerateFinance, addingWeather, addingFinance, isOpen, onToggleOpen, onAddToEscalada, alreadyInEscalada }: {
   noticia: NewsItem; bi: number; ni: number;
   inputStyle: React.CSSProperties; fetchingLink: string | null;
   onUpdate: (bi: number, ni: number, field: keyof NewsItem, value: any) => void;
@@ -1778,22 +1778,26 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   onRegenerateFinance?: (bi: number, ni: number) => void;
   addingWeather?: boolean;
   addingFinance?: boolean;
-  defaultCollapsed?: boolean;
+  isOpen: boolean;
+  onToggleOpen: (open: boolean) => void;
+  onAddToEscalada: () => void;
+  alreadyInEscalada: boolean;
 }) {
   const [linkInput, setLinkInput] = useState(noticia.link || "");
-  const [collapsed, setCollapsed] = useState(!!defaultCollapsed);
+  const collapsed = !isOpen;
+  const setCollapsed = (v: boolean) => onToggleOpen(!v);
   const isFetching = fetchingLink === `${bi}-${ni}`;
 
   const handlePasteLink = (url: string) => { setLinkInput(url); if (url.startsWith("http")) onFetchLink(bi, ni, url); };
   const prevTituloRef = useRef(noticia.titulo);
-  
+
   useEffect(() => {
     if (noticia.titulo && !prevTituloRef.current && !collapsed && !isFetching) {
-      const timer = setTimeout(() => setCollapsed(true), 3000); // Increased time to 3s and only if not fetching
+      const timer = setTimeout(() => onToggleOpen(false), 3000);
       return () => clearTimeout(timer);
     }
     prevTituloRef.current = noticia.titulo;
-  }, [noticia.titulo, collapsed, isFetching]);
+  }, [noticia.titulo, collapsed, isFetching, onToggleOpen]);
 
   if (collapsed && noticia.titulo) {
     return (
@@ -1805,6 +1809,15 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         </div>
         <div className="flex items-center gap-1 shrink-0 ml-2">
           <Pencil size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
+          <button
+            onClick={(e) => { e.stopPropagation(); onAddToEscalada(); }}
+            disabled={alreadyInEscalada}
+            className="p-0.5 rounded hover:opacity-70 disabled:opacity-40"
+            style={{ color: alreadyInEscalada ? "#10b981" : NEXO_CYAN }}
+            title={alreadyInEscalada ? "Já está na escalada" : "Adicionar à escalada"}
+          >
+            <Megaphone size={12} />
+          </button>
           {canRemove && <button onClick={(e) => { e.stopPropagation(); onRemove(bi, ni); }} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>}
         </div>
       </div>
