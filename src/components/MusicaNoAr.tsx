@@ -1180,11 +1180,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       <section style={{ background: NEXO_CARD_BG, borderRadius: 28, overflow: "hidden", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)" }}>
         <button
           onClick={() => setShowConfig(!showConfig)}
-          className="w-full flex items-center justify-between px-5 py-3.5 text-left transition-colors"
-          style={{ borderBottom: showConfig ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent)" : "none" }}
+          className="w-full flex items-center justify-between text-left transition-colors"
+          style={{ padding: "18px 24px", borderBottom: showConfig ? `1px solid ${NEXO_CYAN}33` : "none" }}
         >
-          <span className="text-xs font-bold flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-            <Monitor size={14} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+          <span className="flex items-center gap-2.5" style={{ color: NEXO_DARK, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>
+            <Monitor size={16} style={{ color: NEXO_CYAN }} />
             Configuração das Origens
             {localMonitoring && (
               <span className="relative flex h-2 w-2">
@@ -1193,7 +1193,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               </span>
             )}
           </span>
-          {showConfig ? <ChevronUp size={16} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} /> : <ChevronDown size={16} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />}
+          {showConfig ? <ChevronUp size={18} style={{ color: NEXO_DARK }} /> : <ChevronDown size={18} style={{ color: NEXO_DARK }} />}
         </button>
 
         {showConfig && (
