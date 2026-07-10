@@ -21,6 +21,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [playerCount] = useState<number>(0);
   const [streamingCount] = useState<number>(0);
   const [rotIdx, setRotIdx] = useState(0);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [loadingSocial, setLoadingSocial] = useState(true);
+  const [loadingPlayer] = useState(true);
+  const [loadingStreaming] = useState(true);
   const socialUrlsRef = useRef<{ youtube?: string; instagram?: string; facebook?: string }>({});
 
   // Fetch empresa social URLs + follower counts
