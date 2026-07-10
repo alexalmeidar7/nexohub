@@ -1039,7 +1039,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               }}
             >
               <Suspense fallback={<div className="w-full h-full" />}>
-                <UpcomingEventsWidget onNavigate={onNavigate} />
+                <UpcomingEventsWidget onNavigate={setCurrentPage as any} />
               </Suspense>
             </div>
             </div>
