@@ -109,6 +109,10 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
 
   const openAgenda = (evtId?: string) => {
     if (evtId) sessionStorage.setItem("agenda_focus_event", evtId);
+    try {
+      sessionStorage.setItem("agenda_focus_date", format(selected, "yyyy-MM-dd"));
+      sessionStorage.setItem("agenda_focus_week", format(weekAnchor, "yyyy-MM-dd"));
+    } catch {}
     onNavigate?.("agenda" as Page);
   };
 
@@ -292,6 +296,20 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
           })
         )}
       </div>
+
+      {/* Footer: Ver agenda completa */}
+      <button
+        onClick={() => openAgenda()}
+        className="mt-2 shrink-0 w-full flex items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-bold uppercase tracking-wider transition-all hover:opacity-90 active:scale-[0.98]"
+        style={{
+          background: accent,
+          color: "var(--layout-header-text, #ffffff)",
+        }}
+      >
+        <CalendarDays size={12} />
+        Ver agenda completa
+        <ExternalLink size={11} className="opacity-80" />
+      </button>
     </div>
   );
 }
