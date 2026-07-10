@@ -111,6 +111,28 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
+  // Poll GA4 Realtime API for site visitors.
+  useEffect(() => {
+    if (!dataUserId) return;
+    let cancelled = false;
+    const tick = async () => {
+      const { data } = await supabase.functions.invoke("count-site-visitors", {
+        body: { userId: dataUserId },
+      });
+      if (cancelled) return;
+      if (data && (data as any).ok) {
+        const n = (data as any).activeUsers;
+        setSiteCount(typeof n === "number" ? n : null);
+      }
+      setLoadingSite(false);
+    };
+    tick();
+    const iv = setInterval(tick, SITE_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
+  }, [dataUserId]);
 
 
   // Rotate social display every 3s (only across configured networks)
