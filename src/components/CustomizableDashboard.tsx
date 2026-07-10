@@ -2032,7 +2032,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   const barRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  // Cache one MediaElementAudioSourceNode PER media element (createMediaElementSource
+  // may only be called once per element per context).
+  const sourceMapRef = useRef<WeakMap<HTMLMediaElement, MediaElementAudioSourceNode>>(new WeakMap());
+  const activeSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const rafRef = useRef<number | null>(null);
   const analyserFailedRef = useRef(false);
 
@@ -2040,32 +2043,46 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     const prefersReduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (!isBreak || !isPlaying || prefersReduced) {
       if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
-      // Reset bars to idle heights (static mid-height if reduced motion, low if idle)
       const idle = prefersReduced ? "22px" : "8px";
       barRefs.current.forEach((el) => { if (el) el.style.height = idle; });
       return;
     }
 
+    // Pick the media element that is actually producing sound right now
+    const activeMediaEl: HTMLMediaElement | null = (isVideo && showVideo)
+      ? videoRef.current
+      : audioRef.current;
+    if (!activeMediaEl) return;
 
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    // Lazy-create AudioContext + analyser once (fallback to CSS animation if CORS blocks it)
     const ensureAnalyser = (): boolean => {
-      if (analyserRef.current) return true;
       if (analyserFailedRef.current) return false;
       try {
         const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
-        const ctx = new Ctx();
-        const source = ctx.createMediaElementSource(audio);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 256;
-        analyser.smoothingTimeConstant = 0.88;
-        source.connect(analyser);
-        analyser.connect(ctx.destination);
-        audioCtxRef.current = ctx;
-        sourceRef.current = source;
-        analyserRef.current = analyser;
+        if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
+        const ctx = audioCtxRef.current!;
+
+        if (!analyserRef.current) {
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.88;
+          analyser.connect(ctx.destination);
+          analyserRef.current = analyser;
+        }
+        const analyser = analyserRef.current!;
+
+        // Get or create the source for THIS media element
+        let source = sourceMapRef.current.get(activeMediaEl) || null;
+        if (!source) {
+          source = ctx.createMediaElementSource(activeMediaEl);
+          sourceMapRef.current.set(activeMediaEl, source);
+        }
+
+        // Rewire if the analyser is currently on a different source
+        if (activeSourceRef.current !== source) {
+          try { activeSourceRef.current?.disconnect(analyser); } catch {}
+          source.connect(analyser);
+          activeSourceRef.current = source;
+        }
         return true;
       } catch (e) {
         analyserFailedRef.current = true;
@@ -2088,6 +2105,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     const analyser = ok ? analyserRef.current! : null;
     const bins = analyser ? analyser.frequencyBinCount : 0;
     const data = analyser ? new Uint8Array(bins) : null;
+
     const step = analyser ? Math.max(1, Math.floor(bins / BAR_COUNT)) : 0;
 
     const start = performance.now();
