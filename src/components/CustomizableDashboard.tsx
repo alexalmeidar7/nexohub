@@ -578,7 +578,17 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
 
       {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-2">
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "#002132" }}>Widgets</p>
+          <div className="flex items-center gap-2 mb-3 animate-fade-in">
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: "#002132" }}>Widgets</p>
+            <button
+              onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
+              className="w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110"
+              style={{ background: "#002132", color: "#fff" }}
+              title="Adicionar widget"
+            >
+              <Plus size={12} strokeWidth={2.5} />
+            </button>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" style={{ gridAutoRows: "auto" }}>
 
             {items.filter(i => i.type === "widget").map(item => {
