@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   dataUserId?: string;
-  heightPx: number;
+  heightPx?: number;
 }
 
 interface SocialCounts {
