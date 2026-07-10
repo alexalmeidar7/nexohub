@@ -672,15 +672,17 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                       <GripVertical size={10} style={{ color: "rgba(255,255,255,0.7)" }} />
                     </div>
                   )}
-                  <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                      style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
-                    >
-                      <X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} />
-                    </button>
-                  </div>
+                  {item.widgetType !== "player" && (
+                    <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                        style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
+                      >
+                        <X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} />
+                      </button>
+                    </div>
+                  )}
                   <div className={`${item.widgetType === "player" ? "p-0" : "p-4"} flex-1 ${item.widgetType === "player" && playerVideoActive === item.id ? "overflow-visible" : item.widgetType === "player" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"} widget-scroll`}>
                     <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
                       {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
