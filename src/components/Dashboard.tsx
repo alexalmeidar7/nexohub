@@ -86,6 +86,7 @@ const sidebarMenu: MenuItem[] = [
   {
     icon: Users, label: "cadastros", children: [
       { icon: Mic2, label: "participantes", page: "apresentadores" },
+      { icon: Users, label: "ouvintes", page: "ouvintes" },
       { icon: PlaySquare, label: "programas", page: "programas" },
       { icon: CloudSun, label: "cidade tempo", page: "previsao" },
     ]
