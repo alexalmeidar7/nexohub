@@ -2274,38 +2274,14 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
                 ? <Pause size={compactMode ? 11 : 12} style={{ color: "#c8ff00" }} fill="#c8ff00" />
                 : <Play size={compactMode ? 11 : 12} style={{ color: "#c8ff00", marginLeft: 1 }} fill="#c8ff00" />}
             </button>
-            <div className="relative group/vol">
-              <button
-                onClick={toggleMute}
-                className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
-                style={{ background: "#c8ff00" }}
-                title={isMuted ? "Ativar som" : "Mudo"}
-              >
-                {isMuted || volume === 0
-                  ? <VolumeX size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} />
-                  : <Volume2 size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} fill="#001e2d" />}
-              </button>
-              <div className="absolute right-full top-1/2 -translate-y-1/2 mr-1.5 opacity-0 pointer-events-none group-hover/vol:opacity-100 group-hover/vol:pointer-events-auto transition-opacity duration-150 z-30">
-                <div className="rounded-full px-2 py-1 sm:px-2.5 sm:py-1.5 flex items-center shadow-lg" style={{ background: "#c8ff00" }}>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={isMuted ? 0 : volume}
-                    onChange={e => handleVolume(Number(e.target.value))}
-                    onMouseDown={e => e.stopPropagation()}
-                    onTouchStart={e => e.stopPropagation()}
-                    onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
-                    draggable={false}
-                    className="volume-slider-lime h-1 appearance-none rounded-full cursor-pointer w-12 sm:w-16"
-                    style={{
-                      background: `linear-gradient(to right, #001e2d ${(isMuted ? 0 : volume) * 100}%, rgba(0,30,45,0.25) ${(isMuted ? 0 : volume) * 100}%)`,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+            <VolumeSliderControl
+              compactMode={compactMode}
+              isMuted={isMuted}
+              volume={volume}
+              toggleMute={toggleMute}
+              handleVolume={handleVolume}
+            />
+
             <button
               onClick={() => setCompactMode(m => !m)}
               className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
