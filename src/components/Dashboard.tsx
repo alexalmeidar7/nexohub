@@ -222,6 +222,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [showNext, setShowNext] = useState(false);
   const [onAirTimes, setOnAirTimes] = useState<{ inicio: string; fim: string } | null>(null);
   const [nowTick, setNowTick] = useState(() => Date.now());
+  // Global player state (mirrored from CustomizableDashboard via window events)
+  const [playerState, setPlayerState] = useState<{ isPlaying: boolean; isLoading: boolean; hasChannel: boolean; channelName: string }>({ isPlaying: false, isLoading: false, hasChannel: false, channelName: "" });
+  useEffect(() => {
+    const onState = (e: Event) => {
+      const d = (e as CustomEvent).detail;
+      if (d) setPlayerState(d);
+    };
+    window.addEventListener("player:state", onState);
+    return () => window.removeEventListener("player:state", onState);
+  }, []);
   useEffect(() => {
     const iv = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(iv);
