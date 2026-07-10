@@ -18,10 +18,11 @@ const ROTATE_MS = 3000;
 const REFETCH_MS = Math.round((24 * 60 * 60 * 1000) / 5);
 const LISTENERS_MS = 30 * 1000; // 30s for stream listeners
 const SITE_MS = 30 * 1000; // 30s for site realtime users
+const VIDEO_MS = 30 * 1000; // 30s for video viewers
 
 export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [social, setSocial] = useState<SocialCounts>({ youtube: null, instagram: null, facebook: null });
-  const [videoCount] = useState<number>(0);
+  const [videoCount, setVideoCount] = useState<number | null>(null);
   const [streamingCount, setStreamingCount] = useState<number | null>(null);
   const [siteCount, setSiteCount] = useState<number | null>(null);
   const [rotIdx, setRotIdx] = useState(0);
