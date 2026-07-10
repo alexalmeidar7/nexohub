@@ -1,25 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Loader2, Trash2, Pencil, UserPlus, X, Search } from "lucide-react";
+import { Loader2, Trash2, Pencil, Save, X, Search, Users } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 
@@ -36,6 +18,7 @@ interface Ouvinte {
   escolaridade: string | null;
   renda: string | null;
   pontuacao: number | null;
+  sexo: string | null;
 }
 
 const ESCOLARIDADE_OPTIONS = [
@@ -59,6 +42,8 @@ const RENDA_OPTIONS = [
   "Acima de 20 salários mínimos",
 ];
 
+const SEXO_OPTIONS = ["Feminino", "Masculino", "Outro", "Prefere não informar"];
+
 const emptyForm = {
   nome: "",
   cpf: "",
@@ -70,7 +55,57 @@ const emptyForm = {
   escolaridade: "",
   renda: "",
   pontuacao: "0",
+  sexo: "",
 };
+
+// Palette (nexo-form-design-system)
+const CYAN = "#00BFF0";
+const LIME = "#C6F03C";
+const CARD_BG = "#D6F4FB";
+const DARK = "#0A2540";
+
+const pillInput: React.CSSProperties = {
+  width: "100%",
+  height: 44,
+  borderRadius: 999,
+  background: "#FFFFFF",
+  border: `2px solid ${CYAN}`,
+  padding: "0 20px",
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 13,
+  color: DARK,
+  outline: "none",
+};
+
+const pillSelect: React.CSSProperties = {
+  ...pillInput,
+  appearance: "none",
+  backgroundImage:
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2300BFF0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 18px center",
+  paddingRight: 44,
+};
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  color: DARK,
+  marginBottom: 8,
+  display: "block",
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  );
+}
 
 export default function OuvintesPage() {
   const { user } = useAuth();
@@ -123,6 +158,7 @@ export default function OuvintesPage() {
       data_nascimento: form.data_nascimento || null,
       escolaridade: form.escolaridade || null,
       renda: form.renda || null,
+      sexo: form.sexo || null,
       pontuacao: Number(form.pontuacao) || 0,
     };
 
@@ -155,6 +191,7 @@ export default function OuvintesPage() {
       data_nascimento: o.data_nascimento || "",
       escolaridade: o.escolaridade || "",
       renda: o.renda || "",
+      sexo: o.sexo || "",
       pontuacao: String(o.pontuacao ?? 0),
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -187,157 +224,275 @@ export default function OuvintesPage() {
   const today = new Date().toLocaleDateString("pt-BR");
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Form */}
-      <section className="rounded-2xl p-6 bg-card border border-border">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <UserPlus className="w-5 h-5" />
-              {editingId ? "Editar Ouvinte" : "Cadastrar Ouvinte"}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1">
-              Data do cadastro: <span className="font-medium">{editingId ? "—" : today}</span>
-            </p>
+    <div className="space-y-8 animate-fade-in" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      {/* FORM CARD */}
+      <section
+        style={{
+          background: CARD_BG,
+          borderRadius: 28,
+          padding: "28px 32px 32px",
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <h3
+            style={{
+              fontSize: 18,
+              fontWeight: 800,
+              letterSpacing: 2,
+              color: DARK,
+              textTransform: "uppercase",
+              margin: 0,
+            }}
+          >
+            {editingId ? "Editar Ouvinte" : "Cadastro de Ouvinte"}
+          </h3>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: DARK,
+              background: "#FFFFFF",
+              padding: "6px 16px",
+              borderRadius: 999,
+              border: `2px solid ${CYAN}`,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+            }}
+          >
+            Data do cadastro: <span style={{ color: CYAN }}>{editingId ? "—" : today}</span>
           </div>
-          {editingId && (
-            <Button variant="outline" size="sm" onClick={resetForm}>
-              <X className="w-4 h-4 mr-1" /> Cancelar edição
-            </Button>
-          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
           <div className="lg:col-span-2">
-            <Label htmlFor="nome">Nome</Label>
-            <Input id="nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Nome completo" />
+            <Field label="Nome Completo">
+              <input style={pillInput} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Nome completo" />
+            </Field>
           </div>
-          <div>
-            <Label htmlFor="cpf">CPF</Label>
-            <Input id="cpf" value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" />
-          </div>
-          <div>
-            <Label htmlFor="telefone">Telefone</Label>
-            <Input id="telefone" value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" />
-          </div>
-          <div>
-            <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" />
-          </div>
-          <div>
-            <Label htmlFor="setor">Setor</Label>
-            <Input id="setor" value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} placeholder="Ex.: Bairro / região" />
-          </div>
-          <div>
-            <Label htmlFor="cidade">Cidade</Label>
-            <Input id="cidade" value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} placeholder="Cidade" />
-          </div>
-          <div>
-            <Label htmlFor="nasc">Data de nascimento</Label>
-            <Input id="nasc" type="date" value={form.data_nascimento} onChange={(e) => setForm({ ...form, data_nascimento: e.target.value })} />
-          </div>
-          <div>
-            <Label>Escolaridade</Label>
-            <Select value={form.escolaridade} onValueChange={(v) => setForm({ ...form, escolaridade: v })}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>
-                {ESCOLARIDADE_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Renda</Label>
-            <Select value={form.renda} onValueChange={(v) => setForm({ ...form, renda: v })}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>
-                {RENDA_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="pontos">Pontuação</Label>
-            <Input id="pontos" type="number" step="1" value={form.pontuacao} onChange={(e) => setForm({ ...form, pontuacao: e.target.value })} />
-          </div>
+          <Field label="CPF">
+            <input style={pillInput} value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" />
+          </Field>
+
+          <Field label="Telefone">
+            <input style={pillInput} value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" />
+          </Field>
+          <Field label="E-mail">
+            <input style={pillInput} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" />
+          </Field>
+          <Field label="Sexo">
+            <select style={pillSelect} value={form.sexo} onChange={(e) => setForm({ ...form, sexo: e.target.value })}>
+              <option value="">Selecione</option>
+              {SEXO_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </Field>
+
+          <Field label="Setor">
+            <input style={pillInput} value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} placeholder="Bairro / região" />
+          </Field>
+          <Field label="Cidade">
+            <input style={pillInput} value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} placeholder="Cidade" />
+          </Field>
+          <Field label="Data de Nascimento">
+            <input style={pillInput} type="date" value={form.data_nascimento} onChange={(e) => setForm({ ...form, data_nascimento: e.target.value })} />
+          </Field>
+
+          <Field label="Escolaridade">
+            <select style={pillSelect} value={form.escolaridade} onChange={(e) => setForm({ ...form, escolaridade: e.target.value })}>
+              <option value="">Selecione</option>
+              {ESCOLARIDADE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </Field>
+          <Field label="Renda">
+            <select style={pillSelect} value={form.renda} onChange={(e) => setForm({ ...form, renda: e.target.value })}>
+              <option value="">Selecione</option>
+              {RENDA_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </Field>
+          <Field label="Pontuação">
+            <input style={pillInput} type="number" step="1" value={form.pontuacao} onChange={(e) => setForm({ ...form, pontuacao: e.target.value })} />
+          </Field>
         </div>
 
-        <div className="mt-6 flex justify-end">
-          <Button onClick={handleSave} disabled={saving}>
-            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {editingId ? "Atualizar Ouvinte" : "Cadastrar Ouvinte"}
-          </Button>
+        <div className="mt-8 flex items-center justify-end gap-3">
+          {editingId && (
+            <button
+              onClick={resetForm}
+              style={{
+                height: 44,
+                padding: "0 22px",
+                borderRadius: 999,
+                background: "#FFFFFF",
+                border: `2px solid ${CYAN}`,
+                color: DARK,
+                fontWeight: 700,
+                fontSize: 12,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+              }}
+            >
+              <X size={16} /> Cancelar
+            </button>
+          )}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              height: 44,
+              padding: "0 28px",
+              borderRadius: 999,
+              background: LIME,
+              border: "none",
+              color: DARK,
+              fontWeight: 800,
+              fontSize: 12,
+              letterSpacing: 2,
+              textTransform: "uppercase",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              cursor: saving ? "wait" : "pointer",
+              opacity: saving ? 0.7 : 1,
+              boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
+            }}
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            Salvar
+          </button>
         </div>
       </section>
 
-      {/* List */}
-      <section className="rounded-2xl p-6 bg-card border border-border">
+      {/* LIST CARD */}
+      <section
+        style={{
+          background: "#FFFFFF",
+          borderRadius: 28,
+          padding: "20px 24px 28px",
+          border: "1px solid #E5F5FB",
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
+        }}
+      >
         <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
-          <h3 className="text-lg font-semibold text-foreground">
-            Ouvintes cadastrados <span className="text-muted-foreground text-sm font-normal">({filtered.length})</span>
-          </h3>
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
+          <div className="flex items-center gap-2" style={{ color: DARK }}>
+            <Users size={18} style={{ color: CYAN }} />
+            <h3 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+              Ouvintes Cadastrados
+            </h3>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                background: CARD_BG,
+                color: DARK,
+                padding: "3px 12px",
+                borderRadius: 999,
+              }}
+            >
+              {filtered.length}
+            </span>
+          </div>
+
+          <div style={{ position: "relative" }}>
+            <Search size={14} style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: CYAN }} />
+            <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome, CPF, e-mail ou cidade"
-              className="pl-9 w-72"
+              placeholder="Buscar nome, CPF, e-mail ou cidade"
+              style={{ ...pillInput, width: 320, paddingLeft: 40, height: 40, fontSize: 12 }}
             />
           </div>
         </div>
 
         {filtered.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">Nenhum ouvinte cadastrado.</p>
+          <p style={{ fontSize: 13, color: "#64748B", textAlign: "center", padding: "40px 0", fontFamily: "'Montserrat', sans-serif" }}>
+            Nenhum ouvinte cadastrado.
+          </p>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CPF</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Setor</TableHead>
-                  <TableHead>Cidade</TableHead>
-                  <TableHead>Nascimento</TableHead>
-                  <TableHead>Escolaridade</TableHead>
-                  <TableHead>Renda</TableHead>
-                  <TableHead className="text-right">Pontos</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((o) => (
-                  <TableRow key={o.id}>
-                    <TableCell className="whitespace-nowrap text-xs">
+          <div style={{ overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
+            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: CYAN, color: "#FFFFFF" }}>
+                  {["Data", "Nome", "CPF", "Telefone", "E-mail", "Sexo", "Setor", "Cidade", "Nascimento", "Escolaridade", "Renda", "Pontos", "Ações"].map((h, i) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: "12px 14px",
+                        textAlign: h === "Pontos" || h === "Ações" ? "right" : "left",
+                        fontWeight: 800,
+                        letterSpacing: 1.2,
+                        textTransform: "uppercase",
+                        fontSize: 10,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((o, idx) => (
+                  <tr
+                    key={o.id}
+                    style={{
+                      background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
+                      color: DARK,
+                    }}
+                  >
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                       {o.created_at ? new Date(o.created_at).toLocaleDateString("pt-BR") : "—"}
-                    </TableCell>
-                    <TableCell className="font-medium">{o.nome}</TableCell>
-                    <TableCell>{o.cpf || "—"}</TableCell>
-                    <TableCell>{o.telefone || "—"}</TableCell>
-                    <TableCell>{o.email || "—"}</TableCell>
-                    <TableCell>{o.setor || "—"}</TableCell>
-                    <TableCell>{o.cidade || "—"}</TableCell>
-                    <TableCell className="whitespace-nowrap">
+                    </td>
+                    <td style={{ padding: "12px 14px", fontWeight: 700 }}>{o.nome}</td>
+                    <td style={{ padding: "12px 14px" }}>{o.cpf || "—"}</td>
+                    <td style={{ padding: "12px 14px" }}>{o.telefone || "—"}</td>
+                    <td style={{ padding: "12px 14px" }}>{o.email || "—"}</td>
+                    <td style={{ padding: "12px 14px" }}>{o.sexo || "—"}</td>
+                    <td style={{ padding: "12px 14px" }}>{o.setor || "—"}</td>
+                    <td style={{ padding: "12px 14px" }}>{o.cidade || "—"}</td>
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                       {o.data_nascimento ? new Date(o.data_nascimento + "T00:00:00").toLocaleDateString("pt-BR") : "—"}
-                    </TableCell>
-                    <TableCell>{o.escolaridade || "—"}</TableCell>
-                    <TableCell>{o.renda || "—"}</TableCell>
-                    <TableCell className="text-right">{o.pontuacao ?? 0}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-1 justify-end">
-                        <Button size="icon" variant="ghost" onClick={() => handleEdit(o)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button size="icon" variant="ghost" onClick={() => handleDelete(o.id)}>
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
+                    </td>
+                    <td style={{ padding: "12px 14px" }}>{o.escolaridade || "—"}</td>
+                    <td style={{ padding: "12px 14px" }}>{o.renda || "—"}</td>
+                    <td style={{ padding: "12px 14px", textAlign: "right", fontWeight: 800, color: CYAN }}>
+                      {o.pontuacao ?? 0}
+                    </td>
+                    <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                      <div style={{ display: "inline-flex", gap: 6 }}>
+                        <button
+                          onClick={() => handleEdit(o)}
+                          title="Editar"
+                          style={{
+                            width: 30, height: 30, borderRadius: "50%",
+                            background: CARD_BG, border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: DARK,
+                          }}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(o.id)}
+                          title="Excluir"
+                          style={{
+                            width: 30, height: 30, borderRadius: "50%",
+                            background: "#FEE2E2", border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: "#DC2626",
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           </div>
         )}
       </section>

@@ -987,6 +987,7 @@ export type Database = {
           pontuacao: number | null
           renda: string | null
           setor: string | null
+          sexo: string | null
           telefone: string | null
           updated_at: string
           user_id: string
@@ -1003,6 +1004,7 @@ export type Database = {
           pontuacao?: number | null
           renda?: string | null
           setor?: string | null
+          sexo?: string | null
           telefone?: string | null
           updated_at?: string
           user_id: string
@@ -1019,6 +1021,7 @@ export type Database = {
           pontuacao?: number | null
           renda?: string | null
           setor?: string | null
+          sexo?: string | null
           telefone?: string | null
           updated_at?: string
           user_id?: string
