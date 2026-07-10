@@ -30,6 +30,35 @@ const BLOCK_COLORS = [
   "#2ec1f7", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316",
 ];
 
+// === Nexo Form Design System (mesmo do Cadastro de Participante) ===
+const NEXO_CYAN = "#00BFF0";
+const NEXO_LIME = "#C6F03C";
+const NEXO_CARD_BG = "#D6F4FB";
+const NEXO_DARK = "#0A2540";
+const nexoPillGhost: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 11,
+  fontWeight: 800,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  padding: "8px 16px",
+  borderRadius: 999,
+  background: "#FFFFFF",
+  border: `2px solid ${NEXO_CYAN}`,
+  color: NEXO_DARK,
+  cursor: "pointer",
+  transition: "opacity .2s",
+};
+const nexoPillPrimary: React.CSSProperties = {
+  ...nexoPillGhost,
+  background: NEXO_CYAN,
+  color: "#FFFFFF",
+  border: `2px solid ${NEXO_CYAN}`,
+};
+
 interface NewsItem {
   titulo: string;
   imagemUrl: string;
@@ -170,18 +199,18 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
   };
 
   return (
-    <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)", backgroundColor: "color-mix(in srgb, #8b5cf6 5%, transparent)" }}>
-      <p className="text-xs font-bold flex items-center gap-1.5 mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-        <Link2 size={14} style={{ color: "#8b5cf6" }} />
+    <div className="rounded-2xl p-5" style={{ border: `1px solid ${NEXO_CYAN}33`, backgroundColor: NEXO_CARD_BG, fontFamily: "'Montserrat', sans-serif" }}>
+      <p className="text-xs font-bold flex items-center gap-1.5 mb-1" style={{ color: NEXO_DARK, letterSpacing: 1, textTransform: "uppercase" }}>
+        <Link2 size={14} style={{ color: NEXO_CYAN }} />
         Atualizar Notícias por Links
       </p>
-      <p className="text-[10px] mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+      <p className="text-[10px] mb-3" style={{ color: `${NEXO_DARK}99` }}>
         Cole um link por linha em cada bloco. Ao clicar em "Atualizar notícias", as notícias serão substituídas e o XML será atualizado.
       </p>
       <div className="space-y-2">
         {blocos.map((_, bi) => (
           <div key={bi}>
-            <label className="text-[10px] font-bold mb-1 block" style={{ color: BLOCK_COLORS[bi % BLOCK_COLORS.length] }}>
+            <label className="text-[10px] font-bold mb-1 block" style={{ color: NEXO_DARK, letterSpacing: 1, textTransform: "uppercase" }}>
               BLOCO {bi + 1} — links
             </label>
             <textarea
@@ -189,8 +218,8 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
               onChange={e => setLinksText(prev => { const c = [...prev]; c[bi] = e.target.value; return c; })}
               placeholder="https://...&#10;https://..."
               rows={3}
-              className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none resize-y"
-              style={inputStyle}
+              className="w-full px-3 py-2 text-[11px] outline-none resize-y"
+              style={{ ...inputStyle, backgroundColor: "#FFFFFF", border: `2px solid ${NEXO_CYAN}`, color: NEXO_DARK, borderRadius: 14 }}
             />
           </div>
         ))}
@@ -198,15 +227,16 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
       <button
         onClick={handleUpdate}
         disabled={updating}
-        className="w-full mt-3 py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40"
-        style={{ backgroundColor: "#8b5cf6", color: "#fff" }}
+        className="w-full mt-4 flex items-center justify-center gap-1.5 disabled:opacity-40 hover:opacity-90"
+        style={{ ...nexoPillPrimary, padding: "12px 20px", fontSize: 12, width: "100%" }}
       >
-        {updating ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-        Atualizar notícias
+        {updating ? <Loader2 size={12} className="animate-spin" /> : <Check size={14} />}
+        Atualizar Notícias
       </button>
     </div>
   );
 }
+
 
 export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader, externalPasteText, onExternalPasteConsumed, novoOpen, onNovoOpenChange, hideNovoToggle, renderAsModal }: Props) {
   const { user } = useAuth();
@@ -1611,72 +1641,74 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         ) : (
           <>
             {/* Escalada */}
-            <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, #f59e0b 30%, transparent)", backgroundColor: "color-mix(in srgb, #f59e0b 5%, transparent)" }}>
-              <p className="text-xs font-bold flex items-center gap-1.5 mb-2" style={{ color: "#f59e0b" }}>
-                📢 Escalada
-                {escaladaList.length > 0 && <span className="text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>({escaladaList.length} {escaladaList.length === 1 ? "item" : "itens"})</span>}
+            <div className="rounded-2xl p-5" style={{ border: `1px solid ${NEXO_CYAN}33`, backgroundColor: NEXO_CARD_BG, fontFamily: "'Montserrat', sans-serif" }}>
+              <p className="text-xs font-bold flex items-center gap-1.5 mb-3" style={{ color: NEXO_DARK, letterSpacing: 1, textTransform: "uppercase" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: NEXO_CYAN, color: "#fff", fontSize: 11 }}>📢</span>
+                Escalada
+                {escaladaList.length > 0 && <span className="text-[10px] font-normal" style={{ color: `${NEXO_DARK}80`, letterSpacing: 0, textTransform: "none" }}>({escaladaList.length} {escaladaList.length === 1 ? "item" : "itens"})</span>}
               </p>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {escaladaList.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold shrink-0 w-5 text-center" style={{ color: "#f59e0b" }}>{idx + 1}.</span>
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold shrink-0 w-5 text-center" style={{ color: NEXO_CYAN }}>{idx + 1}.</span>
                     <div className="flex flex-col shrink-0">
-                      <button onClick={() => { if (idx === 0) return; setEscaladaList(prev => { const c = [...prev]; [c[idx - 1], c[idx]] = [c[idx], c[idx - 1]]; return c; }); }} disabled={idx === 0} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: "#f59e0b" }}><ArrowUp size={10} /></button>
-                      <button onClick={() => { if (idx === escaladaList.length - 1) return; setEscaladaList(prev => { const c = [...prev]; [c[idx], c[idx + 1]] = [c[idx + 1], c[idx]]; return c; }); }} disabled={idx === escaladaList.length - 1} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: "#f59e0b" }}><ArrowDown size={10} /></button>
+                      <button onClick={() => { if (idx === 0) return; setEscaladaList(prev => { const c = [...prev]; [c[idx - 1], c[idx]] = [c[idx], c[idx - 1]]; return c; }); }} disabled={idx === 0} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: NEXO_CYAN }}><ArrowUp size={10} /></button>
+                      <button onClick={() => { if (idx === escaladaList.length - 1) return; setEscaladaList(prev => { const c = [...prev]; [c[idx], c[idx + 1]] = [c[idx + 1], c[idx]]; return c; }); }} disabled={idx === escaladaList.length - 1} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: NEXO_CYAN }}><ArrowDown size={10} /></button>
                     </div>
                     {item.imagemUrl && item.imagemUrl.startsWith("http") && (
                       <img src={item.imagemUrl} alt="" className="w-10 h-7 object-cover rounded shrink-0" onError={e => (e.currentTarget.style.display = "none")} />
                     )}
-                    <input value={item.titulo} onChange={e => setEscaladaList(prev => prev.map((v, i) => i === idx ? { ...v, titulo: e.target.value } : v))} className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] outline-none min-w-0" style={inputStyle} placeholder="Título da manchete..." />
+                    <input value={item.titulo} onChange={e => setEscaladaList(prev => prev.map((v, i) => i === idx ? { ...v, titulo: e.target.value } : v))} className="flex-1 h-10 px-4 text-[12px] outline-none min-w-0" style={{ ...inputStyle, backgroundColor: "#FFFFFF", border: `2px solid ${NEXO_CYAN}`, color: NEXO_DARK, borderRadius: 999 }} placeholder="Título da manchete..." />
                     <button onClick={() => setEscaladaList(prev => prev.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>
                   </div>
                 ))}
               </div>
-              <button onClick={() => setEscaladaList(prev => [...prev, { titulo: "", imagemUrl: "" }])} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2" style={{ color: "#f59e0b", border: "1px dashed color-mix(in srgb, #f59e0b 40%, transparent)" }}>
-                <Plus size={12} /> Adicionar manchete
+              <button onClick={() => setEscaladaList(prev => [...prev, { titulo: "", imagemUrl: "" }])} className="mt-3 hover:opacity-80" style={nexoPillGhost}>
+                <Plus size={12} /> Adicionar Manchete
               </button>
             </div>
 
             {/* Blocos */}
             <div className="space-y-4 min-w-0 w-full">
               {blocos.map((bloco, bi) => (
-                <div key={bi} className="rounded-xl p-3 min-w-0 w-full overflow-hidden" style={{ border: `2px solid ${BLOCK_COLORS[bi % BLOCK_COLORS.length]}44`, backgroundColor: `${BLOCK_COLORS[bi % BLOCK_COLORS.length]}0a` }}>
+                <div key={bi} className="rounded-2xl p-4 min-w-0 w-full overflow-hidden" style={{ border: `1px solid ${NEXO_CYAN}33`, backgroundColor: NEXO_CARD_BG, fontFamily: "'Montserrat', sans-serif" }}>
                   <div className="flex items-center justify-between mb-2 cursor-pointer min-w-0" onClick={() => toggleCollapse(bi)}>
-                    <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: BLOCK_COLORS[bi % BLOCK_COLORS.length] }}>
-                      📺 BLOCO {bi + 1}
-                      <span className="text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>({bloco.noticias.length} {bloco.noticias.length === 1 ? "notícia" : "notícias"})</span>
+                    <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: NEXO_DARK, letterSpacing: 1, textTransform: "uppercase" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: BLOCK_COLORS[bi % BLOCK_COLORS.length], color: "#fff", fontSize: 11 }}>📺</span>
+                      BLOCO {bi + 1}
+                      <span className="text-[10px] font-normal" style={{ color: `${NEXO_DARK}80`, letterSpacing: 0, textTransform: "none" }}>({bloco.noticias.length} {bloco.noticias.length === 1 ? "notícia" : "notícias"})</span>
                     </p>
                     <div className="flex items-center gap-1">
                       {blocos.length > 1 && <button onClick={(e) => { e.stopPropagation(); removeBloco(bi); }} className="p-1 rounded-full hover:opacity-70" style={{ color: "#ef4444" }}><Trash2 size={13} /></button>}
-                      {collapsedBlocos.has(bi) ? <ChevronDown size={14} style={{ color: "var(--layout-page-text)" }} /> : <ChevronUp size={14} style={{ color: "var(--layout-page-text)" }} />}
+                      {collapsedBlocos.has(bi) ? <ChevronDown size={14} style={{ color: NEXO_DARK }} /> : <ChevronUp size={14} style={{ color: NEXO_DARK }} />}
                     </div>
                   </div>
                   {!collapsedBlocos.has(bi) && (
                     <div className="space-y-3">
                       {bloco.noticias.map((noticia, ni) => (
-                        <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} onRegenerateWeather={addWeatherInfo} onRegenerateFinance={addFinanceInfo} addingWeather={addingWeather} addingFinance={addingFinance} />
+                        <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} onRegenerateWeather={addWeatherInfo} onRegenerateFinance={addFinanceInfo} addingWeather={addingWeather} addingFinance={addingFinance} defaultCollapsed={!!editingId && !!noticia.titulo} />
                       ))}
                       <div className="flex flex-wrap gap-2">
-                        <button onClick={() => addNoticia(bi)} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all" style={{ color: "var(--layout-accent-color, #2ec1f7)", border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 40%, transparent)" }}>
-                          <Plus size={12} /> Adicionar notícia
+                        <button onClick={() => addNoticia(bi)} className="hover:opacity-80" style={nexoPillGhost}>
+                          <Plus size={12} /> Adicionar Notícia
                         </button>
-                        <button 
-                          onClick={() => addWeatherInfo(bi)} 
+                        <button
+                          onClick={() => addWeatherInfo(bi)}
                           disabled={addingWeather}
-                          className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all disabled:opacity-50" 
-                          style={{ color: "#f59e0b", border: "1px dashed color-mix(in srgb, #f59e0b 40%, transparent)" }}
+                          className="hover:opacity-80 disabled:opacity-50"
+                          style={nexoPillGhost}
                         >
-                          {addingWeather ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} 
-                          Adicionar previsão do tempo
+                          {addingWeather ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                          Adicionar Previsão do Tempo
                         </button>
-                        <button 
-                          onClick={() => addFinanceInfo(bi)} 
+                        <button
+                          onClick={() => addFinanceInfo(bi)}
                           disabled={addingFinance}
-                          className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all disabled:opacity-50" 
-                          style={{ color: "#10b981", border: "1px dashed color-mix(in srgb, #10b981 40%, transparent)" }}
+                          className="hover:opacity-80 disabled:opacity-50"
+                          style={nexoPillGhost}
                         >
-                          {addingFinance ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} 
-                          Adicionar mercado financeiro
+                          {addingFinance ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                          Adicionar Mercado Financeiro
                         </button>
                       </div>
                     </div>
@@ -1725,7 +1757,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
 
 /* Sub-component for each noticia row */
-function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields, onRegenerateWeather, onRegenerateFinance, addingWeather, addingFinance }: {
+function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields, onRegenerateWeather, onRegenerateFinance, addingWeather, addingFinance, defaultCollapsed }: {
   noticia: NewsItem; bi: number; ni: number;
   inputStyle: React.CSSProperties; fetchingLink: string | null;
   onUpdate: (bi: number, ni: number, field: keyof NewsItem, value: any) => void;
@@ -1737,9 +1769,10 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   onRegenerateFinance?: (bi: number, ni: number) => void;
   addingWeather?: boolean;
   addingFinance?: boolean;
+  defaultCollapsed?: boolean;
 }) {
   const [linkInput, setLinkInput] = useState(noticia.link || "");
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(!!defaultCollapsed);
   const isFetching = fetchingLink === `${bi}-${ni}`;
 
   const handlePasteLink = (url: string) => { setLinkInput(url); if (url.startsWith("http")) onFetchLink(bi, ni, url); };
@@ -1758,7 +1791,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       <div className="rounded-lg px-3 py-2 flex items-center justify-between cursor-pointer hover:opacity-90 transition-all overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }} onClick={() => setCollapsed(false)}>
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <p className="text-[10px] font-bold uppercase shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Notícia {ni + 1}</p>
-          <p className="text-[11px] truncate font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{noticia.titulo}</p>
+          <p className="text-[12px] truncate font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{noticia.titulo}</p>
           {noticia.escalada && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 15%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}>ESCALADA</span>}
         </div>
         <div className="flex items-center gap-1 shrink-0 ml-2">
