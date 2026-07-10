@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   dataUserId?: string;
-  heightPx: number;
+  heightPx?: number;
 }
 
 interface SocialCounts {
@@ -126,11 +126,9 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   return (
     <div
-      className="rounded-3xl flex flex-col p-5"
+      className="rounded-3xl flex flex-col p-5 w-full h-full"
       style={{
         background: bg,
-        height: `${heightPx}px`,
-        maxHeight: `${heightPx}px`,
         boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
         borderRadius: 24,
       }}
