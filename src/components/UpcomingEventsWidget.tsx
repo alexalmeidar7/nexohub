@@ -109,6 +109,10 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
 
   const openAgenda = (evtId?: string) => {
     if (evtId) sessionStorage.setItem("agenda_focus_event", evtId);
+    try {
+      sessionStorage.setItem("agenda_focus_date", format(selected, "yyyy-MM-dd"));
+      sessionStorage.setItem("agenda_focus_week", format(weekAnchor, "yyyy-MM-dd"));
+    } catch {}
     onNavigate?.("agenda" as Page);
   };
 
