@@ -1235,4 +1235,21 @@ table:not([data-no-row-hover]) tbody tr:hover {
   font-size: 0.8125rem;
 }
 
+/* Checkboxes nativos herdam o cyan do design system (exceto os .sr-only,
+   que são inputs escondidos usados para toggles pill customizados). */
+input[type="checkbox"]:not(.sr-only) {
+  accent-color: #00BFF0;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+/* Rádios nativos também acompanham o padrão */
+input[type="radio"]:not(.sr-only) {
+  accent-color: #00BFF0;
+  cursor: pointer;
+}
+
+
 
