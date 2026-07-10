@@ -628,15 +628,15 @@ export default function RoteiroPrograma() {
               <div className="flex flex-col gap-3">
                 {estudios.map(est => (
                   <div key={est}>
-                    <div className="flex items-center gap-2 mb-1.5 px-0.5">
-                      <span className="inline-block w-1 h-3 rounded-full" style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }} />
-                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
+                    <div className="flex items-center gap-2 mb-2 px-0.5">
+                      <span style={{ display: "inline-block", width: 6, height: 14, borderRadius: 999, background: CYAN }} />
+                      <span style={{ ...MONT, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK }}>
                         {est}
                       </span>
-                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                      <span style={{ ...MONT, fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}`, color: CYAN }}>
                         {grupos.get(est)!.length}
                       </span>
-                      <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, color-mix(in srgb, var(--layout-border-color, #333333) 18%, transparent), transparent)" }} />
+                      <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, ${CYAN}55, transparent)` }} />
                     </div>
                     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                       {grupos.get(est)!.map(r => {
