@@ -957,7 +957,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
 
           <div
-            className="flex items-center gap-2 rounded-full px-3 py-1.5"
+            className="flex items-center gap-2 rounded-full px-3 py-0.5"
             style={{ backgroundColor: "#f1f3f5" }}
           >
             {!isDashboard && playerState.hasChannel && (
@@ -965,7 +965,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent("player:toggle"))}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                    className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
                     style={{ color: "#002132" }}
                     aria-label={playerState.isPlaying ? "Pausar player" : "Reproduzir player"}
                   >
@@ -987,7 +987,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("intercom:open"))}
-                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
                   style={{ color: "#002132" }}
                 >
                   <Radio size={18} />
@@ -1002,7 +1002,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setCurrentPage("configuracoes")}
-                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
                   style={{ color: "#002132" }}
                 >
                   <Settings size={18} />
@@ -1014,7 +1014,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={onLogout}
-                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
                   style={{ color: "#002132" }}
                 >
                   <LogOut size={18} />
