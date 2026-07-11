@@ -275,6 +275,50 @@ export default function PreRollPage() {
               </div>
             </div>
 
+            {/* ──── ONDE VAMOS ANUNCIAR? ──── */}
+            {sectionHeader(<MapPin size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Onde vamos anunciar?")}
+            <div>
+              <p className="text-[11px] mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                Selecione um ou mais locais onde este anúncio será exibido.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {([
+                  { value: "site", label: "SITE", desc: "Portal de notícias", icon: Globe },
+                  { value: "pre_roll", label: "PRE ROLL", desc: "Antes do conteúdo", icon: Film },
+                  { value: "mid_roll", label: "MID ROLL", desc: "Durante o conteúdo", icon: Play },
+                ] as const).map(({ value, label, desc, icon: Icon }) => {
+                  const selected = placements.includes(value);
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        setPlacements((prev) => {
+                          const next = prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value];
+                          return next.length === 0 ? [value] : next;
+                        });
+                        if (value === "mid_roll") setIsMidroll((prev) => !prev);
+                      }}
+                      className="flex items-center gap-3 p-3 rounded-xl transition-all text-left"
+                      style={{
+                        border: selected ? "2px solid var(--layout-accent-color, #2563eb)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                        backgroundColor: selected ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)" : "transparent",
+                      }}
+                    >
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: selected ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+                        <Icon size={16} style={{ color: selected ? "#ffffff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold uppercase tracking-wider" style={{ color: selected ? "var(--layout-accent-color, #2563eb)" : "var(--layout-page-text, #1a1a1a)" }}>{label}</div>
+                        <div className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>{desc}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+
             {/* ──── SEÇÃO 2: MÍDIA ──── */}
             {sectionHeader(<Video size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Mídia")}
 
