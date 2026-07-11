@@ -927,7 +927,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {isDashboard && (
                   <div className="flex items-center gap-1.5">
                     {[
-                      { Icon: HouseMixIcon, name: "House Mix", label: "HouseMix" },
+                      { Icon: HouseMixIcon, name: "nexohub", label: "nexohub" },
                       { Icon: BusinessIcon, name: "Business" },
                       { Icon: ChatbotIcon, name: "Chatbot" },
                       { Icon: SocialDesignIcon, name: "Social Design" },
