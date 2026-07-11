@@ -67,6 +67,7 @@ export default function PreRollPage() {
   const [videoPosition, setVideoPosition] = useState<"center" | "left" | "right">("center");
   const [showPreview, setShowPreview] = useState(false);
   const [isMidroll, setIsMidroll] = useState(false);
+  const [placements, setPlacements] = useState<string[]>(["pre_roll"]);
 
   const bgInputRef = useRef<HTMLInputElement>(null);
 
